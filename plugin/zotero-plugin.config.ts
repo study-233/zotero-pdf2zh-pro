@@ -8,14 +8,12 @@ export default defineConfig({
     xpiName: "zotero-pdf2zh-next",
     id: pkg.config.addonID,
     namespace: pkg.config.addonRef,
-    updateURL: `https://github.com/{{owner}}/{{repo}}/releases/download/release/${
-        pkg.version.includes("-") ? "update-beta.json" : "update.json"
-    }`,
-    xpiDownloadLink:
-        "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
 
     build: {
         assets: ["addon/**/*.*"],
+        // Private GitHub releases cannot serve Zotero's anonymous updater.
+        // Keep the addon identity stable, but ship private builds for manual XPI updates.
+        makeManifest: { enable: false },
         define: {
             ...pkg.config,
             author: pkg.author,

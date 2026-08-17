@@ -12,13 +12,13 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/NightWatcher314/zotero-pdf2zh-next.git"
+        "url": "git+ssh://git@github.com/study-233/zotero-pdf2zh-next.git"
     },
-    "author": "NightWatcher",
+    "author": "study-233",
     "bugs": {
-        "url": "https://github.com/NightWatcher314/zotero-pdf2zh-next/issues"
+        "url": "https://github.com/study-233/zotero-pdf2zh-next/issues"
     },
-    "homepage": "https://github.com/NightWatcher314/zotero-pdf2zh-next#readme",
+    "homepage": "https://github.com/study-233/zotero-pdf2zh-next#readme",
     "license": "AGPL-3.0-or-later",
     "scripts": {
         "start": "zotero-plugin serve",

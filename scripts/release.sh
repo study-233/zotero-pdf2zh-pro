@@ -3,33 +3,32 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: scripts/release.sh <version> [--no-push] [--no-release] [--no-pypi] [--tap-path <path>] [--no-tap]
+Usage: scripts/release.sh <version> [--no-push] [--no-release] [--pypi] [--tap-path <path>] [--no-tap]
 
 Build, validate, push, and publish a zotero-pdf2zh-next release.
 
 Examples:
   scripts/release.sh 5.1.0
   scripts/release.sh 5.1.1 --no-release
-  scripts/release.sh 5.1.1 --no-pypi
-  scripts/release.sh 5.1.1 --tap-path /Users/night/Documents/Codes/homebrew-formula
+  scripts/release.sh 5.1.1 --pypi
+  scripts/release.sh 5.1.1 --tap-path ../homebrew-formula
   scripts/release.sh 5.1.1 --no-tap
 
 The script updates the shared plugin/server version, runs validation, commits
-the version bump, pushes main, publishes the server package to PyPI, creates
-the v<version> GitHub release with the XPI asset using CHANGELOG.md release
-notes, updates the fixed "release" GitHub release with update.json for Zotero's
-Check for Updates flow, and publishes the Homebrew formula through a bottle PR.
+the version bump, pushes main, creates the private v<version> GitHub release
+with the XPI asset using CHANGELOG.md release notes, and updates the private
+Homebrew source formula. PyPI publishing is opt-in.
 
 Before running, add a CHANGELOG.md section like:
   ## v5.1.1 - YYYY-MM-DD
 
 Unless --no-push or --no-tap is set, the script also updates the Homebrew tap
-formula after the main repo push/release succeeds. The default tap path is
-../homebrew-formula when present, then /Users/night/Documents/Codes/homebrew-formula
-when present.
+formula after the main repo push/release succeeds. The default tap path is the
+adjacent ../homebrew-formula checkout.
 
 PyPI publishing uses UV_PUBLISH_TOKEN when available. Otherwise the script
-dispatches the trusted-publishing workflow. Use --no-pypi to skip upload.
+dispatches the trusted-publishing workflow. Use --pypi only after configuring
+a package and Trusted Publisher owned by this private fork.
 EOF
 }
 
@@ -41,7 +40,7 @@ die() {
 TEMP_PATHS=()
 cleanup() {
     local path
-    for path in "${TEMP_PATHS[@]}"; do
+    for path in "${TEMP_PATHS[@]-}"; do
         if [[ -n "$path" && -e "$path" ]]; then
             rm -rf "$path"
         fi
@@ -68,10 +67,13 @@ shift
 PUSH=1
 PUBLISH_RELEASE=1
 UPDATE_TAP=1
-PUBLISH_PYPI=1
+PUBLISH_PYPI=0
 TAP_PATH=""
 PYPI_TOKEN="${UV_PUBLISH_TOKEN:-}"
 unset UV_PUBLISH_TOKEN
+GITHUB_REPO="${GITHUB_REPO:-study-233/zotero-pdf2zh-next}"
+HOMEBREW_TAP_REPO="${HOMEBREW_TAP_REPO:-study-233/homebrew-formula}"
+HOMEBREW_TAP_NAME="${HOMEBREW_TAP_NAME:-study-233/formula}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -82,6 +84,9 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-release)
             PUBLISH_RELEASE=0
+            ;;
+        --pypi)
+            PUBLISH_PYPI=1
             ;;
         --no-pypi)
             PUBLISH_PYPI=0
@@ -119,8 +124,6 @@ cd "$REPO_ROOT"
 if [[ -z "$TAP_PATH" ]]; then
     if [[ -d "$REPO_ROOT/../homebrew-formula/.git" ]]; then
         TAP_PATH="$REPO_ROOT/../homebrew-formula"
-    elif [[ -d "/Users/night/Documents/Codes/homebrew-formula/.git" ]]; then
-        TAP_PATH="/Users/night/Documents/Codes/homebrew-formula"
     fi
 fi
 
@@ -133,9 +136,10 @@ if [[ "$UPDATE_TAP" -eq 1 && "$PUSH" -eq 1 ]]; then
         die "Homebrew tap must be on main: $TAP_PATH"
     [[ -z "$(git -C "$TAP_PATH" status --porcelain)" ]] ||
         die "Homebrew tap worktree is dirty; commit or stash changes first"
-    require_command curl
-    require_command shasum
     require_command ruby
+    TAP_REMOTE="$(git -C "$TAP_PATH" remote get-url origin)"
+    [[ "$TAP_REMOTE" == "git@github.com:${HOMEBREW_TAP_REPO}.git" ]] ||
+        die "Homebrew tap origin must be git@github.com:${HOMEBREW_TAP_REPO}.git, got: $TAP_REMOTE"
 fi
 
 BRANCH="$(git branch --show-current)"
@@ -145,7 +149,6 @@ git diff --quiet || die "tracked worktree changes exist; commit or stash them fi
 git diff --cached --quiet || die "staged changes exist; commit or unstage them first"
 
 TAG="v$VERSION"
-GITHUB_REPO="NightWatcher314/zotero-pdf2zh-next"
 PYPI_PACKAGE="zotero-pdf2zh-next"
 PYPI_VERSION_URL="https://pypi.org/pypi/$PYPI_PACKAGE/$VERSION/json"
 PYPI_CHECK_URL="https://pypi.org/simple/$PYPI_PACKAGE/"
@@ -282,13 +285,11 @@ node -e '
 const fs = require("fs");
 const version = process.argv[1];
 const manifest = JSON.parse(fs.readFileSync("plugin/build/addon/manifest.json", "utf8"));
-const update = JSON.parse(fs.readFileSync("plugin/build/update.json", "utf8"));
-const addon = update.addons["zotero-pdf2zh-next@nightwatcher.local"];
 if (manifest.version !== version) {
   throw new Error(`manifest version ${manifest.version} != ${version}`);
 }
-if (!addon || addon.updates[0].version !== version) {
-  throw new Error("update.json does not point at the requested version");
+if (manifest.applications?.zotero?.update_url) {
+  throw new Error("private build must not contain an anonymous update URL");
 }
 ' "$VERSION"
 
@@ -363,11 +364,8 @@ fi
 if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
     NOTES_FILE="$(mktemp)"
     TEMP_PATHS+=("$NOTES_FILE")
-    printf '%s\n\n' "$CHANGELOG_SECTION" >"$NOTES_FILE"
-    cat >>"$NOTES_FILE" <<EOF
-Zotero automatic updates use the fixed release asset:
-https://github.com/NightWatcher314/zotero-pdf2zh-next/releases/download/release/update.json
-EOF
+    printf '%s\n\nPrivate build: download the XPI while signed in and install it manually in Zotero.\n' \
+        "$CHANGELOG_SECTION" >"$NOTES_FILE"
 
     if [[ "$GITHUB_RELEASE_EXISTS" -eq 1 ]]; then
         echo "Reusing existing GitHub release: $TAG"
@@ -385,139 +383,37 @@ EOF
             --latest
     fi
 
-    if gh release view release --repo "$GITHUB_REPO" >/dev/null 2>&1; then
-        gh release upload release plugin/build/update.json --repo "$GITHUB_REPO" --clobber
-    else
-        gh release create release \
-            plugin/build/update.json \
-            --repo "$GITHUB_REPO" \
-            --target "$COMMIT" \
-            --title "Zotero update manifest" \
-            --notes "Stable update manifest used by Zotero Check for Updates." \
-            --latest=false
-    fi
 fi
 
 if [[ "$UPDATE_TAP" -eq 1 && "$PUSH" -eq 1 ]]; then
-    TAP_REPO="NightWatcher314/homebrew-formula"
-    TAP_BRANCH="zotero-pdf2zh-next-$TAG"
-    TAP_REMOTE="$(git -C "$TAP_PATH" remote get-url origin)"
-    TAP_TEMP_ROOT="$(mktemp -d)"
-    TAP_WORKTREE="$TAP_TEMP_ROOT/tap"
-    TEMP_PATHS+=("$TAP_TEMP_ROOT")
-
-    git clone --quiet "$TAP_PATH" "$TAP_WORKTREE"
-    git -C "$TAP_WORKTREE" remote set-url origin "$TAP_REMOTE"
-    git -C "$TAP_WORKTREE" fetch --quiet origin main
-    if git -C "$TAP_WORKTREE" ls-remote --exit-code --heads origin "$TAP_BRANCH" >/dev/null 2>&1; then
-        git -C "$TAP_WORKTREE" fetch --quiet origin "$TAP_BRANCH"
-        git -C "$TAP_WORKTREE" switch --quiet -c "$TAP_BRANCH" "origin/$TAP_BRANCH"
-    else
-        git -C "$TAP_WORKTREE" switch --quiet -c "$TAP_BRANCH" origin/main
-    fi
-
     FORMULA_REL="Formula/zotero-pdf2zh-next.rb"
-    FORMULA="$TAP_WORKTREE/$FORMULA_REL"
-    TARBALL_URL="https://github.com/NightWatcher314/zotero-pdf2zh-next/archive/$COMMIT.tar.gz"
-    SHA256="$(curl -LfsS "$TARBALL_URL" | shasum -a 256 | awk '{print $1}')"
-    [[ -n "$SHA256" ]] || die "failed to compute sha256 for $TARBALL_URL"
-
-    URL="$TARBALL_URL" VERSION="$VERSION" SHA256="$SHA256" perl -0pi -e '
-s/url "[^"]+"/url "$ENV{URL}"/;
+    FORMULA="$TAP_PATH/$FORMULA_REL"
+    SOURCE_URL="git@github.com:${GITHUB_REPO}.git"
+    SOURCE_URL="$SOURCE_URL" COMMIT="$COMMIT" VERSION="$VERSION" perl -0pi -e '
+s{url "[^"]+"[^\n]*}{url "$ENV{SOURCE_URL}", using: :git, revision: "$ENV{COMMIT}"};
 s/version "[^"]+"/version "$ENV{VERSION}"/;
-s/sha256 "[^"]+"/sha256 "$ENV{SHA256}"/;
 ' "$FORMULA"
 
-    git -C "$TAP_WORKTREE" diff -- "$FORMULA_REL"
+    git -C "$TAP_PATH" diff -- "$FORMULA_REL"
     ruby -c "$FORMULA"
     if command -v brew >/dev/null 2>&1; then
         HOMEBREW_NO_AUTO_UPDATE=1 brew style "$FORMULA"
     fi
 
-    git -C "$TAP_WORKTREE" add "$FORMULA_REL"
-    if ! git -C "$TAP_WORKTREE" diff --cached --quiet; then
-        git -C "$TAP_WORKTREE" commit -m "chore: update zotero-pdf2zh-next to $TAG"
+    git -C "$TAP_PATH" add "$FORMULA_REL"
+    if ! git -C "$TAP_PATH" diff --cached --quiet; then
+        git -C "$TAP_PATH" commit -m "chore: update zotero-pdf2zh-next to $TAG"
     fi
-    TAP_HEAD_SHA="$(git -C "$TAP_WORKTREE" rev-parse HEAD)"
-    git -C "$TAP_WORKTREE" push --set-upstream origin "$TAP_BRANCH"
-
-    TAP_PR_NUMBER="$(gh pr list \
-        --repo "$TAP_REPO" \
-        --head "$TAP_BRANCH" \
-        --state open \
-        --json number \
-        --jq '.[0].number // empty')"
-    if [[ -z "$TAP_PR_NUMBER" ]]; then
-        TAP_PR_URL="$(gh pr create \
-            --repo "$TAP_REPO" \
-            --base main \
-            --head "$TAP_BRANCH" \
-            --title "chore: update zotero-pdf2zh-next to $TAG" \
-            --body "Build and publish Homebrew bottles for zotero-pdf2zh-next $TAG.")"
-        TAP_PR_NUMBER="${TAP_PR_URL##*/}"
-    fi
-
-    TAP_CHECKS_FOUND=0
-    for _ in {1..30}; do
-        if [[ "$(gh pr checks "$TAP_PR_NUMBER" \
-            --repo "$TAP_REPO" \
-            --json name \
-            --jq 'length' 2>/dev/null || true)" -gt 0 ]]; then
-            TAP_CHECKS_FOUND=1
-            break
-        fi
-        sleep 2
-    done
-    [[ "$TAP_CHECKS_FOUND" -eq 1 ]] || die "Homebrew bottle checks did not start for PR #$TAP_PR_NUMBER"
-    gh pr checks "$TAP_PR_NUMBER" --repo "$TAP_REPO" --watch --fail-fast
-
-    PREVIOUS_PUBLISH_RUN="$(gh run list \
-        --repo "$TAP_REPO" \
-        --workflow publish.yml \
-        --event workflow_dispatch \
-        --limit 1 \
-        --json databaseId \
-        --jq '.[0].databaseId // empty')"
-    gh workflow run publish.yml \
-        --repo "$TAP_REPO" \
-        --ref main \
-        -f pull_request="$TAP_PR_NUMBER" \
-        -f head_sha="$TAP_HEAD_SHA"
-
-    TAP_PUBLISH_RUN=""
-    for _ in {1..30}; do
-        TAP_PUBLISH_RUN="$(gh run list \
-            --repo "$TAP_REPO" \
-            --workflow publish.yml \
-            --event workflow_dispatch \
-            --limit 1 \
-            --json databaseId \
-            --jq '.[0].databaseId // empty')"
-        if [[ -n "$TAP_PUBLISH_RUN" && "$TAP_PUBLISH_RUN" != "$PREVIOUS_PUBLISH_RUN" ]]; then
-            break
-        fi
-        sleep 2
-    done
-    [[ -n "$TAP_PUBLISH_RUN" && "$TAP_PUBLISH_RUN" != "$PREVIOUS_PUBLISH_RUN" ]] ||
-        die "Homebrew bottle publish workflow did not start"
-    gh run watch "$TAP_PUBLISH_RUN" --repo "$TAP_REPO" --exit-status
-
-    TAP_PR_STATE="$(gh pr view "$TAP_PR_NUMBER" --repo "$TAP_REPO" --json state --jq .state)"
-    [[ "$TAP_PR_STATE" == "CLOSED" || "$TAP_PR_STATE" == "MERGED" ]] ||
-        die "Homebrew bottle PR #$TAP_PR_NUMBER was not closed by brew pr-pull"
-    git -C "$TAP_PATH" pull --ff-only
-    grep -Fq "bottle do" "$TAP_PATH/$FORMULA_REL" ||
-        die "Homebrew formula does not contain a bottle block after publishing"
-    grep -Eq 'sha256 arm64_[a-z_]+' "$TAP_PATH/$FORMULA_REL" ||
-        die "Homebrew formula does not contain an Apple Silicon bottle"
+    git -C "$TAP_PATH" push origin main
 
     if command -v brew >/dev/null 2>&1; then
-        BREW_TAP_PATH="$(brew --repository nightwatcher314/formula 2>/dev/null || true)"
+        BREW_TAP_PATH="$(brew --repository "$HOMEBREW_TAP_NAME" 2>/dev/null || true)"
         if [[ -n "$BREW_TAP_PATH" && -d "$BREW_TAP_PATH/.git" ]]; then
             git -C "$BREW_TAP_PATH" pull --ff-only
         fi
-        HOMEBREW_NO_AUTO_UPDATE=1 brew readall nightwatcher314/formula
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install --formula --dry-run nightwatcher314/formula/zotero-pdf2zh-next
+        HOMEBREW_NO_AUTO_UPDATE=1 brew readall "$HOMEBREW_TAP_NAME"
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install --build-from-source --formula --dry-run \
+            "$HOMEBREW_TAP_NAME/zotero-pdf2zh-next"
     else
         echo "Skipping Homebrew validation because brew is not installed" >&2
     fi

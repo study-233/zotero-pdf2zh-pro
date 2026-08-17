@@ -134,20 +134,20 @@ scripts/release.sh 5.2.3
 - 跑服务端测试和插件构建。
 - 构建服务端 Python wheel/sdist，确保 PyPI 包可发布。
 - 创建主仓库 release commit 并推送。
-- 使用本地 token 或 GitHub Trusted Publisher 发布服务端包到 PyPI。
+- 仅在显式传入 `--pypi` 时，使用本地 token 或 GitHub Trusted Publisher 发布服务端包到 PyPI。
 - 确认 PyPI 已可查询该版本后，用 `CHANGELOG.md` 对应章节生成 GitHub Release notes。
-- 上传 Zotero `.xpi` 和固定 `release/update.json`。
-- 更新 Homebrew tap formula 并跑 brew 验证。
+- 上传供登录用户手动安装的 Zotero `.xpi`；私人构建不发布匿名自动更新清单。
+- 直接更新私人 Homebrew tap 的源码 Formula 并跑 brew 验证。
 
 `plugin/pnpm-lock.yaml` 必须提交。CI 和发版都使用 `--frozen-lockfile`，依赖变化后要同步更新 lockfile。
 
 `.github/workflows/publish-pypi.yml` 只接受手动指定的现有 tag，并从该 tag 构建。`scripts/release.sh` 在没有 `UV_PUBLISH_TOKEN` 时负责创建/校验 tag、触发该 workflow、等待 PyPI 可查询；不要直接从 `main` 构建旧版本。
 
-PyPI Trusted Publisher 的绑定必须保持为：owner `NightWatcher314`、repository `zotero-pdf2zh-next`、workflow `publish-pypi.yml`、environment `pypi`。GitHub `pypi` environment 不保存 token；`id-token: write` 只授予发布 job。
+上游 PyPI 项目仍由 `NightWatcher314/zotero-pdf2zh-next` 的 Trusted Publisher 管理；私人 fork 默认不发布 PyPI。只有为自己的包名和 Trusted Publisher 完成配置后，才可显式传入 `--pypi`。
 
 同一次 release commit 的 GitHub Release 或 PyPI 其中一端已存在时，脚本会校验 tag/commit 和 PyPI wheel/sdist 后补齐缺失步骤。旧版本 backfill 必须从对应 tag 构建，不能从已前进的 `main` 直接重发。不要恢复单独的 tag 发布 workflow；`scripts/release.sh` 是唯一发版入口。
 
-如果临时不想上传 PyPI，可以传 `--no-pypi`；默认发版会同时发布 XPI、PyPI 和 Homebrew。
+私人 fork 默认不上传 PyPI；只有显式传入 `--pypi` 才会启用。`--no-pypi` 继续保留用于兼容旧调用。
 
 Homebrew formula 必须继续 pin `python@3.13`。目前 `pdf2zh_next -> pydantic-core` 依赖链在 Python 3.14 上不应被假定可用。
 

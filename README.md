@@ -36,7 +36,8 @@
 
 ## 安装插件
 
-从 GitHub Release 下载最新的 `zotero-pdf2zh-next.xpi`，然后：
+登录后从私人仓库 `study-233/zotero-pdf2zh-next` 的 GitHub Release 下载最新的
+`zotero-pdf2zh-next.xpi`，然后：
 
 1. 打开 Zotero。
 2. 进入 `工具 -> 插件`。
@@ -50,8 +51,8 @@
 macOS 推荐使用 Homebrew，这样可以用 `brew services` 管理后台服务：
 
 ```bash
-brew tap NightWatcher314/homebrew-formula
-brew install zotero-pdf2zh-next
+brew tap study-233/formula git@github.com:study-233/homebrew-formula.git
+brew install --build-from-source study-233/formula/zotero-pdf2zh-next
 brew services start zotero-pdf2zh-next
 ```
 
@@ -84,16 +85,16 @@ http://127.0.0.1:8890
 
 ## 更新
 
-插件更新：
+私人插件更新：
 
-- 在 Zotero 的插件管理页面直接检查更新。
-- 按 Zotero 提示完成更新并重启。
+- 从私人仓库的 GitHub Release 下载新 XPI。
+- 在 Zotero 插件管理页面从文件安装并重启。私人 Release 不支持 Zotero 匿名自动更新。
 
 Homebrew 服务端更新：
 
 ```bash
 brew update
-brew upgrade zotero-pdf2zh-next
+brew upgrade study-233/formula/zotero-pdf2zh-next
 brew services restart zotero-pdf2zh-next
 ```
 
