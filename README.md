@@ -13,6 +13,7 @@
 - [安装插件](#安装插件)
 - [安装并启动本地服务](#安装并启动本地服务)
 - [更新](#更新)
+- [本机源码一键更新](#本机源码一键更新)
 - [在 Zotero 里使用](#在-zotero-里使用)
 - [License](#license)
 
@@ -102,6 +103,26 @@ brew services restart zotero-pdf2zh-next
 uv tool upgrade zotero-pdf2zh-next
 ```
 
+## 本机源码一键更新
+
+macOS 上如果已经通过 Homebrew 安装服务，并希望直接使用当前工作树中的插件和后端改动，可以运行：
+
+```bash
+./scripts/local-deploy.sh
+```
+
+脚本会自动发现 Zotero 默认 Profile，依次完成插件与后端检查、生产构建、制品校验、备份、安装、Homebrew 服务重启和健康检查。存在运行中、排队中或正在取消的任务时，部署会在修改安装前退出，不会终止任务。
+
+首次从源码开发模式切换时，新 Homebrew 服务从空任务列表开始；后续重复部署会保留 Homebrew 服务的任务记录。每次部署的 XPI、wheel、任务备份、Git 状态和 SHA-256 位于 `.local-dev/deployments/`，安装失败时会自动恢复上一版。
+
+只检查和打包、不更新本机安装时使用：
+
+```bash
+./scripts/local-deploy.sh --check-only
+```
+
+该工作流不会修改版本号、提交代码或发布远端制品。正式发布仍使用 `scripts/release.sh`。
+
 ## 在 Zotero 里使用
 
 1. 打开 Zotero 设置里的 `zotero-pdf2zh-next`。
@@ -111,7 +132,32 @@ uv tool upgrade zotero-pdf2zh-next
 5. 选择输出中文 PDF、双语 PDF，或两者同时输出。
 6. 在条目或 PDF 附件上右键，选择 `zotero-pdf2zh-next: Translate PDF`。
 
-任务提交后，可以在右键菜单里打开 `zotero-pdf2zh-next: Task Manager` 查看进度、取消任务、重试失败任务和导入结果。
+任务提交后，可以在右键菜单里打开 `zotero-pdf2zh-next: Task Manager` 查看进度、取消任务、重试失败任务和导入结果。DeepSeek 任务还会显示当前段落吞吐量、预计剩余时间、本地缓存命中、实际 QPS、请求耗时、自动重试、上下文缓存 token 和估算费用。
+
+“不翻译参考文献”默认关闭。启用后会优先使用 PDF 版面标签，并在证据充分时通过 `References`、`Bibliography` 或 `参考文献` 标题识别参考文献区；被跳过的内容仍保留在输出 PDF 中。
+
+DeepSeek 费用按每百万 token 的缓存命中输入、未命中输入和输出费率估算。内置人民币费率按每次响应发生的 UTC 时间自动套用峰谷价：高峰为 `01:00–04:00`、`06:00–10:00`（北京时间 `09:00–12:00`、`14:00–18:00`），其余为非高峰。
+
+| 模型     | 时段   | 缓存命中输入 | 缓存未命中输入 |     输出 |
+| -------- | ------ | -----------: | -------------: | -------: |
+| V4 Flash | 非高峰 |      0.05 元 |        1.50 元 |  4.50 元 |
+| V4 Flash | 高峰   |      0.10 元 |        3.00 元 |  9.00 元 |
+| V4 Pro   | 非高峰 |      0.15 元 |        4.50 元 | 13.50 元 |
+| V4 Pro   | 高峰   |      0.30 元 |        9.00 元 | 27.00 元 |
+
+内置费率无法覆盖自定义或新模型时，可在该 LLM 配置的 `extraData` 中设置固定费率：
+
+```json
+{
+  "deepseek_cache_hit_input_price": 0.5,
+  "deepseek_cache_miss_input_price": 2,
+  "deepseek_output_price": 8,
+  "deepseek_price_currency": "CNY",
+  "deepseek_pricing_version": "custom-2026-08"
+}
+```
+
+自定义费率不会自动切换峰谷价。这些数字仅用于本地估算，不会联网更新，也不会替代 DeepSeek 账单；已保存的历史任务费用不会追溯重算。
 
 ## License
 

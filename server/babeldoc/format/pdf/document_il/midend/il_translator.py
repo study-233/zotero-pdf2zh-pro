@@ -40,6 +40,9 @@ from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
     is_pure_numeric_paragraph,
 )
 from babeldoc.format.pdf.document_il.utils.style_helper import GRAY80
+from babeldoc.format.pdf.document_il.midend.reference_filter import (
+    find_reference_paragraph_ids,
+)
 from babeldoc.format.pdf.translation_config import TranslationConfig
 from babeldoc.translator.translator import BaseTranslator
 from babeldoc.utils.priority_thread_pool_executor import PriorityThreadPoolExecutor
@@ -388,6 +391,11 @@ class ILTranslator:
     def translate(self, docs: Document):
         self.docs = docs
         tracker = DocumentTranslateTracker()
+        self.reference_skip_ids = (
+            find_reference_paragraph_ids(docs)
+            if self.translation_config.skip_references
+            else set()
+        )
 
         if not self.translation_config.shared_context_cross_split_part.first_paragraph:
             # Try to find the first title paragraph
@@ -399,7 +407,10 @@ class ILTranslator:
                 title_paragraph
             )
             if title_paragraph:
-                logger.info(f"Found first title paragraph: {title_paragraph.unicode}")
+                logger.info(
+                    "found first title paragraph: paragraph_id=%s",
+                    title_paragraph.debug_id,
+                )
 
         # count total paragraph
         total = sum(len(page.pdf_paragraph) for page in docs.page)
@@ -407,6 +418,11 @@ class ILTranslator:
             self.stage_name,
             total,
         ) as pbar:
+            if self.reference_skip_ids:
+                pbar.advance(len(self.reference_skip_ids))
+                collector = getattr(self.translate_engine, "metrics_collector", None)
+                if collector is not None:
+                    collector.reference_skipped(len(self.reference_skip_ids))
             with PriorityThreadPoolExecutor(
                 max_workers=self.translation_config.pool_max_workers,
             ) as executor:
@@ -415,10 +431,7 @@ class ILTranslator:
 
         path = self.translation_config.get_working_file_path("translate_tracking.json")
 
-        if (
-            self.translation_config.debug
-            or self.translation_config.working_dir is not None
-        ):
+        if self.translation_config.save_detailed_tracking:
             logger.debug(f"save translate tracking to {path}")
             with Path(path).open("w", encoding="utf-8") as f:
                 f.write(tracker.to_json())
@@ -435,7 +448,10 @@ class ILTranslator:
         for page in docs.page:
             for paragraph in page.pdf_paragraph:
                 if paragraph.layout_label == "title":
-                    logger.info(f"Found title paragraph: {paragraph.unicode}")
+                    logger.info(
+                        "found title paragraph: paragraph_id=%s",
+                        paragraph.debug_id,
+                    )
                     return paragraph
         return None
 
@@ -448,6 +464,8 @@ class ILTranslator:
     ):
         self.translation_config.raise_if_cancelled()
         for paragraph in page.pdf_paragraph:
+            if id(paragraph) in getattr(self, "reference_skip_ids", set()):
+                continue
             page_font_map = {}
             for font in page.pdf_font:
                 page_font_map[font.font_id] = font
@@ -625,9 +643,8 @@ class ILTranslator:
                 return None
             else:
                 logger.error(
-                    f"Unknown composition type. "
-                    f"Composition: {composition}. "
-                    f"Paragraph: {paragraph}. ",
+                    "unknown composition type: paragraph_id=%s",
+                    paragraph.debug_id,
                 )
                 return None
 
@@ -709,10 +726,8 @@ class ILTranslator:
                 chars.append(placeholder.right_placeholder)
             else:
                 logger.error(
-                    "Unexpected PdfParagraphComposition type "
-                    "in PdfParagraph during translation. "
-                    f"Composition: {composition}. "
-                    f"Paragraph: {paragraph}. ",
+                    "unexpected paragraph composition type: paragraph_id=%s",
+                    paragraph.debug_id,
                 )
                 return None
 
@@ -812,7 +827,7 @@ class ILTranslator:
             if llm_translate_tracker:
                 llm_translate_tracker.set_placeholder_full_match()
         else:
-            logger.debug(f"Failed to match all placeholder for {input_text.unicode}")
+            logger.debug("failed to match all placeholders")
         # 合并所有模式
         combined_pattern = "|".join(patterns)
         combined_placeholder_pattern = "|".join(placeholder_patterns)
@@ -979,7 +994,9 @@ class ILTranslator:
         text = translate_input.unicode
         if len(text) < self.translation_config.min_text_length:
             logger.debug(
-                f"Text too short to translate, skip. Text: {text}. Paragraph id: {paragraph.debug_id}."
+                "text too short to translate: paragraph_id=%s length=%s",
+                paragraph.debug_id,
+                len(text),
             )
             return None, None
         return text, translate_input
@@ -1263,12 +1280,17 @@ class ILTranslator:
                     paragraph, tracker, translate_input, translated_text
                 )
             except ContentFilterError as e:
-                logger.warning(f"ContentFilterError: {e.message}")
+                logger.warning(
+                    "content filter rejected paragraph: paragraph_id=%s",
+                    paragraph.debug_id,
+                )
                 self.add_content_filter_hint(page, paragraph)
                 return
             except Exception as e:
-                logger.exception(
-                    f"Error translating paragraph. Paragraph: {paragraph.debug_id} ({paragraph.unicode}). Error: {e}. ",
+                logger.error(
+                    "error translating paragraph: paragraph_id=%s error_type=%s",
+                    paragraph.debug_id,
+                    type(e).__name__,
                 )
                 # ignore error and continue
                 return

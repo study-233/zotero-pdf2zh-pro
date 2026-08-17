@@ -17,6 +17,7 @@ from pdf2zh_next_service import TranslationOutputFile
 from pdf2zh_next_service import diagnose_service_error
 from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
+from observability import empty_metrics
 
 TaskStatus = str
 LOGGER = logging.getLogger("zotero_pdf2zh_server.tasks")
@@ -43,6 +44,7 @@ class TaskRecord:
     error: str | None = None
     error_diagnostics: list[dict[str, str]] = field(default_factory=list)
     result_files: dict[str, TranslationOutputFile] = field(default_factory=dict)
+    metrics: dict[str, Any] | None = None
     attempt: int = 1
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
@@ -50,7 +52,7 @@ class TaskRecord:
     cancel_callback: Callable[[], None] | None = field(default=None, repr=False)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "taskId": self.task_id,
             "fileName": self.file_name,
             "service": self.service,
@@ -73,6 +75,9 @@ class TaskRecord:
             "canCancel": self.status in {"queued", "running", "cancelling"},
             "cancelRequested": self.cancel_requested,
         }
+        if self.metrics is not None:
+            payload["metrics"] = self.metrics
+        return payload
 
 
 class TaskManager:
@@ -115,6 +120,7 @@ class TaskManager:
             output_modes=output_modes,
             request_payload=request_payload,
             workspace_dir=workspace_dir,
+            metrics=empty_metrics() if service == "deepseek" else None,
         )
         thread = threading.Thread(
             target=self._run_task,
@@ -235,6 +241,7 @@ class TaskManager:
             record.error = None
             record.error_diagnostics = []
             record.result_files = {}
+            record.metrics = empty_metrics() if record.service == "deepseek" else None
             record.attempt += 1
             record.cancel_requested = False
             record.cancel_callback = None
@@ -296,6 +303,9 @@ class TaskManager:
                     task_id,
                     progress_callback=lambda event: self._handle_progress_event(
                         task_id, event
+                    ),
+                    metrics_callback=lambda metrics: self._handle_metrics_event(
+                        task_id, metrics
                     ),
                     on_config_ready=lambda config: self._register_cancel_callback(
                         task_id,
@@ -380,6 +390,20 @@ class TaskManager:
 
         self._publish_event({"type": "task", "task": snapshot})
 
+    def _handle_metrics_event(
+        self,
+        task_id: str,
+        metrics: dict[str, Any],
+    ) -> None:
+        with self._lock:
+            record = self._tasks.get(task_id)
+            if record is None:
+                return
+            record.metrics = dict(metrics)
+            record.updated_at = utc_now_iso()
+            snapshot = record.to_dict()
+        self._publish_event({"type": "task", "task": snapshot})
+
     def _handle_task_error(self, task_id: str, exc: Exception) -> None:
         with self._lock:
             record = self._tasks.get(task_id)
@@ -405,7 +429,11 @@ class TaskManager:
         if cancelled:
             LOGGER.info("[%s] task cancelled", task_id)
             return
-        LOGGER.error("[%s] task failed: %s", task_id, error_message)
+        LOGGER.error(
+            "[%s] task failed: error_type=%s",
+            task_id,
+            type(exc).__name__,
+        )
 
     def _publish_event(self, event: dict[str, Any]) -> None:
         with self._lock:
@@ -497,6 +525,7 @@ class TaskManager:
             "overall_progress": record.overall_progress,
             "error": record.error,
             "error_diagnostics": record.error_diagnostics,
+            "metrics": record.metrics,
             "attempt": record.attempt,
             "created_at": record.created_at,
             "updated_at": record.updated_at,
@@ -532,10 +561,17 @@ class TaskManager:
                         filename=str(filename),
                     )
 
+            service = str(payload["service"])
+            metrics_payload = payload.get("metrics")
+            metrics = (
+                dict(metrics_payload)
+                if isinstance(metrics_payload, dict)
+                else (empty_metrics() if service == "deepseek" else None)
+            )
             return TaskRecord(
                 task_id=str(payload["task_id"]),
                 file_name=str(payload["file_name"]),
-                service=str(payload["service"]),
+                service=service,
                 output_modes=list(payload.get("output_modes", [])),
                 request_payload=dict(payload.get("request_payload", {})),
                 workspace_dir=Path(payload["workspace_dir"]),
@@ -554,6 +590,7 @@ class TaskManager:
                 error=payload.get("error"),
                 error_diagnostics=list(payload.get("error_diagnostics") or []),
                 result_files=result_files,
+                metrics=metrics,
                 attempt=TaskManager._coerce_int(payload.get("attempt"), 1),
                 created_at=str(payload.get("created_at") or utc_now_iso()),
                 updated_at=str(payload.get("updated_at") or utc_now_iso()),

@@ -13,6 +13,7 @@ sys.path.insert(0, str(SERVER_DIR))
 from pdf2zh_next_service import TranslationOutputFile
 from task_manager import TaskManager
 from task_manager import TaskRecord
+from observability import empty_metrics
 
 
 class TaskManagerTests(unittest.TestCase):
@@ -150,6 +151,43 @@ class TaskManagerTests(unittest.TestCase):
         )
 
         self.assertEqual(record.to_dict()["attempt"], 1)
+
+    def test_deepseek_task_snapshot_and_persistence_include_metrics(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            persistence_path = Path(temp_dir) / "tasks.json"
+            manager = TaskManager(persistence_path=persistence_path)
+            metrics = empty_metrics()
+            metrics["localCache"]["hits"] = 7
+            manager._tasks["task-1"] = TaskRecord(
+                task_id="task-1",
+                file_name="paper.pdf",
+                service="deepseek",
+                output_modes=["dual"],
+                request_payload={},
+                workspace_dir=Path(temp_dir) / "workspace",
+                status="failed",
+                metrics=metrics,
+            )
+            manager._save_persistent_tasks()
+
+            restored = TaskManager(persistence_path=persistence_path)
+            snapshot = restored.get_task("task-1")
+            self.assertEqual(snapshot["metrics"]["localCache"]["hits"], 7)
+
+    def test_old_persisted_task_without_metrics_remains_compatible(self) -> None:
+        record = TaskManager._record_from_persistence(
+            {
+                "task_id": "old-1",
+                "file_name": "old.pdf",
+                "service": "deepseek",
+                "output_modes": ["dual"],
+                "request_payload": {},
+                "workspace_dir": "/tmp/old",
+                "status": "failed",
+            }
+        )
+        self.assertIsNotNone(record)
+        self.assertEqual(record.to_dict()["metrics"], empty_metrics())
 
     def test_missing_result_file_is_not_returned(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

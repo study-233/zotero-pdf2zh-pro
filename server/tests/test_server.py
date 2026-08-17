@@ -231,12 +231,14 @@ class ServerRouteTests(unittest.TestCase):
         ):
             response = self.client.get("/tasks/events", buffered=False)
             first_chunk = next(response.response).decode("utf-8")
+            event_chunk = next(response.response).decode("utf-8")
             response.close()
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/event-stream", response.content_type)
-        self.assertIn('"type": "deleted"', first_chunk)
-        self.assertIn('"taskId": "task-1"', first_chunk)
+        self.assertEqual(first_chunk, ": connected\n\n")
+        self.assertIn('"type": "deleted"', event_chunk)
+        self.assertIn('"taskId": "task-1"', event_chunk)
         unsubscribe.assert_called_once_with(event_queue)
 
     def test_validate_config_returns_service_and_model(self) -> None:
@@ -421,6 +423,20 @@ class ServerRouteTests(unittest.TestCase):
             )
 
             self.assertFalse(prepared.request_payload["translate_table_text"])
+
+    def test_prepare_translation_request_can_skip_references(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = server_module.prepare_translation_request(
+                {
+                    "fileName": "paper.pdf",
+                    "fileContent": build_pdf_payload(),
+                    "outputMode": "dual",
+                    "skipReferences": True,
+                },
+                Path(temp_dir),
+            )
+
+            self.assertTrue(prepared.request_payload["skip_references"])
 
     def test_create_workspace_dir_uses_translates_folder(self) -> None:
         workspace_dir = server_module.create_workspace_dir("test-job")

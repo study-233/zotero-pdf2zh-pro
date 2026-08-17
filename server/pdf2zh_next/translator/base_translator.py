@@ -1,4 +1,6 @@
 import contextlib
+import hashlib
+import json
 import logging
 import re
 from abc import ABC
@@ -44,6 +46,7 @@ class BaseTranslator(ABC):
         self.cache = TranslationCache(
             self.name,
             {
+                "cache_schema": 2,
                 "lang_in": lang_in,
                 "lang_out": lang_out,
             },
@@ -51,6 +54,7 @@ class BaseTranslator(ABC):
 
         self.translate_call_count = 0
         self.translate_cache_call_count = 0
+        self.metrics_collector = None
 
     def __del__(self):
         with contextlib.suppress(Exception):
@@ -69,6 +73,24 @@ class BaseTranslator(ABC):
         """
         self.cache.add_params(k, v)
 
+    def add_cache_fingerprint(self, key: str, value) -> None:
+        serialized = json.dumps(
+            value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        self.add_cache_impact_parameters(
+            key,
+            hashlib.sha256(serialized.encode("utf-8")).hexdigest(),
+        )
+
+    def set_metrics_collector(self, collector) -> None:
+        self.metrics_collector = collector
+
+    def configure_cache_namespace(self, *, provider: str) -> None:
+        self.add_cache_impact_parameters("provider", provider)
+
     def translate(self, text, ignore_cache=False, rate_limit_params: dict = None):
         """
         Translate the text, and the other part should call this method.
@@ -81,9 +103,16 @@ class BaseTranslator(ABC):
                 cache = self.cache.get(text)
                 if cache is not None:
                     self.translate_cache_call_count += 1
+                    if self.metrics_collector is not None:
+                        self.metrics_collector.local_cache_hit()
                     return cache
             except Exception as e:
-                logger.debug(f"try get cache failed, ignore it: {e}")
+                logger.debug(
+                    "translation cache lookup failed: error_type=%s",
+                    type(e).__name__,
+                )
+        if self.metrics_collector is not None:
+            self.metrics_collector.local_cache_miss()
         self.rate_limiter.wait(rate_limit_params)
         translation = self.do_translate(text, rate_limit_params)
         if not (self.ignore_cache or ignore_cache):
@@ -102,9 +131,16 @@ class BaseTranslator(ABC):
                 cache = self.cache.get(text)
                 if cache is not None:
                     self.translate_cache_call_count += 1
+                    if self.metrics_collector is not None:
+                        self.metrics_collector.local_cache_hit()
                     return cache
             except Exception as e:
-                logger.debug(f"try get cache failed, ignore it: {e}")
+                logger.debug(
+                    "translation cache lookup failed: error_type=%s",
+                    type(e).__name__,
+                )
+        if self.metrics_collector is not None:
+            self.metrics_collector.local_cache_miss()
         self.rate_limiter.wait(rate_limit_params)
         translation = self.do_llm_translate(text, rate_limit_params)
         if not (self.ignore_cache or ignore_cache):

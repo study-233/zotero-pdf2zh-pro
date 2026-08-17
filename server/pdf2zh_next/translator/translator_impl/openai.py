@@ -6,13 +6,36 @@ from babeldoc.utils.atomic_integer import AtomicInteger
 from pdf2zh_next.config.model import SettingsModel
 from pdf2zh_next.translator.base_rate_limiter import BaseRateLimiter
 from pdf2zh_next.translator.base_translator import BaseTranslator
-from tenacity import before_sleep_log
 from tenacity import retry
 from tenacity import retry_if_exception_type
 from tenacity import stop_after_attempt
 from tenacity import wait_exponential
 
 logger = logging.getLogger(__name__)
+
+
+def _status_code(error) -> int | None:
+    value = getattr(error, "status_code", None)
+    if value is None:
+        value = getattr(getattr(error, "response", None), "status_code", None)
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _record_retry_before_sleep(retry_state) -> None:
+    translator = retry_state.args[0] if retry_state.args else None
+    collector = getattr(translator, "metrics_collector", None)
+    if collector is not None:
+        collector.retry_scheduled()
+    error = retry_state.outcome.exception() if retry_state.outcome else None
+    logger.warning(
+        "provider retry scheduled: error_type=%s status_code=%s attempt=%s",
+        type(error).__name__ if error is not None else "unknown",
+        _status_code(error),
+        retry_state.attempt_number,
+    )
 
 
 class OpenAITranslator(BaseTranslator):
@@ -56,12 +79,23 @@ class OpenAITranslator(BaseTranslator):
             self.options["reasoning_effort"] = self.reasoning_effort
 
         self.model = settings.translate_engine_settings.openai_model
+        self.configure_cache_namespace(provider="openai-compatible")
+        self.add_cache_fingerprint(
+            "endpoint_fingerprint",
+            settings.translate_engine_settings.openai_base_url,
+        )
         self.add_cache_impact_parameters("model", self.model)
-        self.add_cache_impact_parameters("prompt", self.prompt(""))
+        self.add_cache_impact_parameters("prompt_template_version", 2)
+        self.add_cache_fingerprint("prompt_fingerprint", self.prompt(""))
+        self.add_cache_fingerprint(
+            "custom_system_prompt_fingerprint",
+            settings.translation.custom_system_prompt,
+        )
         self.token_count = AtomicInteger()
         self.prompt_token_count = AtomicInteger()
         self.completion_token_count = AtomicInteger()
         self.cache_hit_prompt_token_count = AtomicInteger()
+        self.cache_miss_prompt_token_count = AtomicInteger()
 
         self.enable_json_mode = (
             settings.translate_engine_settings.openai_enable_json_mode
@@ -73,7 +107,7 @@ class OpenAITranslator(BaseTranslator):
         retry=retry_if_exception_type(openai.RateLimitError),
         stop=stop_after_attempt(100),
         wait=wait_exponential(multiplier=1, min=1, max=15),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+        before_sleep=_record_retry_before_sleep,
     )
     def do_translate(self, text, rate_limit_params: dict = None) -> str:
         options = self.options.copy()
@@ -84,11 +118,27 @@ class OpenAITranslator(BaseTranslator):
         ):
             options["response_format"] = {"type": "json_object"}
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            **options,
-            messages=self.prompt(text),
+        started_at = (
+            self.metrics_collector.request_started()
+            if self.metrics_collector is not None
+            else None
         )
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                **options,
+                messages=self.prompt(text),
+            )
+        except Exception as error:
+            if self.metrics_collector is not None and started_at is not None:
+                self.metrics_collector.request_finished(
+                    started_at,
+                    succeeded=False,
+                    status_code=_status_code(error),
+                )
+            raise
+        if self.metrics_collector is not None and started_at is not None:
+            self.metrics_collector.request_finished(started_at, succeeded=True)
         try:
             if hasattr(response, "usage") and response.usage:
                 if hasattr(response.usage, "total_tokens"):
@@ -107,9 +157,33 @@ class OpenAITranslator(BaseTranslator):
                     self.cache_hit_prompt_token_count.inc(
                         response.usage.prompt_tokens_details.cached_tokens
                     )
+                if hasattr(response.usage, "prompt_cache_miss_tokens"):
+                    self.cache_miss_prompt_token_count.inc(
+                        response.usage.prompt_cache_miss_tokens
+                    )
+                if self.metrics_collector is not None:
+                    hit_tokens = getattr(
+                        response.usage, "prompt_cache_hit_tokens", None
+                    )
+                    if hit_tokens is None:
+                        details = getattr(
+                            response.usage, "prompt_tokens_details", None
+                        )
+                        hit_tokens = getattr(details, "cached_tokens", None)
+                    self.metrics_collector.record_usage(
+                        prompt_tokens=getattr(response.usage, "prompt_tokens", 0),
+                        completion_tokens=getattr(
+                            response.usage, "completion_tokens", 0
+                        ),
+                        cache_hit_tokens=hit_tokens,
+                        cache_miss_tokens=getattr(
+                            response.usage, "prompt_cache_miss_tokens", None
+                        ),
+                    )
         except Exception as e:
-            logger.error(f"Error getting token usage: {e}")
-            pass
+            logger.error(
+                "token usage parsing failed: error_type=%s", type(e).__name__
+            )
         message = response.choices[0].message.content.strip()
         message = self._remove_cot_content(message)
         return message
@@ -118,7 +192,7 @@ class OpenAITranslator(BaseTranslator):
         retry=retry_if_exception_type(openai.RateLimitError),
         stop=stop_after_attempt(100),
         wait=wait_exponential(multiplier=1, min=1, max=15),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+        before_sleep=_record_retry_before_sleep,
     )
     def do_llm_translate(self, text, rate_limit_params: dict = None):
         if text is None:
@@ -131,16 +205,32 @@ class OpenAITranslator(BaseTranslator):
         ):
             options["response_format"] = {"type": "json_object"}
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            **options,
-            messages=[
-                {
-                    "role": "user",
-                    "content": text,
-                },
-            ],
+        started_at = (
+            self.metrics_collector.request_started()
+            if self.metrics_collector is not None
+            else None
         )
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                **options,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": text,
+                    },
+                ],
+            )
+        except Exception as error:
+            if self.metrics_collector is not None and started_at is not None:
+                self.metrics_collector.request_finished(
+                    started_at,
+                    succeeded=False,
+                    status_code=_status_code(error),
+                )
+            raise
+        if self.metrics_collector is not None and started_at is not None:
+            self.metrics_collector.request_finished(started_at, succeeded=True)
         try:
             if hasattr(response, "usage") and response.usage:
                 if hasattr(response.usage, "total_tokens"):
@@ -159,9 +249,33 @@ class OpenAITranslator(BaseTranslator):
                     self.cache_hit_prompt_token_count.inc(
                         response.usage.prompt_tokens_details.cached_tokens
                     )
+                if hasattr(response.usage, "prompt_cache_miss_tokens"):
+                    self.cache_miss_prompt_token_count.inc(
+                        response.usage.prompt_cache_miss_tokens
+                    )
+                if self.metrics_collector is not None:
+                    hit_tokens = getattr(
+                        response.usage, "prompt_cache_hit_tokens", None
+                    )
+                    if hit_tokens is None:
+                        details = getattr(
+                            response.usage, "prompt_tokens_details", None
+                        )
+                        hit_tokens = getattr(details, "cached_tokens", None)
+                    self.metrics_collector.record_usage(
+                        prompt_tokens=getattr(response.usage, "prompt_tokens", 0),
+                        completion_tokens=getattr(
+                            response.usage, "completion_tokens", 0
+                        ),
+                        cache_hit_tokens=hit_tokens,
+                        cache_miss_tokens=getattr(
+                            response.usage, "prompt_cache_miss_tokens", None
+                        ),
+                    )
         except Exception as e:
-            logger.error(f"Error getting token usage: {e}")
-            pass
+            logger.error(
+                "token usage parsing failed: error_type=%s", type(e).__name__
+            )
         message = response.choices[0].message.content.strip()
         message = self._remove_cot_content(message)
         return message

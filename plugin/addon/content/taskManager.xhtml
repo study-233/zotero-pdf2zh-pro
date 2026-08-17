@@ -15,6 +15,23 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
         <title>zotero-pdf2zh-next 任务列表</title>
         <meta charset="utf-8" />
         <style>
+            :root {
+                --surface: #fbfbfa;
+                --surface-subtle: #f5f6f7;
+                --surface-hover: rgba(38, 49, 72, 0.06);
+                --text-primary: #0f1115;
+                --text-secondary: #61666b;
+                --text-tertiary: #81858c;
+                --border: rgba(15, 17, 21, 0.12);
+                --border-strong: rgba(15, 17, 21, 0.18);
+                --accent: #4176e6;
+                --primary: #0f1115;
+                --primary-hover: #43454a;
+                --primary-text: #ffffff;
+                --focus-ring: rgba(65, 118, 230, 0.28);
+                --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
             body {
                 margin: 0;
                 padding: 14px;
@@ -110,8 +127,17 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             .button:hover:not(:disabled) {
-                background: #f6f8fa;
+                background: var(--surface-hover);
                 border-color: #9fa6ad;
+            }
+
+            .button:focus-visible,
+            .segment:focus-visible,
+            .metrics-details summary:focus-visible,
+            .metric-rail:focus-visible {
+                outline: 2px solid var(--accent);
+                outline-offset: 2px;
+                box-shadow: 0 0 0 3px var(--focus-ring);
             }
 
             .button:disabled {
@@ -126,9 +152,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             .button.primary {
-                border-color: #8ca8ca;
-                color: #0b4d8c;
-                background: #f3f8ff;
+                border-color: var(--primary);
+                color: var(--primary-text);
+                background: var(--primary);
+            }
+
+            .button.primary:hover:not(:disabled) {
+                border-color: var(--primary-hover);
+                background: var(--primary-hover);
             }
 
             .stats {
@@ -304,7 +335,61 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 height: 100%;
                 background: linear-gradient(90deg, #2563eb, #16836b);
                 border-radius: 8px;
-                transition: width 160ms ease-out;
+                transition: width 160ms var(--ease);
+            }
+
+            .observability-summary,
+            .observability-detail-grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .observability-summary {
+                margin-top: 9px;
+                padding: 8px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: var(--surface-subtle);
+            }
+
+            .observability-item {
+                min-width: 0;
+            }
+
+            .metrics-details {
+                margin-top: 6px;
+                border-top: 1px solid var(--border);
+            }
+
+            .metrics-details summary {
+                width: max-content;
+                margin-top: 6px;
+                color: var(--text-secondary);
+                cursor: pointer;
+                border-radius: 6px;
+                padding: 3px 6px;
+                list-style-position: inside;
+                user-select: none;
+            }
+
+            .metrics-details summary:hover {
+                background: var(--surface-hover);
+                color: var(--text-primary);
+            }
+
+            .observability-detail-grid {
+                margin-top: 4px;
+                padding: 8px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: var(--surface);
+            }
+
+            .metric-note {
+                margin-top: 6px;
+                color: var(--text-tertiary);
+                font-size: 11px;
             }
 
             .progress-meta {
@@ -370,9 +455,772 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
 
+                .observability-summary,
+                .observability-detail-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
                 .progress-meta {
                     flex-direction: column;
                     gap: 2px;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                *,
+                *::before,
+                *::after {
+                    scroll-behavior: auto !important;
+                    transition-duration: 0.01ms !important;
+                    animation-duration: 0.01ms !important;
+                }
+            }
+        </style>
+        <style>
+            /* Calm task manager theme */
+            :root {
+                color-scheme: light dark;
+                --page: #f1f3f5;
+                --surface: #ffffff;
+                --surface-subtle: #f9fafb;
+                --surface-raised: #f5f6f7;
+                --surface-hover: rgba(38, 49, 72, 0.06);
+                --surface-active: rgba(38, 49, 72, 0.1);
+                --text-primary: #0f1115;
+                --text-secondary: #61666b;
+                --text-tertiary: #81858c;
+                --text-caption: #979da6;
+                --border: rgba(15, 17, 21, 0.12);
+                --border-strong: rgba(15, 17, 21, 0.18);
+                --accent-fill: #4d6bfe;
+                --accent: #405ee8;
+                --accent-tint: #eef1ff;
+                --primary: #0f1115;
+                --primary-hover: #353638;
+                --primary-text: #ffffff;
+                --focus-ring: rgba(77, 107, 254, 0.28);
+                --success: #16803c;
+                --success-tint: #eaf7ee;
+                --warning: #956400;
+                --warning-tint: #fff5dc;
+                --error: #b4232d;
+                --error-tint: #fff0f1;
+                --neutral-tint: #ebeef2;
+                --shadow-1: 0 2px 4px rgba(15, 17, 21, 0.05);
+                --shadow-2:
+                    0 4px 12px rgba(15, 17, 21, 0.02),
+                    0 2px 8px rgba(15, 17, 21, 0.04);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    color-scheme: dark;
+                    --page: #151517;
+                    --surface: #232323;
+                    --surface-subtle: #1b1b1c;
+                    --surface-raised: #2c2c2e;
+                    --surface-hover: rgba(255, 255, 255, 0.08);
+                    --surface-active: rgba(255, 255, 255, 0.14);
+                    --text-primary: #f9fafb;
+                    --text-secondary: #cfd3d6;
+                    --text-tertiary: #adb2b8;
+                    --text-caption: #81858c;
+                    --border: rgba(255, 255, 255, 0.12);
+                    --border-strong: rgba(255, 255, 255, 0.2);
+                    --accent-fill: #4d6bfe;
+                    --accent: #6b82ff;
+                    --accent-tint: rgba(77, 107, 254, 0.18);
+                    --primary: #f9fafb;
+                    --primary-hover: #ebeef2;
+                    --primary-text: #0f1115;
+                    --focus-ring: rgba(107, 130, 255, 0.34);
+                    --success: #4ade80;
+                    --success-tint: rgba(34, 197, 94, 0.16);
+                    --warning: #fbbf24;
+                    --warning-tint: rgba(245, 158, 11, 0.16);
+                    --error: #f25a5a;
+                    --error-tint: rgba(242, 90, 90, 0.16);
+                    --neutral-tint: rgba(255, 255, 255, 0.08);
+                    --shadow-1: 0 2px 4px rgba(0, 0, 0, 0.18);
+                    --shadow-2:
+                        0 4px 12px rgba(0, 0, 0, 0.12),
+                        0 2px 8px rgba(0, 0, 0, 0.18);
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            [hidden] {
+                display: none !important;
+            }
+
+            html {
+                min-height: 100%;
+                background: var(--page);
+            }
+
+            body {
+                min-height: 100vh;
+                padding: 20px;
+                background: var(--page);
+                color: var(--text-primary);
+                font:
+                    13px/20px -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    "PingFang SC",
+                    "Hiragino Sans GB",
+                    "Microsoft YaHei",
+                    "Helvetica Neue",
+                    Arial,
+                    sans-serif;
+            }
+
+            .page {
+                gap: 12px;
+                max-width: 1440px;
+                margin: 0 auto;
+            }
+
+            .toolbar {
+                gap: 24px;
+                padding: 18px 20px;
+                background: var(--surface);
+                border-color: var(--border);
+                border-radius: 12px;
+                box-shadow: var(--shadow-1);
+            }
+
+            .heading {
+                min-width: 0;
+            }
+
+            .eyebrow {
+                margin-bottom: 2px;
+                color: var(--text-tertiary);
+                font-size: 11px;
+                line-height: 14px;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .title {
+                font-size: 20px;
+                line-height: 28px;
+                font-weight: 600;
+                letter-spacing: -0.015em;
+            }
+
+            .subtitle {
+                margin-top: 2px;
+                color: var(--text-secondary);
+                line-height: 18px;
+            }
+
+            .toolbar-actions {
+                gap: 8px;
+            }
+
+            .connection {
+                height: 32px;
+                min-height: 32px;
+                padding: 0 10px;
+                border-color: var(--border);
+                border-radius: 16px;
+                background: var(--surface-subtle);
+                color: var(--text-secondary);
+                font-size: 12px;
+                line-height: 18px;
+            }
+
+            .connection-dot {
+                width: 6px;
+                height: 6px;
+                background: var(--text-caption);
+                box-shadow: 0 0 0 3px var(--neutral-tint);
+            }
+
+            .connection.connected .connection-dot,
+            .connection.open .connection-dot {
+                background: var(--success);
+                box-shadow: 0 0 0 3px var(--success-tint);
+            }
+
+            .connection.connecting .connection-dot {
+                background: var(--warning);
+                box-shadow: 0 0 0 3px var(--warning-tint);
+            }
+
+            .connection.closed .connection-dot,
+            .connection.error .connection-dot {
+                background: var(--error);
+                box-shadow: 0 0 0 3px var(--error-tint);
+            }
+
+            .button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 32px;
+                padding: 0 12px;
+                border-color: var(--border-strong);
+                border-radius: 16px;
+                background: var(--surface);
+                color: var(--text-primary);
+                font-weight: 500;
+                white-space: nowrap;
+                transition:
+                    background-color 100ms var(--ease),
+                    border-color 100ms var(--ease),
+                    color 100ms var(--ease),
+                    transform 100ms var(--ease);
+            }
+
+            .button:hover:not(:disabled) {
+                background: var(--surface-hover);
+                border-color: var(--border-strong);
+            }
+
+            .button:active:not(:disabled) {
+                background: var(--surface-active);
+                transform: translateY(1px);
+            }
+
+            .button:disabled {
+                opacity: 0.42;
+            }
+
+            .button.danger {
+                border-color: var(--border);
+                color: var(--error);
+                background: var(--surface);
+            }
+
+            .button.danger:hover:not(:disabled) {
+                border-color: var(--error);
+                background: var(--error-tint);
+            }
+
+            .button.primary,
+            .button.primary:hover:not(:disabled) {
+                color: var(--primary-text);
+            }
+
+            .stats {
+                gap: 0;
+                overflow: hidden;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                box-shadow: var(--shadow-1);
+            }
+
+            .stat {
+                min-width: 0;
+                padding: 14px 16px;
+                border: 0;
+                border-radius: 0;
+                background: transparent;
+            }
+
+            .stat + .stat {
+                border-left: 1px solid var(--border);
+            }
+
+            .stat-label {
+                color: var(--text-secondary);
+                font-size: 12px;
+                line-height: 18px;
+                font-weight: 500;
+                text-transform: none;
+                letter-spacing: 0;
+            }
+
+            .stat-value {
+                margin-top: 4px;
+                font-size: 24px;
+                line-height: 30px;
+                font-weight: 600;
+            }
+
+            .stat-hint {
+                margin-left: 6px;
+                color: var(--text-tertiary);
+                font-size: 11px;
+                line-height: 14px;
+                font-weight: 400;
+            }
+
+            .stat[data-tone="active"] .stat-value {
+                color: var(--accent);
+            }
+
+            .stat[data-tone="failed"] .stat-value {
+                color: var(--error);
+            }
+
+            .stat[data-tone="completed"] .stat-value {
+                color: var(--success);
+            }
+
+            .control-bar {
+                position: sticky;
+                top: 12px;
+                z-index: 10;
+                gap: 12px;
+                padding: 8px;
+                background: var(--surface);
+                border-color: var(--border);
+                border-radius: 12px;
+                box-shadow: var(--shadow-2);
+            }
+
+            .segmented {
+                padding: 2px;
+                gap: 2px;
+                background: var(--surface-raised);
+                border-color: var(--border);
+                border-radius: 18px;
+            }
+
+            .segment {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                min-height: 28px;
+                padding: 0 10px;
+                border-radius: 14px;
+                color: var(--text-secondary);
+                font-weight: 500;
+                transition:
+                    background-color 100ms var(--ease),
+                    color 100ms var(--ease);
+            }
+
+            .segment:hover:not(.active) {
+                background: var(--surface-hover);
+                color: var(--text-primary);
+            }
+
+            .segment.active {
+                background: var(--primary);
+                color: var(--primary-text);
+                box-shadow: var(--shadow-1);
+            }
+
+            .segment-count {
+                min-width: 18px;
+                height: 18px;
+                padding: 0 5px;
+                border-radius: 9px;
+                background: var(--neutral-tint);
+                color: var(--text-secondary);
+                font-size: 11px;
+                line-height: 18px;
+                font-variant-numeric: tabular-nums;
+            }
+
+            .segment.active .segment-count {
+                background: var(--border-strong);
+                color: var(--primary-text);
+            }
+
+            .list-meta {
+                padding: 0 8px;
+                color: var(--text-tertiary);
+            }
+
+            .list {
+                gap: 8px;
+            }
+
+            .card {
+                overflow: hidden;
+                padding: 0;
+                background: var(--surface);
+                border-color: var(--border);
+                border-radius: 12px;
+                box-shadow: var(--shadow-1);
+                transition:
+                    border-color 100ms var(--ease),
+                    box-shadow 100ms var(--ease);
+            }
+
+            .card:hover {
+                border-color: var(--border-strong);
+                box-shadow: var(--shadow-2);
+            }
+
+            .card-header {
+                align-items: center;
+                gap: 16px;
+                padding: 14px 16px 12px;
+            }
+
+            .name {
+                overflow: hidden;
+                font-size: 14px;
+                line-height: 22px;
+                font-weight: 600;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .meta {
+                overflow: hidden;
+                margin-top: 1px;
+                color: var(--text-tertiary);
+                line-height: 18px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .status {
+                min-height: 24px;
+                padding: 3px 8px;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: var(--neutral-tint);
+                color: var(--text-secondary);
+                line-height: 16px;
+                font-weight: 500;
+            }
+
+            .status.running {
+                border-color: var(--accent-tint);
+                background: var(--accent-tint);
+                color: var(--accent);
+            }
+
+            .status.cancelling {
+                border-color: var(--warning-tint);
+                background: var(--warning-tint);
+                color: var(--warning);
+            }
+
+            .status.completed {
+                border-color: var(--success-tint);
+                background: var(--success-tint);
+                color: var(--success);
+            }
+
+            .status.failed,
+            .status.cancelled {
+                border-color: var(--error-tint);
+                background: var(--error-tint);
+                color: var(--error);
+            }
+
+            .grid {
+                gap: 0;
+                margin: 0 16px;
+                overflow: hidden;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: var(--surface-subtle);
+            }
+
+            .task-metric {
+                min-width: 0;
+                padding: 8px 10px;
+            }
+
+            .task-metric + .task-metric {
+                border-left: 1px solid var(--border);
+            }
+
+            .metric-label {
+                color: var(--text-tertiary);
+                line-height: 14px;
+                font-weight: 500;
+                text-transform: none;
+                letter-spacing: 0;
+            }
+
+            .metric-value {
+                overflow: hidden;
+                margin-top: 3px;
+                color: var(--text-primary);
+                font-size: 12px;
+                line-height: 18px;
+                font-weight: 500;
+            }
+
+            .progress {
+                margin: 0;
+                padding: 12px 16px;
+            }
+
+            .progress-track {
+                height: 6px;
+                border-radius: 3px;
+                background: var(--neutral-tint);
+            }
+
+            .progress-fill {
+                background: var(--accent-fill);
+                border-radius: 3px;
+                transition: width 200ms var(--ease);
+            }
+
+            .observability-item {
+                min-width: 0;
+                padding: 8px 10px;
+            }
+
+            .observability-item + .observability-item {
+                border-left: 1px solid var(--border);
+            }
+
+            .metrics-panel {
+                margin: 0 16px 12px;
+            }
+
+            .metrics-panel[hidden] {
+                display: none;
+            }
+
+            .observability-detail-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                margin-top: 6px;
+                padding: 0;
+                gap: 0;
+                overflow: hidden;
+                border-color: var(--border);
+                background: var(--surface-subtle);
+            }
+
+            .observability-detail-grid .observability-item:nth-child(3n + 1) {
+                border-left: 0;
+            }
+
+            .observability-detail-grid .observability-item:nth-child(n + 4) {
+                border-top: 1px solid var(--border);
+            }
+
+            .metric-note {
+                margin-top: 0;
+                padding: 6px 8px 2px;
+                line-height: 16px;
+            }
+
+            .task-footer {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-height: 44px;
+                padding: 8px 12px;
+                border-top: 1px solid var(--border);
+                background: var(--surface-subtle);
+            }
+
+            .metric-rail {
+                display: flex;
+                flex: 1 1 auto;
+                align-items: center;
+                min-width: 0;
+                overflow-x: auto;
+                color: var(--text-secondary);
+                white-space: nowrap;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .metric-rail::-webkit-scrollbar {
+                display: none;
+                width: 0;
+                height: 0;
+            }
+
+            .metric-summary-item {
+                display: inline-flex;
+                flex: 0 0 auto;
+                align-items: baseline;
+                gap: 4px;
+                min-height: 22px;
+                padding: 0 10px;
+                font-size: 11px;
+                line-height: 16px;
+                font-variant-numeric: tabular-nums;
+            }
+
+            .metric-summary-item:first-child {
+                padding-left: 2px;
+            }
+
+            .metric-summary-item + .metric-summary-item {
+                border-left: 1px solid var(--border);
+            }
+
+            .metric-summary-label {
+                color: var(--text-tertiary);
+            }
+
+            .metric-summary-value {
+                color: var(--text-primary);
+                font-weight: 500;
+            }
+
+            .metric-empty {
+                padding: 0 2px;
+                color: var(--text-tertiary);
+                font-size: 11px;
+                line-height: 18px;
+            }
+
+            .footer-actions {
+                display: flex;
+                flex: 0 0 auto;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .task-footer .button {
+                flex: 0 0 auto;
+                min-height: 28px;
+                padding: 0 10px;
+                font-size: 12px;
+                line-height: 18px;
+            }
+
+            .task-footer .metrics-toggle {
+                border-color: var(--accent-tint);
+                background: var(--accent-tint);
+                color: var(--accent);
+            }
+
+            .task-footer .metrics-toggle:hover:not(:disabled) {
+                border-color: var(--accent);
+                background: var(--accent-tint);
+            }
+
+            .progress-meta {
+                margin-top: 6px;
+                color: var(--text-tertiary);
+                font-size: 11px;
+                line-height: 16px;
+            }
+
+            .error {
+                margin: 0 16px 12px;
+                padding: 10px 12px;
+                border: 1px solid var(--error-tint);
+                border-radius: 8px;
+                background: var(--error-tint);
+                color: var(--error);
+                line-height: 18px;
+            }
+
+            .empty {
+                padding: 48px 24px;
+                border-color: var(--border-strong);
+                border-radius: 12px;
+                background: var(--surface);
+                color: var(--text-secondary);
+                box-shadow: var(--shadow-1);
+            }
+
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                border-radius: 4px;
+                background: var(--border-strong);
+            }
+
+            @media (max-width: 900px) {
+                body {
+                    padding: 12px;
+                }
+
+                .observability-detail-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .stat:nth-child(3) {
+                    border-left: 0;
+                }
+
+                .stat:nth-child(n + 3) {
+                    border-top: 1px solid var(--border);
+                }
+
+                .task-metric:nth-child(odd) {
+                    border-left: 0;
+                }
+
+                .task-metric:nth-child(n + 3) {
+                    border-top: 1px solid var(--border);
+                }
+
+                .observability-item:nth-child(odd) {
+                    border-left: 0;
+                }
+
+                .observability-item:nth-child(n + 3) {
+                    border-top: 1px solid var(--border);
+                }
+
+                .observability-detail-grid .observability-item:nth-child(even) {
+                    border-left: 1px solid var(--border);
+                }
+            }
+
+            @media (max-width: 620px) {
+                .toolbar {
+                    padding: 16px;
+                }
+
+                .toolbar-actions,
+                .segmented {
+                    width: 100%;
+                }
+
+                .button,
+                .segment {
+                    flex: 1;
+                }
+
+                .connection {
+                    width: 100%;
+                    justify-content: center;
+                }
+
+                .control-bar {
+                    position: static;
+                }
+
+                .card-header {
+                    align-items: flex-start;
+                }
+
+                .name,
+                .meta {
+                    white-space: normal;
+                }
+
+                .task-footer {
+                    align-items: stretch;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+
+                .metric-rail {
+                    width: 100%;
+                }
+
+                .footer-actions {
+                    justify-content: flex-end;
                 }
             }
         </style>
@@ -380,10 +1228,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
     <body>
         <div class="page">
             <div class="toolbar">
-                <div>
-                    <div class="title">zotero-pdf2zh-next 任务列表</div>
+                <div class="heading">
+                    <div class="eyebrow">zotero PDF2ZH</div>
+                    <div class="title">翻译任务</div>
                     <div class="subtitle">
-                        显示当前翻译任务、阶段进度与附件导入状态
+                        跟踪翻译进度、服务状态与附件导入结果
                     </div>
                 </div>
                 <div class="toolbar-actions">
@@ -391,47 +1240,71 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         <span class="connection-dot"></span>
                         <span id="connection-label">事件流未知</span>
                     </div>
+                    <button id="refresh-btn" class="button">刷新</button>
                     <button id="retry-all-failed-btn" class="button primary">
                         重试全部失败
                     </button>
                     <button id="clear-failed-btn" class="button danger">
                         清理失败任务
                     </button>
-                    <button id="refresh-btn" class="button">刷新</button>
                     <button id="close-btn" class="button">关闭</button>
                 </div>
             </div>
             <div class="stats">
                 <div class="stat">
-                    <div class="stat-label">Total</div>
-                    <div id="stat-total" class="stat-value">0</div>
+                    <div class="stat-label">全部任务</div>
+                    <div class="stat-value">
+                        <span id="stat-total">0</span>
+                        <span class="stat-hint">条记录</span>
+                    </div>
                 </div>
-                <div class="stat">
-                    <div class="stat-label">Running</div>
-                    <div id="stat-running" class="stat-value">0</div>
+                <div class="stat" data-tone="active">
+                    <div class="stat-label">正在处理</div>
+                    <div class="stat-value">
+                        <span id="stat-running">0</span>
+                        <span class="stat-hint">运行中</span>
+                    </div>
                 </div>
-                <div class="stat">
-                    <div class="stat-label">Failed</div>
-                    <div id="stat-failed" class="stat-value">0</div>
+                <div class="stat" data-tone="failed">
+                    <div class="stat-label">需要处理</div>
+                    <div class="stat-value">
+                        <span id="stat-failed">0</span>
+                        <span class="stat-hint">失败任务</span>
+                    </div>
                 </div>
-                <div class="stat">
-                    <div class="stat-label">Completed / Imported</div>
-                    <div id="stat-completed" class="stat-value">0</div>
+                <div class="stat" data-tone="completed">
+                    <div class="stat-label">已完成</div>
+                    <div class="stat-value">
+                        <span id="stat-completed">0</span>
+                        <span class="stat-hint">含已导入</span>
+                    </div>
                 </div>
             </div>
             <div class="control-bar">
                 <div id="filter-control" class="segmented" role="tablist">
                     <button class="segment active" data-filter="all" role="tab">
                         全部
+                        <span id="filter-count-all" class="segment-count"
+                            >0</span
+                        >
                     </button>
                     <button class="segment" data-filter="active" role="tab">
-                        活跃
+                        进行中
+                        <span id="filter-count-active" class="segment-count"
+                            >0</span
+                        >
                     </button>
                     <button class="segment" data-filter="failed" role="tab">
                         失败
+                        <span id="filter-count-failed" class="segment-count"
+                            >0</span
+                        >
                     </button>
                     <button class="segment" data-filter="completed" role="tab">
-                        完成
+                        已完成
+                        <span id="filter-count-completed" class="segment-count"
+                            >0</span
+                        >
                     </button>
                 </div>
                 <div id="list-meta" class="list-meta">0 个任务</div>
@@ -445,6 +1318,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             let unsubscribeTasksChanged = null;
             let currentTasks = [];
             let currentFilter = "all";
+            const expandedMetricTaskIds = new Set();
+            const taskCardViews = new Map();
+            let emptyStateNode = null;
+            let pendingRenderTasks = null;
+            let renderFrameId = null;
 
             document.addEventListener("DOMContentLoaded", async () => {
                 api = window.arguments && window.arguments[0];
@@ -453,7 +1331,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 }
                 if (api && api.onTasksChanged) {
                     unsubscribeTasksChanged = api.onTasksChanged(() => {
-                        render(api.getTasks());
+                        scheduleRender(api.getTasks());
                     });
                 }
 
@@ -495,6 +1373,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             });
 
             window.addEventListener("unload", () => {
+                if (renderFrameId !== null) {
+                    window.cancelAnimationFrame(renderFrameId);
+                    renderFrameId = null;
+                }
                 if (unsubscribeTasksChanged) {
                     unsubscribeTasksChanged();
                     unsubscribeTasksChanged = null;
@@ -504,179 +1386,483 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             async function refresh() {
                 if (!api) return;
                 await api.refreshTasks();
-                render(api.getTasks());
+                scheduleRender(api.getTasks());
+            }
+
+            function scheduleRender(tasks) {
+                pendingRenderTasks = tasks || [];
+                if (renderFrameId !== null) return;
+                renderFrameId = window.requestAnimationFrame(() => {
+                    renderFrameId = null;
+                    const latestTasks = pendingRenderTasks || [];
+                    pendingRenderTasks = null;
+                    render(latestTasks);
+                });
             }
 
             function render(tasks) {
+                const root = document.getElementById("task-list");
                 currentTasks = tasks || [];
                 updateConnectionStatus();
                 renderStats(currentTasks);
                 renderFilterButtons();
 
-                const root = document.getElementById("task-list");
-                root.innerHTML = "";
+                const currentTaskIds = new Set(
+                    currentTasks.map((task) => task.taskId),
+                );
+                taskCardViews.forEach((view, taskId) => {
+                    if (currentTaskIds.has(taskId)) return;
+                    view.card.remove();
+                    taskCardViews.delete(taskId);
+                    expandedMetricTaskIds.delete(taskId);
+                });
+
                 const filteredTasks = currentTasks.filter(matchesCurrentFilter);
-                document.getElementById("list-meta").textContent =
-                    `${filteredTasks.length}/${currentTasks.length} 个任务`;
+                setTextContent(
+                    document.getElementById("list-meta"),
+                    `${filteredTasks.length}/${currentTasks.length} 个任务`,
+                );
 
                 if (filteredTasks.length === 0) {
-                    const empty = document.createElement("div");
-                    empty.className = "empty";
-                    empty.textContent =
+                    if (!emptyStateNode) {
+                        emptyStateNode = document.createElement("div");
+                        emptyStateNode.className = "empty";
+                    }
+                    setTextContent(
+                        emptyStateNode,
                         currentTasks.length === 0
                             ? "当前没有任务。"
-                            : "当前筛选条件下没有任务。";
-                    root.appendChild(empty);
+                            : "当前筛选条件下没有任务。",
+                    );
+                    Array.from(root.children).forEach((child) => {
+                        if (child !== emptyStateNode) child.remove();
+                    });
+                    if (emptyStateNode.parentNode !== root) {
+                        root.appendChild(emptyStateNode);
+                    }
                     return;
                 }
 
-                filteredTasks.forEach((task) => {
-                    const card = document.createElement("div");
-                    card.className = "card";
-
-                    const header = document.createElement("div");
-                    header.className = "card-header";
-
-                    const titleWrap = document.createElement("div");
-                    titleWrap.className = "task-title";
-                    const name = document.createElement("div");
-                    name.className = "name";
-                    name.textContent = task.fileName;
-                    const meta = document.createElement("div");
-                    meta.className = "meta";
-                    meta.textContent = `${task.service} | ${task.outputModes.join(", ")} | ${task.source === "local" ? "本地提交" : "远端任务"}`;
-                    titleWrap.appendChild(name);
-                    titleWrap.appendChild(meta);
-
-                    const status = document.createElement("div");
-                    status.className = `status ${task.status}`;
-                    status.textContent = formatStatus(task);
-
-                    header.appendChild(titleWrap);
-                    header.appendChild(status);
-                    card.appendChild(header);
-
-                    const grid = document.createElement("div");
-                    grid.className = "grid";
-                    [
-                        ["阶段", task.stage || "等待中"],
-                        [
-                            "阶段进度",
-                            `${Math.round(task.stageProgress || 0)}% (${task.stageCurrent || 0}/${task.stageTotal || 0})`,
-                        ],
-                        ["总进度", `${Math.round(task.overallProgress || 0)}%`],
-                        ["导入状态", formatImportState(task)],
-                        ["尝试", formatAttempt(task)],
-                    ].forEach(([label, value]) => {
-                        const box = document.createElement("div");
-                        const labelEl = document.createElement("div");
-                        labelEl.className = "metric-label";
-                        labelEl.textContent = label;
-                        const valueEl = document.createElement("div");
-                        valueEl.className = "metric-value";
-                        valueEl.textContent = value;
-                        box.appendChild(labelEl);
-                        box.appendChild(valueEl);
-                        grid.appendChild(box);
-                    });
-                    card.appendChild(grid);
-
-                    const progress = document.createElement("div");
-                    progress.className = "progress";
-                    const track = document.createElement("div");
-                    track.className = "progress-track";
-                    const fill = document.createElement("div");
-                    fill.className = "progress-fill";
-                    fill.style.width = `${Math.max(0, Math.min(task.overallProgress || 0, 100))}%`;
-                    track.appendChild(fill);
-                    progress.appendChild(track);
-
-                    const metaRow = document.createElement("div");
-                    metaRow.className = "progress-meta";
-                    const createdAt = document.createElement("span");
-                    createdAt.textContent = `创建于 ${formatDate(task.createdAt)}`;
-                    const updatedAt = document.createElement("span");
-                    updatedAt.textContent = `更新于 ${formatDate(task.updatedAt)}`;
-                    metaRow.appendChild(createdAt);
-                    metaRow.appendChild(updatedAt);
-                    progress.appendChild(metaRow);
-                    card.appendChild(progress);
-
-                    if (task.error || task.importError) {
-                        const error = document.createElement("div");
-                        error.className = "error";
-                        error.textContent = [
-                            task.importError || task.error,
-                            formatDiagnostics(task.errorDiagnostics),
-                        ]
-                            .filter(Boolean)
-                            .join("\n\n");
-                        card.appendChild(error);
+                const visibleTaskIds = new Set(
+                    filteredTasks.map((task) => task.taskId),
+                );
+                Array.from(root.children).forEach((child) => {
+                    if (!visibleTaskIds.has(child.dataset.taskId)) {
+                        child.remove();
                     }
-
-                    if (task.canCancel || canRetry(task) || canDelete(task)) {
-                        const actions = document.createElement("div");
-                        actions.className = "actions";
-                        if (task.canCancel) {
-                            const cancelButton =
-                                document.createElement("button");
-                            cancelButton.className = "button danger";
-                            cancelButton.textContent = "终止任务";
-                            cancelButton.addEventListener("click", async () => {
-                                cancelButton.disabled = true;
-                                try {
-                                    await api.cancelTask(task.taskId);
-                                    await refresh();
-                                } catch (error) {
-                                    alert(String(error));
-                                    cancelButton.disabled = false;
-                                }
-                            });
-                            actions.appendChild(cancelButton);
-                        }
-                        if (canRetry(task)) {
-                            const retryButton =
-                                document.createElement("button");
-                            retryButton.className = "button";
-                            retryButton.textContent =
-                                task.status === "completed"
-                                    ? "重试导入"
-                                    : "重试任务";
-                            retryButton.addEventListener("click", async () => {
-                                retryButton.disabled = true;
-                                try {
-                                    await api.retryTask(task.taskId);
-                                    render(api.getTasks());
-                                } catch (error) {
-                                    alert(String(error));
-                                    retryButton.disabled = false;
-                                }
-                            });
-                            actions.appendChild(retryButton);
-                        }
-                        if (canDelete(task)) {
-                            const deleteButton =
-                                document.createElement("button");
-                            deleteButton.className = "button";
-                            deleteButton.textContent = "删除记录";
-                            deleteButton.addEventListener("click", async () => {
-                                deleteButton.disabled = true;
-                                try {
-                                    await api.deleteTask(task.taskId);
-                                    render(api.getTasks());
-                                    void refresh();
-                                } catch (error) {
-                                    alert(String(error));
-                                    deleteButton.disabled = false;
-                                }
-                            });
-                            actions.appendChild(deleteButton);
-                        }
-                        card.appendChild(actions);
-                    }
-
-                    root.appendChild(card);
                 });
+
+                filteredTasks.forEach((task, index) => {
+                    let view = taskCardViews.get(task.taskId);
+                    if (!view) {
+                        view = createTaskCardView(task);
+                        taskCardViews.set(task.taskId, view);
+                    }
+
+                    const signature =
+                        view.task === task
+                            ? view.signature
+                            : getTaskRenderSignature(task);
+                    if (view.signature !== signature) {
+                        updateTaskCardView(view, task);
+                        view.signature = signature;
+                    } else {
+                        view.task = task;
+                    }
+
+                    const currentNode = root.children[index] || null;
+                    if (currentNode !== view.card) {
+                        root.insertBefore(view.card, currentNode);
+                    }
+                });
+
+                while (root.children.length > filteredTasks.length) {
+                    root.lastElementChild.remove();
+                }
+            }
+
+            function createTaskCardView(task) {
+                const view = {
+                    task: null,
+                    signature: null,
+                    pendingAction: null,
+                };
+                const card = document.createElement("div");
+                card.dataset.taskId = task.taskId;
+
+                const header = document.createElement("div");
+                header.className = "card-header";
+                const titleWrap = document.createElement("div");
+                titleWrap.className = "task-title";
+                const name = document.createElement("div");
+                name.className = "name";
+                const meta = document.createElement("div");
+                meta.className = "meta";
+                const status = document.createElement("div");
+                titleWrap.appendChild(name);
+                titleWrap.appendChild(meta);
+                header.appendChild(titleWrap);
+                header.appendChild(status);
+                card.appendChild(header);
+
+                const grid = document.createElement("div");
+                grid.className = "grid";
+                const gridValues = [
+                    "阶段",
+                    "阶段进度",
+                    "总进度",
+                    "导入状态",
+                    "尝试",
+                ].map((label) => {
+                    const box = document.createElement("div");
+                    box.className = "task-metric";
+                    const labelEl = document.createElement("div");
+                    labelEl.className = "metric-label";
+                    labelEl.textContent = label;
+                    const valueEl = document.createElement("div");
+                    valueEl.className = "metric-value";
+                    box.appendChild(labelEl);
+                    box.appendChild(valueEl);
+                    grid.appendChild(box);
+                    return valueEl;
+                });
+                card.appendChild(grid);
+
+                const progress = document.createElement("div");
+                progress.className = "progress";
+                const progressTrack = document.createElement("div");
+                progressTrack.className = "progress-track";
+                progressTrack.setAttribute("role", "progressbar");
+                progressTrack.setAttribute("aria-label", "任务总进度");
+                progressTrack.setAttribute("aria-valuemin", "0");
+                progressTrack.setAttribute("aria-valuemax", "100");
+                const progressFill = document.createElement("div");
+                progressFill.className = "progress-fill";
+                progressTrack.appendChild(progressFill);
+                progress.appendChild(progressTrack);
+                const metaRow = document.createElement("div");
+                metaRow.className = "progress-meta";
+                const createdAt = document.createElement("span");
+                const updatedAt = document.createElement("span");
+                metaRow.appendChild(createdAt);
+                metaRow.appendChild(updatedAt);
+                progress.appendChild(metaRow);
+                card.appendChild(progress);
+
+                const error = document.createElement("div");
+                error.className = "error";
+                error.hidden = true;
+                card.appendChild(error);
+
+                const metricsPanel = document.createElement("div");
+                metricsPanel.className = "metrics-panel";
+                metricsPanel.id = `metrics-panel-${sanitizeId(task.taskId)}`;
+                metricsPanel.hidden = true;
+                const detailGrid = document.createElement("div");
+                detailGrid.className = "observability-detail-grid";
+                const detailValues = [
+                    "实际 QPS（10秒）",
+                    "活跃请求",
+                    "平均耗时",
+                    "P95 耗时",
+                    "自动重试",
+                    "本地缓存命中率",
+                    "DeepSeek 缓存命中率",
+                    "Token（输入 / 输出）",
+                    "跳过参考文献段落",
+                ].map((label) => appendMetric(detailGrid, label, "-"));
+                metricsPanel.appendChild(detailGrid);
+                const metricNote = document.createElement("div");
+                metricNote.className = "metric-note";
+                metricsPanel.appendChild(metricNote);
+                card.appendChild(metricsPanel);
+
+                const footer = document.createElement("div");
+                footer.className = "task-footer";
+                const metricRail = document.createElement("div");
+                metricRail.className = "metric-rail";
+                metricRail.tabIndex = 0;
+                metricRail.setAttribute("role", "region");
+                metricRail.setAttribute("aria-label", "请求指标摘要");
+                const metricEmpty = document.createElement("span");
+                metricEmpty.className = "metric-empty";
+                metricRail.appendChild(metricEmpty);
+                const summaryMetrics = [
+                    "费用",
+                    "剩余 / 吞吐",
+                    "Token",
+                    "DeepSeek 缓存",
+                    "请求 / 重试",
+                    "平均 / P95",
+                ].map((label) => appendSummaryMetric(metricRail, label, "-"));
+                footer.appendChild(metricRail);
+
+                const footerActions = document.createElement("div");
+                footerActions.className = "footer-actions";
+                const metricsToggle = document.createElement("button");
+                metricsToggle.className = "button metrics-toggle";
+                metricsToggle.setAttribute("aria-controls", metricsPanel.id);
+                metricsToggle.addEventListener("click", () => {
+                    const currentTask = view.task;
+                    if (!currentTask?.metrics) return;
+                    const isExpanded = metricsPanel.hidden;
+                    metricsPanel.hidden = !isExpanded;
+                    if (isExpanded) {
+                        expandedMetricTaskIds.add(currentTask.taskId);
+                    } else {
+                        expandedMetricTaskIds.delete(currentTask.taskId);
+                    }
+                    updateMetricsToggle(metricsToggle, isExpanded);
+                });
+                footerActions.appendChild(metricsToggle);
+
+                const cancelButton = document.createElement("button");
+                cancelButton.className = "button danger";
+                cancelButton.textContent = "终止任务";
+                cancelButton.addEventListener("click", async () => {
+                    const currentTask = view.task;
+                    if (!canCancelTask(currentTask)) return;
+                    view.pendingAction = "cancel";
+                    cancelButton.disabled = true;
+                    try {
+                        await api.cancelTask(currentTask.taskId);
+                        view.pendingAction = null;
+                        await refresh();
+                    } catch (errorValue) {
+                        view.pendingAction = null;
+                        alert(String(errorValue));
+                        cancelButton.disabled = false;
+                    }
+                });
+                footerActions.appendChild(cancelButton);
+
+                const retryButton = document.createElement("button");
+                retryButton.className = "button";
+                retryButton.addEventListener("click", async () => {
+                    const currentTask = view.task;
+                    if (!currentTask) return;
+                    view.pendingAction = "retry";
+                    retryButton.disabled = true;
+                    try {
+                        await api.retryTask(currentTask.taskId);
+                        view.pendingAction = null;
+                        render(api.getTasks());
+                    } catch (errorValue) {
+                        view.pendingAction = null;
+                        alert(String(errorValue));
+                        retryButton.disabled = false;
+                    }
+                });
+                footerActions.appendChild(retryButton);
+
+                const deleteButton = document.createElement("button");
+                deleteButton.className = "button";
+                deleteButton.textContent = "删除记录";
+                deleteButton.addEventListener("click", async () => {
+                    const currentTask = view.task;
+                    if (!currentTask) return;
+                    view.pendingAction = "delete";
+                    deleteButton.disabled = true;
+                    try {
+                        await api.deleteTask(currentTask.taskId);
+                        view.pendingAction = null;
+                        render(api.getTasks());
+                        void refresh();
+                    } catch (errorValue) {
+                        view.pendingAction = null;
+                        alert(String(errorValue));
+                        deleteButton.disabled = false;
+                    }
+                });
+                footerActions.appendChild(deleteButton);
+                footer.appendChild(footerActions);
+                card.appendChild(footer);
+
+                Object.assign(view, {
+                    card,
+                    name,
+                    meta,
+                    status,
+                    gridValues,
+                    progressTrack,
+                    progressFill,
+                    createdAt,
+                    updatedAt,
+                    error,
+                    metricsPanel,
+                    detailValues,
+                    metricNote,
+                    metricEmpty,
+                    summaryMetrics,
+                    metricsToggle,
+                    cancelButton,
+                    retryButton,
+                    deleteButton,
+                });
+                updateTaskCardView(view, task);
+                view.signature = getTaskRenderSignature(task);
+                return view;
+            }
+
+            function updateTaskCardView(view, task) {
+                view.task = task;
+                setClassName(view.card, `card ${task.status}`);
+                setTextContent(view.name, task.fileName);
+                setTextContent(
+                    view.meta,
+                    `${task.service} | ${task.outputModes.join(", ")} | ${task.source === "local" ? "本地提交" : "远端任务"}`,
+                );
+                setClassName(view.status, `status ${task.status}`);
+                setTextContent(view.status, formatStatus(task));
+
+                const overallProgress = Math.max(
+                    0,
+                    Math.min(task.overallProgress || 0, 100),
+                );
+                const gridValues = [
+                    task.stage || "等待中",
+                    `${Math.round(task.stageProgress || 0)}% (${task.stageCurrent || 0}/${task.stageTotal || 0})`,
+                    `${Math.round(overallProgress)}%`,
+                    formatImportState(task),
+                    formatAttempt(task),
+                ];
+                view.gridValues.forEach((node, index) => {
+                    setTextContent(node, gridValues[index]);
+                });
+                setAttributeValue(
+                    view.progressTrack,
+                    "aria-valuenow",
+                    String(Math.round(overallProgress)),
+                );
+                const progressWidth = `${overallProgress}%`;
+                if (view.progressFill.style.width !== progressWidth) {
+                    view.progressFill.style.width = progressWidth;
+                }
+                setTextContent(
+                    view.createdAt,
+                    `创建于 ${formatDate(task.createdAt)}`,
+                );
+                setTextContent(
+                    view.updatedAt,
+                    `更新于 ${formatDate(task.updatedAt)}`,
+                );
+
+                const errorText = [
+                    task.importError || task.error,
+                    formatDiagnostics(task.errorDiagnostics),
+                ]
+                    .filter(Boolean)
+                    .join("\n\n");
+                setTextContent(view.error, errorText);
+                setNodeHidden(view.error, !errorText);
+
+                const metrics = task.metrics;
+                if (metrics) {
+                    const detailValues = [
+                        formatDecimal(metrics.requests?.qps10s, 2),
+                        formatInteger(metrics.requests?.active || 0),
+                        formatMilliseconds(metrics.requests?.averageLatencyMs),
+                        formatMilliseconds(metrics.requests?.p95LatencyMs),
+                        formatInteger(metrics.requests?.retries || 0),
+                        formatPercent(metrics.localCache?.hitRate),
+                        formatPercent(metrics.providerCache?.hitRate),
+                        `${formatInteger(metrics.tokens?.input || 0)} / ${formatInteger(metrics.tokens?.output || 0)}`,
+                        formatInteger(metrics.referencesSkipped || 0),
+                    ];
+                    view.detailValues.forEach((node, index) => {
+                        setTextContent(node, detailValues[index]);
+                    });
+                    setTextContent(view.metricNote, formatCostNote(metrics));
+
+                    const summaryValues = [
+                        formatCost(metrics),
+                        `${formatEta(metrics)} / ${formatThroughput(metrics)}`,
+                        `${formatCompactNumber(metrics.tokens?.input || 0)} / ${formatCompactNumber(metrics.tokens?.output || 0)}`,
+                        formatPercent(metrics.providerCache?.hitRate),
+                        `${formatCompactNumber(metrics.requests?.attempts || 0)} / ${formatCompactNumber(metrics.requests?.retries || 0)}`,
+                        `${formatCompactDuration(metrics.requests?.averageLatencyMs)} / ${formatCompactDuration(metrics.requests?.p95LatencyMs)}`,
+                    ];
+                    view.summaryMetrics.forEach((summary, index) => {
+                        setTextContent(summary.value, summaryValues[index]);
+                        setNodeHidden(summary.item, false);
+                    });
+                    setNodeHidden(view.metricEmpty, true);
+                    setNodeHidden(view.metricsToggle, false);
+                    const isExpanded = expandedMetricTaskIds.has(task.taskId);
+                    setNodeHidden(view.metricsPanel, !isExpanded);
+                    updateMetricsToggle(view.metricsToggle, isExpanded);
+                } else {
+                    view.summaryMetrics.forEach((summary) => {
+                        setNodeHidden(summary.item, true);
+                    });
+                    setTextContent(
+                        view.metricEmpty,
+                        isActiveTask(task) ? "指标采集中" : "暂无请求指标",
+                    );
+                    setNodeHidden(view.metricEmpty, false);
+                    setNodeHidden(view.metricsPanel, true);
+                    setNodeHidden(view.metricsToggle, true);
+                }
+
+                setNodeHidden(view.cancelButton, !canCancelTask(task));
+                view.cancelButton.disabled = view.pendingAction === "cancel";
+                setTextContent(
+                    view.retryButton,
+                    task.status === "completed" ? "重试导入" : "重试任务",
+                );
+                setNodeHidden(view.retryButton, !canRetry(task));
+                view.retryButton.disabled = view.pendingAction === "retry";
+                setNodeHidden(view.deleteButton, !canDelete(task));
+                view.deleteButton.disabled = view.pendingAction === "delete";
+            }
+
+            function getTaskRenderSignature(task) {
+                return JSON.stringify([
+                    task.fileName,
+                    task.service,
+                    task.outputModes,
+                    task.status,
+                    task.stage,
+                    task.stageCurrent,
+                    task.stageTotal,
+                    task.stageProgress,
+                    task.overallProgress,
+                    task.error,
+                    task.errorDiagnostics,
+                    task.attempt,
+                    task.createdAt,
+                    task.updatedAt,
+                    task.canCancel,
+                    task.source,
+                    task.importState,
+                    task.importError,
+                    task.metrics,
+                ]);
+            }
+
+            function setTextContent(node, value) {
+                const nextValue = String(value ?? "");
+                if (node.textContent !== nextValue) {
+                    node.textContent = nextValue;
+                }
+            }
+
+            function setClassName(node, value) {
+                if (node.className !== value) {
+                    node.className = value;
+                }
+            }
+
+            function setAttributeValue(node, name, value) {
+                if (node.getAttribute(name) !== value) {
+                    node.setAttribute(name, value);
+                }
+            }
+
+            function setNodeHidden(node, hidden) {
+                if (node.hidden !== hidden) {
+                    node.hidden = hidden;
+                }
             }
 
             function renderStats(tasks) {
@@ -686,13 +1872,38 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     failed: tasks.filter(isFailedTask).length,
                     completed: tasks.filter(isCompletedTask).length,
                 };
-                document.getElementById("stat-total").textContent = stats.total;
-                document.getElementById("stat-running").textContent =
-                    stats.running;
-                document.getElementById("stat-failed").textContent =
-                    stats.failed;
-                document.getElementById("stat-completed").textContent =
-                    stats.completed;
+                setTextContent(
+                    document.getElementById("stat-total"),
+                    stats.total,
+                );
+                setTextContent(
+                    document.getElementById("stat-running"),
+                    stats.running,
+                );
+                setTextContent(
+                    document.getElementById("stat-failed"),
+                    stats.failed,
+                );
+                setTextContent(
+                    document.getElementById("stat-completed"),
+                    stats.completed,
+                );
+                setTextContent(
+                    document.getElementById("filter-count-all"),
+                    stats.total,
+                );
+                setTextContent(
+                    document.getElementById("filter-count-active"),
+                    tasks.filter(isActiveTask).length,
+                );
+                setTextContent(
+                    document.getElementById("filter-count-failed"),
+                    stats.failed,
+                );
+                setTextContent(
+                    document.getElementById("filter-count-completed"),
+                    stats.completed,
+                );
                 document.getElementById("retry-all-failed-btn").disabled =
                     stats.failed === 0 || !api;
             }
@@ -704,8 +1915,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         const active =
                             button.getAttribute("data-filter") ===
                             currentFilter;
-                        button.classList.toggle("active", active);
-                        button.setAttribute(
+                        if (button.classList.contains("active") !== active) {
+                            button.classList.toggle("active", active);
+                        }
+                        setAttributeValue(
+                            button,
                             "aria-selected",
                             active ? "true" : "false",
                         );
@@ -720,8 +1934,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         ? api.getEventStreamState()
                         : null;
                 const state = normalizeEventStreamState(rawState);
-                status.className = `connection ${state.className}`;
-                label.textContent = state.label;
+                setClassName(status, `connection ${state.className}`);
+                setTextContent(label, state.label);
             }
 
             async function retryAllFailed() {
@@ -866,6 +2080,163 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 return String(task.attempt);
             }
 
+            function appendMetric(root, label, value) {
+                const item = document.createElement("div");
+                item.className = "observability-item";
+                const labelEl = document.createElement("div");
+                labelEl.className = "metric-label";
+                labelEl.textContent = label;
+                const valueEl = document.createElement("div");
+                valueEl.className = "metric-value";
+                valueEl.textContent = value;
+                item.appendChild(labelEl);
+                item.appendChild(valueEl);
+                root.appendChild(item);
+                return valueEl;
+            }
+
+            function appendSummaryMetric(root, label, value) {
+                const item = document.createElement("span");
+                item.className = "metric-summary-item";
+                const labelEl = document.createElement("span");
+                labelEl.className = "metric-summary-label";
+                labelEl.textContent = label;
+                const valueEl = document.createElement("span");
+                valueEl.className = "metric-summary-value";
+                valueEl.textContent = value;
+                item.appendChild(labelEl);
+                item.appendChild(valueEl);
+                root.appendChild(item);
+                return {
+                    item,
+                    value: valueEl,
+                };
+            }
+
+            function updateMetricsToggle(button, isExpanded) {
+                setAttributeValue(
+                    button,
+                    "aria-expanded",
+                    isExpanded ? "true" : "false",
+                );
+                setTextContent(button, isExpanded ? "收起详情" : "请求详情");
+            }
+
+            function sanitizeId(value) {
+                return String(value).replace(/[^a-zA-Z0-9_-]/g, "-");
+            }
+
+            function formatInteger(value) {
+                const number = Number(value);
+                return Number.isFinite(number)
+                    ? Math.round(number).toLocaleString("zh-CN")
+                    : "-";
+            }
+
+            function formatCompactNumber(value) {
+                const number = Number(value);
+                if (!Number.isFinite(number)) return "-";
+                const absolute = Math.abs(number);
+                if (absolute >= 1000000) {
+                    return `${stripTrailingZero(number / 1000000)}M`;
+                }
+                if (absolute >= 1000) {
+                    return `${stripTrailingZero(number / 1000)}K`;
+                }
+                return String(Math.round(number));
+            }
+
+            function stripTrailingZero(value) {
+                return value.toFixed(1).replace(/\.0$/, "");
+            }
+
+            function formatDecimal(value, digits) {
+                if (value === null || value === undefined) return "-";
+                const number = Number(value);
+                return Number.isFinite(number) ? number.toFixed(digits) : "-";
+            }
+
+            function formatPercent(value) {
+                if (value === null || value === undefined) return "-";
+                const number = Number(value);
+                return Number.isFinite(number)
+                    ? `${(number * 100).toFixed(1)}%`
+                    : "-";
+            }
+
+            function formatMilliseconds(value) {
+                if (value === null || value === undefined) return "-";
+                const number = Number(value);
+                return Number.isFinite(number)
+                    ? `${Math.round(number).toLocaleString("zh-CN")} ms`
+                    : "-";
+            }
+
+            function formatCompactDuration(value) {
+                if (value === null || value === undefined) return "-";
+                const milliseconds = Number(value);
+                if (!Number.isFinite(milliseconds)) return "-";
+                if (milliseconds < 1000) {
+                    return `${Math.round(milliseconds)}ms`;
+                }
+                const seconds = milliseconds / 1000;
+                if (seconds < 60) {
+                    return `${stripTrailingZero(seconds)}s`;
+                }
+                const minutes = seconds / 60;
+                if (minutes < 60) {
+                    return `${stripTrailingZero(minutes)}m`;
+                }
+                return `${stripTrailingZero(minutes / 60)}h`;
+            }
+
+            function formatThroughput(metrics) {
+                const value = metrics.throughput?.paragraphsPerMinute;
+                if (value === null || value === undefined) return "计算中";
+                return `${formatDecimal(value, 1)} 段/分钟`;
+            }
+
+            function formatEta(metrics) {
+                const value = metrics.throughput?.etaSeconds;
+                if (value === null || value === undefined) return "计算中";
+                const seconds = Math.max(Math.round(Number(value)), 0);
+                if (!Number.isFinite(seconds)) return "计算中";
+                if (seconds < 60) return `${seconds} 秒`;
+                const minutes = Math.floor(seconds / 60);
+                if (minutes < 60) return `${minutes} 分 ${seconds % 60} 秒`;
+                const hours = Math.floor(minutes / 60);
+                return `${hours} 小时 ${minutes % 60} 分`;
+            }
+
+            function formatCost(metrics) {
+                const cost = metrics.cost;
+                if (
+                    !cost ||
+                    cost.amount === null ||
+                    cost.amount === undefined
+                ) {
+                    return "无法估算";
+                }
+                const marker = cost.accuracy === "fallback" ? "≈" : "";
+                return `${marker}${cost.currency || "CNY"} ${Number(cost.amount).toFixed(4)}`;
+            }
+
+            function formatCostNote(metrics) {
+                const cost = metrics.cost;
+                if (!cost || cost.accuracy === "unavailable") {
+                    return "费用无法估算：当前模型没有已知费率，请在 DeepSeek extraData 中配置费率。";
+                }
+                const accuracy =
+                    cost.accuracy === "fallback"
+                        ? "输入 token 缺少缓存拆分，已按未命中费率保守估算"
+                        : "按 DeepSeek 返回的缓存命中、未命中和输出 token 估算";
+                const pricingVersion = cost.pricingVersion || "custom";
+                const schedule = pricingVersion.endsWith("-tiered")
+                    ? "；内置费率按响应时间自动套用 UTC 01:00–04:00、06:00–10:00 高峰价"
+                    : "";
+                return `${accuracy}；费率版本 ${pricingVersion}${schedule}。`;
+            }
+
             function formatDiagnostics(diagnostics) {
                 if (!Array.isArray(diagnostics) || diagnostics.length === 0) {
                     return "";
@@ -895,6 +2266,15 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     task.status === "completed" &&
                     task.importState !== "pending" &&
                     task.importState !== "importing"
+                );
+            }
+
+            function canCancelTask(task) {
+                if (!task || !task.canCancel) return false;
+                return (
+                    task.status === "queued" ||
+                    task.status === "running" ||
+                    task.status === "cancelling"
                 );
             }
 

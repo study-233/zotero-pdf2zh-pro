@@ -25,8 +25,13 @@ FORBIDDEN_DISTRIBUTIONS = {
     "uvicorn",
 }
 REQUIRED_RUNTIME_FILES = {
+    "observability.py",
+    "pdf2zh_next_service.py",
+    "server.py",
+    "task_manager.py",
     "pdf2zh_next/__init__.py",
     "babeldoc/__init__.py",
+    "babeldoc/format/pdf/document_il/midend/reference_filter.py",
     "babeldoc/pdfminer/cmap/UniGB-UCS2-H.pickle.gz",
     "rapidocr_onnxruntime/__init__.py",
     "rapidocr_onnxruntime/models/ch_PP-OCRv4_det_infer.onnx",

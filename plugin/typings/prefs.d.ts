@@ -21,10 +21,12 @@ declare namespace _ZoteroTypes {
       "poolSize": number;
       "rename": boolean;
       "openAfterTranslate": boolean;
+      "notifyOnTranslationComplete": boolean;
       "fontFamily": string;
       "ocr": boolean;
       "autoOcr": boolean;
       "translateTableText": boolean;
+      "skipReferences": boolean;
       "skipTextChecks": boolean;
       "noWatermark": boolean;
       "disableTermExtraction": boolean;

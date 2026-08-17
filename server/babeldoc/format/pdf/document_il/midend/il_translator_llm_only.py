@@ -22,6 +22,9 @@ from babeldoc.format.pdf.document_il.midend.il_translator import PageTranslateTr
 from babeldoc.format.pdf.document_il.midend.il_translator import (
     ParagraphTranslateTracker,
 )
+from babeldoc.format.pdf.document_il.midend.reference_filter import (
+    find_reference_paragraph_ids,
+)
 from babeldoc.format.pdf.document_il.utils.fontmap import FontMapper
 from babeldoc.format.pdf.document_il.utils.paragraph_helper import is_cid_paragraph
 from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
@@ -168,7 +171,10 @@ class ILTranslatorLLMOnly:
         for page in docs.page:
             for paragraph in page.pdf_paragraph:
                 if paragraph.layout_label == "title":
-                    logger.info(f"Found title paragraph: {paragraph.unicode}")
+                    logger.info(
+                        "found title paragraph: paragraph_id=%s",
+                        paragraph.debug_id,
+                    )
                     return paragraph
         return None
 
@@ -176,6 +182,12 @@ class ILTranslatorLLMOnly:
         self.il_translator.docs = docs
         tracker = DocumentTranslateTracker()
         self.mid = 0
+        self.reference_skip_ids = (
+            find_reference_paragraph_ids(docs)
+            if self.translation_config.skip_references
+            else set()
+        )
+        self.il_translator.reference_skip_ids = self.reference_skip_ids
 
         if not self.translation_config.shared_context_cross_split_part.first_paragraph:
             # Try to find the first title paragraph
@@ -187,7 +199,10 @@ class ILTranslatorLLMOnly:
                 title_paragraph
             )
             if title_paragraph:
-                logger.info(f"Found first title paragraph: {title_paragraph.unicode}")
+                logger.info(
+                    "found first title paragraph: paragraph_id=%s",
+                    title_paragraph.debug_id,
+                )
 
         # count total paragraph
         total = sum(
@@ -207,6 +222,11 @@ class ILTranslatorLLMOnly:
             self.stage_name,
             total,
         ) as pbar:
+            if self.reference_skip_ids:
+                pbar.advance(len(self.reference_skip_ids))
+                collector = getattr(self.translate_engine, "metrics_collector", None)
+                if collector is not None:
+                    collector.reference_skipped(len(self.reference_skip_ids))
             with PriorityThreadPoolExecutor(
                 max_workers=self.translation_config.pool_max_workers,
             ) as executor2:
@@ -243,10 +263,7 @@ class ILTranslatorLLMOnly:
 
         path = self.translation_config.get_working_file_path("translate_tracking.json")
 
-        if (
-            self.translation_config.debug
-            or self.translation_config.working_dir is not None
-        ):
+        if self.translation_config.save_detailed_tracking:
             logger.debug(f"save translate tracking to {path}")
             with Path(path).open("w", encoding="utf-8") as f:
                 f.write(tracker.to_json())
@@ -287,6 +304,9 @@ class ILTranslatorLLMOnly:
         """
         # Basic validation checks
         if paragraph.debug_id is None or paragraph.unicode is None:
+            return False
+
+        if id(paragraph) in getattr(self, "reference_skip_ids", set()):
             return False
 
         # Check if already translated
@@ -737,7 +757,8 @@ class ILTranslatorLLMOnly:
                 try:
                     if not isinstance(output, str):
                         logger.warning(
-                            f"Translation result is not a string. Output: {output}"
+                            "translation result is not a string: output_type=%s",
+                            type(output).__name__,
                         )
                         continue
 
@@ -792,10 +813,11 @@ class ILTranslatorLLMOnly:
                         )
                         if edit_distance < 5 and input_token_count > 20:
                             llm_translate_tracker.set_error_message(
-                                f"Translation result edit distance is too small. distance: {edit_distance}, input: {input_unicode}, output: {output_unicode}"
+                                f"Translation result edit distance is too small. distance: {edit_distance}"
                             )
                             logger.warning(
-                                f"Translation result edit distance is too small. distance: {edit_distance}, input: {input_unicode}, output: {output_unicode}"
+                                "translation result edit distance is too small: distance=%s",
+                                edit_distance,
                             )
                             llm_translate_tracker.set_placeholder_full_match()
                             continue
@@ -810,8 +832,14 @@ class ILTranslatorLLMOnly:
                     if pbar:
                         pbar.advance(1)
                 except Exception as e:
-                    error_message = f"Error translating paragraph. Error: {e}."
-                    logger.exception(error_message)
+                    error_message = (
+                        "Error translating paragraph. "
+                        f"Error type: {type(e).__name__}."
+                    )
+                    logger.error(
+                        "error translating paragraph: error_type=%s",
+                        type(e).__name__,
+                    )
                     # Ignore error and continue
                     for llm_translate_tracker in llm_translate_trackers:
                         llm_translate_tracker.set_error_message(error_message)
@@ -846,8 +874,14 @@ class ILTranslatorLLMOnly:
                         self.ok_count += 1
 
         except Exception as e:
-            error_message = f"Error {e} during translation. try fallback"
-            logger.warning(error_message)
+            error_message = (
+                "Error during translation; using fallback. "
+                f"Error type: {type(e).__name__}."
+            )
+            logger.warning(
+                "translation batch failed; using fallback: error_type=%s",
+                type(e).__name__,
+            )
             for llm_translate_tracker in llm_translate_trackers:
                 llm_translate_tracker.set_error_message(error_message)
                 llm_translate_tracker.set_fallback_to_translate()

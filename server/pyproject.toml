@@ -65,7 +65,7 @@ dependencies = [
 zotero-pdf2zh-next = "server:main"
 
 [tool.setuptools]
-py-modules = ["server", "task_manager", "pdf2zh_next_service"]
+py-modules = ["server", "task_manager", "pdf2zh_next_service", "observability"]
 
 [tool.setuptools.packages.find]
 where = ["."]

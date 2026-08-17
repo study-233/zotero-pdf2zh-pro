@@ -882,6 +882,8 @@ async function checkServerConnection() {
                 autoOcr: getPref("autoOcr")?.toString() || "true",
                 translateTableText:
                     getPref("translateTableText")?.toString() || "true",
+                skipReferences:
+                    getPref("skipReferences")?.toString() || "false",
                 skipTextChecks:
                     getPref("skipTextChecks")?.toString() || "false",
                 noWatermark: getPref("noWatermark")?.toString() || "true",

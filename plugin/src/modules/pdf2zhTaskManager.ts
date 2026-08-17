@@ -1,4 +1,5 @@
 import { config } from "../../package.json";
+import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
 import {
     PluginTask,
@@ -46,6 +47,8 @@ export class PDF2zhTaskManager {
         getTask: (taskId) => PDF2zhTaskManager.tasks.get(taskId),
         updateTask: (taskId, patch) =>
             PDF2zhTaskManager.updateLocalTask(taskId, patch),
+        onTaskImported: (taskId) =>
+            PDF2zhTaskManager.notifyTranslationCompleted(taskId),
     });
 
     static async processWorker() {
@@ -402,6 +405,7 @@ export class PDF2zhTaskManager {
             updatedAt: snapshot.updatedAt,
             canCancel: snapshot.canCancel,
             cancelRequested: snapshot.cancelRequested,
+            metrics: snapshot.metrics,
             serverUrl,
             source: existing?.source || "remote",
             importState: existing?.importState || "none",
@@ -434,8 +438,11 @@ export class PDF2zhTaskManager {
         const dialogOpen = Boolean(
             this.dialogWindow && !this.dialogWindow.closed,
         );
-        const shouldTrackCurrentServer = dialogOpen || this.hasActiveTasks();
-        if (currentServerUrl && shouldTrackCurrentServer) {
+        // Keep the configured server subscribed for the plugin lifetime. A
+        // task dialog can survive an extension reload while the static window
+        // reference is reset, so using dialogOpen as a prerequisite can leave
+        // a visible dialog with an empty stream set.
+        if (currentServerUrl) {
             serverUrls.add(currentServerUrl);
         }
         for (const task of this.tasks.values()) {
@@ -486,6 +493,42 @@ export class PDF2zhTaskManager {
             } catch (error) {
                 ztoolkit.log(error);
             }
+        }
+    }
+
+    private static notifyTranslationCompleted(taskId: string): void {
+        if (
+            !PDF2zhHelperFactory.isTrue(getPref("notifyOnTranslationComplete"))
+        ) {
+            return;
+        }
+
+        const task = this.tasks.get(taskId);
+        if (
+            !task ||
+            task.source !== "local" ||
+            task.importState !== "imported"
+        ) {
+            return;
+        }
+
+        try {
+            const alertsService = Cc[
+                "@mozilla.org/alerts-service;1"
+            ].getService(Ci.nsIAlertsService);
+            alertsService.showAlertNotification(
+                `chrome://${config.addonRef}/content/icons/favicon.svg`,
+                getString("translation-complete-title"),
+                getString("translation-complete-body", {
+                    args: { fileName: task.fileName },
+                }),
+                false,
+                "",
+                undefined,
+                `${config.addonRef}-translation-${task.taskId}`,
+            );
+        } catch (error) {
+            ztoolkit.log("无法发送翻译完成系统通知:", error);
         }
     }
 }
