@@ -8,7 +8,7 @@
 
 ## 目录
 
-- [和原项目的区别](#和原项目的区别)
+- [项目来源与本分支改动](#项目来源与本分支改动)
 - [效果预览](#效果预览)
 - [安装插件](#安装插件)
 - [安装并启动本地服务](#安装并启动本地服务)
@@ -17,9 +17,15 @@
 - [在 Zotero 里使用](#在-zotero-里使用)
 - [License](#license)
 
-## 和原项目的区别
+## 项目来源与本分支改动
 
-本项目基于 `guaguastandup/zotero-pdf2zh` 演化而来，但现在按更轻量的方向维护：
+本仓库直接基于
+[NightWatcher314/zotero-pdf2zh-next](https://github.com/NightWatcher314/zotero-pdf2zh-next)
+的 `v5.3.0` 版本继续开发。该上游项目是
+[guaguastandup/zotero-pdf2zh](https://github.com/guaguastandup/zotero-pdf2zh)
+的分支，并在其基础上演化而来。感谢两位上游维护者及所有贡献者。
+
+NightWatcher 上游将项目向更轻量的插件与本地服务架构重构：
 
 - 只保留 Zotero 插件和本地 Python 服务两部分。
 - 服务端提供 Homebrew 和 `uv tool` 分发，尽量减少手动配置。
@@ -28,7 +34,14 @@
 - 偏好页整合插件版本、服务端版本、连接检查和常用翻译选项。
 - 去掉旧 runner、旧 server 和历史遗留自动化路径，减少维护成本。
 
-更新记录见 [CHANGELOG.md](CHANGELOG.md)。
+在此基础上，本分支进一步增加：
+
+- macOS 本机源码一键部署、任务保护、备份和失败回滚。
+- DeepSeek 请求耗时、QPS、缓存、重试、token、吞吐量和费用观测。
+- 按翻译配置隔离缓存，避免错误复用其他模型或提示词的译文。
+- 可选的参考文献跳过功能，并在输出 PDF 中保留参考文献原文。
+
+完整更新记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 效果预览
 
@@ -62,6 +75,15 @@ Windows 和 Linux 可以使用 `uv tool`：
 uv tool install --python 3.13 zotero-pdf2zh-next
 zotero-pdf2zh-next
 ```
+
+> [!IMPORTANT]
+> PyPI 上的 `zotero-pdf2zh-next` 当前由 NightWatcher 上游维护；以上
+> `uv tool` 命令安装的是上游已发布的后端，不包含本仓库尚未发布的改动。
+> 如需运行本仓库当前源码，请克隆本仓库后执行：
+>
+> ```bash
+> uv run --directory server --locked zotero-pdf2zh-next
+> ```
 
 也可以用 Docker 启动本地服务：
 
@@ -162,4 +184,7 @@ DeepSeek 费用按每百万 token 的缓存命中输入、未命中输入和输�
 
 ## License
 
-本项目延续上游许可，采用 `AGPL-3.0-or-later` 发布，见 [LICENSE](LICENSE)。
+本项目延续
+[NightWatcher314/zotero-pdf2zh-next](https://github.com/NightWatcher314/zotero-pdf2zh-next)
+及 [guaguastandup/zotero-pdf2zh](https://github.com/guaguastandup/zotero-pdf2zh)
+的许可，采用 `AGPL-3.0-or-later` 发布，见 [LICENSE](LICENSE)。
