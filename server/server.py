@@ -15,6 +15,7 @@ import sys
 import uuid
 from dataclasses import dataclass
 from io import BytesIO
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 
@@ -25,10 +26,16 @@ from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
 
-VERSION = "5.3.0"
+VERSION = "1.0.0"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
-TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
+DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
+TRANSLATES_DIR = Path(
+    os.getenv("PDF2ZH_DATA_DIR", str(DEFAULT_TRANSLATES_DIR))
+).expanduser().resolve()
 TASK_MANAGER = TaskManager(TRANSLATES_DIR / "tasks.json")
+LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
+LOG_MAX_BYTES = 10 * 1024 * 1024
+LOG_BACKUP_COUNT = 3
 
 
 class RequestValidationError(ValueError):
@@ -539,19 +546,51 @@ def package_version(package_name: str) -> str | None:
 app = create_app()
 
 
-def configure_logging(level_name: str | None = None) -> None:
+def configure_runtime_paths(data_dir: str | Path | None = None) -> None:
+    global TRANSLATES_DIR, TASK_MANAGER
+
+    requested_dir = data_dir or os.getenv("PDF2ZH_DATA_DIR")
+    TRANSLATES_DIR = (
+        Path(requested_dir).expanduser().resolve()
+        if requested_dir
+        else DEFAULT_TRANSLATES_DIR
+    )
+    TASK_MANAGER = TaskManager(TRANSLATES_DIR / "tasks.json")
+
+
+def configure_logging(
+    level_name: str | None = None,
+    log_file: str | Path | None = None,
+) -> None:
     if level_name is None:
         level_name = os.getenv("PDF2ZH_LOG_LEVEL", "INFO")
     level_name = level_name.upper()
     level = getattr(logging, level_name, logging.INFO)
+
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    requested_log_file = log_file or os.getenv("PDF2ZH_LOG_FILE")
+    if requested_log_file:
+        log_path = Path(requested_log_file).expanduser().resolve()
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        handlers.append(
+            RotatingFileHandler(
+                log_path,
+                maxBytes=LOG_MAX_BYTES,
+                backupCount=LOG_BACKUP_COUNT,
+                encoding="utf-8",
+            )
+        )
+
     logging.basicConfig(
         level=level,
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        format=LOG_FORMAT,
+        handlers=handlers,
+        force=True,
     )
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run the zotero-pdf2zh-next server")
+    parser = argparse.ArgumentParser(description="Run the zotero-pdf2zh-pro server")
     parser.add_argument(
         "--host",
         default=os.getenv("PDF2ZH_HOST", "127.0.0.1"),
@@ -568,12 +607,23 @@ def parse_args() -> argparse.Namespace:
         default=os.getenv("PDF2ZH_LOG_LEVEL", "INFO"),
         help="Logging level, default: %(default)s",
     )
+    parser.add_argument(
+        "--data-dir",
+        default=os.getenv("PDF2ZH_DATA_DIR"),
+        help="Persistent task and result directory",
+    )
+    parser.add_argument(
+        "--log-file",
+        default=os.getenv("PDF2ZH_LOG_FILE"),
+        help="Optional rotating log file",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    configure_logging(args.log_level)
+    configure_runtime_paths(args.data_dir)
+    configure_logging(args.log_level, args.log_file)
     LOGGER.info("server starting on http://%s:%s", args.host, args.port)
     app.run(host=args.host, port=args.port)
 

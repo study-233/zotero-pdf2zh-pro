@@ -30,4 +30,4 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 EXPOSE 8890
 
-CMD ["uv", "run", "--no-sync", "zotero-pdf2zh-next", "--host", "0.0.0.0", "--port", "8890"]
+CMD ["uv", "run", "--no-sync", "zotero-pdf2zh-pro", "--host", "0.0.0.0", "--port", "8890"]

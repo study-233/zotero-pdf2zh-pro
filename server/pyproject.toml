@@ -3,10 +3,11 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "zotero-pdf2zh-next"
-version = "5.3.0"
+name = "zotero-pdf2zh-pro"
+version = "1.0.0"
 description = "Minimal pdf2zh_next bridge for the Zotero plugin"
 readme = "README.md"
+authors = [{ name = "study-233" }]
 requires-python = ">=3.12,<3.14"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSES/*.txt", "THIRD_PARTY_NOTICES.md"]
@@ -62,7 +63,11 @@ dependencies = [
 ]
 
 [project.scripts]
-zotero-pdf2zh-next = "server:main"
+zotero-pdf2zh-pro = "server:main"
+
+[project.urls]
+Repository = "https://github.com/study-233/zotero-pdf2zh-pro"
+Issues = "https://github.com/study-233/zotero-pdf2zh-pro/issues"
 
 [tool.setuptools]
 py-modules = ["server", "task_manager", "pdf2zh_next_service"]

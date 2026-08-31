@@ -2,6 +2,12 @@ name: CI
 
 on:
     workflow_dispatch:
+        inputs:
+            run_windows_lifecycle:
+                description: Run install/start/stop/uninstall on the Windows runner
+                required: false
+                type: boolean
+                default: false
     push:
         branches:
             - main
@@ -11,7 +17,13 @@ on:
 
 jobs:
     plugin:
-        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - windows-latest
+        runs-on: ${{ matrix.os }}
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -39,23 +51,123 @@ jobs:
               working-directory: plugin
 
     server:
-        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - windows-latest
+        runs-on: ${{ matrix.os }}
+        env:
+            UV_DEFAULT_INDEX: https://pypi.org/simple
         steps:
             - name: Checkout
               uses: actions/checkout@v7
 
             - name: Setup uv
               uses: astral-sh/setup-uv@v8.3.2
+              with:
+                  enable-cache: true
 
             - name: Run server tests
-              run: |
-                  UV_LOCK_INDEX="$(awk -F '"' '/^source = \{ registry = / { print $2; exit }' uv.lock)"
-                  test -n "$UV_LOCK_INDEX"
-                  UV_DEFAULT_INDEX="$UV_LOCK_INDEX" uv run --locked python -m unittest discover -s tests
-              working-directory: server
+              run: uv run --directory server --locked python -m unittest discover -s tests
 
             - name: Validate PyPI artifacts
+              if: runner.os == 'Linux'
               run: |
                   VERSION="$(python -c 'import tomllib; print(tomllib.load(open("server/pyproject.toml", "rb"))["project"]["version"])')"
                   uv build server --out-dir server/dist --clear --no-sources
                   python scripts/check_pypi_artifacts.py server/dist "$VERSION"
+
+    windows-package:
+        runs-on: windows-latest
+        env:
+            UV_DEFAULT_INDEX: https://pypi.org/simple
+            UV_TOOL_DIR: ${{ runner.temp }}\uv-tools
+            UV_TOOL_BIN_DIR: ${{ runner.temp }}\uv-bin
+            PDF2ZH_WINDOWS_APP_ROOT: ${{ runner.temp }}\zotero-pdf2zh-pro
+            PDF2ZH_WINDOWS_START_MENU_DIR: ${{ runner.temp }}\start-menu\zotero-pdf2zh-pro
+            PDF2ZH_WINDOWS_PORT: "18890"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Setup uv
+              uses: astral-sh/setup-uv@v8.3.2
+              with:
+                  enable-cache: true
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 20
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v6
+              with:
+                  version: 10.34.5
+
+            - name: Build plugin for friends package
+              shell: powershell
+              run: |
+                  pnpm install --frozen-lockfile
+                  pnpm build
+              working-directory: plugin
+
+            - name: Parse Windows PowerShell scripts
+              shell: powershell
+              run: powershell.exe -NoProfile -File scripts\check_windows_scripts.ps1
+
+            - name: Build wheel, Windows ZIP, and friends package
+              shell: powershell
+              run: |
+                  uv build server --wheel --out-dir server/dist --clear --no-sources
+                  uv run --no-project python scripts/build_windows_package.py
+                  uv run --no-project python scripts/build_friend_package.py --source-ref HEAD
+
+            - name: Exercise install, start, stop, and uninstall
+              if: github.event_name == 'workflow_dispatch' && inputs.run_windows_lifecycle
+              shell: powershell
+              run: |
+                  $wheel = (
+                      Get-ChildItem server\dist\zotero_pdf2zh_pro-*.whl |
+                      Select-Object -First 1
+                  ).FullName
+
+                  & scripts\windows\install.ps1 -PackageSource $wheel -SkipUvBootstrap -NonInteractive
+                  . scripts\windows\common.ps1
+                  if (Get-NetTCPConnection -State Listen -LocalPort 18890 -ErrorAction SilentlyContinue) {
+                      throw "Installer started the server automatically"
+                  }
+                  $shortcuts = Get-ChildItem $env:PDF2ZH_WINDOWS_START_MENU_DIR -Filter *.lnk
+                  if ($shortcuts.Count -ne 4) {
+                      throw "Installer did not create all four Start menu shortcuts"
+                  }
+
+                  New-Item -ItemType File -Force -Path "$env:PDF2ZH_WINDOWS_APP_ROOT\data\preserve-me" | Out-Null
+                  & scripts\windows\start-server.ps1 -Quiet
+                  & scripts\windows\start-server.ps1 -Quiet
+                  $health = Get-ServerHealth
+                  if (-not $health.workspace.writable) { throw "Workspace is not writable" }
+                  & scripts\windows\stop-server.ps1 -Quiet
+
+                  & scripts\windows\uninstall.ps1 -NonInteractive
+                  Start-Sleep -Seconds 4
+                  if (-not (Test-Path "$env:PDF2ZH_WINDOWS_APP_ROOT\data\preserve-me")) {
+                      throw "Default uninstall removed persistent data"
+                  }
+                  if (Test-Path $env:PDF2ZH_WINDOWS_START_MENU_DIR) {
+                      throw "Uninstall left Start menu shortcuts behind"
+                  }
+
+                  & scripts\windows\install.ps1 -PackageSource $wheel -SkipUvBootstrap -NonInteractive
+                  if (-not (Test-Path "$env:PDF2ZH_WINDOWS_APP_ROOT\data\preserve-me")) {
+                      throw "Reinstall did not preserve persistent data"
+                  }
+                  & scripts\windows\start-server.ps1 -Quiet
+                  & scripts\windows\stop-server.ps1 -Quiet
+                  & scripts\windows\uninstall.ps1 -PurgeData -NonInteractive
+                  Start-Sleep -Seconds 4
+                  if (Test-Path $env:PDF2ZH_WINDOWS_APP_ROOT) {
+                      throw "Purge uninstall left application data behind"
+                  }

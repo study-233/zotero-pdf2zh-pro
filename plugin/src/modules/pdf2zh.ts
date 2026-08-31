@@ -20,12 +20,12 @@ export class PDF2zhUIFactory {
             tag: "menu",
             id: menuPrefix,
             icon: menuIcon,
-            label: "zotero-pdf2zh-next",
+            label: "zotero-pdf2zh-pro",
             children: [
                 {
                     tag: "menuitem",
                     id: `${menuPrefix}-translate-pdf`,
-                    label: `zotero-pdf2zh-next: ${getString("prefs-menu-translate")}`,
+                    label: `zotero-pdf2zh-pro: ${getString("prefs-menu-translate")}`,
                     commandListener: () =>
                         addon.hooks.onDialogEvents("translatePDF"),
                     icon: menuIcon,
@@ -33,7 +33,7 @@ export class PDF2zhUIFactory {
                 {
                     tag: "menuitem",
                     id: `${menuPrefix}-task-manager`,
-                    label: `zotero-pdf2zh-next: ${getString("prefs-menu-tasks")}`,
+                    label: `zotero-pdf2zh-pro: ${getString("prefs-menu-tasks")}`,
                     commandListener: () =>
                         addon.hooks.onDialogEvents("openTaskManager"),
                     icon: menuIcon,

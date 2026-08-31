@@ -1,11 +1,11 @@
 services:
-  zotero-pdf2zh-next:
+  zotero-pdf2zh-pro:
     build:
       context: .
       dockerfile: server/Dockerfile
       args:
         UV_INDEX_URL: "${UV_INDEX_URL:-}"
-    image: "${PDF2ZH_IMAGE:-zotero-pdf2zh-next:local}"
+    image: "${PDF2ZH_IMAGE:-zotero-pdf2zh-pro:local}"
     ports:
       - "${PDF2ZH_PORT:-8890}:8890"
     volumes:

@@ -148,7 +148,7 @@ def main() -> None:
     (LICENSES_DIR / "RapidOCR-Apache-2.0.txt").write_bytes(rapidocr_license)
     shutil.copyfile(
         REPO_ROOT / "LICENSE",
-        LICENSES_DIR / "zotero-pdf2zh-next-AGPL-3.0-or-later.txt",
+        LICENSES_DIR / "zotero-pdf2zh-pro-AGPL-3.0-or-later.txt",
     )
 
     for snapshot in SNAPSHOTS:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import logging
 import queue
 import sys
 import tempfile
@@ -448,14 +449,65 @@ class ServerRouteTests(unittest.TestCase):
                 ),
             ):
                 response = self.client.get("/tasks/task-1/result?mode=dual")
+            try:
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.headers["X-PDF2ZH-Task-Id"], "task-1")
+                self.assertEqual(response.headers["X-PDF2ZH-Output-Mode"], "dual")
+                self.assertEqual(response.data, b"%PDF-1.4\n")
+            finally:
+                response.close()
 
+    def test_configure_runtime_paths_uses_persistent_data_dir(self) -> None:
+        original_dir = server_module.TRANSLATES_DIR
+        original_manager = server_module.TASK_MANAGER
         try:
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.headers["X-PDF2ZH-Task-Id"], "task-1")
-            self.assertEqual(response.headers["X-PDF2ZH-Output-Mode"], "dual")
-            self.assertEqual(response.data, b"%PDF-1.4\n")
+            with tempfile.TemporaryDirectory() as temp_dir:
+                data_dir = Path(temp_dir) / "data"
+                server_module.configure_runtime_paths(data_dir)
+
+                self.assertEqual(server_module.TRANSLATES_DIR, data_dir.resolve())
+                self.assertEqual(
+                    server_module.TASK_MANAGER._persistence_path,
+                    data_dir.resolve() / "tasks.json",
+                )
         finally:
-            response.close()
+            server_module.TRANSLATES_DIR = original_dir
+            server_module.TASK_MANAGER = original_manager
+
+    def test_configure_logging_writes_rotating_log_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            log_path = Path(temp_dir) / "logs" / "server.log"
+            try:
+                server_module.configure_logging("INFO", log_path)
+                server_module.LOGGER.info("windows log smoke")
+                for handler in logging.getLogger().handlers:
+                    handler.flush()
+
+                self.assertIn(
+                    "windows log smoke",
+                    log_path.read_text(encoding="utf-8"),
+                )
+            finally:
+                for handler in logging.getLogger().handlers:
+                    handler.close()
+                logging.getLogger().handlers.clear()
+
+    def test_parse_args_accepts_runtime_paths(self) -> None:
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "zotero-pdf2zh-pro",
+                "--data-dir",
+                "C:/data",
+                "--log-file",
+                "C:/logs/server.log",
+            ],
+        ):
+            args = server_module.parse_args()
+
+        self.assertEqual(args.data_dir, "C:/data")
+        self.assertEqual(args.log_file, "C:/logs/server.log")
 
     def test_task_result_rejects_invalid_output_mode(self) -> None:
         response = self.client.get("/tasks/task-1/result?mode=compare")

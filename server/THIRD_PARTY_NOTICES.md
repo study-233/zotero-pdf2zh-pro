@@ -1,6 +1,6 @@
 # Bundled runtime snapshots
 
-`zotero-pdf2zh-next` bundles fixed, source-readable runtime snapshots so its
+`zotero-pdf2zh-pro` bundles fixed, source-readable runtime snapshots so its
 PyPI package does not resolve a newer `pdf2zh-next` release or install the
 upstream Gradio/FastAPI web UI.
 

@@ -5,17 +5,16 @@ export default defineConfig({
     source: ["src", "addon"],
     dist: "build",
     name: pkg.config.addonName,
-    xpiName: "zotero-pdf2zh-next",
+    xpiName: "zotero-pdf2zh-pro",
     id: pkg.config.addonID,
     namespace: pkg.config.addonRef,
-    updateURL: `https://github.com/{{owner}}/{{repo}}/releases/download/release/${
-        pkg.version.includes("-") ? "update-beta.json" : "update.json"
-    }`,
-    xpiDownloadLink:
-        "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
-
     build: {
         assets: ["addon/**/*.*"],
+        // Friends receive XPI files directly, so keep the source manifest as-is
+        // instead of letting the scaffold inject its public-release update URL.
+        makeManifest: {
+            enable: false,
+        },
         define: {
             ...pkg.config,
             author: pkg.author,

@@ -36,7 +36,7 @@ REQUIRED_LICENSE_FILES = {
     "BabelDOC-AGPL-3.0.txt",
     "pdf2zh-next-AGPL-3.0.txt",
     "RapidOCR-Apache-2.0.txt",
-    "zotero-pdf2zh-next-AGPL-3.0-or-later.txt",
+    "zotero-pdf2zh-pro-AGPL-3.0-or-later.txt",
 }
 FORBIDDEN_RUNTIME_FILES = {
     "pdf2zh_next/gui.py",
@@ -68,11 +68,35 @@ def check_wheel(wheel: Path, version: str) -> None:
         if len(metadata_files) != 1:
             raise RuntimeError(f"Expected one dist-info METADATA, found {metadata_files}")
         metadata = BytesParser().parsebytes(archive.read(metadata_files[0]))
+        entry_point_files = [
+            name for name in names if name.endswith(".dist-info/entry_points.txt")
+        ]
+        if len(entry_point_files) != 1:
+            raise RuntimeError(
+                f"Expected one dist-info entry_points.txt, found {entry_point_files}"
+            )
+        entry_points = archive.read(entry_point_files[0]).decode("utf-8")
 
+    if metadata["Name"] != "zotero-pdf2zh-pro":
+        raise RuntimeError(f"Unexpected wheel project name: {metadata['Name']}")
     if metadata["Version"] != version:
         raise RuntimeError(f"Wheel version {metadata['Version']} != {version}")
+    if metadata["Author"] != "study-233":
+        raise RuntimeError(f"Unexpected wheel author: {metadata['Author']}")
     if metadata["License-Expression"] != "AGPL-3.0-or-later":
         raise RuntimeError("Wheel is missing AGPL-3.0-or-later license metadata")
+    project_urls = set(metadata.get_all("Project-URL", []))
+    expected_urls = {
+        "Repository, https://github.com/study-233/zotero-pdf2zh-pro",
+        "Issues, https://github.com/study-233/zotero-pdf2zh-pro/issues",
+    }
+    if project_urls != expected_urls:
+        raise RuntimeError(f"Unexpected project URLs: {sorted(project_urls)}")
+    if entry_points.strip() != (
+        "[console_scripts]\n"
+        "zotero-pdf2zh-pro = server:main"
+    ):
+        raise RuntimeError(f"Unexpected CLI entry point: {entry_points!r}")
 
     requirements = {
         requirement_name(value) for value in metadata.get_all("Requires-Dist", [])
@@ -101,7 +125,7 @@ def check_sdist(sdist: Path, version: str) -> None:
     if sdist.stat().st_size > MAX_ARTIFACT_BYTES:
         raise RuntimeError(f"sdist is unexpectedly large: {sdist.stat().st_size} bytes")
 
-    prefix = f"zotero_pdf2zh_next-{version}/"
+    prefix = f"zotero_pdf2zh_pro-{version}/"
     with tarfile.open(sdist, "r:gz") as archive:
         names = set(archive.getnames())
 
@@ -123,8 +147,8 @@ def main() -> None:
         raise SystemExit("usage: check_pypi_artifacts.py <dist-dir> <version>")
     dist_dir = Path(sys.argv[1])
     version = sys.argv[2]
-    wheel = dist_dir / f"zotero_pdf2zh_next-{version}-py3-none-any.whl"
-    sdist = dist_dir / f"zotero_pdf2zh_next-{version}.tar.gz"
+    wheel = dist_dir / f"zotero_pdf2zh_pro-{version}-py3-none-any.whl"
+    sdist = dist_dir / f"zotero_pdf2zh_pro-{version}.tar.gz"
     check_wheel(wheel, version)
     check_sdist(sdist, version)
     print(f"validated PyPI artifacts for {version}")

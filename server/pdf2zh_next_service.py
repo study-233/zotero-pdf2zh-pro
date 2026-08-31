@@ -625,7 +625,7 @@ def run_live_translator_test(translator: Any, timeout_seconds: int = 20) -> dict
 
 
 def validate_service_config(payload: dict[str, Any], job_id: str) -> ValidationResult:
-    with TemporaryDirectory(prefix="zotero-pdf2zh-next-check-") as temp_dir:
+    with TemporaryDirectory(prefix="zotero-pdf2zh-pro-check-") as temp_dir:
         output_dir = Path(temp_dir) / "output"
         output_dir.mkdir(parents=True, exist_ok=True)
 

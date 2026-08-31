@@ -57,7 +57,7 @@ export class PDF2zhTaskManager {
         }
 
         const progressWindow = new ztoolkit.ProgressWindow(
-            "zotero-pdf2zh-next 任务",
+            "zotero-pdf2zh-pro 任务",
         ).createLine({
             text: "正在提交翻译任务...",
             type: "default",

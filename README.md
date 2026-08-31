@@ -1,118 +1,86 @@
-# zotero-pdf2zh-next
+# zotero-pdf2zh-pro
 
-一个面向 Zotero 7 及以上版本的 PDF 翻译插件，配套一个本地 Python 服务来调用 `pdf2zh_next` 完成翻译。
+面向 Zotero 7 及以上版本的 PDF 翻译插件，配套本地 Python 服务调用
+`pdf2zh_next` 完成翻译。
 
-项目维护重点是：少一点配置负担，稳定地在 Zotero 里提交任务、查看进度、导入结果。
+当前统一版本：<!-- release-version --> `1.0.0`
 
-当前统一版本：<!-- release-version --> `5.3.0`
+## 安装前说明
 
-## 目录
+`zotero-pdf2zh-pro` 是独立产品，不会读取或迁移旧插件设置和旧服务数据。
+如果安装过旧产品，请先停止并卸载旧服务、从 Zotero 移除旧插件，避免两个服务同时占用
+`127.0.0.1:8890`。
 
-- [和原项目的区别](#和原项目的区别)
-- [效果预览](#效果预览)
-- [安装插件](#安装插件)
-- [安装并启动本地服务](#安装并启动本地服务)
-- [更新](#更新)
-- [在 Zotero 里使用](#在-zotero-里使用)
-- [License](#license)
+朋友用户应使用维护者直接提供的 `zotero-pdf2zh-pro-<版本>-friends.zip`。其中包含
+插件、Windows 安装包、中文说明、源码归档和 SHA-256 校验值。
 
-## 和原项目的区别
+## 安装 Zotero 插件
 
-本项目基于 `guaguastandup/zotero-pdf2zh` 演化而来，但现在按更轻量的方向维护：
+1. 解压朋友包，找到 `zotero-pdf2zh-pro.xpi`。
+2. 在 Zotero 中进入 `工具 -> 插件`。
+3. 点击右上角齿轮，选择 `Install Add-on From File...`。
+4. 选择 XPI 并重启 Zotero。
 
-- 只保留 Zotero 插件和本地 Python 服务两部分。
-- 服务端提供 Homebrew 和 `uv tool` 分发，尽量减少手动配置。
-- 支持任务面板、进度显示、取消、重试和结果导入状态。
-- 支持同时输出中文 PDF 和双语 PDF。
-- 偏好页整合插件版本、服务端版本、连接检查和常用翻译选项。
-- 去掉旧 runner、旧 server 和历史遗留自动化路径，减少维护成本。
+仓库为私有仓库，插件不配置自动更新。新版本由维护者重新发送 XPI。
 
-更新记录见 [CHANGELOG.md](CHANGELOG.md)。
+## Windows 10/11 x64
 
-## 效果预览
+解压 `zotero-pdf2zh-pro-windows-x64.zip` 后双击：
 
-![任务进度页面](assets/任务进度.png)
+- `安装.cmd`：安装官方 uv、uv 托管的 Python 3.13，以及公开 PyPI 上的
+  `zotero-pdf2zh-pro==1.0.0`；安装完成后不会自动启动。
+- `启动服务.cmd`：需要翻译时手动启动。
+- `停止服务.cmd`：停止本项目管理的服务进程。
+- `查看日志.cmd`：打开服务日志。
+- `卸载.cmd`：卸载程序，并选择是否删除数据和日志。
 
-## 安装插件
+安装不需要管理员权限，不创建任务计划、Windows Service 或登录启动项。数据位于
+`%LOCALAPPDATA%\zotero-pdf2zh-pro\data`，日志位于
+`%LOCALAPPDATA%\zotero-pdf2zh-pro\logs`。
 
-从 GitHub Release 下载最新的 `zotero-pdf2zh-next.xpi`，然后：
+## macOS
 
-1. 打开 Zotero。
-2. 进入 `工具 -> 插件`。
-3. 点击右上角齿轮图标。
-4. 选择 `Install Add-on From File...`。
-5. 选择下载的 `.xpi` 文件。
-6. 重启 Zotero。
-
-## 安装并启动本地服务
-
-macOS 推荐使用 Homebrew，这样可以用 `brew services` 管理后台服务：
+Homebrew tap 是维护者自用的私有仓库，需要两个私有仓库的 SSH 权限：
 
 ```bash
-brew tap NightWatcher314/homebrew-formula
-brew install zotero-pdf2zh-next
-brew services start zotero-pdf2zh-next
+brew tap study-233/formula git@github.com:study-233/homebrew-formula.git
+brew install --build-from-source study-233/formula/zotero-pdf2zh-pro
+brew services start zotero-pdf2zh-pro
 ```
 
-Windows 和 Linux 可以使用 `uv tool`：
+也可以从公开 PyPI 安装服务端：
 
 ```bash
-uv tool install --python 3.13 zotero-pdf2zh-next
-zotero-pdf2zh-next
+uv tool install --python 3.13 zotero-pdf2zh-pro
+zotero-pdf2zh-pro
 ```
 
-也可以用 Docker 启动本地服务：
+## Docker
 
 ```bash
 docker compose up --build -d
 ```
 
-如需在构建时使用自定义 Python 包索引或推送到自己的镜像仓库，可以通过环境变量覆盖默认值：
+默认服务地址为 `http://127.0.0.1:8890`。
 
-```bash
-UV_INDEX_URL=https://your-pypi-proxy/index/ \
-PDF2ZH_IMAGE=your-registry/zotero-pdf2zh-next:latest \
-docker compose up --build -d
-```
+## 使用
 
-默认服务地址是：
-
-```text
-http://127.0.0.1:8890
-```
+1. 打开 Zotero 设置中的 `zotero-pdf2zh-pro`。
+2. 确认服务地址为 `http://127.0.0.1:8890`。
+3. 点击“检查连接与配置”。
+4. 配置翻译服务、语言和输出格式。
+5. 在条目或 PDF 附件上右键，选择
+   `zotero-pdf2zh-pro: Translate PDF`。
+6. 在 `zotero-pdf2zh-pro: Task Manager` 查看进度、重试任务并导入结果。
 
 ## 更新
 
-插件更新：
-
-- 在 Zotero 的插件管理页面直接检查更新。
-- 按 Zotero 提示完成更新并重启。
-
-Homebrew 服务端更新：
-
-```bash
-brew update
-brew upgrade zotero-pdf2zh-next
-brew services restart zotero-pdf2zh-next
-```
-
-`uv tool` 服务端更新：
-
-```bash
-uv tool upgrade zotero-pdf2zh-next
-```
-
-## 在 Zotero 里使用
-
-1. 打开 Zotero 设置里的 `zotero-pdf2zh-next`。
-2. 把 `Python Server URL` 设为本地服务地址，例如 `http://127.0.0.1:8890`。
-3. 点击“检查连接与配置”，确认插件端和服务端版本都能显示。
-4. 选择翻译服务，并配置对应的 LLM API。
-5. 选择输出中文 PDF、双语 PDF，或两者同时输出。
-6. 在条目或 PDF 附件上右键，选择 `zotero-pdf2zh-next: Translate PDF`。
-
-任务提交后，可以在右键菜单里打开 `zotero-pdf2zh-next: Task Manager` 查看进度、取消任务、重试失败任务和导入结果。
+- 插件：安装维护者发送的新 XPI。
+- Windows：重新运行新版本中的 `安装.cmd`，新产品数据会保留。
+- uv：`uv tool upgrade zotero-pdf2zh-pro`。
+- Homebrew：`brew upgrade zotero-pdf2zh-pro` 后重启服务。
 
 ## License
 
-本项目延续上游许可，采用 `AGPL-3.0-or-later` 发布，见 [LICENSE](LICENSE)。
+本项目采用 `AGPL-3.0-or-later`，并保留所有上游项目和第三方组件的许可证与归属，
+见 [LICENSE](LICENSE) 和 [server/THIRD_PARTY_NOTICES.md](server/THIRD_PARTY_NOTICES.md)。

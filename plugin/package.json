@@ -1,24 +1,24 @@
 {
-    "name": "zotero-pdf2zh-next",
-    "version": "5.3.0",
+    "name": "zotero-pdf2zh-pro",
+    "version": "1.0.0",
     "packageManager": "pnpm@10.34.5",
     "description": "Minimal Zotero bridge for pdf2zh_next",
     "config": {
-        "addonName": "zotero-pdf2zh-next",
-        "addonID": "zotero-pdf2zh-next@nightwatcher.local",
-        "addonRef": "pdf2zhnext",
-        "addonInstance": "pdf2zhnext",
-        "prefsPrefix": "extensions.zotero.pdf2zhnext"
+        "addonName": "zotero-pdf2zh-pro",
+        "addonID": "zotero-pdf2zh-pro@study-233",
+        "addonRef": "pdf2zhpro",
+        "addonInstance": "pdf2zhpro",
+        "prefsPrefix": "extensions.zotero.pdf2zhpro"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/NightWatcher314/zotero-pdf2zh-next.git"
+        "url": "git+https://github.com/study-233/zotero-pdf2zh-pro.git"
     },
-    "author": "NightWatcher",
+    "author": "study-233",
     "bugs": {
-        "url": "https://github.com/NightWatcher314/zotero-pdf2zh-next/issues"
+        "url": "https://github.com/study-233/zotero-pdf2zh-pro/issues"
     },
-    "homepage": "https://github.com/NightWatcher314/zotero-pdf2zh-next#readme",
+    "homepage": "https://github.com/study-233/zotero-pdf2zh-pro#readme",
     "license": "AGPL-3.0-or-later",
     "scripts": {
         "start": "zotero-plugin serve",

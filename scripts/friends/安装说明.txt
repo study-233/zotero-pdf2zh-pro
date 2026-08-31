@@ -1,0 +1,14 @@
+zotero-pdf2zh-pro Windows 安装说明
+
+1. 校验 SHA256SUMS.txt（可选但推荐）。
+2. 在 Zotero 的“工具 -> 插件”中安装 zotero-pdf2zh-pro.xpi，然后重启 Zotero。
+3. 解压 zotero-pdf2zh-pro-windows-x64.zip。
+4. 双击“安装.cmd”。安装完成后服务不会自动启动。
+5. 需要翻译时双击“启动服务.cmd”，然后在 Zotero 设置中检查连接。
+6. 不使用时可双击“停止服务.cmd”。
+7. 双击“卸载.cmd”可以卸载；默认保留任务数据和日志。
+
+安装需要联网访问 Astral 和官方 PyPI，不需要 GitHub 仓库权限或管理员权限。
+本包附带对应版本源码归档，许可证见源码中的 LICENSE 和 server/LICENSES。
+
+如果安装过旧产品，请先停止并卸载旧服务、移除旧 Zotero 插件，避免 8890 端口冲突。

@@ -47,14 +47,24 @@ jobs:
                   from pathlib import Path
 
                   version = sys.argv[1].removeprefix("v")
-                  plugin = json.loads(Path("plugin/package.json").read_text())["version"]
-                  server = tomllib.loads(Path("server/pyproject.toml").read_text())["project"]["version"]
+                  plugin_metadata = json.loads(Path("plugin/package.json").read_text())
+                  server_metadata = tomllib.loads(Path("server/pyproject.toml").read_text())["project"]
+                  plugin = plugin_metadata["version"]
+                  server = server_metadata["version"]
                   match = re.search(r'^VERSION = "([^"]+)"$', Path("server/server.py").read_text(), re.MULTILINE)
                   runtime = match.group(1) if match else None
                   if {plugin, server, runtime} != {version}:
                       raise SystemExit(
                           f"version mismatch: tag={version}, plugin={plugin}, server={server}, runtime={runtime}"
                       )
+                  if plugin_metadata["name"] != "zotero-pdf2zh-pro":
+                      raise SystemExit(f"unexpected plugin package: {plugin_metadata['name']}")
+                  if plugin_metadata["config"]["addonID"] != "zotero-pdf2zh-pro@study-233":
+                      raise SystemExit(f"unexpected add-on ID: {plugin_metadata['config']['addonID']}")
+                  if server_metadata["name"] != "zotero-pdf2zh-pro":
+                      raise SystemExit(f"unexpected PyPI package: {server_metadata['name']}")
+                  if set(server_metadata["scripts"]) != {"zotero-pdf2zh-pro"}:
+                      raise SystemExit(f"unexpected CLI entry points: {server_metadata['scripts']}")
                   PY
 
             - name: Build package
@@ -69,5 +79,5 @@ jobs:
               run: >-
                   uv publish
                   --trusted-publishing always
-                  --check-url https://pypi.org/simple/zotero-pdf2zh-next/
+                  --check-url https://pypi.org/simple/zotero-pdf2zh-pro/
                   server/dist/*

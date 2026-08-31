@@ -47,8 +47,16 @@ def main() -> None:
     if unexpected:
         raise RuntimeError(f"Forbidden distributions installed: {sorted(unexpected)}")
 
-    if importlib.metadata.version("zotero-pdf2zh-next") != expected_version:
-        raise RuntimeError("Installed zotero-pdf2zh-next version mismatch")
+    distribution = importlib.metadata.distribution("zotero-pdf2zh-pro")
+    if distribution.version != expected_version:
+        raise RuntimeError("Installed zotero-pdf2zh-pro version mismatch")
+    scripts = {
+        entry_point.name: entry_point.value
+        for entry_point in distribution.entry_points
+        if entry_point.group == "console_scripts"
+    }
+    if scripts != {"zotero-pdf2zh-pro": "server:main"}:
+        raise RuntimeError(f"Installed CLI entry point mismatch: {scripts}")
     if pdf2zh_next.__version__ != "2.8.2":
         raise RuntimeError(f"Unexpected pdf2zh_next snapshot: {pdf2zh_next.__version__}")
     if babeldoc.__version__ != "0.5.24":

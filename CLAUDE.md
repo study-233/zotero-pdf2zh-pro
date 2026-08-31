@@ -68,13 +68,15 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - This repo ships the server through multiple targets: local `uv`, Docker, and Homebrew.
 - Keep the plugin and server version aligned. When bumping a release, update both `plugin/package.json` and the server version fields in `server/pyproject.toml` and `server/server.py`.
-- The server is also published to PyPI as `zotero-pdf2zh-next`; `scripts/release.sh <version>` is the unified release path for XPI, PyPI, and Homebrew unless an explicit `--no-*` flag is used.
+- The server is published to PyPI as `zotero-pdf2zh-pro`; `scripts/release.sh <version>` is the unified release path for XPI, PyPI, the Windows/friends packages, and optional Homebrew updates.
 - When changing server packaging or startup behavior, also review:
   - `server/pyproject.toml`
   - `server/uv.lock`
   - `server/Dockerfile`
   - `compose.yaml`
-  - the Homebrew tap repo `NightWatcher314/homebrew-formula`, formula `Formula/zotero-pdf2zh-next.rb`
+  - the private Homebrew tap `study-233/homebrew-formula`, formula `Formula/zotero-pdf2zh-pro.rb`
 - The Homebrew formula should stay aligned with the server CLI entrypoint and currently must pin `python@3.13` instead of unversioned `python`, because the `pdf2zh_next -> pydantic-core` dependency chain does not currently build correctly on Python 3.14.
-- The Homebrew tap remote is `https://github.com/NightWatcher314/homebrew-formula.git`; use local path `/Users/night/Documents/Codes/homebrew-formula` when release tooling needs a tap checkout.
+- The Homebrew tap remote is `git@github.com:study-233/homebrew-formula.git`. Use `--tap-path` or let the release script use a temporary clone; never add a personal absolute path.
+- The tap is source-only and intentionally does not publish bottles. Update its `version` and git `revision`, push `main`, and wait for `formula-checks.yml`.
+- The plugin repository is private, so the plugin has no automatic update URL. Friends receive XPI and source through the generated friends package.
 - Do not update only one distribution target if the change affects all startup/install paths.

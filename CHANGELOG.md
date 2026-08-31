@@ -1,98 +1,14 @@
 # 更新记录
 
-这里记录 `zotero-pdf2zh-next` 每个版本的重要变化。GitHub Release 的说明会从对应版本的条目生成。
+这里记录 `zotero-pdf2zh-pro` 的用户可见变化。旧项目的历史仍保留在 Git 历史中，
+不作为本产品的版本序列。
 
 ## Unreleased
 
-## v5.3.0 - 2026-08-01
+## v1.0.0 - 2026-08-31
 
-- Zotero 偏好页新增“翻译表格内文字”开关；默认开启，可按任务关闭，并完整传递到 `pdf2zh_next` 的 `translate_table_text`。
-- PyPI 发行包固定内置 `pdf2zh-next 2.8.2`、BabelDOC `0.5.24` 和 RapidOCR `1.4.4` 核心快照，避免上游版本漂移。
-- PyPI 安装不再拉取 Gradio、FastAPI、pandas 等上游完整 Web UI 依赖；fresh Python 3.13 环境验证为 105 个 distribution，OCR 模型加载通过。
-- Homebrew 依赖图去掉 BabelDOC 未使用的 `xsdata` CLI extra 和 Ruff，并在构建 bottle 时裁掉依赖包 tests、OpenCV/skimage 示例数据。
-- wheel/sdist 新增固定来源 SHA、第三方许可证、内容检查和 fresh-wheel 安装 smoke；Docker 构建同步包含固定核心快照。
-
-## v5.2.9 - 2026-07-31
-
-- 源码 `uv sync`、Docker 和 Homebrew 构建去掉重复的 GUI 版 `opencv-python`，只保留 BabelDOC 已依赖的 `opencv-python-headless`。
-- RapidOCR 空白图 smoke test 通过；OCR 能力保持不变，Linux 不再因 GUI OpenCV 缺少 `libxcb.so.1` 而失败。
-- fresh macOS 环境实测降至 114 个 Python distribution、703 MiB；相对未瘦身版本共减少 28 个 distribution、285 MiB。
-- 加固统一发版脚本：可靠检测 tap 远端分支、接受 `brew pr-pull` 的关闭状态，并确认 Apple Silicon bottle 确实写入 Formula。
-
-## v5.2.8 - 2026-07-31
-
-- Homebrew 改为发布 Apple Silicon bottle，安装时不再现场解析和下载 Python 依赖。
-- Homebrew 和源码 `uv sync` 跳过上游未使用的 Gradio、FastAPI 等前端/服务依赖，保留全部翻译 provider、OCR 和术语提取能力。
-- 补齐上游漏声明的 `tomlkit` 核心依赖，并增加锁文件公共 PyPI 与瘦身依赖回归测试。
-- fresh macOS 环境实测从 142 个 Python distribution、988 MiB 降至 115 个、740 MiB。
-
-## v5.2.7 - 2026-07-31
-
-- 修复 Homebrew 安装依赖被锁定到私有 `pypi.ntwc.top` 镜像的问题。
-- 服务端锁文件改用公共 PyPI，公网环境无需实验室内网即可安装。
-- 加固发版流程，阻止后续版本再次提交 Host 本地镜像地址。
-- 修复翻译结果未持久化到任务工作目录的问题。
-
-## v5.2.6 - 2026-06-21
-
-- 增强服务端 `/health`，返回 Python、`pdf2zh_next`、BabelDOC、工作目录可写性、剩余空间和任务统计。
-- 增强“检查连接与配置”，在偏好页展示健康信息、任务统计、配置诊断和可选真实 API 测试结果。
-- 新增结构化诊断信息，用于常见 LLM 配置错误、CID 文本层问题、限流、网络错误、输出缺失和页码设置错误。
-- 失败任务现在会保留并展示诊断建议，任务相关 API 错误也会返回诊断详情。
-
-- 新增 `CHANGELOG.md`，集中记录每个版本的用户可见变化。
-- 更新发布脚本，要求发版前存在对应版本的 changelog 条目，并用该条目生成 GitHub Release 说明。
-- 精简 README，移除服务接口和请求体示例等偏技术内容，并补充与原项目的区别。
-- 新增 `docs/development-notes.md`，记录架构边界、偏好页维护、服务端参数映射、测试和发布经验。
-
-## v5.2.5 - 2026-05-28
-
-- 修复 5.2.4 中“跳过文本安全检查”对 BabelDOC worker 线程不生效的问题。
-- 在启用该选项时，将 CID 检查绕过状态传递到实际解析 PDF 段落的执行线程。
-- 串行化受文本检查绕过影响的翻译调用，避免并发任务之间互相污染检查状态。
-
-## v5.2.4 - 2026-05-28
-
-- 新增“跳过文本安全检查”高级选项，用于绕过 BabelDOC 对高 CID 文本层 PDF 的拦截。
-- 服务端在该选项启用时跳过 CID 字符、CID 段落和逐段 CID 过滤检查。
-- 插件偏好页新增对应开关，并将配置传递到服务端任务和配置校验请求。
-
-## v5.2.3 - 2026-05-14
-
-- 新增 `uv tool install --python 3.13 zotero-pdf2zh-next` 作为统一服务端安装方式。
-- 将服务端 Python 包名统一为 `zotero-pdf2zh-next`，为 PyPI 分发做准备。
-- 发布脚本统一 XPI、PyPI 和 Homebrew 分发，支持通过 direnv 注入 `UV_PUBLISH_TOKEN`。
-- 补充 PyPI 包 README 和维护文档中的发布说明。
-
-## v5.2.2 - 2026-05-11
-
-- 重构 Zotero 插件偏好页，把连接、翻译、输出、运行参数和 LLM 配置分区展示。
-- 在偏好页显示插件端版本和服务端版本。
-- 打开偏好页或修改服务端地址后，自动刷新服务端连接状态。
-
-## v5.2.1 - 2026-05-11
-
-- 新增“禁用术语提取”选项。
-- 将该选项从 Zotero 插件传递到服务端，并映射到 `pdf2zh_next` 运行参数。
-- 为术语提取开关增加回归测试。
-
-## v5.2.0 - 2026-05-11
-
-- 新增 Codex 发布技能和发布流程说明。
-- 发布 `v5.2.0`，保持插件端和服务端版本一致。
-
-## v5.1.0 - 2026-05-11
-
-- 改进任务持久化和任务管理面板。
-- 增加失败任务重试能力。
-- 改进实时进度更新和结果导入状态展示。
-
-## v5.0.1 - 2026-05-11
-
-- 同步服务端 lockfile 中的版本号。
-
-## v5.0.0 - 2026-05-11
-
-- 将项目重构为精简版 `zotero-pdf2zh-next` fork。
-- 增加 Docker 和 Homebrew 等服务端安装方式。
-- 将翻译任务工作目录统一放到 `server/translates/`。
+- 以独立产品 `zotero-pdf2zh-pro` 发布，使用新的插件 ID、设置空间、CLI、数据目录和发行物名称。
+- 服务端发布到由 `study-233` 控制的新 PyPI 项目，不再安装旧开发者拥有的发行包。
+- 新增 Windows 10/11 x64 一键安装、手动启停、日志查看和一键卸载，并明确不注册自启动。
+- 新增面向朋友直接发送的整合包，包含 XPI、Windows 安装包、源码归档、中文说明和 SHA-256 校验值。
+- 保留固定的 pdf2zh-next、BabelDOC 和 RapidOCR 核心快照及全部第三方许可证声明。
