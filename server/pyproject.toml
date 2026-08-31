@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zotero-pdf2zh-pro"
-version = "1.2.0"
+version = "1.3.0"
 description = "Minimal pdf2zh_next bridge for the Zotero plugin"
 readme = "README.md"
 authors = [{ name = "study-233" }]
