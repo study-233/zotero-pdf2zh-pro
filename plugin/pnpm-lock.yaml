@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  adm-zip: 0.6.0
+  js-yaml: 4.3.1
+
 importers:
 
   .:
@@ -630,9 +634,9 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  adm-zip@0.5.18:
-    resolution: {integrity: sha512-ufJnssQGbxzLNS1Ho9bCtX4rQKCCvoVuDLHoJyc3F9dOGDB4BkWs2Ci0kv53lqocAEQ/Cbi+I2XCsNYGqVYqng==}
-    engines: {node: '>=12.0'}
+  adm-zip@0.6.0:
+    resolution: {integrity: sha512-XleryMhbuksdKtofnWZ9Sk+4CUTbms4Mb/EU32SZwToAyZ5RgVos/ki8n+yr0LWHOGKuakbXTuuYNHLQjhddgg==}
+    engines: {node: '>=14.0'}
 
   agent-base@6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
@@ -784,7 +788,7 @@ packages:
     engines: {node: '>= 0.4'}
 
   epubjs@https://codeload.github.com/zotero/epub.js/tar.gz/a6139d586b66d404f3da2b846598960c0394afc5:
-    resolution: {gitHosted: true, integrity: sha512-6bY5ThKK3dL0f1I6pqZO0KkCOh5KGrybGAlkdGSE7y1ddrQ03nLKaxUnmcYRZ6Z8vYgJRnByq1WM4RhdJw0p7w==, tarball: https://codeload.github.com/zotero/epub.js/tar.gz/a6139d586b66d404f3da2b846598960c0394afc5}
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/zotero/epub.js/tar.gz/a6139d586b66d404f3da2b846598960c0394afc5}
     version: 0.3.93
 
   es-define-property@1.0.1:
@@ -1038,8 +1042,8 @@ packages:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
-  js-yaml@4.3.0:
-    resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
+  js-yaml@4.3.1:
+    resolution: {integrity: sha512-CY6crGq313MX8GkwvB7tzgp99vjQxY1++5y10/BKN/GUfHqWaOGQMNZkBvqSzsZKWk/ijwHlWzzkLulsGHhjWQ==}
     hasBin: true
 
   json-buffer@3.0.1:
@@ -1151,8 +1155,8 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
-  pdfjs-dist@https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/6fb504f2d970ffa91bbaed38231a62df6b00f48e:
-    resolution: {gitHosted: true, integrity: sha512-QOF8ZfH+gA5Fgmq95lhzRhUVaOQIr6W7ykrWwQQr//0Ij05w55PJNOpGVXe7J9r4WpjVb2aULdpWblcw1Lk8tg==, tarball: https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/6fb504f2d970ffa91bbaed38231a62df6b00f48e}
+  pdfjs-dist@https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/cb4ba25178e5fd5a6cfbde859d87ef763a2a20f1:
+    resolution: {gitHosted: true, integrity: sha512-XhIYLjarWpryNqmVz0w3zACej2K6FL3CYM8aKe+N9D1s1hiFUN1jXmwDsStTlPOavHswq7Oqdk/lppuWSOlRVw==, tarball: https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/cb4ba25178e5fd5a6cfbde859d87ef763a2a20f1}
     version: 0.0.0
     engines: {node: '>=18'}
 
@@ -1456,7 +1460,7 @@ snapshots:
       globals: 14.0.0
       ignore: 5.3.2
       import-fresh: 3.3.1
-      js-yaml: 4.3.0
+      js-yaml: 4.3.1
       minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
@@ -1857,7 +1861,7 @@ snapshots:
 
   acorn@8.17.0: {}
 
-  adm-zip@0.5.18: {}
+  adm-zip@0.6.0: {}
 
   agent-base@6.0.2:
     dependencies:
@@ -2303,7 +2307,7 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  js-yaml@4.3.0:
+  js-yaml@4.3.1:
     dependencies:
       argparse: 2.0.1
 
@@ -2423,7 +2427,7 @@ snapshots:
 
   pathe@2.0.3: {}
 
-  pdfjs-dist@https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/6fb504f2d970ffa91bbaed38231a62df6b00f48e: {}
+  pdfjs-dist@https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/cb4ba25178e5fd5a6cfbde859d87ef763a2a20f1: {}
 
   perfect-debounce@2.1.0: {}
 
@@ -2563,7 +2567,7 @@ snapshots:
   zotero-plugin-scaffold@0.3.5:
     dependencies:
       '@swc/core': 1.15.46
-      adm-zip: 0.5.18
+      adm-zip: 0.6.0
       bumpp: 10.4.1
       c12: 3.3.4
       chokidar: 4.0.3
@@ -2588,4 +2592,4 @@ snapshots:
       '@types/bluebird': 3.5.42
       '@types/react': 18.3.31
       epubjs: https://codeload.github.com/zotero/epub.js/tar.gz/a6139d586b66d404f3da2b846598960c0394afc5
-      pdfjs-dist: https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/6fb504f2d970ffa91bbaed38231a62df6b00f48e
+      pdfjs-dist: https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/cb4ba25178e5fd5a6cfbde859d87ef763a2a20f1
