@@ -42,6 +42,10 @@ The private plugin repository cannot serve automatic updates to friends. The
 friends ZIP must contain the XPI, Windows ZIP, Chinese instructions, the
 corresponding source archive, and `SHA256SUMS.txt`.
 
+Keep the friends ZIP local for direct private delivery. Never upload it as a
+GitHub Release asset. GitHub Releases contain only the XPI and Windows ZIP;
+report the local friends ZIP path and hash separately.
+
 ## Publish PyPI
 
 Trusted Publishing is bound to project `zotero-pdf2zh-pro`, owner `study-233`,

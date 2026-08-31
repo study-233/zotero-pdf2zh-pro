@@ -264,16 +264,15 @@ if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
     NOTES_FILE="$(mktemp)"
     TEMP_PATHS+=("$NOTES_FILE")
     printf '%s\n\n' "$CHANGELOG_SECTION" >"$NOTES_FILE"
-    printf 'Direct-share package: `%s`\n' "$(basename "$FRIENDS_PACKAGE")" >>"$NOTES_FILE"
+    printf 'The direct-share friends package is generated locally and is not uploaded to GitHub.\n' >>"$NOTES_FILE"
     printf '\nSHA-256:\n\n' >>"$NOTES_FILE"
     printf -- '- `%s`  `%s`\n' "$XPI_SHA256" "$(basename "$XPI")" >>"$NOTES_FILE"
     printf -- '- `%s`  `%s`\n' "$WINDOWS_SHA256" "$(basename "$WINDOWS_PACKAGE")" >>"$NOTES_FILE"
-    printf -- '- `%s`  `%s`\n' "$FRIENDS_SHA256" "$(basename "$FRIENDS_PACKAGE")" >>"$NOTES_FILE"
     if gh release view "$TAG" --repo "$MAIN_REPO" >/dev/null 2>&1; then
-        gh release upload "$TAG" "$XPI" "$WINDOWS_PACKAGE" "$FRIENDS_PACKAGE" \
+        gh release upload "$TAG" "$XPI" "$WINDOWS_PACKAGE" \
             --repo "$MAIN_REPO" --clobber
     else
-        gh release create "$TAG" "$XPI" "$WINDOWS_PACKAGE" "$FRIENDS_PACKAGE" \
+        gh release create "$TAG" "$XPI" "$WINDOWS_PACKAGE" \
             --repo "$MAIN_REPO" --target "$COMMIT" --title "$TAG" \
             --notes-file "$NOTES_FILE" --latest
     fi
