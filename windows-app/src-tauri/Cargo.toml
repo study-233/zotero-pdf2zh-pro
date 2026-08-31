@@ -1,6 +1,6 @@
 [package]
 name = "zotero-pdf2zh-pro-control"
-version = "1.1.0"
+version = "1.2.0"
 description = "Windows control center for zotero-pdf2zh-pro"
 authors = ["study-233"]
 edition = "2021"

@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$PackageVersion = "1.1.0" # release-version
+$PackageVersion = "1.2.0" # release-version
 $ProductName = "zotero-pdf2zh-pro"
 $ServerHost = "127.0.0.1"
 $ServerPort = if ($env:PDF2ZH_WINDOWS_PORT) {
