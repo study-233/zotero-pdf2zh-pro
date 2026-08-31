@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import process from "node:process";
 import test from "node:test";
 import { fileURLToPath, URL } from "node:url";
 
@@ -63,8 +64,23 @@ function assertManifestIdentity(manifest, label, templates = false) {
 }
 
 function readXpiManifest() {
-    const xpi = path.join(pluginRoot, "build", expected.name + ".xpi");
-    const result = spawnSync("tar", ["-xOf", xpi, "manifest.json"], {
+    const xpi = path.join("build", expected.name + ".xpi");
+    const extractor =
+        process.platform === "win32"
+            ? {
+                  command: path.join(
+                      process.env.SystemRoot,
+                      "System32",
+                      "tar.exe",
+                  ),
+                  args: ["-xOf", xpi, "manifest.json"],
+              }
+            : {
+                  command: "unzip",
+                  args: ["-p", xpi, "manifest.json"],
+              };
+    const result = spawnSync(extractor.command, extractor.args, {
+        cwd: pluginRoot,
         encoding: "utf8",
     });
     assert.equal(
