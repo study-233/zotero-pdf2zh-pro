@@ -44,11 +44,11 @@ function Install-ManagementFiles {
         "stop-server.ps1",
         "view-log.ps1",
         "uninstall.ps1",
-        "安装.cmd",
-        "启动服务.cmd",
-        "停止服务.cmd",
-        "查看日志.cmd",
-        "卸载.cmd"
+        "install.cmd",
+        "start-server.cmd",
+        "stop-server.cmd",
+        "view-log.cmd",
+        "uninstall.cmd"
     )
     foreach ($file in $files) {
         $source = Join-Path $PSScriptRoot $file
@@ -66,10 +66,10 @@ function Install-Shortcuts {
     New-Item -ItemType Directory -Force -Path $StartMenuDir | Out-Null
     $shell = New-Object -ComObject WScript.Shell
     $shortcuts = @{
-        "启动服务.lnk" = "启动服务.cmd"
-        "停止服务.lnk" = "停止服务.cmd"
-        "查看日志.lnk" = "查看日志.cmd"
-        "卸载.lnk" = "卸载.cmd"
+        "Start Server.lnk" = "start-server.cmd"
+        "Stop Server.lnk" = "stop-server.cmd"
+        "View Log.lnk" = "view-log.cmd"
+        "Uninstall.lnk" = "uninstall.cmd"
     }
     foreach ($shortcutName in $shortcuts.Keys) {
         $shortcut = $shell.CreateShortcut((Join-Path $StartMenuDir $shortcutName))
@@ -128,6 +128,6 @@ Install-Shortcuts
 
 Write-Host ""
 Write-Host "Installation complete. The server was not started automatically."
-Write-Host "Use the Start menu shortcut or 启动服务.cmd when you want to run it."
+Write-Host "Use the Start menu shortcut or start-server.cmd when you want to run it."
 Write-Host "Data: $DataDir"
 Write-Host "Logs: $LogFile"

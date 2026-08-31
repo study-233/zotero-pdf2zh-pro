@@ -1,6 +1,6 @@
 # zotero-pdf2zh-pro
 
-面向 Zotero 7 及以上版本的 PDF 翻译插件，配套本地 Python 服务调用
+面向 Zotero 8、9 和 10 的 PDF 翻译插件，配套本地 Python 服务调用
 `pdf2zh_next` 完成翻译。
 
 当前统一版本：<!-- release-version --> `1.0.0`
@@ -27,12 +27,12 @@
 
 解压 `zotero-pdf2zh-pro-windows-x64.zip` 后双击：
 
-- `安装.cmd`：安装官方 uv、uv 托管的 Python 3.13，以及公开 PyPI 上的
+- `install.cmd`：安装官方 uv、uv 托管的 Python 3.13，以及公开 PyPI 上的
   `zotero-pdf2zh-pro==1.0.0`；安装完成后不会自动启动。
-- `启动服务.cmd`：需要翻译时手动启动。
-- `停止服务.cmd`：停止本项目管理的服务进程。
-- `查看日志.cmd`：打开服务日志。
-- `卸载.cmd`：卸载程序，并选择是否删除数据和日志。
+- `start-server.cmd`：需要翻译时手动启动。
+- `stop-server.cmd`：停止本项目管理的服务进程。
+- `view-log.cmd`：打开服务日志。
+- `uninstall.cmd`：卸载程序，并选择是否删除数据和日志。
 
 安装不需要管理员权限，不创建任务计划、Windows Service 或登录启动项。数据位于
 `%LOCALAPPDATA%\zotero-pdf2zh-pro\data`，日志位于
@@ -76,7 +76,7 @@ docker compose up --build -d
 ## 更新
 
 - 插件：安装维护者发送的新 XPI。
-- Windows：重新运行新版本中的 `安装.cmd`，新产品数据会保留。
+- Windows：重新运行新版本中的 `install.cmd`，新产品数据会保留。
 - uv：`uv tool upgrade zotero-pdf2zh-pro`。
 - Homebrew：`brew upgrade zotero-pdf2zh-pro` 后重启服务。
 

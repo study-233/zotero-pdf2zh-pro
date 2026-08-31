@@ -168,16 +168,7 @@ CI=true "${PNPM[@]}" --dir plugin install --frozen-lockfile
 "${PNPM[@]}" --dir plugin lint:check
 rm -rf -- plugin/build
 "${PNPM[@]}" --dir plugin build
-
-node - "$VERSION" <<'NODE'
-const fs = require("fs");
-const version = process.argv[2];
-const manifest = JSON.parse(fs.readFileSync("plugin/build/addon/manifest.json", "utf8"));
-const zotero = manifest.applications.zotero;
-if (manifest.name !== "zotero-pdf2zh-pro" || manifest.version !== version) throw new Error("manifest identity mismatch");
-if (zotero.id !== "zotero-pdf2zh-pro@study-233") throw new Error("manifest add-on ID mismatch");
-if (Object.hasOwn(zotero, "update_url")) throw new Error("private add-on must not contain update_url");
-NODE
+"${PNPM[@]}" --dir plugin test
 
 if command -v powershell.exe >/dev/null 2>&1; then
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1

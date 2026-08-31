@@ -10,12 +10,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WINDOWS_DIR = REPO_ROOT / "scripts" / "windows"
 PACKAGE_FILES = [
-    "使用说明.txt",
-    "安装.cmd",
-    "启动服务.cmd",
-    "停止服务.cmd",
-    "查看日志.cmd",
-    "卸载.cmd",
+    "README.txt",
+    "install.cmd",
+    "start-server.cmd",
+    "stop-server.cmd",
+    "view-log.cmd",
+    "uninstall.cmd",
     "common.ps1",
     "install.ps1",
     "start-server.ps1",
@@ -50,6 +50,10 @@ def build_package(version: str, output_dir: Path) -> Path:
             "Windows package version mismatch: "
             f"requested={version}, project={project_version()}, script={script_version()}"
         )
+
+    non_ascii = [name for name in PACKAGE_FILES if not name.isascii()]
+    if non_ascii:
+        raise RuntimeError(f"Windows package file names must be ASCII: {non_ascii}")
 
     missing = [name for name in PACKAGE_FILES if not (WINDOWS_DIR / name).is_file()]
     if missing:

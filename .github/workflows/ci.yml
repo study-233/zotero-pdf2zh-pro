@@ -50,6 +50,10 @@ jobs:
               run: pnpm build
               working-directory: plugin
 
+            - name: Test plugin artifacts
+              run: pnpm test
+              working-directory: plugin
+
     server:
         strategy:
             fail-fast: false

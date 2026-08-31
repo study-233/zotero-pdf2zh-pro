@@ -5,7 +5,7 @@ Assert-WindowsX64
 
 $serverExecutable = Get-ServerExecutable
 if (-not $serverExecutable) {
-    throw "The server is not installed. Run 安装.cmd first."
+    throw "The server is not installed. Run install.cmd first."
 }
 
 $listenerPid = Get-ListeningProcessId
