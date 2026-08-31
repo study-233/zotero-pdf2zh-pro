@@ -9,6 +9,7 @@
 
 - 将插件兼容范围更新为 Zotero 8.0 至 10.0.x，并新增源码、构建目录与 XPI 清单的一致性测试。
 - Windows 安装包改用 ASCII 文件名，避免不同系统区域设置下的解压和启动问题。
+- 修复 uv 启动器使用 Python 子进程监听端口时的 Windows 服务归属判断。
 - 仓库改为公开，并通过 Release 中的 `update.json` 为 Zotero 插件提供自动更新。
 - GitHub Release 发布 XPI、自动更新清单与 Windows ZIP，不再构建或上传朋友版制品。
 

@@ -119,15 +119,42 @@ function Test-PathEqual {
     )
 }
 
+function Get-ToolPythonExecutable {
+    $uv = Get-UvExecutable
+    if (-not $uv) {
+        return $null
+    }
+    $toolRoot = (& $uv tool dir 2>$null | Select-Object -Last 1).Trim()
+    if (-not $toolRoot) {
+        return $null
+    }
+    $candidate = Join-Path (Join-Path $toolRoot $ProductName) "Scripts\python.exe"
+    if (Test-Path -LiteralPath $candidate) {
+        return [IO.Path]::GetFullPath($candidate)
+    }
+    return $null
+}
+
 function Test-ExpectedServerProcess {
     param([int]$ProcessId, [string]$ServerExecutable)
     $actualExecutable = Get-ProcessExecutablePath -ProcessId $ProcessId
-    if (-not (Test-PathEqual -Left $actualExecutable -Right $ServerExecutable)) {
+    $commandLine = Get-ProcessCommandLine -ProcessId $ProcessId
+    if (-not $actualExecutable -or -not $commandLine) {
         return $false
     }
-    $commandLine = Get-ProcessCommandLine -ProcessId $ProcessId
-    if (-not $commandLine) {
-        return $false
+    if (-not (Test-PathEqual -Left $actualExecutable -Right $ServerExecutable)) {
+        $toolPython = Get-ToolPythonExecutable
+        if (
+            -not $toolPython -or
+            -not [string]::Equals(
+                [IO.Path]::GetFileName($actualExecutable),
+                "python.exe",
+                [StringComparison]::OrdinalIgnoreCase
+            ) -or
+            $commandLine.IndexOf($toolPython, [StringComparison]::OrdinalIgnoreCase) -lt 0
+        ) {
+            return $false
+        }
     }
     $quote = [char]34
     $expectedValues = @(
