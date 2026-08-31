@@ -137,7 +137,9 @@ def _translate_wrapper(
                 cancel_event.set()
                 config.cancel_translation()
             except Exception as e:
-                logger.error(f"Error in cancel_recv_thread: {e}")
+                logger.error(
+                    "error in cancel receiver: error_type=%s", type(e).__name__
+                )
 
         cancel_t = threading.Thread(target=cancel_recv_thread, daemon=True)
         cancel_t.start()
@@ -145,7 +147,10 @@ def _translate_wrapper(
         async def translate_wrapper_async():
             try:
                 async for event in babeldoc_translate(config):
-                    logger.debug(f"sub process generate event: {event}")
+                    logger.debug(
+                        "subprocess generated event: event_type=%s",
+                        event.get("type") if isinstance(event, dict) else type(event).__name__,
+                    )
                     if event["type"] == "error":
                         # Convert babeldoc error to structured exception
                         error_msg = str(event.get("error", "Unknown babeldoc error"))
@@ -250,7 +255,10 @@ def _translate_wrapper(
                 # Capture non-babeldoc errors during translation
                 tb_str = traceback.format_exc()
                 if not cancel_event.is_set():
-                    logger.error(f"Error in translate_wrapper_async: {e}\n{tb_str}")
+                    logger.error(
+                        "translation wrapper failed: error_type=%s",
+                        type(e).__name__,
+                    )
                 error = SubprocessError(
                     message=f"Error during translation process: {e}",
                     traceback_str=tb_str,
@@ -259,7 +267,10 @@ def _translate_wrapper(
                     pipe_progress_send.send(error)
                 except Exception as pipe_err:
                     if not cancel_event.is_set():
-                        logger.error(f"Failed to send error through pipe: {pipe_err}")
+                        logger.error(
+                            "failed to send error through pipe: error_type=%s",
+                            type(pipe_err).__name__,
+                        )
 
         # Run the async translation in the subprocess's event loop
         try:
@@ -268,7 +279,9 @@ def _translate_wrapper(
             # Capture errors that might occur outside the async context
             tb_str = traceback.format_exc()
             if not cancel_event.is_set():
-                logger.error(f"Error running async translation: {e}\n{tb_str}")
+                logger.error(
+                    "async translation failed: error_type=%s", type(e).__name__
+                )
             error = SubprocessError(
                 message=f"Failed to run translation process: {e}", traceback_str=tb_str
             )
@@ -276,11 +289,16 @@ def _translate_wrapper(
                 pipe_progress_send.send(error)
             except Exception as pipe_err:
                 if not cancel_event.is_set():
-                    logger.error(f"Failed to send error through pipe: {pipe_err}")
+                    logger.error(
+                        "failed to send error through pipe: error_type=%s",
+                        type(pipe_err).__name__,
+                    )
     except Exception as e:
         # Capture any errors during setup or initialization
         tb_str = traceback.format_exc()
-        logger.error(f"Subprocess initialization error: {e}\n{tb_str}")
+        logger.error(
+            "subprocess initialization failed: error_type=%s", type(e).__name__
+        )
         try:
             error = SubprocessError(
                 message=f"Translation subprocess initialization error: {e}",
@@ -289,7 +307,10 @@ def _translate_wrapper(
             pipe_progress_send.send(error)
         except Exception as pipe_err:
             if not cancel_event.is_set():
-                logger.error(f"Failed to send error through pipe: {pipe_err}")
+                logger.error(
+                    "failed to send error through pipe: error_type=%s",
+                    type(pipe_err).__name__,
+                )
     finally:
         logger.debug("sub process send close")
         try:
@@ -298,7 +319,10 @@ def _translate_wrapper(
             logger.debug("sub process close pipe progress send")
         except Exception as e:
             if not cancel_event.is_set():
-                logger.error(f"Error closing progress pipe: {e}")
+                logger.error(
+                    "error closing progress pipe: error_type=%s",
+                    type(e).__name__,
+                )
 
         try:
             logging.getLogger().removeHandler(queue_handler)
@@ -307,7 +331,10 @@ def _translate_wrapper(
             logger_queue.close()
         except Exception as e:
             if not cancel_event.is_set():
-                logger.error(f"Error closing logger queue: {e}")
+                logger.error(
+                    "error closing logger queue: error_type=%s",
+                    type(e).__name__,
+                )
 
 
 async def _translate_in_subprocess(
@@ -338,7 +365,10 @@ async def _translate_in_subprocess(
                 # Handle different types of messages from the subprocess
                 if isinstance(event, TranslationError):
                     # Received a structured error object
-                    logger.error(f"Received error from subprocess: {event}")
+                    logger.error(
+                        "received error from subprocess: error_type=%s",
+                        type(event).__name__,
+                    )
                     cb.error_callback(event)
                     break
                 elif isinstance(event, dict):
@@ -359,7 +389,10 @@ async def _translate_in_subprocess(
                 break
             except Exception as e:
                 if not cancel_event.is_set():
-                    logger.error(f"Error receiving event: {e}")
+                    logger.error(
+                        "error receiving event: error_type=%s",
+                        type(e).__name__,
+                    )
                 error = IPCError(f"IPC error: {e}", details=str(e))
                 cb.error_callback(error)
                 break
@@ -418,17 +451,17 @@ async def _translate_in_subprocess(
         try:
             pipe_cancel_message_send.send(True)
         except (OSError, BrokenPipeError) as e:
-            logger.debug(f"Failed to send cancel message: {e}")
+            logger.debug("failed to send cancel message: error_type=%s", type(e).__name__)
         logger.debug("close pipe cancel message")
         try:
             pipe_cancel_message_send.close()
         except Exception as e:
-            logger.debug(f"Failed to close pipe_cancel_message_send: {e}")
+            logger.debug("failed to close cancel pipe: error_type=%s", type(e).__name__)
 
         try:
             pipe_progress_send.send(None)
         except (OSError, BrokenPipeError) as e:
-            logger.debug(f"Failed to send None to pipe_progress_send: {e}")
+            logger.debug("failed to close progress sender: error_type=%s", type(e).__name__)
 
         logger.debug("set cancel event")
         cancel_event.set()
@@ -438,7 +471,7 @@ async def _translate_in_subprocess(
             pipe_progress_recv.close()
             logger.debug("closed pipe_progress_recv")
         except Exception as e:
-            logger.debug(f"Failed to close pipe_progress_recv: {e}")
+            logger.debug("failed to close progress receiver: error_type=%s", type(e).__name__)
 
         # 终止子进程，使用超时防止卡住
         translate_process.join(timeout=2)
@@ -454,7 +487,10 @@ async def _translate_in_subprocess(
                 translate_process.join(timeout=1)
                 logger.info("Translate process killed")
             except Exception as e:
-                logger.exception(f"Error killing translate process: {e}")
+                logger.error(
+                    "error killing translation process: error_type=%s",
+                    type(e).__name__,
+                )
 
         # 等待接收线程，使用超时防止卡住
         logger.debug("join recv thread")
@@ -472,7 +508,7 @@ async def _translate_in_subprocess(
             logger_queue.put(None)
             logger_queue.close()
         except Exception as e:
-            logger.debug(f"Failed to close logger_queue: {e}")
+            logger.debug("failed to close logger queue: error_type=%s", type(e).__name__)
 
         logger.debug("translate process exit code: %s", translate_process.exitcode)
         if not cancel_flag:
@@ -584,6 +620,7 @@ def create_babeldoc_config(settings: SettingsModel, file: Path) -> BabelDOCConfi
         split_strategy=split_strategy,
         # 添加表格模型，仅在需要翻译表格时
         table_model=table_model,
+        skip_references=settings.pdf.skip_references,
         skip_scanned_detection=settings.pdf.skip_scanned_detection,
         ocr_workaround=settings.pdf.ocr_workaround,
         custom_system_prompt=settings.translation.custom_system_prompt,
@@ -642,11 +679,7 @@ async def do_translate_async_stream(
                 break
     except TranslationError as e:
         # Log and re-raise structured errors
-        logger.error(f"Translation error: {e}")
-        if isinstance(e, BabeldocError) and e.original_error:
-            logger.error(f"Original babeldoc error: {e.original_error}")
-        elif isinstance(e, SubprocessError) and e.traceback_str:
-            logger.error(f"Subprocess traceback: {e.traceback_str}")
+        logger.error("translation error: error_type=%s", type(e).__name__)
         # Create an error event to yield to client code
         error_event = {
             "type": "error",
@@ -738,10 +771,12 @@ async def do_translate_file_async(
                         error_type = event.get("error_type", "UnknownError")
                         details = event.get("details", "")
 
-                        logger.error(f"Error translating file {file}: {error_msg}")
+                        logger.error(
+                            "error translating file: error_type=%s", error_type
+                        )
                         logger.error(f"Error type: {error_type}")
                         if details:
-                            logger.error(f"Error details: {details}")
+                            logger.error("error details available")
 
                         error_count += 1
                         if not ignore_error:
@@ -753,7 +788,9 @@ async def do_translate_file_async(
                 if not ignore_error:
                     raise
             except Exception as e:
-                logger.error(f"Error translating file {file}: {e}")
+                logger.error(
+                    "error translating file: error_type=%s", type(e).__name__
+                )
                 error_count += 1
                 if not ignore_error:
                     raise

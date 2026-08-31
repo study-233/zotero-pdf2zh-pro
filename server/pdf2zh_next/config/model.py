@@ -176,6 +176,10 @@ class PDFSettings(BaseModel):
     translate_table_text: bool = Field(
         default=True, description="Translate table text (experimental)"
     )
+    skip_references: bool = Field(
+        default=False,
+        description="Keep automatically detected reference paragraphs untranslated",
+    )
     skip_scanned_detection: bool = Field(
         default=False, description="Skip scanned detection"
     )

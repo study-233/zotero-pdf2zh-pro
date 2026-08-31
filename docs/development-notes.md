@@ -56,6 +56,20 @@ git diff --check
 Windows 还要运行 PowerShell 5.1 语法检查、ZIP 构建以及安装、手动启动、重复启动、
 健康检查、停止、保留数据卸载、重装和 `-PurgeData` 生命周期测试。
 
+## macOS 本机源码部署
+
+`scripts/local-deploy.sh` 用于把当前工作树部署到本机 Zotero Profile 和 Homebrew
+管理的 `zotero-pdf2zh-pro` 服务。脚本在修改安装前完成构建与制品校验，并在存在
+运行中、排队中或正在取消的任务时退出，不会终止用户任务。
+
+```bash
+./scripts/local-deploy.sh --check-only
+./scripts/local-deploy.sh
+```
+
+部署备份和 SHA-256 记录位于被忽略的 `.local-dev/deployments/`。失败时必须恢复
+上一版 XPI、Python 包和任务数据；该脚本不得修改版本、创建提交或发布远端制品。
+
 ## 发布
 
 新版本先写 `CHANGELOG.md` 的 `## v<version> - YYYY-MM-DD`，再运行：

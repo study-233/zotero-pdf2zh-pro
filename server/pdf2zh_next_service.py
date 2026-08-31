@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import contextlib
 import logging
 import shutil
 import threading
@@ -17,9 +18,12 @@ from pdf2zh_next.config.cli_env_model import CLIEnvSettingsModel
 from pdf2zh_next.high_level import BabelDOCConfig
 from pdf2zh_next.high_level import babeldoc_translate, create_babeldoc_config
 from pdf2zh_next.translator import get_translator
+from observability import TaskMetricsCollector
+from observability import resolve_deepseek_pricing
 
 LOGGER = logging.getLogger("zotero_pdf2zh_server.translate")
 ProgressCallback = Callable[[dict[str, Any]], None]
+MetricsCallback = Callable[[dict[str, Any]], None]
 ConfigReadyCallback = Callable[[BabelDOCConfig], None]
 _TEXT_CHECK_TRANSLATION_LOCK = threading.Lock()
 _TEXT_CHECK_PATCH_LOCK = threading.Lock()
@@ -270,9 +274,8 @@ class ProgressLogger:
 
         if event_type == "error":
             LOGGER.error(
-                "[%s] translation failed: %s",
+                "[%s] translation failed: error_type=translation_event",
                 self.job_id,
-                event.get("error") or "unknown error",
             )
 
     @staticmethod
@@ -328,11 +331,16 @@ def build_settings_input(payload: dict[str, Any]) -> dict[str, Any]:
     output_modes = payload["output_modes"]
     service = payload["service"]
 
-    settings_input: dict[str, Any] = {
+    translation_input: dict[str, Any] = {
         "lang_in": payload["source_lang"],
         "lang_out": payload["target_lang"],
         "output": str(output_dir),
         "qps": max(int(payload.get("qps", 8) or 8), 1),
+        "no_auto_extract_glossary": bool(
+            payload.get("no_auto_extract_glossary")
+        ),
+    }
+    pdf_input: dict[str, Any] = {
         "no_mono": "mono" not in output_modes,
         "no_dual": "dual" not in output_modes,
         "watermark_output_mode": (
@@ -341,16 +349,20 @@ def build_settings_input(payload: dict[str, Any]) -> dict[str, Any]:
         "ocr_workaround": bool(payload.get("ocr")),
         "auto_enable_ocr_workaround": bool(payload.get("auto_ocr")),
         "translate_table_text": bool(payload.get("translate_table_text", True)),
-        "no_auto_extract_glossary": bool(payload.get("no_auto_extract_glossary")),
+        "skip_references": bool(payload.get("skip_references", False)),
+    }
+    settings_input: dict[str, Any] = {
+        "translation": translation_input,
+        "pdf": pdf_input,
         service: True,
     }
 
     if payload.get("pool_size"):
-        settings_input["pool_max_workers"] = int(payload["pool_size"])
+        translation_input["pool_max_workers"] = int(payload["pool_size"])
 
     font_family = payload.get("font_family")
     if font_family and font_family != "auto":
-        settings_input["primary_font_family"] = font_family
+        translation_input["primary_font_family"] = font_family
 
     skip_last_pages = int(payload.get("skip_last_pages", 0) or 0)
     if skip_last_pages > 0:
@@ -360,7 +372,7 @@ def build_settings_input(payload: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(
                 f"skipLastPages={skip_last_pages} removes every page from {input_path.name}"
             )
-        settings_input["pages"] = f"1-{last_page}"
+        pdf_input["pages"] = f"1-{last_page}"
 
     llm_api = payload.get("llm_api") or {}
     detail = build_service_detail(service, llm_api)
@@ -527,6 +539,7 @@ async def translate_pdf_with_callbacks(
     payload: dict[str, Any],
     job_id: str,
     progress_callback: ProgressCallback | None = None,
+    metrics_callback: MetricsCallback | None = None,
     on_config_ready: ConfigReadyCallback | None = None,
 ) -> TranslationResult:
     input_path = Path(payload["input_path"])
@@ -540,9 +553,37 @@ async def translate_pdf_with_callbacks(
 
     await asyncio.to_thread(_TEXT_CHECK_TRANSLATION_LOCK.acquire)
     previous_skip_text_checks = set_text_checks_skipped(skip_text_checks)
+    metrics_collector: TaskMetricsCollector | None = None
+    heartbeat_task: asyncio.Task | None = None
     try:
         settings = create_runtime_settings(payload)
         translation_config = create_babeldoc_config(settings, input_path)
+        translation_config.save_detailed_tracking = False
+        if str(payload.get("service") or "").lower() == "deepseek":
+            model = str(
+                getattr(settings.translate_engine_settings, "openai_model", "")
+                or (payload.get("llm_api") or {}).get("model")
+                or "deepseek-chat"
+            )
+            metrics_collector = TaskMetricsCollector(
+                task_id=job_id,
+                provider="deepseek",
+                model=model,
+                pricing=resolve_deepseek_pricing(model, payload.get("llm_api")),
+                callback=metrics_callback,
+            )
+            translator = translation_config.translator
+            if hasattr(translator, "configure_cache_namespace"):
+                translator.configure_cache_namespace(provider="deepseek")
+            if hasattr(translator, "set_metrics_collector"):
+                translator.set_metrics_collector(metrics_collector)
+
+            async def publish_metrics_heartbeat() -> None:
+                while True:
+                    await asyncio.sleep(1)
+                    metrics_collector.emit_heartbeat()
+
+            heartbeat_task = asyncio.create_task(publish_metrics_heartbeat())
         if on_config_ready is not None:
             on_config_ready(translation_config)
 
@@ -556,6 +597,8 @@ async def translate_pdf_with_callbacks(
         )
 
         async for event in babeldoc_translate(translation_config):
+            if metrics_collector is not None:
+                metrics_collector.update_progress(event)
             progress_logger.log(event)
             if progress_callback is not None:
                 progress_callback(event)
@@ -581,8 +624,16 @@ async def translate_pdf_with_callbacks(
                 job_id,
                 ", ".join(file.filename for file in files.values()),
             )
+            if metrics_collector is not None:
+                metrics_collector.emit_final()
             return TranslationResult(files=files)
     finally:
+        if heartbeat_task is not None:
+            heartbeat_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await heartbeat_task
+        if metrics_collector is not None:
+            metrics_collector.emit_final()
         set_text_checks_skipped(previous_skip_text_checks)
         _TEXT_CHECK_TRANSLATION_LOCK.release()
 

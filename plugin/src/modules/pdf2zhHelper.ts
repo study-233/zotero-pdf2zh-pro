@@ -47,6 +47,7 @@ export class PDF2zhHelperFactory {
             ocr: config.ocr,
             autoOcr: config.autoOcr,
             translateTableText: config.translateTableText,
+            skipReferences: config.skipReferences,
             skipTextChecks: config.skipTextChecks,
             noWatermark: config.noWatermark,
             disableTermExtraction: config.disableTermExtraction,
@@ -194,6 +195,7 @@ export class PDF2zhHelperFactory {
             autoOcr: getPref("autoOcr")?.toString() || "true",
             translateTableText:
                 getPref("translateTableText")?.toString() || "true",
+            skipReferences: getPref("skipReferences")?.toString() || "false",
             skipTextChecks: getPref("skipTextChecks")?.toString() || "false",
             noWatermark: getPref("noWatermark")?.toString() || "true",
             disableTermExtraction:

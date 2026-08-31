@@ -14,6 +14,7 @@ export interface ServerConfig {
     ocr: string;
     autoOcr: string;
     translateTableText: string;
+    skipReferences: string;
     skipTextChecks: string;
     noWatermark: string;
     disableTermExtraction: string;
@@ -89,6 +90,38 @@ export interface ServerTaskSnapshot {
     updatedAt: string;
     canCancel: boolean;
     cancelRequested: boolean;
+    metrics?: TaskMetrics;
+}
+
+export interface TaskMetrics {
+    requests: {
+        attempts: number;
+        succeeded: number;
+        failed: number;
+        active: number;
+        retries: number;
+        qps10s: number;
+        averageLatencyMs: number | null;
+        p95LatencyMs: number | null;
+    };
+    localCache: { hits: number; misses: number; hitRate: number | null };
+    providerCache: {
+        hitTokens: number;
+        missTokens: number;
+        hitRate: number | null;
+    };
+    tokens: { input: number; output: number; total: number };
+    throughput: {
+        paragraphsPerMinute: number | null;
+        etaSeconds: number | null;
+    };
+    cost: {
+        amount: number | null;
+        currency: string;
+        pricingVersion: string | null;
+        accuracy: "exact-tokens" | "fallback" | "unavailable";
+    };
+    referencesSkipped: number;
 }
 
 export interface PluginTask extends ServerTaskSnapshot {

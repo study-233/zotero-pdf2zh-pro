@@ -5,6 +5,7 @@ import { ServerTaskClient } from "./serverTaskClient";
 type TaskImporterCallbacks = {
     getTask: (taskId: string) => PluginTask | undefined;
     updateTask: (taskId: string, patch: Partial<PluginTask>) => void;
+    onTaskImported: (taskId: string) => void;
 };
 
 export class ZoteroTaskImporter {
@@ -64,6 +65,11 @@ export class ZoteroTaskImporter {
                 importState: "imported",
                 importError: undefined,
             });
+            try {
+                this.callbacks.onTaskImported(taskId);
+            } catch (error) {
+                ztoolkit.log("翻译完成回调执行失败:", error);
+            }
         } catch (error) {
             this.callbacks.updateTask(taskId, {
                 importState: "failed",

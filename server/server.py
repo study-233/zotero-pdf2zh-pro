@@ -187,6 +187,9 @@ def create_app() -> Flask:
         @stream_with_context
         def generate():
             try:
+                # Flush the SSE response immediately so clients can transition
+                # from "connecting" even when there are no task snapshots yet.
+                yield ": connected\n\n"
                 while True:
                     try:
                         event = event_queue.get(timeout=15)
@@ -286,6 +289,7 @@ def validate_config_request(data: dict[str, Any]):
         "translate_table_text": parse_bool(
             data.get("translateTableText"), True
         ),
+        "skip_references": parse_bool(data.get("skipReferences"), False),
         "skip_text_checks": parse_bool(data.get("skipTextChecks"), False),
         "no_watermark": parse_bool(data.get("noWatermark"), True),
         "no_auto_extract_glossary": parse_bool(
@@ -325,6 +329,7 @@ def prepare_translation_request(
         "translate_table_text": parse_bool(
             data.get("translateTableText"), True
         ),
+        "skip_references": parse_bool(data.get("skipReferences"), False),
         "skip_text_checks": parse_bool(data.get("skipTextChecks"), False),
         "no_watermark": parse_bool(data.get("noWatermark"), True),
         "no_auto_extract_glossary": parse_bool(

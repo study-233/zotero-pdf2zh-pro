@@ -7,10 +7,12 @@ import sys
 
 import babeldoc
 import numpy
+import observability
 import pdf2zh_next
 from rapidocr_onnxruntime import RapidOCR
 
 import server
+import task_manager
 
 FORBIDDEN_DISTRIBUTIONS = {
     "babeldoc",
@@ -61,6 +63,10 @@ def main() -> None:
         raise RuntimeError(f"Unexpected pdf2zh_next snapshot: {pdf2zh_next.__version__}")
     if babeldoc.__version__ != "0.5.24":
         raise RuntimeError(f"Unexpected BabelDOC snapshot: {babeldoc.__version__}")
+    if not callable(observability.empty_metrics):
+        raise RuntimeError("Observability runtime is incomplete")
+    if not callable(task_manager.TaskManager):
+        raise RuntimeError("Task manager runtime is incomplete")
 
     health = server.build_health_payload()
     if health["pdf2zhVersion"] != "2.8.2":

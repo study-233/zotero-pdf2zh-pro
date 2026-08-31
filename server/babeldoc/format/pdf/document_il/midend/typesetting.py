@@ -422,8 +422,7 @@ class TypesettingUnit:
                 self.formular.pdf_form,
             )
         elif self.unicode:
-            logger.error(f"Cannot passthrough unicode. TypesettingUnit: {self}. ")
-            logger.error(f"Cannot passthrough unicode. TypesettingUnit: {self}. ")
+            logger.error("cannot passthrough unicode typesetting unit")
             return [], [], []
 
     @property
@@ -888,7 +887,10 @@ class Typesetting:
                         paragraph.optimal_scale = optimal_scale
                 except Exception as e:
                     # 如果预处理出错，默认使用 1.0 缩放因子
-                    logger.warning(f"预处理段落时出错：{e}")
+                    logger.warning(
+                        "typesetting paragraph preprocessing failed: error_type=%s",
+                        type(e).__name__,
+                    )
                     paragraph.optimal_scale = 1.0
 
                 if paragraph.optimal_scale is not None:

@@ -1,6 +1,7 @@
 # 只锁定这两个批处理脚本为 CRLF
 /server/install-with-conda.bat text eol=crlf
 /server/install-with-uv.bat    text eol=crlf
+/scripts/*.sh                  text eol=lf
 /server/babeldoc/**            linguist-vendored whitespace=-trailing-space
 /server/pdf2zh_next/**         linguist-vendored whitespace=-trailing-space
 /server/rapidocr_onnxruntime/** linguist-vendored whitespace=-trailing-space

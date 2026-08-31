@@ -20,6 +20,9 @@ from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
 from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
     is_pure_numeric_paragraph,
 )
+from babeldoc.format.pdf.document_il.midend.reference_filter import (
+    find_reference_paragraph_ids,
+)
 from babeldoc.utils.priority_thread_pool_executor import PriorityThreadPoolExecutor
 
 if TYPE_CHECKING:
@@ -197,7 +200,9 @@ class AutomaticTermExtractor:
 
             if not isinstance(extracted_data, list):
                 logger.warning(
-                    f"Request ID {request_id}: LLM response was not a JSON list, but type: {type(extracted_data)}. Content: {cleaned_response_text[:200]}"
+                    "Request ID %s: LLM response was not a JSON list: response_type=%s",
+                    request_id,
+                    type(extracted_data).__name__,
                 )
                 return
 
@@ -213,15 +218,22 @@ class AutomaticTermExtractor:
                         )
                 else:
                     logger.warning(
-                        f"Request ID {request_id}: Skipping malformed item in LLM JSON response: {item}"
+                        "Request ID %s: skipping malformed item in LLM JSON response",
+                        request_id,
                     )
 
         except json.JSONDecodeError as e:
             logger.error(
-                f"Request ID {request_id}: JSON Parsing Error: {e}. Problematic LLM Response after cleaning (start): {cleaned_response_text[:200]}..."
+                "Request ID %s: JSON parsing error: error_type=%s",
+                request_id,
+                type(e).__name__,
             )
         except Exception as e:
-            logger.error(f"Request ID {request_id}: Error processing LLM response: {e}")
+            logger.error(
+                "Request ID %s: error processing LLM response: error_type=%s",
+                request_id,
+                type(e).__name__,
+            )
 
     def process_page(
         self,
@@ -234,6 +246,9 @@ class AutomaticTermExtractor:
         paragraphs = []
         total_token_count = 0
         for paragraph in page.pdf_paragraph:
+            if id(paragraph) in getattr(self, "reference_skip_ids", set()):
+                pbar.advance(1)
+                continue
             if paragraph.debug_id is None or paragraph.unicode is None:
                 pbar.advance(1)
                 continue
@@ -349,13 +364,21 @@ class AutomaticTermExtractor:
                         )
 
         except Exception as e:
-            logger.warning(f"Error during automatic terms extract: {e}")
+            logger.warning(
+                "automatic term extraction failed: error_type=%s",
+                type(e).__name__,
+            )
             return
         finally:
             pbar.advance(len(paragraphs.paragraphs))
 
     def procress(self, doc_il: ILDocument):
         logger.info(f"{self.stage_name}: Starting term extraction for document.")
+        self.reference_skip_ids = (
+            find_reference_paragraph_ids(doc_il)
+            if self.translation_config.skip_references
+            else set()
+        )
         start_total, start_prompt, start_completion, start_cache_hit_prompt = (
             self._snapshot_token_usage()
         )
@@ -386,10 +409,7 @@ class AutomaticTermExtractor:
             end_cache_hit_prompt - start_cache_hit_prompt,
         )
 
-        if (
-            self.translation_config.debug
-            or self.translation_config.working_dir is not None
-        ):
+        if self.translation_config.save_detailed_tracking:
             path = self.translation_config.get_working_file_path(
                 "term_extractor_tracking.json"
             )

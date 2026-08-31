@@ -9,6 +9,7 @@ __pycache__/
 logs/
 dist/
 .tmp/
+.local-dev/
 
 plugin/node_modules/
 plugin/build/

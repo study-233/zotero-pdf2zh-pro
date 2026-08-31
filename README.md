@@ -14,6 +14,23 @@
 仓库和发行版均公开。GitHub Release 提供 Zotero XPI、自动更新清单和 Windows
 安装包；对应源码可从版本标签直接获取。
 
+## 项目来源与当前改动
+
+本仓库直接基于
+[NightWatcher314/zotero-pdf2zh-next](https://github.com/NightWatcher314/zotero-pdf2zh-next)
+的 `v5.3.0` 版本继续开发；该项目又基于
+[guaguastandup/zotero-pdf2zh](https://github.com/guaguastandup/zotero-pdf2zh)
+演化而来。感谢两位上游维护者及所有贡献者。
+
+当前 Pro 分支在轻量插件和本地服务架构上进一步增加：
+
+- macOS 本机源码一键部署、任务保护、备份和失败回滚。
+- DeepSeek 请求耗时、QPS、缓存、重试、token、吞吐量和费用观测。
+- 按翻译配置隔离缓存，避免错误复用其他模型或提示词的译文。
+- 可选的参考文献跳过功能，并在输出 PDF 中保留参考文献原文。
+
+完整更新记录见 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 安装 Zotero 插件
 
 1. 从 [GitHub Releases](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)
@@ -73,6 +90,31 @@ docker compose up --build -d
 5. 在条目或 PDF 附件上右键，选择
    `zotero-pdf2zh-pro: Translate PDF`。
 6. 在 `zotero-pdf2zh-pro: Task Manager` 查看进度、重试任务并导入结果。
+
+DeepSeek 任务还会显示段落吞吐量、预计剩余时间、本地缓存命中、实际 QPS、
+请求耗时、自动重试、token 和估算费用。费用只用于本地估算，不替代服务商账单。
+
+“不翻译参考文献”默认关闭。启用后会优先使用 PDF 版面标签，并在证据充分时通过
+`References`、`Bibliography` 或 `参考文献` 标题识别参考文献区；跳过的内容仍保留在
+输出 PDF 中。
+
+## macOS 本机源码更新
+
+已经通过 Homebrew 安装服务，并希望直接部署当前工作树时，可以运行：
+
+```bash
+./scripts/local-deploy.sh
+```
+
+脚本会检查运行中任务，构建并校验插件和后端，备份现有安装，更新 Homebrew 服务并
+执行健康检查；失败时自动恢复上一版。只检查和打包而不修改本机安装时使用：
+
+```bash
+./scripts/local-deploy.sh --check-only
+```
+
+该流程不会修改版本、提交代码或发布远端制品。正式发布仍使用
+`scripts/release.sh`。
 
 ## 更新
 

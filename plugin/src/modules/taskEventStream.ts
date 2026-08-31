@@ -67,7 +67,6 @@ export class TaskEventStream {
             return;
         }
 
-        this.setState(serverUrl, "connecting");
         const source = new EventSourceConstructor(`${serverUrl}/tasks/events`);
         this.streams.set(serverUrl, {
             source,
@@ -90,6 +89,7 @@ export class TaskEventStream {
             this.setState(serverUrl, "error");
             ztoolkit.log(`任务进度事件连接异常: ${serverUrl}`);
         };
+        this.setState(serverUrl, "connecting");
     }
 
     private setState(serverUrl: string, state: TaskEventStreamState): void {

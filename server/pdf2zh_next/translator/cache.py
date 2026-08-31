@@ -96,7 +96,7 @@ class TranslationCache:
                 translation=translation,
             )
         except Exception as e:
-            logger.debug(f"Error setting cache: {e}")
+            logger.debug("error setting cache: error_type=%s", type(e).__name__)
 
 
 def init_db(remove_exists=False):
