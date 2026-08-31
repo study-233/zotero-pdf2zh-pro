@@ -139,7 +139,7 @@ function replaceOnce(file, pattern, replacement, label) {
 replaceOnce("README.md", /(<!-- release-version --> `)[^`]+(`)/g, `$1${version}$2`, "README version marker");
 replaceOnce(
   "server/uv.lock",
-  /(\[\[package\]\]\nname = "zotero-pdf2zh-pro"\nversion = ")[^"]+(")/g,
+  /(\[\[package\]\]\r?\nname = "zotero-pdf2zh-pro"\r?\nversion = ")[^"]+(")/g,
   `$1${version}$2`,
   "server lock version",
 );
