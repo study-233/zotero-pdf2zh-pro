@@ -3,7 +3,7 @@
 面向 Zotero 8、9 和 10 的 PDF 翻译插件，配套本地 Python 服务调用
 `pdf2zh_next` 完成翻译。
 
-当前统一版本：<!-- release-version --> `1.0.0`
+当前统一版本：<!-- release-version --> `1.0.1`
 
 ## 安装前说明
 
