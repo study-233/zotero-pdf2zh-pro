@@ -19,8 +19,15 @@ $BinDir = Join-Path $AppRoot "bin"
 $DataDir = Join-Path $AppRoot "data"
 $LogsDir = Join-Path $AppRoot "logs"
 $LogFile = Join-Path $LogsDir "server.log"
+$ControlLogFile = Join-Path $LogsDir "control-panel.log"
 $PidFile = Join-Path $AppRoot "server.pid"
 $ExecutableFile = Join-Path $AppRoot "server-executable.txt"
+$InstalledVersionFile = Join-Path $AppRoot "installed-version.txt"
+$ControlPanelExecutable = Join-Path $BinDir "$ProductName.exe"
+$ControlPanelPidFile = Join-Path $AppRoot "control-panel.pid"
+$ControlPanelExecutableFile = Join-Path $AppRoot "control-panel-executable.txt"
+$AutostartRunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+$AutostartApprovedKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
 $StartMenuDir = if ($env:PDF2ZH_WINDOWS_START_MENU_DIR) {
     [IO.Path]::GetFullPath($env:PDF2ZH_WINDOWS_START_MENU_DIR)
 } else {
@@ -82,7 +89,8 @@ function Get-ServerExecutable {
 }
 
 function Get-ListeningProcessId {
-    $connection = Get-NetTCPConnection -State Listen -LocalPort $ServerPort -ErrorAction SilentlyContinue | Select-Object -First 1
+    $connection = Get-NetTCPConnection -State Listen -LocalPort $ServerPort -ErrorAction SilentlyContinue |
+        Select-Object -First 1
     if ($connection) {
         return [int]$connection.OwningProcess
     }
@@ -213,4 +221,49 @@ function Save-ManagedProcess {
 
 function Remove-ManagedProcessState {
     Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue
+}
+
+function Get-ManagedControlPanelProcessId {
+    if (
+        -not (Test-Path -LiteralPath $ControlPanelPidFile) -or
+        -not (Test-Path -LiteralPath $ControlPanelExecutableFile)
+    ) {
+        return $null
+    }
+    $rawProcessId = (Get-Content -Raw -LiteralPath $ControlPanelPidFile).Trim()
+    $savedExecutable = (Get-Content -Raw -LiteralPath $ControlPanelExecutableFile).Trim()
+    if ($rawProcessId -notmatch "^\d+$") {
+        return $null
+    }
+    if (-not (Test-PathEqual -Left $savedExecutable -Right $ControlPanelExecutable)) {
+        return $null
+    }
+    $controlProcessId = [int]$rawProcessId
+    $actualExecutable = Get-ProcessExecutablePath -ProcessId $controlProcessId
+    if (-not (Test-PathEqual -Left $actualExecutable -Right $ControlPanelExecutable)) {
+        return $null
+    }
+    return $controlProcessId
+}
+
+function Remove-ManagedControlPanelState {
+    Remove-Item -LiteralPath $ControlPanelPidFile -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $ControlPanelExecutableFile -Force -ErrorAction SilentlyContinue
+}
+
+function Stop-ManagedControlPanel {
+    $controlProcessId = Get-ManagedControlPanelProcessId
+    if (-not $controlProcessId) {
+        Remove-ManagedControlPanelState
+        return
+    }
+    Stop-Process -Id $controlProcessId
+    for ($attempt = 0; $attempt -lt 40; $attempt++) {
+        if (-not (Get-Process -Id $controlProcessId -ErrorAction SilentlyContinue)) {
+            Remove-ManagedControlPanelState
+            return
+        }
+        Start-Sleep -Milliseconds 250
+    }
+    throw "The managed control center did not stop within 10 seconds."
 }

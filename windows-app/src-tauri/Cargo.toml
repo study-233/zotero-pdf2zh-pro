@@ -1,0 +1,23 @@
+[package]
+name = "zotero-pdf2zh-pro-control"
+version = "1.1.0"
+description = "Windows control center for zotero-pdf2zh-pro"
+authors = ["study-233"]
+edition = "2021"
+
+[[bin]]
+name = "zotero-pdf2zh-pro"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+semver = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+winreg = "0.55"
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }

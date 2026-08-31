@@ -6,11 +6,24 @@ param(
 . (Join-Path $PSScriptRoot "common.ps1")
 Assert-WindowsX64
 
+foreach ($registryPath in @($AutostartRunKey, $AutostartApprovedKey)) {
+    if (Test-Path -LiteralPath $registryPath) {
+        Remove-ItemProperty -LiteralPath $registryPath -Name $ProductName -Force -ErrorAction SilentlyContinue
+    }
+}
+
 try {
     & (Join-Path $PSScriptRoot "stop-server.ps1") -Quiet
 } catch {
     Write-Warning $_
     throw "Uninstall stopped because the managed server could not be safely stopped."
+}
+
+try {
+    Stop-ManagedControlPanel
+} catch {
+    Write-Warning $_
+    throw "Uninstall stopped because the managed control center could not be safely stopped."
 }
 
 $uv = Get-UvExecutable
@@ -26,6 +39,8 @@ if ($uv) {
 Remove-Item -LiteralPath $StartMenuDir -Recurse -Force -ErrorAction SilentlyContinue
 Remove-ManagedProcessState
 Remove-Item -LiteralPath $ExecutableFile -Force -ErrorAction SilentlyContinue
+Remove-ManagedControlPanelState
+Remove-Item -LiteralPath $InstalledVersionFile -Force -ErrorAction SilentlyContinue
 
 if (-not $PurgeData -and -not $NonInteractive) {
     try {

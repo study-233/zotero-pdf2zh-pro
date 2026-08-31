@@ -29,8 +29,10 @@ pdf2zh-next、BabelDOC 和 RapidOCR 核心快照；来源、SHA 和许可证记�
 
 ## Windows
 
-Windows 包只包含管理脚本。安装时通过官方 Astral 安装 uv，由 uv 安装托管的
-Python 3.13，并从公共 PyPI 安装与脚本相同版本的 `zotero-pdf2zh-pro`。
+Windows 包包含 Tauri 2 控制中心 EXE、故障恢复管理脚本、README、许可证和第三方声明。
+控制中心使用 Rust 后端和原生 TypeScript/CSS 单页前端，不授予通用 Shell 权限。安装时
+通过官方 Astral 安装 uv，由 uv 安装托管的 Python 3.13，并从公共 PyPI 安装与控制中心
+相同版本的 `zotero-pdf2zh-pro`。
 
 默认目录：
 
@@ -38,8 +40,10 @@ Python 3.13，并从公共 PyPI 安装与脚本相同版本的 `zotero-pdf2zh-pr
 - 日志：`%LOCALAPPDATA%\zotero-pdf2zh-pro\logs`
 - 管理脚本：`%LOCALAPPDATA%\zotero-pdf2zh-pro\bin`
 
-不得创建登录自启动、计划任务、Windows Service 或防火墙规则。停止和卸载前
-必须同时校验 PID 与命令行归属，不得结束未知 Python 进程。
+首次 GUI 安装默认创建当前用户 HKCU Run 登录自启，参数固定为 `--autostart`；它必须在
+控制中心可见、可关闭，升级必须保留用户选择。除此以外不得创建计划任务、Windows Service
+或防火墙规则。停止、升级和卸载前必须校验 PID、命令行、可执行文件路径和健康接口归属，
+不得结束未知进程。关闭窗口隐藏到托盘，退出控制中心不停止服务。
 
 ## 测试
 
@@ -47,14 +51,19 @@ Python 3.13，并从公共 PyPI 安装与脚本相同版本的 `zotero-pdf2zh-pr
 pnpm --dir plugin install --frozen-lockfile
 pnpm --dir plugin lint:check
 pnpm --dir plugin build
+pnpm --dir windows-app install --frozen-lockfile
+pnpm --dir windows-app test
+cargo test --manifest-path windows-app/src-tauri/Cargo.toml
+pnpm --dir windows-app tauri build --no-bundle
 uv run --directory server --locked python -m unittest discover -s tests
 uv build server --out-dir server/dist --clear --no-sources
 python scripts/check_pypi_artifacts.py server/dist <version>
 git diff --check
 ```
 
-Windows 还要运行 PowerShell 5.1 语法检查、ZIP 构建以及安装、手动启动、重复启动、
-健康检查、停止、保留数据卸载、重装和 `-PurgeData` 生命周期测试。
+Windows 还要运行前端单测、Rust 单测、PowerShell 5.1 语法/安全检查、Tauri release
+构建、ZIP 内容校验，以及首次安装、默认自启、关闭自启后升级、重复启动、健康检查、
+启动失败、端口冲突、日志/数据目录、升级失败保护、保留数据卸载和 `-PurgeData` 生命周期测试。
 
 ## macOS 本机源码部署
 
@@ -78,8 +87,9 @@ Windows 还要运行 PowerShell 5.1 语法检查、ZIP 构建以及安装、手�
 scripts/release.sh <version>
 ```
 
-统一脚本同步插件、服务端、锁文件和 Windows 脚本版本，验证 XPI、PyPI 包和
-Windows ZIP，生成本地源码归档，提交并推送主仓库，然后发布 PyPI 和公开 GitHub Release。
+统一脚本必须在 Windows 上运行；它同步插件、服务端、控制中心、锁文件和 Windows 脚本
+版本，构建 Tauri release EXE，验证 XPI、PyPI 包和 Windows ZIP，生成本地源码归档，
+提交并推送主仓库，然后发布 PyPI 和公开 GitHub Release。
 
 PyPI Trusted Publisher 必须绑定：
 

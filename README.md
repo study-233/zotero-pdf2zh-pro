@@ -43,18 +43,27 @@
 
 ## Windows 10/11 x64
 
-解压 `zotero-pdf2zh-pro-windows-x64.zip` 后双击：
+解压 `zotero-pdf2zh-pro-windows-x64.zip` 后，双击
+`zotero-pdf2zh-pro.exe`，再点击“安装并启动”。控制中心会安装官方 uv、uv 托管的
+Python 3.13，以及公开 PyPI 上与控制中心相同版本的服务端；不需要打开 PowerShell
+或 CMD。
 
-- `install.cmd`：安装官方 uv、uv 托管的 Python 3.13，以及公开 PyPI 上的
-  与安装包相同版本的 `zotero-pdf2zh-pro`；安装完成后不会自动启动。
-- `start-server.cmd`：需要翻译时手动启动。
-- `stop-server.cmd`：停止本项目管理的服务进程。
-- `view-log.cmd`：打开服务日志。
-- `uninstall.cmd`：卸载程序，并选择是否删除数据和日志。
+首次安装默认开启当前账户登录自启。重新登录后不会弹出窗口，控制中心会驻留系统托盘
+并确保服务运行；可在主卡片随时关闭，后续升级不会重新开启。关闭主窗口只会隐藏到托盘，
+退出控制中心也不会停止服务。
 
-安装不需要管理员权限，不创建任务计划、Windows Service 或登录启动项。数据位于
-`%LOCALAPPDATA%\zotero-pdf2zh-pro\data`，日志位于
+升级时从 [GitHub Releases](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)
+下载并解压新版 ZIP，运行其中的 EXE 后点击“升级并重启”。任务、翻译结果、日志和自启
+选择都会保留；更旧版本不能覆盖当前安装。包内的 CMD/PowerShell 文件仅作为故障恢复入口。
+
+安装不需要管理员权限，不创建计划任务、Windows Service 或防火墙规则，也不会停止
+占用 8890 端口的未知进程。唯一允许的自启机制是当前用户可见、可关闭的登录启动项。
+数据位于 `%LOCALAPPDATA%\zotero-pdf2zh-pro\data`，日志位于
 `%LOCALAPPDATA%\zotero-pdf2zh-pro\logs`。
+
+控制中心依赖 Microsoft Edge WebView2 Runtime；Windows 10/11 缺失时会在创建窗口前
+提供微软官方下载入口。本阶段 EXE 未签名，SmartScreen 可能提示风险，请只从官方 Release
+下载并核对发布页 SHA-256。
 
 ## macOS
 
@@ -119,7 +128,7 @@ DeepSeek 任务还会显示段落吞吐量、预计剩余时间、本地缓存�
 ## 更新
 
 - 插件：由 Zotero 自动检查稳定版本，也可以从 GitHub Release 手动安装新 XPI。
-- Windows：重新运行新版本中的 `install.cmd`，新产品数据会保留。
+- Windows：运行新版 ZIP 中的 `zotero-pdf2zh-pro.exe`，点击“升级并重启”。
 - uv：`uv tool upgrade zotero-pdf2zh-pro`。
 - Homebrew：`brew upgrade zotero-pdf2zh-pro` 后重启服务。
 

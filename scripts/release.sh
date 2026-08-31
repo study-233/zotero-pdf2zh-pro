@@ -8,9 +8,9 @@ Usage: scripts/release.sh <version> [--no-push] [--no-release] [--no-pypi] [--no
 Build, validate, and publish a unified zotero-pdf2zh-pro release.
 
 The release includes the Zotero XPI and update manifest, PyPI wheel/sdist,
-Windows helper ZIP, a local corresponding-source archive, and an optional
+Windows GUI ZIP, a local corresponding-source archive, and an optional
 update to the public source-only Homebrew tap. Add a matching CHANGELOG.md
-section first.
+section first. Run this unified release from Windows so the Tauri EXE can be built.
 EOF
 }
 
@@ -78,7 +78,7 @@ done
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] ||
     die "version must look like semver, got: $VERSION"
 
-for cmd in git gh node npx uv perl curl; do
+for cmd in git gh node npx uv perl curl cargo powershell.exe; do
     require_command "$cmd"
 done
 
@@ -119,13 +119,19 @@ CHANGELOG_SECTION="$(awk -v tag="$TAG" '
 node - "$VERSION" <<'NODE'
 const fs = require("fs");
 const version = process.argv[2];
-const file = "plugin/package.json";
-const data = JSON.parse(fs.readFileSync(file, "utf8"));
-data.version = version;
-fs.writeFileSync(file, JSON.stringify(data, null, 4) + "\n");
+for (const file of [
+  "plugin/package.json",
+  "windows-app/package.json",
+  "windows-app/src-tauri/tauri.conf.json",
+]) {
+  const data = JSON.parse(fs.readFileSync(file, "utf8"));
+  data.version = version;
+  fs.writeFileSync(file, JSON.stringify(data, null, 4) + "\n");
+}
 NODE
 
 VERSION="$VERSION" perl -0pi -e 's/version = "[^"]+"/version = "$ENV{VERSION}"/' server/pyproject.toml
+VERSION="$VERSION" perl -0pi -e 's/^(version = ")[^"]+("\s*)$/$1$ENV{VERSION}$2/m' windows-app/src-tauri/Cargo.toml
 VERSION="$VERSION" perl -0pi -e 's/VERSION = "[^"]+"/VERSION = "$ENV{VERSION}"/' server/server.py
 VERSION="$VERSION" perl -0pi -e 's/(\$PackageVersion = ")[^"]+(" # release-version)/$1$ENV{VERSION}$2/' scripts/windows/common.ps1
 
@@ -172,12 +178,18 @@ rm -rf -- plugin/build
 "${PNPM[@]}" --dir plugin build
 "${PNPM[@]}" --dir plugin test
 
-if command -v powershell.exe >/dev/null 2>&1; then
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
-fi
+CI=true "${PNPM[@]}" --dir windows-app install --frozen-lockfile
+"${PNPM[@]}" --dir windows-app test
+cargo fmt --manifest-path windows-app/src-tauri/Cargo.toml --check
+cargo test --manifest-path windows-app/src-tauri/Cargo.toml
+"${PNPM[@]}" --dir windows-app tauri build --no-bundle
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
 uv run --no-project python scripts/build_windows_package.py --version "$VERSION"
 
-git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock scripts/windows/common.ps1
+git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock \
+    scripts/windows/common.ps1 windows-app/package.json windows-app/src-tauri/Cargo.toml \
+    windows-app/src-tauri/Cargo.lock windows-app/src-tauri/tauri.conf.json
 if ! git diff --cached --quiet; then
     git commit -m "chore: release $TAG"
 fi

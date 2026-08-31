@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="color-scheme" content="light" />
+        <title>zotero-pdf2zh-pro</title>
+    </head>
+    <body>
+        <main class="shell">
+            <section class="card" aria-labelledby="product-title">
+                <header class="header">
+                    <div class="brand-mark" aria-hidden="true">译</div>
+                    <div>
+                        <p class="eyebrow">Zotero PDF 翻译服务</p>
+                        <h1 id="product-title">zotero-pdf2zh-pro</h1>
+                    </div>
+                    <span id="status-badge" class="status-badge neutral">正在检测</span>
+                </header>
+
+                <div class="status-panel">
+                    <p id="status-title" class="status-title">正在读取服务状态…</p>
+                    <p id="status-detail" class="status-detail">请稍候</p>
+                    <div class="address-row">
+                        <code id="service-address">http://127.0.0.1:8890</code>
+                        <button id="copy-address" class="text-button" type="button">复制</button>
+                    </div>
+                </div>
+
+                <button id="primary-action" class="primary-action" type="button" disabled>
+                    正在检测
+                </button>
+
+                <label class="toggle-row" for="autostart-toggle">
+                    <span>
+                        <strong>登录 Windows 后自动启动</strong>
+                        <small>静默进入托盘，并确保翻译服务可用</small>
+                    </span>
+                    <span class="switch">
+                        <input id="autostart-toggle" type="checkbox" disabled />
+                        <span class="slider"></span>
+                    </span>
+                </label>
+
+                <div class="utility-grid">
+                    <button id="open-log" class="utility-button" type="button" disabled>打开日志</button>
+                    <button id="open-data" class="utility-button" type="button" disabled>打开数据目录</button>
+                </div>
+
+                <div id="operation-panel" class="operation-panel" hidden>
+                    <div class="operation-heading">
+                        <strong>操作记录</strong>
+                        <button id="clear-output" class="text-button" type="button">清空</button>
+                    </div>
+                    <pre id="operation-output" aria-live="polite"></pre>
+                </div>
+
+                <p id="error-message" class="error-message" role="alert" hidden></p>
+
+                <footer class="footer">
+                    <span id="version-label">控制中心 -- · 服务 --</span>
+                    <details class="more-menu">
+                        <summary>更多</summary>
+                        <div class="more-popover">
+                            <p>升级时请从 GitHub Release 下载新版 Windows ZIP，再运行其中的 EXE。</p>
+                            <button id="uninstall" class="danger-button" type="button" disabled>卸载</button>
+                        </div>
+                    </details>
+                </footer>
+            </section>
+        </main>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>

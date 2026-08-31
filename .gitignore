@@ -14,6 +14,11 @@ dist/
 plugin/node_modules/
 plugin/build/
 
+windows-app/node_modules/
+windows-app/dist/
+windows-app/src-tauri/target/
+windows-app/src-tauri/gen/
+
 server/.venv/
 server/.pytest_cache/
 server/.mypy_cache/

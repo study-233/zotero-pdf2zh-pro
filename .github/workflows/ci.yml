@@ -105,11 +105,46 @@ jobs:
               with:
                   enable-cache: true
 
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 20
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v6
+              with:
+                  version: 10.34.5
+
+            - name: Setup Rust
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  toolchain: stable
+
+            - name: Cache Rust build
+              uses: Swatinem/rust-cache@v2
+              with:
+                  workspaces: windows-app/src-tauri -> target
+
+            - name: Install control center deps
+              run: pnpm install --frozen-lockfile
+              working-directory: windows-app
+
+            - name: Test control center frontend
+              run: pnpm test
+              working-directory: windows-app
+
+            - name: Test control center backend
+              run: cargo test --manifest-path windows-app/src-tauri/Cargo.toml
+
+            - name: Build Tauri release executable
+              run: pnpm tauri build --no-bundle
+              working-directory: windows-app
+
             - name: Parse Windows PowerShell scripts
               shell: powershell
               run: powershell.exe -NoProfile -File scripts\check_windows_scripts.ps1
 
-            - name: Build wheel and Windows ZIP
+            - name: Build wheel and Windows GUI ZIP
               shell: powershell
               run: |
                   uv build server --wheel --out-dir server/dist --clear --no-sources
@@ -123,41 +158,11 @@ jobs:
                       Get-ChildItem server\dist\zotero_pdf2zh_pro-*.whl |
                       Select-Object -First 1
                   ).FullName
+                  $gui = "windows-app\src-tauri\target\release\zotero-pdf2zh-pro.exe"
+                  & scripts\test_windows_lifecycle.ps1 -GuiBinary $gui -PackageSource $wheel
 
-                  & scripts\windows\install.ps1 -PackageSource $wheel -SkipUvBootstrap -NonInteractive
-                  . scripts\windows\common.ps1
-                  if (Get-NetTCPConnection -State Listen -LocalPort 18890 -ErrorAction SilentlyContinue) {
-                      throw "Installer started the server automatically"
-                  }
-                  $shortcuts = Get-ChildItem $env:PDF2ZH_WINDOWS_START_MENU_DIR -Filter *.lnk
-                  if ($shortcuts.Count -ne 4) {
-                      throw "Installer did not create all four Start menu shortcuts"
-                  }
-
-                  New-Item -ItemType File -Force -Path "$env:PDF2ZH_WINDOWS_APP_ROOT\data\preserve-me" | Out-Null
-                  & scripts\windows\start-server.ps1 -Quiet
-                  & scripts\windows\start-server.ps1 -Quiet
-                  $health = Get-ServerHealth
-                  if (-not $health.workspace.writable) { throw "Workspace is not writable" }
-                  & scripts\windows\stop-server.ps1 -Quiet
-
-                  & scripts\windows\uninstall.ps1 -NonInteractive
-                  Start-Sleep -Seconds 4
-                  if (-not (Test-Path "$env:PDF2ZH_WINDOWS_APP_ROOT\data\preserve-me")) {
-                      throw "Default uninstall removed persistent data"
-                  }
-                  if (Test-Path $env:PDF2ZH_WINDOWS_START_MENU_DIR) {
-                      throw "Uninstall left Start menu shortcuts behind"
-                  }
-
-                  & scripts\windows\install.ps1 -PackageSource $wheel -SkipUvBootstrap -NonInteractive
-                  if (-not (Test-Path "$env:PDF2ZH_WINDOWS_APP_ROOT\data\preserve-me")) {
-                      throw "Reinstall did not preserve persistent data"
-                  }
-                  & scripts\windows\start-server.ps1 -Quiet
-                  & scripts\windows\stop-server.ps1 -Quiet
-                  & scripts\windows\uninstall.ps1 -PurgeData -NonInteractive
-                  Start-Sleep -Seconds 4
-                  if (Test-Path $env:PDF2ZH_WINDOWS_APP_ROOT) {
-                      throw "Purge uninstall left application data behind"
-                  }
+            - name: Upload Windows ZIP
+              uses: actions/upload-artifact@v6
+              with:
+                  name: zotero-pdf2zh-pro-windows-x64
+                  path: dist/zotero-pdf2zh-pro-windows-x64.zip
