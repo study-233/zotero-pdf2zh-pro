@@ -293,7 +293,7 @@ if [[ "$UPDATE_TAP" -eq 1 && "$PUSH" -eq 1 ]]; then
     FORMULA="$TAP_PATH/$FORMULA_REL"
     [[ -f "$FORMULA" ]] || die "Homebrew formula not found: $FORMULA"
     VERSION="$VERSION" COMMIT="$COMMIT" perl -0pi -e '
-s/(url "https:\/\/github\.com\/study-233\/zotero-pdf2zh-pro\.git", using: :git, revision: ")[^"]+("\n)/$1$ENV{COMMIT}$2/;
+s/(url "https:\/\/github\.com\/study-233\/zotero-pdf2zh-pro\.git", using: :git, revision: ")[^"]+(")/$1$ENV{COMMIT}$2/;
 s/version "[^"]+"/version "$ENV{VERSION}"/;
 ' "$FORMULA"
     grep -Fq "revision: \"$COMMIT\"" "$FORMULA" || die "formula revision update failed"
