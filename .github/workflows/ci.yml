@@ -83,14 +83,18 @@ jobs:
         runs-on: windows-latest
         env:
             UV_DEFAULT_INDEX: https://pypi.org/simple
-            UV_TOOL_DIR: ${{ runner.temp }}\uv-tools
-            UV_TOOL_BIN_DIR: ${{ runner.temp }}\uv-bin
-            PDF2ZH_WINDOWS_APP_ROOT: ${{ runner.temp }}\zotero-pdf2zh-pro
-            PDF2ZH_WINDOWS_START_MENU_DIR: ${{ runner.temp }}\start-menu\zotero-pdf2zh-pro
             PDF2ZH_WINDOWS_PORT: "18890"
         steps:
             - name: Checkout
               uses: actions/checkout@v7
+
+            - name: Configure isolated Windows paths
+              shell: powershell
+              run: |
+                  "UV_TOOL_DIR=${{ runner.temp }}\uv-tools" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                  "UV_TOOL_BIN_DIR=${{ runner.temp }}\uv-bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                  "PDF2ZH_WINDOWS_APP_ROOT=${{ runner.temp }}\zotero-pdf2zh-pro" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                  "PDF2ZH_WINDOWS_START_MENU_DIR=${{ runner.temp }}\start-menu\zotero-pdf2zh-pro" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
             - name: Setup uv
               uses: astral-sh/setup-uv@v8.3.2
