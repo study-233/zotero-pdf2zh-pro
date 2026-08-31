@@ -7,9 +7,10 @@ Usage: scripts/release.sh <version> [--no-push] [--no-release] [--no-pypi] [--no
 
 Build, validate, and publish a unified zotero-pdf2zh-pro release.
 
-The release includes the Zotero XPI, PyPI wheel/sdist, Windows helper ZIP,
-a local corresponding-source archive, and an optional update to the private
-source-only Homebrew tap. Add a matching CHANGELOG.md section first.
+The release includes the Zotero XPI and update manifest, PyPI wheel/sdist,
+Windows helper ZIP, a local corresponding-source archive, and an optional
+update to the public source-only Homebrew tap. Add a matching CHANGELOG.md
+section first.
 EOF
 }
 
@@ -85,12 +86,13 @@ PRODUCT="zotero-pdf2zh-pro"
 TAG="v$VERSION"
 MAIN_REPO="study-233/zotero-pdf2zh-pro"
 TAP_REPO="study-233/homebrew-formula"
-TAP_SSH="git@github.com:study-233/homebrew-formula.git"
+TAP_URL="https://github.com/study-233/homebrew-formula.git"
 PYPI_VERSION_URL="https://pypi.org/pypi/$PRODUCT/$VERSION/json"
 PYPI_CHECK_URL="https://pypi.org/simple/$PRODUCT/"
 WINDOWS_PACKAGE="dist/$PRODUCT-windows-x64.zip"
 SOURCE_ARCHIVE="dist/$PRODUCT-$VERSION-source.zip"
 XPI="plugin/build/$PRODUCT.xpi"
+UPDATE_MANIFEST="plugin/build/update.json"
 PNPM=(npx --yes pnpm@10.34.5)
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -185,7 +187,7 @@ mkdir -p dist
 git archive --format=zip --prefix="$PRODUCT-$VERSION/" \
     --output="$SOURCE_ARCHIVE" "$COMMIT"
 
-for artifact in "$XPI" "$WINDOWS_PACKAGE" "$SOURCE_ARCHIVE"; do
+for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$SOURCE_ARCHIVE"; do
     [[ -f "$artifact" ]] || die "missing release artifact: $artifact"
 done
 
@@ -228,6 +230,7 @@ process.stdout.write(hash);
 }
 
 XPI_SHA256="$(sha256_file "$XPI")"
+UPDATE_SHA256="$(sha256_file "$UPDATE_MANIFEST")"
 WINDOWS_SHA256="$(sha256_file "$WINDOWS_PACKAGE")"
 SOURCE_SHA256="$(sha256_file "$SOURCE_ARCHIVE")"
 
@@ -258,12 +261,13 @@ if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
     printf '%s\n\n' "$CHANGELOG_SECTION" >"$NOTES_FILE"
     printf '\nSHA-256:\n\n' >>"$NOTES_FILE"
     printf -- '- `%s`  `%s`\n' "$XPI_SHA256" "$(basename "$XPI")" >>"$NOTES_FILE"
+    printf -- '- `%s`  `%s`\n' "$UPDATE_SHA256" "$(basename "$UPDATE_MANIFEST")" >>"$NOTES_FILE"
     printf -- '- `%s`  `%s`\n' "$WINDOWS_SHA256" "$(basename "$WINDOWS_PACKAGE")" >>"$NOTES_FILE"
     if gh release view "$TAG" --repo "$MAIN_REPO" >/dev/null 2>&1; then
-        gh release upload "$TAG" "$XPI" "$WINDOWS_PACKAGE" \
+        gh release upload "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" \
             --repo "$MAIN_REPO" --clobber
     else
-        gh release create "$TAG" "$XPI" "$WINDOWS_PACKAGE" \
+        gh release create "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" \
             --repo "$MAIN_REPO" --target "$COMMIT" --title "$TAG" \
             --notes-file "$NOTES_FILE" --latest
     fi
@@ -277,7 +281,7 @@ if [[ "$UPDATE_TAP" -eq 1 && "$PUSH" -eq 1 ]]; then
             TAP_TEMP="$(mktemp -d)"
             TEMP_PATHS+=("$TAP_TEMP")
             TAP_PATH="$TAP_TEMP/tap"
-            git clone "$TAP_SSH" "$TAP_PATH"
+            git clone "$TAP_URL" "$TAP_PATH"
         fi
     fi
     [[ -d "$TAP_PATH/.git" ]] || die "Homebrew tap path is not a git repo: $TAP_PATH"
@@ -289,7 +293,7 @@ if [[ "$UPDATE_TAP" -eq 1 && "$PUSH" -eq 1 ]]; then
     FORMULA="$TAP_PATH/$FORMULA_REL"
     [[ -f "$FORMULA" ]] || die "Homebrew formula not found: $FORMULA"
     VERSION="$VERSION" COMMIT="$COMMIT" perl -0pi -e '
-s/(url "git\@github\.com:study-233\/zotero-pdf2zh-pro\.git", using: :git, revision: ")[^"]+("\n)/$1$ENV{COMMIT}$2/;
+s/(url "https:\/\/github\.com\/study-233\/zotero-pdf2zh-pro\.git", using: :git, revision: ")[^"]+("\n)/$1$ENV{COMMIT}$2/;
 s/version "[^"]+"/version "$ENV{VERSION}"/;
 ' "$FORMULA"
     grep -Fq "revision: \"$COMMIT\"" "$FORMULA" || die "formula revision update failed"
@@ -315,8 +319,9 @@ s/version "[^"]+"/version "$ENV{VERSION}"/;
 fi
 
 echo "Released $TAG at $COMMIT"
-echo "Artifacts: $XPI $WINDOWS_PACKAGE $SOURCE_ARCHIVE"
+echo "Artifacts: $XPI $UPDATE_MANIFEST $WINDOWS_PACKAGE $SOURCE_ARCHIVE"
 echo "SHA-256:"
 echo "  $XPI_SHA256  $XPI"
+echo "  $UPDATE_SHA256  $UPDATE_MANIFEST"
 echo "  $WINDOWS_SHA256  $WINDOWS_PACKAGE"
 echo "  $SOURCE_SHA256  $SOURCE_ARCHIVE"

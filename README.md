@@ -11,24 +11,25 @@
 如果安装过旧产品，请先停止并卸载旧服务、从 Zotero 移除旧插件，避免两个服务同时占用
 `127.0.0.1:8890`。
 
-朋友用户由维护者直接提供 XPI 和 Windows 安装包。仓库为私有仓库，向无仓库权限的
-接收者分发二进制文件时，应同时单独提供对应版本的源码归档。
+仓库和发行版均公开。GitHub Release 提供 Zotero XPI、自动更新清单和 Windows
+安装包；对应源码可从版本标签直接获取。
 
 ## 安装 Zotero 插件
 
-1. 获取维护者提供的 `zotero-pdf2zh-pro.xpi`。
+1. 从 [GitHub Releases](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)
+   下载 `zotero-pdf2zh-pro.xpi`。
 2. 在 Zotero 中进入 `工具 -> 插件`。
 3. 点击右上角齿轮，选择 `Install Add-on From File...`。
 4. 选择 XPI 并重启 Zotero。
 
-仓库为私有仓库，插件不配置自动更新。新版本由维护者重新发送 XPI。
+插件安装后通过公开的 `update.json` 接收后续稳定版本更新。
 
 ## Windows 10/11 x64
 
 解压 `zotero-pdf2zh-pro-windows-x64.zip` 后双击：
 
 - `install.cmd`：安装官方 uv、uv 托管的 Python 3.13，以及公开 PyPI 上的
-  `zotero-pdf2zh-pro==1.0.0`；安装完成后不会自动启动。
+  与安装包相同版本的 `zotero-pdf2zh-pro`；安装完成后不会自动启动。
 - `start-server.cmd`：需要翻译时手动启动。
 - `stop-server.cmd`：停止本项目管理的服务进程。
 - `view-log.cmd`：打开服务日志。
@@ -40,10 +41,10 @@
 
 ## macOS
 
-Homebrew tap 是维护者自用的私有仓库，需要两个私有仓库的 SSH 权限：
+Homebrew tap 和源码仓库均为公开仓库：
 
 ```bash
-brew tap study-233/formula git@github.com:study-233/homebrew-formula.git
+brew tap study-233/formula
 brew install --build-from-source study-233/formula/zotero-pdf2zh-pro
 brew services start zotero-pdf2zh-pro
 ```
@@ -75,7 +76,7 @@ docker compose up --build -d
 
 ## 更新
 
-- 插件：安装维护者发送的新 XPI。
+- 插件：由 Zotero 自动检查稳定版本，也可以从 GitHub Release 手动安装新 XPI。
 - Windows：重新运行新版本中的 `install.cmd`，新产品数据会保留。
 - uv：`uv tool upgrade zotero-pdf2zh-pro`。
 - Homebrew：`brew upgrade zotero-pdf2zh-pro` 后重启服务。

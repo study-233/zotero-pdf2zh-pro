@@ -1,16 +1,16 @@
 ---
 name: zotero-pdf2zh-pro-release
-description: Prepare and publish unified zotero-pdf2zh-pro releases across the Zotero plugin, PyPI server, Windows ZIP, private GitHub releases, and the private study-233 Homebrew tap. Use for version bumps, release validation, release recovery, or distribution synchronization. Do not use for ordinary feature development.
+description: Prepare and publish unified zotero-pdf2zh-pro releases across the Zotero plugin, PyPI server, Windows ZIP, public GitHub releases, and the public study-233 Homebrew tap. Use for version bumps, release validation, release recovery, or distribution synchronization. Do not use for ordinary feature development.
 ---
 
 # Zotero PDF2ZH Pro Release
 
 Keep every distribution on one version. The canonical identities are:
 
-- GitHub: `study-233/zotero-pdf2zh-pro` (private)
+- GitHub: `study-233/zotero-pdf2zh-pro` (public)
 - PyPI and CLI: `zotero-pdf2zh-pro`
 - Zotero add-on ID: `zotero-pdf2zh-pro@study-233`
-- Homebrew: `study-233/formula/zotero-pdf2zh-pro` (private, source-only)
+- Homebrew: `study-233/formula/zotero-pdf2zh-pro` (public, source-only)
 
 ## Prepare
 
@@ -35,13 +35,12 @@ The release is not ready until all of these succeed:
 - server tests, wheel/sdist content checks, and fresh Python 3.13 runtime/OCR smoke;
 - PowerShell 5.1 script parsing and Windows install/start/health/stop/uninstall CI;
 - deterministic Windows ZIP and corresponding-source archive validation;
-- XPI manifest ID/name/version checks and absence of `update_url`;
+- XPI manifest ID/name/version/update URL checks and update-manifest hash validation;
 - public PyPI registry in `server/uv.lock`.
 
-Do not build or publish a friends bundle. GitHub Releases contain only the XPI
-and Windows ZIP. The release script generates a separate corresponding-source
-archive locally; provide it alongside binaries when recipients cannot access
-the private repository.
+Do not build or publish a friends bundle. GitHub Releases contain the XPI,
+`update.json`, and Windows ZIP. The release script generates a corresponding-source
+archive locally; the matching public tag is the canonical release source.
 
 ## Publish PyPI
 
@@ -58,7 +57,7 @@ points to the same commit.
 ## Update Homebrew
 
 The tap is `study-233/homebrew-formula`, formula
-`Formula/zotero-pdf2zh-pro.rb`. It uses the private SSH source repository,
+`Formula/zotero-pdf2zh-pro.rb`. It uses the public HTTPS source repository,
 `python@3.13`, and a pinned git revision. It intentionally has no bottles.
 
 Update only the formula version and source revision, push tap `main`, and wait
@@ -67,6 +66,6 @@ or personal absolute-path logic.
 
 ## Report
 
-Return the main commit and tag, PyPI status, XPI/Windows/source archive hashes,
+Return the main commit and tag, PyPI status, XPI/update manifest/Windows/source archive hashes,
 Homebrew commit and check status, validation commands, and any manual external
 step that remains.

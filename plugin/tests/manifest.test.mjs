@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -18,6 +19,8 @@ const expected = {
     name: "zotero-pdf2zh-pro",
     version: pkg.version,
     id: "zotero-pdf2zh-pro@study-233",
+    updateUrl:
+        "https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/update.json",
     strictMinVersion: "8.0",
     strictMaxVersion: "10.0.*",
 };
@@ -54,13 +57,13 @@ function assertManifestIdentity(manifest, label, templates = false) {
             id: templates
                 ? zotero.id.replace("__addonID__", expected.id)
                 : zotero.id,
+            updateUrl: zotero.update_url,
             strictMinVersion: zotero.strict_min_version,
             strictMaxVersion: zotero.strict_max_version,
         },
         expected,
         label + " identity or compatibility range does not match package.json",
     );
-    assertNoUpdateUrl(manifest, label);
 }
 
 function readXpiManifest() {
@@ -113,6 +116,12 @@ test("built manifest and XPI manifest stay consistent", () => {
 });
 
 test("generated update manifests stay consistent", () => {
+    const xpi = fs.readFileSync(
+        path.join(pluginRoot, "build", expected.name + ".xpi"),
+    );
+    const expectedHash =
+        "sha512:" + crypto.createHash("sha512").update(xpi).digest("hex");
+
     for (const relativePath of [
         "build/update.json",
         "build/update-beta.json",
@@ -129,6 +138,7 @@ test("generated update manifests stay consistent", () => {
         );
         const update = updates[0];
         assert.equal(update.version, expected.version);
+        assert.equal(update.update_hash, expectedHash);
         assert.deepEqual(update.applications?.zotero, {
             strict_min_version: expected.strictMinVersion,
             strict_max_version: expected.strictMaxVersion,

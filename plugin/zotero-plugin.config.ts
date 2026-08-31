@@ -10,8 +10,8 @@ export default defineConfig({
     namespace: pkg.config.addonRef,
     build: {
         assets: ["addon/**/*.*"],
-        // Friends receive XPI files directly, so keep the source manifest as-is
-        // instead of letting the scaffold inject its public-release update URL.
+        // Zotero 9 requires update_url even for directly distributed XPI files.
+        // Keep the source manifest so its stable release-manifest URL is packaged.
         makeManifest: {
             enable: false,
         },

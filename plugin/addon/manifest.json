@@ -12,6 +12,7 @@
     "applications": {
         "zotero": {
             "id": "__addonID__",
+            "update_url": "https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/update.json",
             "strict_min_version": "8.0",
             "strict_max_version": "10.0.*"
         }

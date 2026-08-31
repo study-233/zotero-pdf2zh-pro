@@ -6,8 +6,8 @@
 `zotero-pdf2zh-pro@study-233`，设置前缀为
 `extensions.zotero.pdf2zhpro`。它是独立产品，不迁移旧插件设置或旧服务数据。
 
-仓库保持私有；插件不配置自动更新 URL。不要生成或发布朋友整合包；需要线下分发时，
-分别提供 XPI、Windows 安装包和对应版本的源码归档。
+仓库保持公开；插件清单配置稳定的自动更新 URL，每个 GitHub Release 必须同时发布
+XPI、`update.json` 和 Windows 安装包。不要生成或发布朋友整合包；对应源码由公开标签提供。
 
 ## Python 服务
 
@@ -49,7 +49,7 @@ pnpm --dir plugin lint:check
 pnpm --dir plugin build
 uv run --directory server --locked python -m unittest discover -s tests
 uv build server --out-dir server/dist --clear --no-sources
-python scripts/check_pypi_artifacts.py server/dist 1.0.0
+python scripts/check_pypi_artifacts.py server/dist <version>
 git diff --check
 ```
 
@@ -65,7 +65,7 @@ scripts/release.sh <version>
 ```
 
 统一脚本同步插件、服务端、锁文件和 Windows 脚本版本，验证 XPI、PyPI 包和
-Windows ZIP，生成单独的源码归档，提交并推送主仓库，然后发布 PyPI 和私有 GitHub Release。
+Windows ZIP，生成本地源码归档，提交并推送主仓库，然后发布 PyPI 和公开 GitHub Release。
 
 PyPI Trusted Publisher 必须绑定：
 
@@ -75,9 +75,9 @@ PyPI Trusted Publisher 必须绑定：
 - Workflow：`publish-pypi.yml`
 - Environment：`pypi`
 
-Homebrew tap 是私有 source Formula：`study-233/homebrew-formula`。Formula 固定
-`python@3.13` 和主仓库 git revision，不发布 bottles。发布脚本直接更新 tap
-`main` 并等待 `formula-checks.yml`。
+Homebrew tap 是公开 source Formula：`study-233/homebrew-formula`。Formula 使用主仓库
+公开 HTTPS 地址，固定 `python@3.13` 和 git revision，不发布 bottles。发布脚本直接更新
+tap `main` 并等待 `formula-checks.yml`。
 
 同版本恢复发布只能复用指向同一 commit 的 tag、PyPI 发行和 GitHub Release。
 旧版本 backfill 必须从对应 tag 构建。
@@ -85,5 +85,4 @@ Homebrew tap 是私有 source Formula：`study-233/homebrew-formula`。Formula �
 ## 许可证
 
 产品改名不改变 AGPL 或第三方归属。不得删除上游许可证、第三方 notice 或 Git
-历史中的贡献者信息。向无仓库权限的接收者发送二进制发行物时，必须同时单独提供
-对应版本的源码归档。
+历史中的贡献者信息。每个二进制发行物的对应源码必须可从公开版本标签获取。

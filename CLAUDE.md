@@ -74,9 +74,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - `server/uv.lock`
   - `server/Dockerfile`
   - `compose.yaml`
-  - the private Homebrew tap `study-233/homebrew-formula`, formula `Formula/zotero-pdf2zh-pro.rb`
+  - the public Homebrew tap `study-233/homebrew-formula`, formula `Formula/zotero-pdf2zh-pro.rb`
 - The Homebrew formula should stay aligned with the server CLI entrypoint and currently must pin `python@3.13` instead of unversioned `python`, because the `pdf2zh_next -> pydantic-core` dependency chain does not currently build correctly on Python 3.14.
-- The Homebrew tap remote is `git@github.com:study-233/homebrew-formula.git`. Use `--tap-path` or let the release script use a temporary clone; never add a personal absolute path.
+- The Homebrew tap remote is `https://github.com/study-233/homebrew-formula.git`. Use `--tap-path` or let the release script use a temporary clone; never add a personal absolute path.
 - The tap is source-only and intentionally does not publish bottles. Update its `version` and git `revision`, push `main`, and wait for `formula-checks.yml`.
-- The plugin repository is private, so the plugin has no automatic update URL. Do not build or publish a friends bundle; provide XPI, Windows ZIP, and corresponding source separately when needed.
+- The plugin repository is public. Keep the stable `update_url` in the XPI and publish `update.json` with every GitHub Release. Do not build or publish a friends bundle; release source is available from the matching public tag.
 - Do not update only one distribution target if the change affects all startup/install paths.
