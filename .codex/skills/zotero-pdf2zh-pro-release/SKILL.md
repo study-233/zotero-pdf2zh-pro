@@ -1,6 +1,6 @@
 ---
 name: zotero-pdf2zh-pro-release
-description: Prepare and publish unified zotero-pdf2zh-pro releases across the Zotero plugin, PyPI server, Windows and friends ZIPs, private GitHub releases, and the private study-233 Homebrew tap. Use for version bumps, release validation, release recovery, or distribution synchronization. Do not use for ordinary feature development.
+description: Prepare and publish unified zotero-pdf2zh-pro releases across the Zotero plugin, PyPI server, Windows ZIP, private GitHub releases, and the private study-233 Homebrew tap. Use for version bumps, release validation, release recovery, or distribution synchronization. Do not use for ordinary feature development.
 ---
 
 # Zotero PDF2ZH Pro Release
@@ -34,17 +34,14 @@ The release is not ready until all of these succeed:
 - plugin frozen install, lint, type check, and XPI build;
 - server tests, wheel/sdist content checks, and fresh Python 3.13 runtime/OCR smoke;
 - PowerShell 5.1 script parsing and Windows install/start/health/stop/uninstall CI;
-- deterministic Windows ZIP and friends ZIP content/hash validation;
+- deterministic Windows ZIP and corresponding-source archive validation;
 - XPI manifest ID/name/version checks and absence of `update_url`;
 - public PyPI registry in `server/uv.lock`.
 
-The private plugin repository cannot serve automatic updates to friends. The
-friends ZIP must contain the XPI, Windows ZIP, Chinese instructions, the
-corresponding source archive, and `SHA256SUMS.txt`.
-
-Keep the friends ZIP local for direct private delivery. Never upload it as a
-GitHub Release asset. GitHub Releases contain only the XPI and Windows ZIP;
-report the local friends ZIP path and hash separately.
+Do not build or publish a friends bundle. GitHub Releases contain only the XPI
+and Windows ZIP. The release script generates a separate corresponding-source
+archive locally; provide it alongside binaries when recipients cannot access
+the private repository.
 
 ## Publish PyPI
 
@@ -70,6 +67,6 @@ or personal absolute-path logic.
 
 ## Report
 
-Return the main commit and tag, PyPI status, XPI/Windows/friends package hashes,
+Return the main commit and tag, PyPI status, XPI/Windows/source archive hashes,
 Homebrew commit and check status, validation commands, and any manual external
 step that remains.

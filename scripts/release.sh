@@ -8,8 +8,8 @@ Usage: scripts/release.sh <version> [--no-push] [--no-release] [--no-pypi] [--no
 Build, validate, and publish a unified zotero-pdf2zh-pro release.
 
 The release includes the Zotero XPI, PyPI wheel/sdist, Windows helper ZIP,
-direct-share friends ZIP, and an optional update to the private source-only
-Homebrew tap. Add a matching CHANGELOG.md section before running this command.
+a local corresponding-source archive, and an optional update to the private
+source-only Homebrew tap. Add a matching CHANGELOG.md section first.
 EOF
 }
 
@@ -89,7 +89,7 @@ TAP_SSH="git@github.com:study-233/homebrew-formula.git"
 PYPI_VERSION_URL="https://pypi.org/pypi/$PRODUCT/$VERSION/json"
 PYPI_CHECK_URL="https://pypi.org/simple/$PRODUCT/"
 WINDOWS_PACKAGE="dist/$PRODUCT-windows-x64.zip"
-FRIENDS_PACKAGE="dist/$PRODUCT-$VERSION-friends.zip"
+SOURCE_ARCHIVE="dist/$PRODUCT-$VERSION-source.zip"
 XPI="plugin/build/$PRODUCT.xpi"
 PNPM=(npx --yes pnpm@10.34.5)
 
@@ -190,10 +190,11 @@ if ! git diff --cached --quiet; then
 fi
 COMMIT="$(git rev-parse HEAD)"
 
-uv run --no-project python scripts/build_friend_package.py \
-    --version "$VERSION" --source-ref "$COMMIT"
+mkdir -p dist
+git archive --format=zip --prefix="$PRODUCT-$VERSION/" \
+    --output="$SOURCE_ARCHIVE" "$COMMIT"
 
-for artifact in "$XPI" "$WINDOWS_PACKAGE" "$FRIENDS_PACKAGE"; do
+for artifact in "$XPI" "$WINDOWS_PACKAGE" "$SOURCE_ARCHIVE"; do
     [[ -f "$artifact" ]] || die "missing release artifact: $artifact"
 done
 
@@ -237,7 +238,7 @@ process.stdout.write(hash);
 
 XPI_SHA256="$(sha256_file "$XPI")"
 WINDOWS_SHA256="$(sha256_file "$WINDOWS_PACKAGE")"
-FRIENDS_SHA256="$(sha256_file "$FRIENDS_PACKAGE")"
+SOURCE_SHA256="$(sha256_file "$SOURCE_ARCHIVE")"
 
 if [[ "$PUBLISH_PYPI" -eq 1 ]]; then
     if ! pypi_release_complete; then
@@ -264,7 +265,6 @@ if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
     NOTES_FILE="$(mktemp)"
     TEMP_PATHS+=("$NOTES_FILE")
     printf '%s\n\n' "$CHANGELOG_SECTION" >"$NOTES_FILE"
-    printf 'The direct-share friends package is generated locally and is not uploaded to GitHub.\n' >>"$NOTES_FILE"
     printf '\nSHA-256:\n\n' >>"$NOTES_FILE"
     printf -- '- `%s`  `%s`\n' "$XPI_SHA256" "$(basename "$XPI")" >>"$NOTES_FILE"
     printf -- '- `%s`  `%s`\n' "$WINDOWS_SHA256" "$(basename "$WINDOWS_PACKAGE")" >>"$NOTES_FILE"
@@ -324,8 +324,8 @@ s/version "[^"]+"/version "$ENV{VERSION}"/;
 fi
 
 echo "Released $TAG at $COMMIT"
-echo "Artifacts: $XPI $WINDOWS_PACKAGE $FRIENDS_PACKAGE"
+echo "Artifacts: $XPI $WINDOWS_PACKAGE $SOURCE_ARCHIVE"
 echo "SHA-256:"
 echo "  $XPI_SHA256  $XPI"
 echo "  $WINDOWS_SHA256  $WINDOWS_PACKAGE"
-echo "  $FRIENDS_SHA256  $FRIENDS_PACKAGE"
+echo "  $SOURCE_SHA256  $SOURCE_ARCHIVE"

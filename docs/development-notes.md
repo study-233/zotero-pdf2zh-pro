@@ -6,8 +6,8 @@
 `zotero-pdf2zh-pro@study-233`，设置前缀为
 `extensions.zotero.pdf2zhpro`。它是独立产品，不迁移旧插件设置或旧服务数据。
 
-仓库保持私有；朋友通过发行脚本生成的 friends ZIP 获取 XPI、Windows 安装包、
-对应源码和校验值。插件不配置自动更新 URL。
+仓库保持私有；插件不配置自动更新 URL。不要生成或发布朋友整合包；需要线下分发时，
+分别提供 XPI、Windows 安装包和对应版本的源码归档。
 
 ## Python 服务
 
@@ -64,8 +64,8 @@ Windows 还要运行 PowerShell 5.1 语法检查、ZIP 构建以及安装、手�
 scripts/release.sh <version>
 ```
 
-统一脚本同步插件、服务端、锁文件和 Windows 脚本版本，验证 XPI、PyPI 包、
-Windows ZIP 和 friends ZIP，提交并推送主仓库，然后发布 PyPI 和私有 GitHub Release。
+统一脚本同步插件、服务端、锁文件和 Windows 脚本版本，验证 XPI、PyPI 包和
+Windows ZIP，生成单独的源码归档，提交并推送主仓库，然后发布 PyPI 和私有 GitHub Release。
 
 PyPI Trusted Publisher 必须绑定：
 
@@ -85,4 +85,5 @@ Homebrew tap 是私有 source Formula：`study-233/homebrew-formula`。Formula �
 ## 许可证
 
 产品改名不改变 AGPL 或第三方归属。不得删除上游许可证、第三方 notice 或 Git
-历史中的贡献者信息。向朋友发送二进制发行物时，friends ZIP 必须包含对应源码归档。
+历史中的贡献者信息。向无仓库权限的接收者发送二进制发行物时，必须同时单独提供
+对应版本的源码归档。

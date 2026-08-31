@@ -101,33 +101,15 @@ jobs:
               with:
                   enable-cache: true
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v7
-              with:
-                  node-version: 20
-
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-              with:
-                  version: 10.34.5
-
-            - name: Build plugin for friends package
-              shell: powershell
-              run: |
-                  pnpm install --frozen-lockfile
-                  pnpm build
-              working-directory: plugin
-
             - name: Parse Windows PowerShell scripts
               shell: powershell
               run: powershell.exe -NoProfile -File scripts\check_windows_scripts.ps1
 
-            - name: Build wheel, Windows ZIP, and friends package
+            - name: Build wheel and Windows ZIP
               shell: powershell
               run: |
                   uv build server --wheel --out-dir server/dist --clear --no-sources
                   uv run --no-project python scripts/build_windows_package.py
-                  uv run --no-project python scripts/build_friend_package.py --source-ref HEAD
 
             - name: Exercise install, start, stop, and uninstall
               if: github.event_name == 'workflow_dispatch' && inputs.run_windows_lifecycle

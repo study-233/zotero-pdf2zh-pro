@@ -11,12 +11,12 @@
 如果安装过旧产品，请先停止并卸载旧服务、从 Zotero 移除旧插件，避免两个服务同时占用
 `127.0.0.1:8890`。
 
-朋友用户应使用维护者直接提供的 `zotero-pdf2zh-pro-<版本>-friends.zip`。其中包含
-插件、Windows 安装包、中文说明、源码归档和 SHA-256 校验值。
+朋友用户由维护者直接提供 XPI 和 Windows 安装包。仓库为私有仓库，向无仓库权限的
+接收者分发二进制文件时，应同时单独提供对应版本的源码归档。
 
 ## 安装 Zotero 插件
 
-1. 解压朋友包，找到 `zotero-pdf2zh-pro.xpi`。
+1. 获取维护者提供的 `zotero-pdf2zh-pro.xpi`。
 2. 在 Zotero 中进入 `工具 -> 插件`。
 3. 点击右上角齿轮，选择 `Install Add-on From File...`。
 4. 选择 XPI 并重启 Zotero。
