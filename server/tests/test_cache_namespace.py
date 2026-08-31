@@ -50,7 +50,7 @@ class CacheNamespaceTests(unittest.TestCase):
         translator.configure_cache_namespace(provider="deepseek")
         return json.loads(translator.cache.translate_engine_params)
 
-    def test_namespace_contains_only_safe_stable_dimensions(self) -> None:
+    def test_namespace_is_safe_stable_and_sensitive_to_translation_inputs(self) -> None:
         params = self.params(settings(prompt="PRIVATE_PROMPT"))
         serialized = json.dumps(params)
         self.assertEqual(params["provider"], "deepseek")
@@ -62,18 +62,16 @@ class CacheNamespaceTests(unittest.TestCase):
         self.assertNotIn("SECRET_API_KEY", serialized)
         self.assertNotIn("PRIVATE_PROMPT", serialized)
         self.assertNotIn("api_key", serialized.lower())
-
-    def test_each_translation_dimension_changes_namespace(self) -> None:
         baseline = self.params(settings())
-        variants = [
-            self.params(settings(model="deepseek-reasoner")),
-            self.params(settings(lang_in="de")),
-            self.params(settings(lang_out="fr")),
-            self.params(settings(prompt="Use terse terminology")),
-            self.params(settings(endpoint="https://example.invalid/v1")),
-        ]
-        for variant in variants:
-            self.assertNotEqual(variant, baseline)
+        for overrides in (
+            {"model": "deepseek-reasoner"},
+            {"lang_in": "de"},
+            {"lang_out": "fr"},
+            {"prompt": "Use terse terminology"},
+            {"endpoint": "https://example.invalid/v1"},
+        ):
+            with self.subTest(overrides=overrides):
+                self.assertNotEqual(self.params(settings(**overrides)), baseline)
         self.assertEqual(self.params(settings()), baseline)
 
 

@@ -67,6 +67,8 @@ class TaskManagerTests(unittest.TestCase):
             completed_output.parent.mkdir()
             completed_output.write_bytes(b"%PDF-1.4\n")
 
+            metrics = empty_metrics()
+            metrics["localCache"]["hits"] = 7
             manager = TaskManager(persistence_path=persistence_path)
             manager._tasks["failed-1"] = TaskRecord(
                 task_id="failed-1",
@@ -79,6 +81,7 @@ class TaskManagerTests(unittest.TestCase):
                 stage="failed",
                 error="boom",
                 attempt=3,
+                metrics=metrics,
             )
             manager._tasks["completed-1"] = TaskRecord(
                 task_id="completed-1",
@@ -113,6 +116,10 @@ class TaskManagerTests(unittest.TestCase):
             restored = TaskManager(persistence_path=persistence_path)
             self.assertIsNotNone(restored.get_task("failed-1"))
             self.assertEqual(restored.get_task("failed-1")["attempt"], 3)
+            self.assertEqual(
+                restored.get_task("failed-1")["metrics"]["localCache"]["hits"],
+                7,
+            )
             self.assertIsNone(restored.get_task("running-1"))
 
             result = restored.get_result_file("completed-1", "dual")
@@ -124,6 +131,20 @@ class TaskManagerTests(unittest.TestCase):
                 restored.get_task("completed-1")["resultFiles"],
                 {"dual": "paper.dual.pdf"},
             )
+
+            old_record = TaskManager._record_from_persistence(
+                {
+                    "task_id": "old-1",
+                    "file_name": "old.pdf",
+                    "service": "deepseek",
+                    "output_modes": ["dual"],
+                    "request_payload": {},
+                    "workspace_dir": "/tmp/old",
+                    "status": "failed",
+                }
+            )
+            self.assertIsNotNone(old_record)
+            self.assertEqual(old_record.to_dict()["metrics"], empty_metrics())
 
     def test_subscriber_queue_keeps_latest_event_without_unbounded_growth(self) -> None:
         manager = TaskManager()
@@ -139,55 +160,6 @@ class TaskManagerTests(unittest.TestCase):
             last_event = event_queue.get_nowait()
 
         self.assertEqual(last_event, {"type": "deleted", "taskId": "task-199"})
-
-    def test_task_snapshot_includes_attempt(self) -> None:
-        record = TaskRecord(
-            task_id="task-1",
-            file_name="paper.pdf",
-            service="openai",
-            output_modes=["dual"],
-            request_payload={},
-            workspace_dir=Path("/tmp/workspace"),
-        )
-
-        self.assertEqual(record.to_dict()["attempt"], 1)
-
-    def test_deepseek_task_snapshot_and_persistence_include_metrics(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            persistence_path = Path(temp_dir) / "tasks.json"
-            manager = TaskManager(persistence_path=persistence_path)
-            metrics = empty_metrics()
-            metrics["localCache"]["hits"] = 7
-            manager._tasks["task-1"] = TaskRecord(
-                task_id="task-1",
-                file_name="paper.pdf",
-                service="deepseek",
-                output_modes=["dual"],
-                request_payload={},
-                workspace_dir=Path(temp_dir) / "workspace",
-                status="failed",
-                metrics=metrics,
-            )
-            manager._save_persistent_tasks()
-
-            restored = TaskManager(persistence_path=persistence_path)
-            snapshot = restored.get_task("task-1")
-            self.assertEqual(snapshot["metrics"]["localCache"]["hits"], 7)
-
-    def test_old_persisted_task_without_metrics_remains_compatible(self) -> None:
-        record = TaskManager._record_from_persistence(
-            {
-                "task_id": "old-1",
-                "file_name": "old.pdf",
-                "service": "deepseek",
-                "output_modes": ["dual"],
-                "request_payload": {},
-                "workspace_dir": "/tmp/old",
-                "status": "failed",
-            }
-        )
-        self.assertIsNotNone(record)
-        self.assertEqual(record.to_dict()["metrics"], empty_metrics())
 
     def test_missing_result_file_is_not_returned(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

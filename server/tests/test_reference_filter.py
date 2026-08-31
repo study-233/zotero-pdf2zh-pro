@@ -19,14 +19,13 @@ def document(*pages):
 
 
 class ReferenceFilterTests(unittest.TestCase):
-    def test_layout_labels_are_skipped_anywhere(self) -> None:
+    def test_explicit_labels_and_verified_trailing_sections_are_skipped(self) -> None:
         body = paragraph("Body")
         reference = paragraph("Smith 2020", "reference_content")
         skipped = find_reference_paragraph_ids(document([body, reference]))
         self.assertNotIn(id(body), skipped)
         self.assertIn(id(reference), skipped)
 
-    def test_verified_heading_in_second_half_skips_until_appendix(self) -> None:
         body = paragraph("Body")
         heading = paragraph("References", "title")
         ref1 = paragraph("[1] Smith, J. 2020. A paper.")
@@ -42,21 +41,28 @@ class ReferenceFilterTests(unittest.TestCase):
         self.assertNotIn(id(appendix), skipped)
         self.assertNotIn(id(appendix_body), skipped)
 
-    def test_heading_in_first_half_is_not_used_as_fallback(self) -> None:
-        heading = paragraph("References", "title")
-        ref1 = paragraph("[1] Smith 2020")
-        ref2 = paragraph("[2] Doe 2021")
-        skipped = find_reference_paragraph_ids(
-            document([heading, ref1, ref2], [paragraph("Body")], [paragraph("End")])
+    def test_unverified_headings_are_not_used(self) -> None:
+        cases = (
+            document(
+                [paragraph("References", "title"), paragraph("[1] Smith 2020"), paragraph("[2] Doe 2021")],
+                [paragraph("Body")],
+                [paragraph("End")],
+            ),
+            document(
+                [paragraph("Body")],
+                [paragraph("Bibliography", "title"), paragraph("ordinary text")],
+            ),
         )
-        self.assertNotIn(id(heading), skipped)
-
-    def test_heading_without_two_reference_shapes_is_not_used(self) -> None:
-        heading = paragraph("Bibliography", "title")
-        skipped = find_reference_paragraph_ids(
-            document([paragraph("Body")], [heading, paragraph("ordinary text")])
-        )
-        self.assertNotIn(id(heading), skipped)
+        for candidate in cases:
+            with self.subTest():
+                skipped = find_reference_paragraph_ids(candidate)
+                headings = [
+                    item
+                    for page in candidate.page
+                    for item in page.pdf_paragraph
+                    if item.layout_label == "title"
+                ]
+                self.assertTrue(all(id(heading) not in skipped for heading in headings))
 
 
 if __name__ == "__main__":

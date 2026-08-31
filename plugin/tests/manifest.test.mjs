@@ -97,25 +97,19 @@ function readXpiManifest() {
     return JSON.parse(result.stdout);
 }
 
-test("source manifest declares the supported Zotero range", () => {
+test("plugin release artifacts remain consistent", () => {
     assert.equal(pkg.name, expected.name);
     assert.equal(pkg.config.addonName, expected.name);
     assert.equal(pkg.config.addonID, expected.id);
 
     const manifest = readJson("addon/manifest.json");
     assertManifestIdentity(manifest, "source manifest", true);
-});
-
-test("built manifest and XPI manifest stay consistent", () => {
     const builtManifest = readJson("build/addon/manifest.json");
     const xpiManifest = readXpiManifest();
 
     assertManifestIdentity(builtManifest, "built manifest");
     assertManifestIdentity(xpiManifest, "XPI manifest");
     assert.deepEqual(xpiManifest, builtManifest);
-});
-
-test("generated update manifests stay consistent", () => {
     const xpi = fs.readFileSync(
         path.join(pluginRoot, "build", expected.name + ".xpi"),
     );

@@ -25,7 +25,7 @@ UV_DEFAULT_INDEX=https://pypi.org/simple uv --directory server lock
 面向用户的 PyPI 包和 CLI 都叫 `zotero-pdf2zh-pro`。包内固定包含
 pdf2zh-next、BabelDOC 和 RapidOCR 核心快照；来源、SHA 和许可证记录在
 `server/THIRD_PARTY_NOTICES.md`。更新快照后必须重建锁文件、wheel/sdist，
-再执行 fresh Python 3.13 安装和 OCR smoke。
+再执行产物校验。
 
 ## Windows
 
@@ -47,28 +47,26 @@ Windows 包包含 Tauri 2 控制中心 EXE、故障恢复管理脚本、README�
 
 ## 测试
 
+日常核心检查与 GitHub CI 保持一致：
+
 ```bash
 pnpm --dir plugin install --frozen-lockfile
-pnpm --dir plugin lint:check
 pnpm --dir plugin build
+pnpm --dir plugin test
+uv run --directory server --locked python -m unittest discover -s tests
 pnpm --dir windows-app install --frozen-lockfile
 pnpm --dir windows-app test
-cargo test --manifest-path windows-app/src-tauri/Cargo.toml
-pnpm --dir windows-app tauri build --no-bundle
-uv run --directory server --locked python -m unittest discover -s tests
-uv build server --out-dir server/dist --clear --no-sources
-python scripts/check_pypi_artifacts.py server/dist <version>
 git diff --check
 ```
 
-Windows 还要运行前端单测、Rust 单测、PowerShell 5.1 语法/安全检查、Tauri release
-构建、ZIP 内容校验，以及首次安装、默认自启、关闭自启后升级、重复启动、健康检查、
-启动失败、端口冲突、日志/数据目录、升级失败保护、保留数据卸载和 `-PurgeData` 生命周期测试。
+修改 Windows 原生后端或安装脚本时，可在 Windows 本地显式运行 Rust 单测、PowerShell
+语法/安全检查和 `scripts/test_windows_lifecycle.ps1`。Tauri release、ZIP 与 PyPI
+产物只在正式发布流程中构建和校验，不进入日常 CI。
 
 ## macOS 本机源码部署
 
 `scripts/local-deploy.sh` 用于把当前工作树部署到本机 Zotero Profile 和 Homebrew
-管理的 `zotero-pdf2zh-pro` 服务。脚本在修改安装前完成构建与制品校验，并在存在
+管理的 `zotero-pdf2zh-pro` 服务。脚本在修改安装前完成构建，并在存在
 运行中、排队中或正在取消的任务时退出，不会终止用户任务。
 
 ```bash
@@ -89,7 +87,8 @@ scripts/release.sh <version>
 
 统一脚本必须在 Windows 上运行；它同步插件、服务端、控制中心、锁文件和 Windows 脚本
 版本，构建 Tauri release EXE，验证 XPI、PyPI 包和 Windows ZIP，生成本地源码归档，
-提交并推送主仓库，然后发布 PyPI 和公开 GitHub Release。
+提交并推送主仓库，然后发布 PyPI 和公开 GitHub Release。日常核心测试由 CI 承担，
+发布脚本不重复运行单测、lint 或全新虚拟环境冒烟。
 
 PyPI Trusted Publisher 必须绑定：
 

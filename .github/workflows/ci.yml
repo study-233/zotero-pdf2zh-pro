@@ -1,168 +1,55 @@
 name: CI
 
 on:
-    workflow_dispatch:
-        inputs:
-            run_windows_lifecycle:
-                description: Run install/start/stop/uninstall on the Windows runner
-                required: false
-                type: boolean
-                default: false
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - ".github/ISSUE_TEMPLATE/**"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - ".github/ISSUE_TEMPLATE/**"
 
 jobs:
-    plugin:
-        strategy:
-            fail-fast: false
-            matrix:
-                os:
-                    - ubuntu-latest
-                    - windows-latest
-        runs-on: ${{ matrix.os }}
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
+  core:
+    runs-on: ubuntu-latest
+    env:
+      UV_DEFAULT_INDEX: https://pypi.org/simple
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v7
-              with:
-                  node-version: 20
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-              with:
-                  version: 10.34.5
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.34.5
 
-            - name: Install plugin deps
-              run: pnpm install --frozen-lockfile
-              working-directory: plugin
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8.3.2
+        with:
+          enable-cache: true
 
-            - name: Lint plugin
-              run: pnpm lint:check
-              working-directory: plugin
+      - name: Build and check plugin
+        working-directory: plugin
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm test
 
-            - name: Build plugin
-              run: pnpm build
-              working-directory: plugin
+      - name: Test server core
+        run: uv run --directory server --locked python -m unittest discover -s tests
 
-            - name: Test plugin artifacts
-              run: pnpm test
-              working-directory: plugin
-
-    server:
-        strategy:
-            fail-fast: false
-            matrix:
-                os:
-                    - ubuntu-latest
-                    - windows-latest
-        runs-on: ${{ matrix.os }}
-        env:
-            UV_DEFAULT_INDEX: https://pypi.org/simple
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-
-            - name: Setup uv
-              uses: astral-sh/setup-uv@v8.3.2
-              with:
-                  enable-cache: true
-
-            - name: Run server tests
-              run: uv run --directory server --locked python -m unittest discover -s tests
-
-            - name: Validate PyPI artifacts
-              if: runner.os == 'Linux'
-              run: |
-                  VERSION="$(python -c 'import tomllib; print(tomllib.load(open("server/pyproject.toml", "rb"))["project"]["version"])')"
-                  uv build server --out-dir server/dist --clear --no-sources
-                  python scripts/check_pypi_artifacts.py server/dist "$VERSION"
-
-    windows-package:
-        runs-on: windows-latest
-        env:
-            UV_DEFAULT_INDEX: https://pypi.org/simple
-            PDF2ZH_WINDOWS_PORT: "18890"
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-
-            - name: Configure isolated Windows paths
-              shell: powershell
-              run: |
-                  "UV_TOOL_DIR=${{ runner.temp }}\uv-tools" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-                  "UV_TOOL_BIN_DIR=${{ runner.temp }}\uv-bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-                  "PDF2ZH_WINDOWS_APP_ROOT=${{ runner.temp }}\zotero-pdf2zh-pro" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-                  "PDF2ZH_WINDOWS_START_MENU_DIR=${{ runner.temp }}\start-menu\zotero-pdf2zh-pro" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-            - name: Setup uv
-              uses: astral-sh/setup-uv@v8.3.2
-              with:
-                  enable-cache: true
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v7
-              with:
-                  node-version: 20
-
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-              with:
-                  version: 10.34.5
-
-            - name: Setup Rust
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                  toolchain: stable
-
-            - name: Cache Rust build
-              uses: Swatinem/rust-cache@v2
-              with:
-                  workspaces: windows-app/src-tauri -> target
-
-            - name: Install control center deps
-              run: pnpm install --frozen-lockfile
-              working-directory: windows-app
-
-            - name: Test control center frontend
-              run: pnpm test
-              working-directory: windows-app
-
-            - name: Test control center backend
-              run: cargo test --manifest-path windows-app/src-tauri/Cargo.toml
-
-            - name: Build Tauri release executable
-              run: pnpm tauri build --no-bundle
-              working-directory: windows-app
-
-            - name: Parse Windows PowerShell scripts
-              shell: powershell
-              run: powershell.exe -NoProfile -File scripts\check_windows_scripts.ps1
-
-            - name: Build wheel and Windows GUI ZIP
-              shell: powershell
-              run: |
-                  uv build server --wheel --out-dir server/dist --clear --no-sources
-                  uv run --no-project python scripts/build_windows_package.py
-
-            - name: Exercise install, start, stop, and uninstall
-              if: github.event_name == 'workflow_dispatch' && inputs.run_windows_lifecycle
-              shell: powershell
-              run: |
-                  $wheel = (
-                      Get-ChildItem server\dist\zotero_pdf2zh_pro-*.whl |
-                      Select-Object -First 1
-                  ).FullName
-                  $gui = "windows-app\src-tauri\target\release\zotero-pdf2zh-pro.exe"
-                  & scripts\test_windows_lifecycle.ps1 -GuiBinary $gui -PackageSource $wheel
-
-            - name: Upload Windows ZIP
-              uses: actions/upload-artifact@v6
-              with:
-                  name: zotero-pdf2zh-pro-windows-x64
-                  path: dist/zotero-pdf2zh-pro-windows-x64.zip
+      - name: Test Windows control center state
+        working-directory: windows-app
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test

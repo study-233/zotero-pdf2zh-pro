@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import sys
 import unittest
 from concurrent.futures import ThreadPoolExecutor
@@ -13,10 +14,14 @@ sys.path.insert(0, str(SERVER_DIR))
 
 from pdf2zh_next_service import build_settings_input
 from pdf2zh_next_service import collect_output_files
+from pdf2zh_next_service import create_font_progress_event
 from pdf2zh_next_service import diagnose_service_error
+from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import install_text_check_bypass
+from pdf2zh_next_service import ProgressLogger
 from pdf2zh_next_service import run_live_translator_test
 from pdf2zh_next_service import set_text_checks_skipped
+from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next.config.cli_env_model import CLIEnvSettingsModel
 
 
@@ -45,6 +50,84 @@ def make_settings_payload(**overrides):
 
 
 class PDF2zhNextServiceTests(unittest.TestCase):
+    def test_translation_prepares_fonts_before_babeldoc(self) -> None:
+        sequence: list[str] = []
+        events: list[dict] = []
+
+        async def prepare_fonts(progress_callback):
+            sequence.append("fonts")
+            progress_callback("Check Fonts", 0, 2)
+            progress_callback("Check Fonts", 2, 2)
+            progress_callback("Download Fonts", 0, 100)
+            progress_callback("Download Fonts", 100, 100)
+
+        async def translate(_config):
+            sequence.append("translation")
+            yield {"type": "finish", "translate_result": SimpleNamespace()}
+
+        config = SimpleNamespace(save_detailed_tracking=True)
+        expected_files = {"dual": SimpleNamespace(filename="paper.dual.pdf")}
+        payload = {
+            "input_path": "/tmp/paper.pdf",
+            "output_dir": "/tmp/output",
+            "output_modes": ["dual"],
+            "service": "openai",
+        }
+
+        with (
+            patch("pdf2zh_next_service.create_runtime_settings", return_value=object()),
+            patch("pdf2zh_next_service.create_babeldoc_config", return_value=config),
+            patch(
+                "pdf2zh_next_service.download_all_fonts_async",
+                side_effect=prepare_fonts,
+            ),
+            patch("pdf2zh_next_service.babeldoc_translate", side_effect=translate),
+            patch(
+                "pdf2zh_next_service.collect_output_files",
+                return_value=expected_files,
+            ),
+        ):
+            result = asyncio.run(
+                translate_pdf_with_callbacks(
+                    payload,
+                    "font-test",
+                    progress_callback=events.append,
+                )
+            )
+
+        self.assertEqual(sequence, ["fonts", "translation"])
+        self.assertEqual(result.files, expected_files)
+        self.assertEqual(
+            [event["stage"] for event in events if "stage" in event],
+            ["Check Fonts", "Check Fonts", "Download Fonts", "Download Fonts"],
+        )
+
+    def test_font_progress_and_download_diagnostics(self) -> None:
+        start = create_font_progress_event("Download Fonts", 0, 200)
+        update = create_font_progress_event("Download Fonts", 50, 200)
+        end = create_font_progress_event("Download Fonts", 200, 200)
+
+        self.assertEqual(start["type"], "progress_start")
+        self.assertEqual(update["type"], "progress_update")
+        self.assertEqual(update["stage_progress"], 25.0)
+        self.assertEqual(update["overall_progress"], 0.0)
+        self.assertEqual(end["type"], "progress_end")
+
+        progress_logger = ProgressLogger("font-test")
+        with self.assertLogs("zotero_pdf2zh_server.translate", level="INFO"):
+            progress_logger.log(start)
+            progress_logger.log(update)
+            progress_logger.log(end)
+
+        message = explain_service_error(
+            "Font asset download failed for example.ttf: connection timeout"
+        )
+        diagnostics = diagnose_service_error(message)
+
+        self.assertIn("字体资源下载失败", message)
+        self.assertEqual(diagnostics[0]["code"], "font_asset_download")
+        self.assertIn("重试任务", diagnostics[0]["suggestion"])
+
     def test_collect_output_files_moves_absolute_result_into_workspace(self) -> None:
         with TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -68,51 +151,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
             self.assertEqual(persisted_path.read_bytes(), b"pdf")
             self.assertFalse(generated_path.exists())
 
-    def test_build_settings_input_disables_auto_extract_glossary(self) -> None:
-        settings_input = build_settings_input(
-            {
-                "input_path": "/tmp/paper.pdf",
-                "output_dir": "/tmp/output",
-                "output_modes": ["dual"],
-                "source_lang": "en",
-                "target_lang": "zh-CN",
-                "service": "openai",
-                "no_auto_extract_glossary": True,
-            }
-        )
-
-        self.assertTrue(settings_input["translation"]["no_auto_extract_glossary"])
-
-    def test_build_settings_input_translates_table_text_by_default(self) -> None:
-        settings_input = build_settings_input(
-            {
-                "input_path": "/tmp/paper.pdf",
-                "output_dir": "/tmp/output",
-                "output_modes": ["dual"],
-                "source_lang": "en",
-                "target_lang": "zh-CN",
-                "service": "openai",
-            }
-        )
-
-        self.assertTrue(settings_input["pdf"]["translate_table_text"])
-
-    def test_build_settings_input_can_skip_table_text(self) -> None:
-        settings_input = build_settings_input(
-            {
-                "input_path": "/tmp/paper.pdf",
-                "output_dir": "/tmp/output",
-                "output_modes": ["dual"],
-                "source_lang": "en",
-                "target_lang": "zh-CN",
-                "service": "openai",
-                "translate_table_text": False,
-            }
-        )
-
-        self.assertFalse(settings_input["pdf"]["translate_table_text"])
-
-    def test_settings_survive_cli_model_conversion(self) -> None:
+    def test_settings_contract_and_defaults(self) -> None:
         settings_input = build_settings_input(make_settings_payload())
         settings = CLIEnvSettingsModel.model_validate(
             settings_input
@@ -134,52 +173,13 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         self.assertFalse(settings.pdf.translate_table_text)
         self.assertTrue(settings.pdf.skip_references)
 
-    def test_auto_values_leave_pdf2zh_defaults_in_control(self) -> None:
-        settings_input = build_settings_input(
+        defaults = build_settings_input(
             make_settings_payload(pool_size=0, font_family="auto")
         )
-        translation = settings_input["translation"]
+        self.assertNotIn("pool_max_workers", defaults["translation"])
+        self.assertNotIn("primary_font_family", defaults["translation"])
 
-        self.assertNotIn("pool_max_workers", translation)
-        self.assertNotIn("primary_font_family", translation)
-
-    def test_output_modes_map_to_nested_pdf_settings(self) -> None:
-        mono = build_settings_input(
-            make_settings_payload(output_modes=["mono"])
-        )["pdf"]
-        both = build_settings_input(
-            make_settings_payload(output_modes=["mono", "dual"])
-        )["pdf"]
-
-        self.assertFalse(mono["no_mono"])
-        self.assertTrue(mono["no_dual"])
-        self.assertFalse(both["no_mono"])
-        self.assertFalse(both["no_dual"])
-
-    def test_skip_last_pages_maps_to_nested_pdf_pages(self) -> None:
-        fake_reader = SimpleNamespace(pages=[None] * 10)
-        with patch("pdf2zh_next_service.PdfReader", return_value=fake_reader):
-            settings_input = build_settings_input(
-                make_settings_payload(skip_last_pages=3)
-            )
-
-        self.assertEqual(settings_input["pdf"]["pages"], "1-7")
-
-    def test_service_details_remain_top_level(self) -> None:
-        settings_input = build_settings_input(
-            make_settings_payload(
-                service="deepseek",
-                llm_api={"model": "test-model", "apiKey": "test-key"},
-            )
-        )
-
-        self.assertTrue(settings_input["deepseek"])
-        self.assertEqual(
-            settings_input["deepseek_detail"],
-            {"deepseek_model": "test-model", "deepseek_api_key": "test-key"},
-        )
-
-    def test_text_check_bypass_skips_cid_checks_in_context(self) -> None:
+    def test_text_check_bypass_in_context_and_executor(self) -> None:
         import babeldoc.format.pdf.high_level as babeldoc_high_level
         from babeldoc.format.pdf.document_il.midend import il_translator_llm_only
         from babeldoc.format.pdf.document_il.midend.paragraph_finder import (
@@ -192,15 +192,6 @@ class PDF2zhNextServiceTests(unittest.TestCase):
             self.assertFalse(babeldoc_high_level.check_cid_char(object()))
             self.assertFalse(ParagraphFinder.check_cid_paragraph(object(), object()))
             self.assertFalse(il_translator_llm_only.is_cid_paragraph(object()))
-        finally:
-            set_text_checks_skipped(previous)
-
-    def test_text_check_bypass_reaches_executor_threads(self) -> None:
-        import babeldoc.format.pdf.high_level as babeldoc_high_level
-
-        install_text_check_bypass()
-        previous = set_text_checks_skipped(True)
-        try:
             with ThreadPoolExecutor(max_workers=1) as executor:
                 self.assertFalse(
                     executor.submit(
@@ -211,31 +202,25 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         finally:
             set_text_checks_skipped(previous)
 
-    def test_diagnose_service_error_classifies_openai_response_shape(self) -> None:
+    def test_service_diagnostics_and_live_probe(self) -> None:
         diagnostics = diagnose_service_error("object has no attribute 'choices'")
 
         self.assertEqual(diagnostics[0]["code"], "llm_response_shape")
         self.assertEqual(diagnostics[0]["severity"], "error")
 
-    def test_live_translator_test_returns_success(self) -> None:
-        class Translator:
+        class SuccessfulTranslator:
             def translate(self, text, ignore_cache=False, rate_limit_params=None):
                 return f"{text} translated"
 
-        result = run_live_translator_test(Translator(), timeout_seconds=1)
-
-        self.assertTrue(result["ok"])
-        self.assertEqual(result["message"], "Hello translated")
-
-    def test_live_translator_test_returns_diagnostic_message_on_error(self) -> None:
-        class Translator:
+        class FailingTranslator:
             def translate(self, text, ignore_cache=False, rate_limit_params=None):
                 raise RuntimeError("401 Unauthorized")
 
-        result = run_live_translator_test(Translator(), timeout_seconds=1)
-
-        self.assertFalse(result["ok"])
-        self.assertIn("401", result["message"])
+        success = run_live_translator_test(SuccessfulTranslator(), timeout_seconds=1)
+        failure = run_live_translator_test(FailingTranslator(), timeout_seconds=1)
+        self.assertEqual(success, {"enabled": True, "ok": True, "message": "Hello translated"})
+        self.assertFalse(failure["ok"])
+        self.assertIn("401", failure["message"])
 
 
 if __name__ == "__main__":

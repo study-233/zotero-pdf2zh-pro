@@ -4,6 +4,7 @@ import json
 import logging
 import threading
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
 
 import httpx
@@ -33,6 +34,13 @@ logger = logging.getLogger(__name__)
 _FASTEST_FONT_UPSTREAM_LOCK = asyncio.Lock()
 _FASTEST_FONT_UPSTREAM: str | None = None
 _FASTEST_FONT_METADATA: dict | None = None
+_ALL_FONTS_READY = False
+
+FONT_CACHE_CHECK_STAGE = "Check Fonts"
+FONT_DOWNLOAD_STAGE = "Download Fonts"
+FONT_DOWNLOAD_CONCURRENCY = 4
+FontProgressCallback = Callable[[str, int, int], None]
+FileProgressCallback = Callable[[int], None]
 
 
 class ResultContainer:
@@ -104,19 +112,42 @@ async def download_file(
     url: str = None,
     path: Path = None,
     sha3_256: str = None,
+    progress_callback: FileProgressCallback | None = None,
 ):
-    if client is None:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, follow_redirects=True)
-    else:
-        response = await client.get(url, follow_redirects=True)
+    async def _download(active_client: httpx.AsyncClient):
+        temporary_path = path.with_name(f"{path.name}.part")
+        temporary_path.unlink(missing_ok=True)
+        downloaded = 0
+        hash_ = hashlib.sha3_256()
+        if progress_callback is not None:
+            progress_callback(0)
+        try:
+            async with active_client.stream(
+                "GET", url, follow_redirects=True
+            ) as response:
+                response.raise_for_status()
+                with temporary_path.open("wb") as f:
+                    async for chunk in response.aiter_bytes(1024 * 1024):
+                        if not chunk:
+                            continue
+                        f.write(chunk)
+                        hash_.update(chunk)
+                        downloaded += len(chunk)
+                        if progress_callback is not None:
+                            progress_callback(downloaded)
 
-    response.raise_for_status()
-    with path.open("wb") as f:
-        f.write(response.content)
-    if not verify_file(path, sha3_256):
-        path.unlink(missing_ok=True)
-        raise ValueError(f"File {path} is corrupted")
+            if hash_.hexdigest() != sha3_256:
+                raise ValueError(f"File {path} is corrupted")
+            temporary_path.replace(path)
+        except BaseException:
+            temporary_path.unlink(missing_ok=True)
+            raise
+
+    if client is None:
+        async with httpx.AsyncClient() as active_client:
+            await _download(active_client)
+    else:
+        await _download(client)
 
 
 @retry(
@@ -397,32 +428,109 @@ def get_font_family(lang_code: str):
     return font_family
 
 
-async def download_all_fonts_async(client: httpx.AsyncClient | None = None):
-    for font_file_name in EMBEDDING_FONT_METADATA:
-        if not verify_file(
-            get_cache_file_path(font_file_name, "fonts"),
-            EMBEDDING_FONT_METADATA[font_file_name]["sha3_256"],
-        ):
-            break
-    else:
-        logger.debug("All fonts are already downloaded")
+async def download_all_fonts_async(
+    client: httpx.AsyncClient | None = None,
+    progress_callback: FontProgressCallback | None = None,
+):
+    """Verify and download the complete font cache once per server process."""
+    global _ALL_FONTS_READY
+
+    if _ALL_FONTS_READY:
         return
 
-    fastest_upstream, font_metadata = await get_fastest_upstream_for_font(client)
-    if fastest_upstream is None:
-        logger.error("Failed to get fastest upstream")
-        exit(1)
-    logger.info(f"Downloading fonts from {fastest_upstream}")
+    font_items = list(EMBEDDING_FONT_METADATA.items())
+    total_fonts = len(font_items)
+    if progress_callback is not None:
+        progress_callback(FONT_CACHE_CHECK_STAGE, 0, total_fonts)
 
-    font_tasks = [
-        asyncio.create_task(
-            get_font_and_metadata_async(
-                font_file_name, client, fastest_upstream, font_metadata
-            )
+    missing_fonts: list[tuple[str, dict]] = []
+    for index, (font_file_name, metadata) in enumerate(font_items, start=1):
+        cache_file_path = get_cache_file_path(font_file_name, "fonts")
+        if not verify_file(cache_file_path, metadata["sha3_256"]):
+            missing_fonts.append((font_file_name, metadata))
+        if progress_callback is not None:
+            progress_callback(FONT_CACHE_CHECK_STAGE, index, total_fonts)
+
+    if not missing_fonts:
+        logger.debug("All fonts are already downloaded")
+        _ALL_FONTS_READY = True
+        return
+
+    owns_client = client is None
+    active_client = client or httpx.AsyncClient()
+    try:
+        fastest_upstream, online_metadata = await get_fastest_upstream_for_font(
+            active_client
         )
-        for font_file_name in EMBEDDING_FONT_METADATA
-    ]
-    await asyncio.gather(*font_tasks)
+        if fastest_upstream is None or online_metadata is None:
+            raise RuntimeError("Font asset download failed: no upstream is available")
+
+        missing_online_metadata = [
+            name for name, _ in missing_fonts if name not in online_metadata
+        ]
+        if missing_online_metadata:
+            raise RuntimeError(
+                "Font asset download failed: upstream metadata is missing "
+                + ", ".join(missing_online_metadata)
+            )
+
+        logger.info(f"Downloading fonts from {fastest_upstream}")
+        total_bytes = sum(int(metadata["size"]) for _, metadata in missing_fonts)
+        downloaded_by_font = {name: 0 for name, _ in missing_fonts}
+        if progress_callback is not None:
+            progress_callback(FONT_DOWNLOAD_STAGE, 0, total_bytes)
+
+        def update_download_progress(font_name: str, downloaded: int) -> None:
+            expected_size = int(EMBEDDING_FONT_METADATA[font_name]["size"])
+            downloaded_by_font[font_name] = max(
+                downloaded_by_font[font_name],
+                min(max(downloaded, 0), expected_size),
+            )
+            if progress_callback is not None:
+                progress_callback(
+                    FONT_DOWNLOAD_STAGE,
+                    sum(downloaded_by_font.values()),
+                    total_bytes,
+                )
+
+        semaphore = asyncio.Semaphore(FONT_DOWNLOAD_CONCURRENCY)
+
+        async def download_font(font_name: str, metadata: dict) -> None:
+            async with semaphore:
+                url = get_font_url_by_name_and_upstream(font_name, fastest_upstream)
+                cache_file_path = get_cache_file_path(font_name, "fonts")
+                try:
+                    await download_file(
+                        active_client,
+                        url,
+                        cache_file_path,
+                        metadata["sha3_256"],
+                        lambda downloaded: update_download_progress(
+                            font_name, downloaded
+                        ),
+                    )
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Font asset download failed for {font_name}: {exc}"
+                    ) from exc
+                update_download_progress(font_name, int(metadata["size"]))
+
+        font_tasks = [
+            asyncio.create_task(download_font(name, metadata))
+            for name, metadata in missing_fonts
+        ]
+        try:
+            await asyncio.gather(*font_tasks)
+        except BaseException:
+            for task in font_tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*font_tasks, return_exceptions=True)
+            raise
+        _ALL_FONTS_READY = True
+    finally:
+        if owns_client:
+            await active_client.aclose()
 
 
 async def download_all_cmaps_async(client: httpx.AsyncClient | None = None):

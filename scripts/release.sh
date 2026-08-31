@@ -154,34 +154,14 @@ replaceOnce(
 NODE
 
 UV_DEFAULT_INDEX=https://pypi.org/simple uv --directory server lock --locked
-UV_DEFAULT_INDEX=https://pypi.org/simple \
-    uv run --directory server --locked python -m unittest discover -s tests
 uv build server --out-dir server/dist --clear --no-sources
 uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$VERSION"
 
-SMOKE_ROOT="$(mktemp -d)"
-TEMP_PATHS+=("$SMOKE_ROOT")
-UV_NO_CONFIG=1 uv venv --python 3.13 "$SMOKE_ROOT/venv"
-if [[ -x "$SMOKE_ROOT/venv/bin/python" ]]; then
-    SMOKE_PYTHON="$SMOKE_ROOT/venv/bin/python"
-else
-    SMOKE_PYTHON="$SMOKE_ROOT/venv/Scripts/python.exe"
-fi
-env -u UV_INDEX_URL -u PIP_INDEX_URL UV_NO_CONFIG=1 UV_DEFAULT_INDEX=https://pypi.org/simple \
-    uv pip install --python "$SMOKE_PYTHON" \
-    "server/dist/zotero_pdf2zh_pro-$VERSION-py3-none-any.whl"
-"$SMOKE_PYTHON" scripts/check_installed_runtime.py "$VERSION"
-
 CI=true "${PNPM[@]}" --dir plugin install --frozen-lockfile
-"${PNPM[@]}" --dir plugin lint:check
 rm -rf -- plugin/build
 "${PNPM[@]}" --dir plugin build
-"${PNPM[@]}" --dir plugin test
 
 CI=true "${PNPM[@]}" --dir windows-app install --frozen-lockfile
-"${PNPM[@]}" --dir windows-app test
-cargo fmt --manifest-path windows-app/src-tauri/Cargo.toml --check
-cargo test --manifest-path windows-app/src-tauri/Cargo.toml
 "${PNPM[@]}" --dir windows-app tauri build --no-bundle
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1

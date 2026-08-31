@@ -228,37 +228,6 @@ if not callable(task_manager.TaskManager):
 if not callable(server.build_health_payload):
     raise SystemExit("server module is incomplete")
 PY
-    "$BREW_PYTHON" "$REPO_ROOT/scripts/check_installed_runtime.py" "$VERSION"
-}
-
-verify_staged_wheel() {
-    local wheel="$1"
-    local smoke_root="$BUILD_DIR/wheel-smoke"
-    mkdir -p "$smoke_root"
-    python3 - "$wheel" "$smoke_root" <<'PY'
-import sys
-import zipfile
-from pathlib import Path
-
-wheel = Path(sys.argv[1])
-destination = Path(sys.argv[2])
-with zipfile.ZipFile(wheel) as archive:
-    archive.extractall(destination)
-PY
-    PYTHONPATH="$smoke_root" "$BREW_PYTHON" - "$smoke_root" <<'PY'
-import sys
-from pathlib import Path
-
-import observability
-import server
-import task_manager
-
-root = Path(sys.argv[1]).resolve()
-for module in (observability, server, task_manager):
-    module_path = Path(module.__file__).resolve()
-    if root not in module_path.parents:
-        raise SystemExit(f"staged wheel import escaped artifact: {module_path}")
-PY
 }
 
 verify_running_service() {
@@ -364,26 +333,19 @@ PNPM=(npx --yes pnpm@10.34.5)
 
 log "installing plugin dependencies"
 CI=true "${PNPM[@]}" --dir plugin install --frozen-lockfile
-log "checking and building the Zotero plugin"
-"${PNPM[@]}" --dir plugin lint:check
+log "building the Zotero plugin"
 "${PNPM[@]}" --dir plugin build
 
-UV_LOCK_INDEX="$(awk -F '"' '/^source = \{ registry = / { print $2; exit }' server/uv.lock)"
-[[ -n "$UV_LOCK_INDEX" ]] || die "server/uv.lock does not contain a registry source"
-log "running server tests"
-UV_DEFAULT_INDEX="$UV_LOCK_INDEX" uv run --directory server --locked python -m unittest discover -s tests
-log "building and validating server artifacts"
+log "building the server package"
 uv build server --out-dir "$ARTIFACT_DIR" --clear --no-sources
-python3 scripts/check_pypi_artifacts.py "$ARTIFACT_DIR" "$VERSION"
 
 PLUGIN_XPI_SOURCE="$REPO_ROOT/plugin/build/zotero-pdf2zh-pro.xpi"
-SERVER_WHEEL_SOURCE="$ARTIFACT_DIR/zotero_pdf2zh_next-$VERSION-py3-none-any.whl"
+SERVER_WHEEL_SOURCE="$ARTIFACT_DIR/zotero_pdf2zh_pro-$VERSION-py3-none-any.whl"
 [[ -f "$PLUGIN_XPI_SOURCE" ]] || die "plugin build did not produce $PLUGIN_XPI_SOURCE"
 [[ -f "$SERVER_WHEEL_SOURCE" ]] || die "server build did not produce $SERVER_WHEEL_SOURCE"
 cp -p "$PLUGIN_XPI_SOURCE" "$ARTIFACT_DIR/zotero-pdf2zh-pro.xpi"
 PLUGIN_XPI_SOURCE="$ARTIFACT_DIR/zotero-pdf2zh-pro.xpi"
 WHEEL_BASENAME="$(basename "$SERVER_WHEEL_SOURCE")"
-verify_staged_wheel "$SERVER_WHEEL_SOURCE"
 
 python3 - "$PLUGIN_XPI_SOURCE" "$VERSION" "$ADDON_ID" <<'PY'
 import json

@@ -12,6 +12,7 @@ from tempfile import TemporaryDirectory
 from typing import Any
 from typing import Callable
 
+from babeldoc.assets.assets import download_all_fonts_async
 from pypdf import PdfReader
 
 from pdf2zh_next.config.cli_env_model import CLIEnvSettingsModel
@@ -290,6 +291,29 @@ class ProgressLogger:
             return 0.0
 
 
+def create_font_progress_event(
+    stage: str,
+    current: int,
+    total: int,
+) -> dict[str, Any]:
+    bounded_current = max(0, min(current, total)) if total > 0 else 0
+    stage_progress = 100.0 if total <= 0 else bounded_current * 100.0 / total
+    if bounded_current == 0:
+        event_type = "progress_start"
+    elif bounded_current >= total:
+        event_type = "progress_end"
+    else:
+        event_type = "progress_update"
+    return {
+        "type": event_type,
+        "stage": stage,
+        "stage_current": bounded_current,
+        "stage_total": total,
+        "stage_progress": stage_progress,
+        "overall_progress": 0.0,
+    }
+
+
 def coerce_value(value: Any) -> Any:
     if not isinstance(value, str):
         return value
@@ -394,6 +418,12 @@ def explain_service_error(error: Exception | str) -> str:
     if not message:
         return "Unknown translation error"
 
+    if "font asset download failed" in message.lower():
+        return (
+            "字体资源下载失败。已完成的字体会保留，请检查网络后重试任务。"
+            f"详情：{message}"
+        )
+
     if "object has no attribute 'choices'" in message or 'object has no attribute "choices"' in message:
         return (
             "LLM 接口返回的不是标准 OpenAI Chat Completions 响应。"
@@ -408,6 +438,15 @@ def diagnose_service_error(error: Exception | str) -> list[dict[str, str]]:
     lowered = message.lower()
 
     diagnostics: list[DiagnosticMessage] = []
+    if "字体资源下载失败" in message or "font asset download failed" in lowered:
+        diagnostics.append(
+            DiagnosticMessage(
+                code="font_asset_download",
+                severity="error",
+                message="首次运行所需字体未能全部下载。",
+                suggestion="检查网络或代理设置后重试任务；已下载完成的字体不会重复下载。",
+            )
+        )
     if "too many cid paragraphs" in lowered or "cid" in lowered:
         diagnostics.append(
             DiagnosticMessage(
@@ -556,6 +595,7 @@ async def translate_pdf_with_callbacks(
     metrics_collector: TaskMetricsCollector | None = None
     heartbeat_task: asyncio.Task | None = None
     try:
+        progress_logger = ProgressLogger(job_id)
         settings = create_runtime_settings(payload)
         translation_config = create_babeldoc_config(settings, input_path)
         translation_config.save_detailed_tracking = False
@@ -587,7 +627,21 @@ async def translate_pdf_with_callbacks(
         if on_config_ready is not None:
             on_config_ready(translation_config)
 
-        progress_logger = ProgressLogger(job_id)
+        last_font_progress: tuple[str, int, int] | None = None
+
+        def publish_font_progress(stage: str, current: int, total: int) -> None:
+            nonlocal last_font_progress
+            progress_key = (stage, current, total)
+            if progress_key == last_font_progress:
+                return
+            last_font_progress = progress_key
+            event = create_font_progress_event(stage, current, total)
+            progress_logger.log(event)
+            if progress_callback is not None:
+                progress_callback(event)
+
+        await download_all_fonts_async(progress_callback=publish_font_progress)
+
         LOGGER.info(
             "[%s] translation started: file=%s service=%s output_modes=%s",
             job_id,

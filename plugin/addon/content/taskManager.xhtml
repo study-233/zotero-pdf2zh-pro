@@ -1719,10 +1719,20 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     0,
                     Math.min(task.overallProgress || 0, 100),
                 );
+                const stageProgress = Math.max(
+                    0,
+                    Math.min(task.stageProgress || 0, 100),
+                );
+                const fontAssetStage = isFontAssetStage(task.stage);
+                const displayedProgress = fontAssetStage
+                    ? stageProgress
+                    : overallProgress;
                 const gridValues = [
-                    task.stage || "等待中",
-                    `${Math.round(task.stageProgress || 0)}% (${task.stageCurrent || 0}/${task.stageTotal || 0})`,
-                    `${Math.round(overallProgress)}%`,
+                    formatStage(task.stage),
+                    formatStageProgress(task),
+                    fontAssetStage
+                        ? "字体准备完成后开始翻译"
+                        : `${Math.round(overallProgress)}%`,
                     formatImportState(task),
                     formatAttempt(task),
                 ];
@@ -1732,9 +1742,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 setAttributeValue(
                     view.progressTrack,
                     "aria-valuenow",
-                    String(Math.round(overallProgress)),
+                    String(Math.round(displayedProgress)),
                 );
-                const progressWidth = `${overallProgress}%`;
+                setAttributeValue(
+                    view.progressTrack,
+                    "aria-label",
+                    fontAssetStage ? "字体初始化进度" : "任务总进度",
+                );
+                const progressWidth = `${displayedProgress}%`;
                 if (view.progressFill.style.width !== progressWidth) {
                     view.progressFill.style.width = progressWidth;
                 }
@@ -2059,7 +2074,42 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     failed: "失败",
                     cancelled: "已终止",
                 };
+                if (task.status === "running" && isFontAssetStage(task.stage)) {
+                    return "正在准备首次运行所需字体";
+                }
                 return mapping[task.status] || task.status;
+            }
+
+            function isFontAssetStage(stage) {
+                return stage === "Check Fonts" || stage === "Download Fonts";
+            }
+
+            function formatStage(stage) {
+                if (stage === "Check Fonts") {
+                    return "检查字体缓存";
+                }
+                if (stage === "Download Fonts") {
+                    return "下载字体资源（首次初始化，仅需一次）";
+                }
+                return stage || "等待中";
+            }
+
+            function formatStageProgress(task) {
+                const progress = Math.round(task.stageProgress || 0);
+                const current = task.stageCurrent || 0;
+                const total = task.stageTotal || 0;
+                if (task.stage === "Check Fonts") {
+                    return `${progress}% (${current}/${total} 个)`;
+                }
+                if (task.stage === "Download Fonts") {
+                    return `${progress}% (${formatBytes(current)} / ${formatBytes(total)})`;
+                }
+                return `${progress}% (${current}/${total})`;
+            }
+
+            function formatBytes(bytes) {
+                const value = Math.max(0, Number(bytes) || 0);
+                return `${(value / (1024 * 1024)).toFixed(1)} MB`;
             }
 
             function formatImportState(task) {
