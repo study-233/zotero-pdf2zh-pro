@@ -43,7 +43,7 @@
         "typescript-eslint": "^8.26.0",
         "zotero-plugin-scaffold": "^0.3.2",
         "zotero-types": "^4.1.0-beta.4",
-        "@napi-rs/canvas": "^0.1.80"
+        "@napi-rs/canvas": "^1.0.8"
     },
     "pnpm": {
         "overrides": {
