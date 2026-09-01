@@ -52,9 +52,10 @@ Python 3.13，以及公开 PyPI 上与控制中心相同版本的服务端；不
 并确保服务运行；可在主卡片随时关闭，后续升级不会重新开启。关闭主窗口只会隐藏到托盘，
 退出控制中心也不会停止服务。
 
-升级时从 [GitHub Releases](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)
-下载并解压新版 ZIP，运行其中的 EXE 后点击“升级并重启”。任务、翻译结果、日志和自启
-选择都会保留；更旧版本不能覆盖当前安装。包内的 CMD/PowerShell 文件仅作为故障恢复入口。
+控制中心启动时会静默检查 GitHub 上的稳定版本；发现新版后点击“更新到 vX.X.X”即可
+自动下载、校验、更新控制中心和服务端并重启。任务、翻译结果、日志和自启选择都会保留，
+失败时自动恢复旧版。首次获得这一能力仍需手动安装一次包含自动更新功能的 Windows ZIP。
+包内的 CMD/PowerShell 文件仅作为故障恢复入口。
 
 安装不需要管理员权限，不创建计划任务、Windows Service 或防火墙规则，也不会停止
 占用 8890 端口的未知进程。唯一允许的自启机制是当前用户可见、可关闭的登录启动项。
@@ -128,7 +129,7 @@ DeepSeek 任务还会显示段落吞吐量、预计剩余时间、本地缓存�
 ## 更新
 
 - 插件：由 Zotero 自动检查稳定版本，也可以从 GitHub Release 手动安装新 XPI。
-- Windows：运行新版 ZIP 中的 `zotero-pdf2zh-pro.exe`，点击“升级并重启”。
+- Windows：控制中心启动时静默检查稳定版本，发现新版后点击“更新到 vX.X.X”。
 - uv：`uv tool upgrade zotero-pdf2zh-pro`。
 - Homebrew：`brew upgrade zotero-pdf2zh-pro` 后重启服务。
 

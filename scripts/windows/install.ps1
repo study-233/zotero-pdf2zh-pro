@@ -11,6 +11,7 @@ Assert-WindowsX64
 
 $managementFiles = @(
     "common.ps1",
+    "apply-update.ps1",
     "install.ps1",
     "start-server.ps1",
     "stop-server.ps1",

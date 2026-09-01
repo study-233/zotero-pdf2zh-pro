@@ -20,7 +20,13 @@ export interface ControlState {
     runningFromInstalledPath: boolean;
 }
 
-export type PrimaryAction = "install" | "upgrade" | "start" | "stop" | "refresh" | "none";
+export interface UpdateCheck {
+    available: boolean;
+    currentVersion: string;
+    latestVersion: string;
+}
+
+export type PrimaryAction = "install" | "upgrade" | "update" | "start" | "stop" | "refresh" | "none";
 
 export interface ViewModel {
     badge: string;
@@ -32,7 +38,7 @@ export interface ViewModel {
     installed: boolean;
 }
 
-export function toViewModel(state: ControlState): ViewModel {
+export function toViewModel(state: ControlState, update?: UpdateCheck | null): ViewModel {
     if (state.installation === "notInstalled") {
         return {
             badge: "未安装",
@@ -63,6 +69,17 @@ export function toViewModel(state: ControlState): ViewModel {
             detail: `当前已安装 ${state.installedVersion ?? "未知版本"}，请下载更新版本。`,
             primaryLabel: "重新检测",
             primaryAction: "refresh",
+            installed: true,
+        };
+    }
+    if (update?.available && state.runningFromInstalledPath) {
+        return {
+            badge: "发现新版",
+            tone: "warning",
+            title: `可以更新到 ${update.latestVersion}`,
+            detail: "控制中心和服务端将一起更新，任务数据、日志和自启选择会保留。",
+            primaryLabel: `更新到 v${update.latestVersion}`,
+            primaryAction: "update",
             installed: true,
         };
     }

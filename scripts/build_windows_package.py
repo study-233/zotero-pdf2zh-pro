@@ -24,6 +24,7 @@ class PackageEntry:
 
 SCRIPT_NAMES = [
     "README.txt",
+    "apply-update.ps1",
     "install.cmd",
     "start-server.cmd",
     "stop-server.cmd",

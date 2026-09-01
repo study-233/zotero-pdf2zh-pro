@@ -86,6 +86,7 @@ pre { margin: 9px 0 0; max-height: 108px; overflow: auto; white-space: pre-wrap;
 .more-menu summary::-webkit-details-marker { display: none; }
 .more-popover { position: absolute; right: 0; bottom: 25px; width: 250px; padding: 14px; border: 1px solid #dce2de; border-radius: 12px; background: white; box-shadow: 0 12px 35px rgba(25, 48, 36, .17); z-index: 3; }
 .more-popover p { margin: 0 0 12px; color: #65726b; line-height: 1.45; }
+.menu-button { width: 100%; margin-bottom: 8px; }
 .danger-button { width: 100%; min-height: 34px; border: 1px solid #e6b8b5; border-radius: 9px; color: #a33232; background: #fff7f6; }
 
 @media (max-height: 660px) {

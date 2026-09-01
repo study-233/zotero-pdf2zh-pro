@@ -90,6 +90,7 @@ TAP_URL="https://github.com/study-233/homebrew-formula.git"
 PYPI_VERSION_URL="https://pypi.org/pypi/$PRODUCT/$VERSION/json"
 PYPI_CHECK_URL="https://pypi.org/simple/$PRODUCT/"
 WINDOWS_PACKAGE="dist/$PRODUCT-windows-x64.zip"
+WINDOWS_UPDATE_MANIFEST="dist/windows-update.json"
 SOURCE_ARCHIVE="dist/$PRODUCT-$VERSION-source.zip"
 XPI="plugin/build/$PRODUCT.xpi"
 UPDATE_MANIFEST="plugin/build/update.json"
@@ -162,10 +163,15 @@ rm -rf -- plugin/build
 "${PNPM[@]}" --dir plugin build
 
 CI=true "${PNPM[@]}" --dir windows-app install --frozen-lockfile
+"${PNPM[@]}" --dir windows-app test
+cargo test --manifest-path windows-app/src-tauri/Cargo.toml
 "${PNPM[@]}" --dir windows-app tauri build --no-bundle
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
 uv run --no-project python scripts/build_windows_package.py --version "$VERSION"
+uv run --no-project python scripts/build_windows_update_manifest.py \
+    --version "$VERSION" --package "$WINDOWS_PACKAGE" --output "$WINDOWS_UPDATE_MANIFEST"
+uv run --no-project python scripts/test_windows_update_manifest.py
 
 git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock \
     scripts/windows/common.ps1 windows-app/package.json windows-app/src-tauri/Cargo.toml \
@@ -179,7 +185,7 @@ mkdir -p dist
 git archive --format=zip --prefix="$PRODUCT-$VERSION/" \
     --output="$SOURCE_ARCHIVE" "$COMMIT"
 
-for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$SOURCE_ARCHIVE"; do
+for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_UPDATE_MANIFEST" "$SOURCE_ARCHIVE"; do
     [[ -f "$artifact" ]] || die "missing release artifact: $artifact"
 done
 
@@ -224,6 +230,7 @@ process.stdout.write(hash);
 XPI_SHA256="$(sha256_file "$XPI")"
 UPDATE_SHA256="$(sha256_file "$UPDATE_MANIFEST")"
 WINDOWS_SHA256="$(sha256_file "$WINDOWS_PACKAGE")"
+WINDOWS_UPDATE_SHA256="$(sha256_file "$WINDOWS_UPDATE_MANIFEST")"
 SOURCE_SHA256="$(sha256_file "$SOURCE_ARCHIVE")"
 
 if [[ "$PUBLISH_PYPI" -eq 1 ]]; then
@@ -255,11 +262,12 @@ if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
     printf -- '- `%s`  `%s`\n' "$XPI_SHA256" "$(basename "$XPI")" >>"$NOTES_FILE"
     printf -- '- `%s`  `%s`\n' "$UPDATE_SHA256" "$(basename "$UPDATE_MANIFEST")" >>"$NOTES_FILE"
     printf -- '- `%s`  `%s`\n' "$WINDOWS_SHA256" "$(basename "$WINDOWS_PACKAGE")" >>"$NOTES_FILE"
+    printf -- '- `%s`  `%s`\n' "$WINDOWS_UPDATE_SHA256" "$(basename "$WINDOWS_UPDATE_MANIFEST")" >>"$NOTES_FILE"
     if gh release view "$TAG" --repo "$MAIN_REPO" >/dev/null 2>&1; then
-        gh release upload "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" \
+        gh release upload "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_UPDATE_MANIFEST" \
             --repo "$MAIN_REPO" --clobber
     else
-        gh release create "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" \
+        gh release create "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_UPDATE_MANIFEST" \
             --repo "$MAIN_REPO" --target "$COMMIT" --title "$TAG" \
             --notes-file "$NOTES_FILE" --latest
     fi
@@ -311,9 +319,10 @@ s/version "[^"]+"/version "$ENV{VERSION}"/;
 fi
 
 echo "Released $TAG at $COMMIT"
-echo "Artifacts: $XPI $UPDATE_MANIFEST $WINDOWS_PACKAGE $SOURCE_ARCHIVE"
+echo "Artifacts: $XPI $UPDATE_MANIFEST $WINDOWS_PACKAGE $WINDOWS_UPDATE_MANIFEST $SOURCE_ARCHIVE"
 echo "SHA-256:"
 echo "  $XPI_SHA256  $XPI"
 echo "  $UPDATE_SHA256  $UPDATE_MANIFEST"
 echo "  $WINDOWS_SHA256  $WINDOWS_PACKAGE"
+echo "  $WINDOWS_UPDATE_SHA256  $WINDOWS_UPDATE_MANIFEST"
 echo "  $SOURCE_SHA256  $SOURCE_ARCHIVE"

@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod update;
+
 use semver::Version;
 use serde::Serialize;
 use serde_json::Value;
@@ -442,6 +444,52 @@ async fn install_or_upgrade(
 }
 
 #[tauri::command]
+async fn check_for_update() -> Result<update::UpdateCheck, String> {
+    update::check(env!("CARGO_PKG_VERSION")).await
+}
+
+#[tauri::command]
+async fn download_and_apply_update(
+    app: AppHandle,
+    context: State<'_, AppContext>,
+) -> Result<(), String> {
+    let _guard = begin_operation(&context)?;
+    let paths = ProductPaths::discover()?;
+    if !running_from_installed_path(&paths) {
+        return Err("请先安装控制中心，再使用程序内更新。".to_owned());
+    }
+    let staged = update::download_and_stage(&app, &paths.app_root).await?;
+    emit_log(
+        &app,
+        &paths.control_log,
+        format!(
+            "已验证 Windows 更新 {}，暂存目录：{}",
+            staged.version,
+            staged.directory.display()
+        ),
+    );
+    let launch = Command::new(powershell_path())
+        .arg("-NoProfile")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
+        .arg("-File")
+        .arg(&staged.apply_script)
+        .arg("-ParentProcessId")
+        .arg(std::process::id().to_string())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn();
+    if let Err(error) = launch {
+        let _ = fs::remove_dir_all(&staged.directory);
+        return Err(format!("无法启动更新安装程序：{error}"));
+    }
+    context.exiting.store(true, Ordering::Release);
+    app.exit(0);
+    Ok(())
+}
+
+#[tauri::command]
 fn set_autostart(app: AppHandle, enabled: bool) -> Result<(), String> {
     let paths = ProductPaths::discover()?;
     if !running_from_installed_path(&paths) {
@@ -718,8 +766,9 @@ fn main() {
     let installed_launch = ProductPaths::discover()
         .map(|paths| running_from_installed_path(&paths))
         .unwrap_or(false);
+    let lifecycle_test = env::var("PDF2ZH_WINDOWS_LIFECYCLE_TEST").as_deref() == Ok("1");
     let mut builder = tauri::Builder::default();
-    if installed_launch {
+    if installed_launch && !lifecycle_test {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             show_main_window(app)
         }));
@@ -733,6 +782,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             get_state,
             install_or_upgrade,
+            check_for_update,
+            download_and_apply_update,
             start_server,
             stop_server,
             set_autostart,

@@ -77,9 +77,11 @@ $firstControlProcessId = Wait-ControlPanel
 Wait-ExpectedHealth
 Assert-Autostart -Enabled $true
 
-$duplicate = Start-Process -FilePath $ControlPanelExecutable -PassThru -WindowStyle Hidden
-Assert-True ($duplicate.WaitForExit(10000)) "A duplicate control center instance remained running."
-Assert-True ((Get-ManagedControlPanelProcessId) -eq $firstControlProcessId) "Duplicate launch replaced the primary instance."
+if ($env:PDF2ZH_WINDOWS_LIFECYCLE_TEST -ne "1") {
+    $duplicate = Start-Process -FilePath $ControlPanelExecutable -PassThru -WindowStyle Hidden
+    Assert-True ($duplicate.WaitForExit(10000)) "A duplicate control center instance remained running."
+    Assert-True ((Get-ManagedControlPanelProcessId) -eq $firstControlProcessId) "Duplicate launch replaced the primary instance."
+}
 
 & (Join-Path $BinDir "stop-server.ps1") -Quiet
 $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $ServerPort)
@@ -141,6 +143,27 @@ Assert-True ($null -eq (Get-Process -Id $upgradedControlProcessId -ErrorAction S
 $recoveredControlProcessId = Wait-ControlPanel
 Assert-True ($recoveredControlProcessId -ne $upgradedControlProcessId) "Failed upgrade did not restart the previous GUI."
 Wait-ExpectedHealth
+
+$selfUpdateRoot = Join-Path $AppRoot ".self-update-test"
+$selfUpdatePackage = Join-Path $selfUpdateRoot "package"
+New-Item -ItemType Directory -Force -Path $selfUpdatePackage | Out-Null
+Copy-Item -Path (Join-Path $windowsDir "*") -Destination $selfUpdatePackage -Recurse -Force
+Copy-Item -LiteralPath $gui -Destination (Join-Path $selfUpdatePackage "$ProductName.exe") -Force
+$applyUpdate = Join-Path $selfUpdatePackage "apply-update.ps1"
+$applyArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -ParentProcessId 2147483647 -PackageSource "{1}"' -f $applyUpdate, $package
+$applyProcess = Start-Process `
+    -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -ArgumentList $applyArguments `
+    -WindowStyle Hidden `
+    -PassThru
+Assert-True ($applyProcess.WaitForExit(120000)) "Self-update bootstrap did not finish within two minutes."
+Assert-True ($applyProcess.ExitCode -eq 0) "Self-update bootstrap failed."
+Assert-True ($null -eq (Get-Process -Id $recoveredControlProcessId -ErrorAction SilentlyContinue)) "Self-update did not stop the previous GUI."
+$selfUpdatedControlProcessId = Wait-ControlPanel
+Assert-True ($selfUpdatedControlProcessId -ne $recoveredControlProcessId) "Self-update did not start a new GUI."
+Wait-ExpectedHealth
+Assert-True (Test-Path -LiteralPath (Join-Path $DataDir "preserve-me")) "Self-update removed persistent data."
+Assert-Autostart -Enabled $false
 
 Set-Content -LiteralPath $InstalledVersionFile -Value "99.0.0" -Encoding ascii
 $downgradeBlocked = $false

@@ -47,4 +47,21 @@ describe("toViewModel", () => {
       }).badge,
     ).toBe("发现新版");
   });
+
+  it("prioritizes a verified remote update for the installed control center", () => {
+    const view = toViewModel(base, {
+      available: true,
+      currentVersion: "1.1.0",
+      latestVersion: "1.2.0",
+    });
+    expect(view.primaryAction).toBe("update");
+    expect(view.primaryLabel).toBe("更新到 v1.2.0");
+    expect(
+      toViewModel({ ...base, runningFromInstalledPath: false }, {
+        available: true,
+        currentVersion: "1.1.0",
+        latestVersion: "1.2.0",
+      }).primaryAction,
+    ).toBe("start");
+  });
 });
