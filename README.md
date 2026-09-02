@@ -14,7 +14,7 @@
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 
-当前统一版本：<!-- release-version --> `1.4.0`
+当前统一版本：<!-- release-version --> `1.5.0`
 
 [快速开始](#quick-start) · [功能亮点](#features) · [安装方式](#installation) ·
 [使用说明](#usage) · [问题反馈](#community)
