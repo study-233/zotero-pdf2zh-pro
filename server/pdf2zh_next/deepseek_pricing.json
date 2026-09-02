@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "version": "2026-08-17-cny-tiered-r2",
+  "updatedAt": "2026-08-17T00:00:00+08:00",
+  "sourceUrl": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+  "currency": "CNY",
+  "unit": "per_million_tokens",
+  "schedule": {
+    "timezone": "Asia/Shanghai",
+    "utcOffsetMinutes": 480,
+    "peakWeekdays": [1, 2, 3, 4, 5],
+    "peakWindows": [
+      ["09:00", "12:00"],
+      ["14:00", "18:00"]
+    ]
+  },
+  "models": {
+    "deepseek-v4-flash": {
+      "aliases": ["deepseek-chat", "deepseek-reasoner"],
+      "offPeak": {
+        "cacheHitInput": 0.05,
+        "cacheMissInput": 1.5,
+        "output": 4.5
+      },
+      "peak": {
+        "cacheHitInput": 0.1,
+        "cacheMissInput": 3.0,
+        "output": 9.0
+      }
+    },
+    "deepseek-v4-pro": {
+      "aliases": [],
+      "offPeak": {
+        "cacheHitInput": 0.15,
+        "cacheMissInput": 4.5,
+        "output": 13.5
+      },
+      "peak": {
+        "cacheHitInput": 0.3,
+        "cacheMissInput": 9.0,
+        "output": 27.0
+      }
+    },
+    "deepseek-v4-flash-vision-exp": {
+      "aliases": [],
+      "offPeak": {
+        "cacheHitInput": 0.05,
+        "cacheMissInput": 1.5,
+        "output": 4.5
+      },
+      "peak": {
+        "cacheHitInput": 0.1,
+        "cacheMissInput": 3.0,
+        "output": 9.0
+      }
+    }
+  }
+}

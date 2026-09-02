@@ -79,6 +79,7 @@ include = ["pdf2zh_next*", "babeldoc*", "rapidocr_onnxruntime*"]
 [tool.setuptools.package-data]
 "*" = [
     "*.md",
+    "*.json",
     "*.onnx",
     "*.pickle.gz",
     "*.png",

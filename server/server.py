@@ -24,6 +24,7 @@ from pdf2zh_next_service import diagnose_service_error
 from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
+from observability import start_deepseek_pricing_updater
 from task_manager import TaskManager
 
 VERSION = "1.4.0"
@@ -283,7 +284,7 @@ def validate_config_request(data: dict[str, Any]):
         "target_lang": normalize_language(data.get("targetLang"), "zh-CN"),
         "service": service,
         "qps": parse_int(data.get("qps"), 1, minimum=1),
-        "pool_size": parse_int(data.get("poolSize"), 0, minimum=0),
+        "pool_size": parse_int(data.get("poolSize"), 50, minimum=0),
         "ocr": parse_bool(data.get("ocr"), False),
         "auto_ocr": parse_bool(data.get("autoOcr"), True),
         "translate_table_text": parse_bool(
@@ -293,7 +294,7 @@ def validate_config_request(data: dict[str, Any]):
         "skip_text_checks": parse_bool(data.get("skipTextChecks"), False),
         "no_watermark": parse_bool(data.get("noWatermark"), True),
         "no_auto_extract_glossary": parse_bool(
-            data.get("disableTermExtraction"), False
+            data.get("disableTermExtraction"), True
         ),
         "font_family": normalize_font_family(data.get("fontFamily")),
         "live_test": parse_bool(data.get("liveTest"), False),
@@ -322,7 +323,7 @@ def prepare_translation_request(
         "output_modes": output_modes,
         "service": service,
         "qps": parse_int(data.get("qps"), 8, minimum=1),
-        "pool_size": parse_int(data.get("poolSize"), 0, minimum=0),
+        "pool_size": parse_int(data.get("poolSize"), 50, minimum=0),
         "skip_last_pages": parse_int(data.get("skipLastPages"), 0, minimum=0),
         "ocr": parse_bool(data.get("ocr"), False),
         "auto_ocr": parse_bool(data.get("autoOcr"), True),
@@ -333,7 +334,7 @@ def prepare_translation_request(
         "skip_text_checks": parse_bool(data.get("skipTextChecks"), False),
         "no_watermark": parse_bool(data.get("noWatermark"), True),
         "no_auto_extract_glossary": parse_bool(
-            data.get("disableTermExtraction"), False
+            data.get("disableTermExtraction"), True
         ),
         "font_family": normalize_font_family(data.get("fontFamily")),
         "llm_api": data.get("llm_api") or {},
@@ -629,6 +630,7 @@ def main() -> None:
     args = parse_args()
     configure_runtime_paths(args.data_dir)
     configure_logging(args.log_level, args.log_file)
+    start_deepseek_pricing_updater(TRANSLATES_DIR)
     LOGGER.info("server starting on http://%s:%s", args.host, args.port)
     app.run(host=args.host, port=args.port)
 

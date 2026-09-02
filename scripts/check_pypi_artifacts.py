@@ -30,6 +30,7 @@ REQUIRED_RUNTIME_FILES = {
     "server.py",
     "task_manager.py",
     "pdf2zh_next/__init__.py",
+    "pdf2zh_next/deepseek_pricing.json",
     "babeldoc/__init__.py",
     "babeldoc/format/pdf/document_il/midend/reference_filter.py",
     "babeldoc/pdfminer/cmap/UniGB-UCS2-H.pickle.gz",

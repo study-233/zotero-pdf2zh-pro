@@ -549,6 +549,9 @@ def create_babeldoc_config(settings: SettingsModel, file: Path) -> BabelDOCConfi
     if (
         settings.term_extraction_engine_settings == settings.translate_engine_settings
         and settings.translation.term_qps == settings.translation.qps
+        and not getattr(
+            translator, "requires_dedicated_term_extraction_translator", False
+        )
     ):
         term_extraction_translator = translator
         if recommended_qps := getattr(translator, "pdf2zh_next_recommended_qps", None):

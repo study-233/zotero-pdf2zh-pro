@@ -877,7 +877,7 @@ async function checkServerConnection() {
                 sourceLang: getPref("sourceLang")?.toString() || "en",
                 targetLang: getPref("targetLang")?.toString() || "zh-CN",
                 qps: getPref("qps")?.toString() || "1",
-                poolSize: getPref("poolSize")?.toString() || "0",
+                poolSize: getPref("poolSize")?.toString() || "50",
                 ocr: getPref("ocr")?.toString() || "false",
                 autoOcr: getPref("autoOcr")?.toString() || "true",
                 translateTableText:
@@ -888,7 +888,7 @@ async function checkServerConnection() {
                     getPref("skipTextChecks")?.toString() || "false",
                 noWatermark: getPref("noWatermark")?.toString() || "true",
                 disableTermExtraction:
-                    getPref("disableTermExtraction")?.toString() || "false",
+                    getPref("disableTermExtraction")?.toString() || "true",
                 fontFamily: getPref("fontFamily")?.toString() || "auto",
                 liveTest,
                 llm_api: llmApi

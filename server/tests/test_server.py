@@ -189,6 +189,8 @@ class ServerRouteTests(unittest.TestCase):
         self.assertEqual(response.json["model"], "gpt-4.1")
         self.assertTrue(validate.call_args.args[0]["live_test"])
         self.assertFalse(validate.call_args.args[0]["translate_table_text"])
+        self.assertEqual(validate.call_args.args[0]["pool_size"], 50)
+        self.assertTrue(validate.call_args.args[0]["no_auto_extract_glossary"])
 
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace = Path(temp_dir)

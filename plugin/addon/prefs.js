@@ -13,7 +13,7 @@ pref("__prefsPrefix__.outputDual", true);
 
 pref("__prefsPrefix__.skipLastPages", 0);
 pref("__prefsPrefix__.qps", 10);
-pref("__prefsPrefix__.poolSize", 0);
+pref("__prefsPrefix__.poolSize", 50);
 pref("__prefsPrefix__.rename", true);
 pref("__prefsPrefix__.openAfterTranslate", false);
 pref("__prefsPrefix__.notifyOnTranslationComplete", true);
@@ -25,7 +25,7 @@ pref("__prefsPrefix__.translateTableText", true);
 pref("__prefsPrefix__.skipReferences", false);
 pref("__prefsPrefix__.skipTextChecks", false);
 pref("__prefsPrefix__.noWatermark", true);
-pref("__prefsPrefix__.disableTermExtraction", false);
+pref("__prefsPrefix__.disableTermExtraction", true);
 
 pref("__prefsPrefix__.dialog-service", "openai");
 pref("__prefsPrefix__.dialog-serviceSelect", "openai");

@@ -2281,10 +2281,24 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         ? "输入 token 缺少缓存拆分，已按未命中费率保守估算"
                         : "按 DeepSeek 返回的缓存命中、未命中和输出 token 估算";
                 const pricingVersion = cost.pricingVersion || "custom";
-                const schedule = pricingVersion.endsWith("-tiered")
-                    ? "；内置费率按响应时间自动套用 UTC 01:00–04:00、06:00–10:00 高峰价"
+                const sourceLabels = {
+                    custom: "用户配置",
+                    remote: "自动更新",
+                    bundled: "内置规则",
+                };
+                const sourceKey =
+                    cost.pricingSource ||
+                    (pricingVersion.includes("-tiered")
+                        ? "bundled"
+                        : "custom");
+                const source = sourceLabels[sourceKey] || "未知来源";
+                const updatedAt = cost.pricingUpdatedAt
+                    ? `；规则更新时间 ${cost.pricingUpdatedAt}`
                     : "";
-                return `${accuracy}；费率版本 ${pricingVersion}${schedule}。`;
+                const schedule = pricingVersion.includes("-tiered")
+                    ? "；高峰价仅适用于北京时间周一至周五 09:00–12:00、14:00–18:00"
+                    : "";
+                return `${accuracy}；费率版本 ${pricingVersion}；来源 ${source}${updatedAt}${schedule}。`;
             }
 
             function formatDiagnostics(diagnostics) {

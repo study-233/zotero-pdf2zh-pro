@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import unittest
 from types import SimpleNamespace
+from unittest.mock import Mock
 from unittest.mock import patch
 
 from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
@@ -73,6 +74,37 @@ class CacheNamespaceTests(unittest.TestCase):
             with self.subTest(overrides=overrides):
                 self.assertNotEqual(self.params(settings(**overrides)), baseline)
         self.assertEqual(self.params(settings()), baseline)
+
+    def test_deepseek_term_extraction_disables_thinking_and_separates_cache(self) -> None:
+        with patch("pdf2zh_next.translator.translator_impl.openai.openai.OpenAI"):
+            translator = OpenAITranslator(settings(), NoopRateLimiter())
+        translator.configure_for_term_extraction()
+        translator.client = Mock()
+        translator.client.chat.completions.create.return_value = SimpleNamespace(
+            usage=None,
+            choices=[SimpleNamespace(message=SimpleNamespace(content="[]"))],
+        )
+
+        self.assertEqual(translator.do_llm_translate("extract terms"), "[]")
+        request = translator.client.chat.completions.create.call_args.kwargs
+        self.assertEqual(
+            request["extra_body"], {"thinking": {"type": "disabled"}}
+        )
+        params = json.loads(translator.cache.translate_engine_params)
+        self.assertEqual(params["deepseek_thinking"], "disabled")
+
+    def test_regular_deepseek_translation_keeps_provider_default_thinking(self) -> None:
+        with patch("pdf2zh_next.translator.translator_impl.openai.openai.OpenAI"):
+            translator = OpenAITranslator(settings(), NoopRateLimiter())
+        translator.client = Mock()
+        translator.client.chat.completions.create.return_value = SimpleNamespace(
+            usage=None,
+            choices=[SimpleNamespace(message=SimpleNamespace(content="translation"))],
+        )
+
+        self.assertEqual(translator.do_llm_translate("translate"), "translation")
+        request = translator.client.chat.completions.create.call_args.kwargs
+        self.assertNotIn("extra_body", request)
 
 
 if __name__ == "__main__":

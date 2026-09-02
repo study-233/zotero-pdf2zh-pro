@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import threading
 import unittest
 from datetime import datetime
 from datetime import timezone
+from pathlib import Path
 
+from observability import DeepSeekPricingManager
 from observability import DeepSeekPricing
 from observability import TaskMetricsCollector
+from observability import parse_deepseek_pricing_manifest
 from observability import resolve_deepseek_pricing
 
 
@@ -102,6 +106,27 @@ class ObservabilityTests(unittest.TestCase):
                 )
                 self.assertEqual(collector.snapshot()["cost"]["amount"], expected)
 
+        weekend = TaskMetricsCollector(
+            task_id="weekend-pricing",
+            provider="deepseek",
+            model="deepseek-v4-flash",
+            pricing=resolve_deepseek_pricing("deepseek-v4-flash", {}),
+            utc_now=lambda: datetime(2026, 8, 22, 1, 0, tzinfo=timezone.utc),
+        )
+        weekend.record_usage(
+            prompt_tokens=2_000_000,
+            completion_tokens=1_000_000,
+            cache_hit_tokens=1_000_000,
+            cache_miss_tokens=1_000_000,
+        )
+        self.assertEqual(weekend.snapshot()["cost"]["amount"], 6.05)
+
+        vision = resolve_deepseek_pricing("deepseek-v4-flash-vision-exp", {})
+        self.assertIsNotNone(vision)
+        self.assertEqual(vision.off_peak.cache_hit_input, 0.05)
+        self.assertEqual(vision.source, "bundled")
+        self.assertEqual(vision.version, "2026-08-17-cny-tiered-r2")
+
         custom = resolve_deepseek_pricing(
             "deepseek-v4-flash",
             {
@@ -124,6 +149,100 @@ class ObservabilityTests(unittest.TestCase):
             cache_miss_tokens=None,
         )
         self.assertEqual(fallback.snapshot()["cost"]["accuracy"], "fallback")
+
+    def test_pricing_manager_updates_caches_and_rejects_invalid_data(self) -> None:
+        manifest_path = (
+            Path(__file__).resolve().parents[1]
+            / "pdf2zh_next"
+            / "deepseek_pricing.json"
+        )
+        bundled = json.loads(manifest_path.read_text(encoding="utf-8"))
+        remote = dict(bundled)
+        remote["version"] = "remote-v1"
+        remote["updatedAt"] = "2026-09-02T10:00:00+08:00"
+        remote_payload = json.dumps(remote).encode("utf-8")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DeepSeekPricingManager()
+            self.assertEqual(
+                manager.refresh_once(temp_dir, lambda: remote_payload),
+                "updated",
+            )
+            self.assertEqual(manager.resolve("deepseek-chat").version, "remote-v1")
+            self.assertEqual(manager.resolve("deepseek-chat").source, "remote")
+            self.assertEqual(
+                manager.refresh_once(temp_dir, lambda: remote_payload),
+                "unchanged",
+            )
+
+            cache_path = Path(temp_dir) / "pricing" / "deepseek.json"
+            self.assertEqual(cache_path.read_bytes(), remote_payload)
+            reloaded = DeepSeekPricingManager()
+            self.assertTrue(reloaded.load_cache(temp_dir))
+            self.assertEqual(reloaded.resolve("deepseek-v4-pro").version, "remote-v1")
+
+            cache_path.write_text("{broken", encoding="utf-8")
+            fallback = DeepSeekPricingManager()
+            self.assertFalse(fallback.load_cache(temp_dir))
+            self.assertEqual(fallback.resolve("deepseek-chat").source, "bundled")
+
+            stale = dict(bundled)
+            stale["version"] = "stale-v1"
+            stale["updatedAt"] = "2026-01-01T00:00:00+08:00"
+            cache_path.write_text(json.dumps(stale), encoding="utf-8")
+            self.assertFalse(fallback.load_cache(temp_dir))
+            self.assertEqual(fallback.resolve("deepseek-chat").source, "bundled")
+
+            previous = manager.resolve("deepseek-chat")
+            with self.assertRaises(TimeoutError):
+                manager.refresh_once(
+                    temp_dir,
+                    lambda: (_ for _ in ()).throw(TimeoutError()),
+                )
+            self.assertIs(manager.resolve("deepseek-chat"), previous)
+
+    def test_pricing_manifest_validation_rejects_negative_rates(self) -> None:
+        manifest_path = (
+            Path(__file__).resolve().parents[1]
+            / "pdf2zh_next"
+            / "deepseek_pricing.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["models"]["deepseek-v4-pro"]["peak"]["output"] = -1
+        with self.assertRaisesRegex(ValueError, "non-negative"):
+            parse_deepseek_pricing_manifest(manifest, source="remote")
+
+    def test_running_task_keeps_its_pricing_snapshot(self) -> None:
+        manifest_path = (
+            Path(__file__).resolve().parents[1]
+            / "pdf2zh_next"
+            / "deepseek_pricing.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manager = DeepSeekPricingManager()
+        original = manager.resolve("deepseek-v4-flash")
+        collector = TaskMetricsCollector(
+            task_id="frozen-pricing",
+            provider="deepseek",
+            model="deepseek-v4-flash",
+            pricing=original,
+            utc_now=lambda: datetime(2026, 8, 17, 0, 0, tzinfo=timezone.utc),
+        )
+        manifest["version"] = "future-price"
+        manifest["models"]["deepseek-v4-flash"]["offPeak"]["output"] = 99
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager.refresh_once(
+                temp_dir,
+                lambda: json.dumps(manifest).encode("utf-8"),
+            )
+        collector.record_usage(
+            prompt_tokens=0,
+            completion_tokens=1_000_000,
+            cache_hit_tokens=0,
+            cache_miss_tokens=0,
+        )
+        self.assertEqual(collector.snapshot()["cost"]["amount"], 4.5)
+        self.assertEqual(manager.resolve("deepseek-v4-flash").version, "future-price")
 
     def test_concurrent_cache_updates_are_thread_safe(self) -> None:
         collector = self.make_collector()

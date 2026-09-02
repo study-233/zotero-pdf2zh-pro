@@ -26,6 +26,7 @@ def _create_translator_instance(
     translator_config,
     rate_limiter: BaseRateLimiter | None,
     enforce_glossary_support: bool = True,
+    term_extraction: bool = False,
 ) -> (BaseTranslator, int | None, int | None):
     """Create translator instance from translator_config.
 
@@ -60,6 +61,10 @@ def _create_translator_instance(
             translator = getattr(module, f"{translate_engine_type}Translator")(
                 temp_settings, rate_limiter
             )
+            if term_extraction:
+                configure = getattr(translator, "configure_for_term_extraction", None)
+                if callable(configure):
+                    configure()
             recommended_qps = None
             recommended_pool_max_workers = None
             if getattr(translator, "pdf2zh_next_recommended_qps", None):
@@ -117,6 +122,7 @@ def get_term_translator(settings: SettingsModel) -> BaseTranslator | None:
             translator_config=translator_config,
             rate_limiter=rate_limiter,
             enforce_glossary_support=False,
+            term_extraction=True,
         )
     )
     if recommended_qps:

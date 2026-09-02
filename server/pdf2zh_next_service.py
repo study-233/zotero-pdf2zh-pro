@@ -361,7 +361,7 @@ def build_settings_input(payload: dict[str, Any]) -> dict[str, Any]:
         "output": str(output_dir),
         "qps": max(int(payload.get("qps", 8) or 8), 1),
         "no_auto_extract_glossary": bool(
-            payload.get("no_auto_extract_glossary")
+            payload.get("no_auto_extract_glossary", True)
         ),
     }
     pdf_input: dict[str, Any] = {
@@ -740,14 +740,14 @@ def validate_service_config(payload: dict[str, Any], job_id: str) -> ValidationR
             "output_modes": payload.get("output_modes") or ["dual"],
             "service": payload["service"],
             "qps": payload.get("qps", 1),
-            "pool_size": payload.get("pool_size", 0),
+            "pool_size": payload.get("pool_size", 50),
             "skip_last_pages": 0,
             "ocr": payload.get("ocr", False),
             "auto_ocr": payload.get("auto_ocr", True),
             "translate_table_text": payload.get("translate_table_text", True),
             "no_watermark": payload.get("no_watermark", True),
             "no_auto_extract_glossary": payload.get(
-                "no_auto_extract_glossary", False
+                "no_auto_extract_glossary", True
             ),
             "font_family": payload.get("font_family"),
             "llm_api": payload.get("llm_api") or {},

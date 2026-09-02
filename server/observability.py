@@ -3,18 +3,44 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
 import threading
 import time
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import Callable
+from urllib.request import Request
+from urllib.request import urlopen
 
 
 METRIC_LOGGER = logging.getLogger("zotero_pdf2zh_server.metrics")
 MetricsCallback = Callable[[dict[str, Any]], None]
+DEEPSEEK_PRICING_LOGGER = logging.getLogger(
+    "zotero_pdf2zh_server.deepseek_pricing"
+)
+DEEPSEEK_PRICING_SOURCE_URL = (
+    "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+)
+DEEPSEEK_PRICING_URL = (
+    "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/"
+    "main/server/pdf2zh_next/deepseek_pricing.json"
+)
+DEEPSEEK_PRICING_REFRESH_SECONDS = 24 * 60 * 60
+DEEPSEEK_PRICING_TIMEOUT_SECONDS = 5
+DEEPSEEK_PRICING_MAX_BYTES = 64 * 1024
+REQUIRED_DEEPSEEK_PRICING_NAMES = {
+    "deepseek-chat",
+    "deepseek-reasoner",
+    "deepseek-v4-flash",
+    "deepseek-v4-pro",
+    "deepseek-v4-flash-vision-exp",
+}
 
 
 @dataclass(frozen=True)
@@ -24,12 +50,17 @@ class DeepSeekPricing:
     output: float
     currency: str
     version: str
+    source: str = "custom"
+    updated_at: str | None = None
 
 
 @dataclass(frozen=True)
 class DeepSeekTieredPricing:
     off_peak: DeepSeekPricing
     peak: DeepSeekPricing
+    utc_offset_minutes: int
+    peak_weekdays: tuple[int, ...]
+    peak_windows: tuple[tuple[int, int], ...]
 
     @property
     def currency(self) -> str:
@@ -39,40 +70,27 @@ class DeepSeekTieredPricing:
     def version(self) -> str:
         return self.off_peak.version
 
+    @property
+    def source(self) -> str:
+        return self.off_peak.source
+
+    @property
+    def updated_at(self) -> str | None:
+        return self.off_peak.updated_at
+
     def at(self, moment: datetime) -> DeepSeekPricing:
-        utc_hour = moment.astimezone(timezone.utc).hour
-        if 1 <= utc_hour < 4 or 6 <= utc_hour < 10:
+        local_time = moment.astimezone(
+            timezone(timedelta(minutes=self.utc_offset_minutes))
+        )
+        local_minute = local_time.hour * 60 + local_time.minute
+        if local_time.isoweekday() in self.peak_weekdays and any(
+            start <= local_minute < end for start, end in self.peak_windows
+        ):
             return self.peak
         return self.off_peak
 
 
 DeepSeekPricingPolicy = DeepSeekPricing | DeepSeekTieredPricing
-DEEPSEEK_TIERED_PRICING_VERSION = "2026-08-17-cny-tiered"
-
-
-def _tiered_pricing(
-    off_peak: tuple[float, float, float],
-    peak: tuple[float, float, float],
-) -> DeepSeekTieredPricing:
-    return DeepSeekTieredPricing(
-        DeepSeekPricing(*off_peak, "CNY", DEEPSEEK_TIERED_PRICING_VERSION),
-        DeepSeekPricing(*peak, "CNY", DEEPSEEK_TIERED_PRICING_VERSION),
-    )
-
-
-DEEPSEEK_V4_FLASH_PRICING = _tiered_pricing(
-    (0.05, 1.5, 4.5),
-    (0.1, 3.0, 9.0),
-)
-BUILTIN_DEEPSEEK_PRICING: dict[str, DeepSeekPricingPolicy] = {
-    "deepseek-chat": DEEPSEEK_V4_FLASH_PRICING,
-    "deepseek-reasoner": DEEPSEEK_V4_FLASH_PRICING,
-    "deepseek-v4-flash": DEEPSEEK_V4_FLASH_PRICING,
-    "deepseek-v4-pro": _tiered_pricing(
-        (0.15, 4.5, 13.5),
-        (0.3, 9.0, 27.0),
-    ),
-}
 
 
 def _utc_now() -> datetime:
@@ -87,6 +105,297 @@ def _number(value: Any) -> float | None:
     if not math.isfinite(result) or result < 0:
         return None
     return result
+
+
+def _pricing_time(value: Any) -> int:
+    if not isinstance(value, str):
+        raise ValueError("pricing time must be HH:MM")
+    parts = value.split(":")
+    if len(parts) != 2 or not all(part.isdigit() for part in parts):
+        raise ValueError("pricing time must be HH:MM")
+    hour, minute = (int(part) for part in parts)
+    if not 0 <= hour <= 24 or not 0 <= minute < 60:
+        raise ValueError("pricing time is out of range")
+    if hour == 24 and minute != 0:
+        raise ValueError("pricing time is out of range")
+    return hour * 60 + minute
+
+
+def _pricing_rates(
+    value: Any,
+    *,
+    currency: str,
+    version: str,
+    source: str,
+    updated_at: str,
+) -> DeepSeekPricing:
+    if not isinstance(value, dict):
+        raise ValueError("pricing rates must be an object")
+    rates = tuple(
+        _number(value.get(key))
+        for key in ("cacheHitInput", "cacheMissInput", "output")
+    )
+    if any(rate is None or rate > 10_000 for rate in rates):
+        raise ValueError(
+            "pricing rates must be finite non-negative reasonable numbers"
+        )
+    return DeepSeekPricing(
+        rates[0], rates[1], rates[2], currency, version, source, updated_at
+    )
+
+
+def parse_deepseek_pricing_manifest(
+    payload: bytes | str | dict[str, Any],
+    *,
+    source: str,
+) -> dict[str, DeepSeekPricingPolicy]:
+    if isinstance(payload, bytes):
+        if len(payload) > DEEPSEEK_PRICING_MAX_BYTES:
+            raise ValueError("pricing manifest is too large")
+        data = json.loads(payload.decode("utf-8"))
+    elif isinstance(payload, str):
+        if len(payload.encode("utf-8")) > DEEPSEEK_PRICING_MAX_BYTES:
+            raise ValueError("pricing manifest is too large")
+        data = json.loads(payload)
+    else:
+        data = payload
+    if not isinstance(data, dict) or data.get("schemaVersion") != 1:
+        raise ValueError("unsupported pricing manifest schema")
+    version = str(data.get("version") or "").strip()
+    updated_at = str(data.get("updatedAt") or "").strip()
+    currency = str(data.get("currency") or "").strip().upper()
+    source_url = str(data.get("sourceUrl") or "").strip()
+    if not version or not updated_at or not currency or not source_url:
+        raise ValueError("pricing manifest metadata is incomplete")
+    if source_url != DEEPSEEK_PRICING_SOURCE_URL:
+        raise ValueError("pricing manifest source is not the official page")
+    if data.get("unit") != "per_million_tokens":
+        raise ValueError("unsupported pricing unit")
+    try:
+        parsed_updated_at = datetime.fromisoformat(updated_at)
+    except ValueError as error:
+        raise ValueError("pricing updatedAt must be ISO 8601") from error
+    if parsed_updated_at.utcoffset() is None:
+        raise ValueError("pricing updatedAt must include a UTC offset")
+
+    schedule = data.get("schedule")
+    if not isinstance(schedule, dict):
+        raise ValueError("pricing schedule is missing")
+    if schedule.get("timezone") != "Asia/Shanghai":
+        raise ValueError("pricing timezone must be Asia/Shanghai")
+    offset = schedule.get("utcOffsetMinutes")
+    weekdays = schedule.get("peakWeekdays")
+    raw_windows = schedule.get("peakWindows")
+    if offset != 480:
+        raise ValueError("pricing UTC offset must be 480 minutes")
+    if (
+        not isinstance(weekdays, list)
+        or not weekdays
+        or any(type(day) is not int or not 1 <= day <= 7 for day in weekdays)
+        or len(set(weekdays)) != len(weekdays)
+    ):
+        raise ValueError("pricing peak weekdays are invalid")
+    if not isinstance(raw_windows, list) or not raw_windows:
+        raise ValueError("pricing peak windows are invalid")
+    windows: list[tuple[int, int]] = []
+    for window in raw_windows:
+        if not isinstance(window, list) or len(window) != 2:
+            raise ValueError("pricing peak window must have start and end")
+        start, end = (_pricing_time(value) for value in window)
+        if start >= end:
+            raise ValueError("pricing peak window start must precede end")
+        windows.append((start, end))
+    if any(current[0] < previous[1] for previous, current in zip(windows, windows[1:])):
+        raise ValueError("pricing peak windows must not overlap")
+
+    models = data.get("models")
+    if not isinstance(models, dict) or not models:
+        raise ValueError("pricing models are missing")
+    policies: dict[str, DeepSeekPricingPolicy] = {}
+    for raw_model, model_data in models.items():
+        model = str(raw_model).strip().lower()
+        if not model or not isinstance(model_data, dict):
+            raise ValueError("pricing model entry is invalid")
+        aliases = model_data.get("aliases")
+        if not isinstance(aliases, list) or any(
+            not isinstance(alias, str) or not alias.strip() for alias in aliases
+        ):
+            raise ValueError("pricing model aliases are invalid")
+        off_peak = _pricing_rates(
+            model_data.get("offPeak"),
+            currency=currency,
+            version=version,
+            source=source,
+            updated_at=updated_at,
+        )
+        peak = _pricing_rates(
+            model_data.get("peak"),
+            currency=currency,
+            version=version,
+            source=source,
+            updated_at=updated_at,
+        )
+        policy = DeepSeekTieredPricing(
+            off_peak,
+            peak,
+            offset,
+            tuple(weekdays),
+            tuple(windows),
+        )
+        for name in (model, *(alias.strip().lower() for alias in aliases)):
+            if name in policies:
+                raise ValueError(f"duplicate pricing model or alias: {name}")
+            policies[name] = policy
+    missing_names = REQUIRED_DEEPSEEK_PRICING_NAMES - policies.keys()
+    if missing_names:
+        raise ValueError(
+            f"pricing manifest is missing required models: {sorted(missing_names)}"
+        )
+    return policies
+
+
+def _bundled_deepseek_pricing() -> dict[str, DeepSeekPricingPolicy]:
+    manifest = Path(__file__).with_name("pdf2zh_next") / "deepseek_pricing.json"
+    return parse_deepseek_pricing_manifest(
+        manifest.read_bytes(),
+        source="bundled",
+    )
+
+
+BUILTIN_DEEPSEEK_PRICING = _bundled_deepseek_pricing()
+
+
+class DeepSeekPricingManager:
+    def __init__(self) -> None:
+        self._lock = threading.RLock()
+        self._policies = BUILTIN_DEEPSEEK_PRICING
+        self._thread: threading.Thread | None = None
+
+    def resolve(self, model: str) -> DeepSeekPricingPolicy | None:
+        with self._lock:
+            return self._policies.get(model.strip().lower())
+
+    def load_cache(self, data_dir: str | Path) -> bool:
+        cache_path = self._cache_path(data_dir)
+        try:
+            policies = parse_deepseek_pricing_manifest(
+                cache_path.read_bytes(),
+                source="remote",
+            )
+        except FileNotFoundError:
+            return False
+        except Exception as error:
+            DEEPSEEK_PRICING_LOGGER.warning(
+                "cached pricing manifest rejected: %s", error
+            )
+            return False
+        with self._lock:
+            if self._updated_at(policies) < self._updated_at(self._policies):
+                DEEPSEEK_PRICING_LOGGER.warning(
+                    "cached pricing manifest is older than the active rules"
+                )
+                return False
+            self._policies = policies
+        return True
+
+    def refresh_once(
+        self,
+        data_dir: str | Path,
+        fetcher: Callable[[], bytes] | None = None,
+    ) -> str:
+        raw = (fetcher or _download_deepseek_pricing_manifest)()
+        policies = parse_deepseek_pricing_manifest(raw, source="remote")
+        with self._lock:
+            if self._updated_at(policies) < self._updated_at(self._policies):
+                raise ValueError("remote pricing manifest is older than active rules")
+        cache_path = self._cache_path(data_dir)
+        previous = cache_path.read_bytes() if cache_path.exists() else None
+        if previous != raw:
+            self._write_cache(cache_path, raw)
+            result = "updated"
+        else:
+            result = "unchanged"
+        with self._lock:
+            self._policies = policies
+        return result
+
+    def start(self, data_dir: str | Path) -> None:
+        self.load_cache(data_dir)
+        with self._lock:
+            if self._thread is not None and self._thread.is_alive():
+                return
+
+            def update_loop() -> None:
+                while True:
+                    try:
+                        result = self.refresh_once(data_dir)
+                        DEEPSEEK_PRICING_LOGGER.info(
+                            "DeepSeek pricing refresh %s", result
+                        )
+                    except Exception as error:
+                        DEEPSEEK_PRICING_LOGGER.warning(
+                            "DeepSeek pricing refresh failed: %s", error
+                        )
+                    time.sleep(DEEPSEEK_PRICING_REFRESH_SECONDS)
+
+            self._thread = threading.Thread(
+                target=update_loop,
+                name="deepseek-pricing-updater",
+                daemon=True,
+            )
+            self._thread.start()
+
+    @staticmethod
+    def _cache_path(data_dir: str | Path) -> Path:
+        return Path(data_dir) / "pricing" / "deepseek.json"
+
+    @staticmethod
+    def _updated_at(policies: dict[str, DeepSeekPricingPolicy]) -> datetime:
+        policy = next(iter(policies.values()))
+        updated_at = policy.updated_at
+        if updated_at is None:
+            raise ValueError("pricing catalog has no update timestamp")
+        return datetime.fromisoformat(updated_at)
+
+    @staticmethod
+    def _write_cache(cache_path: Path, payload: bytes) -> None:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        temporary_path: Path | None = None
+        try:
+            with NamedTemporaryFile(
+                mode="wb",
+                dir=cache_path.parent,
+                prefix=".deepseek-pricing-",
+                suffix=".tmp",
+                delete=False,
+            ) as temporary:
+                temporary.write(payload)
+                temporary_path = Path(temporary.name)
+            os.replace(temporary_path, cache_path)
+        finally:
+            if temporary_path is not None and temporary_path.exists():
+                temporary_path.unlink()
+
+
+def _download_deepseek_pricing_manifest() -> bytes:
+    request = Request(
+        DEEPSEEK_PRICING_URL,
+        headers={"User-Agent": "zotero-pdf2zh-pro/deepseek-pricing"},
+    )
+    with urlopen(request, timeout=DEEPSEEK_PRICING_TIMEOUT_SECONDS) as response:
+        if response.status != 200:
+            raise RuntimeError(f"pricing endpoint returned HTTP {response.status}")
+        payload = response.read(DEEPSEEK_PRICING_MAX_BYTES + 1)
+    if len(payload) > DEEPSEEK_PRICING_MAX_BYTES:
+        raise ValueError("pricing manifest is too large")
+    return payload
+
+
+DEEPSEEK_PRICING_MANAGER = DeepSeekPricingManager()
+
+
+def start_deepseek_pricing_updater(data_dir: str | Path) -> None:
+    DEEPSEEK_PRICING_MANAGER.start(data_dir)
 
 
 def resolve_deepseek_pricing(
@@ -106,7 +415,7 @@ def resolve_deepseek_pricing(
                 extra_data.get("deepseek_pricing_version") or "custom"
             ).strip()
             return DeepSeekPricing(hit, miss, output, currency, version)
-    return BUILTIN_DEEPSEEK_PRICING.get(model.strip().lower())
+    return DEEPSEEK_PRICING_MANAGER.resolve(model)
 
 
 def empty_metrics() -> dict[str, Any]:
@@ -129,6 +438,8 @@ def empty_metrics() -> dict[str, Any]:
             "amount": None,
             "currency": "CNY",
             "pricingVersion": None,
+            "pricingSource": None,
+            "pricingUpdatedAt": None,
             "accuracy": "unavailable",
         },
         "referencesSkipped": 0,
@@ -389,12 +700,16 @@ class TaskMetricsCollector:
                 "amount": None,
                 "currency": "CNY",
                 "pricingVersion": None,
+                "pricingSource": None,
+                "pricingUpdatedAt": None,
                 "accuracy": "unavailable",
             }
         return {
             "amount": round(self._cost_amount, 6),
             "currency": self.pricing.currency,
             "pricingVersion": self.pricing.version,
+            "pricingSource": self.pricing.source,
+            "pricingUpdatedAt": self.pricing.updated_at,
             "accuracy": "fallback" if self._usage_fallback else "exact-tokens",
         }
 

@@ -179,6 +179,15 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         self.assertNotIn("pool_max_workers", defaults["translation"])
         self.assertNotIn("primary_font_family", defaults["translation"])
 
+        default_payload = make_settings_payload()
+        default_payload.pop("pool_size")
+        default_payload.pop("no_auto_extract_glossary")
+        default_settings = CLIEnvSettingsModel.model_validate(
+            build_settings_input(default_payload)
+        ).to_settings_model()
+        self.assertEqual(default_settings.translation.pool_max_workers, 50)
+        self.assertTrue(default_settings.translation.no_auto_extract_glossary)
+
     def test_text_check_bypass_in_context_and_executor(self) -> None:
         import babeldoc.format.pdf.high_level as babeldoc_high_level
         from babeldoc.format.pdf.document_il.midend import il_translator_llm_only

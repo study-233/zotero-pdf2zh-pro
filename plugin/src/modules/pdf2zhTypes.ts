@@ -119,6 +119,8 @@ export interface TaskMetrics {
         amount: number | null;
         currency: string;
         pricingVersion: string | null;
+        pricingSource: "custom" | "remote" | "bundled" | null;
+        pricingUpdatedAt: string | null;
         accuracy: "exact-tokens" | "fallback" | "unavailable";
     };
     referencesSkipped: number;

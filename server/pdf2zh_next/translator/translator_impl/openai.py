@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlparse
 
 import httpx
 import openai
@@ -49,8 +50,11 @@ class OpenAITranslator(BaseTranslator):
     ):
         super().__init__(settings, rate_limiter)
         self.timeout = settings.translate_engine_settings.openai_timeout
+        base_url = settings.translate_engine_settings.openai_base_url
+        self.is_deepseek = urlparse(base_url or "").hostname == "api.deepseek.com"
+        self.requires_dedicated_term_extraction_translator = self.is_deepseek
         self.client = openai.OpenAI(
-            base_url=settings.translate_engine_settings.openai_base_url,
+            base_url=base_url,
             api_key=settings.translate_engine_settings.openai_api_key,
             timeout=float(self.timeout) if self.timeout else openai.NOT_GIVEN,
             http_client=httpx.Client(
@@ -102,6 +106,13 @@ class OpenAITranslator(BaseTranslator):
         )
         if self.enable_json_mode:
             self.add_cache_impact_parameters("enable_json_mode", self.enable_json_mode)
+
+    def configure_for_term_extraction(self) -> None:
+        """Apply provider-specific options used only for automatic term extraction."""
+        if not self.is_deepseek:
+            return
+        self.options["extra_body"] = {"thinking": {"type": "disabled"}}
+        self.add_cache_impact_parameters("deepseek_thinking", "disabled")
 
     @retry(
         retry=retry_if_exception_type(openai.RateLimitError),

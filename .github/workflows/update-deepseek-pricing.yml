@@ -1,0 +1,68 @@
+name: Update DeepSeek pricing
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-deepseek-pricing
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check official pricing
+        run: python scripts/update_deepseek_pricing.py
+
+      - name: Validate updated manifest
+        run: python -m unittest server.tests.test_deepseek_pricing_update
+
+      - name: Create or update review pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: automation/deepseek-pricing
+        run: |
+          if git diff --quiet -- server/pdf2zh_next/deepseek_pricing.json; then
+            echo "Official pricing is unchanged."
+            exit 0
+          fi
+
+          body="$RUNNER_TEMP/deepseek-pricing-pr.md"
+          {
+            echo "DeepSeek's official pricing page changed. This PR updates the reviewed runtime manifest."
+            echo
+            echo "Official source: https://api-docs.deepseek.com/zh-cn/quick_start/pricing/"
+            echo
+            echo '```diff'
+            git diff -- server/pdf2zh_next/deepseek_pricing.json
+            echo '```'
+          } > "$body"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add server/pdf2zh_next/deepseek_pricing.json
+          git commit -m "chore: update DeepSeek pricing"
+          git push --force origin "HEAD:$BRANCH"
+
+          pr_number="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')"
+          if [ -n "$pr_number" ]; then
+            gh pr edit "$pr_number" --body-file "$body"
+          else
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore: update DeepSeek pricing" \
+              --body-file "$body"
+          fi

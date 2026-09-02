@@ -190,7 +190,7 @@ export class PDF2zhHelperFactory {
             outputModes: this.getOutputModesFromPrefs(),
             skipLastPages: getPref("skipLastPages")?.toString() || "0",
             qps: getPref("qps")?.toString() || "10",
-            poolSize: getPref("poolSize")?.toString() || "0",
+            poolSize: getPref("poolSize")?.toString() || "50",
             ocr: getPref("ocr")?.toString() || "false",
             autoOcr: getPref("autoOcr")?.toString() || "true",
             translateTableText:
@@ -199,7 +199,7 @@ export class PDF2zhHelperFactory {
             skipTextChecks: getPref("skipTextChecks")?.toString() || "false",
             noWatermark: getPref("noWatermark")?.toString() || "true",
             disableTermExtraction:
-                getPref("disableTermExtraction")?.toString() || "false",
+                getPref("disableTermExtraction")?.toString() || "true",
             fontFamily: getPref("fontFamily")?.toString() || "auto",
         };
     }

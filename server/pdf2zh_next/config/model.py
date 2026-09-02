@@ -108,8 +108,8 @@ class TranslationSettings(BaseModel):
         default=False, description="save automatically extracted glossary"
     )
     pool_max_workers: int | None = Field(
-        default=None,
-        description="Maximum number of workers for translation pool. If not set, will use qps as the number of workers",
+        default=50,
+        description="Maximum number of workers for translation pool",
     )
     term_qps: int | None = Field(
         default=None,
@@ -120,7 +120,7 @@ class TranslationSettings(BaseModel):
         description="Maximum number of workers for term extraction translation pool. If not set or 0, will follow pool_max_workers.",
     )
     no_auto_extract_glossary: bool = Field(
-        default=False,
+        default=True,
         description="Disable auto extract glossary",
     )
     primary_font_family: str | None = Field(
