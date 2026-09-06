@@ -6,6 +6,7 @@ import contextlib
 import logging
 import json
 import shutil
+import ssl
 import threading
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,7 +23,9 @@ from pdf2zh_next.high_level import babeldoc_translate, create_babeldoc_config
 from pdf2zh_next.translator import get_translator
 from observability import TaskMetricsCollector
 from pdf2zh_next.config.translate_engine_model import OpenAISettings
-from pdf2zh_next.translator.openai_protocol import normalize_endpoint, parse_request_options
+from pdf2zh_next.translator.openai_protocol import (
+    normalize_endpoint, parse_request_options, protocol_rejection_message,
+)
 
 LOGGER = logging.getLogger("zotero_pdf2zh_server.translate")
 ProgressCallback = Callable[[dict[str, Any]], None]
@@ -435,6 +438,32 @@ def explain_service_error(error: Exception | str) -> str:
     if not message:
         return "Unknown translation error"
 
+    # SDK connection exceptions hide their TLS cause behind "Connection error".
+    # Classify the chain without exposing request URLs, headers or credentials.
+    cause = error if isinstance(error, Exception) else None
+    seen = set()
+    tls_failure = False
+    forbidden = False
+    while cause is not None and id(cause) not in seen:
+        seen.add(id(cause))
+        tls_failure |= isinstance(cause, ssl.SSLCertVerificationError)
+        forbidden |= getattr(cause, "status_code", None) == 403
+        cause = cause.__cause__ or cause.__context__
+    lowered = message.lower()
+    if tls_failure or "certificate_verify_failed" in lowered or "certificate verify failed" in lowered:
+        return (
+            "TLS 证书验证失败：Python 服务无法验证 API 端点的证书链。"
+            "请使用系统信任证书，并检查代理或中转站的证书配置。"
+        )
+    if (forbidden or "403" in lowered) and any(
+        phrase in lowered.replace(" ", "")
+        for phrase in ("standardcodexclient", "标准codex客户端", "client_not_allowed", "client_restricted")
+    ):
+        return (
+            "中转站拒绝此客户端（403）：此通道限制客户端类型。"
+            "请联系服务商开放第三方应用调用，或使用允许翻译插件调用的通道。"
+        )
+
     if "font asset download failed" in message.lower():
         return (
             "字体资源下载失败。已完成的字体会保留，请检查网络后重试任务。"
@@ -455,6 +484,25 @@ def diagnose_service_error(error: Exception | str) -> list[dict[str, str]]:
     lowered = message.lower()
 
     diagnostics: list[DiagnosticMessage] = []
+    if "tls 证书验证失败" in lowered:
+        return [DiagnosticMessage(
+            code="network_tls", severity="error",
+            message="Python 服务验证 API 端点的 TLS 证书失败。",
+            suggestion="更新服务端并使用系统信任证书；检查代理证书和中转站证书链。",
+        ).to_dict()]
+    if "中转站拒绝此客户端" in message:
+        return [DiagnosticMessage(
+            code="llm_client_restricted", severity="error",
+            message="中转站不允许当前客户端调用此通道。",
+            suggestion="联系服务商开放第三方应用权限，或选择允许插件调用的通道。",
+        ).to_dict()]
+    protocol_rejected = protocol_rejection_message(message)
+    if protocol_rejected:
+        diagnostics.append(DiagnosticMessage(
+            code="llm_protocol", severity="error",
+            message="中转站明确拒绝了当前 API 协议。",
+            suggestion="将 API 协议设为自动识别，或手动选择服务商支持的 Responses / Chat Completions。",
+        ))
     if "字体资源下载失败" in message or "font asset download failed" in lowered:
         diagnostics.append(
             DiagnosticMessage(
@@ -476,7 +524,7 @@ def diagnose_service_error(error: Exception | str) -> list[dict[str, str]]:
                 ),
             )
         )
-    if any(word in lowered for word in ("chat/completions", "choices", "responses", "译文", "协议")):
+    if not protocol_rejected and any(word in lowered for word in ("chat/completions", "choices", "responses", "译文", "协议")):
         diagnostics.append(
             DiagnosticMessage(
                 code="llm_response_shape",
@@ -487,7 +535,7 @@ def diagnose_service_error(error: Exception | str) -> list[dict[str, str]]:
                 ),
             )
         )
-    if "model" in lowered and any(word in lowered for word in ("not found", "not exist", "unavailable", "not supported")):
+    if not protocol_rejected and "model" in lowered and any(word in lowered for word in ("not found", "not exist", "unavailable", "not supported")):
         diagnostics.append(DiagnosticMessage(
             code="llm_model", severity="error", message="所选模型不可用或不存在。",
             suggestion="核对中转站提供的模型名称和当前密钥的模型权限。",
@@ -833,4 +881,5 @@ def validate_service_config(payload: dict[str, Any], job_id: str) -> ValidationR
             diagnostics=diagnostics,
             live_test=live_test,
             status=status,
+            resolved_protocol=getattr(translator, "resolved_protocol", None),
         )

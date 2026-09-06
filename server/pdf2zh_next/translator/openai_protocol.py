@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from urllib.parse import urlsplit, urlunsplit
 
 PROTOCOLS = ("auto", "chat_completions", "responses")
@@ -141,6 +142,21 @@ def wire_options(options: dict, protocol: str) -> dict:
     return options
 
 
+def protocol_rejection_message(message: str) -> bool:
+    """Recognize an explicit wire-protocol rejection, including relay messages."""
+    message = message.lower()
+    if "protocol_not_supported" in message or "unsupported_protocol" in message:
+        return True
+    protocol = r"(?:responses|chat[ /_]completions)(?:\s+api|\s*协议)?"
+    return any(re.search(pattern, message) for pattern in (
+        r"(?:only supports?|only supported)\s+(?:the\s+)?" + protocol,
+        r"(?:仅支持|只支持)\s*" + protocol,
+        r"(?:不支持|does not support|doesn't support)\s*(?:the\s+)?" + protocol,
+        protocol + r"\s+(?:is|are)\s+not supported",
+        r"unsupported\s+" + protocol,
+    ))
+
+
 def endpoint_unsupported(error: Exception) -> bool:
     status = getattr(error, "status_code", None)
     body = getattr(error, "body", None)
@@ -160,6 +176,21 @@ def endpoint_unsupported(error: Exception) -> bool:
         return False
     if status in (401, 403, 429) or status is None:
         return False
+    # A protocol-specific error code is decisive even when the message is
+    # localized. Model, authentication and parameter failures still take priority.
+    if any(word in message for word in (
+        "model_not_found", "unsupported_model", "model_not_supported",
+        "model not found", "model does not exist",
+        "模型不存在", "模型不可用", "模型未找到", "模型无权限", "参数",
+    )):
+        return False
+    if "model" in message and any(
+        phrase in message
+        for phrase in ("not found", "not exist", "unavailable", "not_found", "no such")
+    ):
+        return False
+    if status in (400, 404, 422) and protocol_rejection_message(message):
+        return True
     only_protocol = any(
         phrase in message for phrase in ("only supports", "only supported")
     ) and any(
@@ -167,17 +198,6 @@ def endpoint_unsupported(error: Exception) -> bool:
         for name in ("responses", "chat completions", "chat/completions")
     )
     if "model" in message:
-        if any(
-            phrase in message
-            for phrase in (
-                "not found",
-                "not exist",
-                "unavailable",
-                "not_found",
-                "no such",
-            )
-        ):
-            return False
         return status in (400, 404, 422) and only_protocol
     if only_protocol and status in (400, 404, 422):
         return True

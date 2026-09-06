@@ -46,6 +46,53 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             margin-left: 4px;
         }
 
+        /*
+         * Zotero's dark theme supplies a light default text color. The form
+         * itself intentionally stays white, so the native summary text would
+         * otherwise be rendered white on white and appear to be missing.
+         */
+        .advanced-settings {
+            color: #555;
+        }
+        .advanced-settings > summary {
+            color: #555;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.5;
+            list-style-position: inside;
+            user-select: none;
+        }
+        .advanced-settings > summary::marker {
+            color: #555;
+        }
+        .advanced-settings[open] > summary {
+            margin-bottom: 12px;
+        }
+        .advanced-settings select,
+        .advanced-settings textarea {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            color: #333;
+            font-size: 13px;
+        }
+        .advanced-settings select {
+            padding: 8px 10px;
+        }
+        .advanced-settings textarea {
+            padding: 10px 12px;
+            resize: vertical;
+        }
+        .advanced-settings p {
+            margin: 8px 0 12px;
+            color: #777;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
         /* 统一的输入组样式 */
         .input-group {
             display: flex;
@@ -295,7 +342,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 </label>
             </div>
 
-            <details class="form-group">
+            <details class="form-group advanced-settings">
                 <summary>高级设置：接口协议与请求参数</summary>
                 <label for="apiProtocol">接口协议</label>
                 <select id="apiProtocol">

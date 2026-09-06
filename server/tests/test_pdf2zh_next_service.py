@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import sys
+import ssl
+
+import httpx
+import openai
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -23,6 +27,7 @@ from pdf2zh_next_service import ProgressLogger
 from pdf2zh_next_service import run_live_translator_test
 from pdf2zh_next_service import set_text_checks_skipped
 from pdf2zh_next_service import translate_pdf_with_callbacks
+from pdf2zh_next_service import validate_service_config
 from pdf2zh_next.config.cli_env_model import CLIEnvSettingsModel
 
 
@@ -254,6 +259,45 @@ class PDF2zhNextServiceTests(unittest.TestCase):
                 )
         finally:
             set_text_checks_skipped(previous)
+
+    def test_validation_returns_the_resolved_protocol_without_an_extra_request(self):
+        for protocol in ("chat_completions", "responses"):
+            with self.subTest(protocol=protocol):
+                translator = SimpleNamespace(model="custom-model", resolved_protocol=protocol)
+                with patch("pdf2zh_next_service.create_runtime_settings"), \
+                     patch("pdf2zh_next_service.get_translator", return_value=translator), \
+                     patch("pdf2zh_next_service.run_live_translator_test") as probe:
+                    result = validate_service_config({"service": "openai", "live_test": True}, "test")
+                self.assertEqual(result.resolved_protocol, protocol)
+                self.assertTrue(result.live_test["ok"])
+                probe.assert_not_called()
+
+    def test_tls_causes_and_client_restrictions_have_safe_specific_diagnostics(self):
+        secret = "secret-must-not-appear"
+        request = httpx.Request("POST", f"https://relay.invalid/responses?key={secret}",
+                                headers={"Authorization": f"Bearer {secret}"})
+        tls = ssl.SSLCertVerificationError(1, secret)
+        connection = httpx.ConnectError("connection", request=request)
+        connection.__cause__ = tls
+        failure = openai.APIConnectionError(request=request)
+        failure.__cause__ = connection
+        for error in (failure, explain_service_error(failure)):
+            message = explain_service_error(error)
+            self.assertIn("TLS 证书验证失败", message)
+            self.assertNotIn(secret, message)
+            self.assertEqual([d["code"] for d in diagnose_service_error(error)], ["network_tls"])
+        # A malformed exception chain must not hang the diagnostic route.
+        connection.__cause__ = failure
+        self.assertEqual(explain_service_error(failure), "Connection error.")
+        denial = openai.PermissionDeniedError(
+            f"403 请使用标准 Codex 客户端 {secret}",
+            response=httpx.Response(403, request=request), body=None,
+        )
+        message = explain_service_error(denial)
+        self.assertNotIn(secret, message)
+        self.assertEqual([d["code"] for d in diagnose_service_error(message)], ["llm_client_restricted"])
+        diagnostics = diagnose_service_error("400 protocol_not_supported 模型 custom 不支持 chat completions 协议")
+        self.assertEqual([d["code"] for d in diagnostics], ["llm_protocol"])
 
     def test_service_diagnostics_and_live_probe(self) -> None:
         diagnostics = diagnose_service_error("object has no attribute 'choices'")

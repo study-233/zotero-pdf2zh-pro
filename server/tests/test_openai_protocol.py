@@ -188,6 +188,55 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(translator.resolved_protocol, "responses")
         self.assertEqual(len(self.requests), 2)
 
+    def test_localized_protocol_rejection_switches_once_and_preserves_denial(self):
+        for rejection in (
+            {"code": "protocol_not_supported", "message": "模型 custom-model 不支持 chat completions 协议"},
+            {"message": "模型 custom-model 不支持 chat completions 协议"},
+            {"code": "unsupported_protocol", "message": "请使用其他协议"},
+            {"message": "该模型仅支持Responses协议"},
+        ):
+            with self.subTest(rejection=rejection):
+                translator = self.translator(lambda r: (
+                    httpx.Response(400, json={"error": rejection})
+                    if r.url.path.endswith("chat/completions")
+                    else httpx.Response(200, json=response())
+                ))
+                translator.health_check()
+                self.assertEqual(translator.resolved_protocol, "responses")
+                self.assertEqual(len(self.requests), 2)
+        translator = self.translator(lambda r: (
+            httpx.Response(400, json={"error": {"code": "protocol_not_supported"}})
+            if r.url.path.endswith("chat/completions")
+            else httpx.Response(403, json={"error": {"message": "请使用标准 Codex 客户端"}})
+        ))
+        with self.assertRaises(openai.PermissionDeniedError):
+            translator.health_check()
+        self.assertEqual(len(self.requests), 2)
+        self.assertIsNone(translator.resolved_protocol)
+
+    def test_protocol_code_cannot_override_auth_model_or_parameter_errors(self):
+        for status, error in (
+            (403, {"code": "protocol_not_supported"}),
+            (429, {"code": "protocol_not_supported"}),
+            (404, {"code": "protocol_not_supported", "message": "模型不存在"}),
+            (404, {"code": "protocol_not_supported", "message": "Model custom-model not found"}),
+            (400, {"code": "unsupported_model", "message": "Unsupported model for responses"}),
+            (400, {"code": "protocol_not_supported", "message": "参数错误"}),
+            (400, {"message": "This model is not supported; responses route is available"}),
+        ):
+            with self.subTest(status=status, error=error):
+                translator = self.translator(lambda r: httpx.Response(status, json={"error": error}))
+                with self.assertRaises(openai.APIStatusError):
+                    translator.health_check()
+                self.assertEqual(len(self.requests), 1)
+        translator = self.translator(
+            lambda r: httpx.Response(400, json={"error": {"code": "protocol_not_supported"}}),
+            protocol="chat_completions",
+        )
+        with self.assertRaises(openai.BadRequestError):
+            translator.health_check()
+        self.assertEqual(len(self.requests), 1)
+
     def test_manual_and_paragraph_failure_never_probe_other_protocol(self):
         translator = self.translator(
             lambda r: httpx.Response(404, json={"error": "Not found"}),
