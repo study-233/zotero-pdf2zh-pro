@@ -30,7 +30,7 @@ REQUIRED_RUNTIME_FILES = {
     "server.py",
     "task_manager.py",
     "pdf2zh_next/__init__.py",
-    "pdf2zh_next/deepseek_pricing.json",
+    "pdf2zh_next/translator/openai_protocol.py",
     "babeldoc/__init__.py",
     "babeldoc/format/pdf/document_il/midend/reference_filter.py",
     "babeldoc/pdfminer/cmap/UniGB-UCS2-H.pickle.gz",
@@ -46,6 +46,7 @@ REQUIRED_LICENSE_FILES = {
 }
 FORBIDDEN_RUNTIME_FILES = {
     "pdf2zh_next/gui.py",
+    "pdf2zh_next/deepseek_pricing.json",
     "pdf2zh_next/gui_translation.yaml",
     "pdf2zh_next/http_api.py",
     "pdf2zh_next/i18n.py",
@@ -107,6 +108,9 @@ def check_wheel(wheel: Path, version: str) -> None:
     requirements = {
         requirement_name(value) for value in metadata.get_all("Requires-Dist", [])
     }
+    openai_requirements = [value for value in metadata.get_all("Requires-Dist", []) if requirement_name(value) == "openai"]
+    if len(openai_requirements) != 1 or ">=2.32.0" not in openai_requirements[0]:
+        raise RuntimeError("Wheel must require the Responses-capable OpenAI SDK >=2.32.0")
     unexpected = requirements & FORBIDDEN_DISTRIBUTIONS
     if unexpected:
         raise RuntimeError(f"Wheel declares forbidden dependencies: {sorted(unexpected)}")

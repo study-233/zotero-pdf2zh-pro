@@ -1567,7 +1567,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     "P95 耗时",
                     "自动重试",
                     "本地缓存命中率",
-                    "DeepSeek 缓存命中率",
+                    "服务端缓存命中率",
                     "Token（输入 / 输出）",
                     "跳过参考文献段落",
                 ].map((label) => appendMetric(detailGrid, label, "-"));
@@ -1588,10 +1588,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 metricEmpty.className = "metric-empty";
                 metricRail.appendChild(metricEmpty);
                 const summaryMetrics = [
-                    "费用",
                     "剩余 / 吞吐",
                     "Token",
-                    "DeepSeek 缓存",
+                    "服务端缓存",
                     "请求 / 重试",
                     "平均 / P95",
                 ].map((label) => appendSummaryMetric(metricRail, label, "-"));
@@ -1781,18 +1780,17 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         formatInteger(metrics.requests?.retries || 0),
                         formatPercent(metrics.localCache?.hitRate),
                         formatPercent(metrics.providerCache?.hitRate),
-                        `${formatInteger(metrics.tokens?.input || 0)} / ${formatInteger(metrics.tokens?.output || 0)}`,
+                        `${formatInteger(metrics.tokens?.input)} / ${formatInteger(metrics.tokens?.output)}`,
                         formatInteger(metrics.referencesSkipped || 0),
                     ];
                     view.detailValues.forEach((node, index) => {
                         setTextContent(node, detailValues[index]);
                     });
-                    setTextContent(view.metricNote, formatCostNote(metrics));
+                    setTextContent(view.metricNote, formatUsageNote(metrics));
 
                     const summaryValues = [
-                        formatCost(metrics),
                         `${formatEta(metrics)} / ${formatThroughput(metrics)}`,
-                        `${formatCompactNumber(metrics.tokens?.input || 0)} / ${formatCompactNumber(metrics.tokens?.output || 0)}`,
+                        `${formatCompactNumber(metrics.tokens?.input)} / ${formatCompactNumber(metrics.tokens?.output)}`,
                         formatPercent(metrics.providerCache?.hitRate),
                         `${formatCompactNumber(metrics.requests?.attempts || 0)} / ${formatCompactNumber(metrics.requests?.retries || 0)}`,
                         `${formatCompactDuration(metrics.requests?.averageLatencyMs)} / ${formatCompactDuration(metrics.requests?.p95LatencyMs)}`,
@@ -2184,6 +2182,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function formatCompactNumber(value) {
+                if (value === null || value === undefined) return "-";
                 const number = Number(value);
                 if (!Number.isFinite(number)) return "-";
                 const absolute = Math.abs(number);
@@ -2258,47 +2257,13 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 return `${hours} 小时 ${minutes % 60} 分`;
             }
 
-            function formatCost(metrics) {
-                const cost = metrics.cost;
-                if (
-                    !cost ||
-                    cost.amount === null ||
-                    cost.amount === undefined
-                ) {
-                    return "无法估算";
-                }
-                const marker = cost.accuracy === "fallback" ? "≈" : "";
-                return `${marker}${cost.currency || "CNY"} ${Number(cost.amount).toFixed(4)}`;
-            }
-
-            function formatCostNote(metrics) {
-                const cost = metrics.cost;
-                if (!cost || cost.accuracy === "unavailable") {
-                    return "费用无法估算：当前模型没有已知费率，请在 DeepSeek extraData 中配置费率。";
-                }
-                const accuracy =
-                    cost.accuracy === "fallback"
-                        ? "输入 token 缺少缓存拆分，已按未命中费率保守估算"
-                        : "按 DeepSeek 返回的缓存命中、未命中和输出 token 估算";
-                const pricingVersion = cost.pricingVersion || "custom";
-                const sourceLabels = {
-                    custom: "用户配置",
-                    remote: "自动更新",
-                    bundled: "内置规则",
+            function formatUsageNote(metrics) {
+                const labels = {
+                    unavailable: "服务未提供",
+                    partial: "部分请求缺失，统计不完整",
+                    complete: "已完整统计",
                 };
-                const sourceKey =
-                    cost.pricingSource ||
-                    (pricingVersion.includes("-tiered")
-                        ? "bundled"
-                        : "custom");
-                const source = sourceLabels[sourceKey] || "未知来源";
-                const updatedAt = cost.pricingUpdatedAt
-                    ? `；规则更新时间 ${cost.pricingUpdatedAt}`
-                    : "";
-                const schedule = pricingVersion.includes("-tiered")
-                    ? "；高峰价仅适用于北京时间周一至周五 09:00–12:00、14:00–18:00"
-                    : "";
-                return `${accuracy}；费率版本 ${pricingVersion}；来源 ${source}${updatedAt}${schedule}。`;
+                return `Token：${labels[metrics.tokens?.availability] || "已记录"}；服务端缓存：${labels[metrics.providerCache?.availability] || "以接口返回为准"}。`;
             }
 
             function formatDiagnostics(diagnostics) {

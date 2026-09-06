@@ -1,3 +1,6 @@
+import { prepareApiForServer } from "./apiCompatibility";
+import type { LLMApiData } from "./llmApiManager";
+import type { ServerHealthResponse } from "./pdf2zhTypes";
 import {
     DiagnosticMessage,
     OutputMode,
@@ -32,6 +35,29 @@ export class ServerTaskClient {
         serverUrl: string,
         requestBody: Record<string, unknown>,
     ): Promise<ServerTaskSnapshot> {
+        const api = requestBody.llm_api as LLMApiData | undefined;
+        if (
+            api &&
+            (api.apiProtocol === "auto" ||
+                api.apiProtocol === "responses" ||
+                Object.keys(api.requestOptions || {}).length)
+        ) {
+            const healthResponse = await fetch(`${serverUrl}/health`);
+            if (!healthResponse.ok)
+                throw new Error(await this.readErrorMessage(healthResponse));
+            const health =
+                (await healthResponse.json()) as ServerHealthResponse;
+            const prepared = prepareApiForServer(
+                api,
+                health.supportedApiProtocols,
+            );
+            requestBody = { ...requestBody, llm_api: prepared.api };
+            if (prepared.warning) {
+                new ztoolkit.ProgressWindow("API 兼容提示")
+                    .createLine({ text: prepared.warning, type: "default" })
+                    .show();
+            }
+        }
         const response = await PDF2zhHelperFactory.retryOperation(() =>
             fetch(`${serverUrl}/tasks`, {
                 method: "POST",

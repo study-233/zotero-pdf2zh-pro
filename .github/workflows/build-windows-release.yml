@@ -1,0 +1,162 @@
+name: Build Windows release
+run-name: Build v${{ inputs.version }} at ${{ inputs.commit }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable version already committed (for example 1.6.0)
+        required: true
+        type: string
+      commit:
+        description: Full 40-character commit SHA containing this version
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-windows-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_COMMIT: ${{ inputs.commit }}
+      GH_TOKEN: ${{ github.token }}
+      UV_DEFAULT_INDEX: https://pypi.org/simple
+      PDF2ZH_WINDOWS_PORT: "18890"
+    steps:
+      - name: Validate inputs
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_VERSION -cnotmatch '^[0-9]+\.[0-9]+\.[0-9]+$') { throw 'Expected stable semver' }
+          if ($env:RELEASE_COMMIT -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected full lowercase commit SHA' }
+          git config --global core.autocrlf false
+
+      - name: Checkout exact commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+
+      - name: Prepare temporary local main and isolated test paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+          git merge-base --is-ancestor "$RELEASE_COMMIT" origin/main
+          git switch -C main "$RELEASE_COMMIT"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Configure isolated Windows installation
+        shell: pwsh
+        run: |
+          "UV_TOOL_DIR=$env:RUNNER_TEMP\uv-tools" >> $env:GITHUB_ENV
+          "UV_TOOL_BIN_DIR=$env:RUNNER_TEMP\uv-bin" >> $env:GITHUB_ENV
+          "PDF2ZH_WINDOWS_APP_ROOT=$env:RUNNER_TEMP\zotero-pdf2zh-pro" >> $env:GITHUB_ENV
+          "PDF2ZH_WINDOWS_START_MENU_DIR=$env:RUNNER_TEMP\start-menu\zotero-pdf2zh-pro" >> $env:GITHUB_ENV
+          "PDF2ZH_DATA_DIR=$env:RUNNER_TEMP\server-test-data" >> $env:GITHUB_ENV
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.34.5
+
+      - name: Setup uv and Python 3.13
+        uses: astral-sh/setup-uv@v8.3.2
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: windows-app/src-tauri
+
+      - name: Verify committed versions
+        shell: bash
+        run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT"
+
+      - name: Build distributions, test Windows frontend and Rust
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/release.sh "$RELEASE_VERSION" --no-push
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+          git diff --exit-code
+          git diff --cached --exit-code
+
+      - name: Plugin lint, type check and tests
+        working-directory: plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm lint:check
+          pnpm exec tsc --noEmit
+          pnpm test
+
+      - name: Python tests
+        shell: bash
+        run: uv run --directory server --locked python -m unittest discover -s tests
+
+      - name: Fresh installed Python 3.13 runtime and OCR
+        shell: pwsh
+        run: |
+          $venv = Join-Path $env:RUNNER_TEMP 'release-runtime'
+          uv venv --python 3.13 $venv
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $python = Join-Path $venv 'Scripts\python.exe'
+          $wheel = "server/dist/zotero_pdf2zh_pro-$env:RELEASE_VERSION-py3-none-any.whl"
+          uv pip install --python $python $wheel
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python scripts/check_installed_runtime.py $env:RELEASE_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: PowerShell 5.1 parse and full Windows lifecycle
+        shell: powershell
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'PowerShell 5.1 is required' }
+          & scripts/check_windows_scripts.ps1
+          $wheel = (Resolve-Path "server/dist/zotero_pdf2zh_pro-$env:RELEASE_VERSION-py3-none-any.whl").Path
+          & scripts/test_windows_lifecycle.ps1 -GuiBinary 'windows-app/src-tauri/target/release/zotero-pdf2zh-pro.exe' -PackageSource $wheel
+
+      - name: Verify and collect release artifacts
+        shell: bash
+        run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT" --collect
+
+      - name: Upload verified distributions and checksums
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-${{ inputs.version }}-${{ inputs.commit }}
+          path: dist/release/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload build diagnostics and available artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: failed-release-${{ inputs.version }}-${{ inputs.commit }}
+          path: |
+            plugin/build/*.xpi
+            plugin/build/update*.json
+            server/dist/*
+            dist/*.zip
+            dist/*.json
+            ${{ runner.temp }}/zotero-pdf2zh-pro/logs/**
+          if-no-files-found: ignore
+          retention-days: 14

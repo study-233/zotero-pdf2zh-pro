@@ -14,7 +14,7 @@
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 
-当前统一版本：<!-- release-version --> `1.5.0`
+当前统一版本：<!-- release-version --> `1.6.0`
 
 [快速开始](#quick-start) · [功能亮点](#features) · [安装方式](#installation) ·
 [使用说明](#usage) · [问题反馈](#community)
@@ -26,22 +26,9 @@
 
 ## 🖼️ 界面预览
 
-![zotero-pdf2zh-pro 翻译任务面板](assets/task-manager.png)
+![Windows 图形化控制中心](assets/windows-control-center.png)
 
-<table>
-  <tr>
-    <td width="68%">
-      <img src="assets/task-metrics.png" alt="DeepSeek 请求指标详情">
-    </td>
-    <td width="32%">
-      <img src="assets/windows-control-center.png" alt="Windows 控制中心">
-    </td>
-  </tr>
-  <tr>
-    <td align="center">DeepSeek 请求、缓存、token 与费用指标</td>
-    <td align="center">Windows 图形化控制中心</td>
-  </tr>
-</table>
+翻译任务面板提供任务进度、请求耗时、token 和缓存指标。
 
 <a id="features"></a>
 
@@ -51,7 +38,7 @@
 | --- | ----------------- | -------------------------------------------------------------------- |
 | 🚀  | 多平台安装        | Windows 图形化控制中心、macOS Homebrew、uv 与 Docker                 |
 | 📊  | 任务尽在掌握      | 查看阶段与总进度，失败后重试，并将翻译结果导回 Zotero                |
-| 🔭  | DeepSeek 可观测性 | 查看请求耗时、QPS、缓存、重试、token、吞吐量、预计剩余时间和估算费用 |
+| 🔭  | API 可观测性 | 查看请求耗时、QPS、缓存、重试、token、吞吐量、预计剩余时间 |
 | 🧠  | 配置隔离缓存      | 按 provider、模型、语言和提示词隔离缓存，避免错误复用译文            |
 | 📚  | 参考文献保护      | 可选跳过参考文献翻译，同时在输出 PDF 中保留原文                      |
 | 🛟  | 安全更新与回滚    | Windows 与 macOS 更新流程保护运行中任务，失败时恢复上一版本          |
@@ -156,8 +143,8 @@ docker compose up --build -d
 5. 在条目或 PDF 附件上右键，选择 `zotero-pdf2zh-pro: Translate PDF`。
 6. 在 `zotero-pdf2zh-pro: Task Manager` 查看进度、重试任务并导入结果。
 
-DeepSeek 任务会显示段落吞吐量、预计剩余时间、本地缓存命中、实际 QPS、请求耗时、
-自动重试、token 和估算费用。费用只用于本地估算，不替代服务商账单。
+使用通用 OpenAI 翻译器的任务会显示段落吞吐量、预计剩余时间、本地缓存命中、实际 QPS、请求耗时、
+自动重试和 token。Chat Completions 与 Responses 共用指标面板；接口未返回的统计显示为不可用，部分缺失时标记为不完整。
 
 “不翻译参考文献”默认关闭。启用后会优先使用 PDF 版面标签，并在证据充分时通过
 `References`、`Bibliography` 或 `参考文献` 标题识别参考文献区；跳过的内容仍会保留在
@@ -189,6 +176,13 @@ DeepSeek 任务会显示段落吞吐量、预计剩余时间、本地缓存命�
 
 该流程不会修改版本、提交代码或发布远端制品。正式发布仍使用 `scripts/release.sh`。
 
+也可在 GitHub Actions 手动运行 `Build Windows release`，输入已提交的版本号和完整
+40 位提交 SHA。工作流在 Windows runner 上执行 `scripts/release.sh <版本> --no-push`、
+插件与服务测试、PowerShell 5.1 安装升级回滚及 Python 3.13 OCR 检查，完成后上传
+XPI、Windows ZIP、Python 包、对应源码和 `checksums.json`。它只构建和验证，不推送
+标签或发布渠道；确认全部通过后，以同一提交创建版本标签，运行 `Publish PyPI`，
+再发布 GitHub Release 并更新 Homebrew 配方。日常 CI 不执行完整 Windows 发布构建。
+
 ## 🌱 项目来源
 
 本仓库直接基于
@@ -217,3 +211,17 @@ Pull Request 也很欢迎。较大的行为调整建议先创建 Issue，说明�
 本项目采用 `AGPL-3.0-or-later`，并保留所有上游项目和第三方组件的许可证与归属，
 见 [LICENSE](LICENSE) 和
 [server/THIRD_PARTY_NOTICES.md](server/THIRD_PARTY_NOTICES.md)。
+
+### 自定义 API 与 Responses
+
+在 LLM API 配置中选择 **OpenAI 兼容**，填写中转站地址、API Key 和模型名。新配置的接口协议默认为「自动识别」，旧配置继续使用 Chat Completions。
+
+- 地址支持 Base URL 或完整 `/chat/completions`、`/responses` 地址，保留自定义路径前缀，不自动添加 `/v1`。
+- 「高级设置」可指定 Chat Completions 或 Responses；指定协议须与完整地址后缀一致。
+- 自动识别复用短文本连接检查，仅在明确不支持接口时尝试另一协议；任务开始后固定协议。鉴权、模型、参数、限流和超时错误会直接提示。
+- Responses 当前支持同步非流式文本翻译，各段落独立请求，默认 `store=false`；不支持工具调用或仅提供流式响应的接口。
+- 「额外请求参数」使用 JSON，例如 `{"max_output_tokens": 4096}` 或 `{"reasoning": {"effort": "low"}}`。常用字段随协议转换，中转站扩展字段直接透传。冲突参数报错；不能覆盖模型、翻译输入、执行方式、会话、工具或连接设置。
+- 原「额外参数」保留为「内部配置参数」，供旧配置使用。修改协议或请求参数后会隔离翻译缓存。
+- 「配置检查」会显示实际使用的协议。旧 Python 服务仅能回退到 Chat Completions；Responses 和额外请求参数需要升级服务端。
+
+服务端 `llm_api` 新增可选 `apiProtocol`（`auto` / `chat_completions` / `responses`）和 `requestOptions`（JSON 对象）。`/health` 返回 `supportedApiProtocols`，`/validate-config` 返回 `resolvedProtocol`。新任务指标移除 `cost`，token 和服务端缓存数值允许为 `null`，并提供 `availability`（`unavailable` / `partial` / `complete`）。历史费用字段读取时忽略。

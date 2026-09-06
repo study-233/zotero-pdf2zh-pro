@@ -75,7 +75,11 @@ def _create_translator_instance(
                 )
 
             # Health check: perform a short translation ignoring cache to validate translator availability
-            translator.translate("Hello", ignore_cache=True)
+            health_check = getattr(translator, "health_check", None)
+            if callable(health_check):
+                translator.health_check()
+            else:
+                translator.translate("Hello", ignore_cache=True)
             return translator, recommended_qps, recommended_pool_max_workers
 
     raise ValueError("No translator found")

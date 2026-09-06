@@ -1,3 +1,5 @@
+import { prepareApiForServer } from "./apiCompatibility";
+import type { ApiProtocol } from "./apiCompatibility";
 import { config, version } from "../../package.json";
 import { getPref, setPref } from "../utils/prefs";
 import {
@@ -277,6 +279,8 @@ async function openLLMApiEditDialog(key?: string): Promise<boolean> {
         apiUrl: llmApi?.apiUrl || "",
         activate: llmApi?.activate || false,
         extraData: llmApi?.extraData || {},
+        apiProtocol: llmApi?.apiProtocol || (key ? "chat_completions" : "auto"),
+        requestOptions: llmApi?.requestOptions || {},
     };
 
     const windowArgs: {
@@ -288,6 +292,8 @@ async function openLLMApiEditDialog(key?: string): Promise<boolean> {
             apiUrl: string;
             activate: boolean;
             extraData: any;
+            apiProtocol?: ApiProtocol;
+            requestOptions?: Record<string, unknown>;
         };
         isEdit: boolean;
         result?: {
@@ -299,6 +305,8 @@ async function openLLMApiEditDialog(key?: string): Promise<boolean> {
                 apiUrl: string;
                 activate: boolean;
                 extraData?: Record<string, any>;
+                apiProtocol?: ApiProtocol;
+                requestOptions?: Record<string, unknown>;
             };
         };
     } = {
@@ -342,6 +350,8 @@ async function openLLMApiEditDialog(key?: string): Promise<boolean> {
         apiUrl: userData.apiUrl,
         activate: userData.activate,
         extraData: userData.extraData || {},
+        apiProtocol: userData.apiProtocol || "chat_completions",
+        requestOptions: userData.requestOptions || {},
     };
     addon.data.llmApis?.map.set(newLLMApi.key, newLLMApi);
     updateCachedLLMApiKeys();
@@ -638,6 +648,7 @@ function formatCheckReport(
         ...formatHealthDetails(healthData),
         `翻译服务: ${validateData.service || service}`,
         `模型: ${validateData.model || "未返回"}`,
+        `接口协议: ${validateData.resolvedProtocol === "responses" ? "Responses" : validateData.resolvedProtocol === "chat_completions" ? "Chat Completions" : "服务端未返回"}`,
         formatLiveTest(validateData),
     ];
     const diagnostics = formatDiagnostics(validateData.diagnostics);
@@ -869,7 +880,14 @@ async function checkServerConnection() {
         const service = normalizeServiceName(
             getPref("service")?.toString() || "siliconflowfree",
         );
-        const llmApi = getActiveLLMApiByService(service);
+        const activeApi = getActiveLLMApiByService(service);
+        const prepared = activeApi
+            ? prepareApiForServer(
+                  activeApi,
+                  healthResponse.data.supportedApiProtocols,
+              )
+            : undefined;
+        const llmApi = prepared?.api;
         const validateResponse = await axios.post<ValidateConfigResponse>(
             `${serverUrl}/validate-config`,
             {
@@ -898,11 +916,13 @@ async function checkServerConnection() {
                           apiKey: llmApi.apiKey,
                           apiUrl: llmApi.apiUrl,
                           extraData: llmApi.extraData || {},
+                          apiProtocol: llmApi.apiProtocol || "chat_completions",
+                          requestOptions: llmApi.requestOptions || {},
                       }
                     : {},
             },
             {
-                timeout: liveTest ? 25000 : 10000,
+                timeout: 45000,
                 headers: { "Content-Type": "application/json" },
             },
         );
@@ -913,6 +933,16 @@ async function checkServerConnection() {
 
         const healthData = healthResponse.data;
         const validateData = validateResponse.data;
+        if (prepared?.warning) {
+            validateData.diagnostics = [
+                ...(validateData.diagnostics || []),
+                {
+                    code: "server_protocol_legacy",
+                    severity: "warning",
+                    message: prepared.warning,
+                },
+            ];
+        }
         if (validateData.status === "error") {
             const diagnostics = formatDiagnostics(validateData.diagnostics);
             throw new Error(
@@ -935,7 +965,7 @@ async function checkServerConnection() {
                       getDiagnosticSummary(validateData.diagnostics) ||
                       "Live API测试未通过"
                   }`
-                : `✓ 检查通过：${validateData.service || service}${validateData.model ? ` / ${validateData.model}` : ""}`,
+                : `✓ 检查通过：${validateData.service || service}${validateData.model ? ` / ${validateData.model}` : ""}${validateData.resolvedProtocol ? ` · ${validateData.resolvedProtocol === "responses" ? "Responses" : "Chat Completions"}` : ""}`,
             type: hasIssues ? "default" : "success",
             progress: 100,
         });

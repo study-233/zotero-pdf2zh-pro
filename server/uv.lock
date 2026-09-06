@@ -2246,7 +2246,7 @@ wheels = [
 
 [[package]]
 name = "zotero-pdf2zh-pro"
-version = "1.5.0"
+version = "1.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "azure-ai-translation-text" },
@@ -2320,7 +2320,7 @@ requires-dist = [
     { name = "ollama" },
     { name = "onnx", specifier = ">=1.18.0" },
     { name = "onnxruntime", specifier = ">=1.16.1" },
-    { name = "openai", specifier = ">=1.59.3" },
+    { name = "openai", specifier = ">=2.32.0,<3" },
     { name = "opencv-python-headless", specifier = ">=4.10.0.84" },
     { name = "orjson", specifier = ">=3.10.14" },
     { name = "peewee", specifier = ">=3.17.8" },

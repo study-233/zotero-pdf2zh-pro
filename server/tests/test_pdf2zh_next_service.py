@@ -13,6 +13,7 @@ SERVER_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SERVER_DIR))
 
 from pdf2zh_next_service import build_settings_input
+from pdf2zh_next_service import create_runtime_settings
 from pdf2zh_next_service import collect_output_files
 from pdf2zh_next_service import create_font_progress_event
 from pdf2zh_next_service import diagnose_service_error
@@ -50,6 +51,49 @@ def make_settings_payload(**overrides):
 
 
 class PDF2zhNextServiceTests(unittest.TestCase):
+    def test_api_protocol_options_and_preset_endpoint_reach_runtime(self):
+        for service in ("openai", "openaicompatible", "deepseek", "gemini", "modelscope"):
+            with self.subTest(service=service):
+                runtime = create_runtime_settings(make_settings_payload(service=service, llm_api={
+                    "apiKey": "test-key", "apiUrl": "https://relay.invalid/custom/responses",
+                    "model": "custom-model", "apiProtocol": "responses",
+                    "requestOptions": {"max_output_tokens": 100, "vendor": {"enabled": False}},
+                }))
+                engine = runtime.translate_engine_settings
+                self.assertEqual(engine.openai_api_protocol, "responses")
+                self.assertEqual(engine.openai_base_url, "https://relay.invalid/custom/responses")
+                self.assertEqual(engine.openai_model, "custom-model")
+                self.assertIn('"max_output_tokens": 100', engine.openai_request_options)
+                self.assertIs(runtime.term_extraction_engine_settings, engine)
+
+    def test_old_config_defaults_to_chat_and_protocol_mismatch_fails(self):
+        api = {"apiKey": "test-key", "apiUrl": "https://relay.invalid/v1", "model": "custom"}
+        runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", llm_api=api))
+        self.assertEqual(runtime.translate_engine_settings.openai_api_protocol, "chat_completions")
+        with self.assertRaisesRegex(ValueError, "冲突"):
+            create_runtime_settings(make_settings_payload(service="openai", llm_api={
+                **api, "apiUrl": "https://relay.invalid/responses", "apiProtocol": "chat_completions",
+            }))
+
+    def test_dedicated_term_translator_inherits_resolved_protocol_and_base(self):
+        from pdf2zh_next.high_level import create_babeldoc_config
+        runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", llm_api={
+            "apiKey": "test-key", "apiUrl": "https://relay.invalid/custom/chat/completions",
+            "model": "model", "apiProtocol": "auto",
+        }))
+        translator = SimpleNamespace(
+            resolved_protocol="responses", requires_dedicated_term_extraction_translator=True,
+            client=SimpleNamespace(base_url="https://relay.invalid/custom/"),
+        )
+        with patch("pdf2zh_next.high_level.get_translator", return_value=translator), \
+             patch("pdf2zh_next.high_level.get_term_translator", return_value=translator) as term, \
+             patch("pdf2zh_next.high_level.BabelDOCConfig"):
+            create_babeldoc_config(runtime, Path("/tmp/source.pdf"))
+        inherited = term.call_args.args[0].term_extraction_engine_settings
+        self.assertEqual(inherited.openai_api_protocol, "responses")
+        self.assertEqual(inherited.openai_base_url, "https://relay.invalid/custom/")
+        self.assertEqual(runtime.translate_engine_settings.openai_api_protocol, "auto")
+
     def test_translation_prepares_fonts_before_babeldoc(self) -> None:
         sequence: list[str] = []
         events: list[dict] = []

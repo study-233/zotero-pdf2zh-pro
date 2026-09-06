@@ -295,8 +295,32 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 </label>
             </div>
 
+            <details class="form-group">
+                <summary>高级设置：接口协议与请求参数</summary>
+                <label for="apiProtocol">接口协议</label>
+                <select id="apiProtocol">
+                    <option value="auto">自动识别（推荐）</option>
+                    <option value="chat_completions">Chat Completions</option>
+                    <option value="responses">Responses</option>
+                </select>
+                <p>
+                    自定义中转站请选择 OpenAI 兼容服务。地址可填写 Base URL
+                    或完整接口地址。
+                </p>
+                <label for="requestOptions">额外请求参数（JSON，可留空）</label>
+                <textarea
+                    id="requestOptions"
+                    rows="5"
+                    style="width: 100%; box-sizing: border-box"
+                    placeholder='{"max_output_tokens": 4096}'
+                ></textarea>
+                <p>
+                    参数支持数字、布尔值和嵌套对象；不能覆盖模型、翻译输入、工具或执行方式。
+                </p>
+            </details>
+
             <div class="form-group">
-                <label>额外参数</label>
+                <label>内部配置参数（兼容旧配置）</label>
                 <div id="extra-fields-container"></div>
                 <button
                     type="button"
@@ -937,6 +961,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         ? currentData.activate
                         : true;
 
+                document.getElementById("apiProtocol").value =
+                    currentData.apiProtocol ||
+                    (isEditMode ? "chat_completions" : "auto");
+                document.getElementById("requestOptions").value = Object.keys(
+                    currentData.requestOptions || {},
+                ).length
+                    ? JSON.stringify(currentData.requestOptions, null, 2)
+                    : "";
                 if (currentData.extraData) {
                     for (const key in currentData.extraData)
                         addExtraFieldRow(key, currentData.extraData[key]);
@@ -1082,6 +1114,21 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function saveLLMApi() {
+                let requestOptions;
+                try {
+                    requestOptions = JSON.parse(
+                        document.getElementById("requestOptions").value || "{}",
+                    );
+                    if (
+                        !requestOptions ||
+                        Array.isArray(requestOptions) ||
+                        typeof requestOptions !== "object"
+                    )
+                        throw new Error();
+                } catch (_) {
+                    window.alert("额外请求参数必须是有效的 JSON 对象。");
+                    return;
+                }
                 let extraDataObject = {};
                 const rows = document
                     .getElementById("extra-fields-container")
@@ -1107,6 +1154,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     apiUrl: u,
                     activate: a,
                     extraData: extraDataObject,
+                    apiProtocol: document.getElementById("apiProtocol").value,
+                    requestOptions,
                 };
                 if (window.arguments && window.arguments[0]) {
                     window.arguments[0].result = {

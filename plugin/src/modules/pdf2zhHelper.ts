@@ -1,3 +1,4 @@
+import type { ApiProtocol } from "./apiCompatibility";
 import { getPref } from "../utils/prefs";
 import { ServerConfig, PDFOperationOptions, OutputMode } from "./pdf2zhTypes";
 import { loadLLMApisFromPrefs } from "./preferenceScript";
@@ -8,6 +9,8 @@ type ActiveLLMApiConfig = {
     apiKey: string;
     apiUrl: string;
     extraData: Record<string, any>;
+    apiProtocol?: ApiProtocol;
+    requestOptions?: Record<string, unknown>;
 } | null;
 
 export type TaskOutputResponse = {
@@ -220,6 +223,8 @@ export class PDF2zhHelperFactory {
                     apiKey: llmApi.apiKey,
                     apiUrl: llmApi.apiUrl,
                     extraData: llmApi.extraData || {},
+                    apiProtocol: llmApi.apiProtocol || "chat_completions",
+                    requestOptions: llmApi.requestOptions || {},
                 };
             }
         }

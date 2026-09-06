@@ -50,6 +50,7 @@ class ServerRouteTests(unittest.TestCase):
         self.assertEqual(response.json["status"], "ok")
         self.assertTrue(response.json["workspace"]["writable"])
         self.assertIn("pdf2zhVersion", response.json)
+        self.assertEqual(response.json["supportedApiProtocols"], ["auto", "chat_completions", "responses"])
         self.assertIn("total", response.json["tasks"])
 
         with (
@@ -176,6 +177,7 @@ class ServerRouteTests(unittest.TestCase):
                 status="ok",
                 diagnostics=[],
                 live_test={"enabled": True, "ok": True, "message": "你好"},
+                resolved_protocol="responses",
             )
             response = self.client.post(
                 "/validate-config",
@@ -187,6 +189,7 @@ class ServerRouteTests(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["model"], "gpt-4.1")
+        self.assertEqual(response.json["resolvedProtocol"], "responses")
         self.assertTrue(validate.call_args.args[0]["live_test"])
         self.assertFalse(validate.call_args.args[0]["translate_table_text"])
         self.assertEqual(validate.call_args.args[0]["pool_size"], 50)

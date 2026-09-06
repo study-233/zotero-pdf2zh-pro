@@ -32,6 +32,7 @@ export interface ServerHealthResponse {
     status?: string;
     version?: string;
     pythonVersion?: string;
+    supportedApiProtocols?: string[];
     pdf2zhVersion?: string;
     babeldocVersion?: string;
     workspace?: {
@@ -51,6 +52,7 @@ export interface ValidateConfigResponse {
     status?: string;
     service?: string;
     model?: string | null;
+    resolvedProtocol?: "chat_completions" | "responses" | null;
     message?: string;
     diagnostics?: DiagnosticMessage[];
     liveTest?: {
@@ -106,22 +108,20 @@ export interface TaskMetrics {
     };
     localCache: { hits: number; misses: number; hitRate: number | null };
     providerCache: {
-        hitTokens: number;
-        missTokens: number;
+        hitTokens: number | null;
+        missTokens: number | null;
+        availability?: "unavailable" | "partial" | "complete";
         hitRate: number | null;
     };
-    tokens: { input: number; output: number; total: number };
+    tokens: {
+        input: number | null;
+        output: number | null;
+        total: number | null;
+        availability?: "unavailable" | "partial" | "complete";
+    };
     throughput: {
         paragraphsPerMinute: number | null;
         etaSeconds: number | null;
-    };
-    cost: {
-        amount: number | null;
-        currency: string;
-        pricingVersion: string | null;
-        pricingSource: "custom" | "remote" | "bundled" | null;
-        pricingUpdatedAt: string | null;
-        accuracy: "exact-tokens" | "fallback" | "unavailable";
     };
     referencesSkipped: number;
 }

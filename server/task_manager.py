@@ -17,7 +17,7 @@ from pdf2zh_next_service import TranslationOutputFile
 from pdf2zh_next_service import diagnose_service_error
 from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
-from observability import empty_metrics
+from observability import empty_metrics, supports_request_metrics
 
 TaskStatus = str
 LOGGER = logging.getLogger("zotero_pdf2zh_server.tasks")
@@ -120,7 +120,7 @@ class TaskManager:
             output_modes=output_modes,
             request_payload=request_payload,
             workspace_dir=workspace_dir,
-            metrics=empty_metrics() if service == "deepseek" else None,
+            metrics=empty_metrics() if supports_request_metrics(service) else None,
         )
         thread = threading.Thread(
             target=self._run_task,
@@ -241,7 +241,7 @@ class TaskManager:
             record.error = None
             record.error_diagnostics = []
             record.result_files = {}
-            record.metrics = empty_metrics() if record.service == "deepseek" else None
+            record.metrics = empty_metrics() if supports_request_metrics(record.service) else None
             record.attempt += 1
             record.cancel_requested = False
             record.cancel_callback = None
@@ -566,8 +566,10 @@ class TaskManager:
             metrics = (
                 dict(metrics_payload)
                 if isinstance(metrics_payload, dict)
-                else (empty_metrics() if service == "deepseek" else None)
+                else (empty_metrics() if supports_request_metrics(service) else None)
             )
+            if metrics is not None:
+                metrics.pop("cost", None)
             return TaskRecord(
                 task_id=str(payload["task_id"]),
                 file_name=str(payload["file_name"]),

@@ -4,6 +4,7 @@ import asyncio
 import concurrent.futures
 import contextlib
 import logging
+import json
 import shutil
 import threading
 from dataclasses import dataclass
@@ -20,7 +21,8 @@ from pdf2zh_next.high_level import BabelDOCConfig
 from pdf2zh_next.high_level import babeldoc_translate, create_babeldoc_config
 from pdf2zh_next.translator import get_translator
 from observability import TaskMetricsCollector
-from observability import resolve_deepseek_pricing
+from pdf2zh_next.config.translate_engine_model import OpenAISettings
+from pdf2zh_next.translator.openai_protocol import normalize_endpoint, parse_request_options
 
 LOGGER = logging.getLogger("zotero_pdf2zh_server.translate")
 ProgressCallback = Callable[[dict[str, Any]], None]
@@ -188,6 +190,7 @@ class ValidationResult:
     diagnostics: list[dict[str, str]]
     live_test: dict[str, Any]
     status: str = "ok"
+    resolved_protocol: str | None = None
 
 
 @dataclass(frozen=True)
@@ -410,6 +413,20 @@ def create_runtime_settings(payload: dict[str, Any]):
     settings_input = build_settings_input(payload)
     settings = CLIEnvSettingsModel.model_validate(settings_input).to_settings_model()
     settings.validate_settings()
+    engine = settings.translate_engine_settings
+    llm_api = payload.get("llm_api") or {}
+    if isinstance(engine, OpenAISettings):
+        # Presets may transform to OpenAISettings with a hard-coded URL.
+        # Apply the explicit endpoint and protocol after that transformation.
+        if llm_api.get("apiUrl"):
+            engine.openai_base_url = str(llm_api["apiUrl"]).strip()
+        engine.openai_api_protocol = llm_api.get("apiProtocol", engine.openai_api_protocol)
+        if "requestOptions" in llm_api:
+            engine.openai_request_options = json.dumps(parse_request_options(llm_api["requestOptions"]))
+        normalize_endpoint(engine.openai_base_url, engine.openai_api_protocol)
+        parse_request_options(engine.openai_request_options)
+    elif llm_api.get("apiProtocol") == "responses" or llm_api.get("requestOptions"):
+        raise ValueError("此服务类型不支持双协议参数，请使用 OpenAI 兼容服务")
     return settings
 
 
@@ -459,18 +476,27 @@ def diagnose_service_error(error: Exception | str) -> list[dict[str, str]]:
                 ),
             )
         )
-    if "chat/completions" in lowered or "choices" in lowered:
+    if any(word in lowered for word in ("chat/completions", "choices", "responses", "译文", "协议")):
         diagnostics.append(
             DiagnosticMessage(
                 code="llm_response_shape",
                 severity="error",
-                message="The LLM endpoint did not return an OpenAI-compatible chat response.",
+                message="LLM 接口未返回所选协议要求的完整文本响应。",
                 suggestion=(
-                    "Check that the API URL points to a compatible /chat/completions "
-                    "endpoint or use the provider-specific service type."
+                    "检查 API 地址、Chat Completions / Responses 协议及输出 token 上限。"
                 ),
             )
         )
+    if "model" in lowered and any(word in lowered for word in ("not found", "not exist", "unavailable", "not supported")):
+        diagnostics.append(DiagnosticMessage(
+            code="llm_model", severity="error", message="所选模型不可用或不存在。",
+            suggestion="核对中转站提供的模型名称和当前密钥的模型权限。",
+        ))
+    if any(word in lowered for word in ("requestoptions", "请求参数", "unsupported parameter", "unknown parameter")):
+        diagnostics.append(DiagnosticMessage(
+            code="llm_parameters", severity="error", message="API 请求参数无效或不受支持。",
+            suggestion="检查额外请求参数及所选协议；移除服务不支持的可选参数。",
+        ))
     if "401" in lowered or "unauthorized" in lowered or "api key" in lowered:
         diagnostics.append(
             DiagnosticMessage(
@@ -599,24 +625,19 @@ async def translate_pdf_with_callbacks(
         settings = create_runtime_settings(payload)
         translation_config = create_babeldoc_config(settings, input_path)
         translation_config.save_detailed_tracking = False
-        if str(payload.get("service") or "").lower() == "deepseek":
-            model = str(
-                getattr(settings.translate_engine_settings, "openai_model", "")
-                or (payload.get("llm_api") or {}).get("model")
-                or "deepseek-chat"
-            )
+        if isinstance(getattr(settings, "translate_engine_settings", None), OpenAISettings):
+            translator = translation_config.translator
             metrics_collector = TaskMetricsCollector(
                 task_id=job_id,
-                provider="deepseek",
-                model=model,
-                pricing=resolve_deepseek_pricing(model, payload.get("llm_api")),
+                provider=str(payload["service"]),
+                model=translator.model,
                 callback=metrics_callback,
             )
-            translator = translation_config.translator
-            if hasattr(translator, "configure_cache_namespace"):
+            if str(payload["service"]).lower() == "deepseek":
                 translator.configure_cache_namespace(provider="deepseek")
-            if hasattr(translator, "set_metrics_collector"):
-                translator.set_metrics_collector(metrics_collector)
+            for measured in (translator, getattr(translation_config, "term_extraction_translator", None)):
+                if measured is not None and hasattr(measured, "set_metrics_collector"):
+                    measured.set_metrics_collector(metrics_collector)
 
             async def publish_metrics_heartbeat() -> None:
                 while True:
@@ -782,7 +803,10 @@ def validate_service_config(payload: dict[str, Any], job_id: str) -> ValidationR
                 job_id,
                 validation_payload["service"],
             )
-            live_test = run_live_translator_test(translator)
+            if getattr(translator, "resolved_protocol", None):
+                live_test = {"enabled": True, "ok": True, "message": "短文本连接检查通过"}
+            else:
+                live_test = run_live_translator_test(translator)
             if live_test.get("ok"):
                 diagnostics.append(
                     DiagnosticMessage(

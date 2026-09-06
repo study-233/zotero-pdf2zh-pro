@@ -565,6 +565,14 @@ def create_babeldoc_config(settings: SettingsModel, file: Path) -> BabelDOCConfi
                 f"Updated term pool max workers to {recommended_pool_max_workers}"
             )
     else:
+        if (
+            settings.term_extraction_engine_settings == settings.translate_engine_settings
+            and getattr(translator, "resolved_protocol", None)
+        ):
+            settings.term_extraction_engine_settings = settings.translate_engine_settings.model_copy(update={
+                "openai_api_protocol": translator.resolved_protocol,
+                "openai_base_url": str(translator.client.base_url),
+            })
         term_extraction_translator = get_term_translator(settings)
 
     # 设置分割策略

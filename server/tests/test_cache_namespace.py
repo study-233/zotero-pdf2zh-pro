@@ -104,7 +104,7 @@ class CacheNamespaceTests(unittest.TestCase):
 
         self.assertEqual(translator.do_llm_translate("translate"), "translation")
         request = translator.client.chat.completions.create.call_args.kwargs
-        self.assertNotIn("extra_body", request)
+        self.assertEqual(request.get("extra_body", {}), {})
 
 
 if __name__ == "__main__":

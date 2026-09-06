@@ -24,10 +24,9 @@ from pdf2zh_next_service import diagnose_service_error
 from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
-from observability import start_deepseek_pricing_updater
 from task_manager import TaskManager
 
-VERSION = "1.5.0"
+VERSION = "1.6.0"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
 DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
 TRANSLATES_DIR = Path(
@@ -106,6 +105,7 @@ def create_app() -> Flask:
                     "model": result.model,
                     "diagnostics": result.diagnostics,
                     "liveTest": result.live_test,
+                    "resolvedProtocol": result.resolved_protocol,
                 }
             ),
             200,
@@ -490,6 +490,7 @@ def build_health_payload() -> dict[str, Any]:
         "status": "ok" if workspace.get("writable") else "degraded",
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
+        "supportedApiProtocols": ["auto", "chat_completions", "responses"],
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
         "workspace": workspace,
@@ -630,7 +631,6 @@ def main() -> None:
     args = parse_args()
     configure_runtime_paths(args.data_dir)
     configure_logging(args.log_level, args.log_file)
-    start_deepseek_pricing_updater(TRANSLATES_DIR)
     LOGGER.info("server starting on http://%s:%s", args.host, args.port)
     app.run(host=args.host, port=args.port)
 

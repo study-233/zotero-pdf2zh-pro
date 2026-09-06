@@ -78,6 +78,8 @@ class OpenAISettings(BaseModel):
         default="yes", description="Whether the translator supports LLM"
     )
 
+    openai_api_protocol: str = Field(default="chat_completions", description="API protocol: auto, chat_completions, responses")
+    openai_request_options: str | None = Field(default=None, description="Additional API request parameters as JSON")
     openai_model: str = Field(default="gpt-4o-mini", description="OpenAI model to use")
     openai_base_url: str | None = Field(
         default=None, description="Base URL for OpenAI API"
@@ -112,7 +114,7 @@ class OpenAISettings(BaseModel):
         if not self.openai_api_key:
             raise ValueError("OpenAI API key is required")
         self.openai_api_key = _clean_string(self.openai_api_key)
-        self.openai_base_url = _clean_url(self.openai_base_url)
+        self.openai_base_url = _clean_string(self.openai_base_url)
         self.openai_model = _clean_string(self.openai_model)
         self.openai_timeout = _check_if_positive_float(
             _clean_string(self.openai_timeout),
@@ -658,6 +660,8 @@ class OpenAICompatibleSettings(BaseModel):
         default="yes", description="Whether the translator supports LLM"
     )
 
+    openai_compatible_api_protocol: str = Field(default="chat_completions", description="API protocol: auto, chat_completions, responses")
+    openai_compatible_request_options: str | None = Field(default=None, description="Additional API request parameters as JSON")
     openai_compatible_model: str = Field(
         default="gpt-4o-mini", description="OpenAI Compatible model to use"
     )
@@ -695,7 +699,7 @@ class OpenAICompatibleSettings(BaseModel):
         if not self.openai_compatible_model:
             raise ValueError("OpenAI Compatible model is required")
         self.openai_compatible_api_key = _clean_string(self.openai_compatible_api_key)
-        self.openai_compatible_base_url = _clean_url(self.openai_compatible_base_url)
+        self.openai_compatible_base_url = _clean_string(self.openai_compatible_base_url)
         self.openai_compatible_model = _clean_string(self.openai_compatible_model)
         self.openai_compatible_timeout = _check_if_positive_float(
             _clean_string(self.openai_compatible_timeout), field="Timeout"
@@ -725,6 +729,8 @@ class OpenAICompatibleSettings(BaseModel):
 
     def transform(self) -> OpenAISettings:
         return OpenAISettings(
+            openai_api_protocol=self.openai_compatible_api_protocol,
+            openai_request_options=self.openai_compatible_request_options,
             openai_model=self.openai_compatible_model,
             openai_api_key=self.openai_compatible_api_key,
             openai_base_url=self.openai_compatible_base_url,

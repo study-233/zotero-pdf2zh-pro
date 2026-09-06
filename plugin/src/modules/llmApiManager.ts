@@ -1,3 +1,4 @@
+import type { ApiProtocol } from "./apiCompatibility";
 export interface LLMServiceConfig {
     name: string;
     models?: string[];
@@ -13,6 +14,8 @@ export interface LLMApiData {
     model: string;
     activate: boolean;
     extraData?: Record<string, any>;
+    apiProtocol?: ApiProtocol;
+    requestOptions?: Record<string, unknown>;
 }
 
 export const emptyLLMApi: LLMApiData = {
@@ -22,6 +25,8 @@ export const emptyLLMApi: LLMApiData = {
     apiUrl: "",
     model: "",
     activate: false,
+    apiProtocol: "auto",
+    requestOptions: {},
     extraData: {},
 };
 
@@ -126,6 +131,8 @@ export function createLLMApiFromFormData(formData: any): LLMApiData {
         model: formData.model || formData.modelselect || "",
         activate: formData.activate !== undefined ? formData.activate : false,
         extraData: formData.extraData || {},
+        apiProtocol: formData.apiProtocol || "chat_completions",
+        requestOptions: formData.requestOptions || {},
     };
 }
 

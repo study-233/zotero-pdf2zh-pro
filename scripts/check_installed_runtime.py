@@ -9,6 +9,8 @@ import babeldoc
 import numpy
 import observability
 import pdf2zh_next
+import openai
+from packaging.version import Version
 from rapidocr_onnxruntime import RapidOCR
 
 import server
@@ -65,10 +67,16 @@ def main() -> None:
         raise RuntimeError(f"Unexpected BabelDOC snapshot: {babeldoc.__version__}")
     if not callable(observability.empty_metrics):
         raise RuntimeError("Observability runtime is incomplete")
+    if Version(openai.__version__) < Version("2.32.0"):
+        raise RuntimeError("Installed OpenAI SDK is too old for the dual-protocol runtime")
+    if "cost" in observability.empty_metrics():
+        raise RuntimeError("Runtime still exposes removed billing metrics")
     if not callable(task_manager.TaskManager):
         raise RuntimeError("Task manager runtime is incomplete")
 
     health = server.build_health_payload()
+    if health.get("supportedApiProtocols") != ["auto", "chat_completions", "responses"]:
+        raise RuntimeError("Runtime is missing dual-protocol capabilities")
     if health["pdf2zhVersion"] != "2.8.2":
         raise RuntimeError(f"Health reports wrong pdf2zh version: {health}")
     if health["babeldocVersion"] != "0.5.24":

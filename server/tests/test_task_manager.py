@@ -17,6 +17,16 @@ from observability import empty_metrics
 
 
 class TaskManagerTests(unittest.TestCase):
+    def test_legacy_metrics_cost_is_ignored(self):
+        original = empty_metrics()
+        original["cost"] = {"amount": 1.2}
+        record = TaskManager._record_from_persistence({
+            "task_id": "legacy", "file_name": "paper.pdf", "service": "openai",
+            "workspace_dir": "/tmp/legacy", "metrics": original,
+        })
+        self.assertNotIn("cost", record.to_dict()["metrics"])
+        self.assertIn("cost", original)
+
     def test_retry_increments_attempt_and_keeps_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_dir = Path(temp_dir) / "workspace"
@@ -53,6 +63,7 @@ class TaskManagerTests(unittest.TestCase):
             self.assertIsNotNone(snapshot)
             self.assertEqual(snapshot["attempt"], 2)
             self.assertEqual(snapshot["status"], "queued")
+            self.assertIsNotNone(snapshot["metrics"])
             self.assertTrue(workspace_dir.exists())
             self.assertTrue(output_dir.exists())
             self.assertFalse(stale_output.exists())
