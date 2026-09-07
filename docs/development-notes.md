@@ -31,14 +31,19 @@ pdf2zh-next、BabelDOC 和 RapidOCR 核心快照；来源、SHA 和许可证记�
 
 Windows 包包含 Tauri 2 控制中心 EXE、故障恢复管理脚本、README、许可证和第三方声明。
 控制中心使用 Rust 后端和原生 TypeScript/CSS 单页前端，不授予通用 Shell 权限。安装时
-通过官方 Astral 安装 uv，由 uv 安装托管的 Python 3.13，并从公共 PyPI 安装与控制中心
-相同版本的 `zotero-pdf2zh-pro`。
+通过官方 Astral 安装私有 uv，由 uv 安装托管的 Python 3.13，并从公共 PyPI 安装与控制中心
+相同版本的 `zotero-pdf2zh-pro`。安装根目录优先读取测试覆盖，其次读取当前用户注册表
+`HKCU\Software\zotero-pdf2zh-pro\InstallRoot`，最后回退到 `%LOCALAPPDATA%`。
 
 默认目录：
 
 - 数据：`%LOCALAPPDATA%\zotero-pdf2zh-pro\data`
 - 日志：`%LOCALAPPDATA%\zotero-pdf2zh-pro\logs`
 - 管理脚本：`%LOCALAPPDATA%\zotero-pdf2zh-pro\bin`
+
+用户选择其他产品根目录时，`bin`、`runtime`、`cache`、`data` 和 `logs` 必须整体迁移。
+迁移前停止服务，验证新服务的版本、进程归属和 workspace 后才允许切换注册表、快捷方式
+及自启路径；这也保护任务目录中的段落恢复检查点。迁移失败必须重新启动原安装。
 
 首次 GUI 安装默认创建当前用户 HKCU Run 登录自启，参数固定为 `--autostart`；它必须在
 控制中心可见、可关闭，升级必须保留用户选择。除此以外不得创建计划任务、Windows Service

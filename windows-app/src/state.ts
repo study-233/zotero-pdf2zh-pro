@@ -18,6 +18,10 @@ export interface ControlState {
     logFile: string;
     controlLog: string;
     runningFromInstalledPath: boolean;
+    installRoot: string;
+    defaultInstallRoot: string;
+    canRelocate: boolean;
+    lastOperationError: string | null;
 }
 
 export interface UpdateCheck {
@@ -36,6 +40,10 @@ export interface ViewModel {
     primaryLabel: string;
     primaryAction: PrimaryAction;
     installed: boolean;
+}
+
+export function productRootForParent(parent: string): string {
+    return `${parent.replace(/[\\/]+$/, "")}\\zotero-pdf2zh-pro`;
 }
 
 export function toViewModel(state: ControlState, update?: UpdateCheck | null): ViewModel {

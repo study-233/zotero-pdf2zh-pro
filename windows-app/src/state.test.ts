@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ControlState, toViewModel } from "./state";
+import { ControlState, productRootForParent, toViewModel } from "./state";
 
 const base: ControlState = {
   installation: "current",
@@ -13,9 +13,17 @@ const base: ControlState = {
   logFile: "C:\\logs\\server.log",
   controlLog: "C:\\logs\\control-panel.log",
   runningFromInstalledPath: true,
+  installRoot: "C:\\Apps\\zotero-pdf2zh-pro",
+  defaultInstallRoot: "C:\\Users\\test\\AppData\\Local\\zotero-pdf2zh-pro",
+  canRelocate: true,
+  lastOperationError: null,
 };
 
 describe("toViewModel", () => {
+  it("appends the product directory to a selected parent", () => {
+    expect(productRootForParent("D:\\Apps\\")).toBe("D:\\Apps\\zotero-pdf2zh-pro");
+  });
+
   it("maps installation and service states to safe primary actions", () => {
     const cases: Array<[ControlState, string]> = [
       [{ ...base, installation: "notInstalled" }, "install"],

@@ -7,7 +7,7 @@
 
 * { box-sizing: border-box; }
 
-body { margin: 0; min-width: 420px; min-height: 620px; }
+body { margin: 0; min-width: 420px; min-height: 700px; }
 button, input { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: default; opacity: 0.55; }
@@ -57,6 +57,16 @@ code { color: #25573f; font: 12px/1.4 "Cascadia Mono", Consolas, monospace; }
     box-shadow: 0 8px 18px rgba(23, 107, 69, 0.2);
 }
 .primary-action:not(:disabled):hover { background: #115c3a; }
+
+.install-location {
+    margin: 0 0 14px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    border: 1px solid #e2e8e4; border-radius: 12px; background: #fbfcfb;
+}
+.install-location-copy { min-width: 0; }
+.install-location strong { display: block; margin-bottom: 4px; font-size: 12px; }
+.install-location code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.install-location small { display: block; margin-top: 4px; color: #7a867f; font-size: 10px; }
+.location-button { min-width: 58px; padding: 0 10px; flex: 0 0 auto; }
 
 .toggle-row {
     margin-top: 18px; padding: 14px 2px; display: flex; align-items: center; justify-content: space-between; gap: 14px;

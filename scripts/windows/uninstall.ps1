@@ -26,6 +26,7 @@ try {
     throw "Uninstall stopped because the managed control center could not be safely stopped."
 }
 
+$usingPrivateUv = Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf
 $uv = Get-UvExecutable
 if ($uv) {
     & $uv tool uninstall $ProductName
@@ -62,22 +63,48 @@ if (-not $PurgeData -and -not $NonInteractive) {
     }
 }
 
-$cleanupTarget = if ($PurgeData) { $AppRoot } else { $BinDir }
+if ($PurgeData) {
+    Remove-InstallRoot
+}
 $cleanupFile = Join-Path ([IO.Path]::GetTempPath()) (
     "zotero-pdf2zh-pro-cleanup-{0}.ps1" -f [guid]::NewGuid().ToString("N")
 )
 $cleanup = @'
-param([string]$TargetPath)
+param([string]$RootPath, [switch]$PurgeData)
 Start-Sleep -Seconds 2
-Remove-Item -LiteralPath $TargetPath -Recurse -Force -ErrorAction SilentlyContinue
-if (Test-Path -LiteralPath $TargetPath) {
+$targets = if ($PurgeData) {
+    @($RootPath)
+} else {
+    @(
+        (Join-Path $RootPath "bin"),
+        (Join-Path $RootPath "cache"),
+        (Join-Path $RootPath "runtime"),
+        (Join-Path $RootPath "updates"),
+        (Join-Path $RootPath "installed-version.txt"),
+        (Join-Path $RootPath "server-executable.txt"),
+        (Join-Path $RootPath "server.pid"),
+        (Join-Path $RootPath "control-panel-executable.txt"),
+        (Join-Path $RootPath "control-panel.pid"),
+        (Join-Path $RootPath "last-operation-error.txt")
+    )
+}
+foreach ($target in $targets) {
+    Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+}
+$remainingTargets = @($targets | Where-Object { Test-Path -LiteralPath $_ })
+if ($remainingTargets.Count -gt 0) {
     $reportPath = Join-Path ([IO.Path]::GetTempPath()) "zotero-pdf2zh-pro-uninstall-error.txt"
-    $remaining = Get-ChildItem -LiteralPath $TargetPath -Recurse -Force -ErrorAction SilentlyContinue |
-        Select-Object -ExpandProperty FullName
+    $remaining = $remainingTargets | ForEach-Object {
+        if (Test-Path -LiteralPath $_ -PathType Container) {
+            Get-ChildItem -LiteralPath $_ -Recurse -Force -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+        } else {
+            $_
+        }
+    }
     @(
         "Some files could not be removed."
-        "Remove this directory manually after closing programs that use it:"
-        $TargetPath
+        "Remove these paths manually after closing programs that use them:"
+        $remainingTargets
         ""
         $remaining
     ) | Set-Content -LiteralPath $reportPath -Encoding utf8
@@ -86,7 +113,10 @@ if (Test-Path -LiteralPath $TargetPath) {
 Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
 '@
 Set-Content -LiteralPath $cleanupFile -Value $cleanup -Encoding utf8
-$cleanupArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -TargetPath "{1}"' -f $cleanupFile, $cleanupTarget
+$cleanupArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -RootPath "{1}"' -f $cleanupFile, $AppRoot
+if ($PurgeData) {
+    $cleanupArguments += " -PurgeData"
+}
 Start-Process -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList $cleanupArguments -WindowStyle Hidden
 
 if ($PurgeData) {
@@ -94,4 +124,8 @@ if ($PurgeData) {
 } else {
     Write-Host "Uninstall complete. Task data and logs were preserved in $AppRoot"
 }
-Write-Host "uv was left installed because other applications may use it."
+if ($usingPrivateUv) {
+    Write-Host "The private uv and Python runtime will be removed."
+} else {
+    Write-Host "Shared uv and Python files were left installed because other applications may use them."
+}

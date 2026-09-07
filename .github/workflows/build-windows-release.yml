@@ -60,6 +60,7 @@ jobs:
           "UV_TOOL_DIR=$env:RUNNER_TEMP\uv-tools" >> $env:GITHUB_ENV
           "UV_TOOL_BIN_DIR=$env:RUNNER_TEMP\uv-bin" >> $env:GITHUB_ENV
           "PDF2ZH_WINDOWS_APP_ROOT=$env:RUNNER_TEMP\zotero-pdf2zh-pro" >> $env:GITHUB_ENV
+          "PDF2ZH_WINDOWS_REGISTRY_KEY=HKCU:\Software\zotero-pdf2zh-pro-ci-$env:GITHUB_RUN_ID" >> $env:GITHUB_ENV
           "PDF2ZH_WINDOWS_START_MENU_DIR=$env:RUNNER_TEMP\start-menu\zotero-pdf2zh-pro" >> $env:GITHUB_ENV
           "PDF2ZH_DATA_DIR=$env:RUNNER_TEMP\server-test-data" >> $env:GITHUB_ENV
 

@@ -12,6 +12,7 @@ use std::{
     io::{BufRead, BufReader, Read, Write},
     net::{Ipv4Addr, SocketAddr, TcpStream},
     os::windows::ffi::OsStrExt,
+    os::windows::process::CommandExt,
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::atomic::{AtomicBool, Ordering},
@@ -28,6 +29,8 @@ use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 
 const PRODUCT_NAME: &str = "zotero-pdf2zh-pro";
 const DEFAULT_PORT: u16 = 8890;
+const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
+const INSTALL_REGISTRY_KEY: &str = r"Software\zotero-pdf2zh-pro";
 const WEBVIEW2_CLIENT_ID: &str = "{F3017226-FE2A-4295-8BDF-00C72A961EAB}";
 
 #[derive(Default)]
@@ -44,6 +47,41 @@ impl Drop for OperationGuard<'_> {
     }
 }
 
+fn default_install_root() -> Result<PathBuf, String> {
+    Ok(
+        PathBuf::from(env::var_os("LOCALAPPDATA").ok_or("LOCALAPPDATA is not available")?)
+            .join(PRODUCT_NAME),
+    )
+}
+
+fn install_registry_subkey() -> String {
+    env::var("PDF2ZH_WINDOWS_REGISTRY_KEY")
+        .ok()
+        .map(|value| value.replace("HKCU:\\", ""))
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or_else(|| INSTALL_REGISTRY_KEY.to_owned())
+}
+
+fn saved_install_root() -> Option<PathBuf> {
+    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
+    RegKey::predef(HKEY_CURRENT_USER)
+        .open_subkey(install_registry_subkey())
+        .ok()
+        .and_then(|key| key.get_value::<String, _>("InstallRoot").ok())
+        .filter(|value| !value.trim().is_empty())
+        .map(PathBuf::from)
+}
+
+fn resolved_install_root() -> Result<PathBuf, String> {
+    if let Some(root) = env::var_os("PDF2ZH_WINDOWS_APP_ROOT") {
+        return Ok(PathBuf::from(root));
+    }
+    if let Some(root) = saved_install_root() {
+        return Ok(root);
+    }
+    default_install_root()
+}
+
 #[derive(Clone)]
 struct ProductPaths {
     app_root: PathBuf,
@@ -56,20 +94,19 @@ struct ProductPaths {
     installed_gui: PathBuf,
     control_pid: PathBuf,
     control_executable: PathBuf,
+    operation_error: PathBuf,
 }
 
 impl ProductPaths {
     fn discover() -> Result<Self, String> {
-        let app_root = match env::var_os("PDF2ZH_WINDOWS_APP_ROOT") {
-            Some(path) => PathBuf::from(path),
-            None => {
-                PathBuf::from(env::var_os("LOCALAPPDATA").ok_or("LOCALAPPDATA is not available")?)
-                    .join(PRODUCT_NAME)
-            }
-        };
+        let app_root = resolved_install_root()?;
+        Ok(Self::from_root(app_root))
+    }
+
+    fn from_root(app_root: PathBuf) -> Self {
         let bin_dir = app_root.join("bin");
         let logs_dir = app_root.join("logs");
-        Ok(Self {
+        Self {
             data_dir: app_root.join("data"),
             server_log: logs_dir.join("server.log"),
             control_log: logs_dir.join("control-panel.log"),
@@ -77,10 +114,11 @@ impl ProductPaths {
             installed_gui: bin_dir.join(format!("{PRODUCT_NAME}.exe")),
             control_pid: app_root.join("control-panel.pid"),
             control_executable: app_root.join("control-panel-executable.txt"),
+            operation_error: app_root.join("last-operation-error.txt"),
             app_root,
             bin_dir,
             logs_dir,
-        })
+        }
     }
 
     fn script(&self, name: &str) -> PathBuf {
@@ -119,6 +157,10 @@ struct ControlState {
     log_file: String,
     control_log: String,
     running_from_installed_path: bool,
+    install_root: String,
+    default_install_root: String,
+    can_relocate: bool,
+    last_operation_error: Option<String>,
 }
 
 #[derive(Clone, Serialize)]
@@ -158,6 +200,28 @@ fn path_equal(left: &Path, right: &Path) -> bool {
     normalize_path(&canonical_left) == normalize_path(&canonical_right)
 }
 
+fn path_is_within(path: &Path, parent: &Path) -> bool {
+    let path = normalize_path(path);
+    let parent = normalize_path(parent);
+    path.len() > parent.len()
+        && path.starts_with(&parent)
+        && path.as_bytes().get(parent.len()) == Some(&b'\\')
+}
+
+fn validate_install_root(candidate: &Path, current: &Path, relocating: bool) -> Result<(), String> {
+    if !candidate.is_absolute() {
+        return Err("安装位置必须是绝对路径。".to_owned());
+    }
+    if relocating
+        && (path_equal(candidate, current)
+            || path_is_within(candidate, current)
+            || path_is_within(current, candidate))
+    {
+        return Err("新旧安装位置不能相同或互相嵌套。".to_owned());
+    }
+    Ok(())
+}
+
 fn current_executable() -> Result<PathBuf, String> {
     env::current_exe().map_err(|error| format!("无法读取当前程序路径：{error}"))
 }
@@ -171,7 +235,7 @@ fn running_from_installed_path(paths: &ProductPaths) -> bool {
 fn read_trimmed(path: &Path) -> Option<String> {
     fs::read_to_string(path)
         .ok()
-        .map(|value| value.trim().to_owned())
+        .map(|value| value.trim_start_matches('\u{feff}').trim().to_owned())
         .filter(|value| !value.is_empty())
 }
 
@@ -257,6 +321,8 @@ fn query_health(paths: &ProductPaths) -> HealthResult {
 fn build_state(app: &AppHandle) -> Result<ControlState, String> {
     let paths = ProductPaths::discover()?;
     let (installation, installed_version) = installation_status(&paths);
+    let installed_path = running_from_installed_path(&paths);
+    let can_relocate = installed_path && matches!(&installation, InstallationStatus::Current);
     let health = query_health(&paths);
     let service = if health.valid {
         ServiceStatus::Running
@@ -276,7 +342,11 @@ fn build_state(app: &AppHandle) -> Result<ControlState, String> {
         data_dir: paths.data_dir.to_string_lossy().into_owned(),
         log_file: paths.server_log.to_string_lossy().into_owned(),
         control_log: paths.control_log.to_string_lossy().into_owned(),
-        running_from_installed_path: running_from_installed_path(&paths),
+        running_from_installed_path: installed_path,
+        install_root: paths.app_root.to_string_lossy().into_owned(),
+        default_install_root: default_install_root()?.to_string_lossy().into_owned(),
+        can_relocate,
+        last_operation_error: read_trimmed(&paths.operation_error),
     })
 }
 
@@ -335,7 +405,7 @@ fn run_powershell(
     let stderr_thread = thread::spawn(move || {
         if let Some(stderr) = stderr {
             for line in BufReader::new(stderr).lines().map_while(Result::ok) {
-                emit_log(&app_err, &log_err, format!("错误：{line}"));
+                emit_log(&app_err, &log_err, line);
             }
         }
     });
@@ -404,9 +474,22 @@ async fn stop_server(
 async fn install_or_upgrade(
     app: AppHandle,
     context: State<'_, AppContext>,
+    install_root: Option<String>,
 ) -> Result<ControlState, String> {
     let _guard = begin_operation(&context)?;
-    let paths = ProductPaths::discover()?;
+    let discovered_paths = ProductPaths::discover()?;
+    let requested_root = install_root
+        .filter(|value| !value.trim().is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| discovered_paths.app_root.clone());
+    validate_install_root(&requested_root, &discovered_paths.app_root, false)?;
+    let (existing_status, _) = installation_status(&discovered_paths);
+    if !matches!(existing_status, InstallationStatus::NotInstalled)
+        && !path_equal(&requested_root, &discovered_paths.app_root)
+    {
+        return Err("已有安装请使用“更改安装位置”安全迁移。".to_owned());
+    }
+    let paths = ProductPaths::from_root(requested_root);
     let source_executable = current_executable()?;
     if path_equal(&source_executable, &paths.installed_gui) {
         return Err("请从新版 Windows ZIP 运行 EXE，以升级控制中心。".to_owned());
@@ -420,6 +503,8 @@ async fn install_or_upgrade(
     let args = vec![
         "-GuiSource".to_owned(),
         source_executable.to_string_lossy().into_owned(),
+        "-InstallRoot".to_owned(),
+        paths.app_root.to_string_lossy().into_owned(),
         "-NonInteractive".to_owned(),
     ];
     let log = paths.control_log.clone();
@@ -476,14 +561,51 @@ async fn download_and_apply_update(
         .arg(&staged.apply_script)
         .arg("-ParentProcessId")
         .arg(std::process::id().to_string())
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .creation_flags(CREATE_NEW_CONSOLE)
         .spawn();
     if let Err(error) = launch {
         let _ = fs::remove_dir_all(&staged.directory);
         return Err(format!("无法启动更新安装程序：{error}"));
     }
+    context.exiting.store(true, Ordering::Release);
+    app.exit(0);
+    Ok(())
+}
+
+#[tauri::command]
+fn relocate_installation(
+    app: AppHandle,
+    context: State<'_, AppContext>,
+    destination_root: String,
+) -> Result<(), String> {
+    let _guard = begin_operation(&context)?;
+    let paths = ProductPaths::discover()?;
+    if !running_from_installed_path(&paths) {
+        return Err("请从已安装的控制中心更改安装位置。".to_owned());
+    }
+    let destination = PathBuf::from(destination_root);
+    validate_install_root(&destination, &paths.app_root, true)?;
+    let script = paths.script("relocate.ps1");
+    if !script.is_file() {
+        return Err("当前安装缺少迁移脚本，请先升级或重新安装控制中心。".to_owned());
+    }
+    Command::new(powershell_path())
+        .arg("-NoProfile")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
+        .arg("-File")
+        .arg(script)
+        .arg("-ParentProcessId")
+        .arg(std::process::id().to_string())
+        .arg("-SourceRoot")
+        .arg(&paths.app_root)
+        .arg("-DestinationRoot")
+        .arg(&destination)
+        .arg("-CurrentVersion")
+        .arg(env!("CARGO_PKG_VERSION"))
+        .creation_flags(CREATE_NEW_CONSOLE)
+        .spawn()
+        .map_err(|error| format!("无法启动迁移程序：{error}"))?;
     context.exiting.store(true, Ordering::Release);
     app.exit(0);
     Ok(())
@@ -774,6 +896,7 @@ fn main() {
         }));
     }
     let app = builder
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             Some(vec!["--autostart"]),
@@ -784,6 +907,7 @@ fn main() {
             install_or_upgrade,
             check_for_update,
             download_and_apply_update,
+            relocate_installation,
             start_server,
             stop_server,
             set_autostart,
@@ -883,9 +1007,42 @@ mod tests {
     }
 
     #[test]
+    fn detects_nested_install_roots() {
+        assert!(path_is_within(
+            Path::new(r"D:\Apps\zotero-pdf2zh-pro\data"),
+            Path::new(r"d:\apps\zotero-pdf2zh-pro")
+        ));
+        assert!(!path_is_within(
+            Path::new(r"D:\Apps\zotero-pdf2zh-pro-archive"),
+            Path::new(r"D:\Apps\zotero-pdf2zh-pro")
+        ));
+    }
+
+    #[test]
+    fn rejects_equal_or_nested_relocation_roots() {
+        let current = Path::new(r"C:\Users\Andy\AppData\Local\zotero-pdf2zh-pro");
+        assert!(validate_install_root(current, current, true).is_err());
+        assert!(validate_install_root(&current.join("moved"), current, true).is_err());
+        assert!(
+            validate_install_root(Path::new(r"D:\Apps\zotero-pdf2zh-pro"), current, true).is_ok()
+        );
+    }
+
+    #[test]
     fn missing_listener_is_stopped() {
         let result = HealthResult::default();
         assert!(!result.listening);
         assert!(!result.valid);
+    }
+
+    #[test]
+    fn reads_powershell_utf8_files_without_the_bom() {
+        let path = env::temp_dir().join(format!(
+            "zotero-pdf2zh-pro-bom-test-{}.txt",
+            std::process::id()
+        ));
+        fs::write(&path, "\u{feff}operation failed\r\n").unwrap();
+        assert_eq!(read_trimmed(&path).as_deref(), Some("operation failed"));
+        fs::remove_file(path).unwrap();
     }
 }

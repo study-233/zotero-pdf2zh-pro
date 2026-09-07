@@ -10,14 +10,46 @@ $ServerPort = if ($env:PDF2ZH_WINDOWS_PORT) {
     8890
 }
 $HealthUrl = "http://${ServerHost}:$ServerPort/health"
+$InstallRegistryKey = if ($env:PDF2ZH_WINDOWS_REGISTRY_KEY) {
+    $env:PDF2ZH_WINDOWS_REGISTRY_KEY
+} else {
+    "HKCU:\Software\$ProductName"
+}
+$DefaultAppRoot = Join-Path $env:LOCALAPPDATA $ProductName
+
+function Get-SavedInstallRoot {
+    if (-not (Test-Path -LiteralPath $InstallRegistryKey)) {
+        return $null
+    }
+    try {
+        $saved = Get-ItemPropertyValue -LiteralPath $InstallRegistryKey -Name "InstallRoot" -ErrorAction Stop
+        if ($saved) {
+            return [IO.Path]::GetFullPath([string]$saved)
+        }
+    } catch {
+        return $null
+    }
+    return $null
+}
+
+$savedInstallRoot = Get-SavedInstallRoot
 $AppRoot = if ($env:PDF2ZH_WINDOWS_APP_ROOT) {
     [IO.Path]::GetFullPath($env:PDF2ZH_WINDOWS_APP_ROOT)
+} elseif ($savedInstallRoot) {
+    $savedInstallRoot
 } else {
-    Join-Path $env:LOCALAPPDATA $ProductName
+    $DefaultAppRoot
 }
 $BinDir = Join-Path $AppRoot "bin"
 $DataDir = Join-Path $AppRoot "data"
 $LogsDir = Join-Path $AppRoot "logs"
+$RuntimeDir = Join-Path $AppRoot "runtime"
+$UvInstallDir = Join-Path $RuntimeDir "uv"
+$UvToolsDir = Join-Path $RuntimeDir "tools"
+$UvToolBinDir = Join-Path $RuntimeDir "tool-bin"
+$UvPythonDir = Join-Path $RuntimeDir "python"
+$UvCacheDir = Join-Path $AppRoot "cache"
+$PrivateUvExecutable = Join-Path $UvInstallDir "uv.exe"
 $LogFile = Join-Path $LogsDir "server.log"
 $ControlLogFile = Join-Path $LogsDir "control-panel.log"
 $PidFile = Join-Path $AppRoot "server.pid"
@@ -32,6 +64,35 @@ $StartMenuDir = if ($env:PDF2ZH_WINDOWS_START_MENU_DIR) {
     [IO.Path]::GetFullPath($env:PDF2ZH_WINDOWS_START_MENU_DIR)
 } else {
     Join-Path ([Environment]::GetFolderPath("Programs")) $ProductName
+}
+
+function Save-InstallRoot {
+    param([string]$Path = $AppRoot)
+    $resolved = [IO.Path]::GetFullPath($Path)
+    New-Item -Force -Path $InstallRegistryKey | Out-Null
+    New-ItemProperty -LiteralPath $InstallRegistryKey -Name "InstallRoot" -Value $resolved -PropertyType String -Force | Out-Null
+}
+
+function Remove-InstallRoot {
+    if (Test-Path -LiteralPath $InstallRegistryKey) {
+        Remove-ItemProperty -LiteralPath $InstallRegistryKey -Name "InstallRoot" -Force -ErrorAction SilentlyContinue
+        $remaining = Get-ItemProperty -LiteralPath $InstallRegistryKey -ErrorAction SilentlyContinue
+        if ($remaining -and @($remaining.PSObject.Properties | Where-Object { $_.Name -notmatch '^PS' }).Count -eq 0) {
+            Remove-Item -LiteralPath $InstallRegistryKey -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Use-PrivateUvEnvironment {
+    $env:UV_INSTALL_DIR = $UvInstallDir
+    $env:UV_TOOL_DIR = $UvToolsDir
+    $env:UV_TOOL_BIN_DIR = $UvToolBinDir
+    $env:UV_PYTHON_INSTALL_DIR = $UvPythonDir
+    $env:UV_CACHE_DIR = $UvCacheDir
+}
+
+if (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf) {
+    Use-PrivateUvEnvironment
 }
 
 function Write-Status {
@@ -54,6 +115,10 @@ function Assert-WindowsX64 {
 }
 
 function Get-UvExecutable {
+    if (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf) {
+        Use-PrivateUvEnvironment
+        return $PrivateUvExecutable
+    }
     $command = Get-Command uv.exe -ErrorAction SilentlyContinue
     if ($command) {
         return $command.Source

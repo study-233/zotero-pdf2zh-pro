@@ -1,7 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { open } from "@tauri-apps/plugin-dialog";
 import "./styles.css";
-import { ControlState, PrimaryAction, UpdateCheck, toViewModel } from "./state";
+import { ControlState, PrimaryAction, UpdateCheck, productRootForParent, toViewModel } from "./state";
 
 const byId = <T extends HTMLElement>(id: string): T => {
     const element = document.getElementById(id);
@@ -24,11 +25,15 @@ const versionLabel = byId<HTMLSpanElement>("version-label");
 const operationPanel = byId<HTMLDivElement>("operation-panel");
 const operationOutput = byId<HTMLPreElement>("operation-output");
 const errorMessage = byId<HTMLParagraphElement>("error-message");
+const installRoot = byId<HTMLElement>("install-root");
+const installLocationHint = byId<HTMLElement>("install-location-hint");
+const chooseLocation = byId<HTMLButtonElement>("choose-location");
 
 let currentState: ControlState | null = null;
 let currentUpdate: UpdateCheck | null = null;
 let currentAction: PrimaryAction = "none";
 let busy = false;
+let selectedInstallRoot: string | null = null;
 
 function showError(message: unknown): void {
     errorMessage.textContent = message instanceof Error ? message.message : String(message);
@@ -49,6 +54,9 @@ function setBusy(value: boolean, label?: string): void {
     openData.disabled = value || !currentState;
     uninstall.disabled = value || !currentState || currentState.installation === "notInstalled";
     checkUpdate.disabled = value || !currentState?.runningFromInstalledPath;
+    chooseLocation.disabled = value || !currentState || (
+        currentState.installation !== "notInstalled" && !currentState.canRelocate
+    );
 }
 
 function render(state: ControlState): void {
@@ -68,7 +76,23 @@ function render(state: ControlState): void {
     openData.disabled = busy;
     uninstall.disabled = busy || state.installation === "notInstalled";
     checkUpdate.disabled = busy || !state.runningFromInstalledPath;
+    if (state.installation === "notInstalled") {
+        selectedInstallRoot ??= state.installRoot;
+        installRoot.textContent = selectedInstallRoot;
+        installLocationHint.textContent = "控制中心、运行时、数据和日志都安装到这里";
+        chooseLocation.textContent = "选择";
+        chooseLocation.disabled = busy;
+    } else {
+        selectedInstallRoot = null;
+        installRoot.textContent = state.installRoot;
+        installLocationHint.textContent = state.canRelocate
+            ? "可安全迁移全部程序和任务数据"
+            : "请从已安装的控制中心更改位置";
+        chooseLocation.textContent = "更改";
+        chooseLocation.disabled = busy || !state.canRelocate;
+    }
     versionLabel.textContent = `控制中心 ${state.appVersion} · 服务 ${state.serviceVersion ?? state.installedVersion ?? "未安装"}`;
+    if (state.lastOperationError) showError(state.lastOperationError);
 }
 
 async function checkForUpdates(silent: boolean): Promise<void> {
@@ -97,20 +121,20 @@ async function checkForUpdates(silent: boolean): Promise<void> {
 async function refresh(): Promise<void> {
     if (busy) return;
     try {
-        render(await invoke<ControlState>("get_state"));
         clearError();
+        render(await invoke<ControlState>("get_state"));
     } catch (error) {
         showError(error);
     }
 }
 
-async function runOperation(command: string, pendingLabel: string): Promise<void> {
+async function runOperation(command: string, pendingLabel: string, args?: Record<string, unknown>): Promise<void> {
     clearError();
     operationPanel.hidden = false;
     operationOutput.textContent = "";
     setBusy(true, pendingLabel);
     try {
-        const state = await invoke<ControlState>(command);
+        const state = await invoke<ControlState>(command, args);
         render(state);
     } catch (error) {
         showError(error);
@@ -129,7 +153,11 @@ primary.addEventListener("click", async () => {
         ) {
             return;
         }
-        await runOperation("install_or_upgrade", currentAction === "install" ? "正在安装…" : "正在升级…");
+        await runOperation(
+            "install_or_upgrade",
+            currentAction === "install" ? "正在安装…" : "正在升级…",
+            { installRoot: currentAction === "install" ? selectedInstallRoot : currentState?.installRoot ?? null },
+        );
     } else if (currentAction === "update") {
         if (!window.confirm(
             `确认更新到 v${currentUpdate?.latestVersion ?? "最新版本"} 并重启吗？任务数据、日志和自启选择都会保留。`,
@@ -174,6 +202,38 @@ byId<HTMLButtonElement>("copy-address").addEventListener("click", async () => {
 openLog.addEventListener("click", () => invoke("open_log").catch(showError));
 openData.addEventListener("click", () => invoke("open_data_dir").catch(showError));
 checkUpdate.addEventListener("click", () => void checkForUpdates(false));
+chooseLocation.addEventListener("click", async () => {
+    if (busy || !currentState) return;
+    clearError();
+    let selected: string | string[] | null;
+    try {
+        selected = await open({
+            directory: true,
+            multiple: false,
+            title: currentState.installation === "notInstalled" ? "选择安装位置" : "选择新的安装位置",
+        });
+    } catch (error) {
+        showError(error);
+        return;
+    }
+    if (typeof selected !== "string") return;
+    const target = productRootForParent(selected);
+    if (currentState.installation === "notInstalled") {
+        selectedInstallRoot = target;
+        installRoot.textContent = target;
+        return;
+    }
+    if (!window.confirm(
+        `确认将控制中心、运行时和全部任务数据迁移到：\n\n${target}\n\n迁移时服务会暂时停止，并打开命令行窗口显示进度。`,
+    )) return;
+    setBusy(true, "正在准备迁移…");
+    try {
+        await invoke("relocate_installation", { destinationRoot: target });
+    } catch (error) {
+        showError(error);
+        setBusy(false);
+    }
+});
 byId<HTMLButtonElement>("clear-output").addEventListener("click", () => {
     operationOutput.textContent = "";
 });

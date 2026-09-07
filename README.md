@@ -79,10 +79,10 @@ GitHub Release 同时提供 Zotero XPI、自动更新清单和 Windows 安装包
 
 1. 从 [最新 Release](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)
    下载并解压 `zotero-pdf2zh-pro-windows-x64.zip`。
-2. 双击 `zotero-pdf2zh-pro.exe`，点击“安装并启动”。
+2. 双击 `zotero-pdf2zh-pro.exe`，按需选择安装位置，再点击“安装并启动”。
 
-控制中心会安装官方 uv、uv 托管的 Python 3.13，以及公开 PyPI 上与控制中心相同版本的
-服务端；全程不需要打开 PowerShell 或 CMD。
+控制中心会在所选位置安装私有 uv、uv 托管的 Python 3.13，以及公开 PyPI 上与控制中心
+相同版本的服务端。默认位置仍为 `%LOCALAPPDATA%\zotero-pdf2zh-pro`。
 
 **运行与更新**
 
@@ -90,9 +90,12 @@ GitHub Release 同时提供 Zotero XPI、自动更新清单和 Windows 安装包
   确保服务运行；可在主卡片随时关闭，后续升级不会重新开启。
 - 关闭主窗口只会隐藏到托盘，退出控制中心也不会停止服务。
 - 控制中心启动时会静默检查 GitHub 稳定版本；发现新版后点击“更新到 vX.X.X”即可
-  自动下载、校验、更新控制中心和服务端并重启。
+  自动下载、校验、更新控制中心和服务端并重启。替换程序期间会打开命令行窗口显示真实
+  安装进度，完成后自动关闭。
 - 任务、翻译结果、日志和自启选择都会保留，更新失败时自动恢复旧版。首次获得自动更新
   能力仍需手动安装一次包含该功能的 Windows ZIP。
+- 已安装用户可在控制中心更改安装位置。迁移会先停止服务、复制并验证全部任务数据和恢复
+  检查点，再切换到新目录；失败时自动恢复原安装。
 - 包内的 CMD/PowerShell 文件仅作为故障恢复入口。
 
 **安全与数据位置**
@@ -100,8 +103,8 @@ GitHub Release 同时提供 Zotero XPI、自动更新清单和 Windows 安装包
 - 安装不需要管理员权限，不创建计划任务、Windows Service 或防火墙规则，也不会停止
   占用 8890 端口的未知进程。
 - 唯一允许的自启机制是当前用户可见、可关闭的登录启动项。
-- 数据位于 `%LOCALAPPDATA%\zotero-pdf2zh-pro\data`，日志位于
-  `%LOCALAPPDATA%\zotero-pdf2zh-pro\logs`。
+- 控制中心、私有运行时、缓存、数据和日志都位于所选产品目录；其中数据在 `data`，日志在
+  `logs`。只有开始菜单、当前用户自启项和安装位置记录保留在 Windows 用户配置中。
 - 控制中心依赖 Microsoft Edge WebView2 Runtime；Windows 10/11 缺失时会在创建窗口前
   提供微软官方下载入口。
 - 本阶段 EXE 未签名，SmartScreen 可能提示风险。请只从官方 Release 下载，并核对发布页

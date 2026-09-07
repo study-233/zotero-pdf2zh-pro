@@ -23,6 +23,7 @@ const REQUIRED_FILES: &[&str] = &[
     "apply-update.ps1",
     "common.ps1",
     "install.ps1",
+    "relocate.ps1",
     "start-server.ps1",
     "stop-server.ps1",
     "uninstall.ps1",

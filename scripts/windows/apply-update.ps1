@@ -12,6 +12,7 @@ function Write-UpdateLog {
     New-Item -ItemType Directory -Force -Path $LogsDir | Out-Null
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     Add-Content -LiteralPath $ControlLogFile -Value "$timestamp [update] $Message" -Encoding utf8
+    Write-Host $Message
 }
 
 function Start-Cleanup {
@@ -35,7 +36,8 @@ $installScript = Join-Path $PSScriptRoot "install.ps1"
 $guiSource = Join-Path $PSScriptRoot "$ProductName.exe"
 
 try {
-    Write-UpdateLog "Waiting for control center process $ParentProcessId to exit."
+    Remove-Item -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -Force -ErrorAction SilentlyContinue
+    Write-UpdateLog "[1/5] Waiting for the previous control center to exit..."
     for ($attempt = 0; $attempt -lt 80; $attempt++) {
         if (-not (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue)) {
             break
@@ -46,21 +48,30 @@ try {
         throw "The previous control center did not exit within 20 seconds."
     }
 
-    Write-UpdateLog "Applying Windows package $PackageVersion."
+    Write-UpdateLog "[2/5] Stopping the translation service..."
+    & (Join-Path $PSScriptRoot "stop-server.ps1") -Quiet
+    Write-UpdateLog "[3/5] Installing Windows package $PackageVersion and its runtime..."
     $installArguments = @{
         GuiSource = $guiSource
+        InstallRoot = $AppRoot
         NonInteractive = $true
+    }
+    if ($env:PDF2ZH_WINDOWS_APP_ROOT) {
+        $installArguments.DeferLocationCommit = $true
     }
     if ($PackageSource) {
         $installArguments.PackageSource = [IO.Path]::GetFullPath($PackageSource)
     }
     & $installScript @installArguments
-    Write-UpdateLog "Update installed successfully; starting the new control center."
+    Write-UpdateLog "[4/5] Control center and management files replaced successfully."
+    Write-UpdateLog "[5/5] Starting the updated control center..."
     Start-Process -FilePath $ControlPanelExecutable -ArgumentList "--post-install" -WindowStyle Hidden
     Start-Cleanup -Target $stagingRoot
     exit 0
 } catch {
-    Write-UpdateLog "Update failed: $($_.Exception.Message)"
+    $failureMessage = "Update failed: $($_.Exception.Message)"
+    Write-UpdateLog $failureMessage
+    Set-Content -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -Value $failureMessage -Encoding utf8
     if (Test-Path -LiteralPath $ControlPanelExecutable -PathType Leaf) {
         try {
             Start-Process -FilePath $ControlPanelExecutable -ArgumentList "--post-install" -WindowStyle Hidden

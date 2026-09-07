@@ -1,17 +1,28 @@
 param(
     [string]$PackageSource,
     [string]$GuiSource,
+    [string]$InstallRoot,
+    [switch]$DeferLocationCommit,
+    [switch]$AllowPreparedDestination,
     [switch]$SkipUvBootstrap,
     [switch]$NoShortcuts,
     [switch]$NonInteractive
 )
 
+$explicitInstallRoot = $InstallRoot
+if ($explicitInstallRoot) {
+    if (-not [IO.Path]::IsPathRooted($explicitInstallRoot)) {
+        throw "The installation directory must be an absolute path."
+    }
+    $env:PDF2ZH_WINDOWS_APP_ROOT = [IO.Path]::GetFullPath($explicitInstallRoot)
+}
 . (Join-Path $PSScriptRoot "common.ps1")
 Assert-WindowsX64
 
 $managementFiles = @(
     "common.ps1",
     "apply-update.ps1",
+    "relocate.ps1",
     "install.ps1",
     "start-server.ps1",
     "stop-server.ps1",
@@ -25,9 +36,92 @@ $managementFiles = @(
 )
 
 function Install-Uv {
-    Write-Host "Installing uv from the official Astral installer..."
-    $installer = Invoke-RestMethod "https://astral.sh/uv/install.ps1"
-    Invoke-Expression $installer
+    Use-PrivateUvEnvironment
+    New-Item -ItemType Directory -Force -Path $UvInstallDir | Out-Null
+    Write-Host "[install] Installing private uv in $UvInstallDir..."
+    $installerFile = Join-Path ([IO.Path]::GetTempPath()) (
+        "zotero-pdf2zh-pro-uv-installer-{0}.ps1" -f [guid]::NewGuid().ToString("N")
+    )
+    try {
+        for ($attempt = 1; $attempt -le 3; $attempt++) {
+            try {
+                Invoke-WebRequest -UseBasicParsing "https://astral.sh/uv/install.ps1" -OutFile $installerFile
+                $powerShellExecutable = (Get-Process -Id $PID).Path
+                $modulePathBefore = $env:PSModulePath
+                try {
+                    if ([IO.Path]::GetFileName($powerShellExecutable) -ieq "powershell.exe") {
+                        $builtInModulePath = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\Modules"
+                        $env:PSModulePath = "$builtInModulePath;$modulePathBefore"
+                    }
+                    $installerOutput = & $powerShellExecutable -NoProfile -ExecutionPolicy Bypass -File $installerFile 2>&1
+                    $installerExitCode = $LASTEXITCODE
+                } finally {
+                    $env:PSModulePath = $modulePathBefore
+                }
+                $installerOutput | ForEach-Object { Write-Host $_ }
+                if ($installerExitCode -ne 0) {
+                    throw "The uv installer failed with exit code $installerExitCode."
+                }
+                if (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf) {
+                    break
+                }
+                throw "The uv installer completed without creating $PrivateUvExecutable"
+            } catch {
+                if ($attempt -eq 3) {
+                    throw
+                }
+                Write-Warning "Private uv installation attempt $attempt failed; retrying: $($_.Exception.Message)"
+                Start-Sleep -Seconds 1
+            }
+        }
+    } finally {
+        Remove-Item -LiteralPath $installerFile -Force -ErrorAction SilentlyContinue
+    }
+    if (-not (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf)) {
+        throw "The uv installer completed without creating $PrivateUvExecutable"
+    }
+    Write-Host "[install] Private uv is ready at $PrivateUvExecutable"
+}
+
+function Assert-InstallDestination {
+    $fullRoot = [IO.Path]::GetFullPath($AppRoot)
+    if (-not [IO.Path]::IsPathRooted($fullRoot)) {
+        throw "The installation directory must be an absolute path."
+    }
+    if (Test-Path -LiteralPath $fullRoot -PathType Leaf) {
+        throw "The installation directory points to a file: $fullRoot"
+    }
+    if (Test-Path -LiteralPath $fullRoot -PathType Container) {
+        $entries = @(Get-ChildItem -Force -LiteralPath $fullRoot)
+        $knownNames = @(
+            "bin", "cache", "data", "logs", "runtime", "updates",
+            "installed-version.txt", "server.pid", "server-executable.txt",
+            "control-panel.pid", "control-panel-executable.txt", "last-operation-error.txt"
+        )
+        $unknown = @($entries | Where-Object {
+            $_.Name -notin $knownNames -and $_.Name -notlike ".install-*"
+        })
+        if ($unknown.Count -gt 0) {
+            throw "The installation directory contains unrelated files: $($unknown[0].FullName)"
+        }
+        $recognizedInstallation =
+            (Test-Path -LiteralPath (Join-Path $fullRoot "installed-version.txt") -PathType Leaf) -or
+            (Test-Path -LiteralPath (Join-Path $fullRoot "bin\$ProductName.exe") -PathType Leaf)
+        $savedRoot = Get-SavedInstallRoot
+        $preservedInstallation = $savedRoot -and
+            (Test-PathEqual -Left $savedRoot -Right $fullRoot) -and
+            @($entries | Where-Object { $_.Name -notin @("data", "logs") }).Count -eq 0
+        if ($entries.Count -gt 0 -and -not $recognizedInstallation -and -not $preservedInstallation -and -not $AllowPreparedDestination) {
+            throw "The installation directory is not empty and is not a recognized installation: $fullRoot"
+        }
+    }
+    New-Item -ItemType Directory -Force -Path $fullRoot | Out-Null
+    $probe = Join-Path $fullRoot (".write-test-{0}" -f [guid]::NewGuid().ToString("N"))
+    try {
+        Set-Content -LiteralPath $probe -Value "ok" -Encoding ascii
+    } finally {
+        Remove-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function Copy-LegacyData {
@@ -141,6 +235,7 @@ function Install-Shortcuts {
     $uninstallShortcut.Save()
 }
 
+Assert-InstallDestination
 $resolvedGuiSource = Resolve-GuiSource
 $firstGuiInstall = -not (Test-Path -LiteralPath $ControlPanelExecutable -PathType Leaf)
 $previousVersion = if (Test-Path -LiteralPath $InstalledVersionFile) {
@@ -167,6 +262,7 @@ $backupBin = Join-Path $stagingRoot "previous"
 $serverInstalled = $false
 $filesInstalled = $false
 $previousControlPanelRunning = $null -ne (Get-ManagedControlPanelProcessId)
+$savedInstallRootBefore = Get-SavedInstallRoot
 
 try {
     Copy-PackageFiles -Destination $stagedBin
@@ -181,13 +277,18 @@ try {
         & (Join-Path $PSScriptRoot "stop-server.ps1") -Quiet
     }
 
-    $uv = Get-UvExecutable
-    if (-not $uv) {
-        if ($SkipUvBootstrap) {
-            throw "uv is required but was not found."
+    $uv = if (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf) {
+        Use-PrivateUvEnvironment
+        $PrivateUvExecutable
+    } elseif ($SkipUvBootstrap) {
+        $existingUv = Get-UvExecutable
+        if ($existingUv) {
+            Use-PrivateUvEnvironment
         }
+        $existingUv
+    } else {
         Install-Uv
-        $uv = Get-UvExecutable
+        Get-UvExecutable
     }
     if (-not $uv) {
         throw "uv installation completed but uv.exe could not be found."
@@ -224,8 +325,19 @@ try {
     Set-Content -LiteralPath $versionTemp -Value $PackageVersion -Encoding ascii
     Move-Item -LiteralPath $versionTemp -Destination $InstalledVersionFile -Force
     Install-Shortcuts
+    if (-not $DeferLocationCommit -and ($explicitInstallRoot -or -not $env:PDF2ZH_WINDOWS_APP_ROOT)) {
+        Save-InstallRoot -Path $AppRoot
+    }
+    Remove-Item -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -Force -ErrorAction SilentlyContinue
 } catch {
     $installError = $_
+    if (-not $DeferLocationCommit -and ($explicitInstallRoot -or -not $env:PDF2ZH_WINDOWS_APP_ROOT)) {
+        if ($savedInstallRootBefore) {
+            Save-InstallRoot -Path $savedInstallRootBefore
+        } else {
+            Remove-InstallRoot
+        }
+    }
     if ($filesInstalled) {
         try {
             Restore-InstalledFiles -BackupDirectory $backupBin

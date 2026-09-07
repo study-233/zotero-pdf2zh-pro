@@ -51,6 +51,30 @@ if ($commonText.IndexOf($expectedAutostart, [StringComparison]::Ordinal) -lt 0) 
     $failed = $true
 }
 
+$requiredLocationControls = @(
+    "PDF2ZH_WINDOWS_REGISTRY_KEY",
+    "InstallRoot",
+    "UV_INSTALL_DIR",
+    "UV_TOOL_DIR",
+    "UV_TOOL_BIN_DIR",
+    "UV_PYTHON_INSTALL_DIR",
+    "UV_CACHE_DIR"
+)
+foreach ($control in $requiredLocationControls) {
+    if ($commonText.IndexOf($control, [StringComparison]::Ordinal) -lt 0) {
+        Write-Error "Windows path configuration is missing: $control"
+        $failed = $true
+    }
+}
+
+$relocateText = Get-Content -Raw -LiteralPath (Join-Path $windowsDir "relocate.ps1")
+foreach ($stage in @("stop-server.ps1", "start-server.ps1", "Save-InstallRoot", "last-operation-error.txt", "CurrentVersion")) {
+    if ($relocateText.IndexOf($stage, [StringComparison]::Ordinal) -lt 0) {
+        Write-Error "Windows relocation rollback contract is missing: $stage"
+        $failed = $true
+    }
+}
+
 if ($failed) {
     exit 1
 }
