@@ -3,6 +3,8 @@ import hashlib
 import json
 import logging
 import re
+from babeldoc.translator.validation import InvalidTranslation
+
 from abc import ABC
 from abc import abstractmethod
 
@@ -91,61 +93,53 @@ class BaseTranslator(ABC):
     def configure_cache_namespace(self, *, provider: str) -> None:
         self.add_cache_impact_parameters("provider", provider)
 
-    def translate(self, text, ignore_cache=False, rate_limit_params: dict = None):
-        """
-        Translate the text, and the other part should call this method.
-        :param text: text to translate
-        :return: translated text
-        """
+    def _translate_cached(self, text, ignore_cache, rate_limit_params, method):
         self.translate_call_count += 1
-        if not (self.ignore_cache or ignore_cache):
+        params = rate_limit_params or {}
+        validate = params.get("validate_output", lambda value: None)
+        use_cache = not (self.ignore_cache or ignore_cache)
+        if use_cache:
             try:
-                cache = self.cache.get(text)
-                if cache is not None:
+                cached = self.cache.get(text)
+            except Exception as error:
+                logger.debug("translation cache lookup failed: error_type=%s", type(error).__name__)
+                cached = None
+            if cached is not None:
+                try:
+                    validate(cached)
+                except InvalidTranslation:
+                    with contextlib.suppress(Exception):
+                        self.cache.delete(text)
+                else:
                     self.translate_cache_call_count += 1
                     if self.metrics_collector is not None:
                         self.metrics_collector.local_cache_hit()
-                    return cache
-            except Exception as e:
-                logger.debug(
-                    "translation cache lookup failed: error_type=%s",
-                    type(e).__name__,
-                )
+                    return cached
         if self.metrics_collector is not None:
             self.metrics_collector.local_cache_miss()
-        self.rate_limiter.wait(rate_limit_params)
-        translation = self.do_translate(text, rate_limit_params)
-        if not (self.ignore_cache or ignore_cache):
-            self.cache.set(text, translation)
-        return translation
+        for generation in range(2):
+            if not getattr(self, "limits_each_attempt", False):
+                self.rate_limiter.wait(params)
+                if params.get("on_attempt"):
+                    params["on_attempt"]()
+            try:
+                translation = method(text, rate_limit_params)
+                validate(translation)
+            except InvalidTranslation:
+                if generation:
+                    raise
+                if self.metrics_collector is not None:
+                    self.metrics_collector.retry_scheduled()
+                continue
+            if use_cache:
+                self.cache.set(text, translation)
+            return translation
 
-    def llm_translate(self, text, ignore_cache=False, rate_limit_params: dict = None):
-        """
-        Translate the text, and the other part should call this method.
-        :param text: text to translate
-        :return: translated text
-        """
-        self.translate_call_count += 1
-        if not (self.ignore_cache or ignore_cache):
-            try:
-                cache = self.cache.get(text)
-                if cache is not None:
-                    self.translate_cache_call_count += 1
-                    if self.metrics_collector is not None:
-                        self.metrics_collector.local_cache_hit()
-                    return cache
-            except Exception as e:
-                logger.debug(
-                    "translation cache lookup failed: error_type=%s",
-                    type(e).__name__,
-                )
-        if self.metrics_collector is not None:
-            self.metrics_collector.local_cache_miss()
-        self.rate_limiter.wait(rate_limit_params)
-        translation = self.do_llm_translate(text, rate_limit_params)
-        if not (self.ignore_cache or ignore_cache):
-            self.cache.set(text, translation)
-        return translation
+    def translate(self, text, ignore_cache=False, rate_limit_params=None):
+        return self._translate_cached(text, ignore_cache, rate_limit_params, self.do_translate)
+
+    def llm_translate(self, text, ignore_cache=False, rate_limit_params=None):
+        return self._translate_cached(text, ignore_cache, rate_limit_params, self.do_llm_translate)
 
     def do_llm_translate(self, text, rate_limit_params: dict = None):
         """

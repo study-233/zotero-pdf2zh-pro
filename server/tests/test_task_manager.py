@@ -131,7 +131,7 @@ class TaskManagerTests(unittest.TestCase):
                 restored.get_task("failed-1")["metrics"]["localCache"]["hits"],
                 7,
             )
-            self.assertIsNone(restored.get_task("running-1"))
+            self.assertEqual(restored.get_task("running-1")["status"], "incomplete")
 
             result = restored.get_result_file("completed-1", "dual")
             self.assertIsNotNone(result)

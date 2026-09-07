@@ -293,6 +293,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 color: #216e39;
             }
 
+            .status.incomplete,
             .status.failed,
             .status.cancelled {
                 background: #fdecec;
@@ -908,6 +909,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 color: var(--success);
             }
 
+            .status.incomplete,
             .status.failed,
             .status.cancelled {
                 border-color: var(--error-tint);
@@ -1654,6 +1656,23 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 });
                 footerActions.appendChild(retryButton);
 
+                const repairButton = document.createElement("button");
+                repairButton.className = "button primary";
+                repairButton.addEventListener("click", async () => {
+                    if (!view.task) return;
+                    view.pendingAction = "repair";
+                    repairButton.disabled = true;
+                    try {
+                        await api.repairTask(view.task.taskId);
+                        view.pendingAction = null;
+                        render(api.getTasks());
+                    } catch (errorValue) {
+                        view.pendingAction = null;
+                        repairButton.disabled = false;
+                        alert(String(errorValue));
+                    }
+                });
+                footerActions.appendChild(repairButton);
                 const deleteButton = document.createElement("button");
                 deleteButton.className = "button";
                 deleteButton.textContent = "删除记录";
@@ -1696,6 +1715,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     metricsToggle,
                     cancelButton,
                     retryButton,
+                    repairButton,
                     deleteButton,
                 });
                 updateTaskCardView(view, task);
@@ -1764,6 +1784,12 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const errorText = [
                     task.importError || task.error,
                     formatDiagnostics(task.errorDiagnostics),
+                    (task.failedParagraphs || [])
+                        .map(
+                            (p) =>
+                                `第 ${p.page} 页 · ${p.paragraphId} · ${p.attempts} 次请求 · ${p.reason || p.errorType}`,
+                        )
+                        .join("\n"),
                 ]
                     .filter(Boolean)
                     .join("\n\n");
@@ -1825,6 +1851,15 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 );
                 setNodeHidden(view.retryButton, !canRetry(task));
                 view.retryButton.disabled = view.pendingAction === "retry";
+                setTextContent(
+                    view.repairButton,
+                    task.status === "completed" ? "检查并补译" : "补译",
+                );
+                setNodeHidden(
+                    view.repairButton,
+                    !task.canRepair || !api.repairTask,
+                );
+                view.repairButton.disabled = view.pendingAction === "repair";
                 setNodeHidden(view.deleteButton, !canDelete(task));
                 view.deleteButton.disabled = view.pendingAction === "delete";
             }
@@ -1842,6 +1877,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     task.overallProgress,
                     task.error,
                     task.errorDiagnostics,
+                    task.translationSummary,
+                    task.failedParagraphs,
+                    task.canRepair,
                     task.attempt,
                     task.createdAt,
                     task.updatedAt,
@@ -1997,15 +2035,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             function isFailedTask(task) {
                 return (
-                    task.status === "failed" || task.importState === "failed"
+                    task.status === "failed" ||
+                    task.status === "incomplete" ||
+                    task.importState === "failed"
                 );
             }
 
             function isCompletedTask(task) {
-                return (
-                    task.status === "completed" ||
-                    task.importState === "imported"
-                );
+                return task.status === "completed";
             }
 
             function normalizeEventStreamState(rawState) {
@@ -2069,6 +2106,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     running: "运行中",
                     cancelling: "正在终止",
                     completed: "已完成",
+                    incomplete: `未完成，剩余 ${task.translationSummary?.failed || task.translationSummary?.pending || "待检查"} 段`,
                     failed: "失败",
                     cancelled: "已终止",
                 };
@@ -2288,7 +2326,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function canDelete(task) {
-                if (task.status === "failed" || task.status === "cancelled") {
+                if (
+                    task.status === "failed" ||
+                    task.status === "incomplete" ||
+                    task.status === "cancelled"
+                ) {
                     return true;
                 }
                 return (

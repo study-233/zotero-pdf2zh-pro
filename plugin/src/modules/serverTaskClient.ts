@@ -90,6 +90,13 @@ export class ServerTaskClient {
         return this.postTaskAction(serverUrl, taskId, "retry");
     }
 
+    static async repairTask(
+        serverUrl: string,
+        taskId: string,
+    ): Promise<ServerTaskSnapshot | undefined> {
+        return this.postTaskAction(serverUrl, taskId, "repair");
+    }
+
     static async deleteTask(serverUrl: string, taskId: string): Promise<void> {
         const response = await fetch(`${serverUrl}/tasks/${taskId}`, {
             method: "DELETE",
@@ -128,7 +135,7 @@ export class ServerTaskClient {
     private static async postTaskAction(
         serverUrl: string,
         taskId: string,
-        action: "cancel" | "retry",
+        action: "cancel" | "retry" | "repair",
     ): Promise<ServerTaskSnapshot | undefined> {
         const response = await fetch(`${serverUrl}/tasks/${taskId}/${action}`, {
             method: "POST",

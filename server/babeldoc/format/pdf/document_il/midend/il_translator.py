@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from babeldoc.translator.validation import validate_text, InvalidTranslation
+
 import copy
 import json
 import logging
@@ -962,7 +964,27 @@ class ILTranslator:
 
         return result
 
-    def pre_translate_paragraph(
+    def pre_translate_paragraph(self, paragraph, tracker, page_font_map, xobj_font_map):
+        recovery = getattr(self.translation_config, "recovery", None)
+        if recovery is not None and recovery.is_skipped(paragraph):
+            return None, None
+        text, translate_input = self._prepare_paragraph(paragraph, tracker, page_font_map, xobj_font_map)
+        recovery = getattr(self.translation_config, "recovery", None)
+        if recovery is not None:
+            if text is None:
+                recovery.record(paragraph, "skipped", reason="not_translatable")
+            else:
+                restored = recovery.restored(paragraph, text)
+                if restored is not None:
+                    try:
+                        self.post_translate_paragraph(paragraph, tracker, translate_input, restored)
+                    except InvalidTranslation:
+                        pass
+                    else:
+                        return None, None
+        return text, translate_input
+
+    def _prepare_paragraph(
         self,
         paragraph: PdfParagraph,
         tracker: ParagraphTranslateTracker,
@@ -1009,18 +1031,21 @@ class ILTranslator:
         translated_text: str,
     ):
         """Post-translation processing: update paragraph with translated text."""
+        validate_text(translate_input.unicode, translated_text, self.translate_engine.lang_out,
+                      not self.translation_config.disable_same_text_fallback)
         tracker.set_output(translated_text)
         if translated_text == translate_input:
             if llm_translate_tracker := tracker.last_llm_translate_tracker():
                 llm_translate_tracker.set_placeholder_full_match()
             return False
-        paragraph.unicode = translated_text
-        paragraph.pdf_paragraph_composition = self.parse_translate_output(
+        compositions = self.parse_translate_output(
             translate_input,
             translated_text,
             tracker,
             tracker.last_llm_translate_tracker(),
         )
+        paragraph.unicode = translated_text
+        paragraph.pdf_paragraph_composition = compositions
         for composition in paragraph.pdf_paragraph_composition:
             if (
                 composition.pdf_same_style_unicode_characters
@@ -1029,6 +1054,9 @@ class ILTranslator:
                 composition.pdf_same_style_unicode_characters.pdf_style = (
                     paragraph.pdf_style
                 )
+        recovery = getattr(self.translation_config, "recovery", None)
+        if recovery is not None:
+            recovery.record(paragraph, "succeeded", input=translate_input.unicode, translation=translated_text, reason=None)
         return True
 
     def _build_role_block(self) -> str:
@@ -1250,6 +1278,14 @@ class ILTranslator:
                 if text is None:
                     return
                 llm_translate_tracker = tracker.new_llm_translate_tracker()
+                recovery = getattr(self.translation_config, "recovery", None)
+                context = [text]
+                params = {
+                    "paragraph_token_count": paragraph_token_count,
+                    "validate_output": lambda value: validate_text(text, value, self.translate_engine.lang_out,
+                        not self.translation_config.disable_same_text_fallback),
+                    "on_attempt": lambda: recovery.attempt([paragraph], context[0]) if recovery is not None else None,
+                }
                 # Perform translation
                 if self.support_llm_translate:
                     llm_prompt = self.generate_prompt_for_llm(
@@ -1258,20 +1294,17 @@ class ILTranslator:
                         local_title_paragraph,
                         translate_input,
                     )
+                    context[0] = llm_prompt
                     llm_translate_tracker.set_input(llm_prompt)
                     translated_text = self.translate_engine.llm_translate(
                         llm_prompt,
-                        rate_limit_params={
-                            "paragraph_token_count": paragraph_token_count
-                        },
+                        rate_limit_params=params,
                     )
                     llm_translate_tracker.set_output(translated_text)
                 else:
                     translated_text = self.translate_engine.translate(
                         text,
-                        rate_limit_params={
-                            "paragraph_token_count": paragraph_token_count
-                        },
+                        rate_limit_params=params,
                     )
                 translated_text = re.sub(r"[. 。…，]{20,}", ".", translated_text)
 
@@ -1280,6 +1313,9 @@ class ILTranslator:
                     paragraph, tracker, translate_input, translated_text
                 )
             except ContentFilterError as e:
+                recovery = getattr(self.translation_config, "recovery", None)
+                if recovery is not None:
+                    recovery.fail(paragraph, e)
                 logger.warning(
                     "content filter rejected paragraph: paragraph_id=%s",
                     paragraph.debug_id,
@@ -1287,6 +1323,10 @@ class ILTranslator:
                 self.add_content_filter_hint(page, paragraph)
                 return
             except Exception as e:
+                self.translation_config.raise_if_cancelled()
+                recovery = getattr(self.translation_config, "recovery", None)
+                if recovery is not None:
+                    recovery.fail(paragraph, e)
                 logger.error(
                     "error translating paragraph: paragraph_id=%s error_type=%s",
                     paragraph.debug_id,

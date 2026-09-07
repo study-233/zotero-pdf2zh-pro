@@ -13,7 +13,13 @@ export class ZoteroTaskImporter {
 
     async importTaskOutputs(taskId: string): Promise<void> {
         const task = this.callbacks.getTask(taskId);
-        if (!task || task.importState !== "pending") {
+        if (
+            !task ||
+            task.status !== "completed" ||
+            task.translationSummary?.failed ||
+            task.translationSummary?.pending ||
+            task.importState !== "pending"
+        ) {
             return;
         }
 
@@ -40,7 +46,10 @@ export class ZoteroTaskImporter {
         });
 
         try {
+            const importedOutputs = [...(task.importedOutputs || [])];
             for (const outputMode of task.outputModes) {
+                const outputKey = `${task.attempt || 1}:${outputMode}`;
+                if (importedOutputs.includes(outputKey)) continue;
                 const bytes = await ServerTaskClient.fetchResult(
                     task.serverUrl,
                     task.taskId,
@@ -58,6 +67,10 @@ export class ZoteroTaskImporter {
                     ...PDF2zhHelperFactory.getServerConfig(),
                     service: task.service,
                     outputModes: task.outputModes,
+                });
+                importedOutputs.push(outputKey);
+                this.callbacks.updateTask(taskId, {
+                    importedOutputs: [...importedOutputs],
                 });
             }
 

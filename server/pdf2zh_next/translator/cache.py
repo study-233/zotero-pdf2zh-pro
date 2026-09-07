@@ -87,6 +87,13 @@ class TranslationCache:
         )
         return result.translation if result else None
 
+    def delete(self, original_text: str):
+        (_TranslationCache.delete().where(
+            (_TranslationCache.translate_engine == self.translate_engine)
+            & (_TranslationCache.translate_engine_params == self.translate_engine_params)
+            & (_TranslationCache.original_text == original_text)
+        ).execute())
+
     def set(self, original_text: str, translation: str):
         try:
             _TranslationCache.create(

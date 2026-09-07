@@ -21,6 +21,7 @@ from pdf2zh_next_service import create_runtime_settings
 from pdf2zh_next_service import collect_output_files
 from pdf2zh_next_service import create_font_progress_event
 from pdf2zh_next_service import diagnose_service_error
+from pdf2zh_next_service import ensure_translation_provider_timeout
 from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import install_text_check_bypass
 from pdf2zh_next_service import ProgressLogger
@@ -56,6 +57,25 @@ def make_settings_payload(**overrides):
 
 
 class PDF2zhNextServiceTests(unittest.TestCase):
+    def test_formal_translation_gets_a_longer_default_provider_timeout(self):
+        runtime = create_runtime_settings(make_settings_payload(service="openai", llm_api={
+            "apiKey": "test-key",
+            "apiUrl": "https://relay.invalid/v1",
+            "model": "custom-model",
+        }))
+        self.assertIsNone(runtime.translate_engine_settings.openai_timeout)
+        ensure_translation_provider_timeout(runtime)
+        self.assertEqual(runtime.translate_engine_settings.openai_timeout, "120")
+
+        configured = create_runtime_settings(make_settings_payload(service="openai", llm_api={
+            "apiKey": "test-key",
+            "apiUrl": "https://relay.invalid/v1",
+            "model": "custom-model",
+            "extraData": {"openai_timeout": "300"},
+        }))
+        ensure_translation_provider_timeout(configured)
+        self.assertEqual(configured.translate_engine_settings.openai_timeout, "300")
+
     def test_api_protocol_options_and_preset_endpoint_reach_runtime(self):
         for service in ("openai", "openaicompatible", "deepseek", "gemini", "modelscope"):
             with self.subTest(service=service):
@@ -114,7 +134,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
             sequence.append("translation")
             yield {"type": "finish", "translate_result": SimpleNamespace()}
 
-        config = SimpleNamespace(save_detailed_tracking=True)
+        config = SimpleNamespace(save_detailed_tracking=True, pool_max_workers=1, translator=SimpleNamespace())
         expected_files = {"dual": SimpleNamespace(filename="paper.dual.pdf")}
         payload = {
             "input_path": "/tmp/paper.pdf",
@@ -124,6 +144,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         }
 
         with (
+            patch("pdf2zh_next_service.Path.read_bytes", return_value=b"pdf"),
             patch("pdf2zh_next_service.create_runtime_settings", return_value=object()),
             patch("pdf2zh_next_service.create_babeldoc_config", return_value=config),
             patch(

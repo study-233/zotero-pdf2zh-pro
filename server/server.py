@@ -26,7 +26,7 @@ from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
 
-VERSION = "1.6.1"
+VERSION = "1.6.2"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
 DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
 TRANSLATES_DIR = Path(
@@ -170,6 +170,16 @@ def create_app() -> Flask:
     def retry_task(task_id: str):
         try:
             task = TASK_MANAGER.retry_task(task_id)
+        except ValueError as exc:
+            return error_response(str(exc), 409)
+        if task is None:
+            return error_response("Task not found", 404)
+        return jsonify({"status": "ok", "task": task}), 202
+
+    @app.post("/tasks/<task_id>/repair")
+    def repair_task(task_id: str):
+        try:
+            task = TASK_MANAGER.repair_task(task_id)
         except ValueError as exc:
             return error_response(str(exc), 409)
         if task is None:

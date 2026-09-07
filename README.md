@@ -14,7 +14,7 @@
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 
-当前统一版本：<!-- release-version --> `1.6.1`
+当前统一版本：<!-- release-version --> `1.6.2`
 
 [快速开始](#quick-start) · [功能亮点](#features) · [安装方式](#installation) ·
 [使用说明](#usage) · [问题反馈](#community)
@@ -225,3 +225,13 @@ Pull Request 也很欢迎。较大的行为调整建议先创建 Issue，说明�
 - 「配置检查」会显示实际使用的协议。旧 Python 服务仅能回退到 Chat Completions；Responses 和额外请求参数需要升级服务端。
 
 服务端 `llm_api` 新增可选 `apiProtocol`（`auto` / `chat_completions` / `responses`）和 `requestOptions`（JSON 对象）。`/health` 返回 `supportedApiProtocols`，`/validate-config` 返回 `resolvedProtocol`。新任务指标移除 `cost`，token 和服务端缓存数值允许为 `null`，并提供 `availability`（`unavailable` / `partial` / `complete`）。历史费用字段读取时忽略。
+
+### 翻译完整性与补译
+
+后端按段落记录成功、跳过和失败；只要仍有应译段落失败，任务显示“未完成”，不会自动导入 Zotero。
+“补译”保留已验证的译文，只为剩余段落请求 API，默认 QPS 2、并发 4。历史已完成任务可通过“检查并补译”重新检查；修复结果使用新的附件文件名，保留旧附件。
+连接、超时和临时服务错误最多尝试 5 次，所有请求共用限流和并发限制；JSON、段落 ID、非空译文和占位符通过校验后才写入缓存。
+
+任务详情及 SSE 新增 `translationSummary`、`failedParagraphs`、`canRepair`，状态新增 `incomplete`。
+`POST /tasks/{taskId}/repair` 支持未完成、已完成和已取消任务，返回新一轮任务快照；运行中的任务返回 409。
+段落检查点保存在任务目录的 `paragraph-recovery.json`，服务重启后可以继续补译；删除任务会一并移除检查点。

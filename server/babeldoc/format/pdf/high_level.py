@@ -687,6 +687,7 @@ def do_translate(
                                     )
                                 )
                                 part_config.input_file = part_temp_input_path
+                                part_config.recovery_page_offset = split_point.start_page
 
                                 temp_doc = Document()
                                 for x in range(
@@ -1072,7 +1073,13 @@ def _do_translate_single(
         else:
             il_translator = ILTranslator(translate_engine, translation_config)
 
+        recovery = getattr(translation_config, "recovery", None)
+        if recovery is not None:
+            recovery.register(docs, translation_config)
         il_translator.translate(docs)
+        translation_config.raise_if_cancelled()
+        if recovery is not None:
+            recovery.finish()
         del il_translator
         logger.debug(f"finish ILTranslator from {temp_pdf_path}")
     else:

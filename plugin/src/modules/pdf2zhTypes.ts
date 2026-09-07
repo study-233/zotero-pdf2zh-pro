@@ -1,6 +1,12 @@
 export type OutputMode = "mono" | "dual";
 export type ServerTaskStatus =
-    "queued" | "running" | "cancelling" | "completed" | "failed" | "cancelled";
+    | "queued"
+    | "running"
+    | "cancelling"
+    | "completed"
+    | "incomplete"
+    | "failed"
+    | "cancelled";
 
 export interface ServerConfig {
     serverUrl: string;
@@ -93,6 +99,21 @@ export interface ServerTaskSnapshot {
     canCancel: boolean;
     cancelRequested: boolean;
     metrics?: TaskMetrics;
+    canRepair?: boolean;
+    translationSummary?: {
+        total: number;
+        succeeded: number;
+        skipped: number;
+        failed: number;
+        pending: number;
+    } | null;
+    failedParagraphs?: {
+        page: number;
+        paragraphId: string;
+        attempts: number;
+        errorType: string;
+        reason: string;
+    }[];
 }
 
 export interface TaskMetrics {
@@ -132,6 +153,7 @@ export interface PluginTask extends ServerTaskSnapshot {
     source: "local" | "remote";
     importState: "pending" | "importing" | "imported" | "failed" | "none";
     importError?: string;
+    importedOutputs?: string[];
 }
 
 export interface ServerTaskEvent {

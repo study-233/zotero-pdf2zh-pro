@@ -5,10 +5,11 @@ import concurrent.futures
 import contextlib
 import logging
 import json
+import hashlib
 import shutil
 import ssl
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
@@ -35,6 +36,7 @@ _TEXT_CHECK_TRANSLATION_LOCK = threading.Lock()
 _TEXT_CHECK_PATCH_LOCK = threading.Lock()
 _SKIP_TEXT_CHECKS_ENABLED = False
 _TEXT_CHECK_PATCH_INSTALLED = False
+DEFAULT_TRANSLATION_PROVIDER_TIMEOUT_SECONDS = 120
 
 SERVICE_FIELD_MAP = {
     "openai": {
@@ -184,6 +186,8 @@ class TranslationOutputFile:
 @dataclass(frozen=True)
 class TranslationResult:
     files: dict[str, TranslationOutputFile]
+    translation_summary: dict | None = None
+    failed_paragraphs: list = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -433,6 +437,12 @@ def create_runtime_settings(payload: dict[str, Any]):
     return settings
 
 
+def ensure_translation_provider_timeout(settings: Any) -> None:
+    engine = getattr(settings, "translate_engine_settings", None)
+    if isinstance(engine, OpenAISettings) and not engine.openai_timeout:
+        engine.openai_timeout = str(DEFAULT_TRANSLATION_PROVIDER_TIMEOUT_SECONDS)
+
+
 def explain_service_error(error: Exception | str) -> str:
     message = str(error).strip() if not isinstance(error, str) else error.strip()
     if not message:
@@ -563,7 +573,19 @@ def diagnose_service_error(error: Exception | str) -> list[dict[str, str]]:
                 suggestion="Lower QPS or pool size, then retry the task.",
             )
         )
-    if "timeout" in lowered or "timed out" in lowered or "connection" in lowered:
+    if "timeout" in lowered or "timed out" in lowered:
+        diagnostics.append(
+            DiagnosticMessage(
+                code="network_connectivity",
+                severity="warning",
+                message="API 端点未在超时期限内响应。",
+                suggestion=(
+                    "稍后重试或更换稳定端点；若服务本身响应较慢，"
+                    "可在内部配置参数中设置 openai_timeout。"
+                ),
+            )
+        )
+    elif "connection" in lowered:
         diagnostics.append(
             DiagnosticMessage(
                 code="network_connectivity",
@@ -671,8 +693,25 @@ async def translate_pdf_with_callbacks(
     try:
         progress_logger = ProgressLogger(job_id)
         settings = create_runtime_settings(payload)
+        ensure_translation_provider_timeout(settings)
         translation_config = create_babeldoc_config(settings, input_path)
         translation_config.save_detailed_tracking = False
+        from babeldoc.format.pdf.translation_recovery import TranslationRecovery
+        fingerprint_payload = {k: v for k, v in payload.items() if k not in {
+            "input_path", "output_dir", "qps", "pool_size", "repair_attempt",
+        }}
+        fingerprint_payload["llm_api"] = {k: v for k, v in payload.get("llm_api", {}).items() if k != "apiKey"}
+        fingerprint = hashlib.sha256(input_path.read_bytes())
+        fingerprint.update(json.dumps(fingerprint_payload, sort_keys=True).encode())
+        translation_config.recovery = TranslationRecovery(
+            input_path.parent / "paragraph-recovery.json", fingerprint.hexdigest(), progress_callback
+        )
+        slots = threading.BoundedSemaphore(translation_config.pool_max_workers)
+        main_translator = translation_config.translator
+        for engine in (main_translator, getattr(translation_config, "term_extraction_translator", None)):
+            if engine is not None and hasattr(engine, "configure_execution"):
+                engine.rate_limiter = main_translator.rate_limiter
+                engine.configure_execution(translation_config.pool_max_workers, translation_config.raise_if_cancelled, slots)
         if isinstance(getattr(settings, "translate_engine_settings", None), OpenAISettings):
             translator = translation_config.translator
             metrics_collector = TaskMetricsCollector(
@@ -749,7 +788,15 @@ async def translate_pdf_with_callbacks(
             )
             if metrics_collector is not None:
                 metrics_collector.emit_final()
-            return TranslationResult(files=files)
+            if payload.get("repair_attempt"):
+                repaired_files = {}
+                for mode, file in files.items():
+                    renamed = file.output_path.with_name(f"{file.output_path.stem}.repair-{payload['repair_attempt']}.pdf")
+                    file.output_path.replace(renamed)
+                    repaired_files[mode] = TranslationOutputFile(mode, renamed, renamed.name)
+                files = repaired_files
+            summary, failed = translation_config.recovery.snapshot()
+            return TranslationResult(files=files, translation_summary=summary, failed_paragraphs=failed)
     finally:
         if heartbeat_task is not None:
             heartbeat_task.cancel()

@@ -1,6 +1,11 @@
 import logging
 import copy
 import math
+import threading
+import time
+import random
+from email.utils import parsedate_to_datetime
+from babeldoc.translator.validation import InvalidTranslation
 from urllib.parse import urlparse
 
 import httpx
@@ -11,7 +16,6 @@ from pdf2zh_next.translator.base_rate_limiter import BaseRateLimiter
 from pdf2zh_next.translator.base_translator import BaseTranslator
 from tenacity import retry
 from tenacity import retry_if_exception
-from tenacity import wait_exponential
 
 from pdf2zh_next.translator.openai_protocol import (
     normalize_endpoint,
@@ -46,27 +50,47 @@ def _record_retry_before_sleep(retry_state) -> None:
         _status_code(error),
         retry_state.attempt_number,
     )
+    if translator is not None:
+        translator._wait_cancel(retry_state.next_action.sleep)
 
 
 def _retry_provider_error(error: Exception) -> bool:
     status = _status_code(error)
     return (
         isinstance(error, openai.APIConnectionError)
+        or bool(getattr(error, "retryable_verified_404", False))
         or status in {408, 409, 429}
         or (status is not None and status >= 500)
     )
 
 
 def _stop_provider_retry(state) -> bool:
-    # Keep the existing rate-limit allowance, and replace SDK-hidden transport
-    # retries with at most three observable attempts on the same protocol.
-    limit = 100 if isinstance(state.outcome.exception(), openai.RateLimitError) else 3
-    return state.attempt_number >= limit
+    return state.attempt_number >= 5
+
+
+def _retry_wait(state):
+    delay = min(30, 2 ** state.attempt_number) + random.uniform(0, 1)
+    error = state.outcome.exception()
+    response = getattr(error, "response", None)
+    value = response.headers.get("retry-after") if response is not None else None
+    if value:
+        try:
+            seconds = float(value)
+        except ValueError:
+            try:
+                seconds = parsedate_to_datetime(value).timestamp() - time.time()
+            except (ValueError, TypeError, OverflowError):
+                seconds = 0
+        if math.isfinite(seconds):
+            delay = max(delay, seconds)
+    return delay
+
 
 
 class OpenAITranslator(BaseTranslator):
     # https://github.com/openai/openai-python
     name = "openai"
+    limits_each_attempt = True
 
     def __init__(
         self,
@@ -74,6 +98,9 @@ class OpenAITranslator(BaseTranslator):
         rate_limiter: BaseRateLimiter,
     ):
         super().__init__(settings, rate_limiter)
+        self._verified_protocols = set()
+        self._request_slots = threading.BoundedSemaphore(1)
+        self.check_cancelled = lambda: None
         self.timeout = settings.translate_engine_settings.openai_timeout
         self.api_protocol = getattr(
             settings.translate_engine_settings,
@@ -261,7 +288,34 @@ class OpenAITranslator(BaseTranslator):
                 cache_miss_tokens=miss,
             )
 
-    def _request(
+    def configure_execution(self, concurrency, check_cancelled, slots=None):
+        self._request_slots = slots or threading.BoundedSemaphore(max(1, concurrency))
+        self.check_cancelled = check_cancelled
+
+    def _wait_cancel(self, seconds):
+        deadline = time.monotonic() + seconds
+        while True:
+            self.check_cancelled()
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return
+            time.sleep(min(0.1, remaining))
+
+    def _request(self, messages, protocol, rate_limit_params=None, *, health_check=False):
+        while not self._request_slots.acquire(timeout=0.1):
+            self.check_cancelled()
+        try:
+            self.check_cancelled()
+            self.rate_limiter.wait({**(rate_limit_params or {}), "check_cancelled": self.check_cancelled})
+            self.check_cancelled()
+            callback = (rate_limit_params or {}).get("on_attempt")
+            if callback:
+                callback()
+            return self._request_unlimited(messages, protocol, rate_limit_params, health_check=health_check)
+        finally:
+            self._request_slots.release()
+
+    def _request_unlimited(
         self,
         messages: list,
         protocol: str,
@@ -271,7 +325,7 @@ class OpenAITranslator(BaseTranslator):
     ) -> str:
         options = self._options(protocol, rate_limit_params)
         client = (
-            self.client.with_options(timeout=min(float(self.timeout or 20), 20))
+            self.client.with_options(timeout=float(self.timeout or 20))
             if health_check
             else self.client
         )
@@ -289,10 +343,21 @@ class OpenAITranslator(BaseTranslator):
                     model=self.model, messages=messages, extra_body=options
                 )
             self._record_usage(response, protocol)
-            text = self._remove_cot_content(response_text(response, protocol)).strip()
+            try:
+                text = self._remove_cot_content(response_text(response, protocol)).strip()
+            except ValueError as error:
+                raise InvalidTranslation("invalid_response") from error
             if not text:
-                raise ValueError("API 只返回了推理内容，没有有效译文")
+                raise InvalidTranslation("empty_translation")
         except Exception as error:
+            if _status_code(error) == 404 and protocol in self._verified_protocols:
+                body = str(getattr(error, "body", "")).lower()
+                permanent = any(x in body for x in (
+                    "model_not_found", "model not found", "model does not exist",
+                    "unknown model", "unknown endpoint", "route not found", "endpoint not found",
+                    "模型不存在", "模型未找到", "无此模型", "路由不存在",
+                ))
+                error.retryable_verified_404 = not permanent
             if collector is not None:
                 collector.request_finished(
                     started, succeeded=False, status_code=_status_code(error)
@@ -300,12 +365,14 @@ class OpenAITranslator(BaseTranslator):
             raise
         if collector is not None:
             collector.request_finished(started, succeeded=True)
+        self._verified_protocols.add(protocol)
         return text
 
     @retry(
         retry=retry_if_exception(_retry_provider_error),
         stop=_stop_provider_retry,
-        wait=wait_exponential(multiplier=1, min=1, max=15),
+        wait=_retry_wait,
+        sleep=lambda _: None,
         before_sleep=_record_retry_before_sleep,
         reraise=True,
     )
@@ -319,7 +386,8 @@ class OpenAITranslator(BaseTranslator):
     @retry(
         retry=retry_if_exception(_retry_provider_error),
         stop=_stop_provider_retry,
-        wait=wait_exponential(multiplier=1, min=1, max=15),
+        wait=_retry_wait,
+        sleep=lambda _: None,
         before_sleep=_record_retry_before_sleep,
         reraise=True,
     )

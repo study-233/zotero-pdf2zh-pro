@@ -1,6 +1,6 @@
 {
     "name": "zotero-pdf2zh-pro",
-    "version": "1.6.1",
+    "version": "1.6.2",
     "packageManager": "pnpm@10.34.5",
     "description": "Minimal Zotero bridge for pdf2zh_next",
     "config": {
@@ -25,7 +25,7 @@
         "build": "tsc --noEmit && zotero-plugin build",
         "lint:check": "prettier --check . && eslint .",
         "lint:fix": "prettier --write . && eslint . --fix",
-        "test": "node --test tests/manifest.test.mjs tests/apiCompatibility.test.mjs",
+        "test": "node --test tests/*.test.mjs",
         "update-deps": "pnpm up --latest"
     },
     "dependencies": {

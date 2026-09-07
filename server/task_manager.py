@@ -45,6 +45,8 @@ class TaskRecord:
     error_diagnostics: list[dict[str, str]] = field(default_factory=list)
     result_files: dict[str, TranslationOutputFile] = field(default_factory=dict)
     metrics: dict[str, Any] | None = None
+    translation_summary: dict | None = None
+    failed_paragraphs: list = field(default_factory=list)
     attempt: int = 1
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
@@ -66,6 +68,9 @@ class TaskRecord:
             "error": self.error,
             "errorDiagnostics": self.error_diagnostics,
             "attempt": self.attempt,
+            "translationSummary": self.translation_summary,
+            "failedParagraphs": self.failed_paragraphs,
+            "canRepair": self.status in {"incomplete", "completed", "cancelled"},
             "resultFiles": {
                 output_mode: output_file.filename
                 for output_mode, output_file in self.result_files.items()
@@ -83,6 +88,7 @@ class TaskRecord:
 class TaskManager:
     def __init__(self, persistence_path: Path | str | None = None) -> None:
         self._lock = threading.RLock()
+        self._persistence_lock = threading.RLock()
         self._tasks: dict[str, TaskRecord] = {}
         self._subscribers: set[queue.Queue[dict[str, Any]]] = set()
         self._persistence_path = (
@@ -139,6 +145,7 @@ class TaskManager:
             ",".join(output_modes),
             workspace_dir,
         )
+        self._save_persistent_tasks()
         thread.start()
         return record.to_dict()
 
@@ -214,22 +221,31 @@ class TaskManager:
             self._publish_event({"type": "deleted", "taskId": task_id})
         return len(failed_task_ids)
 
-    def retry_task(self, task_id: str) -> dict[str, Any] | None:
+    def repair_task(self, task_id: str) -> dict[str, Any] | None:
+        return self.retry_task(task_id, repair=True)
+
+    def retry_task(self, task_id: str, *, repair=False) -> dict[str, Any] | None:
         with self._lock:
             record = self._tasks.get(task_id)
             if record is None:
                 return None
             if record.status in {"queued", "running", "cancelling"}:
                 raise ValueError("Active task cannot be retried")
-            if record.status != "failed":
-                raise ValueError("Only failed tasks can be retried")
+            allowed = {"incomplete", "completed", "cancelled"} if repair else {"failed"}
+            if record.status not in allowed:
+                raise ValueError("Task is not eligible for repair" if repair else "Only failed tasks can be retried")
 
             input_path = Path(record.request_payload["input_path"])
             output_dir = Path(record.request_payload["output_dir"])
             if not input_path.exists():
                 raise ValueError("Task input file is no longer available")
 
-            shutil.rmtree(output_dir, ignore_errors=True)
+            if repair:
+                record.request_payload.update(qps=2, pool_size=4, repair_attempt=record.attempt + 1)
+                output_dir = record.workspace_dir / f"repair-{record.attempt + 1}"
+                record.request_payload["output_dir"] = str(output_dir)
+            else:
+                shutil.rmtree(output_dir, ignore_errors=True)
             output_dir.mkdir(parents=True, exist_ok=True)
 
             record.status = "queued"
@@ -241,6 +257,8 @@ class TaskManager:
             record.error = None
             record.error_diagnostics = []
             record.result_files = {}
+            record.translation_summary = None
+            record.failed_paragraphs = []
             record.metrics = empty_metrics() if supports_request_metrics(record.service) else None
             record.attempt += 1
             record.cancel_requested = False
@@ -319,18 +337,23 @@ class TaskManager:
 
         with self._lock:
             record = self._tasks[task_id]
-            record.status = "completed"
+            record.translation_summary = result.translation_summary
+            record.failed_paragraphs = result.failed_paragraphs
+            incomplete = bool(result.translation_summary and (result.translation_summary.get("failed", 0) or result.translation_summary.get("pending", 0)))
+            record.status = "incomplete" if incomplete else "completed"
+            record.error = f"未完成，剩余 {result.translation_summary['failed'] + result.translation_summary.get('pending', 0)} 段，可补译" if incomplete else None
             record.result_files = dict(result.files)
-            record.stage = "completed"
-            record.stage_progress = 100.0
-            record.overall_progress = 100.0
+            record.stage = record.status
+            record.stage_progress = 99.0 if incomplete else 100.0
+            record.overall_progress = 99.0 if incomplete else 100.0
             record.updated_at = utc_now_iso()
             snapshot = record.to_dict()
         self._save_persistent_tasks()
         self._publish_event({"type": "task", "task": snapshot})
         LOGGER.info(
-            "[%s] task completed: %s",
+            "[%s] task %s: %s",
             task_id,
+            record.status,
             ", ".join(file.filename for file in result.files.values()),
         )
 
@@ -379,6 +402,10 @@ class TaskManager:
                     record.overall_progress,
                 )
 
+            record.overall_progress = min(99.0, record.overall_progress)
+            if event_type == "translation_summary":
+                record.translation_summary = event["translationSummary"]
+                record.failed_paragraphs = event["failedParagraphs"]
             if event_type == "error":
                 record.error = explain_service_error(
                     str(event.get("error") or "translation failed")
@@ -422,8 +449,6 @@ class TaskManager:
             workspace_dir = record.workspace_dir
             snapshot = record.to_dict()
 
-        if cancelled:
-            shutil.rmtree(workspace_dir, ignore_errors=True)
         self._save_persistent_tasks()
         self._publish_event({"type": "task", "task": snapshot})
         if cancelled:
@@ -479,11 +504,21 @@ class TaskManager:
             if not isinstance(record_payload, dict):
                 continue
             record = self._record_from_persistence(record_payload)
-            if record is None or record.status in {"queued", "running", "cancelling"}:
+            if record is None:
                 continue
+            if record.status in {"queued", "running", "cancelling"}:
+                record.status = "incomplete"
+                record.stage = "incomplete"
+                record.overall_progress = min(99.0, record.overall_progress)
+                record.error = "服务重启中断了翻译，可补译继续"
+                record.cancel_requested = False
             self._tasks[record.task_id] = record
 
     def _save_persistent_tasks(self) -> None:
+        with self._persistence_lock:
+            self._save_persistent_tasks_locked()
+
+    def _save_persistent_tasks_locked(self) -> None:
         if self._persistence_path is None:
             return
 
@@ -491,7 +526,6 @@ class TaskManager:
             records = [
                 self._record_to_persistence(record)
                 for record in self._tasks.values()
-                if record.status not in {"queued", "running", "cancelling"}
             ]
 
         payload = {"tasks": records}
@@ -526,6 +560,8 @@ class TaskManager:
             "error": record.error,
             "error_diagnostics": record.error_diagnostics,
             "metrics": record.metrics,
+            "translation_summary": record.translation_summary,
+            "failed_paragraphs": record.failed_paragraphs,
             "attempt": record.attempt,
             "created_at": record.created_at,
             "updated_at": record.updated_at,
@@ -593,6 +629,8 @@ class TaskManager:
                 error_diagnostics=list(payload.get("error_diagnostics") or []),
                 result_files=result_files,
                 metrics=metrics,
+                translation_summary=payload.get("translation_summary"),
+                failed_paragraphs=list(payload.get("failed_paragraphs") or []),
                 attempt=TaskManager._coerce_int(payload.get("attempt"), 1),
                 created_at=str(payload.get("created_at") or utc_now_iso()),
                 updated_at=str(payload.get("updated_at") or utc_now_iso()),

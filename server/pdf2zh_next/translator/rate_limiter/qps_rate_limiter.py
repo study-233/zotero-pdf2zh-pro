@@ -27,8 +27,12 @@ class QPSRateLimiter(BaseRateLimiter):
             now = time.monotonic()
 
             wait_duration = self.next_request_time - now
-            if wait_duration > 0:
-                time.sleep(wait_duration)
+            while wait_duration > 0:
+                check = (_rate_limit_params or {}).get("check_cancelled")
+                if check:
+                    check()
+                time.sleep(min(wait_duration, 0.1))
+                wait_duration = self.next_request_time - time.monotonic()
 
             # Update the next allowed request time.
             # If the limiter has been idle, the next request should start from 'now'.

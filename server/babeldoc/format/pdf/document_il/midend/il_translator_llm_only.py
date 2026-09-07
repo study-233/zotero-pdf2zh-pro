@@ -1,3 +1,5 @@
+from babeldoc.translator.validation import validate_batch
+
 import copy
 import json
 import logging
@@ -727,6 +729,11 @@ class ILTranslatorLLMOnly:
                 rate_limit_params={
                     "paragraph_token_count": paragraph_token_count,
                     "request_json_mode": True,
+                    "validate_output": lambda value: validate_batch(value, [item[0] for item in inputs],
+                        self.translate_engine.lang_out, not self.translation_config.disable_same_text_fallback),
+                    "on_attempt": lambda: self.translation_config.recovery.attempt(
+                        [item[2] for item in inputs], final_input
+                    ) if getattr(self.translation_config, "recovery", None) is not None else None,
                 },
             )
             for llm_translate_tracker in llm_translate_trackers:
@@ -735,22 +742,8 @@ class ILTranslatorLLMOnly:
 
             llm_output = self._clean_json_output(llm_output)
 
-            parsed_output = json.loads(llm_output)
-
-            if isinstance(parsed_output, dict) and parsed_output.get(
-                "output", parsed_output.get("input", False)
-            ):
-                parsed_output = [parsed_output]
-
-            translation_results = {
-                item["id"]: item.get("output", item.get("input"))
-                for item in parsed_output
-            }
-
-            if len(translation_results) != len(inputs):
-                raise Exception(
-                    f"Translation results length mismatch. Expected: {len(inputs)}, Got: {len(translation_results)}"
-                )
+            translation_results = validate_batch(llm_output, [item[0] for item in inputs],
+                self.translate_engine.lang_out, not self.translation_config.disable_same_text_fallback)
 
             for id_, output in translation_results.items():
                 should_fallback = True
@@ -774,53 +767,6 @@ class ILTranslatorLLMOnly:
                     translate_input = inputs[id_][1]
                     llm_translate_tracker = inputs[id_][4]
 
-                    input_unicode = inputs[id_][0]
-                    output_unicode = translated_text
-
-                    trimed_input = re.sub(r"[. 。…，]{20,}", ".", input_unicode)
-
-                    input_token_count = self.calc_token_count(trimed_input)
-                    output_token_count = self.calc_token_count(output_unicode)
-
-                    same_as_input = trimed_input == output_unicode
-                    if (
-                        same_as_input
-                        and input_token_count > 10
-                        and not self.translation_config.disable_same_text_fallback
-                    ):
-                        llm_translate_tracker.set_error_message(
-                            "Translation result is the same as input, fallback."
-                        )
-                        llm_translate_tracker.set_placeholder_full_match()
-                        logger.warning(
-                            "Translation result is the same as input, fallback."
-                        )
-                        continue
-
-                    if not (0.3 < output_token_count / input_token_count < 3):
-                        llm_translate_tracker.set_error_message(
-                            f"Translation result is too long or too short. Input: {input_token_count}, Output: {output_token_count}"
-                        )
-                        logger.warning(
-                            f"Translation result is too long or too short. Input: {input_token_count}, Output: {output_token_count}"
-                        )
-                        llm_translate_tracker.set_placeholder_full_match()
-                        continue
-
-                    if not self.translation_config.disable_same_text_fallback:
-                        edit_distance = Levenshtein.distance(
-                            input_unicode, output_unicode
-                        )
-                        if edit_distance < 5 and input_token_count > 20:
-                            llm_translate_tracker.set_error_message(
-                                f"Translation result edit distance is too small. distance: {edit_distance}"
-                            )
-                            logger.warning(
-                                "translation result edit distance is too small: distance=%s",
-                                edit_distance,
-                            )
-                            llm_translate_tracker.set_placeholder_full_match()
-                            continue
                     # Apply the translation to the paragraph
                     self.il_translator.post_translate_paragraph(
                         inputs[id_][2],
@@ -860,7 +806,7 @@ class ILTranslatorLLMOnly:
                         executor.submit(
                             self.il_translator.translate_paragraph,
                             inputs[id_][2],
-                            batch_paragraph.pages[id_],
+                            batch_paragraph.pages[should_translate_paragraph[id_]],
                             pbar,
                             inputs[id_][3],
                             page_font_map,
@@ -874,6 +820,7 @@ class ILTranslatorLLMOnly:
                         self.ok_count += 1
 
         except Exception as e:
+            self.translation_config.raise_if_cancelled()
             error_message = (
                 "Error during translation; using fallback. "
                 f"Error type: {type(e).__name__}."
@@ -887,8 +834,8 @@ class ILTranslatorLLMOnly:
                 llm_translate_tracker.set_fallback_to_translate()
             self.total_count += len(llm_translate_trackers)
             self.fallback_count += len(llm_translate_trackers)
-            for input_ in inputs:
-                input_[2].unicode = input_[5]
+            for index, input_ in enumerate(inputs):
+                input_[2].unicode = input_[5][index]
             if not should_translate_paragraph:
                 should_translate_paragraph = list(
                     range(len(batch_paragraph.paragraphs))

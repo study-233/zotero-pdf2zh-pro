@@ -21,6 +21,7 @@ type TaskDialogArgs = {
     refreshTasks: () => Promise<void>;
     cancelTask: (taskId: string) => Promise<void>;
     retryTask: (taskId: string) => Promise<void>;
+    repairTask: (taskId: string) => Promise<void>;
     retryFailedTasks: () => Promise<void>;
     deleteTask: (taskId: string) => Promise<void>;
     clearFailedTasks: () => Promise<void>;
@@ -35,6 +36,60 @@ const ACTIVE_STATUSES: ServerTaskStatus[] = ["queued", "running", "cancelling"];
 
 export class PDF2zhTaskManager {
     private static tasks = new Map<string, PluginTask>();
+    private static localTasksLoaded = false;
+    private static savedBindings = "";
+
+    private static loadLocalTasks(): void {
+        if (this.localTasksLoaded) return;
+        this.localTasksLoaded = true;
+        try {
+            const raw = Zotero.Prefs.get(
+                `${config.prefsPrefix}.taskBindings`,
+                true,
+            );
+            const tasks = typeof raw === "string" ? JSON.parse(raw) : [];
+            for (const task of Array.isArray(tasks) ? tasks : []) {
+                if (
+                    typeof task.taskId !== "string" ||
+                    typeof task.itemID !== "number" ||
+                    typeof task.serverUrl !== "string"
+                )
+                    continue;
+                if (task.importState === "importing")
+                    task.importState = "pending";
+                this.tasks.set(task.taskId, task);
+            }
+        } catch (error) {
+            ztoolkit.log("读取任务附件关联失败", error);
+        }
+    }
+
+    private static saveLocalTasks(): void {
+        const tasks = [...this.tasks.values()].filter(
+            (task) => task.source === "local" && task.itemID,
+        );
+        const signature = JSON.stringify(
+            tasks.map((task) => [
+                task.taskId,
+                task.itemID,
+                task.serverUrl,
+                task.attempt,
+                task.importState,
+                task.importedOutputs,
+            ]),
+        );
+        if (signature === this.savedBindings) return;
+        try {
+            Zotero.Prefs.set(
+                `${config.prefsPrefix}.taskBindings`,
+                JSON.stringify(tasks),
+                true,
+            );
+            this.savedBindings = signature;
+        } catch (error) {
+            ztoolkit.log("保存任务附件关联失败", error);
+        }
+    }
     private static pollPromise: Promise<void> | null = null;
     private static taskListeners = new Set<() => void>();
     private static dialogWindow: Window | undefined;
@@ -128,6 +183,7 @@ export class PDF2zhTaskManager {
             refreshTasks: () => this.refreshTasks(),
             cancelTask: (taskId: string) => this.cancelTask(taskId),
             retryTask: (taskId: string) => this.retryTask(taskId),
+            repairTask: (taskId: string) => this.repairTask(taskId),
             retryFailedTasks: () => this.retryFailedTasks(),
             deleteTask: (taskId: string) => this.deleteTask(taskId),
             clearFailedTasks: () => this.clearFailedTasks(),
@@ -186,6 +242,7 @@ export class PDF2zhTaskManager {
     }
 
     static async refreshTasks(): Promise<void> {
+        this.loadLocalTasks();
         if (this.pollPromise) {
             return this.pollPromise;
         }
@@ -218,12 +275,45 @@ export class PDF2zhTaskManager {
         }
     }
 
+    static async repairTask(taskId: string): Promise<void> {
+        const task = this.tasks.get(taskId);
+        if (!task) throw new Error("任务不存在");
+        if (!task.itemID) {
+            const matches: Zotero.Item[] = [];
+            for (const library of Zotero.Libraries.getAll()) {
+                for (const item of await Zotero.Items.getAll(
+                    library.libraryID,
+                )) {
+                    if (!item.isAttachment()) continue;
+                    const path = await item.getFilePathAsync();
+                    if (path && PathUtils.filename(path) === task.fileName)
+                        matches.push(item);
+                }
+            }
+            if (matches.length !== 1)
+                throw new Error(
+                    "无法唯一匹配原始 PDF 附件，请从原附件重新提交翻译任务。",
+                );
+            this.updateLocalTask(taskId, {
+                itemID: matches[0].id,
+                source: "local",
+            });
+        }
+        const snapshot = await ServerTaskClient.repairTask(
+            task.serverUrl,
+            taskId,
+        );
+        if (snapshot) this.upsertTask(snapshot, task.serverUrl);
+        this.ensureEventStreams();
+    }
+
     static async retryTask(taskId: string): Promise<void> {
         const task = this.tasks.get(taskId);
         if (!task) {
             throw new Error("任务不存在");
         }
 
+        if (task.status === "incomplete") return this.repairTask(taskId);
         if (task.status === "completed" && task.importState === "failed") {
             this.updateLocalTask(taskId, {
                 importState: "pending",
@@ -252,6 +342,7 @@ export class PDF2zhTaskManager {
         const failedTasks = this.getTasks().filter(
             (task) =>
                 task.status === "failed" ||
+                task.status === "incomplete" ||
                 (task.status === "completed" && task.importState === "failed"),
         );
         for (const task of failedTasks) {
@@ -406,6 +497,10 @@ export class PDF2zhTaskManager {
             canCancel: snapshot.canCancel,
             cancelRequested: snapshot.cancelRequested,
             metrics: snapshot.metrics,
+            canRepair: snapshot.canRepair,
+            translationSummary: snapshot.translationSummary,
+            failedParagraphs: snapshot.failedParagraphs,
+            importedOutputs: existing?.importedOutputs,
             serverUrl,
             source: existing?.source || "remote",
             importState: existing?.importState || "none",
@@ -413,6 +508,11 @@ export class PDF2zhTaskManager {
             importError: existing?.importError,
             ...overrides,
         };
+        if (existing && (snapshot.attempt || 1) > (existing.attempt || 1)) {
+            nextTask.importState = nextTask.itemID ? "pending" : "none";
+            nextTask.importError = undefined;
+            nextTask.importedOutputs = [];
+        }
         this.tasks.set(snapshot.taskId, nextTask);
         this.notifyTasksChanged();
     }
@@ -487,6 +587,7 @@ export class PDF2zhTaskManager {
     }
 
     private static notifyTasksChanged(): void {
+        this.saveLocalTasks();
         for (const listener of this.taskListeners) {
             try {
                 listener();

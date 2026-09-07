@@ -98,6 +98,17 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(translator.resolved_protocol, "chat_completions")
         self.assertEqual(len(self.requests), 1)
 
+    def test_health_check_honors_configured_timeout(self):
+        translator = self.translator(lambda r: httpx.Response(200, json=chat()))
+        translator.timeout = "120"
+        with patch.object(
+            translator.client,
+            "with_options",
+            wraps=translator.client.with_options,
+        ) as with_options:
+            translator.health_check()
+        with_options.assert_called_once_with(timeout=120.0)
+
     def test_auto_fallback_responses_and_fixed_after_health_check(self):
         def handler(request):
             if request.url.path.endswith("/chat/completions"):
@@ -256,7 +267,7 @@ class ProtocolTests(unittest.TestCase):
         translator.health_check()
         state[0] = False
         with self.assertRaises(openai.NotFoundError):
-            translator.do_translate("paper")
+            OpenAITranslator.do_translate.retry_with(wait=wait_none())(translator, "paper")
         self.assertTrue(
             all(path.endswith("chat/completions") for path, _ in self.requests)
         )

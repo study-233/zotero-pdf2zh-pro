@@ -44,6 +44,16 @@ class ServerRouteTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = server_module.create_app().test_client()
 
+    def test_repair_contract_success_missing_and_active(self):
+        with patch.object(server_module.TASK_MANAGER, "repair_task", return_value=task_snapshot()) as repair:
+            response = self.client.post("/tasks/task-1/repair")
+            self.assertEqual(response.status_code, 202)
+            repair.assert_called_once_with("task-1")
+        with patch.object(server_module.TASK_MANAGER, "repair_task", return_value=None):
+            self.assertEqual(self.client.post("/tasks/missing/repair").status_code, 404)
+        with patch.object(server_module.TASK_MANAGER, "repair_task", side_effect=ValueError("Active task cannot be retried")):
+            self.assertEqual(self.client.post("/tasks/task-1/repair").status_code, 409)
+
     def test_health_contract_includes_degraded_workspace_state(self) -> None:
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
