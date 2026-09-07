@@ -44,7 +44,7 @@ class TranslationRecovery:
         self.current = {}
         self.keys = {}
         try:
-            data = json.loads(self.path.read_text())
+            data = json.loads(self.path.read_text(encoding="utf-8"))
             if data.get("version") == self.VERSION and data.get("fingerprint") == fingerprint:
                 self.entries = data.get("paragraphs", {})
         except (OSError, ValueError):
