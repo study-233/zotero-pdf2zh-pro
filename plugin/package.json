@@ -25,7 +25,7 @@
         "build": "tsc --noEmit && zotero-plugin build",
         "lint:check": "prettier --check . && eslint .",
         "lint:fix": "prettier --write . && eslint . --fix",
-        "test": "node --test tests/*.test.mjs",
+        "test": "node --test",
         "update-deps": "pnpm up --latest"
     },
     "dependencies": {
