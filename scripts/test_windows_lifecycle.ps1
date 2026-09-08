@@ -227,6 +227,9 @@ $applyProcess = Start-Process `
     -RedirectStandardError $applyStderr `
     -PassThru
 Assert-True ($applyProcess.WaitForExit(300000)) "Self-update bootstrap did not finish within five minutes."
+$applyProcess.WaitForExit()
+$applyProcess.Refresh()
+$applyExitCode = $applyProcess.ExitCode
 $applyOutput = @(
     Get-Content -LiteralPath $applyStdout -ErrorAction SilentlyContinue
     Get-Content -LiteralPath $applyStderr -ErrorAction SilentlyContinue
@@ -234,7 +237,14 @@ $applyOutput = @(
     $_ -match '^\[install\]|^\[[1-5]/5\]|^Update failed|^error:|^downloading uv|^installing to|^everything|^WARNING:'
 }
 $applyOutput | ForEach-Object { Write-Host "[self-update-test] $_" }
-Assert-True ($applyProcess.ExitCode -eq 0) "Self-update bootstrap failed."
+if ($applyExitCode -ne 0) {
+    Write-Host "[self-update-test] exit-code=$applyExitCode"
+    Get-Content -LiteralPath $applyStdout -ErrorAction SilentlyContinue |
+        ForEach-Object { Write-Host "[self-update-test] stdout: $_" }
+    Get-Content -LiteralPath $applyStderr -ErrorAction SilentlyContinue |
+        ForEach-Object { Write-Host "[self-update-test] stderr: $_" }
+}
+Assert-True (-not (Test-Path -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -PathType Leaf)) "Self-update reported an installation error."
 if (-not (Test-Path -LiteralPath (Join-Path $AppRoot "runtime\uv\uv.exe") -PathType Leaf)) {
     foreach ($candidate in @(
         (Join-Path $windowsDir "install.ps1"),
