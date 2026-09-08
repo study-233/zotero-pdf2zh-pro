@@ -366,6 +366,8 @@ Assert-True (-not (Test-Path -LiteralPath $rollbackRoot)) "Failed relocation lef
 $rollbackControlProcessId = Wait-ControlPanel
 Wait-ExpectedHealth -Stage "failed relocation rollback"
 Stop-ManagedControlPanel
+& (Join-Path $BinDir "start-server.ps1") -Quiet
+Wait-ExpectedHealth -Stage "successful relocation precondition"
 
 $destinationRoot = Join-Path (Split-Path $sourceRoot -Parent) "relocated\zotero-pdf2zh-pro"
 $relocationExit = Invoke-RelocationProcess `
