@@ -33,7 +33,7 @@ from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
 from provider_models import ModelDiscoveryError, list_provider_models
 
-VERSION = "1.6.4"
+VERSION = "1.6.5"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
 DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
 TRANSLATES_DIR = Path(

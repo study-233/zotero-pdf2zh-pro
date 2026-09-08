@@ -2255,7 +2255,7 @@ wheels = [
 
 [[package]]
 name = "zotero-pdf2zh-pro"
-version = "1.6.4"
+version = "1.6.5"
 source = { editable = "." }
 dependencies = [
     { name = "azure-ai-translation-text" },
