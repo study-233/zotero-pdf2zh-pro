@@ -128,7 +128,16 @@ export class PDF2zhTaskManager {
         let submitted = 0;
         const errors: string[] = [];
         const total = selectedItems.length;
-        const serverConfig = PDF2zhHelperFactory.getServerConfig();
+        let serverConfig: ServerConfig;
+        try {
+            serverConfig = PDF2zhHelperFactory.getServerConfig();
+            if (!serverConfig.apiConfig)
+                throw new Error("请先在设置中选择翻译配置。");
+        } catch (error) {
+            ztoolkit.getGlobal("alert")(String(error));
+            progressWindow.close();
+            return;
+        }
 
         if (serverConfig.outputModes.length === 0) {
             ztoolkit.getGlobal("alert")("请至少选择一种输出PDF模式。");

@@ -1,17 +1,7 @@
-import type { ApiProtocol } from "./apiCompatibility";
 import { getPref } from "../utils/prefs";
 import { ServerConfig, PDFOperationOptions, OutputMode } from "./pdf2zhTypes";
-import { loadLLMApisFromPrefs } from "./preferenceScript";
-
-type ActiveLLMApiConfig = {
-    service: string;
-    model: string;
-    apiKey: string;
-    apiUrl: string;
-    extraData: Record<string, any>;
-    apiProtocol?: ApiProtocol;
-    requestOptions?: Record<string, unknown>;
-} | null;
+import { getSelectedProfile } from "./profileStore";
+import { SERVICE_NAMES } from "./llmApiManager";
 
 export type TaskOutputResponse = {
     fileName: string;
@@ -36,7 +26,10 @@ export class PDF2zhHelperFactory {
         fileData: { fileName: string; base64: string },
         config: ServerConfig,
     ): Record<string, unknown> {
-        const llmApiConfig = this.getActiveLLMApiConfig(config.service);
+        const llmApiConfig = config.apiConfig;
+        if (!llmApiConfig) throw new Error("请先在设置中选择翻译配置。");
+        if (!SERVICE_NAMES[llmApiConfig.service])
+            throw new Error("此配置的接口类型需要重新选择，请编辑翻译配置。");
         const requestBody: Record<string, unknown> = {
             fileName: fileData.fileName,
             fileContent: fileData.base64,
@@ -182,12 +175,12 @@ export class PDF2zhHelperFactory {
         }
     }
 
-    static getServerConfig(): ServerConfig {
+    static getServerConfig(includeProfile = true): ServerConfig {
+        const apiConfig = includeProfile ? getSelectedProfile() : null;
         return {
+            apiConfig,
             serverUrl: getPref("new_serverip")?.toString() || "",
-            service: this.normalizeServiceName(
-                getPref("service")?.toString() || "siliconflowfree",
-            ),
+            service: apiConfig?.service || "",
             sourceLang: getPref("sourceLang")?.toString() || "en",
             targetLang: getPref("targetLang")?.toString() || "zh-CN",
             outputModes: this.getOutputModesFromPrefs(),
@@ -205,30 +198,6 @@ export class PDF2zhHelperFactory {
                 getPref("disableTermExtraction")?.toString() || "true",
             fontFamily: getPref("fontFamily")?.toString() || "auto",
         };
-    }
-
-    static getActiveLLMApiConfig(service: string): ActiveLLMApiConfig {
-        loadLLMApisFromPrefs();
-        if (!addon.data.llmApis?.map) {
-            return null;
-        }
-        for (const [, llmApi] of addon.data.llmApis.map) {
-            if (
-                llmApi.activate &&
-                this.normalizeServiceName(llmApi.service) === service
-            ) {
-                return {
-                    service,
-                    model: llmApi.model,
-                    apiKey: llmApi.apiKey,
-                    apiUrl: llmApi.apiUrl,
-                    extraData: llmApi.extraData || {},
-                    apiProtocol: llmApi.apiProtocol || "chat_completions",
-                    requestOptions: llmApi.requestOptions || {},
-                };
-            }
-        }
-        return null;
     }
 
     static isTrue(value: string | number | boolean | undefined): boolean {

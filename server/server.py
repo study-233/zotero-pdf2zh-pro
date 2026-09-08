@@ -19,14 +19,21 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 
+import truststore
+
+# Initialize before HTTP libraries cache SSLContext. Keep this in the application
+# so wheel reinstalls cannot remove it by regenerating the console script.
+truststore.inject_into_ssl()
+
 from flask import Flask, Response, jsonify, request, send_file, stream_with_context
 from pdf2zh_next_service import diagnose_service_error
 from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
+from provider_models import ModelDiscoveryError, list_provider_models
 
-VERSION = "1.6.2"
+VERSION = "1.6.3"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
 DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
 TRANSLATES_DIR = Path(
@@ -56,6 +63,17 @@ def create_app() -> Flask:
     @app.get("/health")
     def health() -> tuple[dict[str, Any], int]:
         return build_health_payload(), 200
+
+    @app.post("/list-models")
+    def list_models():
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return error_response("Expected a JSON body", 400)
+        try:
+            models = list_provider_models(data)
+        except ModelDiscoveryError as exc:
+            return error_response(str(exc), exc.status)
+        return jsonify({"status": "ok", "models": models}), 200
 
     @app.post("/translate")
     def translate():
@@ -501,6 +519,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
+        "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
         "workspace": workspace,

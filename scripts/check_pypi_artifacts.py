@@ -27,6 +27,7 @@ FORBIDDEN_DISTRIBUTIONS = {
 REQUIRED_RUNTIME_FILES = {
     "observability.py",
     "pdf2zh_next_service.py",
+    "provider_models.py",
     "server.py",
     "task_manager.py",
     "pdf2zh_next/__init__.py",

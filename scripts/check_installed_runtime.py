@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import importlib.metadata
 import re
+import ssl
 import sys
+
+import server
 
 import babeldoc
 import numpy
@@ -13,7 +16,7 @@ import openai
 from packaging.version import Version
 from rapidocr_onnxruntime import RapidOCR
 
-import server
+import truststore
 import task_manager
 
 FORBIDDEN_DISTRIBUTIONS = {
@@ -61,6 +64,8 @@ def main() -> None:
     }
     if scripts != {"zotero-pdf2zh-pro": "server:main"}:
         raise RuntimeError(f"Installed CLI entry point mismatch: {scripts}")
+    if ssl.SSLContext is not truststore.SSLContext:
+        raise RuntimeError("Server startup did not enable system certificate verification")
     if pdf2zh_next.__version__ != "2.8.2":
         raise RuntimeError(f"Unexpected pdf2zh_next snapshot: {pdf2zh_next.__version__}")
     if babeldoc.__version__ != "0.5.24":

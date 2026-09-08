@@ -1,0 +1,147 @@
+html {
+    color-scheme: light dark;
+    background: Canvas;
+    color: CanvasText;
+    font: menu;
+}
+body {
+    margin: 0;
+    padding: 24px;
+    box-sizing: border-box;
+}
+h2 {
+    font-size: 19px;
+    margin: 0 0 18px;
+}
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+.field {
+    margin: 0 0 16px;
+}
+input,
+select,
+textarea,
+button {
+    font: inherit;
+    color: FieldText;
+    background: Field;
+    border: 1px solid color-mix(in srgb, CanvasText 25%, transparent);
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 7px 9px;
+    min-width: 0;
+}
+button {
+    padding: 7px 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+}
+.primary {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+}
+.inline,
+.toolbar,
+footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.inline input {
+    flex: 1;
+}
+.toolbar,
+footer {
+    flex-wrap: wrap;
+}
+footer {
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+.hint {
+    color: color-mix(in srgb, CanvasText 70%, transparent);
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 6px 0;
+}
+.status {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+    margin: 12px 0;
+}
+.status:empty {
+    display: none;
+}
+.status[data-error="true"] {
+    color: light-dark(#a12622, #ffaaa3);
+}
+summary {
+    cursor: pointer;
+    padding: 10px 0;
+    font-weight: 600;
+}
+details {
+    border-top: 1px solid color-mix(in srgb, CanvasText 16%, transparent);
+}
+textarea {
+    resize: vertical;
+    font-family: monospace;
+}
+.list {
+    width: 100%;
+    margin-bottom: 16px;
+}
+.list label {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px 8px;
+    align-items: center;
+    border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent);
+}
+.list input {
+    width: auto;
+}
+.list .url {
+    display: block;
+    overflow-wrap: anywhere;
+    font-size: 12px;
+    font-weight: normal;
+    margin-top: 4px;
+}
+.current {
+    color: color-mix(in srgb, CanvasText 80%, transparent);
+    font-size: 12px;
+}
+[hidden] {
+    display: none !important;
+}
+@media (max-width: 450px) {
+    body {
+        padding: 16px;
+    }
+    .inline {
+        flex-wrap: wrap;
+    }
+}
+#models {
+    margin-top: 6px;
+}

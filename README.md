@@ -14,7 +14,7 @@
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 
-当前统一版本：<!-- release-version --> `1.6.2`
+当前统一版本：<!-- release-version --> `1.6.3`
 
 [快速开始](#quick-start) · [功能亮点](#features) · [安装方式](#installation) ·
 [使用说明](#usage) · [问题反馈](#community)
@@ -62,7 +62,7 @@
    下载 `zotero-pdf2zh-pro.xpi`。
 2. 在 Zotero 中进入 `工具 → 插件`，点击右上角齿轮，选择
    `Install Add-on From File...`，安装 XPI 并重启 Zotero。
-3. 按下方说明启动本地服务，在插件设置中点击“检查连接与配置”。
+3. 按下方说明启动本地服务，在插件设置中点击“检查本地服务”。
 4. 右键条目或 PDF 附件，选择 `zotero-pdf2zh-pro: Translate PDF`。
 
 <a id="installation"></a>
@@ -138,8 +138,8 @@ docker compose up --build -d
 
 1. 打开 Zotero 设置中的 `zotero-pdf2zh-pro`。
 2. 确认服务地址为 `http://127.0.0.1:8890`。
-3. 点击“检查连接与配置”。
-4. 配置翻译服务、语言和输出格式。
+3. 点击“检查本地服务”。
+4. 新增翻译配置并点击“保存并使用”，再设置语言和输出格式。
 5. 在条目或 PDF 附件上右键，选择 `zotero-pdf2zh-pro: Translate PDF`。
 6. 在 `zotero-pdf2zh-pro: Task Manager` 查看进度、重试任务并导入结果。
 
@@ -212,9 +212,20 @@ Pull Request 也很欢迎。较大的行为调整建议先创建 Issue，说明�
 见 [LICENSE](LICENSE) 和
 [server/THIRD_PARTY_NOTICES.md](server/THIRD_PARTY_NOTICES.md)。
 
+### 选择和管理翻译配置
+
+设置顶部的“当前翻译配置”是唯一选择入口，按“配置名称 · 模型”显示；选中后立即用于新提交的翻译，无需额外激活。配置名称只用于识别中转站，实际接口类型独立保存。
+
+- 新增配置可“保存并使用”或“仅保存”。名称留空时取 API 地址的主机名；编辑已有配置不会切换当前选择。
+- “获取模型”会查询站点的模型列表，可输入关键词筛选并用方向键、回车选择。站点或旧服务端不支持查询时仍可手填模型。
+- 编辑窗口内的“测试 API”使用当前未保存的内容，不影响正在使用的配置；API Key 默认隐藏。
+- “管理”窗口支持新增、编辑、复制、删除和置顶。删除当前配置后需要重新选择，不会自动改用其他中转站。
+- 同一批翻译固定提交时的配置；切换或编辑只影响后续新批次。
+- 首次升级会备份旧配置并迁移原服务下唯一激活项。无法确定时显示“请选择配置”；有地址和模型的未知服务类型转为 OpenAI 兼容，并标记待测试。备份保存在 Zotero 高级配置的 `extensions.zotero.pdf2zhpro.llmApisLegacyBackup`，包含原凭据，不要公开分享。
+
 ### 自定义 API 与 Responses
 
-在 LLM API 配置中选择 **OpenAI 兼容**，填写中转站地址、API Key 和模型名。新配置的接口协议默认为「自动识别」，旧配置继续使用 Chat Completions。
+在设置顶部点击“新增”，默认使用 **OpenAI 兼容**，填写中转站地址、API Key 和模型名。新配置的接口协议默认为「自动识别」，旧配置继续使用 Chat Completions。
 
 - 地址支持 Base URL 或完整 `/chat/completions`、`/responses` 地址，保留自定义路径前缀，不自动添加 `/v1`。
 - 「高级设置」可指定 Chat Completions 或 Responses；指定协议须与完整地址后缀一致。
@@ -222,13 +233,14 @@ Pull Request 也很欢迎。较大的行为调整建议先创建 Issue，说明�
 - Responses 当前支持同步非流式文本翻译，各段落独立请求，默认 `store=false`；不支持工具调用或仅提供流式响应的接口。
 - 「额外请求参数」使用 JSON，例如 `{"max_output_tokens": 4096}` 或 `{"reasoning": {"effort": "low"}}`。常用字段随协议转换，中转站扩展字段直接透传。冲突参数报错；不能覆盖模型、翻译输入、执行方式、会话、工具或连接设置。
 - 原「额外参数」保留为「内部配置参数」，供旧配置使用。修改协议或请求参数后会隔离翻译缓存。
-- 「配置检查」会显示实际使用的协议。旧 Python 服务仅能回退到 Chat Completions；Responses 和额外请求参数需要升级服务端。
+- 「测试 API」会发送短翻译请求并显示实际使用的协议。旧 Python 服务仅能回退到 Chat Completions；Responses 和额外请求参数需要升级服务端。
 
 服务端 `llm_api` 新增可选 `apiProtocol`（`auto` / `chat_completions` / `responses`）和 `requestOptions`（JSON 对象）。`/health` 返回 `supportedApiProtocols`，`/validate-config` 返回 `resolvedProtocol`。新任务指标移除 `cost`，token 和服务端缓存数值允许为 `null`，并提供 `availability`（`unavailable` / `partial` / `complete`）。历史费用字段读取时忽略。
 
 ### 翻译完整性与补译
 
 后端按段落记录成功、跳过和失败；只要仍有应译段落失败，任务显示“未完成”，不会自动导入 Zotero。
+纯网址脚注按规则保留，不调用翻译 API；补译会重新识别历史记录中被误判为失败的网址。含网址的正常正文仍需翻译。
 “补译”保留已验证的译文，只为剩余段落请求 API，默认 QPS 2、并发 4。历史已完成任务可通过“检查并补译”重新检查；修复结果使用新的附件文件名，保留旧附件。
 连接、超时和临时服务错误最多尝试 5 次，所有请求共用限流和并发限制；JSON、段落 ID、非空译文和占位符通过校验后才写入缓存。
 

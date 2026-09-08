@@ -1,164 +1,109 @@
 import type { ApiProtocol } from "./apiCompatibility";
-export interface LLMServiceConfig {
-    name: string;
-    models?: string[];
-    urls?: string[];
-    extraData?: any[];
-}
 
 export interface LLMApiData {
     key: string;
+    name?: string;
     service: string;
     apiKey: string;
     apiUrl: string;
     model: string;
-    activate: boolean;
-    extraData?: Record<string, any>;
+    /** Read only during legacy migration. */
+    activate?: boolean;
+    needsTest?: boolean;
+    extraData?: Record<string, unknown>;
     apiProtocol?: ApiProtocol;
     requestOptions?: Record<string, unknown>;
 }
 
+export const SERVICE_NAMES: Record<string, string> = {
+    openai: "OpenAI 兼容（中转站 / 官方）",
+    openaicompatible: "OpenAICompatible（旧预设）",
+    siliconflowfree: "SiliconFlow Free",
+    aliyundashscope: "AliyunDashScope",
+    deepseek: "DeepSeek",
+    gemini: "Gemini",
+    siliconflow: "SiliconFlow",
+    zhipu: "Zhipu",
+    modelscope: "ModelScope",
+    qwenmt: "QwenMt",
+    azureopenai: "AzureOpenAI",
+    azure: "Azure",
+    deepl: "DeepL",
+    ollama: "Ollama",
+    xinference: "XInference",
+    anythingllm: "AnythingLLM",
+    dify: "Dify",
+    grok: "Grok",
+    groq: "Groq",
+    tencentmechinetranslation: "Tencent",
+    claudecode: "Claude Code",
+};
 export const emptyLLMApi: LLMApiData = {
     key: "",
-    service: "",
+    name: "",
+    service: "openai",
     apiKey: "",
     apiUrl: "",
     model: "",
-    activate: false,
     apiProtocol: "auto",
     requestOptions: {},
     extraData: {},
 };
-
-class LLMApiManager {
-    private data: Map<string, LLMApiData>;
-    constructor() {
-        this.data = new Map<string, LLMApiData>();
+export function normalizeService(value: string): string {
+    return value.trim().toLowerCase().replace(/[-_]/g, "");
+}
+export function profileName(api: LLMApiData): string {
+    if (api.name?.trim()) return api.name.trim();
+    try {
+        return new URL(api.apiUrl).hostname;
+    } catch {
+        return SERVICE_NAMES[api.service] || api.service;
     }
-    public updateLLMApi(llmApi: LLMApiData): string {
-        let key = llmApi.key;
-        if (!key) {
-            key = Zotero.Utilities.generateObjectKey();
-            llmApi.key = key;
+}
+export function profileLabel(api: LLMApiData): string {
+    return `${profileName(api)}${api.model ? ` · ${api.model}` : ""}`;
+}
+export function migrateProfiles(legacy: LLMApiData[], service: string) {
+    const normalized = normalizeService(service);
+    const matches = legacy.filter(
+        (api) => api.activate && normalizeService(api.service) === normalized,
+    );
+    const profiles = legacy.map((original) => {
+        const api = JSON.parse(JSON.stringify(original)) as LLMApiData;
+        const oldName = api.service;
+        api.service = normalizeService(api.service);
+        if (!SERVICE_NAMES[api.service]) {
+            if (api.apiUrl?.trim() && api.model?.trim()) api.service = "openai";
+            api.name ||= oldName;
+            api.needsTest = true;
         }
-        // 如果新条目要激活，需要先停用相同service的其他条目
-        if (llmApi.activate) {
-            this.deactivateSameServiceModel(llmApi.service, key);
-        }
-        this.data.set(key, llmApi);
-        return key;
-    }
-    // 停用相同service的其他条目
-    private deactivateSameServiceModel(
-        service: string,
-        excludeKey: string,
-    ): void {
-        this.data.forEach((llmApi, key) => {
-            if (
-                key !== excludeKey &&
-                llmApi.service === service &&
-                llmApi.activate
-            ) {
-                llmApi.activate = false;
-                this.data.set(key, llmApi);
-            }
+        api.name = profileName(api);
+        api.apiProtocol ||= "chat_completions";
+        api.extraData ||= {};
+        api.requestOptions ||= {};
+        delete api.activate;
+        return api;
+    });
+    // The old UI also supported using an engine's defaults without an API row.
+    if (!profiles.length && SERVICE_NAMES[normalized]) {
+        profiles.push({
+            ...emptyLLMApi,
+            key: "legacy-default",
+            service: normalized,
+            name: SERVICE_NAMES[normalized],
+            apiProtocol: "chat_completions",
         });
+        return { profiles, selectedApiKey: "legacy-default" };
     }
-
-    // 激活指定条目，同时停用相同service的其他条目
-    public activateLLMApi(key: string): boolean {
-        const llmApi = this.data.get(key);
-        if (!llmApi) return false;
-
-        this.deactivateSameServiceModel(llmApi.service, key);
-        llmApi.activate = true;
-        this.data.set(key, llmApi);
-        return true;
-    }
-
-    // 停用指定条目
-    public deactivateLLMApi(key: string): boolean {
-        const llmApi = this.data.get(key);
-        if (!llmApi) return false;
-
-        llmApi.activate = false;
-        this.data.set(key, llmApi);
-        return true;
-    }
-
-    public getLLMApi(key: string): LLMApiData | undefined {
-        return this.data.get(key);
-    }
-
-    public getAllLLMApis(): LLMApiData[] {
-        return Array.from(this.data.values());
-    }
-
-    public deleteLLMApi(key: string): boolean {
-        return this.data.delete(key);
-    }
-
-    public getActiveLLMApiByService(service: string): LLMApiData | undefined {
-        for (const llmApi of this.data.values()) {
-            if (llmApi.service === service && llmApi.activate) {
-                return llmApi;
-            }
-        }
-        return undefined;
-    }
-}
-
-// 向外暴露的方法
-export const llmApiManager = new LLMApiManager();
-// 获取所有 LLM API 配置，供其他模块使用
-export function getAllLLMApiConfigs(): LLMApiData[] {
-    return llmApiManager.getAllLLMApis();
-}
-// 根据服务获取激活的 API 配置
-export function getActiveLLMApiByService(
-    service: string,
-): LLMApiData | undefined {
-    return llmApiManager.getActiveLLMApiByService(service);
-}
-
-// 辅助函数：从表单数据创建 LLM API 数据
-export function createLLMApiFromFormData(formData: any): LLMApiData {
     return {
-        key: formData.key || "",
-        service: formData.service || formData.serviceselect || "",
-        apiKey: formData.apiKey || "",
-        apiUrl: formData.apiUrl || "",
-        model: formData.model || formData.modelselect || "",
-        activate: formData.activate !== undefined ? formData.activate : false,
-        extraData: formData.extraData || {},
-        apiProtocol: formData.apiProtocol || "chat_completions",
-        requestOptions: formData.requestOptions || {},
+        profiles,
+        selectedApiKey: matches.length === 1 ? matches[0].key : "",
     };
 }
-
-// 格式化 extraData 为显示字符串
-export function formatExtraDataForDisplay(
-    extraData?: Record<string, any>,
-): string {
-    if (
-        !extraData ||
-        typeof extraData !== "object" ||
-        Object.keys(extraData).length === 0
-    ) {
-        return "";
-    }
-    const pairs: string[] = [];
-    for (const [key, value] of Object.entries(extraData)) {
-        if (key && key.trim()) {
-            // 截断长值以保持表格整洁
-            const displayValue =
-                String(value || "").length > 10
-                    ? String(value || "").substring(0, 10) + "..."
-                    : String(value || "");
-            pairs.push(`${key}=${displayValue}`);
-        }
-    }
-    // 限制总长度，避免表格列过宽
-    const result = pairs.join(", ");
-    return result.length > 50 ? result.substring(0, 47) + "..." : result;
+export function selectedProfile(
+    profiles: LLMApiData[],
+    key: string,
+): LLMApiData | null {
+    const api = profiles.find((entry) => entry.key === key);
+    return api ? (JSON.parse(JSON.stringify(api)) as LLMApiData) : null;
 }

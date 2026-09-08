@@ -40,6 +40,7 @@ from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
 )
 from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
     is_pure_numeric_paragraph,
+    is_url_only_paragraph,
 )
 from babeldoc.format.pdf.document_il.utils.style_helper import GRAY80
 from babeldoc.format.pdf.document_il.midend.reference_filter import (
@@ -967,6 +968,10 @@ class ILTranslator:
     def pre_translate_paragraph(self, paragraph, tracker, page_font_map, xobj_font_map):
         recovery = getattr(self.translation_config, "recovery", None)
         if recovery is not None and recovery.is_skipped(paragraph):
+            return None, None
+        if is_url_only_paragraph(paragraph):
+            if recovery is not None:
+                recovery.record(paragraph, "skipped", reason="url_only")
             return None, None
         text, translate_input = self._prepare_paragraph(paragraph, tracker, page_font_map, xobj_font_map)
         recovery = getattr(self.translation_config, "recovery", None)

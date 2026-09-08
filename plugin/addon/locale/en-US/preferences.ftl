@@ -38,3 +38,13 @@ pref-llmapi-activate = Activate
 pref-llmapi-totop = Pin
 pref-check-connection = Check Server & Config
 pref-live-api-test = Also run a live API test (sends one short translation request)
+
+pref-current-profile = Current translation profile
+pref-profile-add = Add
+pref-profile-edit = Edit
+pref-profile-manage = Manage
+pref-profile-test = Test API
+pref-profile-test-hint = Testing sends a short translation request.
+pref-language-settings = Languages
+pref-advanced-translation = Advanced translation settings
+pref-check-local-service = Check local server
