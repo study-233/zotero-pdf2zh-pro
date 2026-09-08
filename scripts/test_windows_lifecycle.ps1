@@ -350,6 +350,8 @@ Assert-True (Test-Path -LiteralPath (Join-Path $DataDir "preserve-me")) "Reinsta
 $recoveryDir = Join-Path $DataDir "relocation-task"
 New-Item -ItemType Directory -Force -Path $recoveryDir | Out-Null
 Set-Content -LiteralPath (Join-Path $recoveryDir "paragraph-recovery.json") -Value '{"version":1}' -Encoding utf8
+$cacheMarker = Join-Path $UvCacheDir "relocation-cache-marker.txt"
+Set-Content -LiteralPath $cacheMarker -Value "preserve cache" -Encoding utf8
 $sourceRoot = $AppRoot
 $rollbackRoot = Join-Path (Split-Path $sourceRoot -Parent) "rollback-target\zotero-pdf2zh-pro"
 $relocateScript = Join-Path $BinDir "relocate.ps1"
@@ -379,7 +381,14 @@ $relocatedControlProcessId = Wait-ControlPanel
 Assert-True ($relocatedControlProcessId -ne $rollbackControlProcessId) "Relocation did not launch the new control center."
 Wait-ExpectedHealth -Stage "successful relocation"
 Assert-True (Test-Path -LiteralPath (Join-Path $DataDir "relocation-task\paragraph-recovery.json")) "Relocation lost the recovery checkpoint."
+Assert-True (Test-Path -LiteralPath (Join-Path $UvCacheDir "relocation-cache-marker.txt")) "Relocation lost the private uv cache marker."
 Assert-True ((Get-SavedInstallRoot) -eq $destinationRoot) "Relocation did not commit the destination root."
+$shell = New-Object -ComObject WScript.Shell
+$controlShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "$ProductName.lnk"))
+$uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "卸载.lnk"))
+Assert-True ($controlShortcut.TargetPath -eq $ControlPanelExecutable) "Relocation left the control center shortcut pointing to the source."
+Assert-True ($uninstallShortcut.TargetPath -eq (Join-Path $BinDir "uninstall.cmd")) "Relocation left the uninstall shortcut pointing to the source."
+Assert-Autostart -Enabled $false
 Wait-PathAbsent -Path $sourceRoot
 Assert-True (-not (Test-Path -LiteralPath $sourceRoot)) "Relocation left the old product root behind."
 

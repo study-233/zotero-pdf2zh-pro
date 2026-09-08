@@ -60,6 +60,45 @@ function Write-RelocationLog {
     Write-Host $Message
 }
 
+function Write-RelocationErrorDetails {
+    param(
+        [string]$Operation,
+        [Management.Automation.ErrorRecord]$ErrorRecord
+    )
+    $exception = $ErrorRecord.Exception
+    $nativeErrorCode = Get-WindowsNativeErrorCode -Exception $exception
+    $nativeText = if ($null -eq $nativeErrorCode) { "none" } else { [string]$nativeErrorCode }
+    $hresult = [BitConverter]::ToUInt32([BitConverter]::GetBytes([int]$exception.HResult), 0).ToString("X8")
+    Write-RelocationLog (
+        "$Operation failed: type=$($exception.GetType().FullName); nativeErrorCode=$nativeText; " +
+        "hresult=0x$hresult; fullyQualifiedErrorId=$($ErrorRecord.FullyQualifiedErrorId); message=$($exception.Message)"
+    )
+    if ($ErrorRecord.ScriptStackTrace) {
+        $stack = $ErrorRecord.ScriptStackTrace -replace "[\r\n]+", " | "
+        Write-RelocationLog "$Operation stack: $stack"
+    }
+}
+
+function Invoke-RelocationInteropOperation {
+    param([string]$Name, [scriptblock]$Action)
+    Write-RelocationLog "$Name started."
+    try {
+        Invoke-WindowsInteropOperation -Action {
+            & $Action
+        } -OnRetry {
+            param($completedAttempt, $nextAttempt, $delay, $errorRecord)
+            Write-RelocationLog (
+                "$Name returned Windows error 122 on attempt $completedAttempt; " +
+                "retrying with attempt $nextAttempt after ${delay}ms."
+            )
+        }
+        Write-RelocationLog "$Name completed."
+    } catch {
+        Write-RelocationErrorDetails -Operation $Name -ErrorRecord $_
+        throw
+    }
+}
+
 function Set-RootEnvironment {
     param([string]$Root, [bool]$PrivateRuntime)
     $env:PDF2ZH_WINDOWS_APP_ROOT = $Root
@@ -223,9 +262,15 @@ try {
     & (Join-Path (Join-Path $DestinationRoot "bin") "stop-server.ps1") -Quiet
 
     Write-RelocationLog "[6/8] Switching the saved installation location..."
-    Save-InstallRoot -Path $DestinationRoot
-    Set-ProductShortcuts -Root $DestinationRoot
-    Set-ProductAutostart -Root $DestinationRoot -Enabled $autostartEnabled
+    Invoke-RelocationInteropOperation -Name "Save target installation location" -Action {
+        Save-InstallRoot -Path $DestinationRoot
+    }
+    Invoke-RelocationInteropOperation -Name "Create target Start menu shortcuts" -Action {
+        Set-ProductShortcuts -Root $DestinationRoot
+    }
+    Invoke-RelocationInteropOperation -Name "Update target autostart registration" -Action {
+        Set-ProductAutostart -Root $DestinationRoot -Enabled $autostartEnabled
+    }
 
     Write-RelocationLog "[7/8] Starting the control center from $DestinationRoot..."
     Set-RootEnvironment -Root $DestinationRoot -PrivateRuntime $true
@@ -254,8 +299,10 @@ try {
     }
     exit 0
 } catch {
-    $failure = "Installation relocation failed: $($_.Exception.Message)"
+    $relocationError = $_
+    $failure = "Installation relocation failed: $($relocationError.Exception.Message)"
     Write-RelocationLog $failure
+    Write-RelocationErrorDetails -Operation "Installation relocation" -ErrorRecord $relocationError
     try {
         if ($targetInstalled) {
             Set-RootEnvironment -Root $DestinationRoot -PrivateRuntime $true
@@ -263,22 +310,54 @@ try {
         }
     } catch {
         Write-RelocationLog "The incomplete destination service could not be stopped cleanly."
+        Write-RelocationErrorDetails -Operation "Stop incomplete destination service" -ErrorRecord $_
     }
-    if ($savedRootBeforeMigration) {
-        Save-InstallRoot -Path $savedRootBeforeMigration
-    } else {
-        Remove-InstallRoot
+    try {
+        Invoke-RelocationInteropOperation -Name "Restore source installation location" -Action {
+            if ($savedRootBeforeMigration) {
+                Save-InstallRoot -Path $savedRootBeforeMigration
+            } else {
+                Remove-InstallRoot
+            }
+        }
+    } catch {
+        Write-RelocationLog "Rollback is continuing after the saved installation location could not be restored."
     }
-    Set-ProductShortcuts -Root $SourceRoot
-    Set-ProductAutostart -Root $SourceRoot -Enabled $autostartEnabled
-    if ($destinationCreated -or $targetInstalled) {
-        Remove-Item -LiteralPath $DestinationRoot -Recurse -Force -ErrorAction SilentlyContinue
+    try {
+        Invoke-RelocationInteropOperation -Name "Restore source Start menu shortcuts" -Action {
+            Set-ProductShortcuts -Root $SourceRoot
+        }
+    } catch {
+        Write-RelocationLog "Rollback is continuing after the source shortcuts could not be restored."
     }
-    Set-Content -LiteralPath (Join-Path $SourceRoot "last-operation-error.txt") -Value $failure -Encoding utf8
+    try {
+        Invoke-RelocationInteropOperation -Name "Restore source autostart registration" -Action {
+            Set-ProductAutostart -Root $SourceRoot -Enabled $autostartEnabled
+        }
+    } catch {
+        Write-RelocationLog "Rollback is continuing after the source autostart registration could not be restored."
+    }
+    try {
+        if ($destinationCreated -or $targetInstalled) {
+            Remove-Item -LiteralPath $DestinationRoot -Recurse -Force -ErrorAction Stop
+            if (Test-Path -LiteralPath $DestinationRoot) {
+                Write-RelocationLog "The incomplete destination could not be removed completely: $DestinationRoot"
+            }
+        }
+    } catch {
+        Write-RelocationLog "The incomplete destination could not be removed completely: $DestinationRoot"
+        Write-RelocationErrorDetails -Operation "Remove incomplete destination" -ErrorRecord $_
+    }
+    try {
+        Set-Content -LiteralPath (Join-Path $SourceRoot "last-operation-error.txt") -Value $failure -Encoding utf8
+    } catch {
+        Write-RelocationLog "The relocation failure file could not be written."
+    }
     try {
         Start-SourceControlCenter
     } catch {
         Write-RelocationLog "The original control center could not be restarted automatically."
+        Write-RelocationErrorDetails -Operation "Restart source control center" -ErrorRecord $_
     }
     exit 1
 }

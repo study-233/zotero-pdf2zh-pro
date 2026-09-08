@@ -17,17 +17,39 @@ $InstallRegistryKey = if ($env:PDF2ZH_WINDOWS_REGISTRY_KEY) {
 }
 $DefaultAppRoot = Join-Path $env:LOCALAPPDATA $ProductName
 
-function Get-SavedInstallRoot {
-    if (-not (Test-Path -LiteralPath $InstallRegistryKey)) {
-        return $null
+function Get-InstallRegistrySubKeyPath {
+    $prefix = "HKCU:\"
+    if (-not $InstallRegistryKey.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "The installation registry key must be under HKCU: $InstallRegistryKey"
     }
+    $subKeyPath = $InstallRegistryKey.Substring($prefix.Length)
+    if ([string]::IsNullOrWhiteSpace($subKeyPath)) {
+        throw "The installation registry key must name an HKCU subkey."
+    }
+    return $subKeyPath
+}
+
+function Get-SavedInstallRoot {
+    $key = $null
     try {
-        $saved = Get-ItemPropertyValue -LiteralPath $InstallRegistryKey -Name "InstallRoot" -ErrorAction Stop
+        $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey((Get-InstallRegistrySubKeyPath), $false)
+        if (-not $key) {
+            return $null
+        }
+        $saved = $key.GetValue(
+            "InstallRoot",
+            $null,
+            [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames
+        )
         if ($saved) {
             return [IO.Path]::GetFullPath([string]$saved)
         }
     } catch {
         return $null
+    } finally {
+        if ($key) {
+            $key.Dispose()
+        }
     }
     return $null
 }
@@ -69,16 +91,76 @@ $StartMenuDir = if ($env:PDF2ZH_WINDOWS_START_MENU_DIR) {
 function Save-InstallRoot {
     param([string]$Path = $AppRoot)
     $resolved = [IO.Path]::GetFullPath($Path)
-    New-Item -Force -Path $InstallRegistryKey | Out-Null
-    New-ItemProperty -LiteralPath $InstallRegistryKey -Name "InstallRoot" -Value $resolved -PropertyType String -Force | Out-Null
+    $key = $null
+    try {
+        $key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey((Get-InstallRegistrySubKeyPath), $true)
+        if (-not $key) {
+            throw "The installation registry key could not be opened for writing: $InstallRegistryKey"
+        }
+        $key.SetValue("InstallRoot", $resolved, [Microsoft.Win32.RegistryValueKind]::String)
+    } finally {
+        if ($key) {
+            $key.Dispose()
+        }
+    }
 }
 
 function Remove-InstallRoot {
-    if (Test-Path -LiteralPath $InstallRegistryKey) {
-        Remove-ItemProperty -LiteralPath $InstallRegistryKey -Name "InstallRoot" -Force -ErrorAction SilentlyContinue
-        $remaining = Get-ItemProperty -LiteralPath $InstallRegistryKey -ErrorAction SilentlyContinue
-        if ($remaining -and @($remaining.PSObject.Properties | Where-Object { $_.Name -notmatch '^PS' }).Count -eq 0) {
-            Remove-Item -LiteralPath $InstallRegistryKey -Force -ErrorAction SilentlyContinue
+    $subKeyPath = Get-InstallRegistrySubKeyPath
+    $key = $null
+    $removeEmptyKey = $false
+    try {
+        $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($subKeyPath, $true)
+        if (-not $key) {
+            return
+        }
+        $key.DeleteValue("InstallRoot", $false)
+        $removeEmptyKey = $key.ValueCount -eq 0 -and $key.SubKeyCount -eq 0
+    } finally {
+        if ($key) {
+            $key.Dispose()
+        }
+    }
+    if ($removeEmptyKey) {
+        [Microsoft.Win32.Registry]::CurrentUser.DeleteSubKey($subKeyPath, $false)
+    }
+}
+
+function Get-WindowsNativeErrorCode {
+    param([Exception]$Exception)
+    $current = $Exception
+    while ($current) {
+        if ($current -is [ComponentModel.Win32Exception]) {
+            return $current.NativeErrorCode
+        }
+        if ($current.HResult -eq -2147024774) {
+            return 122
+        }
+        $current = $current.InnerException
+    }
+    return $null
+}
+
+function Invoke-WindowsInteropOperation {
+    param(
+        [Parameter(Mandatory = $true)][scriptblock]$Action,
+        [scriptblock]$OnRetry,
+        [int[]]$RetryDelaysMilliseconds = @(200, 500)
+    )
+    for ($attempt = 1; $attempt -le ($RetryDelaysMilliseconds.Count + 1); $attempt++) {
+        try {
+            return (& $Action)
+        } catch {
+            $errorRecord = $_
+            $errorCode = Get-WindowsNativeErrorCode -Exception $errorRecord.Exception
+            if ($errorCode -ne 122 -or $attempt -gt $RetryDelaysMilliseconds.Count) {
+                throw
+            }
+            $delay = $RetryDelaysMilliseconds[$attempt - 1]
+            if ($OnRetry) {
+                & $OnRetry $attempt ($attempt + 1) $delay $errorRecord
+            }
+            Start-Sleep -Milliseconds $delay
         }
     }
 }

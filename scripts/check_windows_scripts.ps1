@@ -75,6 +75,49 @@ foreach ($stage in @("stop-server.ps1", "start-server.ps1", "Save-InstallRoot", 
     }
 }
 
+. (Join-Path $windowsDir "common.ps1")
+
+$win32Attempts = [Collections.ArrayList]::new()
+$win32Result = Invoke-WindowsInteropOperation -RetryDelaysMilliseconds @(0, 0) -Action {
+    [void]$win32Attempts.Add($true)
+    if ($win32Attempts.Count -eq 1) {
+        throw [ComponentModel.Win32Exception]::new(122)
+    }
+    return "win32-recovered"
+}
+if ($win32Result -ne "win32-recovered" -or $win32Attempts.Count -ne 2) {
+    Write-Error "Windows error 122 was not retried after a Win32Exception."
+    $failed = $true
+}
+
+$comAttempts = [Collections.ArrayList]::new()
+$comResult = Invoke-WindowsInteropOperation -RetryDelaysMilliseconds @(0, 0) -Action {
+    [void]$comAttempts.Add($true)
+    if ($comAttempts.Count -eq 1) {
+        throw [Runtime.InteropServices.COMException]::new("Insufficient buffer", -2147024774)
+    }
+    return "com-recovered"
+}
+if ($comResult -ne "com-recovered" -or $comAttempts.Count -ne 2) {
+    Write-Error "Windows error 122 was not retried after a COM HRESULT."
+    $failed = $true
+}
+
+$otherAttempts = [Collections.ArrayList]::new()
+$otherFailed = $false
+try {
+    Invoke-WindowsInteropOperation -RetryDelaysMilliseconds @(0, 0) -Action {
+        [void]$otherAttempts.Add($true)
+        throw [ComponentModel.Win32Exception]::new(5)
+    }
+} catch {
+    $otherFailed = $_.Exception -is [ComponentModel.Win32Exception] -and $_.Exception.NativeErrorCode -eq 5
+}
+if (-not $otherFailed -or $otherAttempts.Count -ne 1) {
+    Write-Error "A non-retryable Windows error was retried or replaced."
+    $failed = $true
+}
+
 if ($failed) {
     exit 1
 }
