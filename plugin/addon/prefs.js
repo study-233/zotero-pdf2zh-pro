@@ -29,3 +29,6 @@ pref("__prefsPrefix__.disableTermExtraction", true);
 
 pref("__prefsPrefix__.dialog-service", "openai");
 pref("__prefsPrefix__.dialog-serviceSelect", "openai");
+
+pref("__prefsPrefix__.selectedApiKey", "");
+pref("__prefsPrefix__.profileSchemaVersion", 0);

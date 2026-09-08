@@ -1,668 +1,332 @@
-import { prepareApiForServer } from "./apiCompatibility";
-import type { ApiProtocol } from "./apiCompatibility";
 import { config, version } from "../../package.json";
 import { getPref, setPref } from "../utils/prefs";
 import {
-    getActiveLLMApiByService,
-    llmApiManager,
-    LLMApiData,
     emptyLLMApi,
-    formatExtraDataForDisplay,
+    profileLabel,
+    profileName,
+    SERVICE_NAMES,
+    type LLMApiData,
 } from "./llmApiManager";
-import type {
-    DiagnosticMessage,
-    ServerErrorResponse,
-    ServerHealthResponse,
-    ValidateConfigResponse,
-} from "./pdf2zhTypes";
+import {
+    loadProfiles,
+    saveProfiles,
+    getSelectedProfile,
+    removeProfile,
+} from "./profileStore";
+import { testProfile, fetchProfileModels } from "./profileApiClient";
+import type { ServerHealthResponse } from "./pdf2zhTypes";
 import axios from "axios";
 
-function normalizeServiceName(value: string): string {
-    return value.trim().toLowerCase().replace(/[-_]/g, "");
+// Chrome preference windows use XUL popups. HTML select popups can become
+// accessible without being painted by Zotero's native settings window.
+const xulNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+function fillMenu(menu: XULMenuListElement, items: [string, string][]) {
+    const popup = menu.querySelector("menupopup")!;
+    popup.replaceChildren();
+    for (const [label, value] of items) {
+        const item = menu.ownerDocument.createElementNS(xulNS, "menuitem");
+        item.setAttribute("label", label);
+        item.setAttribute("value", value);
+        popup.append(item);
+    }
 }
-
-export async function registerPrefsScripts(_window: Window) {
-    if (!addon.data.prefs) {
-        addon.data.prefs = {
-            window: _window,
-            columns: [],
-            rows: [],
-        };
-    } else {
-        addon.data.prefs.window = _window;
-    }
-    if (!addon.data.llmApis) {
-        addon.data.llmApis = {
-            map: new Map<string, LLMApiData>(),
-            cachedKeys: [],
-        };
-    }
-    const normalizedService = normalizeServiceName(
-        getPref("service")?.toString() || "siliconflowfree",
-    );
-    if (normalizedService !== getPref("service")) {
-        setPref("service", normalizedService);
-    }
-    bindPrefEvents();
-    updateVersionUI();
-    void refreshServerVersion();
-    initTableUI();
-}
-
-function bindPrefEvents() {
-    const { window } = addon.data.prefs ?? {};
-    if (!window) return;
-    const doc = window.document;
-    if (!doc) return;
-
-    const sourceLangSelect = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-sourceLangSelect`,
-    );
-    const targetLangSelect = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-targetLangSelect`,
-    );
-    const outputMonoCheckbox = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-outputMono`,
-    ) as XUL.Checkbox | null;
-    const outputDualCheckbox = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-outputDual`,
-    ) as XUL.Checkbox | null;
-    const serverUrlInput = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-new_serverip`,
-    );
-
-    sourceLangSelect?.replaceChildren();
-    targetLangSelect?.replaceChildren();
-    for (const [langName, langCode] of Object.entries(lang_map)) {
-        const option = doc.createElement("option");
-        option.value = langCode;
-        option.textContent = langName;
-        sourceLangSelect?.appendChild(option.cloneNode(true));
-        targetLangSelect?.appendChild(option.cloneNode(true));
-    }
-    if (sourceLangSelect) {
-        (sourceLangSelect as HTMLSelectElement).value =
-            getPref("sourceLang")?.toString() || "en";
-    }
-    if (targetLangSelect) {
-        (targetLangSelect as HTMLSelectElement).value =
-            getPref("targetLang")?.toString() || "zh-CN";
-    }
-
-    const ensureOutputModes = (fallbackKey: "outputMono" | "outputDual") => {
-        if (!outputMonoCheckbox || !outputDualCheckbox) {
-            return;
-        }
-        if (outputMonoCheckbox.checked || outputDualCheckbox.checked) {
-            return;
-        }
-
-        if (fallbackKey === "outputMono") {
-            outputMonoCheckbox.checked = true;
-        } else {
-            outputDualCheckbox.checked = true;
-        }
-        setPref(fallbackKey, true);
+let managerWindow: Window | undefined;
+function onDialogClosed(win: Window, url: string, callback: () => void) {
+    const onUnload = (event: Event) => {
+        // openDialog first unloads about:blank while loading the real dialog.
+        // That navigation must not resolve edit() or discard the manager.
+        if ((event.target as Document | null)?.documentURI !== url) return;
+        win.removeEventListener("unload", onUnload);
+        callback();
     };
+    win.addEventListener("unload", onUnload);
+}
 
-    outputMonoCheckbox?.addEventListener("command", () => {
-        ensureOutputModes("outputDual");
-    });
-    outputDualCheckbox?.addEventListener("command", () => {
-        ensureOutputModes("outputMono");
-    });
+function refreshProfileManager() {
+    if (managerWindow && !managerWindow.closed) {
+        const event = managerWindow.document.createEvent("Event");
+        event.initEvent("profiles-changed", false, false);
+        managerWindow.dispatchEvent(event);
+    }
+}
 
-    doc.querySelector(
-        `#zotero-prefpane-${config.addonRef}-checkConnection`,
-    )?.addEventListener("click", async () => {
-        await checkServerConnection();
+function element(id: string) {
+    return addon.data.prefs?.window?.document.getElementById(
+        `zotero-prefpane-${config.addonRef}-${id}`,
+    );
+}
+function status(id: string, text: string) {
+    const node = element(id);
+    if (node) {
+        node.textContent = text;
+        node.hidden = !text;
+    }
+}
+function report(error: unknown) {
+    status("apiResult", error instanceof Error ? error.message : "操作失败");
+}
+
+export async function registerPrefsScripts(window: Window) {
+    addon.data.prefs = { window, columns: [], rows: [] };
+    for (const field of ["sourceLang", "targetLang"]) {
+        const select = element(
+            `${field}Select`,
+        ) as unknown as XULMenuListElement;
+        fillMenu(select, Object.entries(lang_map));
+        select.value =
+            getPref(field)?.toString() ||
+            (field === "sourceLang" ? "en" : "zh-CN");
+        select.addEventListener("command", () => {
+            setPref(field, select.value);
+            (element(field) as HTMLInputElement).value = select.value;
+        });
+        element(field)?.addEventListener("change", () => {
+            select.value = (element(field) as HTMLInputElement).value;
+        });
+    }
+    for (const [field, fallback] of [
+        ["outputMono", "outputDual"],
+        ["outputDual", "outputMono"],
+    ]) {
+        element(field)?.addEventListener("command", () => {
+            if (
+                !(element(field) as unknown as XUL.Checkbox).checked &&
+                !(element(fallback) as unknown as XUL.Checkbox).checked
+            ) {
+                (element(fallback) as unknown as XUL.Checkbox).checked = true;
+                setPref(fallback, true);
+            }
+        });
+    }
+    element("selectedApiKey")?.addEventListener("command", () => {
+        const menu = element("selectedApiKey") as unknown as XULMenuListElement;
+        const selected = menu.value;
+        setPref("selectedApiKey", selected);
+        // Native macOS menu commands run while the popup is hiding. Reflowing
+        // the pane here can strand it in that state and block future clicks.
+        window.setTimeout(() => {
+            if (!menu.isConnected || getPref("selectedApiKey") !== selected)
+                return;
+            status("apiResult", "");
+            refreshProfiles(false);
+        }, 0);
     });
-    serverUrlInput?.addEventListener("change", () => {
+    element("profile-add")?.addEventListener("click", () => {
+        void openProfileEditor().catch(report);
+    });
+    element("profile-edit")?.addEventListener("click", () => {
+        void openProfileEditor(getPref("selectedApiKey")?.toString()).catch(
+            report,
+        );
+    });
+    element("profile-manage")?.addEventListener("click", openProfileManager);
+    element("profile-test")?.addEventListener("click", async () => {
+        const button = element("profile-test") as HTMLButtonElement;
+        let api: LLMApiData | null;
+        try {
+            api = getSelectedProfile();
+        } catch (error) {
+            report(error);
+            return;
+        }
+        if (!api) return;
+        button.disabled = true;
+        status("apiResult", "正在发送短翻译请求…");
+        try {
+            const message = await testProfile(api);
+            const profiles = loadProfiles();
+            const saved = profiles.find((entry) => entry.key === api.key);
+            if (saved && JSON.stringify(saved) === JSON.stringify(api)) {
+                saved.needsTest = false;
+                saveProfiles(profiles);
+                if (getPref("selectedApiKey") === api.key)
+                    status("apiResult", message);
+            }
+        } catch (error) {
+            if (getPref("selectedApiKey") === api.key) report(error);
+        } finally {
+            refreshProfiles();
+        }
+    });
+    element("checkConnection")?.addEventListener("click", () => {
         void refreshServerVersion();
     });
-
-    doc.querySelector(
-        `#zotero-prefpane-${config.addonRef}-llmapi-table-container`,
-    )?.addEventListener("showing", () => {
-        updateLLMApiTableUI();
+    element("new_serverip")?.addEventListener("change", () => {
+        void refreshServerVersion();
     });
-
-    const addButton = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-llmapi-add`,
-    );
-    const removeButton = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-llmapi-remove`,
-    );
-    const editButton = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-llmapi-edit`,
-    );
-    const activateButton = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-llmapi-activate`,
-    );
-    const toTopButton = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-llmapi-totop`,
-    );
-
-    addButton?.addEventListener("command", async () => {
-        await openLLMApiEditDialog();
-    });
-    removeButton?.addEventListener("command", () => {
-        const selectedKeys = getLLMApiSelection();
-        selectedKeys.forEach((key) => {
-            if (key) {
-                llmApiManager.deleteLLMApi(key);
-                addon.data.llmApis?.map.delete(key);
-            }
-        });
-        updateCachedLLMApiKeys();
-        saveLLMApisToPrefs();
-        updateLLMApiTableUI();
-    });
-    editButton?.addEventListener("command", async () => {
-        const selectedKeys = getLLMApiSelection();
-        if (selectedKeys.length === 1) {
-            await openLLMApiEditDialog(selectedKeys[0]);
-        }
-    });
-    activateButton?.addEventListener("command", () => {
-        const selectedKeys = getLLMApiSelection();
-        if (selectedKeys.length !== 1) {
-            return;
-        }
-        const key = selectedKeys[0];
-        const llmApi = addon.data.llmApis?.map.get(key);
-        if (!llmApi) {
-            return;
-        }
-        if (llmApi.activate) {
-            llmApiManager.deactivateLLMApi(key);
-        } else {
-            llmApiManager.activateLLMApi(key);
-        }
-        addon.data.llmApis?.map.set(key, llmApiManager.getLLMApi(key)!);
-        saveLLMApisToPrefs();
-        updateLLMApiTableUI();
-    });
-    toTopButton?.addEventListener("command", () => {
-        const selectedKeys = getLLMApiSelection();
-        if (selectedKeys.length !== 1) {
-            return;
-        }
-        const key = selectedKeys[0];
-        const llmApi = addon.data.llmApis?.map.get(key);
-        if (!llmApi) {
-            return;
-        }
-        const llmApis = Array.from(addon.data.llmApis?.map.values() || []);
-        const index = llmApis.findIndex((entry) => entry.key === key);
-        if (index === -1) {
-            return;
-        }
-        llmApis.splice(index, 1);
-        llmApis.unshift(llmApi);
-        addon.data.llmApis?.map.clear();
-        llmApis.forEach((entry) =>
-            addon.data.llmApis?.map.set(entry.key, entry),
-        );
-        updateCachedLLMApiKeys();
-        saveLLMApisToPrefs();
-        updateLLMApiTableUI();
-    });
-}
-
-export async function initTableUI() {
-    if (!addon.data.prefs?.window) return;
-    loadLLMApisFromPrefs();
-    const renderLock = Zotero.Promise.defer();
-    addon.data.prefs.tableHelper = new ztoolkit.VirtualizedTable(
-        addon.data.prefs.window!,
-    )
-        .setContainerId(
-            `zotero-prefpane-${config.addonRef}-llmapi-table-container`,
-        )
-        .setProp({
-            id: `zotero-prefpane-${config.addonRef}-llmapi-table`,
-            columns: [
-                { dataKey: "service", label: "服务", width: 160 },
-                { dataKey: "model", label: "模型", width: 220 },
-                { dataKey: "apiUrl", label: "API URL", width: 170 },
-                { dataKey: "apiKey", label: "API Key", width: 100 },
-                { dataKey: "activate", label: "激活", width: 70 },
-                { dataKey: "extraData", label: "额外参数", width: 200 },
-            ],
-            showHeader: true,
-            multiSelect: true,
-            staticColumns: false,
-            disableFontSizeScaling: true,
-        })
-        .setProp(
-            "getRowCount",
-            () => addon.data.llmApis?.cachedKeys.length || 0,
-        )
-        .setProp("getRowData", getRowData)
-        .setProp("onSelectionChange", () => {
-            const selectedKeys = getLLMApiSelection();
-            addon.data.llmApis.selectedKey = selectedKeys[0];
-            addon.data.prefs?.window?.document
-                .querySelectorAll(".llmapi-selection")
-                ?.forEach((e) =>
-                    setButtonDisabled(
-                        e as XULButtonElement,
-                        selectedKeys.length === 0,
-                    ),
-                );
-            addon.data.prefs?.window?.document
-                .querySelectorAll(".llmapi-selection-single")
-                ?.forEach((e) =>
-                    setButtonDisabled(
-                        e as XULButtonElement,
-                        selectedKeys.length !== 1,
-                    ),
-                );
-        })
-        .render(-1, () => renderLock.resolve());
-    await renderLock.promise;
-}
-
-function updateCachedLLMApiKeys() {
-    addon.data.llmApis.cachedKeys = Array.from(
-        addon.data.llmApis?.map.keys() || [],
-    );
-}
-
-async function openLLMApiEditDialog(key?: string): Promise<boolean> {
-    const llmApi = key ? addon.data.llmApis?.map.get(key) : emptyLLMApi;
-    const dialogData = {
-        service: llmApi?.service || "",
-        model: llmApi?.model || "",
-        apiKey: llmApi?.apiKey || "",
-        apiUrl: llmApi?.apiUrl || "",
-        activate: llmApi?.activate || false,
-        extraData: llmApi?.extraData || {},
-        apiProtocol: llmApi?.apiProtocol || (key ? "chat_completions" : "auto"),
-        requestOptions: llmApi?.requestOptions || {},
-    };
-
-    const windowArgs: {
-        _initPromise: any;
-        data: {
-            service: string;
-            model: string;
-            apiKey: string;
-            apiUrl: string;
-            activate: boolean;
-            extraData: any;
-            apiProtocol?: ApiProtocol;
-            requestOptions?: Record<string, unknown>;
-        };
-        isEdit: boolean;
-        result?: {
-            success: boolean;
-            data: {
-                service: string;
-                model: string;
-                apiKey: string;
-                apiUrl: string;
-                activate: boolean;
-                extraData?: Record<string, any>;
-                apiProtocol?: ApiProtocol;
-                requestOptions?: Record<string, unknown>;
-            };
-        };
-    } = {
-        _initPromise: Zotero.Promise.defer(),
-        data: dialogData,
-        isEdit: !!key,
-    };
-
-    const dialogWindow = Zotero.getMainWindow().openDialog(
-        `chrome://${config.addonRef}/content/llmApiEditor.xhtml`,
-        `${config.addonRef}-llmApiEditor`,
-        `chrome,centerscreen,resizable,status,dialog=no`,
-        windowArgs,
-    );
-    if (!dialogWindow) {
-        return false;
-    }
-    await windowArgs._initPromise.promise;
-
-    const result = await new Promise<any>((resolve) => {
-        const checkClosed = () => {
-            if (dialogWindow.closed) {
-                resolve(windowArgs.result);
-            } else {
-                setTimeout(checkClosed, 100);
-            }
-        };
-        checkClosed();
-    });
-
-    if (!result || !result.success) {
-        return false;
-    }
-
-    const userData = result.data;
-    const newLLMApi: LLMApiData = {
-        key: key || Zotero.Utilities.generateObjectKey(),
-        service: normalizeServiceName(userData.service || ""),
-        model: userData.model || "",
-        apiKey: userData.apiKey,
-        apiUrl: userData.apiUrl,
-        activate: userData.activate,
-        extraData: userData.extraData || {},
-        apiProtocol: userData.apiProtocol || "chat_completions",
-        requestOptions: userData.requestOptions || {},
-    };
-    addon.data.llmApis?.map.set(newLLMApi.key, newLLMApi);
-    updateCachedLLMApiKeys();
-    llmApiManager.updateLLMApi(newLLMApi);
-    saveLLMApisToPrefs();
-    updateLLMApiTableUI();
-    return true;
-}
-
-function saveLLMApisToPrefs() {
-    if (!addon.data.llmApis) return;
-    const llmApisArray = Array.from(addon.data.llmApis.map.values());
-    setPref("llmApis", JSON.stringify(llmApisArray) as string);
-}
-
-export function loadLLMApisFromPrefs() {
-    const llmApisJson = getPref("llmApis");
-    if (!llmApisJson || typeof llmApisJson !== "string") {
-        return;
-    }
+    status("pluginVersion", version);
     try {
-        const llmApisArray = JSON.parse(llmApisJson);
-        if (!Array.isArray(llmApisArray)) {
+        refreshProfiles();
+    } catch (error) {
+        report(error);
+    }
+    void refreshServerVersion();
+}
+
+function refreshProfiles(rebuildMenu = true) {
+    refreshProfileManager();
+    const profiles = loadProfiles();
+    const select = element(
+        "selectedApiKey",
+    ) as unknown as XULMenuListElement | null;
+    if (!select) return;
+    const selected = getPref("selectedApiKey")?.toString() || "";
+    if (rebuildMenu)
+        fillMenu(select, [
+            ["请选择配置", ""],
+            ...profiles.map((api): [string, string] => [
+                profileLabel(api),
+                api.key,
+            ]),
+        ]);
+    const api = profiles.find((entry) => entry.key === selected);
+    select.value = api?.key || "";
+    for (const id of ["profile-edit", "profile-test"])
+        (element(id) as HTMLButtonElement).disabled = !api;
+    status(
+        "profileSummary",
+        api
+            ? `${api.apiUrl || SERVICE_NAMES[api.service] || api.service}${api.needsTest ? " · 待测试" : ""}`
+            : "选择一份配置即可使用，也可以新增中转站。",
+    );
+}
+
+async function openProfileEditor(key?: string, copy = false): Promise<void> {
+    const original = key
+        ? loadProfiles().find((api) => api.key === key)
+        : undefined;
+    if (key && !original) throw new Error("配置已删除，请重新选择。");
+    const data = JSON.parse(
+        JSON.stringify(original || emptyLLMApi),
+    ) as LLMApiData;
+    if (copy) {
+        data.key = "";
+        data.name = `${profileName(data)} 副本`;
+    }
+    return new Promise((resolve) => {
+        const args = {
+            data,
+            isEdit: !!original && !copy,
+            services: SERVICE_NAMES,
+            test: testProfile,
+            listModels: fetchProfileModels,
+            save: (value: LLMApiData, use: boolean) => {
+                const profiles = loadProfiles();
+                const api = {
+                    ...value,
+                    key: data.key || Zotero.Utilities.generateObjectKey(),
+                };
+                const index = profiles.findIndex(
+                    (entry) => entry.key === api.key,
+                );
+                if (data.key && index < 0)
+                    throw new Error("此配置已被删除，请取消后重新新增。");
+                if (index >= 0) profiles[index] = api;
+                else profiles.push(api);
+                saveProfiles(profiles);
+                if (use && (!original || copy))
+                    setPref("selectedApiKey", api.key);
+                status("apiResult", "");
+                refreshProfiles();
+            },
+        };
+        const url = `chrome://${config.addonRef}/content/llmApiEditor.xhtml`;
+        const win = Zotero.getMainWindow().openDialog(
+            url,
+            "",
+            "chrome,centerscreen,resizable,dialog=no,width=640,height=710",
+            args,
+        );
+        if (!win) {
+            resolve();
             return;
         }
-        addon.data.llmApis?.map.clear();
-        llmApisArray.forEach((llmApi: LLMApiData) => {
-            if (llmApi.key && llmApi.service) {
-                if (llmApi.activate === undefined) {
-                    llmApi.activate = false;
-                }
-                if (!llmApi.extraData) {
-                    llmApi.extraData = {};
-                }
-                llmApi.service = normalizeServiceName(llmApi.service);
-                addon.data.llmApis?.map.set(llmApi.key, llmApi);
-                llmApiManager.updateLLMApi(llmApi);
-            }
-        });
-        updateCachedLLMApiKeys();
-    } catch (error) {
-        ztoolkit.log("Error loading LLM APIs from prefs:", error);
-    }
+        onDialogClosed(win, url, () => resolve());
+    });
 }
 
-function updateLLMApiTableUI() {
-    setTimeout(() => addon.data.prefs?.tableHelper?.treeInstance.invalidate());
-}
-
-function updateVersionUI() {
-    const doc = addon.data.prefs?.window?.document;
-    if (!doc) {
+function openProfileManager() {
+    if (managerWindow && !managerWindow.closed) {
+        managerWindow.focus();
         return;
     }
-    setText(doc, "pluginVersion", version);
-    setServerVersionState(doc, {
-        version: "—",
-        status: "未检查",
-        state: "unknown",
-    });
+    const url = `chrome://${config.addonRef}/content/llmApiManager.xhtml`;
+    const win = Zotero.getMainWindow().openDialog(
+        url,
+        "",
+        "chrome,centerscreen,resizable,dialog=no,width=800,height=500",
+        {
+            list: () =>
+                loadProfiles().map((api) => ({
+                    key: api.key,
+                    label: profileLabel(api),
+                    apiUrl: api.apiUrl,
+                    current: getPref("selectedApiKey") === api.key,
+                })),
+            edit: openProfileEditor,
+            remove: (key: string) => {
+                removeProfile(key);
+                status("apiResult", "");
+                refreshProfiles();
+            },
+            top: (key: string) => {
+                const profiles = loadProfiles();
+                const api = profiles.find((entry) => entry.key === key);
+                if (api)
+                    saveProfiles([
+                        api,
+                        ...profiles.filter((entry) => entry.key !== key),
+                    ]);
+                refreshProfiles();
+            },
+        },
+    );
+    if (win) {
+        managerWindow = win;
+        onDialogClosed(win, url, () => {
+            if (managerWindow === win) managerWindow = undefined;
+        });
+    }
 }
 
 async function refreshServerVersion() {
-    const doc = addon.data.prefs?.window?.document;
-    if (!doc) {
-        return;
-    }
-
-    const serverUrl = getPref("new_serverip")?.toString() || "";
-    if (!serverUrl) {
-        setServerVersionState(doc, {
-            version: "—",
-            status: "未配置",
-            state: "unknown",
-        });
-        return;
-    }
-
-    setServerVersionState(doc, {
-        version: "…",
-        status: "检查中",
-        state: "unknown",
-    });
-
+    const url =
+        getPref("new_serverip")?.toString().trim().replace(/\/+$/, "") || "";
+    const button = element("checkConnection") as HTMLButtonElement | null;
+    if (button) button.disabled = true;
+    status("serverStatus", "正在检查本地服务…");
     try {
-        const response = await axios.get<ServerHealthResponse>(
-            `${serverUrl}/health`,
-            {
-                timeout: 4000,
-                headers: { "Content-Type": "application/json" },
-            },
+        if (!url) throw new Error();
+        const { data } = await axios.get<ServerHealthResponse>(
+            `${url}/health`,
+            { timeout: 5000 },
         );
-        setServerVersionState(doc, {
-            version: response.data?.version || "未知",
-            status:
-                response.data?.status === "ok"
-                    ? "已连接"
-                    : response.data?.status === "degraded"
-                      ? "已连接，有警告"
-                      : "状态未知",
-            state:
-                response.data?.status === "ok" ||
-                response.data?.status === "degraded"
-                    ? "ok"
-                    : "unknown",
-        });
+        if (!["ok", "degraded"].includes(data.status || "")) throw new Error();
+        status("serverVersion", data.version || "未知");
+        status(
+            "serverStatus",
+            data.status === "degraded"
+                ? "本地服务已连接，有警告"
+                : "本地服务已连接",
+        );
+        status(
+            "connectionResult",
+            data.status === "degraded"
+                ? "本地服务已连接，请检查工作目录是否可写及磁盘空间。"
+                : "本地服务已连接。API 可用性请使用顶部的「测试 API」。",
+        );
+        element("serverVersionCard")?.setAttribute("data-state", "ok");
     } catch {
-        setServerVersionState(doc, {
-            version: "—",
-            status: "无法连接",
-            state: "error",
-        });
-    }
-}
-
-function setServerVersionState(
-    doc: Document,
-    state: {
-        version: string;
-        status: string;
-        state: "unknown" | "ok" | "error";
-    },
-) {
-    setText(doc, "serverVersion", state.version);
-    setText(doc, "serverStatus", state.status);
-    const card = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-serverVersionCard`,
-    );
-    card?.setAttribute("data-state", state.state);
-}
-
-function setText(doc: Document, idSuffix: string, value: string) {
-    const element = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-${idSuffix}`,
-    );
-    if (element) {
-        element.textContent = value;
-    }
-}
-
-function setConnectionResult(doc: Document | undefined, value: string) {
-    const element = doc?.getElementById(
-        `zotero-prefpane-${config.addonRef}-connectionResult`,
-    );
-    if (!element) {
-        return;
-    }
-    element.textContent = value;
-    if (value) {
-        element.removeAttribute("hidden");
-    } else {
-        element.setAttribute("hidden", "hidden");
-    }
-}
-
-function setButtonDisabled(button: XUL.Button, disabled: boolean) {
-    if (button) {
-        button.disabled = disabled;
-    }
-}
-
-function getRowData(index: number) {
-    const keys = addon.data.llmApis?.cachedKeys || [];
-    let llmApi = emptyLLMApi;
-    if (keys.length > index) {
-        const key = keys[index];
-        llmApi = addon.data.llmApis?.map.get(key) || emptyLLMApi;
-    }
-    return {
-        key: llmApi.key || "",
-        service: llmApi.service || "",
-        model: llmApi.model || "",
-        apiUrl: llmApi.apiUrl || "",
-        apiKey: llmApi.apiKey || "",
-        extraData: formatExtraDataForDisplay(llmApi.extraData),
-        activate: llmApi.activate ? "✅" : "",
-    };
-}
-
-function getLLMApiSelection() {
-    const indices =
-        addon.data.prefs?.tableHelper?.treeInstance?.selection.selected;
-    if (!indices) {
-        return [];
-    }
-    const keys = addon.data.llmApis?.cachedKeys || [];
-    return Array.from(indices).map((i) => keys[i]) || [];
-}
-
-function formatBytes(bytes?: number): string {
-    if (typeof bytes !== "number" || !Number.isFinite(bytes)) {
-        return "未知";
-    }
-    const units = ["B", "KB", "MB", "GB", "TB"];
-    let value = bytes;
-    let unitIndex = 0;
-    while (value >= 1024 && unitIndex < units.length - 1) {
-        value /= 1024;
-        unitIndex += 1;
-    }
-    const precision = unitIndex === 0 ? 0 : 1;
-    return `${value.toFixed(precision)} ${units[unitIndex]}`;
-}
-
-function formatDiagnostics(diagnostics?: DiagnosticMessage[]): string {
-    if (!diagnostics?.length) {
-        return "";
-    }
-    const lines = ["诊断信息:"];
-    diagnostics.forEach((diagnostic) => {
-        lines.push(
-            `- [${diagnostic.severity}] ${diagnostic.code}: ${diagnostic.message}`,
+        status("serverVersion", "—");
+        status("serverStatus", "本地服务无法连接");
+        status(
+            "connectionResult",
+            "请确认 Python 服务已启动，并检查本地服务地址。",
         );
-        if (diagnostic.suggestion) {
-            lines.push(`  建议: ${diagnostic.suggestion}`);
-        }
-    });
-    return lines.join("\n");
-}
-
-function getDiagnosticSummary(diagnostics?: DiagnosticMessage[]): string {
-    if (!diagnostics?.length) {
-        return "";
+        element("serverVersionCard")?.setAttribute("data-state", "error");
+    } finally {
+        if (button) button.disabled = false;
     }
-    return diagnostics
-        .map((diagnostic) => `${diagnostic.severity}:${diagnostic.code}`)
-        .join(", ");
-}
-
-function hasCheckIssues(validateData: ValidateConfigResponse): boolean {
-    return (
-        validateData.liveTest?.ok === false ||
-        validateData.diagnostics?.some(
-            (diagnostic) =>
-                diagnostic.severity === "warning" ||
-                diagnostic.severity === "error",
-        ) === true
-    );
-}
-
-function formatHealthDetails(healthData: ServerHealthResponse): string[] {
-    const workspace = healthData.workspace;
-    const tasks = healthData.tasks;
-    return [
-        `服务端状态: ${healthData.status || "未知"}`,
-        `服务端版本: ${healthData.version || "未知"}`,
-        `Python: ${healthData.pythonVersion || "未知"}`,
-        `pdf2zh_next: ${healthData.pdf2zhVersion || "未知"}`,
-        `BabelDOC: ${healthData.babeldocVersion || "未知"}`,
-        `Workspace: ${workspace?.path || "未知"}`,
-        `Workspace可写: ${
-            typeof workspace?.writable === "boolean"
-                ? workspace.writable
-                    ? "是"
-                    : "否"
-                : "未知"
-        }`,
-        `Workspace剩余空间: ${formatBytes(workspace?.freeBytes)}`,
-        `任务统计: total=${tasks?.total ?? "未知"}, active=${
-            tasks?.active ?? "未知"
-        }, failed=${tasks?.failed ?? "未知"}, completed=${
-            tasks?.completed ?? "未知"
-        }`,
-    ];
-}
-
-function formatLiveTest(validateData: ValidateConfigResponse): string {
-    const liveTest = validateData.liveTest;
-    if (!liveTest?.enabled) {
-        return "Live API测试: 未启用";
-    }
-    const state =
-        typeof liveTest.ok === "boolean"
-            ? liveTest.ok
-                ? "通过"
-                : "未通过"
-            : "未返回结果";
-    return `Live API测试: ${state}${
-        liveTest.message ? ` (${liveTest.message})` : ""
-    }`;
-}
-
-function formatCheckReport(
-    serverUrl: string,
-    healthData: ServerHealthResponse,
-    validateData: ValidateConfigResponse,
-    service: string,
-): string {
-    const lines = [
-        hasCheckIssues(validateData)
-            ? "检查完成，存在需要关注的问题"
-            : "检查通过",
-        `Server地址: ${serverUrl}`,
-        ...formatHealthDetails(healthData),
-        `翻译服务: ${validateData.service || service}`,
-        `模型: ${validateData.model || "未返回"}`,
-        `接口协议: ${validateData.resolvedProtocol === "responses" ? "Responses" : validateData.resolvedProtocol === "chat_completions" ? "Chat Completions" : "服务端未返回"}`,
-        formatLiveTest(validateData),
-    ];
-    const diagnostics = formatDiagnostics(validateData.diagnostics);
-    if (diagnostics) {
-        lines.push("", diagnostics);
-    }
-    return lines.join("\n");
-}
-
-function getServerErrorData(data: unknown): ServerErrorResponse {
-    if (!data || typeof data !== "object") {
-        return {};
-    }
-    return data as ServerErrorResponse;
 }
 
 const lang_map = {
@@ -820,243 +484,3 @@ const lang_map = {
     Tsonga: "ts",
     Zulu: "zu",
 };
-
-async function checkServerConnection() {
-    const serverUrl = getPref("new_serverip")?.toString() || "";
-    if (!serverUrl) {
-        ztoolkit.getGlobal("alert")("请先设置Server地址");
-        return;
-    }
-    const doc = addon.data.prefs?.window?.document;
-    const checkButton = doc?.getElementById(
-        `zotero-prefpane-${config.addonRef}-checkConnection`,
-    ) as XUL.Button | null;
-    const liveApiTestCheckbox = doc?.getElementById(
-        `zotero-prefpane-${config.addonRef}-liveApiTest`,
-    ) as HTMLInputElement | null;
-    const liveTest = Boolean(liveApiTestCheckbox?.checked);
-    if (checkButton) {
-        checkButton.disabled = true;
-    }
-
-    const progressWindow = new ztoolkit.ProgressWindow("Server连接检查", {
-        closeOnClick: false,
-        closeTime: -1,
-    }).createLine({
-        text: "正在检查Server连接...",
-        type: "default",
-        progress: 20,
-    });
-    progressWindow.show();
-
-    try {
-        const healthResponse = await axios.get<ServerHealthResponse>(
-            `${serverUrl}/health`,
-            {
-                timeout: 10000,
-                headers: { "Content-Type": "application/json" },
-            },
-        );
-
-        if (healthResponse.status !== 200 || !healthResponse.data) {
-            throw new Error(`Server返回错误状态: ${healthResponse.status}`);
-        }
-        if (doc) {
-            setServerVersionState(doc, {
-                version: healthResponse.data.version || "未知",
-                status: "已连接",
-                state: "ok",
-            });
-        }
-
-        progressWindow.changeLine({
-            text: liveTest
-                ? "Server已连接，正在检查当前LLM配置与API..."
-                : "Server已连接，正在检查当前LLM配置...",
-            type: "default",
-            progress: 60,
-        });
-
-        const service = normalizeServiceName(
-            getPref("service")?.toString() || "siliconflowfree",
-        );
-        const activeApi = getActiveLLMApiByService(service);
-        const prepared = activeApi
-            ? prepareApiForServer(
-                  activeApi,
-                  healthResponse.data.supportedApiProtocols,
-              )
-            : undefined;
-        const llmApi = prepared?.api;
-        const validateResponse = await axios.post<ValidateConfigResponse>(
-            `${serverUrl}/validate-config`,
-            {
-                service,
-                sourceLang: getPref("sourceLang")?.toString() || "en",
-                targetLang: getPref("targetLang")?.toString() || "zh-CN",
-                qps: getPref("qps")?.toString() || "1",
-                poolSize: getPref("poolSize")?.toString() || "50",
-                ocr: getPref("ocr")?.toString() || "false",
-                autoOcr: getPref("autoOcr")?.toString() || "true",
-                translateTableText:
-                    getPref("translateTableText")?.toString() || "true",
-                skipReferences:
-                    getPref("skipReferences")?.toString() || "false",
-                skipTextChecks:
-                    getPref("skipTextChecks")?.toString() || "false",
-                noWatermark: getPref("noWatermark")?.toString() || "true",
-                disableTermExtraction:
-                    getPref("disableTermExtraction")?.toString() || "true",
-                fontFamily: getPref("fontFamily")?.toString() || "auto",
-                liveTest,
-                llm_api: llmApi
-                    ? {
-                          service,
-                          model: llmApi.model,
-                          apiKey: llmApi.apiKey,
-                          apiUrl: llmApi.apiUrl,
-                          extraData: llmApi.extraData || {},
-                          apiProtocol: llmApi.apiProtocol || "chat_completions",
-                          requestOptions: llmApi.requestOptions || {},
-                      }
-                    : {},
-            },
-            {
-                timeout: 45000,
-                headers: { "Content-Type": "application/json" },
-            },
-        );
-
-        if (validateResponse.status !== 200 || !validateResponse.data) {
-            throw new Error(`配置检查失败: ${validateResponse.status}`);
-        }
-
-        const healthData = healthResponse.data;
-        const validateData = validateResponse.data;
-        if (prepared?.warning) {
-            validateData.diagnostics = [
-                ...(validateData.diagnostics || []),
-                {
-                    code: "server_protocol_legacy",
-                    severity: "warning",
-                    message: prepared.warning,
-                },
-            ];
-        }
-        if (validateData.status === "error") {
-            const diagnostics = formatDiagnostics(validateData.diagnostics);
-            throw new Error(
-                [validateData.message || "配置检查失败", diagnostics]
-                    .filter(Boolean)
-                    .join("\n\n"),
-            );
-        }
-        const report = formatCheckReport(
-            serverUrl,
-            healthData,
-            validateData,
-            service,
-        );
-        setConnectionResult(doc, report);
-        const hasIssues = hasCheckIssues(validateData);
-        progressWindow.changeLine({
-            text: hasIssues
-                ? `⚠ 检查完成，存在诊断信息：${
-                      getDiagnosticSummary(validateData.diagnostics) ||
-                      "Live API测试未通过"
-                  }`
-                : `✓ 检查通过：${validateData.service || service}${validateData.model ? ` / ${validateData.model}` : ""}${validateData.resolvedProtocol ? ` · ${validateData.resolvedProtocol === "responses" ? "Responses" : "Chat Completions"}` : ""}`,
-            type: hasIssues ? "default" : "success",
-            progress: 100,
-        });
-
-        setTimeout(() => {
-            progressWindow.close();
-            ztoolkit.getGlobal("alert")(
-                `${hasIssues ? "⚠ 检查完成，存在需要关注的问题" : "✓ 检查通过！"}\n\n${report}`,
-            );
-        }, 1000);
-    } catch (error) {
-        let errorMsg = "未知错误";
-        let troubleshooting = "";
-        let diagnostics: DiagnosticMessage[] | undefined;
-
-        if (axios.isAxiosError(error)) {
-            if (
-                error.code === "ECONNABORTED" ||
-                error.message.includes("timeout")
-            ) {
-                errorMsg = "请求超时";
-                troubleshooting =
-                    "请确认Server已启动、网络可达，并检查是否有防火墙拦截。";
-            } else if (error.response) {
-                const responseData = getServerErrorData(error.response.data);
-                diagnostics = responseData.diagnostics;
-                const responseMessage =
-                    typeof responseData.message === "string"
-                        ? responseData.message
-                        : "";
-                errorMsg = responseMessage
-                    ? responseMessage
-                    : `Server返回错误: ${error.response.status}`;
-                troubleshooting =
-                    "请检查Server地址、当前服务对应的LLM配置，以及Server日志。";
-            } else if (error.request) {
-                errorMsg = "无法连接到Server";
-                troubleshooting =
-                    "请确认Server已运行，并检查地址格式，例如: http://localhost:8890";
-            } else {
-                errorMsg = error.message;
-            }
-        } else if (error instanceof Error) {
-            errorMsg = error.message;
-        }
-
-        const diagnosticText = formatDiagnostics(diagnostics);
-        const diagnosticSummary = getDiagnosticSummary(diagnostics);
-        progressWindow.changeLine({
-            text: `✗ 连接失败: ${errorMsg}${
-                diagnosticSummary ? `；诊断: ${diagnosticSummary}` : ""
-            }`,
-            type: "error",
-            progress: 100,
-        });
-        if (doc) {
-            setServerVersionState(doc, {
-                version: "—",
-                status: "无法连接",
-                state: "error",
-            });
-            setConnectionResult(
-                doc,
-                [
-                    "检查失败",
-                    `Server地址: ${serverUrl}`,
-                    `错误信息: ${errorMsg}`,
-                    diagnosticText,
-                    troubleshooting,
-                ]
-                    .filter(Boolean)
-                    .join("\n\n"),
-            );
-        }
-
-        setTimeout(() => {
-            progressWindow.close();
-            ztoolkit.getGlobal("alert")(
-                [
-                    "✗ 连接失败",
-                    `错误信息: ${errorMsg}`,
-                    diagnosticText,
-                    troubleshooting,
-                ]
-                    .filter(Boolean)
-                    .join("\n\n"),
-            );
-        }, 1500);
-    } finally {
-        if (checkButton) {
-            checkButton.disabled = false;
-        }
-    }
-}

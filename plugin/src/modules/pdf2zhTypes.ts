@@ -1,3 +1,4 @@
+import type { LLMApiData } from "./llmApiManager";
 export type OutputMode = "mono" | "dual";
 export type ServerTaskStatus =
     | "queued"
@@ -9,6 +10,7 @@ export type ServerTaskStatus =
     | "cancelled";
 
 export interface ServerConfig {
+    apiConfig?: LLMApiData | null;
     serverUrl: string;
     service: string;
     sourceLang: string;

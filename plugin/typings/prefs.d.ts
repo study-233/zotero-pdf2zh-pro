@@ -32,6 +32,8 @@ declare namespace _ZoteroTypes {
       "disableTermExtraction": boolean;
       "dialog-service": string;
       "dialog-serviceSelect": string;
+      "selectedApiKey": string;
+      "profileSchemaVersion": number;
     };
   }
 }

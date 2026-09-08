@@ -7,6 +7,7 @@ from pathlib import Path
 from babeldoc.format.pdf.document_il.midend.reference_filter import find_reference_paragraph_ids
 from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
     is_cid_paragraph, is_placeholder_only_paragraph, is_pure_numeric_paragraph,
+    is_url_only_paragraph,
 )
 
 
@@ -73,6 +74,8 @@ class TranslationRecovery:
                         reason = "short_text"
                     elif is_pure_numeric_paragraph(paragraph) or is_placeholder_only_paragraph(paragraph):
                         reason = "numeric_or_formula"
+                    elif is_url_only_paragraph(paragraph):
+                        reason = "url_only"
                     self.current[key] = {"page": page_number + 1,
                         "paragraphId": paragraph.debug_id, "source": source,
                         "status": "skipped" if reason else "pending", "reason": reason,

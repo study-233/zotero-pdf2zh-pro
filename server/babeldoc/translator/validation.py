@@ -2,6 +2,7 @@
 import json
 import re
 from collections import Counter
+from babeldoc.translator.url_utils import is_url_only_text
 
 
 class InvalidTranslation(ValueError):
@@ -26,6 +27,8 @@ def validate_text(source, output, lang_out="", same_text_check=True):
         raise InvalidTranslation("placeholder_mismatch")
     plain = lambda s: re.sub(pattern, "", s, flags=re.I).strip()
     src, dst = plain(source), plain(output)
+    if src == dst and is_url_only_text(src):
+        return
     words = re.findall(r"[A-Za-z]+", src)
     prose = sum(w.islower() and len(w) > 2 for w in words) >= 3
     heading = src.lower() in {"abstract", "introduction", "discussion", "conclusion", "conclusions", "references", "acknowledgments", "acknowledgements"}

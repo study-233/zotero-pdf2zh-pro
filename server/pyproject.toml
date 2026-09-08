@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zotero-pdf2zh-pro"
-version = "1.6.2"
+version = "1.6.3"
 description = "Minimal pdf2zh_next bridge for the Zotero plugin"
 readme = "README.md"
 authors = [{ name = "study-233" }]
@@ -57,6 +57,7 @@ dependencies = [
     "toml>=0.10.2",
     "tomlkit>=0.13.0,<1",
     "tqdm>=4.67.1",
+    "truststore>=0.10.4,<1",
     "uharfbuzz>=0.50.2",
     "xinference-client",
     "xsdata[lxml,soap]>=24.12",
@@ -70,7 +71,7 @@ Repository = "https://github.com/study-233/zotero-pdf2zh-pro"
 Issues = "https://github.com/study-233/zotero-pdf2zh-pro/issues"
 
 [tool.setuptools]
-py-modules = ["server", "task_manager", "pdf2zh_next_service", "observability"]
+py-modules = ["server", "task_manager", "pdf2zh_next_service", "observability", "provider_models"]
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -38,3 +38,13 @@ pref-llmapi-activate = 激活
 pref-llmapi-totop = 置顶
 pref-check-connection = 检查连接与配置
 pref-live-api-test = 同时执行真实 API 测试（会发送一条短翻译请求）
+
+pref-current-profile = 当前翻译配置
+pref-profile-add = 新增
+pref-profile-edit = 编辑
+pref-profile-manage = 管理
+pref-profile-test = 测试 API
+pref-profile-test-hint = 测试 API 会发送一条短翻译请求。
+pref-language-settings = 语言设置
+pref-advanced-translation = 高级翻译参数
+pref-check-local-service = 检查本地服务

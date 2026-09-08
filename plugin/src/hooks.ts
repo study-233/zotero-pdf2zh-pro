@@ -3,7 +3,7 @@ import { PDF2zhBasicFactory, PDF2zhUIFactory } from "./modules/pdf2zh";
 import { PDF2zhTaskManager } from "./modules/pdf2zhTaskManager";
 import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
-import { registerPrefsScripts, initTableUI } from "./modules/preferenceScript";
+import { registerPrefsScripts } from "./modules/preferenceScript";
 
 async function onStartup() {
     await Promise.all([
@@ -22,7 +22,6 @@ async function onMainWindowLoad(_win: Window): Promise<void> {
     addon.data.ztoolkit = createZToolkit();
     PDF2zhUIFactory.registerRightClickMenuItem();
     await new Promise((resolve) => setTimeout(resolve, 200));
-    initTableUI();
 }
 
 async function onPrefsEvent(type: string, data: { [key: string]: any }) {

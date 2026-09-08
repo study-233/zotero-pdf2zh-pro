@@ -64,7 +64,7 @@ export class ZoteroTaskImporter {
                     bytes,
                 };
                 await PDF2zhHelperFactory.handleOutputResponse(output, item, {
-                    ...PDF2zhHelperFactory.getServerConfig(),
+                    ...PDF2zhHelperFactory.getServerConfig(false),
                     service: task.service,
                     outputModes: task.outputModes,
                 });
