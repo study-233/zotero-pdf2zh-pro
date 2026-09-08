@@ -20,14 +20,38 @@ function Assert-True {
 }
 
 function Wait-ExpectedHealth {
+    param([string]$Stage = "health check")
+    $lastHealth = $null
     for ($attempt = 0; $attempt -lt 60; $attempt++) {
-        $health = Get-ServerHealth
-        if (Test-ExpectedHealth -Health $health) {
+        $lastHealth = Get-ServerHealth
+        if (Test-ExpectedHealth -Health $lastHealth) {
             return
         }
         Start-Sleep -Milliseconds 500
     }
-    throw "The expected health endpoint did not become ready."
+    Write-Host "[health-diagnostic] stage=$Stage"
+    Write-Host "[health-diagnostic] app-root=$AppRoot"
+    Write-Host "[health-diagnostic] data-dir=$DataDir"
+    Write-Host "[health-diagnostic] health=$($lastHealth | ConvertTo-Json -Depth 5 -Compress)"
+    $listenerProcessId = Get-ListeningProcessId
+    Write-Host "[health-diagnostic] listener-pid=$listenerProcessId"
+    if ($listenerProcessId) {
+        Write-Host "[health-diagnostic] listener-executable=$(Get-ProcessExecutablePath -ProcessId $listenerProcessId)"
+        Write-Host "[health-diagnostic] listener-command=$(Get-ProcessCommandLine -ProcessId $listenerProcessId)"
+    }
+    foreach ($diagnosticFile in @(
+        (Join-Path $AppRoot "last-operation-error.txt"),
+        $LogFile,
+        $ControlLogFile
+    )) {
+        if (Test-Path -LiteralPath $diagnosticFile -PathType Leaf) {
+            Write-Host "[health-diagnostic] tail=$diagnosticFile"
+            Get-Content -LiteralPath $diagnosticFile -Tail 80 | ForEach-Object {
+                Write-Host "[health-diagnostic] $_"
+            }
+        }
+    }
+    throw "The expected health endpoint did not become ready during $Stage."
 }
 
 function Wait-ControlPanel {
@@ -85,13 +109,31 @@ function Invoke-RelocationProcess {
         "-PackageSource", ('"{0}"' -f $Wheel),
         "-SkipUvBootstrap"
     ) -join " "
-    $process = Start-Process `
-        -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
-        -ArgumentList $arguments `
-        -WindowStyle Hidden `
-        -PassThru
-    Assert-True ($process.WaitForExit(600000)) "Installation relocation did not finish within ten minutes."
-    return $process.ExitCode
+    $stdoutFile = [IO.Path]::GetTempFileName()
+    $stderrFile = [IO.Path]::GetTempFileName()
+    try {
+        $process = Start-Process `
+            -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+            -ArgumentList $arguments `
+            -WindowStyle Hidden `
+            -RedirectStandardOutput $stdoutFile `
+            -RedirectStandardError $stderrFile `
+            -PassThru
+        Assert-True ($process.WaitForExit(600000)) "Installation relocation did not finish within ten minutes."
+        $process.WaitForExit()
+        $process.Refresh()
+        $exitCode = $process.ExitCode
+        Write-Host "[relocation-test] source=$Source destination=$Destination exit-code=$exitCode"
+        Get-Content -LiteralPath $stdoutFile -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "[relocation-test] stdout: $_"
+        }
+        Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "[relocation-test] stderr: $_"
+        }
+        return $exitCode
+    } finally {
+        Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
+    }
 }
 
 Assert-True (Test-Path -LiteralPath $gui -PathType Leaf) "GUI binary is missing."
@@ -315,7 +357,7 @@ Assert-True ($rollbackExit -ne 0) "Invalid relocation unexpectedly succeeded."
 Assert-True (Test-Path -LiteralPath (Join-Path $recoveryDir "paragraph-recovery.json")) "Failed relocation removed the recovery checkpoint."
 Assert-True (-not (Test-Path -LiteralPath $rollbackRoot)) "Failed relocation left the destination behind."
 $rollbackControlProcessId = Wait-ControlPanel
-Wait-ExpectedHealth
+Wait-ExpectedHealth -Stage "failed relocation rollback"
 Stop-ManagedControlPanel
 
 $destinationRoot = Join-Path (Split-Path $sourceRoot -Parent) "relocated\zotero-pdf2zh-pro"
@@ -330,7 +372,7 @@ $env:PDF2ZH_WINDOWS_APP_ROOT = $destinationRoot
 Use-PrivateUvEnvironment
 $relocatedControlProcessId = Wait-ControlPanel
 Assert-True ($relocatedControlProcessId -ne $rollbackControlProcessId) "Relocation did not launch the new control center."
-Wait-ExpectedHealth
+Wait-ExpectedHealth -Stage "successful relocation"
 Assert-True (Test-Path -LiteralPath (Join-Path $DataDir "relocation-task\paragraph-recovery.json")) "Relocation lost the recovery checkpoint."
 Assert-True ((Get-SavedInstallRoot) -eq $destinationRoot) "Relocation did not commit the destination root."
 Wait-PathAbsent -Path $sourceRoot
