@@ -119,6 +119,7 @@ function Invoke-RelocationProcess {
             -RedirectStandardOutput $stdoutFile `
             -RedirectStandardError $stderrFile `
             -PassThru
+        $null = $process.Handle
         Assert-True ($process.WaitForExit(600000)) "Installation relocation did not finish within ten minutes."
         $process.WaitForExit()
         $process.Refresh()
@@ -127,8 +128,10 @@ function Invoke-RelocationProcess {
         Get-Content -LiteralPath $stdoutFile -ErrorAction SilentlyContinue | ForEach-Object {
             Write-Host "[relocation-test] stdout: $_"
         }
-        Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue | ForEach-Object {
-            Write-Host "[relocation-test] stderr: $_"
+        if ($exitCode -ne 0) {
+            Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue | ForEach-Object {
+                Write-Host "[relocation-test] stderr: $_"
+            }
         }
         return $exitCode
     } finally {
@@ -268,6 +271,7 @@ $applyProcess = Start-Process `
     -RedirectStandardOutput $applyStdout `
     -RedirectStandardError $applyStderr `
     -PassThru
+$null = $applyProcess.Handle
 Assert-True ($applyProcess.WaitForExit(300000)) "Self-update bootstrap did not finish within five minutes."
 $applyProcess.WaitForExit()
 $applyProcess.Refresh()
@@ -286,6 +290,7 @@ if ($applyExitCode -ne 0) {
     Get-Content -LiteralPath $applyStderr -ErrorAction SilentlyContinue |
         ForEach-Object { Write-Host "[self-update-test] stderr: $_" }
 }
+Assert-True ($applyExitCode -eq 0) "Self-update bootstrap failed with exit code $applyExitCode."
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -PathType Leaf)) "Self-update reported an installation error."
 if (-not (Test-Path -LiteralPath (Join-Path $AppRoot "runtime\uv\uv.exe") -PathType Leaf)) {
     foreach ($candidate in @(
