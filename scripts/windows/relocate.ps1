@@ -83,9 +83,7 @@ function Invoke-RelocationInteropOperation {
     param([string]$Name, [scriptblock]$Action)
     Write-RelocationLog "$Name started."
     try {
-        Invoke-WindowsInteropOperation -Action {
-            & $Action
-        } -OnRetry {
+        Invoke-WindowsInteropOperation -Action $Action -OnRetry {
             param($completedAttempt, $nextAttempt, $delay, $errorRecord)
             Write-RelocationLog (
                 "$Name returned Windows error 122 on attempt $completedAttempt; " +
