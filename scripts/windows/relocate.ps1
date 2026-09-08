@@ -220,9 +220,7 @@ try {
     Write-RelocationLog "[5/8] Verifying the service from the new location..."
     Set-RootEnvironment -Root $DestinationRoot -PrivateRuntime $true
     & (Join-Path (Join-Path $DestinationRoot "bin") "start-server.ps1") -Quiet
-    if (-not $sourceWasRunning) {
-        & (Join-Path (Join-Path $DestinationRoot "bin") "stop-server.ps1") -Quiet
-    }
+    & (Join-Path (Join-Path $DestinationRoot "bin") "stop-server.ps1") -Quiet
 
     Write-RelocationLog "[6/8] Switching the saved installation location..."
     Save-InstallRoot -Path $DestinationRoot
@@ -232,7 +230,12 @@ try {
     Write-RelocationLog "[7/8] Starting the control center from $DestinationRoot..."
     Set-RootEnvironment -Root $DestinationRoot -PrivateRuntime $true
     Remove-Item -LiteralPath (Join-Path $DestinationRoot "last-operation-error.txt") -Force -ErrorAction SilentlyContinue
-    Start-Process -FilePath (Join-Path (Join-Path $DestinationRoot "bin") "$ProductName.exe") -WindowStyle Hidden
+    $targetGui = Join-Path (Join-Path $DestinationRoot "bin") "$ProductName.exe"
+    if ($sourceWasRunning) {
+        Start-Process -FilePath $targetGui -ArgumentList "--post-install" -WindowStyle Hidden
+    } else {
+        Start-Process -FilePath $targetGui -WindowStyle Hidden
+    }
     Write-RelocationLog "[8/8] Cleaning the old installation..."
     try {
         if ($sourcePaths.Uv -and $legacyToolOutsideRoot) {
