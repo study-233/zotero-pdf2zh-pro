@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/plugin-dialog";
+import { confirm, open } from "@tauri-apps/plugin-dialog";
 import "./styles.css";
 import { ControlState, PrimaryAction, UpdateCheck, productRootForParent, toViewModel } from "./state";
 
@@ -95,6 +95,18 @@ function render(state: ControlState): void {
     if (state.lastOperationError) showError(state.lastOperationError);
 }
 
+async function confirmAction(message: string): Promise<boolean> {
+    setBusy(true);
+    try {
+        return await confirm(message, { title: "zotero-pdf2zh-pro", kind: "warning" });
+    } catch (error) {
+        showError(error);
+        return false;
+    } finally {
+        setBusy(false);
+    }
+}
+
 async function checkForUpdates(silent: boolean): Promise<void> {
     if (busy || !currentState?.runningFromInstalledPath) return;
     if (!silent) {
@@ -149,7 +161,7 @@ primary.addEventListener("click", async () => {
     if (currentAction === "install" || currentAction === "upgrade") {
         if (
             currentAction === "upgrade" &&
-            !window.confirm("确认升级并重启吗？任务数据、日志和自启选择都会保留。")
+            !await confirmAction("确认升级并重启吗？任务数据、日志和自启选择都会保留。")
         ) {
             return;
         }
@@ -159,7 +171,7 @@ primary.addEventListener("click", async () => {
             { installRoot: currentAction === "install" ? selectedInstallRoot : currentState?.installRoot ?? null },
         );
     } else if (currentAction === "update") {
-        if (!window.confirm(
+        if (!await confirmAction(
             `确认更新到 v${currentUpdate?.latestVersion ?? "最新版本"} 并重启吗？任务数据、日志和自启选择都会保留。`,
         )) return;
         clearError();
@@ -223,7 +235,7 @@ chooseLocation.addEventListener("click", async () => {
         installRoot.textContent = target;
         return;
     }
-    if (!window.confirm(
+    if (!await confirmAction(
         `确认将控制中心、运行时和全部任务数据迁移到：\n\n${target}\n\n迁移时服务会暂时停止，并打开命令行窗口显示进度。`,
     )) return;
     setBusy(true, "正在准备迁移…");
@@ -239,14 +251,30 @@ byId<HTMLButtonElement>("clear-output").addEventListener("click", () => {
 });
 
 uninstall.addEventListener("click", async () => {
-    if (!window.confirm("确定要卸载 zotero-pdf2zh-pro 吗？默认会保留任务数据和日志。")) return;
-    const purge = window.confirm("是否同时永久删除任务数据、翻译结果和日志？\n\n选择“取消”会保留这些数据。 ");
-    setBusy(true, "正在卸载…");
+    if (busy) return;
+    clearError();
+    setBusy(true);
+    let submitted = false;
     try {
+        if (!await confirm("确定要卸载 zotero-pdf2zh-pro 吗？默认会保留任务数据和日志。", {
+            title: "卸载 zotero-pdf2zh-pro",
+            kind: "warning",
+            okLabel: "卸载",
+            cancelLabel: "取消",
+        })) return;
+        const purge = await confirm("是否同时永久删除任务数据、翻译结果和日志？", {
+            title: "保留卸载数据",
+            kind: "warning",
+            okLabel: "永久删除数据",
+            cancelLabel: "保留数据",
+        });
+        setBusy(true, "正在卸载…");
         await invoke("uninstall_product", { purgeData: purge });
+        submitted = true;
     } catch (error) {
         showError(error);
-        setBusy(false);
+    } finally {
+        if (!submitted) setBusy(false);
     }
 });
 

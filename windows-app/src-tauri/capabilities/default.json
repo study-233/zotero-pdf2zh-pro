@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "The control center only uses its own typed Rust commands.",
   "windows": ["main"],
-  "permissions": ["core:default", "dialog:allow-open"]
+  "permissions": ["core:default", "dialog:allow-open", "dialog:allow-message"]
 }
