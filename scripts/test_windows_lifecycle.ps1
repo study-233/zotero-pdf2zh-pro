@@ -1,5 +1,6 @@
-param(
-    [Parameter(Mandatory = $true)][string]$GuiBinary,
+﻿param(
+    [string]$GuiBinary,
+    [string]$WindowsPackage,
     [Parameter(Mandatory = $true)][string]$PackageSource
 )
 
@@ -8,6 +9,13 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $windowsDir = Join-Path $PSScriptRoot "windows"
+if ($WindowsPackage) {
+    $windowsDir = Join-Path ([IO.Path]::GetTempPath()) ('pdf2zh-lifecycle-package-' + [guid]::NewGuid().ToString('N'))
+    Expand-Archive -LiteralPath (Resolve-Path $WindowsPackage).Path -DestinationPath $windowsDir
+    $GuiBinary = Join-Path $windowsDir 'zotero-pdf2zh-pro.exe'
+} elseif (-not $GuiBinary) {
+    throw 'Provide -WindowsPackage (release verification) or -GuiBinary (local development).'
+}
 $gui = [IO.Path]::GetFullPath($GuiBinary)
 $package = [IO.Path]::GetFullPath($PackageSource)
 . (Join-Path $windowsDir "common.ps1")

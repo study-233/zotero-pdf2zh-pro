@@ -1,10 +1,10 @@
-Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $windowsDir = Join-Path $PSScriptRoot "windows"
 $failed = $false
 $powerShellFiles = @(Get-ChildItem -LiteralPath $windowsDir -Filter "*.ps1")
-$powerShellFiles += Get-Item -LiteralPath (Join-Path $PSScriptRoot "test_windows_lifecycle.ps1")
+$powerShellFiles += Get-ChildItem -LiteralPath $PSScriptRoot -Filter "test_windows_*.ps1"
 $powerShellFiles | ForEach-Object {
     $tokens = $null
     $errors = $null

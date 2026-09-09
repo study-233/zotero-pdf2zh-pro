@@ -30,6 +30,11 @@ pdf2zh-next、BabelDOC 和 RapidOCR 核心快照；来源、SHA 和许可证记�
 ## Windows
 
 Windows 包包含 Tauri 2 控制中心 EXE、故障恢复管理脚本、README、许可证和第三方声明。
+正式构建固定使用 `stable-x86_64-pc-windows-msvc` 工具链和 `x86_64-pc-windows-msvc`
+目标，根目录 `.cargo/config.toml` 启用静态 CRT。打包器只读取显式目标目录并检查普通和
+延迟导入表：不能依赖外部 WebView2Loader、VC++ 或其他未交付的非系统 DLL。
+WebView2 准备脚本嵌入 EXE，在 Tauri 窗口创建前通过 Windows PowerShell 5.1 / WinForms
+运行；不依赖解压目录里的额外脚本。下载文件必须验证微软 Authenticode 签名后才能执行。
 控制中心使用 Rust 后端和原生 TypeScript/CSS 单页前端，不授予通用 Shell 权限。安装时
 通过官方 Astral 安装私有 uv，由 uv 安装托管的 Python 3.13，并从公共 PyPI 安装与控制中心
 相同版本的 `zotero-pdf2zh-pro`。安装根目录优先读取测试覆盖，其次读取当前用户注册表
@@ -67,6 +72,11 @@ git diff --check
 修改 Windows 原生后端或安装脚本时，可在 Windows 本地显式运行 Rust 单测、PowerShell
 语法/安全检查和 `scripts/test_windows_lifecycle.ps1`。Tauri release、ZIP 与 PyPI
 产物只在正式发布流程中构建和校验，不进入日常 CI。
+发布检查还运行 `scripts/test_windows_bootstrap.ps1` 和 `scripts/test_windows_package.ps1`；
+后者从最终 ZIP 解压，以独立工作目录、精简 PATH 验证真实窗口。生命周期验证使用
+`-WindowsPackage dist/zotero-pdf2zh-pro-windows-x64.zip`，从同一 ZIP 读取 EXE 和管理脚本。
+候选版本可以在开发分支触发只构建的 Windows 工作流，输入该分支包含的精确提交；
+公开发布仍须通过完整检查，并在干净 Windows 10/11 环境验收已有/缺失 Runtime 两种情况。
 
 ## macOS 本机源码部署
 

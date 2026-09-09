@@ -13,6 +13,7 @@ import zipfile
 from pathlib import Path
 
 from build_windows_package import package_entries, validate_versions
+from windows_pe import validate_release_pe
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = "study-233/zotero-pdf2zh-pro"
@@ -80,7 +81,7 @@ def collect(version: str, commit: str) -> None:
     with zipfile.ZipFile(windows) as archive:
         assert archive.testzip() is None
         assert archive.namelist() == [e.archive_name for e in package_entries(Path("unused"))]
-        assert archive.read(f"{PRODUCT}.exe")[:2] == b"MZ"
+        validate_release_pe(archive.read(f"{PRODUCT}.exe"))
         assert f'$PackageVersion = "{version}" # release-version' in archive.read("common.ps1").decode("utf-8-sig")
     source = ROOT / f"dist/{PRODUCT}-{version}-source.zip"
     # git archive records the source commit in the ZIP comment.

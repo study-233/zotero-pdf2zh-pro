@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod update;
+mod webview_runtime;
 
 use semver::Version;
 use serde::Serialize;
@@ -31,7 +32,6 @@ const PRODUCT_NAME: &str = "zotero-pdf2zh-pro";
 const DEFAULT_PORT: u16 = 8890;
 const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
 const INSTALL_REGISTRY_KEY: &str = r"Software\zotero-pdf2zh-pro";
-const WEBVIEW2_CLIENT_ID: &str = "{F3017226-FE2A-4295-8BDF-00C72A961EAB}";
 
 #[derive(Default)]
 struct AppContext {
@@ -806,79 +806,14 @@ fn redirect_same_version_candidate() -> bool {
     if read_trimmed(&paths.installed_version).as_deref() != Some(env!("CARGO_PKG_VERSION")) {
         return false;
     }
-    Command::new(&paths.installed_gui).spawn().is_ok()
-}
-
-fn webview2_available() -> bool {
-    use winreg::{enums::*, RegKey};
-    let locations = [
-        (
-            HKEY_LOCAL_MACHINE,
-            format!(r"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{WEBVIEW2_CLIENT_ID}"),
-        ),
-        (
-            HKEY_LOCAL_MACHINE,
-            format!(r"SOFTWARE\Microsoft\EdgeUpdate\Clients\{WEBVIEW2_CLIENT_ID}"),
-        ),
-        (
-            HKEY_CURRENT_USER,
-            format!(r"Software\Microsoft\EdgeUpdate\Clients\{WEBVIEW2_CLIENT_ID}"),
-        ),
-    ];
-    let registered = locations.iter().any(|(root, path)| {
-        RegKey::predef(*root)
-            .open_subkey(path)
-            .ok()
-            .and_then(|key| key.get_value::<String, _>("pv").ok())
-            .map(|version| !version.trim().is_empty() && version != "0.0.0.0")
-            .unwrap_or(false)
-    });
-    if registered {
-        return true;
-    }
-    ["ProgramFiles(x86)", "ProgramFiles", "LOCALAPPDATA"]
-        .iter()
-        .filter_map(env::var_os)
-        .map(PathBuf::from)
-        .map(|root| root.join(r"Microsoft\EdgeWebView\Application"))
-        .filter_map(|root| fs::read_dir(root).ok())
-        .flatten()
-        .filter_map(Result::ok)
-        .any(|entry| entry.path().join("msedgewebview2.exe").is_file())
-}
-
-fn show_webview2_prompt() {
-    use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, IDYES, MB_ICONERROR, MB_YESNO};
-    let wide = |value: &str| {
-        OsStr::new(value)
-            .encode_wide()
-            .chain(std::iter::once(0))
-            .collect::<Vec<_>>()
-    };
-    let title = wide(PRODUCT_NAME);
-    let message =
-        wide("未检测到 Microsoft Edge WebView2 Runtime。是否打开 Microsoft 官方下载页面？");
-    let answer = unsafe {
-        MessageBoxW(
-            std::ptr::null_mut(),
-            message.as_ptr(),
-            title.as_ptr(),
-            MB_YESNO | MB_ICONERROR,
-        )
-    };
-    if answer == IDYES {
-        let _ = Command::new("explorer.exe")
-            .arg("https://developer.microsoft.com/microsoft-edge/webview2/")
-            .spawn();
-    }
+    Command::new(&paths.installed_gui).args(env::args_os().skip(1)).spawn().is_ok()
 }
 
 fn main() {
-    if redirect_same_version_candidate() {
+    if !webview_runtime::ensure_ready(has_argument("--autostart")) {
         return;
     }
-    if !cfg!(debug_assertions) && !webview2_available() {
-        show_webview2_prompt();
+    if redirect_same_version_candidate() {
         return;
     }
 

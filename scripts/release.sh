@@ -164,14 +164,15 @@ rm -rf -- plugin/build
 
 CI=true "${PNPM[@]}" --dir windows-app install --frozen-lockfile
 "${PNPM[@]}" --dir windows-app test
-cargo test --manifest-path windows-app/src-tauri/Cargo.toml
-"${PNPM[@]}" --dir windows-app tauri build --no-bundle
+cargo +stable-x86_64-pc-windows-msvc test --locked --target x86_64-pc-windows-msvc --manifest-path windows-app/src-tauri/Cargo.toml
+RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-msvc "${PNPM[@]}" --dir windows-app tauri build --no-bundle --target x86_64-pc-windows-msvc
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
 uv run --no-project python scripts/build_windows_package.py --version "$VERSION"
 uv run --no-project python scripts/build_windows_update_manifest.py \
     --version "$VERSION" --package "$WINDOWS_PACKAGE" --output "$WINDOWS_UPDATE_MANIFEST"
 uv run --no-project python scripts/test_windows_update_manifest.py
+uv run --no-project python scripts/test_windows_pe.py
 
 git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock \
     scripts/windows/common.ps1 windows-app/package.json windows-app/src-tauri/Cargo.toml \

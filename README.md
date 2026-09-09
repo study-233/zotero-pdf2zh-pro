@@ -14,7 +14,7 @@
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 
-当前统一版本：<!-- release-version --> `1.6.6`
+当前统一版本：<!-- release-version --> `1.6.7`
 
 [Windows 安装](#windows) · [macOS 安装](#macos) · [配置翻译 API](#api-configuration) ·
 [开始翻译](#usage) · [常见问题](#troubleshooting)
@@ -117,7 +117,8 @@ API Key 与模型权限由服务商提供，安装本插件不会自动获得 AP
 
 ### 如果控制中心打不开
 
-- 控制中心需要 [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)。缺失时程序会提示官方安装入口，安装后重新打开控制中心。
+- 控制中心会自动检测 Microsoft Edge WebView2 Runtime。缺失时显示准备窗口，联网从微软下载、验证签名并安装，完成后自动继续启动；失败可重试、查看日志或打开[微软官方下载页面](https://developer.microsoft.com/microsoft-edge/webview2/)。首次准备需要联网，通常无需管理员权限。
+- 如果旧版提示缺少 `WebView2Loader.dll`，请下载新版 Windows ZIP，完整解压后运行其中的 EXE，按界面安装或升级；无需先卸载原版，已有配置和翻译记录会保留。
 - 当前 EXE 未签名，Windows SmartScreen 可能提示风险。请只从本项目 Release 下载，并核对发布页提供的 SHA-256。
 - 图形界面仍无法使用时，可查看解压目录内的 [Windows 说明](scripts/windows/README.txt)，使用 `install.cmd`、`start-server.cmd` 或 `view-log.cmd` 等故障恢复入口。
 
@@ -467,7 +468,7 @@ curl -fsS http://127.0.0.1:8890/health
 | `/health` 返回 `degraded` | 查看 `workspace` 中的写入状态和错误，检查数据目录权限与磁盘空间 |
 | 浏览器打开服务根地址返回 404 | 健康检查路径是 `/health`；不要用首页是否存在判断服务是否启动 |
 | 8890 端口已被占用 | 检查是否重复运行 Homebrew、uv 或其他服务；只停止自己确认的服务，不要直接结束未知进程 |
-| Windows 控制中心无法打开 | 检查是否完整解压、是否具备 WebView2 Runtime；查看安装包中的故障恢复脚本 |
+| Windows 控制中心无法打开 | 旧版缺少 DLL 时下载新版完整 ZIP；运行环境准备失败时点击“重试”或“查看日志”，诊断文件为产品目录下的 `logs/webview2-setup.log` |
 | `command not found: brew` | 完成 Homebrew 安装后的 Next steps 并重新打开终端 |
 | `command not found: zotero-pdf2zh-pro` | uv 用户执行 `uv tool update-shell` 后重开终端；Homebrew 用户先确认安装命令成功 |
 | 本地检查成功，但 API 测试失败 | 本地服务和上游 API 是两条连接；检查 API 地址、Key、模型及协议 |

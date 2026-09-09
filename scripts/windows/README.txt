@@ -31,7 +31,8 @@ install.cmd、start-server.cmd、stop-server.cmd、view-log.cmd 和 uninstall.cm
 
 系统要求与安全说明
 
-- 需要 Windows 10/11 x64 和 Microsoft Edge WebView2 Runtime。缺失 WebView2 时，程序会在创建窗口前给出提示；请从 Microsoft 官方网站下载安装。
+- 需要 Windows 10/11 x64。双击 EXE 后会自动检测 WebView2 Runtime，缺失时联网从微软下载、验证签名并安装，完成后自动打开控制台；通常无需管理员权限。失败可重试、查看日志或打开微软官方下载页面。
+- 旧版提示缺少 WebView2Loader.dll 时，请下载新版 ZIP，完整解压后运行 EXE 并按界面安装或升级，无需先卸载旧版。运行环境准备日志位于产品目录下的 logs\webview2-setup.log。
 - 当前 EXE 未进行代码签名，Windows SmartScreen 可能显示警告。请只从本项目官方 GitHub Release 下载，并核对发布页 SHA-256。
 - 程序不会创建 Windows Service、计划任务或防火墙规则，也不会停止占用 8890 端口的未知进程。
 - 登录自启仅写入当前用户可见、可关闭的启动项，固定使用 --autostart 参数。

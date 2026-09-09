@@ -49,7 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
-          git merge-base --is-ancestor "$RELEASE_COMMIT" origin/main
+          git merge-base --is-ancestor "$RELEASE_COMMIT" "$GITHUB_SHA"
           git switch -C main "$RELEASE_COMMIT"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -82,6 +82,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable-x86_64-pc-windows-msvc
+          targets: x86_64-pc-windows-msvc
 
       - name: Cache Rust build
         uses: Swatinem/rust-cache@v2
@@ -91,6 +94,14 @@ jobs:
       - name: Verify committed versions
         shell: bash
         run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT"
+
+      - name: Check Windows startup scripts and dependency guard
+        shell: powershell
+        run: |
+          & scripts/check_windows_scripts.ps1
+          & scripts/test_windows_bootstrap.ps1
+          uv run --no-project python scripts/test_windows_pe.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build distributions, test Windows frontend and Rust
         shell: bash
@@ -133,7 +144,8 @@ jobs:
           if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'PowerShell 5.1 is required' }
           & scripts/check_windows_scripts.ps1
           $wheel = (Resolve-Path "server/dist/zotero_pdf2zh_pro-$env:RELEASE_VERSION-py3-none-any.whl").Path
-          & scripts/test_windows_lifecycle.ps1 -GuiBinary 'windows-app/src-tauri/target/release/zotero-pdf2zh-pro.exe' -PackageSource $wheel
+          & scripts/test_windows_package.ps1 -Package 'dist/zotero-pdf2zh-pro-windows-x64.zip'
+          & scripts/test_windows_lifecycle.ps1 -WindowsPackage 'dist/zotero-pdf2zh-pro-windows-x64.zip' -PackageSource $wheel
 
       - name: Verify and collect release artifacts
         shell: bash

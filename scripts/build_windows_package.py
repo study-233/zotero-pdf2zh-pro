@@ -9,10 +9,12 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from windows_pe import validate_release_pe
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WINDOWS_DIR = REPO_ROOT / "scripts" / "windows"
 TAURI_DIR = REPO_ROOT / "windows-app" / "src-tauri"
-DEFAULT_GUI_BINARY = TAURI_DIR / "target" / "release" / "zotero-pdf2zh-pro.exe"
+DEFAULT_GUI_BINARY = TAURI_DIR / "target" / "x86_64-pc-windows-msvc" / "release" / "zotero-pdf2zh-pro.exe"
 
 
 @dataclass(frozen=True)
@@ -104,10 +106,11 @@ def validate_gui_binary(gui_binary: Path) -> None:
     if not gui_binary.is_file():
         raise RuntimeError(
             f"Tauri release executable is missing: {gui_binary}. "
-            "Run `pnpm --dir windows-app tauri build --no-bundle` on Windows first."
+            "Run `pnpm --dir windows-app tauri build --no-bundle --target x86_64-pc-windows-msvc` on Windows first."
         )
     if gui_binary.stat().st_size < 1024 or gui_binary.read_bytes()[:2] != b"MZ":
         raise RuntimeError(f"Tauri output is not a valid Windows PE executable: {gui_binary}")
+    validate_release_pe(gui_binary.read_bytes())
 
 
 def build_package(version: str, output_dir: Path, gui_binary: Path) -> Path:
@@ -142,8 +145,7 @@ def build_package(version: str, output_dir: Path, gui_binary: Path) -> Path:
             raise RuntimeError("Windows package content validation failed")
         if archive.testzip() is not None:
             raise RuntimeError("Windows package CRC validation failed")
-        if archive.read("zotero-pdf2zh-pro.exe")[:2] != b"MZ":
-            raise RuntimeError("Packaged GUI executable validation failed")
+        validate_release_pe(archive.read("zotero-pdf2zh-pro.exe"))
     return output_path
 
 
