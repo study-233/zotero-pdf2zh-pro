@@ -102,6 +102,10 @@ jobs:
           & scripts/test_windows_bootstrap.ps1
           uv run --no-project python scripts/test_windows_pe.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          . scripts/windows/prepare-webview2.ps1 -FunctionsOnly
+          $preparation = @{ Status = 'working'; Message = ''; Installer = $null }
+          Invoke-WebView2Preparation -State $preparation -DiagnosticPath "$env:RUNNER_TEMP/webview2-setup.log"
+          if ($preparation.Status -ne 'ready') { throw $preparation.Message }
 
       - name: Build distributions, test Windows frontend and Rust
         shell: bash
@@ -144,7 +148,6 @@ jobs:
           if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'PowerShell 5.1 is required' }
           & scripts/check_windows_scripts.ps1
           $wheel = (Resolve-Path "server/dist/zotero_pdf2zh_pro-$env:RELEASE_VERSION-py3-none-any.whl").Path
-          & scripts/test_windows_package.ps1 -Package 'dist/zotero-pdf2zh-pro-windows-x64.zip'
           & scripts/test_windows_lifecycle.ps1 -WindowsPackage 'dist/zotero-pdf2zh-pro-windows-x64.zip' -PackageSource $wheel
 
       - name: Verify and collect release artifacts
@@ -171,5 +174,6 @@ jobs:
             dist/*.zip
             dist/*.json
             ${{ runner.temp }}/zotero-pdf2zh-pro/logs/**
+            ${{ runner.temp }}/webview2-setup.log
           if-no-files-found: ignore
           retention-days: 14

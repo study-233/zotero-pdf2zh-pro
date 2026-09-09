@@ -173,6 +173,8 @@ uv run --no-project python scripts/build_windows_update_manifest.py \
     --version "$VERSION" --package "$WINDOWS_PACKAGE" --output "$WINDOWS_UPDATE_MANIFEST"
 uv run --no-project python scripts/test_windows_update_manifest.py
 uv run --no-project python scripts/test_windows_pe.py
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_bootstrap.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_package.ps1 -Package "$WINDOWS_PACKAGE"
 
 git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock \
     scripts/windows/common.ps1 windows-app/package.json windows-app/src-tauri/Cargo.toml \

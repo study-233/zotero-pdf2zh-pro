@@ -1,6 +1,19 @@
 ﻿Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+function Test-PreparationOnlyRoot {
+    param([string]$Path)
+    if (-not (Test-Path -LiteralPath $Path -PathType Container)) { return $false }
+    $entries = @(Get-ChildItem -Force -LiteralPath $Path)
+    if ($entries.Count -ne 1 -or $entries[0].Name -ne 'logs' -or -not $entries[0].PSIsContainer -or
+        ($entries[0].Attributes -band [IO.FileAttributes]::ReparsePoint)) { return $false }
+    foreach ($entry in @(Get-ChildItem -Force -LiteralPath $entries[0].FullName)) {
+        if ($entry.PSIsContainer -or ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+            $entry.Name -notin @('control-panel.log', 'webview2-setup.log')) { return $false }
+    }
+    return $true
+}
+
 $PackageVersion = "1.6.7" # release-version
 $ProductName = "zotero-pdf2zh-pro"
 $ServerHost = "127.0.0.1"

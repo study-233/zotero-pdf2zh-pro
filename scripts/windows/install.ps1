@@ -111,7 +111,8 @@ function Assert-InstallDestination {
         $preservedInstallation = $savedRoot -and
             (Test-PathEqual -Left $savedRoot -Right $fullRoot) -and
             @($entries | Where-Object { $_.Name -notin @("data", "logs") }).Count -eq 0
-        if ($entries.Count -gt 0 -and -not $recognizedInstallation -and -not $preservedInstallation -and -not $AllowPreparedDestination) {
+        $preparationOnly = Test-PreparationOnlyRoot -Path $fullRoot
+        if ($entries.Count -gt 0 -and -not $recognizedInstallation -and -not $preservedInstallation -and -not $preparationOnly -and -not $AllowPreparedDestination) {
             throw "The installation directory is not empty and is not a recognized installation: $fullRoot"
         }
     }

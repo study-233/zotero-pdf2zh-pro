@@ -77,6 +77,21 @@ foreach ($stage in @("stop-server.ps1", "start-server.ps1", "Save-InstallRoot", 
 
 . (Join-Path $windowsDir "common.ps1")
 
+$preparationTestRoot = Join-Path ([IO.Path]::GetTempPath()) ('pdf2zh-preparation-root-test-' + [guid]::NewGuid().ToString('N'))
+try {
+    $testLogs = Join-Path $preparationTestRoot 'logs'
+    New-Item -ItemType Directory -Path $testLogs -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $testLogs 'webview2-setup.log') -Value 'Prepared runtime'
+    if (-not (Test-PreparationOnlyRoot $preparationTestRoot)) { throw 'Preparation logs block the first install.' }
+    Set-Content -LiteralPath (Join-Path $testLogs 'unrelated.txt') -Value 'User file'
+    if (Test-PreparationOnlyRoot $preparationTestRoot) { throw 'An unrelated file was accepted as preparation output.' }
+    Remove-Item -LiteralPath (Join-Path $testLogs 'unrelated.txt')
+    New-Item -ItemType Directory -Path (Join-Path $testLogs 'nested') | Out-Null
+    if (Test-PreparationOnlyRoot $preparationTestRoot) { throw 'A nested directory was accepted as preparation output.' }
+} finally {
+    Remove-Item -LiteralPath $preparationTestRoot -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 $win32Attempts = [Collections.ArrayList]::new()
 $win32Result = Invoke-WindowsInteropOperation -RetryDelaysMilliseconds @(0, 0) -Action {
     [void]$win32Attempts.Add($true)

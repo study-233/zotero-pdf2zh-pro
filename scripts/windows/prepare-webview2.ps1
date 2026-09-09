@@ -18,7 +18,9 @@ function Test-WebView2Runtime {
         "HKLM:\SOFTWARE\Microsoft\EdgeUpdate\Clients\$client"
     )) {
         try {
-            $version = [version]([string](& $ReadVersion $key)).Trim()
+            $text = ([string](& $ReadVersion $key)).Trim()
+            if ($text -notmatch '^[0-9]+(\.[0-9]+){1,3}$') { continue }
+            $version = [version]$text
             if ($version -gt [version]'0.0.0.0') { return $true }
         } catch {
             # Missing, inaccessible and malformed registrations are not success.
@@ -86,6 +88,7 @@ function Invoke-WebView2Preparation {
         [scriptblock]$Detect = { Test-WebView2Runtime },
         [scriptblock]$Download = { param($Path, $Progress) Save-WebView2Bootstrapper $Path $Progress },
         [scriptblock]$Verify = { param($Path) Assert-MicrosoftSignature (Get-AuthenticodeSignature -LiteralPath $Path) },
+        [scriptblock]$Pause = { Start-Sleep -Seconds 1 },
         [scriptblock]$Install = {
             param($Path, $Progress)
             $start = [Diagnostics.ProcessStartInfo]::new()
@@ -121,7 +124,7 @@ function Invoke-WebView2Preparation {
                 $State.Status = 'ready'
                 return
             }
-            Start-Sleep -Seconds 1
+            & $Pause
         }
         throw '安装后仍未检测到运行环境。请重试；如系统提示需要重启，请重启电脑。'
     } catch {
@@ -186,6 +189,10 @@ $timer.Interval = 200
 $sourcePath = $PSCommandPath
 
 function Start-PreparationWorker {
+    if ($null -ne $script:state.Installer -and $script:state.Installer.HasExited) {
+        $script:state.Installer.Dispose()
+        $script:state.Installer = $null
+    }
     $script:state.Status = 'working'
     $script:state.Message = '正在检查运行环境…'
     $retry.Visible = $false

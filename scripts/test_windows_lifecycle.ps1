@@ -150,6 +150,14 @@ function Invoke-RelocationProcess {
 Assert-True (Test-Path -LiteralPath $gui -PathType Leaf) "GUI binary is missing."
 Assert-True (Test-Path -LiteralPath $package -PathType Leaf) "Server wheel is missing."
 
+# A real first launch writes these before the user clicks Install.
+if (-not (Test-Path -LiteralPath $AppRoot)) {
+    $startupLogs = Join-Path $AppRoot 'logs'
+    New-Item -ItemType Directory -Path $startupLogs -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $startupLogs 'webview2-setup.log') -Value 'Runtime preparation completed'
+    Set-Content -LiteralPath (Join-Path $startupLogs 'control-panel.log') -Value 'First control-center launch'
+}
+
 $initialInstallArguments = @{
     PackageSource = $package
     GuiSource = $gui

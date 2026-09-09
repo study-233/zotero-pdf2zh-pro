@@ -14,12 +14,12 @@ foreach ($version in @('', '0.0.0.0', 'broken', '1..2')) {
 Assert-True (-not (Test-WebView2Runtime -ReadVersion { throw 'No registry value' })) 'Missing registration accepted'
 Assert-True (Test-WebView2Runtime -ReadVersion {
     param($Path)
-    if ($Path -like 'HKCU:*') { return '128.0.2739.42' }
+    if ($Path -eq 'HKCU:\Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}') { return '128.0.2739.42' }
     throw 'Missing machine installation'
 }) 'Per-user runtime not detected'
 Assert-True (Test-WebView2Runtime -ReadVersion {
     param($Path)
-    if ($Path -like '*WOW6432Node*') { return '128.0.2739.42' }
+    if ($Path -eq 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}') { return '128.0.2739.42' }
     throw 'Missing user installation'
 }) 'Per-machine runtime not detected'
 
@@ -64,6 +64,10 @@ try {
     $state = @{ Status = 'working'; Message = ''; Installer = $null }
     Invoke-WebView2Preparation $state $logPath -Detect { $script:runtimeReady } -Download {} -Verify {} -Install { $script:runtimeReady = $true }
     Assert-True ($state.Status -eq 'ready') 'Successful installation did not continue startup'
+
+    $state = @{ Status = 'working'; Message = ''; Installer = $null }
+    Invoke-WebView2Preparation $state $logPath -Detect { $false } -Download {} -Verify {} -Install {} -Pause {}
+    Assert-True ($state.Status -eq 'failed') 'Successful installer exit without Runtime was accepted'
 
     $name = 'Local\pdf2zh-mutex-test-' + [guid]::NewGuid().ToString('N')
     $mutex = [Threading.Mutex]::new($false, $name)

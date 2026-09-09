@@ -12,7 +12,6 @@ use std::{
     fs::{self, OpenOptions},
     io::{BufRead, BufReader, Read, Write},
     net::{Ipv4Addr, SocketAddr, TcpStream},
-    os::windows::ffi::OsStrExt,
     os::windows::process::CommandExt,
     path::{Path, PathBuf},
     process::{Command, Stdio},
