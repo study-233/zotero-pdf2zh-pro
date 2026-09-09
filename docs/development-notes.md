@@ -106,6 +106,10 @@ scripts/release.sh <version>
 提交并推送主仓库，然后发布 PyPI 和公开 GitHub Release。日常核心测试由 CI 承担，
 发布脚本不重复运行单测、lint 或全新虚拟环境冒烟。
 
+已完成 Windows 构建和新电脑验收时，可在 `publish-pypi.yml` 指定 `tag`、成功的
+`build_run_id` 并启用 `publish_github`，直接发布该次构建的同一份产物。流程先核对
+构建状态、标签提交、版本和所有哈希，再发布 PyPI 与 GitHub，避免重新构建。
+
 PyPI Trusted Publisher 必须绑定：
 
 - PyPI project：`zotero-pdf2zh-pro`
