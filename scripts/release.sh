@@ -166,6 +166,7 @@ rm -rf -- plugin/build
 "${PNPM[@]}" --dir plugin build
 
 CI=true "${PNPM[@]}" --dir windows-app install --frozen-lockfile
+"${PNPM[@]}" --dir windows-app test
 RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-msvc "${PNPM[@]}" --dir windows-app tauri build --no-bundle --target x86_64-pc-windows-msvc
 cargo +stable-x86_64-pc-windows-msvc test --release --locked --target x86_64-pc-windows-msvc --manifest-path windows-app/src-tauri/Cargo.toml
 
