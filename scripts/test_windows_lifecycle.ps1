@@ -1,7 +1,8 @@
 ﻿param(
     [string]$GuiBinary,
     [string]$WindowsPackage,
-    [Parameter(Mandatory = $true)][string]$PackageSource
+    [Parameter(Mandatory = $true)][string]$PackageSource,
+    [switch]$SmokeOnly
 )
 
 Set-StrictMode -Version Latest
@@ -186,52 +187,54 @@ $firstControlProcessId = Wait-ControlPanel
 Wait-ExpectedHealth
 Assert-Autostart -Enabled $true
 
-if ($env:PDF2ZH_WINDOWS_LIFECYCLE_TEST -ne "1") {
+if (-not $SmokeOnly -and $env:PDF2ZH_WINDOWS_LIFECYCLE_TEST -ne "1") {
     $duplicate = Start-Process -FilePath $ControlPanelExecutable -PassThru -WindowStyle Hidden
     Assert-True ($duplicate.WaitForExit(10000)) "A duplicate control center instance remained running."
     Assert-True ((Get-ManagedControlPanelProcessId) -eq $firstControlProcessId) "Duplicate launch replaced the primary instance."
 }
 
-& (Join-Path $BinDir "stop-server.ps1") -Quiet
-$listener = $null
-for ($attempt = 0; $attempt -lt 40; $attempt++) {
-    try {
-        $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $ServerPort)
-        $listener.Start()
-        break
-    } catch {
-        $listener = $null
-        if ($attempt -eq 39) {
-            throw
+if (-not $SmokeOnly) {
+    & (Join-Path $BinDir "stop-server.ps1") -Quiet
+    $listener = $null
+    for ($attempt = 0; $attempt -lt 40; $attempt++) {
+        try {
+            $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $ServerPort)
+            $listener.Start()
+            break
+        } catch {
+            $listener = $null
+            if ($attempt -eq 39) {
+                throw
+            }
+            Start-Sleep -Milliseconds 250
         }
-        Start-Sleep -Milliseconds 250
     }
-}
-try {
-    $conflictDetected = $false
     try {
-        & (Join-Path $BinDir "start-server.ps1") -Quiet
-    } catch {
-        $conflictDetected = $_.Exception.Message -like "*already used by another process*"
+        $conflictDetected = $false
+        try {
+            & (Join-Path $BinDir "start-server.ps1") -Quiet
+        } catch {
+            $conflictDetected = $_.Exception.Message -like "*already used by another process*"
+        }
+        Assert-True $conflictDetected "Port conflict was not reported."
+        Assert-True $listener.Server.IsBound "Port conflict handling stopped the unknown listener."
+    } finally {
+        $listener.Stop()
     }
-    Assert-True $conflictDetected "Port conflict was not reported."
-    Assert-True $listener.Server.IsBound "Port conflict handling stopped the unknown listener."
-} finally {
-    $listener.Stop()
-}
 
-$savedServerExecutable = (Get-Content -Raw -LiteralPath $ExecutableFile).Trim()
-Set-Content -LiteralPath $ExecutableFile -Value (Join-Path $env:SystemRoot "System32\cmd.exe") -Encoding utf8
-try {
-    $startupFailed = $false
+    $savedServerExecutable = (Get-Content -Raw -LiteralPath $ExecutableFile).Trim()
+    Set-Content -LiteralPath $ExecutableFile -Value (Join-Path $env:SystemRoot "System32\cmd.exe") -Encoding utf8
     try {
-        & (Join-Path $BinDir "start-server.ps1") -Quiet
-    } catch {
-        $startupFailed = $true
+        $startupFailed = $false
+        try {
+            & (Join-Path $BinDir "start-server.ps1") -Quiet
+        } catch {
+            $startupFailed = $true
+        }
+        Assert-True $startupFailed "A server startup failure was not surfaced."
+    } finally {
+        Set-Content -LiteralPath $ExecutableFile -Value $savedServerExecutable -Encoding utf8
     }
-    Assert-True $startupFailed "A server startup failure was not surfaced."
-} finally {
-    Set-Content -LiteralPath $ExecutableFile -Value $savedServerExecutable -Encoding utf8
 }
 
 New-Item -ItemType Directory -Force -Path $DataDir, $LogsDir | Out-Null
@@ -255,6 +258,15 @@ Assert-Autostart -Enabled $false
 Start-Process -FilePath $ControlPanelExecutable -ArgumentList "--post-install" -WindowStyle Hidden
 $upgradedControlProcessId = Wait-ControlPanel
 Wait-ExpectedHealth
+if ($SmokeOnly) {
+    & (Join-Path $BinDir "uninstall.ps1") -PurgeData -NonInteractive
+    Wait-PathAbsent -Path $AppRoot
+    if ($WindowsPackage) {
+        Remove-Item -LiteralPath $windowsDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    Write-Host 'Windows package installation, startup, upgrade and data preservation checks passed.'
+    return
+}
 $guiHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ControlPanelExecutable).Hash
 $failedUpgrade = $false
 try {

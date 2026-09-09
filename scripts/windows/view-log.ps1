@@ -1,4 +1,4 @@
-. (Join-Path $PSScriptRoot "common.ps1")
+﻿. (Join-Path $PSScriptRoot "common.ps1")
 
 New-Item -ItemType Directory -Force -Path $LogsDir | Out-Null
 if (-not (Test-Path -LiteralPath $LogFile)) {

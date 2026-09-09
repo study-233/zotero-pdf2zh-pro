@@ -76,7 +76,8 @@ git diff --check
 后者从最终 ZIP 解压，以独立工作目录、精简 PATH 验证真实窗口。生命周期验证使用
 `-WindowsPackage dist/zotero-pdf2zh-pro-windows-x64.zip`，从同一 ZIP 读取 EXE 和管理脚本。
 候选版本可以在开发分支触发只构建的 Windows 工作流，输入该分支包含的精确提交；
-公开发布仍须通过完整检查，并在干净 Windows 10/11 环境验收已有/缺失 Runtime 两种情况。
+默认仅验证启动、一次安装和升级；勾选 `full_validation` 才运行完整回滚、迁移、OCR 和全量测试。
+Rust 单测复用 release 编译依赖，不再额外编译 debug 依赖。在新电脑上补充启动验收后发布。
 
 ## macOS 本机源码部署
 

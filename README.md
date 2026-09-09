@@ -527,8 +527,9 @@ Docker 不会自动继承宿主机的证书信任库，需要私有 CA 时应在
 
 也可在 GitHub Actions 手动运行 `Build Windows release`，输入已提交的版本号和完整
 40 位提交 SHA。工作流在 Windows runner 上执行 `scripts/release.sh <版本> --no-push`、
-插件与服务测试、PowerShell 5.1 安装升级回滚及 Python 3.13 OCR 检查，完成后上传
-XPI、Windows ZIP、Python 包、对应源码和 `checksums.json`。它只构建和验证，不推送
+Windows 启动依赖、环境准备、最终 ZIP 窗口、一次安装与升级检查，完成后上传
+XPI、Windows ZIP、Python 包、对应源码和 `checksums.json`。需要完整的插件/服务测试、
+OCR、回滚与迁移检查时，勾选 `full_validation`。它只构建和验证，不推送
 标签或发布渠道；确认全部通过后，以同一提交创建版本标签，运行 `Publish PyPI`，
 再发布 GitHub Release 并更新 Homebrew 配方。日常 CI 不执行完整 Windows 发布构建。
 

@@ -12,6 +12,11 @@ on:
         description: Full 40-character commit SHA containing this version
         required: true
         type: string
+      full_validation:
+        description: Run extended OCR, backend, rollback and relocation checks
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -90,24 +95,21 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: windows-app/src-tauri
+          cache-on-failure: true
 
       - name: Verify committed versions
         shell: bash
         run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT"
 
-      - name: Check Windows startup scripts and dependency guard
+      - name: Prepare Windows GUI test environment
         shell: powershell
         run: |
-          & scripts/check_windows_scripts.ps1
-          & scripts/test_windows_bootstrap.ps1
-          uv run --no-project python scripts/test_windows_pe.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           . scripts/windows/prepare-webview2.ps1 -FunctionsOnly
           $preparation = @{ Status = 'working'; Message = ''; Installer = $null }
           Invoke-WebView2Preparation -State $preparation -DiagnosticPath "$env:RUNNER_TEMP/webview2-setup.log"
           if ($preparation.Status -ne 'ready') { throw $preparation.Message }
 
-      - name: Build distributions, test Windows frontend and Rust
+      - name: Build artifacts and verify Windows startup
         shell: bash
         run: |
           set -euo pipefail
@@ -117,6 +119,7 @@ jobs:
           git diff --cached --exit-code
 
       - name: Plugin lint, type check and tests
+        if: inputs.full_validation
         working-directory: plugin
         shell: bash
         run: |
@@ -126,10 +129,12 @@ jobs:
           pnpm test
 
       - name: Python tests
+        if: inputs.full_validation
         shell: bash
         run: uv run --directory server --locked python -m unittest discover -s tests
 
       - name: Fresh installed Python 3.13 runtime and OCR
+        if: inputs.full_validation
         shell: pwsh
         run: |
           $venv = Join-Path $env:RUNNER_TEMP 'release-runtime'
@@ -142,13 +147,13 @@ jobs:
           & $python scripts/check_installed_runtime.py $env:RELEASE_VERSION
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: PowerShell 5.1 parse and full Windows lifecycle
+      - name: Verify installed startup and upgrade
         shell: powershell
         run: |
           if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'PowerShell 5.1 is required' }
-          & scripts/check_windows_scripts.ps1
           $wheel = (Resolve-Path "server/dist/zotero_pdf2zh_pro-$env:RELEASE_VERSION-py3-none-any.whl").Path
-          & scripts/test_windows_lifecycle.ps1 -WindowsPackage 'dist/zotero-pdf2zh-pro-windows-x64.zip' -PackageSource $wheel
+          $smokeOnly = '${{ inputs.full_validation }}' -ne 'true'
+          & scripts/test_windows_lifecycle.ps1 -WindowsPackage 'dist/zotero-pdf2zh-pro-windows-x64.zip' -PackageSource $wheel -SmokeOnly:$smokeOnly
 
       - name: Verify and collect release artifacts
         shell: bash

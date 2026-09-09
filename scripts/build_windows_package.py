@@ -124,6 +124,12 @@ def build_package(version: str, output_dir: Path, gui_binary: Path) -> Path:
     missing = [entry.source for entry in entries if not entry.source.is_file()]
     if missing:
         raise RuntimeError(f"Windows package files are missing: {missing}")
+    for entry in entries:
+        if entry.archive_name.endswith(".ps1"):
+            payload = entry.source.read_bytes()
+            if not payload.startswith(b"\xef\xbb\xbf"):
+                raise RuntimeError(f"PowerShell 5.1 scripts require UTF-8 BOM: {entry.source}")
+            payload.decode("utf-8-sig")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "zotero-pdf2zh-pro-windows-x64.zip"

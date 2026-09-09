@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$PackageSource,
     [string]$GuiSource,
     [string]$InstallRoot,

@@ -1,4 +1,4 @@
-param([switch]$Quiet)
+﻿param([switch]$Quiet)
 
 . (Join-Path $PSScriptRoot "common.ps1")
 Assert-WindowsX64
