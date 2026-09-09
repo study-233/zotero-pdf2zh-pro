@@ -123,7 +123,7 @@ function Set-ProductShortcuts {
     $controlShortcut.TargetPath = $gui
     $controlShortcut.WorkingDirectory = $Root
     $controlShortcut.Save()
-    $uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "卸载.lnk"))
+    $uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "Uninstall.lnk"))
     $uninstallShortcut.TargetPath = Join-Path (Join-Path $Root "bin") "uninstall.cmd"
     $uninstallShortcut.WorkingDirectory = $Root
     $uninstallShortcut.Save()

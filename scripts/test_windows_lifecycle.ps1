@@ -179,7 +179,7 @@ Assert-True (Test-Path -LiteralPath (Join-Path $AppRoot "cache") -PathType Conta
 $shortcuts = @(Get-ChildItem -LiteralPath $StartMenuDir -Filter "*.lnk")
 Assert-True ($shortcuts.Count -eq 2) "Installer must create exactly two Start menu shortcuts."
 Assert-True ($shortcuts.Name -contains "$ProductName.lnk") "Start menu is missing the control center shortcut."
-Assert-True ($shortcuts.Name -contains "卸载.lnk") "Start menu is missing the uninstall shortcut."
+Assert-True ($shortcuts.Name -contains "Uninstall.lnk") "Start menu is missing the uninstall shortcut."
 Assert-True (-not (Get-ListeningProcessId)) "Recovery installer started the server unexpectedly."
 
 Start-Process -FilePath $ControlPanelExecutable -ArgumentList @("--post-install", "--enable-autostart") -WindowStyle Hidden
@@ -415,7 +415,7 @@ Assert-True (Test-Path -LiteralPath (Join-Path $UvCacheDir "relocation-cache-mar
 Assert-True ((Get-SavedInstallRoot) -eq $destinationRoot) "Relocation did not commit the destination root."
 $shell = New-Object -ComObject WScript.Shell
 $controlShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "$ProductName.lnk"))
-$uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "卸载.lnk"))
+$uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "Uninstall.lnk"))
 Assert-True ($controlShortcut.TargetPath -eq $ControlPanelExecutable) "Relocation left the control center shortcut pointing to the source."
 Assert-True ($uninstallShortcut.TargetPath -eq (Join-Path $BinDir "uninstall.cmd")) "Relocation left the uninstall shortcut pointing to the source."
 Assert-Autostart -Enabled $false
