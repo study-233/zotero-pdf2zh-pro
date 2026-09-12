@@ -412,10 +412,11 @@ async def async_translate(translation_config: TranslationConfig):
         Exception: Any other errors during translation
     """
     loop = asyncio.get_running_loop()
+    translation_config.raise_if_cancelled()
     callback = asynchronize.AsyncCallback()
 
     finish_event = asyncio.Event()
-    cancel_event = threading.Event()
+    cancel_event = translation_config.cancel_event
     with ProgressMonitor(
         get_translation_stage(translation_config),
         progress_change_callback=callback.step_callback,
@@ -426,21 +427,47 @@ async def async_translate(translation_config: TranslationConfig):
         report_interval=translation_config.report_interval,
     ) as pm:
         future = loop.run_in_executor(None, do_translate, pm, translation_config)
+        terminal_event = None
+        cancelled = False
         try:
             async for event in callback:
+                translation_config.raise_if_cancelled()
                 event = event.kwargs
+                if event["type"] in {"finish", "error"}:
+                    terminal_event = event["type"]
                 yield event
-                if event["type"] == "error":
+                if terminal_event is not None:
                     break
         except CancelledError:
-            cancel_event.set()
+            translation_config.cancel_translation()
+            raise
         except KeyboardInterrupt:
             logger.info("Translation cancelled by user through keyboard interrupt")
-            cancel_event.set()
-    if cancel_event.is_set():
-        future.cancel()
-    logger.info("Waiting for translation to finish...")
-    await finish_event.wait()
+            translation_config.cancel_translation()
+            raise
+        finally:
+            # Cancelling an asyncio Future cannot stop its executor thread. Keep
+            # ownership until the worker has left every translation pool and
+            # finished cleanup, including when the consumer closes the iterator.
+            if terminal_event is None:
+                translation_config.cancel_translation()
+            while not future.done():
+                try:
+                    await asyncio.shield(future)
+                except CancelledError:
+                    cancelled = True
+                    translation_config.cancel_translation()
+                except Exception:
+                    break
+            try:
+                future.result()
+            except CancelledError:
+                cancelled = True
+            except Exception:
+                if terminal_event != "error" and not cancelled and not cancel_event.is_set():
+                    raise
+            if cancelled or cancel_event.is_set():
+                raise CancelledError
 
 
 class MemoryMonitor:
@@ -596,6 +623,7 @@ def do_translate(
 ) -> TranslateResult:
     try:
         translation_config.progress_monitor = pm
+        translation_config.raise_if_cancelled()
         original_pdf_path = translation_config.input_file
         logger.info(f"start to translate: {original_pdf_path}")
         try:
@@ -784,6 +812,7 @@ def do_translate(
             logger.error(
                 f"Failed to migrate TOC from {translation_config.input_file}: {e}"
             )
+        translation_config.raise_if_cancelled()
         pm.translate_done(result)
         return result
 

@@ -88,7 +88,7 @@ class Glossary:
             self.normalized_lookup[normalized_key] = (entry.source, entry.target)
             self.id_lookup.append((entry.source, entry.target))
 
-            hs_pattern.append((re.escape(entry.source).encode("utf-8"), idx))
+            hs_pattern.append((re.escape(normalized_key).encode("utf-8"), idx))
 
         chunk_size = 20000
         for i, pattern_chunk in enumerate(
@@ -195,7 +195,11 @@ class Glossary:
         if not self.hs_dbs or not text:
             return []
 
-        text = TERM_NORM_PATTERN.sub(" ", text)  # Normalize whitespace in the text
+        # Styling can split a term without adding a word boundary. Formula
+        # placeholders, in contrast, must not join words on either side.
+        text = re.sub(r"</?style\b[^>]*>", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"\{\s*v\s*\d+\s*\}", " ", text, flags=re.IGNORECASE)
+        text = TERM_NORM_PATTERN.sub(" ", text)
         if not text:
             return []
 
@@ -211,4 +215,4 @@ class Glossary:
             # Scan the text with the hyperscan database
             scratch = hyperscan.Scratch(hs_db)
             hs_db.scan(text.encode("utf-8"), on_match, scratch=scratch)
-        return active_entries
+        return sorted(active_entries, key=lambda entry: (-len(entry[0]), entry[0].casefold()))

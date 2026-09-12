@@ -42,7 +42,9 @@ def _record_retry_before_sleep(retry_state) -> None:
     translator = retry_state.args[0] if retry_state.args else None
     collector = getattr(translator, "metrics_collector", None)
     if collector is not None:
-        collector.retry_scheduled()
+        params = retry_state.kwargs.get("rate_limit_params") or (
+            retry_state.args[2] if len(retry_state.args) > 2 else {}) or {}
+        collector.retry_scheduled(kind=params.get("metric_kind", "translation"))
     error = retry_state.outcome.exception() if retry_state.outcome else None
     logger.warning(
         "provider retry scheduled: error_type=%s status_code=%s attempt=%s",
@@ -98,6 +100,9 @@ class OpenAITranslator(BaseTranslator):
         rate_limiter: BaseRateLimiter,
     ):
         super().__init__(settings, rate_limiter)
+        self._metrics_lock = threading.RLock()
+        self._pending_initialization_metrics = []
+        self._request_metrics = threading.local()
         self._verified_protocols = set()
         self._request_slots = threading.BoundedSemaphore(1)
         self.check_cancelled = lambda: None
@@ -130,6 +135,11 @@ class OpenAITranslator(BaseTranslator):
                 )
             ),
         )
+        # A read-only hook captures actual HTTP status while preserving the SDK's
+        # create/parse/retry behavior (including with_options during health checks).
+        http_client = getattr(self.client, "_client", None)
+        if isinstance(http_client, httpx.Client):
+            http_client.event_hooks.setdefault("response", []).append(self._capture_http_status)
         self.options = {}
         self.temperature = settings.translate_engine_settings.openai_temperature
         self.reasoning_effort = (
@@ -243,6 +253,19 @@ class OpenAITranslator(BaseTranslator):
             defaults["thinking"] = {"type": "disabled"}
         return defaults
 
+    def _capture_http_status(self, response):
+        self._request_metrics.status_code = response.status_code
+
+    def set_metrics_collector(self, collector) -> None:
+        with self._metrics_lock:
+            self.metrics_collector = collector
+            if collector is None:
+                return
+            pending, self._pending_initialization_metrics = self._pending_initialization_metrics, []
+            for event in pending:
+                collector.record_usage(**event["usage"], kind="initialization")
+                collector.record_completed_request(**event["request"])
+
     def _record_usage(self, response, protocol: str) -> None:
         usage = getattr(response, "usage", None)
         if protocol == "responses":
@@ -251,6 +274,7 @@ class OpenAITranslator(BaseTranslator):
             details = getattr(usage, "input_tokens_details", None)
             hit = getattr(details, "cached_tokens", None)
             miss = None
+            reasoning = getattr(getattr(usage, "output_tokens_details", None), "reasoning_tokens", None)
         else:
             prompt = getattr(usage, "prompt_tokens", None)
             completion = getattr(usage, "completion_tokens", None)
@@ -260,6 +284,9 @@ class OpenAITranslator(BaseTranslator):
                     getattr(usage, "prompt_tokens_details", None), "cached_tokens", None
                 )
             miss = getattr(usage, "prompt_cache_miss_tokens", None)
+            reasoning = getattr(getattr(usage, "completion_tokens_details", None), "reasoning_tokens", None)
+        if reasoning is None:
+            reasoning = getattr(usage, "reasoning_tokens", None)
 
         def number(value):
             return (
@@ -271,7 +298,7 @@ class OpenAITranslator(BaseTranslator):
                 else None
             )
 
-        prompt, completion, hit, miss = map(number, (prompt, completion, hit, miss))
+        prompt, completion, hit, miss, reasoning = map(number, (prompt, completion, hit, miss, reasoning))
         if prompt is not None and hit is not None:
             hit = min(hit, prompt)
             miss = prompt - hit
@@ -280,13 +307,31 @@ class OpenAITranslator(BaseTranslator):
         self.token_count.inc((prompt or 0) + (completion or 0))
         self.cache_hit_prompt_token_count.inc(hit or 0)
         self.cache_miss_prompt_token_count.inc(miss or 0)
-        if self.metrics_collector is not None:
-            self.metrics_collector.record_usage(
-                prompt_tokens=prompt,
-                completion_tokens=completion,
-                cache_hit_tokens=hit,
-                cache_miss_tokens=miss,
-            )
+        values = dict(prompt_tokens=prompt, completion_tokens=completion,
+                      cache_hit_tokens=hit, cache_miss_tokens=miss, reasoning_tokens=reasoning)
+        self._request_metrics.usage = values
+        if self.metrics_collector is not None and not getattr(self._request_metrics, "capturing", False):
+            self.metrics_collector.record_usage(**values)
+
+    def _response_metrics(self, response, protocol):
+        finish, texts = None, []
+        if protocol == "responses":
+            finish = getattr(getattr(response, "incomplete_details", None), "reason", None) or getattr(response, "status", None)
+            for item in getattr(response, "output", None) or []:
+                if getattr(item, "type", None) == "message":
+                    texts.extend(getattr(block, "text", None) for block in getattr(item, "content", None) or []
+                                 if getattr(block, "type", None) == "output_text")
+        else:
+            choices = getattr(response, "choices", None) or []
+            if choices:
+                finish = getattr(choices[0], "finish_reason", None)
+                texts = [getattr(getattr(choices[0], "message", None), "content", None)]
+        allowed = {"stop", "length", "content_filter", "tool_calls", "function_call", "completed",
+                   "incomplete", "failed", "cancelled", "queued", "in_progress", "max_output_tokens"}
+        finish = finish if isinstance(finish, str) and finish in allowed else "other" if finish is not None else None
+        visible = [text for text in texts if isinstance(text, str)]
+        chars = len(self._remove_cot_content("".join(visible)).strip()) if visible else None
+        return finish, chars
 
     def configure_execution(self, concurrency, check_cancelled, slots=None):
         self._request_slots = slots or threading.BoundedSemaphore(max(1, concurrency))
@@ -329,8 +374,20 @@ class OpenAITranslator(BaseTranslator):
             if health_check
             else self.client
         )
+        kind = "initialization" if health_check else (rate_limit_params or {}).get("metric_kind", "translation")
+        if kind not in {"translation", "review", "initialization"}:
+            kind = "translation"
+        batch_size = (rate_limit_params or {}).get("batch_size")
+        if type(batch_size) is not int or batch_size < 1:
+            batch_size = None
         collector = self.metrics_collector
-        started = collector.request_started() if collector else None
+        started = collector.request_started(kind=kind) if collector else None
+        request_started = time.perf_counter()
+        self._request_metrics.status_code = None
+        self._request_metrics.usage = None
+        self._request_metrics.capturing = True
+        response, request_error = None, None
+        succeeded = False
         try:
             # extra_body preserves gateway extensions while the adapter owns the
             # model, input and execution mode. Reserved keys were validated above.
@@ -349,7 +406,9 @@ class OpenAITranslator(BaseTranslator):
                 raise InvalidTranslation("invalid_response") from error
             if not text:
                 raise InvalidTranslation("empty_translation")
+            succeeded = True
         except Exception as error:
+            request_error = error
             if _status_code(error) == 404 and protocol in self._verified_protocols:
                 body = str(getattr(error, "body", "")).lower()
                 permanent = any(x in body for x in (
@@ -358,13 +417,32 @@ class OpenAITranslator(BaseTranslator):
                     "模型不存在", "模型未找到", "无此模型", "路由不存在",
                 ))
                 error.retryable_verified_404 = not permanent
-            if collector is not None:
-                collector.request_finished(
-                    started, succeeded=False, status_code=_status_code(error)
-                )
             raise
-        if collector is not None:
-            collector.request_finished(started, succeeded=True)
+        finally:
+            if self._request_metrics.usage is None:
+                self._record_usage(response, protocol)
+            self._request_metrics.capturing = False
+            finish, visible_chars = self._response_metrics(response, protocol)
+            status = self._request_metrics.status_code
+            if status is None and request_error is not None:
+                status = _status_code(request_error)
+            request = dict(kind=kind, succeeded=succeeded, status_code=status,
+                           error_type=type(request_error).__name__ if request_error else None,
+                           finish_reason=finish, protocol=protocol,
+                           visible_chars=visible_chars, batch_size=batch_size)
+            usage = self._request_metrics.usage
+            if collector is not None:
+                collector.record_usage(**usage, kind=kind)
+                collector.request_finished(started, **request)
+            elif kind == "initialization":
+                request["latency_ms"] = max((time.perf_counter() - request_started) * 1000, 0.0)
+                with self._metrics_lock:
+                    current_collector = self.metrics_collector
+                    if current_collector is None:
+                        self._pending_initialization_metrics.append({"request": request, "usage": usage})
+                    else:
+                        current_collector.record_usage(**usage, kind=kind)
+                        current_collector.record_completed_request(**request)
         self._verified_protocols.add(protocol)
         return text
 

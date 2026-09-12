@@ -3,6 +3,7 @@ import logging
 import shutil
 import tempfile
 import threading
+from asyncio import CancelledError
 from collections import Counter
 from pathlib import Path
 
@@ -201,6 +202,7 @@ class TranslationConfig:
         term_pool_max_workers: int | None = None,
         disable_same_text_fallback: bool = False,
         skip_references: bool = False,
+        cancel_event: threading.Event | None = None,
     ):
         self.translator = translator
         self.term_extraction_translator = term_extraction_translator or translator
@@ -241,6 +243,9 @@ class TranslationConfig:
         self.short_line_split_factor = short_line_split_factor
         self.use_rich_pbar = use_rich_pbar
         self.progress_monitor = progress_monitor
+        self.cancel_event = cancel_event or (
+            progress_monitor.cancel_event if progress_monitor is not None else None
+        ) or threading.Event()
         self.doc_layout_model = doc_layout_model
 
         self.skip_clean = skip_clean or enhance_compatibility
@@ -265,8 +270,8 @@ class TranslationConfig:
         if use_side_by_side_dual is False and use_alternating_pages_dual is False:
             self.use_alternating_pages_dual = True
 
-        if progress_monitor and progress_monitor.cancel_event is None:
-            progress_monitor.cancel_event = threading.Event()
+        if progress_monitor is not None:
+            progress_monitor.cancel_event = self.cancel_event
 
         if working_dir is None:
             if debug:
@@ -458,10 +463,13 @@ class TranslationConfig:
             logger.exception("Error cleaning up temporary files")
 
     def raise_if_cancelled(self):
+        if self.cancel_event.is_set():
+            raise CancelledError
         if self.progress_monitor is not None:
             self.progress_monitor.raise_if_cancelled()
 
     def cancel_translation(self):
+        self.cancel_event.set()
         if self.progress_monitor is not None:
             self.progress_monitor.cancel()
 

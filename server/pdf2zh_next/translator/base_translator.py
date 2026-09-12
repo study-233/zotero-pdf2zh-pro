@@ -93,10 +93,57 @@ class BaseTranslator(ABC):
     def configure_cache_namespace(self, *, provider: str) -> None:
         self.add_cache_impact_parameters("provider", provider)
 
+    def _commit_validated_cache(self, text, output, rate_limit_params=None, *, ignore_cache=False):
+        """Commit a settled batch without issuing a request or counting an attempt."""
+        params = rate_limit_params or {}
+        if self.ignore_cache or ignore_cache or params.get("ignore_cache", False):
+            return False
+        check = params.get("check_cancelled") or getattr(self, "check_cancelled", None)
+        if check:
+            check()
+        try:
+            params.get("validate_output", lambda value: None)(output)
+        except InvalidTranslation:
+            return False
+        if not params.get("cache_output_if", lambda value: True)(output):
+            return False
+        if check:
+            check()
+        try:
+            self.cache.set(text, output)
+        except Exception as error:
+            logger.debug("translation cache commit failed: error_type=%s", type(error).__name__)
+            return False
+        return True
+
+    @staticmethod
+    def _review_cache_key(identity):
+        value = json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        return "quality-review:" + hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+    def _get_review_cache(self, identity, *, ignore_cache=False):
+        if self.ignore_cache or ignore_cache:
+            return None
+        try:
+            value = self.cache.get(self._review_cache_key(identity))
+        except Exception as error:
+            logger.debug("review cache lookup failed: error_type=%s", type(error).__name__)
+            return None
+        return value if isinstance(value, str) and value.strip() else None
+
+    def _set_review_cache(self, identity, output, *, ignore_cache=False, check_cancelled=None):
+        if not isinstance(output, str) or not output.strip():
+            return False
+        return self._commit_validated_cache(
+            self._review_cache_key(identity), output,
+            {"check_cancelled": check_cancelled}, ignore_cache=ignore_cache,
+        )
+
     def _translate_cached(self, text, ignore_cache, rate_limit_params, method):
         self.translate_call_count += 1
         params = rate_limit_params or {}
         validate = params.get("validate_output", lambda value: None)
+        cache_output_if = params.get("cache_output_if", lambda value: True)
         use_cache = not (self.ignore_cache or ignore_cache)
         if use_cache:
             try:
@@ -111,6 +158,11 @@ class BaseTranslator(ABC):
                     with contextlib.suppress(Exception):
                         self.cache.delete(text)
                 else:
+                    if not cache_output_if(cached):
+                        # A structurally valid batch can still contain useful
+                        # translations; let its caller repair just the bad rows.
+                        with contextlib.suppress(Exception):
+                            self.cache.delete(text)
                     self.translate_cache_call_count += 1
                     if self.metrics_collector is not None:
                         self.metrics_collector.local_cache_hit()
@@ -129,10 +181,10 @@ class BaseTranslator(ABC):
                 if generation:
                     raise
                 if self.metrics_collector is not None:
-                    self.metrics_collector.retry_scheduled()
+                    self.metrics_collector.retry_scheduled(kind=params.get("metric_kind", "translation"))
                 continue
-            if use_cache:
-                self.cache.set(text, translation)
+            if use_cache and not params.get("defer_cache_write", False):
+                self._commit_validated_cache(text, translation, params)
             return translation
 
     def translate(self, text, ignore_cache=False, rate_limit_params=None):

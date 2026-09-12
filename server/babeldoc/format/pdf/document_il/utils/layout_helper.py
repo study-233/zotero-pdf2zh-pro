@@ -2,6 +2,8 @@ import logging
 import math
 import re
 import unicodedata
+from collections import defaultdict
+from statistics import median
 from typing import Literal
 
 import regex
@@ -223,7 +225,74 @@ def get_paragraph_unicode(paragraph: PdfParagraph) -> str:
 SPACE_REGEX = regex.compile(r"\s+", regex.UNICODE)
 
 
-def get_char_unicode_string(chars: list[PdfCharacter | str]) -> str:
+def _body_style_key(char):
+    if not isinstance(char, PdfCharacter) or char.vertical or not char.box or not char.pdf_style:
+        return None
+    if (not char.pdf_style.font_id or not char.pdf_style.font_size
+            or char.pdf_style.font_size <= 0 or any(value is None for value in
+            (char.box.x, char.box.x2, char.box.y, char.box.y2))):
+        return None
+    return char.pdf_style.font_id, char.pdf_style.font_size
+
+
+def _body_character_pairs(chars):
+    previous = None
+    for char in chars:
+        if isinstance(char, PdfCharacter):
+            yield previous, char
+            previous = char
+        elif not re.fullmatch(r"</?style\b[^>]*>", char, re.IGNORECASE):
+            previous = None
+
+
+def _same_line_latin_pair(previous, current):
+    if (previous is None or _body_style_key(previous) is None
+            or _body_style_key(previous) != _body_style_key(current)):
+        return False
+    if not (re.search(r"[A-Za-z0-9.,;:!?)]$", previous.char_unicode or "")
+            and re.match(r"[A-Za-z0-9(]", current.char_unicode or "")):
+        return False
+    overlap = min(previous.box.y2, current.box.y2) - max(previous.box.y, current.box.y)
+    height = min(previous.box.y2 - previous.box.y, current.box.y2 - current.box.y)
+    return height > 0 and overlap >= height * 0.5
+
+
+def _body_unicode_string(chars):
+    spaces, gaps = defaultdict(list), defaultdict(list)
+    for previous, char in _body_character_pairs(chars):
+        key = _body_style_key(char)
+        if key is None:
+            continue
+        if (char.char_unicode or "").isspace() and char.advance and char.advance > 0:
+            spaces[key].append(char.advance)
+        if _same_line_latin_pair(previous, char):
+            gaps[key].append(char.box.x - previous.box.x2)
+    thresholds = {}
+    for key in spaces.keys() | gaps.keys():
+        # Sparse pairs do not establish a typography baseline.
+        baseline = median(gaps[key]) if len(gaps[key]) >= 3 else 0
+        size = key[1]
+        thresholds[key] = max(0.5 * median(spaces[key]) if spaces[key] else 0.2 * size,
+                              baseline + 0.1 * size)
+    output = []
+    pairs = iter(_body_character_pairs(chars))
+    for char in chars:
+        if not isinstance(char, PdfCharacter):
+            output.append(char)
+            continue
+        previous, _ = next(pairs)
+        if previous is not None and _body_style_key(previous) and _body_style_key(char):
+            if Layout.is_newline(previous, char):
+                output.append("\n")
+            elif (_same_line_latin_pair(previous, char)
+                  and char.box.x - previous.box.x2 >= thresholds[_body_style_key(char)]):
+                output.append(" ")
+        output.append(unicodedata.normalize("NFKC", char.char_unicode or ""))
+    # Keep real line boundaries for evidence-based dehyphenation in the input plan.
+    return regex.sub(r"[^\S\n]+", " ", "".join(output)).strip()
+
+
+def get_char_unicode_string(chars: list[PdfCharacter | str], *, body_input=False) -> str:
     """
     将字符列表转换为 Unicode 字符串，根据字符间距自动插入空格。
     有些 PDF 不会显式编码空格，这时需要根据间距自动插入空格。
@@ -234,29 +303,17 @@ def get_char_unicode_string(chars: list[PdfCharacter | str]) -> str:
     Returns:
         str: 处理后的 Unicode 字符串
     """
-    # 计算字符间距的中位数
+    if body_input:
+        return _body_unicode_string(chars)
     distances = []
     for i in range(len(chars) - 1):
-        if not (
-            isinstance(chars[i], PdfCharacter)
-            and isinstance(chars[i + 1], PdfCharacter)
-        ):
-            continue
-        distance = chars[i + 1].box.x - chars[i].box.x2
-        if distance > 1:  # 只考虑正向距离
-            distances.append(distance)
-
-    # 去重后的距离
+        if isinstance(chars[i], PdfCharacter) and isinstance(chars[i + 1], PdfCharacter):
+            distance = chars[i + 1].box.x - chars[i].box.x2
+            if distance > 1:
+                distances.append(distance)
     distinct_distances = sorted(set(distances))
-
-    if not distinct_distances:
-        median_distance = 1
-    elif len(distinct_distances) == 1:
-        median_distance = distinct_distances[0]
-    else:
-        median_distance = distinct_distances[1]
-
-    # 构建 unicode 字符串，根据间距插入空格
+    median_distance = (distinct_distances[min(1, len(distinct_distances) - 1)]
+                       if distinct_distances else 1)
     unicode_chars = []
     for i in range(len(chars)):
         # 如果不是字符对象，直接添加，一般来说这个时候 chars[i] 是字符串
@@ -273,18 +330,12 @@ def get_char_unicode_string(chars: list[PdfCharacter | str]) -> str:
             )
         )
 
-        # 如果是空格，跳过
         if chars[i].char_unicode == " ":
             continue
-
-        # 如果两个字符都是 PdfCharacter，检查间距
         if i < len(chars) - 1 and isinstance(chars[i + 1], PdfCharacter):
             distance = chars[i + 1].box.x - chars[i].box.x2
-            if distance >= median_distance or Layout.is_newline(  # 间距大于中位数
-                chars[i],
-                chars[i + 1],
-            ):  # 换行
-                unicode_chars.append(" ")  # 添加空格
+            if distance >= median_distance or Layout.is_newline(chars[i], chars[i + 1]):
+                unicode_chars.append(" ")
 
     result = "".join(unicode_chars)
     # use unicode regex to replace all space with " "

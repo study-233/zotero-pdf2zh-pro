@@ -4,6 +4,7 @@ import { PDF2zhTaskManager } from "./modules/pdf2zhTaskManager";
 import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
 import { registerPrefsScripts } from "./modules/preferenceScript";
+import { migrateReviewPreference } from "./modules/reviewPreferences";
 
 async function onStartup() {
     await Promise.all([
@@ -11,6 +12,7 @@ async function onStartup() {
         Zotero.unlockPromise,
         Zotero.uiReadyPromise,
     ]);
+    migrateReviewPreference();
     initLocale();
     PDF2zhBasicFactory.registerPrefs();
     await Promise.all(

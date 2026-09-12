@@ -9,6 +9,7 @@ import hashlib
 import shutil
 import ssl
 import threading
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -188,6 +189,7 @@ class TranslationResult:
     files: dict[str, TranslationOutputFile]
     translation_summary: dict | None = None
     failed_paragraphs: list = field(default_factory=list)
+    quality_summary: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -676,7 +678,16 @@ async def translate_pdf_with_callbacks(
     progress_callback: ProgressCallback | None = None,
     metrics_callback: MetricsCallback | None = None,
     on_config_ready: ConfigReadyCallback | None = None,
+    cancel_event: threading.Event | None = None,
 ) -> TranslationResult:
+    started_at = time.monotonic()
+    cancel_event = cancel_event or threading.Event()
+
+    def check_cancelled() -> None:
+        if cancel_event.is_set():
+            raise asyncio.CancelledError
+
+    check_cancelled()
     input_path = Path(payload["input_path"])
     output_dir = Path(payload["output_dir"])
     output_modes = payload["output_modes"]
@@ -686,45 +697,82 @@ async def translate_pdf_with_callbacks(
         install_text_check_bypass()
         LOGGER.warning("[%s] skipping BabelDOC CID text extraction checks", job_id)
 
-    await asyncio.to_thread(_TEXT_CHECK_TRANSLATION_LOCK.acquire)
-    previous_skip_text_checks = set_text_checks_skipped(skip_text_checks)
+    # A cancelled to_thread(lock.acquire) leaves a live waiter that can acquire
+    # the lock later with nobody left to release it.
+    try:
+        while not _TEXT_CHECK_TRANSLATION_LOCK.acquire(blocking=False):
+            check_cancelled()
+            await asyncio.sleep(0.05)
+    except asyncio.CancelledError:
+        cancel_event.set()
+        raise
+    previous_skip_text_checks = _SKIP_TEXT_CHECKS_ENABLED
+    initialization_started_at = time.monotonic()
     metrics_collector: TaskMetricsCollector | None = None
     heartbeat_task: asyncio.Task | None = None
+    translation_config: BabelDOCConfig | None = None
+    recovery = None
+    translation_started = False
+    finalize_started_at = None
     try:
+        check_cancelled()
+        previous_skip_text_checks = set_text_checks_skipped(skip_text_checks)
         progress_logger = ProgressLogger(job_id)
         settings = create_runtime_settings(payload)
         ensure_translation_provider_timeout(settings)
-        translation_config = create_babeldoc_config(settings, input_path)
+        check_cancelled()
+        if isinstance(getattr(settings, "translate_engine_settings", None), OpenAISettings):
+            metrics_collector = TaskMetricsCollector(
+                task_id=job_id, provider=str(payload["service"]),
+                model=settings.translate_engine_settings.openai_model, callback=metrics_callback,
+            )
+            metrics_collector.record_stage("Queue Wait", initialization_started_at - started_at)
+        try:
+            translation_config = create_babeldoc_config(
+                settings, input_path, glossary_entries=payload.get("glossary_entries"),
+                metrics_collector=metrics_collector,
+            )
+        finally:
+            if metrics_collector is not None:
+                metrics_collector.record_stage("Initialization", time.monotonic() - initialization_started_at)
+        translation_config.cancel_event = cancel_event
+        translation_config.semantic_review = bool(payload.get("semantic_review", False))
+        translation_config.review_attempt = int(payload.get("review_attempt", payload.get("repair_attempt", 1)))
+        translation_config.glossary_entries = payload.get("glossary_entries") or []
+        check_cancelled()
         translation_config.save_detailed_tracking = False
         from babeldoc.format.pdf.translation_recovery import TranslationRecovery
+        from babeldoc.format.pdf.document_il.midend.body_input import BODY_INPUT_VERSION
+        from babeldoc.format.pdf.quality_review import REVIEW_VERSION
         fingerprint_payload = {k: v for k, v in payload.items() if k not in {
-            "input_path", "output_dir", "qps", "pool_size", "repair_attempt",
+            "input_path", "output_dir", "qps", "pool_size", "repair_attempt", "review_attempt",
         }}
         fingerprint_payload["llm_api"] = {k: v for k, v in payload.get("llm_api", {}).items() if k != "apiKey"}
+        fingerprint_payload["body_input_version"] = BODY_INPUT_VERSION
+        review_policy = {"enabled": translation_config.semantic_review, "version": REVIEW_VERSION}
+        fingerprint_payload["review_policy"] = review_policy
         fingerprint = hashlib.sha256(input_path.read_bytes())
         fingerprint.update(json.dumps(fingerprint_payload, sort_keys=True).encode())
-        translation_config.recovery = TranslationRecovery(
-            input_path.parent / "paragraph-recovery.json", fingerprint.hexdigest(), progress_callback
+        recovery = TranslationRecovery(
+            input_path.parent / "paragraph-recovery.sqlite3", fingerprint.hexdigest(), progress_callback
         )
+        translation_config.recovery = recovery
+        if translation_config.semantic_review:
+            recovery.configure_review(translation_config.review_attempt)
         slots = threading.BoundedSemaphore(translation_config.pool_max_workers)
         main_translator = translation_config.translator
         for engine in (main_translator, getattr(translation_config, "term_extraction_translator", None)):
+            if engine is not None and hasattr(engine, "add_cache_impact_parameters"):
+                engine.add_cache_impact_parameters("body_input_version", BODY_INPUT_VERSION)
+                engine.add_cache_fingerprint("task_glossary", payload.get("glossary_entries", []))
+                engine.add_cache_fingerprint("review_policy", review_policy)
             if engine is not None and hasattr(engine, "configure_execution"):
                 engine.rate_limiter = main_translator.rate_limiter
                 engine.configure_execution(translation_config.pool_max_workers, translation_config.raise_if_cancelled, slots)
-        if isinstance(getattr(settings, "translate_engine_settings", None), OpenAISettings):
+        if metrics_collector is not None:
             translator = translation_config.translator
-            metrics_collector = TaskMetricsCollector(
-                task_id=job_id,
-                provider=str(payload["service"]),
-                model=translator.model,
-                callback=metrics_callback,
-            )
             if str(payload["service"]).lower() == "deepseek":
                 translator.configure_cache_namespace(provider="deepseek")
-            for measured in (translator, getattr(translation_config, "term_extraction_translator", None)):
-                if measured is not None and hasattr(measured, "set_metrics_collector"):
-                    measured.set_metrics_collector(metrics_collector)
 
             async def publish_metrics_heartbeat() -> None:
                 while True:
@@ -734,21 +782,49 @@ async def translate_pdf_with_callbacks(
             heartbeat_task = asyncio.create_task(publish_metrics_heartbeat())
         if on_config_ready is not None:
             on_config_ready(translation_config)
+        check_cancelled()
 
         last_font_progress: tuple[str, int, int] | None = None
 
         def publish_font_progress(stage: str, current: int, total: int) -> None:
             nonlocal last_font_progress
+            check_cancelled()
             progress_key = (stage, current, total)
             if progress_key == last_font_progress:
                 return
             last_font_progress = progress_key
             event = create_font_progress_event(stage, current, total)
+            if metrics_collector is not None:
+                metrics_collector.update_progress(event)
             progress_logger.log(event)
             if progress_callback is not None:
                 progress_callback(event)
 
-        await download_all_fonts_async(progress_callback=publish_font_progress)
+        font_started_at = time.monotonic()
+        font_task = asyncio.create_task(
+            download_all_fonts_async(progress_callback=publish_font_progress)
+        )
+        try:
+            while not font_task.done():
+                check_cancelled()
+                await asyncio.wait({font_task}, timeout=0.05)
+            font_task.result()
+            check_cancelled()
+        except asyncio.CancelledError:
+            cancel_event.set()
+            font_task.cancel()
+            # Drain its async HTTP cleanup before another task prepares fonts.
+            while not font_task.done():
+                try:
+                    await asyncio.shield(font_task)
+                except asyncio.CancelledError:
+                    continue
+            with contextlib.suppress(asyncio.CancelledError):
+                font_task.result()
+            raise
+        finally:
+            if metrics_collector is not None:
+                metrics_collector.record_stage("Font Preparation", time.monotonic() - font_started_at)
 
         LOGGER.info(
             "[%s] translation started: file=%s service=%s output_modes=%s",
@@ -758,23 +834,35 @@ async def translate_pdf_with_callbacks(
             ",".join(output_modes),
         )
 
-        async for event in babeldoc_translate(translation_config):
-            if metrics_collector is not None:
-                metrics_collector.update_progress(event)
-            progress_logger.log(event)
-            if progress_callback is not None:
-                progress_callback(event)
+        check_cancelled()
+        result = None
+        translation_started = True
+        async with contextlib.aclosing(babeldoc_translate(translation_config)) as events:
+            async for event in events:
+                check_cancelled()
+                if metrics_collector is not None:
+                    metrics_collector.update_progress(event)
+                progress_logger.log(event)
+                if progress_callback is not None:
+                    progress_callback(event)
+                check_cancelled()
 
-            if event["type"] == "error":
-                raise RuntimeError(
-                    explain_service_error(
-                        event.get("error") or "pdf2zh_next translation failed"
+                if event["type"] == "error":
+                    error = event.get("error")
+                    if isinstance(error, asyncio.CancelledError) or error is asyncio.CancelledError:
+                        raise asyncio.CancelledError
+                    raise RuntimeError(
+                        explain_service_error(
+                            error or "pdf2zh_next translation failed"
+                        )
                     )
-                )
-            if event["type"] != "finish":
-                continue
+                if event["type"] == "finish":
+                    result = event["translate_result"]
 
-            result = event["translate_result"]
+        # The iterator joins the actual translation worker before output commit.
+        check_cancelled()
+        finalize_started_at = time.monotonic()
+        if result is not None:
             files = collect_output_files(
                 result,
                 output_dir,
@@ -786,26 +874,45 @@ async def translate_pdf_with_callbacks(
                 job_id,
                 ", ".join(file.filename for file in files.values()),
             )
-            if metrics_collector is not None:
-                metrics_collector.emit_final()
             if payload.get("repair_attempt"):
                 repaired_files = {}
                 for mode, file in files.items():
+                    check_cancelled()
                     renamed = file.output_path.with_name(f"{file.output_path.stem}.repair-{payload['repair_attempt']}.pdf")
                     file.output_path.replace(renamed)
                     repaired_files[mode] = TranslationOutputFile(mode, renamed, renamed.name)
                 files = repaired_files
             summary, failed = translation_config.recovery.snapshot()
-            return TranslationResult(files=files, translation_summary=summary, failed_paragraphs=failed)
+            check_cancelled()
+            return TranslationResult(files=files, translation_summary=summary, failed_paragraphs=failed,
+                                     quality_summary=recovery.quality_snapshot())
+    except asyncio.CancelledError:
+        cancel_event.set()
+        if translation_config is not None:
+            translation_config.cancel_translation()
+        raise
     finally:
-        if heartbeat_task is not None:
-            heartbeat_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await heartbeat_task
-        if metrics_collector is not None:
-            metrics_collector.emit_final()
-        set_text_checks_skipped(previous_skip_text_checks)
-        _TEXT_CHECK_TRANSLATION_LOCK.release()
+        if finalize_started_at is None:
+            finalize_started_at = time.monotonic()
+        try:
+            if heartbeat_task is not None:
+                heartbeat_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await heartbeat_task
+            if translation_config is not None and not translation_started:
+                translation_config.cleanup_temp_files()
+        finally:
+            try:
+                if recovery is not None:
+                    recovery.close()
+            finally:
+                set_text_checks_skipped(previous_skip_text_checks)
+                _TEXT_CHECK_TRANSLATION_LOCK.release()
+                if metrics_collector is not None:
+                    ended_at = time.monotonic()
+                    metrics_collector.record_stage("Finalize", ended_at - finalize_started_at)
+                    metrics_collector.record_stage("Total", ended_at - started_at)
+                    metrics_collector.emit_final()
 
     raise RuntimeError("pdf2zh_next finished without producing a result")
 

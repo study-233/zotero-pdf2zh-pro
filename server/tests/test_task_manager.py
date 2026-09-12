@@ -4,7 +4,6 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
 SERVER_DIR = Path(__file__).resolve().parents[1]
@@ -17,6 +16,25 @@ from observability import empty_metrics
 
 
 class TaskManagerTests(unittest.TestCase):
+    def test_retry_and_repair_preserve_original_review_choice(self):
+        for repair in (False, True):
+            for enabled in (False, True):
+                with self.subTest(repair=repair, enabled=enabled), tempfile.TemporaryDirectory() as temp:
+                    workspace = Path(temp)
+                    source = workspace / "input.pdf"
+                    source.write_bytes(b"%PDF-1.4\n")
+                    manager = TaskManager()
+                    manager._tasks["task"] = TaskRecord(
+                        task_id="task", file_name="input.pdf", service="openai",
+                        output_modes=["dual"], workspace_dir=workspace,
+                        request_payload={"input_path": str(source), "output_dir": str(workspace / "output"),
+                                         "semantic_review": enabled},
+                        status="incomplete" if repair else "failed",
+                    )
+                    with patch.object(manager, "_start_worker_locked"):
+                        manager.retry_task("task", repair=repair)
+                    self.assertIs(manager._tasks["task"].request_payload["semantic_review"], enabled)
+
     def test_legacy_metrics_cost_is_ignored(self):
         original = empty_metrics()
         original["cost"] = {"amount": 1.2}
@@ -54,10 +72,7 @@ class TaskManagerTests(unittest.TestCase):
                 attempt=1,
             )
 
-            with patch(
-                "task_manager.threading.Thread",
-                return_value=SimpleNamespace(start=lambda: None),
-            ):
+            with patch.object(manager, "_start_worker_locked"):
                 snapshot = manager.retry_task("task-1")
 
             self.assertIsNotNone(snapshot)
@@ -157,20 +172,20 @@ class TaskManagerTests(unittest.TestCase):
             self.assertIsNotNone(old_record)
             self.assertEqual(old_record.to_dict()["metrics"], empty_metrics())
 
-    def test_subscriber_queue_keeps_latest_event_without_unbounded_growth(self) -> None:
+    def test_subscriber_overflow_requires_resync_without_unbounded_growth(self) -> None:
         manager = TaskManager()
-        event_queue = manager.subscribe()
+        subscription = manager.subscribe()
 
         for index in range(200):
-            manager._publish_event({"type": "deleted", "taskId": f"task-{index}"})
+            record = TaskRecord(f"task-{index}", "paper.pdf", "openai", ["dual"], {}, Path("."))
+            with manager._lock:
+                manager._deleted_locked(record)
 
-        self.assertLessEqual(event_queue.qsize(), event_queue.maxsize)
-
-        last_event = None
-        while not event_queue.empty():
-            last_event = event_queue.get_nowait()
-
-        self.assertEqual(last_event, {"type": "deleted", "taskId": "task-199"})
+        self.assertEqual(subscription.event_queue.qsize(), 128)
+        event = manager.next_subscription_event(subscription, timeout=0)
+        self.assertEqual(event, {"type": "resync", **manager.sync_metadata()})
+        self.assertEqual(event["revision"], 200)
+        self.assertEqual(manager.next_subscription_event(subscription, timeout=0), event)
 
     def test_missing_result_file_is_not_returned(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -26,6 +26,9 @@ pref("__prefsPrefix__.skipReferences", false);
 pref("__prefsPrefix__.skipTextChecks", false);
 pref("__prefsPrefix__.noWatermark", true);
 pref("__prefsPrefix__.disableTermExtraction", true);
+pref("__prefsPrefix__.glossaryEntries", "[]");
+pref("__prefsPrefix__.semanticReview", false);
+pref("__prefsPrefix__.reviewPreferenceMigrationVersion", 0);
 
 pref("__prefsPrefix__.dialog-service", "openai");
 pref("__prefsPrefix__.dialog-serviceSelect", "openai");

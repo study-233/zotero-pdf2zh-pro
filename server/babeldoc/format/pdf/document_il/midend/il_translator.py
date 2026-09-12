@@ -7,6 +7,7 @@ import json
 import logging
 import re
 import threading
+from time import perf_counter
 from pathlib import Path
 from string import Template
 
@@ -46,6 +47,8 @@ from babeldoc.format.pdf.document_il.utils.style_helper import GRAY80
 from babeldoc.format.pdf.document_il.midend.reference_filter import (
     find_reference_paragraph_ids,
 )
+from babeldoc.format.pdf.document_il.midend.body_input import BODY_LABELS, BodyInputPlan
+from babeldoc.format.pdf.document_il.midend.batch_finalizer import BatchFinalizer, ParagraphOutput
 from babeldoc.format.pdf.translation_config import TranslationConfig
 from babeldoc.translator.translator import BaseTranslator
 from babeldoc.utils.priority_thread_pool_executor import PriorityThreadPoolExecutor
@@ -393,12 +396,14 @@ class ILTranslator:
 
     def translate(self, docs: Document):
         self.docs = docs
+        self.begin_translation_completion()
         tracker = DocumentTranslateTracker()
         self.reference_skip_ids = (
             find_reference_paragraph_ids(docs)
             if self.translation_config.skip_references
             else set()
         )
+        self.prepare_body_input_plan(docs)
 
         if not self.translation_config.shared_context_cross_split_part.first_paragraph:
             # Try to find the first title paragraph
@@ -432,12 +437,109 @@ class ILTranslator:
                 for page in docs.page:
                     self.process_page(page, executor, pbar, tracker.new_page())
 
+        self.finish_translation_completion()
+
         path = self.translation_config.get_working_file_path("translate_tracking.json")
 
         if self.translation_config.save_detailed_tracking:
             logger.debug(f"save translate tracking to {path}")
             with Path(path).open("w", encoding="utf-8") as f:
                 f.write(tracker.to_json())
+
+    def begin_translation_completion(self):
+        self._completion_lock = threading.Lock()
+        self._accepted_outputs = {}
+        self._accepted_inputs = {}
+        self._cache_finalizers = []
+        self._completion_finished = False
+        self.quality_review = None
+        if getattr(self.translation_config, "semantic_review", False):
+            from babeldoc.format.pdf.quality_review import QualityReview
+            self.quality_review = QualityReview(
+                self.translate_engine,
+                recovery=getattr(self.translation_config, "recovery", None),
+                attempt=getattr(self.translation_config, "review_attempt", 1),
+                glossary_entries=getattr(self.translation_config, "glossary_entries", ()),
+                check_cancelled=self.translation_config.raise_if_cancelled,
+            )
+
+    def _ensure_translation_completion(self):
+        # Document execution initializes before workers; direct paragraph calls also work.
+        if not hasattr(self, "_completion_lock"):
+            self.begin_translation_completion()
+
+    def register_cache_finalizer(self, finalizer):
+        self._ensure_translation_completion()
+        with self._completion_lock:
+            self._cache_finalizers.append(finalizer)
+
+    def finish_translation_completion(self):
+        """Called only after both main and fallback executor contexts have exited."""
+        self._ensure_translation_completion()
+        self.translation_config.raise_if_cancelled()
+        if self._completion_finished:
+            return
+        if self.quality_review is not None:
+            review_started = perf_counter()
+            try:
+                self.quality_review.run()
+            finally:
+                collector = getattr(self.translate_engine, "metrics_collector", None)
+                if collector is not None:
+                    try:
+                        collector.record_stage("Quality Review", perf_counter() - review_started)
+                    except Exception as exc:
+                        logger.debug("review timing record failed: error_type=%s", type(exc).__name__)
+        for finalizer in self._cache_finalizers:
+            finalizer.finalize(self.quality_review, self.translation_config.raise_if_cancelled)
+        self._completion_finished = True
+
+    def accepted_output(self, paragraph):
+        self._ensure_translation_completion()
+        with self._completion_lock:
+            return self._accepted_outputs.get(id(paragraph))
+
+    def accepted_input(self, paragraph):
+        self._ensure_translation_completion()
+        with self._completion_lock:
+            value = self._accepted_inputs.get(id(paragraph))
+            return copy.copy(value) if value is not None else None
+
+    def prepare_body_input_plan(self, docs: Document):
+        """Freeze prose inputs with their own page fonts before translation workers start."""
+        self._paragraph_order = {
+            id(p): index for index, p in enumerate(p for page in docs.page for p in page.pdf_paragraph)
+        }
+        self._body_prepared_inputs = {}
+        excluded = getattr(self, "reference_skip_ids", set())
+        disable_rich_text = self.translation_config.disable_rich_text_translate or not self.support_llm_translate
+        for page in docs.page:
+            self.translation_config.raise_if_cancelled()
+            fonts = {font.font_id: font for font in page.pdf_font}
+            xobj_fonts = {xobj.xobj_id: {**fonts, **{font.font_id: font for font in xobj.pdf_font}}
+                          for xobj in page.pdf_xobject}
+            for paragraph in page.pdf_paragraph:
+                self.translation_config.raise_if_cancelled()
+                if (paragraph.layout_label not in BODY_LABELS or paragraph.vertical
+                        or id(paragraph) in excluded or is_url_only_paragraph(paragraph)):
+                    continue
+                try:
+                    prepared = self.get_translate_input(
+                        paragraph, xobj_fonts.get(paragraph.xobj_id, fonts), disable_rich_text,
+                    )
+                except Exception as exc:
+                    self.translation_config.raise_if_cancelled()
+                    # Preserve per-paragraph failure handling in the worker path.
+                    logger.debug("body input preparation deferred: paragraph_id=%s error_type=%s",
+                                 paragraph.debug_id, type(exc).__name__)
+                    continue
+                if prepared is not None and len(prepared.unicode) >= self.translation_config.min_text_length:
+                    self._body_prepared_inputs[id(paragraph)] = prepared
+        self.body_input_plan = BodyInputPlan(
+            docs, {key: value.unicode for key, value in self._body_prepared_inputs.items()},
+            evidence=(entry.source for glossary in getattr(self, "_cached_glossaries", ())
+                      for entry in glossary.entries),
+        )
 
     def find_title_paragraph(self, docs: Document) -> PdfParagraph | None:
         """Find the first paragraph with layout_label 'title' in the document.
@@ -630,7 +732,10 @@ class ILTranslator:
                 or composition.pdf_character
             ):
                 translate_input = self.TranslateInput(
-                    paragraph.unicode,
+                    get_char_unicode_string(composition.pdf_line.pdf_character, body_input=True)
+                    if composition.pdf_line and paragraph.layout_label in BODY_LABELS else
+                    get_char_unicode_string(composition.pdf_same_style_characters.pdf_character, body_input=True)
+                    if composition.pdf_same_style_characters and paragraph.layout_label in BODY_LABELS else paragraph.unicode,
                     [],
                     paragraph.pdf_style,
                 )
@@ -742,7 +847,7 @@ class ILTranslator:
                 )
                 return self.get_translate_input(paragraph, page_font_map, True)
 
-        text = get_char_unicode_string(chars)
+        text = get_char_unicode_string(chars, body_input=paragraph.layout_label in BODY_LABELS)
         translate_input = self.TranslateInput(text, placeholders, paragraph.pdf_style)
         translate_input.set_original_placeholder_tokens(original_placeholder_tokens)
         return translate_input
@@ -974,6 +1079,11 @@ class ILTranslator:
                 recovery.record(paragraph, "skipped", reason="url_only")
             return None, None
         text, translate_input = self._prepare_paragraph(paragraph, tracker, page_font_map, xobj_font_map)
+        plan = getattr(self, "body_input_plan", None)
+        if text is not None and plan is not None:
+            plan.apply(paragraph, translate_input)
+            text = translate_input.unicode
+            tracker.set_input(text)
         recovery = getattr(self.translation_config, "recovery", None)
         if recovery is not None:
             if text is None:
@@ -1008,7 +1118,8 @@ class ILTranslator:
         if not self.support_llm_translate:
             disable_rich_text_translate = True
 
-        translate_input = self.get_translate_input(
+        snapshot = getattr(self, "_body_prepared_inputs", {}).get(id(paragraph))
+        translate_input = copy.copy(snapshot) if snapshot is not None else self.get_translate_input(
             paragraph, page_font_map, disable_rich_text_translate
         )
         if not translate_input:
@@ -1034,8 +1145,11 @@ class ILTranslator:
         tracker: ParagraphTranslateTracker,
         translate_input,
         translated_text: str,
+        *,
+        register_review: bool = True,
     ):
         """Post-translation processing: update paragraph with translated text."""
+        self.translation_config.raise_if_cancelled()
         validate_text(translate_input.unicode, translated_text, self.translate_engine.lang_out,
                       not self.translation_config.disable_same_text_fallback)
         tracker.set_output(translated_text)
@@ -1062,6 +1176,24 @@ class ILTranslator:
         recovery = getattr(self.translation_config, "recovery", None)
         if recovery is not None:
             recovery.record(paragraph, "succeeded", input=translate_input.unicode, translation=translated_text, reason=None)
+        self._ensure_translation_completion()
+        result = ParagraphOutput(translate_input.unicode, translated_text)
+        with self._completion_lock:
+            self._accepted_outputs[id(paragraph)] = result
+            self._accepted_inputs[id(paragraph)] = copy.copy(translate_input)
+        if register_review and self.quality_review is not None:
+            review_input = copy.copy(translate_input)
+            self.quality_review.register_candidate(
+                paragraph, result.source, result.output,
+                lambda corrected: self.post_translate_paragraph(
+                    paragraph, tracker, review_input, corrected, register_review=False,
+                ),
+                context=json.dumps(getattr(translate_input, "body_context", {}), ensure_ascii=False),
+                risk_hints=("continuation",) if getattr(translate_input, "continuation_risk", False) else (),
+                is_body=paragraph.layout_label in BODY_LABELS,
+                order_key=getattr(self, "_paragraph_order", {}).get(id(paragraph), 0),
+                continuation_group=getattr(translate_input, "continuation_group", None),
+            )
         return True
 
     def _build_role_block(self) -> str:
@@ -1129,6 +1261,14 @@ class ILTranslator:
                     f"{hint_idx}. Formula placeholder hint:\n{placeholders_hint}"
                 )
 
+        body_context = getattr(translate_input, "body_context", None)
+        if body_context:
+            context_lines.append(
+                "Neighboring source fragments (read-only context; translate only the input, "
+                "do not copy or move neighboring content):\n"
+                + json.dumps(body_context, ensure_ascii=False)
+            )
+
         if context_lines:
             return "## Context / Hints\n" + "\n".join(context_lines) + "\n"
         return ""
@@ -1150,7 +1290,9 @@ class ILTranslator:
         for glossary in self._cached_glossaries:
             active_entries = glossary.get_active_entries_for_text(text)
             if active_entries:
-                glossary_entries_per_glossary[glossary.name] = sorted(active_entries)
+                glossary_entries_per_glossary[glossary.name] = sorted(
+                    active_entries, key=lambda entry: (-len(entry[0]), entry[0].casefold()),
+                )
 
         if not glossary_entries_per_glossary:
             return ""
@@ -1273,7 +1415,7 @@ class ILTranslator:
         self.translation_config.raise_if_cancelled()
         with PbarContext(pbar):
             try:
-                if self.use_as_fallback:
+                if self.use_as_fallback and id(paragraph) not in getattr(self, "_body_prepared_inputs", {}):
                     # il translator llm only modifies unicode in some situations
                     paragraph.unicode = get_paragraph_unicode(paragraph)
                 # Pre-translation processing
@@ -1281,16 +1423,22 @@ class ILTranslator:
                     paragraph, tracker, page_font_map, xobj_font_map
                 )
                 if text is None:
-                    return
+                    return self.accepted_output(paragraph)
                 llm_translate_tracker = tracker.new_llm_translate_tracker()
                 recovery = getattr(self.translation_config, "recovery", None)
                 context = [text]
                 params = {
                     "paragraph_token_count": paragraph_token_count,
+                    "metric_kind": "translation",
+                    "batch_size": 1,
+                    "check_cancelled": self.translation_config.raise_if_cancelled,
                     "validate_output": lambda value: validate_text(text, value, self.translate_engine.lang_out,
                         not self.translation_config.disable_same_text_fallback),
                     "on_attempt": lambda: recovery.attempt([paragraph], context[0]) if recovery is not None else None,
                 }
+                self._ensure_translation_completion()
+                if self.quality_review is not None:
+                    params["defer_cache_write"] = True
                 # Perform translation
                 if self.support_llm_translate:
                     llm_prompt = self.generate_prompt_for_llm(
@@ -1317,6 +1465,15 @@ class ILTranslator:
                 self.post_translate_paragraph(
                     paragraph, tracker, translate_input, translated_text
                 )
+                result = self.accepted_output(paragraph)
+                if self.quality_review is not None:
+                    finalizer = BatchFinalizer(
+                        self.translate_engine, context[0], [paragraph], [text], params, batch=False,
+                    )
+                    finalizer.record(0, result)
+                    finalizer.seal()
+                    self.register_cache_finalizer(finalizer)
+                return result
             except ContentFilterError as e:
                 recovery = getattr(self.translation_config, "recovery", None)
                 if recovery is not None:

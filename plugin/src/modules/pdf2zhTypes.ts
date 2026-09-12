@@ -9,6 +9,12 @@ export type ServerTaskStatus =
     | "failed"
     | "cancelled";
 
+export interface GlossaryEntry {
+    source: string;
+    target: string;
+    tgt_lng: string;
+}
+
 export interface ServerConfig {
     apiConfig?: LLMApiData | null;
     serverUrl: string;
@@ -27,6 +33,8 @@ export interface ServerConfig {
     noWatermark: string;
     disableTermExtraction: string;
     fontFamily: string;
+    glossaryEntries?: GlossaryEntry[];
+    semanticReview?: boolean;
 }
 
 export interface DiagnosticMessage {
@@ -41,6 +49,10 @@ export interface ServerHealthResponse {
     version?: string;
     pythonVersion?: string;
     supportedApiProtocols?: string[];
+    capabilities?: {
+        glossaryEntries?: boolean;
+        semanticReview?: boolean;
+    };
     pdf2zhVersion?: string;
     babeldocVersion?: string;
     workspace?: {
@@ -81,7 +93,29 @@ export interface PDFOperationOptions {
     openAfterProcess: boolean;
 }
 
-export interface ServerTaskSnapshot {
+export interface ServerSyncMetadata {
+    serverInstanceId?: string;
+    revision?: number;
+}
+
+export interface ServerTaskList extends ServerSyncMetadata {
+    tasks: ServerTaskSnapshot[];
+}
+
+export interface TaskQualitySummary {
+    selected: number;
+    checked: number;
+    passed: number;
+    corrected: number;
+    unchecked: number;
+    failed: number;
+    notSelected: number;
+    requestsUsed: number;
+    requestLimit: number;
+    paragraphLimit: number;
+}
+
+export interface ServerTaskSnapshot extends ServerSyncMetadata {
     taskId: string;
     fileName: string;
     service: string;
@@ -102,6 +136,7 @@ export interface ServerTaskSnapshot {
     cancelRequested: boolean;
     metrics?: TaskMetrics;
     canRepair?: boolean;
+    qualitySummary?: TaskQualitySummary | null;
     translationSummary?: {
         total: number;
         succeeded: number;
@@ -118,35 +153,55 @@ export interface ServerTaskSnapshot {
     }[];
 }
 
+export type RequestKind = "translation" | "review" | "initialization";
+export type MetricAvailability = "unavailable" | "partial" | "complete";
+
+export interface RequestMetrics {
+    attempts: number;
+    succeeded: number;
+    failed: number;
+    active: number;
+    retries: number;
+    averageLatencyMs: number | null;
+    p95LatencyMs: number | null;
+    statusCodes?: Record<string, number>;
+    errorTypes?: Record<string, number>;
+    finishReasons?: Record<string, number>;
+    protocols?: Record<string, number>;
+    visibleOutputChars?: number | null;
+    batchSizes?: Record<string, number>;
+}
+
+export interface TokenMetrics {
+    input: number | null;
+    output: number | null;
+    total: number | null;
+    reasoning?: number | null;
+    availability?: MetricAvailability;
+    reasoningAvailability?: MetricAvailability;
+}
+
 export interface TaskMetrics {
-    requests: {
-        attempts: number;
-        succeeded: number;
-        failed: number;
-        active: number;
-        retries: number;
+    requests: RequestMetrics & {
         qps10s: number;
-        averageLatencyMs: number | null;
-        p95LatencyMs: number | null;
+        byKind?: Partial<Record<RequestKind, RequestMetrics>>;
     };
     localCache: { hits: number; misses: number; hitRate: number | null };
     providerCache: {
         hitTokens: number | null;
         missTokens: number | null;
-        availability?: "unavailable" | "partial" | "complete";
+        availability?: MetricAvailability;
         hitRate: number | null;
     };
-    tokens: {
-        input: number | null;
-        output: number | null;
-        total: number | null;
-        availability?: "unavailable" | "partial" | "complete";
+    tokens: TokenMetrics & {
+        byKind?: Partial<Record<RequestKind, TokenMetrics>>;
     };
     throughput: {
         paragraphsPerMinute: number | null;
         etaSeconds: number | null;
     };
     referencesSkipped: number;
+    stageDurations?: Record<string, number>;
 }
 
 export interface PluginTask extends ServerTaskSnapshot {
@@ -158,8 +213,8 @@ export interface PluginTask extends ServerTaskSnapshot {
     importedOutputs?: string[];
 }
 
-export interface ServerTaskEvent {
-    type: "snapshot" | "task" | "deleted";
+export interface ServerTaskEvent extends ServerSyncMetadata {
+    type: "snapshot" | "task" | "deleted" | "resync";
     task?: ServerTaskSnapshot;
     taskId?: string;
 }

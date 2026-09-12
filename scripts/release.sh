@@ -158,6 +158,7 @@ UV_DEFAULT_INDEX=https://pypi.org/simple uv --directory server lock --locked
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_bootstrap.ps1
 uv run --no-project python scripts/test_windows_pe.py
+uv run --no-project python scripts/test_release_gate.py
 uv build server --out-dir server/dist --clear --no-sources
 uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$VERSION"
 
@@ -206,6 +207,55 @@ if [[ "$PUSH" -eq 1 ]]; then
     git push origin main
 fi
 
+# A publication uses the exact packages from the full isolated Windows check.
+# The workflow's --no-push build does not enter this block recursively.
+BUILD_RUN=""
+if [[ "$PUSH" -eq 1 && ( "$PUBLISH_PYPI" -eq 1 || "$PUBLISH_RELEASE" -eq 1 ) ]]; then
+    BUILD_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    gh workflow run build-windows-release.yml --repo "$MAIN_REPO" --ref main \
+        -f version="$VERSION" -f commit="$COMMIT" -f full_validation=true
+    for _ in {1..40}; do
+        BUILD_RUN="$(gh run list --repo "$MAIN_REPO" --workflow build-windows-release.yml \
+            --commit "$COMMIT" --event workflow_dispatch --limit 10 \
+            --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$BUILD_STARTED\")] | first | .databaseId // empty")"
+        [[ -n "$BUILD_RUN" ]] && break
+        sleep 2
+    done
+    [[ -n "$BUILD_RUN" ]] || die "Full Windows release validation did not start"
+    gh run watch "$BUILD_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
+    VERIFIED_DIR="dist/verified-$BUILD_RUN"
+    gh run download "$BUILD_RUN" --repo "$MAIN_REPO" \
+        --name "release-$VERSION-$COMMIT" --dir "$VERIFIED_DIR"
+    node - "$VERIFIED_DIR" "$VERSION" "$COMMIT" <<'VERIFY_BUILD'
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+const [directory, version, commit] = process.argv.slice(2);
+const product = "zotero-pdf2zh-pro";
+const manifest = JSON.parse(fs.readFileSync(path.join(directory, "checksums.json"), "utf8"));
+if (manifest.version !== version || manifest.commit !== commit) throw new Error("Verified build identity mismatch");
+const destinations = {
+  [`${product}.xpi`]: `plugin/build/${product}.xpi`,
+  "update.json": "plugin/build/update.json",
+  [`${product}-windows-x64.zip`]: `dist/${product}-windows-x64.zip`,
+  "windows-update.json": "dist/windows-update.json",
+  [`${product}-${version}-source.zip`]: `dist/${product}-${version}-source.zip`,
+  [`zotero_pdf2zh_pro-${version}-py3-none-any.whl`]: `server/dist/zotero_pdf2zh_pro-${version}-py3-none-any.whl`,
+  [`zotero_pdf2zh_pro-${version}.tar.gz`]: `server/dist/zotero_pdf2zh_pro-${version}.tar.gz`,
+};
+if (JSON.stringify(Object.keys(manifest.artifacts).sort()) !== JSON.stringify(Object.keys(destinations).sort()))
+  throw new Error("Unexpected verified artifact set");
+for (const name of Object.keys(destinations)) {
+  const data = fs.readFileSync(path.join(directory, name));
+  const expected = manifest.artifacts[name];
+  if (data.length !== expected.size || crypto.createHash("sha256").update(data).digest("hex") !== expected.sha256)
+    throw new Error(`Verified artifact checksum mismatch: ${name}`);
+}
+for (const [name, destination] of Object.entries(destinations)) fs.copyFileSync(path.join(directory, name), destination);
+VERIFY_BUILD
+    uv run --no-project python scripts/check_release_artifacts.py "$VERSION" "$COMMIT" --collect
+fi
+
 pypi_release_complete() {
     local response
     response="$(curl -fsS "$PYPI_VERSION_URL")" || return 1
@@ -246,7 +296,8 @@ if [[ "$PUBLISH_PYPI" -eq 1 ]]; then
                 git push origin "$TAG"
                 REMOTE_TAG_COMMIT="$COMMIT"
             fi
-            gh workflow run publish-pypi.yml --repo "$MAIN_REPO" --ref main -f tag="$TAG"
+            gh workflow run publish-pypi.yml --repo "$MAIN_REPO" --ref main \
+                -f tag="$TAG" -f build_run_id="$BUILD_RUN"
         fi
     fi
     PYPI_VERIFIED=0

@@ -272,6 +272,57 @@
         </html:div>
     </html:section>
 
+    <html:section class="pref-section">
+        <html:div class="section-heading">
+            <html:h3
+                class="pref-section-title"
+                data-l10n-id="pref-glossary-title"
+            />
+        </html:div>
+        <html:p class="pref-description" data-l10n-id="pref-glossary-hint" />
+        <html:p
+            id="zotero-prefpane-__addonRef__-glossarySummary"
+            class="pref-description"
+        />
+        <html:div class="llm-toolbar">
+            <html:button
+                id="zotero-prefpane-__addonRef__-glossary-import"
+                data-l10n-id="pref-glossary-import"
+            />
+            <html:button
+                id="zotero-prefpane-__addonRef__-glossary-clear"
+                data-l10n-id="pref-glossary-clear"
+            />
+        </html:div>
+        <html:div
+            id="zotero-prefpane-__addonRef__-glossaryResult"
+            class="connection-result"
+            role="status"
+            aria-live="polite"
+            hidden="true"
+        />
+        <html:div class="toggle-row">
+            <checkbox
+                id="zotero-prefpane-__addonRef__-semanticReview"
+                preference="extensions.zotero.__addonRef__.semanticReview"
+            />
+            <html:label
+                for="zotero-prefpane-__addonRef__-semanticReview"
+                data-l10n-id="pref-semanticReview"
+            />
+        </html:div>
+        <html:p
+            class="pref-description"
+            data-l10n-id="pref-semanticReview-hint"
+        />
+        <html:p
+            id="zotero-prefpane-__addonRef__-qualityCapabilities"
+            class="pref-description"
+            role="status"
+            aria-live="polite"
+        />
+    </html:section>
+
     <html:details class="pref-section">
         <html:summary
             class="pref-section-title"

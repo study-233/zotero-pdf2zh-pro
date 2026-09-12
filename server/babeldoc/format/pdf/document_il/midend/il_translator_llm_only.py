@@ -1,4 +1,4 @@
-from babeldoc.translator.validation import validate_batch
+from babeldoc.translator.validation import InvalidTranslation, inspect_batch
 
 import copy
 import json
@@ -50,6 +50,7 @@ PROMPT_TEMPLATE = Template(
 2. Input paragraphs may be **sliced pieces of the same original paragraph**.  
    → You MUST treat each input paragraph **as an independent, fixed unit**.  
    → Do NOT merge paragraphs, split paragraphs, or move content between paragraphs.
+   → read_only_context contains neighboring source fragments for comprehension only; never output their content.
 3. Inside each paragraph, you may adjust word order for fluency, but:
    - Do NOT change the meaning.
    - Do NOT move placeholders, tags, or code outside their paragraph.
@@ -182,6 +183,7 @@ class ILTranslatorLLMOnly:
 
     def translate(self, docs: Document) -> None:
         self.il_translator.docs = docs
+        self.il_translator.begin_translation_completion()
         tracker = DocumentTranslateTracker()
         self.mid = 0
         self.reference_skip_ids = (
@@ -190,6 +192,7 @@ class ILTranslatorLLMOnly:
             else set()
         )
         self.il_translator.reference_skip_ids = self.reference_skip_ids
+        self.il_translator.prepare_body_input_plan(docs)
 
         if not self.translation_config.shared_context_cross_split_part.first_paragraph:
             # Try to find the first title paragraph
@@ -262,6 +265,8 @@ class ILTranslatorLLMOnly:
                             executor2,
                             translated_ids,
                         )
+
+        self.il_translator.finish_translation_completion()
 
         path = self.translation_config.get_working_file_path("translate_tracking.json")
 
@@ -656,6 +661,10 @@ class ILTranslatorLLMOnly:
         """Translate a paragraph using pre and post processing functions."""
         self.translation_config.raise_if_cancelled()
         should_translate_paragraph = []
+        finalizer = None
+        completed_indices = set()
+        fallback_indices = set()
+        restored_indices = set()
         try:
             inputs = []
             llm_translate_trackers = []
@@ -663,12 +672,19 @@ class ILTranslatorLLMOnly:
             for i in range(len(batch_paragraph.paragraphs)):
                 paragraph = batch_paragraph.paragraphs[i]
                 tracker = batch_paragraph.trackers[i]
+                original_unicode = paragraph.unicode
                 text, translate_input = self.il_translator.pre_translate_paragraph(
                     paragraph, tracker, page_font_map, xobj_font_map
                 )
                 if text is None:
-                    pbar.advance(1)
-                    continue
+                    if pbar:
+                        pbar.advance(1)
+                    restored = self.il_translator.accepted_output(paragraph)
+                    if restored is None:
+                        continue
+                    translate_input = self.il_translator.accepted_input(paragraph)
+                    text = restored.source
+                    restored_indices.add(len(inputs))
 
                 tracker.record_multi_paragraph_id(mp_id)
 
@@ -685,7 +701,7 @@ class ILTranslatorLLMOnly:
                         paragraph_unicodes,
                     )
                 )
-                paragraph_unicodes.append(paragraph.unicode)
+                paragraph_unicodes.append(original_unicode)
             if not inputs:
                 return
             json_format_input = []
@@ -700,6 +716,8 @@ class ILTranslatorLLMOnly:
                     "input": input_text[0],
                     "layout_label": input_text[2].layout_label,
                 }
+                if getattr(ti, "body_context", None):
+                    obj["read_only_context"] = ti.body_context
                 if (
                     placeholders_hint
                     and self.translation_config.add_formula_placehold_hint
@@ -724,17 +742,50 @@ class ILTranslatorLLMOnly:
 
             for llm_translate_tracker in llm_translate_trackers:
                 llm_translate_tracker.set_input(final_input)
-            llm_output = self.translate_engine.llm_translate(
-                final_input,
-                rate_limit_params={
+
+            def inspect_output(value):
+                return inspect_batch(value, [item[0] for item in inputs],
+                    self.translate_engine.lang_out, not self.translation_config.disable_same_text_fallback)
+
+            cache_params = {
                     "paragraph_token_count": paragraph_token_count,
+                    "metric_kind": "translation",
+                    "batch_size": len(inputs),
+                    "check_cancelled": self.translation_config.raise_if_cancelled,
                     "request_json_mode": True,
-                    "validate_output": lambda value: validate_batch(value, [item[0] for item in inputs],
-                        self.translate_engine.lang_out, not self.translation_config.disable_same_text_fallback),
+                    "defer_cache_write": True,
+                    "validate_output": inspect_output,
+                    "cache_output_if": lambda value: not inspect_output(value).invalid_outputs,
                     "on_attempt": lambda: self.translation_config.recovery.attempt(
                         [item[2] for item in inputs], final_input
                     ) if getattr(self.translation_config, "recovery", None) is not None else None,
-                },
+                }
+            finalizer = il_translator.BatchFinalizer(
+                self.translate_engine, final_input, [item[2] for item in inputs],
+                [item[0] for item in inputs], cache_params,
+            )
+            self.il_translator.register_cache_finalizer(finalizer)
+            for index in restored_indices:
+                finalizer.record(index, self.il_translator.accepted_output(inputs[index][2]))
+                completed_indices.add(index)
+            if restored_indices:
+                # Rebuild the original full batch cache key while requesting only missing units.
+                for index, item in enumerate(inputs):
+                    if index in restored_indices:
+                        continue
+                    future = executor.submit(
+                        self.il_translator.translate_paragraph,
+                        item[2], batch_paragraph.pages[should_translate_paragraph[index]],
+                        pbar, item[3], page_font_map, xobj_font_map,
+                        priority=1048576 - self.calc_token_count(item[0]),
+                        paragraph_token_count=self.calc_token_count(item[0]),
+                        title_paragraph=title_paragraph, local_title_paragraph=local_title_paragraph,
+                    )
+                    fallback_indices.add(index)
+                    finalizer.add_future(index, future)
+                return
+            llm_output = self.translate_engine.llm_translate(
+                final_input, rate_limit_params=cache_params,
             )
             for llm_translate_tracker in llm_translate_trackers:
                 llm_translate_tracker.set_output(llm_output)
@@ -742,23 +793,17 @@ class ILTranslatorLLMOnly:
 
             llm_output = self._clean_json_output(llm_output)
 
-            translation_results = validate_batch(llm_output, [item[0] for item in inputs],
-                self.translate_engine.lang_out, not self.translation_config.disable_same_text_fallback)
+            translation_results = inspect_output(llm_output)
 
-            for id_, output in translation_results.items():
+            # Commit every valid row before scheduling repair requests so a
+            # cancellation during repair cannot discard the batch's good work.
+            for id_ in [*translation_results.valid_outputs, *translation_results.invalid_outputs]:
                 should_fallback = True
                 try:
-                    if not isinstance(output, str):
-                        logger.warning(
-                            "translation result is not a string: output_type=%s",
-                            type(output).__name__,
-                        )
-                        continue
-
-                    id_ = int(id_)  # Ensure id is an integer
-                    if id_ >= len(inputs):
-                        logger.warning(f"Invalid id {id_}, skipping")
-                        continue
+                    self.translation_config.raise_if_cancelled()
+                    if id_ in translation_results.invalid_outputs:
+                        raise InvalidTranslation(translation_results.invalid_outputs[id_])
+                    output = translation_results.valid_outputs[id_]
 
                     # Clean up any excessive punctuation in the translated text
                     translated_text = re.sub(r"[. 。…，]{20,}", ".", output)
@@ -774,6 +819,8 @@ class ILTranslatorLLMOnly:
                         translate_input,
                         translated_text,
                     )
+                    finalizer.record(id_, self.il_translator.accepted_output(inputs[id_][2]))
+                    completed_indices.add(id_)
                     should_fallback = False
                     if pbar:
                         pbar.advance(1)
@@ -787,10 +834,10 @@ class ILTranslatorLLMOnly:
                         type(e).__name__,
                     )
                     # Ignore error and continue
-                    for llm_translate_tracker in llm_translate_trackers:
-                        llm_translate_tracker.set_error_message(error_message)
+                    inputs[id_][4].set_error_message(error_message)
                     continue
                 finally:
+                    self.translation_config.raise_if_cancelled()
                     self.total_count += 1
                     if should_fallback:
                         self.fallback_count += 1
@@ -803,7 +850,7 @@ class ILTranslatorLLMOnly:
                         )
                         paragraph_unicodes = inputs[id_][5]
                         inputs[id_][2].unicode = paragraph_unicodes[id_]
-                        executor.submit(
+                        future = executor.submit(
                             self.il_translator.translate_paragraph,
                             inputs[id_][2],
                             batch_paragraph.pages[should_translate_paragraph[id_]],
@@ -816,6 +863,8 @@ class ILTranslatorLLMOnly:
                             title_paragraph=title_paragraph,
                             local_title_paragraph=local_title_paragraph,
                         )
+                        fallback_indices.add(id_)
+                        finalizer.add_future(id_, future)
                     else:
                         self.ok_count += 1
 
@@ -835,18 +884,21 @@ class ILTranslatorLLMOnly:
             self.total_count += len(llm_translate_trackers)
             self.fallback_count += len(llm_translate_trackers)
             for index, input_ in enumerate(inputs):
-                input_[2].unicode = input_[5][index]
+                if index not in completed_indices and index not in fallback_indices:
+                    input_[2].unicode = input_[5][index]
             if not should_translate_paragraph:
                 should_translate_paragraph = list(
                     range(len(batch_paragraph.paragraphs))
                 )
-            for i in should_translate_paragraph:
+            for index, i in enumerate(should_translate_paragraph):
+                if index in completed_indices or index in fallback_indices:
+                    continue
                 paragraph = batch_paragraph.paragraphs[i]
                 tracker = batch_paragraph.trackers[i]
                 if paragraph.debug_id is None:
                     continue
                 paragraph_token_count = self.calc_token_count(paragraph.unicode)
-                executor.submit(
+                future = executor.submit(
                     self.il_translator.translate_paragraph,
                     paragraph,
                     batch_paragraph.pages[i],
@@ -859,6 +911,11 @@ class ILTranslatorLLMOnly:
                     title_paragraph=title_paragraph,
                     local_title_paragraph=local_title_paragraph,
                 )
+                if finalizer is not None:
+                    finalizer.add_future(index, future)
+        finally:
+            if finalizer is not None:
+                finalizer.seal()
 
     def _build_llm_prompt(
         self,
@@ -924,7 +981,7 @@ class ILTranslatorLLMOnly:
                 )
                 if active_entries:
                     glossary_entries_per_glossary[glossary.name] = sorted(
-                        active_entries
+                        active_entries, key=lambda entry: (-len(entry[0]), entry[0].casefold()),
                     )
 
         if glossary_entries_per_glossary:

@@ -2,6 +2,7 @@
 import json
 import re
 from collections import Counter
+from dataclasses import dataclass
 from babeldoc.translator.url_utils import is_url_only_text
 
 
@@ -39,7 +40,13 @@ def validate_text(source, output, lang_out="", same_text_check=True):
             raise InvalidTranslation("target_language_missing")
 
 
-def validate_batch(output, sources, lang_out="", same_text_check=True):
+@dataclass
+class BatchValidationResult:
+    valid_outputs: dict[int, str]
+    invalid_outputs: dict[int, str]
+
+
+def inspect_batch(output, sources, lang_out="", same_text_check=True):
     try:
         rows = json.loads(clean_json(output))
     except (ValueError, TypeError, AttributeError) as exc:
@@ -48,16 +55,29 @@ def validate_batch(output, sources, lang_out="", same_text_check=True):
         rows = [rows]
     if not isinstance(rows, list) or len(rows) != len(sources):
         raise InvalidTranslation("paragraph_count_mismatch")
-    results = {}
+    results = BatchValidationResult({}, {})
+    seen = set()
     for row in rows:
         if not isinstance(row, dict):
             raise InvalidTranslation("invalid_paragraph")
         key = row.get("id")
         if isinstance(key, str) and key.isdecimal():
             key = int(key)
-        if type(key) is not int or key not in range(len(sources)) or key in results:
+        if type(key) is not int or key not in range(len(sources)) or key in seen:
             raise InvalidTranslation("invalid_or_duplicate_paragraph_id")
+        seen.add(key)
         value = row.get("output")
-        validate_text(sources[key], value, lang_out, same_text_check)
-        results[key] = value
+        try:
+            validate_text(sources[key], value, lang_out, same_text_check)
+        except InvalidTranslation as error:
+            results.invalid_outputs[key] = str(error)
+        else:
+            results.valid_outputs[key] = value
     return results
+
+
+def validate_batch(output, sources, lang_out="", same_text_check=True):
+    result = inspect_batch(output, sources, lang_out, same_text_check)
+    if result.invalid_outputs:
+        raise InvalidTranslation(next(iter(result.invalid_outputs.values())))
+    return result.valid_outputs

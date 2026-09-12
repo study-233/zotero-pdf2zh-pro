@@ -5,11 +5,118 @@ import logging
 import math
 import threading
 import time
-from collections import deque
+from collections import Counter, deque
 from typing import Any, Callable
 
 METRIC_LOGGER = logging.getLogger("zotero_pdf2zh_server.metrics")
 MetricsCallback = Callable[[dict[str, Any]], None]
+REQUEST_KINDS = ("translation", "review", "initialization")
+
+
+def _kind(value):
+    return value if value in REQUEST_KINDS else "translation"
+
+
+def _number(value):
+    return (int(value) if isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value) and value >= 0 else None)
+
+
+class _RequestStats:
+    def __init__(self):
+        self.attempts = self.succeeded = self.failed = self.active = self.retries = 0
+        self.latency_total = 0.0
+        self.latencies = deque(maxlen=200)
+        self.status_codes, self.errors, self.finishes, self.protocols, self.batch_sizes = (Counter() for _ in range(5))
+        self.visible_chars = self.visible_known = 0
+
+    def finish(self, *, succeeded, latency_ms, status_code=None, error_type=None,
+               finish_reason=None, protocol=None, visible_chars=None, batch_size=None):
+        self.succeeded += bool(succeeded)
+        self.failed += not succeeded
+        self.latency_total += latency_ms
+        self.latencies.append(latency_ms)
+        self.status_codes[str(status_code) if status_code is not None else "unknown"] += 1
+        if error_type:
+            self.errors[error_type] += 1
+        if finish_reason:
+            self.finishes[finish_reason] += 1
+        if protocol:
+            self.protocols[protocol] += 1
+        if visible_chars is not None:
+            self.visible_chars += visible_chars
+            self.visible_known += 1
+        if batch_size is not None:
+            self.batch_sizes[str(batch_size)] += 1
+
+    def snapshot(self):
+        total = self.succeeded + self.failed
+        ordered = sorted(self.latencies)
+        return {
+            "attempts": self.attempts, "succeeded": self.succeeded, "failed": self.failed,
+            "active": self.active, "retries": self.retries,
+            "averageLatencyMs": round(self.latency_total / total, 1) if total else None,
+            "p95LatencyMs": round(ordered[max(math.ceil(len(ordered) * .95) - 1, 0)], 1) if ordered else None,
+            "statusCodes": dict(self.status_codes), "errorTypes": dict(self.errors),
+            "finishReasons": dict(self.finishes), "protocols": dict(self.protocols),
+            "visibleOutputChars": self.visible_chars if self.visible_known else None,
+            "batchSizes": dict(self.batch_sizes),
+        }
+
+
+class _TokenTotals:
+    def __init__(self):
+        self.calls = 0
+        self.values = Counter()
+        self.known = Counter()
+
+    def record(self, *, prompt_tokens, completion_tokens, cache_hit_tokens, cache_miss_tokens,
+               reasoning_tokens=None):
+        prompt, completion, hit, miss, reasoning = map(_number, (
+            prompt_tokens, completion_tokens, cache_hit_tokens, cache_miss_tokens, reasoning_tokens))
+        if prompt is not None and hit is not None:
+            hit = min(hit, prompt)
+            miss = prompt - hit
+        elif prompt is not None and miss is not None:
+            miss = min(miss, prompt)
+            hit = prompt - miss
+        if reasoning is not None and completion is not None:
+            reasoning = min(reasoning, completion)
+        self.calls += 1
+        for key, value in (("input", prompt), ("output", completion), ("reasoning", reasoning)):
+            if value is not None:
+                self.values[key] += value
+                self.known[key] += 1
+        if hit is not None and miss is not None:
+            self.values["hit"] += hit
+            self.values["miss"] += miss
+            self.known["cache"] += 1
+
+    def availability(self, *keys):
+        counts = [self.known[key] for key in keys]
+        if not any(counts):
+            return "unavailable"
+        return "complete" if all(count == self.calls for count in counts) else "partial"
+
+    def snapshot(self):
+        return {
+            "input": self.values["input"] if self.known["input"] else None,
+            "output": self.values["output"] if self.known["output"] else None,
+            "total": self.values["input"] + self.values["output"]
+            if self.known["input"] or self.known["output"] else None,
+            "reasoning": self.values["reasoning"] if self.known["reasoning"] else None,
+            "availability": self.availability("input", "output"),
+            "reasoningAvailability": self.availability("reasoning"),
+        }
+
+    def cache_snapshot(self):
+        total = self.values["hit"] + self.values["miss"]
+        return {
+            "hitTokens": self.values["hit"] if self.known["cache"] else None,
+            "missTokens": self.values["miss"] if self.known["cache"] else None,
+            "hitRate": round(self.values["hit"] / total, 4) if total else None,
+            "availability": self.availability("cache"),
+        }
 
 # Presets whose settings transform into the common OpenAI translator.
 REQUEST_METRIC_SERVICES = frozenset(
@@ -33,16 +140,8 @@ def supports_request_metrics(service: str) -> bool:
 
 def empty_metrics() -> dict[str, Any]:
     return {
-        "requests": {
-            "attempts": 0,
-            "succeeded": 0,
-            "failed": 0,
-            "active": 0,
-            "retries": 0,
-            "qps10s": 0.0,
-            "averageLatencyMs": None,
-            "p95LatencyMs": None,
-        },
+        "requests": {**_RequestStats().snapshot(), "qps10s": 0.0,
+                     "byKind": {kind: _RequestStats().snapshot() for kind in REQUEST_KINDS}},
         "localCache": {"hits": 0, "misses": 0, "hitRate": None},
         "providerCache": {
             "hitTokens": None,
@@ -50,12 +149,9 @@ def empty_metrics() -> dict[str, Any]:
             "hitRate": None,
             "availability": "unavailable",
         },
-        "tokens": {
-            "input": None,
-            "output": None,
-            "total": None,
-            "availability": "unavailable",
-        },
+        "tokens": {**_TokenTotals().snapshot(),
+                   "byKind": {kind: _TokenTotals().snapshot() for kind in REQUEST_KINDS}},
+        "stageDurations": {},
         "throughput": {"paragraphsPerMinute": None, "etaSeconds": None},
         "referencesSkipped": 0,
     }
@@ -82,33 +178,25 @@ class TaskMetricsCollector:
         self._started_at = clock()
         self._last_emit_at = float("-inf")
         self._attempt_starts: deque[float] = deque()
-        self._latencies_ms: deque[float] = deque(maxlen=200)
-        self._latency_total_ms = 0.0
-        self._attempts = 0
-        self._succeeded = 0
-        self._failed = 0
-        self._active = 0
-        self._retries = 0
+        self._requests = _RequestStats()
+        self._requests_by_kind = {kind: _RequestStats() for kind in REQUEST_KINDS}
         self._local_hits = 0
         self._local_misses = 0
-        self._provider_hit_tokens = 0
-        self._provider_miss_tokens = 0
-        self._output_tokens = 0
-        self._input_tokens = 0
-        self._usage_calls = 0
-        self._input_known = 0
-        self._output_known = 0
-        self._cache_known = 0
+        self._usage = _TokenTotals()
+        self._usage_by_kind = {kind: _TokenTotals() for kind in REQUEST_KINDS}
+        self._stage_started = {}
+        self._stage_durations = Counter()
         self._progress_samples: deque[tuple[float, float]] = deque()
         self._paragraph_samples: deque[tuple[float, int]] = deque()
         self._last_translation_current: int | None = None
         self._references_skipped = 0
 
-    def request_started(self) -> float:
+    def request_started(self, *, kind="translation") -> float:
         now = self.clock()
         with self._lock:
-            self._attempts += 1
-            self._active += 1
+            for stats in (self._requests, self._requests_by_kind[_kind(kind)]):
+                stats.attempts += 1
+                stats.active += 1
             self._attempt_starts.append(now)
             self._trim_locked(now)
         self._emit_if_due()
@@ -120,17 +208,45 @@ class TaskMetricsCollector:
         *,
         succeeded: bool,
         status_code: int | None = None,
+        kind="translation", error_type=None, finish_reason=None, protocol=None,
+        visible_chars=None, batch_size=None,
     ) -> None:
         now = self.clock()
         latency_ms = max((now - started_at) * 1000, 0.0)
+        self._finish_request(kind=kind, latency_ms=latency_ms, succeeded=succeeded,
+                             status_code=status_code, error_type=error_type, finish_reason=finish_reason,
+                             protocol=protocol, visible_chars=visible_chars, batch_size=batch_size)
+
+    def record_completed_request(self, *, kind, latency_ms, succeeded, status_code=None,
+                                 error_type=None, finish_reason=None, protocol=None,
+                                 visible_chars=None, batch_size=None):
+        """Replay completed initialization without fabricating current active/QPS."""
         with self._lock:
-            self._active = max(self._active - 1, 0)
-            if succeeded:
-                self._succeeded += 1
-            else:
-                self._failed += 1
-            self._latency_total_ms += latency_ms
-            self._latencies_ms.append(latency_ms)
+            for stats in (self._requests, self._requests_by_kind[_kind(kind)]):
+                stats.attempts += 1
+        self._finish_request(kind=kind, latency_ms=latency_ms, succeeded=succeeded,
+                             status_code=status_code, error_type=error_type, finish_reason=finish_reason,
+                             protocol=protocol, visible_chars=visible_chars, batch_size=batch_size, replay=True)
+
+    def _finish_request(self, *, kind, latency_ms, succeeded, status_code, error_type,
+                        finish_reason, protocol, visible_chars, batch_size, replay=False):
+        kind = _kind(kind)
+        status_code = status_code if type(status_code) is int and 100 <= status_code <= 599 else None
+        error_type = error_type if isinstance(error_type, str) and error_type.isidentifier() and len(error_type) <= 80 else None
+        finish_reason = (finish_reason if finish_reason in {
+            "stop", "length", "content_filter", "tool_calls", "function_call", "completed",
+            "incomplete", "failed", "cancelled", "queued", "in_progress", "max_output_tokens",
+        } else "other" if finish_reason is not None else None)
+        protocol = protocol if protocol in {"chat_completions", "responses"} else None
+        visible_chars, batch_size = _number(visible_chars), _number(batch_size)
+        latency_ms = max(float(latency_ms), 0.0) if math.isfinite(float(latency_ms)) else 0.0
+        with self._lock:
+            for stats in (self._requests, self._requests_by_kind[kind]):
+                if not replay:
+                    stats.active = max(stats.active - 1, 0)
+                stats.finish(succeeded=succeeded, latency_ms=latency_ms, status_code=status_code,
+                             error_type=error_type, finish_reason=finish_reason, protocol=protocol,
+                             visible_chars=visible_chars, batch_size=batch_size)
         METRIC_LOGGER.info(
             "metric=%s",
             json.dumps(
@@ -139,8 +255,12 @@ class TaskMetricsCollector:
                     "provider": self.provider,
                     "model": self.model,
                     "event": "request",
+                    "kind": kind,
                     "success": succeeded,
                     "statusCode": status_code,
+                    "errorType": error_type, "finishReason": finish_reason,
+                    "protocol": protocol, "visibleOutputChars": visible_chars,
+                    "batchSize": batch_size,
                     "latencyMs": round(latency_ms, 1),
                 },
                 separators=(",", ":"),
@@ -148,9 +268,10 @@ class TaskMetricsCollector:
         )
         self._emit_if_due()
 
-    def retry_scheduled(self) -> None:
+    def retry_scheduled(self, *, kind="translation") -> None:
         with self._lock:
-            self._retries += 1
+            self._requests.retries += 1
+            self._requests_by_kind[_kind(kind)].retries += 1
         self._emit_if_due()
 
     def local_cache_hit(self) -> None:
@@ -170,39 +291,22 @@ class TaskMetricsCollector:
         completion_tokens: int | None,
         cache_hit_tokens: int | None,
         cache_miss_tokens: int | None,
+        reasoning_tokens: int | None = None,
+        kind="translation",
     ) -> None:
         with self._lock:
-            self._usage_calls += 1
-            if prompt_tokens is not None:
-                prompt_tokens = max(int(prompt_tokens), 0)
-                self._input_tokens += prompt_tokens
-                self._input_known += 1
-            if completion_tokens is not None:
-                self._output_tokens += max(int(completion_tokens), 0)
-                self._output_known += 1
-            if prompt_tokens is not None and cache_hit_tokens is not None:
-                hit = min(max(int(cache_hit_tokens), 0), prompt_tokens)
-                miss = prompt_tokens - hit
-            elif prompt_tokens is not None and cache_miss_tokens is not None:
-                miss = min(max(int(cache_miss_tokens), 0), prompt_tokens)
-                hit = prompt_tokens - miss
-            elif cache_hit_tokens is not None and cache_miss_tokens is not None:
-                hit, miss = (
-                    max(int(cache_hit_tokens), 0),
-                    max(int(cache_miss_tokens), 0),
-                )
-            else:
-                hit = miss = None
-            if hit is not None:
-                self._provider_hit_tokens += hit
-                self._provider_miss_tokens += miss
-                self._cache_known += 1
+            for totals in (self._usage, self._usage_by_kind[_kind(kind)]):
+                totals.record(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
+                              cache_hit_tokens=cache_hit_tokens, cache_miss_tokens=cache_miss_tokens,
+                              reasoning_tokens=reasoning_tokens)
         self._emit_if_due()
 
-    def _availability(self, *counts: int) -> str:
-        if not any(counts):
-            return "unavailable"
-        return "complete" if all(n == self._usage_calls for n in counts) else "partial"
+    def record_stage(self, name: str, seconds: float) -> None:
+        if not isinstance(name, str) or not isinstance(seconds, (int, float)) or not math.isfinite(seconds) or seconds < 0:
+            return
+        with self._lock:
+            self._stage_durations[name] += seconds
+        self._emit_if_due()
 
     def update_progress(self, event: dict[str, Any]) -> None:
         if event.get("type") not in {
@@ -219,6 +323,17 @@ class TaskMetricsCollector:
         with self._lock:
             self._progress_samples.append((now, overall))
             stage = str(event.get("stage") or "")
+            if stage:
+                if event.get("type") == "progress_start" or stage not in self._stage_started:
+                    self._stage_started[stage] = now
+                completed = event.get("type") == "progress_end"
+                if stage in {"Check Fonts", "Download Fonts"}:
+                    try:
+                        completed = completed or float(event.get("stage_current", -1)) >= float(event["stage_total"])
+                    except (KeyError, ValueError, TypeError):
+                        pass
+                if completed:
+                    self._stage_durations[stage] += max(now - self._stage_started.pop(stage), 0.0)
             if stage == "Translate Paragraphs":
                 try:
                     current = max(int(event.get("stage_current") or 0), 0)
@@ -244,13 +359,6 @@ class TaskMetricsCollector:
         with self._lock:
             self._trim_locked(now)
             local_total = self._local_hits + self._local_misses
-            provider_total = self._provider_hit_tokens + self._provider_miss_tokens
-            latency_count = self._succeeded + self._failed
-            sorted_latencies = sorted(self._latencies_ms)
-            p95 = None
-            if sorted_latencies:
-                index = max(math.ceil(len(sorted_latencies) * 0.95) - 1, 0)
-                p95 = sorted_latencies[index]
             paragraphs = sum(value for _, value in self._paragraph_samples)
             throughput_window = min(max(now - self._started_at, 1.0), 30.0)
             throughput = (
@@ -260,19 +368,9 @@ class TaskMetricsCollector:
             )
             eta = self._eta_locked(now)
             metrics = empty_metrics()
-            metrics["requests"] = {
-                "attempts": self._attempts,
-                "succeeded": self._succeeded,
-                "failed": self._failed,
-                "active": self._active,
-                "retries": self._retries,
+            metrics["requests"] = {**self._requests.snapshot(),
+                "byKind": {kind: stats.snapshot() for kind, stats in self._requests_by_kind.items()},
                 "qps10s": round(len(self._attempt_starts) / 10.0, 2),
-                "averageLatencyMs": (
-                    round(self._latency_total_ms / latency_count, 1)
-                    if latency_count
-                    else None
-                ),
-                "p95LatencyMs": round(p95, 1) if p95 is not None else None,
             }
             metrics["localCache"] = {
                 "hits": self._local_hits,
@@ -281,26 +379,10 @@ class TaskMetricsCollector:
                     round(self._local_hits / local_total, 4) if local_total else None
                 ),
             }
-            metrics["providerCache"] = {
-                "hitTokens": self._provider_hit_tokens if self._cache_known else None,
-                "missTokens": self._provider_miss_tokens if self._cache_known else None,
-                "availability": self._availability(self._cache_known),
-                "hitRate": (
-                    round(self._provider_hit_tokens / provider_total, 4)
-                    if provider_total
-                    else None
-                ),
-            }
-            metrics["tokens"] = {
-                "input": self._input_tokens if self._input_known else None,
-                "output": self._output_tokens if self._output_known else None,
-                "total": (self._input_tokens + self._output_tokens)
-                if self._input_known or self._output_known
-                else None,
-                "availability": self._availability(
-                    self._input_known, self._output_known
-                ),
-            }
+            metrics["providerCache"] = self._usage.cache_snapshot()
+            metrics["tokens"] = {**self._usage.snapshot(),
+                                 "byKind": {kind: totals.snapshot() for kind, totals in self._usage_by_kind.items()}}
+            metrics["stageDurations"] = {name: round(seconds, 6) for name, seconds in self._stage_durations.items()}
             metrics["throughput"] = {
                 "paragraphsPerMinute": (
                     round(throughput, 1) if throughput is not None else None

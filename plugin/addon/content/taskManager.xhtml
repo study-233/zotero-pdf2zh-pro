@@ -978,6 +978,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 border-left: 1px solid var(--border);
             }
 
+            .quality-summary {
+                margin-top: 12px;
+                color: var(--text-secondary);
+                font-size: 12px;
+                line-height: 1.6;
+                white-space: pre-line;
+            }
+
             .metrics-panel {
                 margin: 0 16px 12px;
             }
@@ -1235,6 +1243,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     <div class="title">翻译任务</div>
                     <div class="subtitle">
                         跟踪翻译进度、服务状态与附件导入结果
+                        <br />
+                        重试和补译沿用原任务的复核设置，不受当前设置开关影响。
                     </div>
                 </div>
                 <div class="toolbar-actions">
@@ -1551,6 +1561,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 progress.appendChild(metaRow);
                 card.appendChild(progress);
 
+                const qualitySummary = document.createElement("div");
+                qualitySummary.className = "quality-summary";
+                qualitySummary.hidden = true;
+                card.appendChild(qualitySummary);
+
                 const error = document.createElement("div");
                 error.className = "error";
                 error.hidden = true;
@@ -1706,6 +1721,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     progressFill,
                     createdAt,
                     updatedAt,
+                    qualitySummary,
                     error,
                     metricsPanel,
                     detailValues,
@@ -1780,6 +1796,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     view.updatedAt,
                     `更新于 ${formatDate(task.updatedAt)}`,
                 );
+
+                const qualityText = qualitySummaryText(task);
+                setTextContent(view.qualitySummary, qualityText);
+                setNodeHidden(view.qualitySummary, !qualityText);
 
                 const errorText = [
                     task.importError || task.error,
@@ -1878,6 +1898,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     task.error,
                     task.errorDiagnostics,
                     task.translationSummary,
+                    task.qualitySummary,
                     task.failedParagraphs,
                     task.canRepair,
                     task.attempt,
@@ -2106,7 +2127,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     running: "运行中",
                     cancelling: "正在终止",
                     completed: "已完成",
-                    incomplete: `未完成，剩余 ${task.translationSummary?.failed || task.translationSummary?.pending || "待检查"} 段`,
+                    incomplete:
+                        task.qualitySummary?.failed > 0
+                            ? `未完成，校对确认 ${task.qualitySummary.failed} 段有问题`
+                            : `未完成，剩余 ${task.translationSummary?.failed || task.translationSummary?.pending || "待检查"} 段`,
                     failed: "失败",
                     cancelled: "已终止",
                 };
@@ -2114,6 +2138,17 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     return "正在准备首次运行所需字体";
                 }
                 return mapping[task.status] || task.status;
+            }
+
+            function qualitySummaryText(task) {
+                const quality = task.qualitySummary;
+                if (!quality) return "";
+                const total = quality.selected + quality.notSelected;
+                return [
+                    `定向校对：已检查 ${quality.checked} 段（通过 ${quality.passed}、已修正 ${quality.corrected}、确认失败 ${quality.failed}）；入选但未核对 ${quality.unchecked} 段。`,
+                    `覆盖范围：已检查 ${quality.checked}/${total} 段正文，入选 ${quality.selected} 段，未入选 ${quality.notSelected} 段；本次最多 ${quality.paragraphLimit} 段，请求 ${quality.requestsUsed}/${quality.requestLimit} 次。`,
+                    "结论仅覆盖已检查段落；未核对与未入选段落没有语义结论。",
+                ].join("\n");
             }
 
             function isFontAssetStage(stage) {
@@ -2213,6 +2248,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function formatInteger(value) {
+                if (value === null || value === undefined) return "-";
                 const number = Number(value);
                 return Number.isFinite(number)
                     ? Math.round(number).toLocaleString("zh-CN")
@@ -2301,7 +2337,27 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     partial: "部分请求缺失，统计不完整",
                     complete: "已完整统计",
                 };
-                return `Token：${labels[metrics.tokens?.availability] || "已记录"}；服务端缓存：${labels[metrics.providerCache?.availability] || "以接口返回为准"}。`;
+                const notes = [
+                    `Token：${labels[metrics.tokens?.availability] || "已记录"}；服务端缓存：${labels[metrics.providerCache?.availability] || "以接口返回为准"}。`,
+                ];
+                const byKind = metrics.requests?.byKind;
+                if (byKind) {
+                    notes.push(
+                        `请求分布：翻译 ${formatInteger(byKind.translation?.attempts)}、校对 ${formatInteger(byKind.review?.attempts)}、初始化探测 ${formatInteger(byKind.initialization?.attempts)}；已包含在总请求中。`,
+                    );
+                }
+                const initialization = metrics.tokens?.byKind?.initialization;
+                if (initialization) {
+                    notes.push(
+                        `初始化探测 Token（输入 / 输出）：${formatInteger(initialization.input)} / ${formatInteger(initialization.output)}，已包含在总 Token 中。`,
+                    );
+                }
+                if (metrics.tokens && "reasoning" in metrics.tokens) {
+                    notes.push(
+                        `推理 Token：${formatInteger(metrics.tokens.reasoning)}（输出 Token 的子集，不重复相加；${labels[metrics.tokens.reasoningAvailability] || "以接口返回为准"}）。`,
+                    );
+                }
+                return notes.join(" ");
             }
 
             function formatDiagnostics(diagnostics) {

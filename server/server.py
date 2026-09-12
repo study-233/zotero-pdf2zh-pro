@@ -32,6 +32,7 @@ from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
 from provider_models import ModelDiscoveryError, list_provider_models
+from babeldoc.glossary_options import normalize_glossary_entries
 
 VERSION = "1.6.8"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
@@ -132,7 +133,7 @@ def create_app() -> Flask:
     @app.route("/tasks", methods=["GET", "POST"])
     def tasks():
         if request.method == "GET":
-            return jsonify({"status": "ok", "tasks": TASK_MANAGER.list_tasks()}), 200
+            return jsonify({"status": "ok", **TASK_MANAGER.list_tasks_snapshot()}), 200
 
         data = request.get_json(silent=True)
         if not isinstance(data, dict):
@@ -158,14 +159,14 @@ def create_app() -> Flask:
             remove_workspace_dir(workspace_dir)
             return error_response(str(exc), 500)
 
-        return jsonify({"status": "ok", "task": task}), 202
+        return jsonify(task_response_payload(task)), 202
 
     @app.get("/tasks/<task_id>")
     def task_detail(task_id: str):
         task = TASK_MANAGER.get_task(task_id)
         if task is None:
             return error_response("Task not found", 404)
-        return jsonify({"status": "ok", "task": task}), 200
+        return jsonify(task_response_payload(task)), 200
 
     @app.delete("/tasks/<task_id>")
     def delete_task(task_id: str):
@@ -175,14 +176,14 @@ def create_app() -> Flask:
             return error_response(str(exc), 409)
         if task is None:
             return error_response("Task not found", 404)
-        return jsonify({"status": "ok", "task": task}), 200
+        return jsonify(task_response_payload(task)), 200
 
     @app.post("/tasks/<task_id>/cancel")
     def cancel_task(task_id: str):
         task = TASK_MANAGER.cancel_task(task_id)
         if task is None:
             return error_response("Task not found", 404)
-        return jsonify({"status": "ok", "task": task}), 200
+        return jsonify(task_response_payload(task)), 200
 
     @app.post("/tasks/<task_id>/retry")
     def retry_task(task_id: str):
@@ -192,7 +193,7 @@ def create_app() -> Flask:
             return error_response(str(exc), 409)
         if task is None:
             return error_response("Task not found", 404)
-        return jsonify({"status": "ok", "task": task}), 202
+        return jsonify(task_response_payload(task)), 202
 
     @app.post("/tasks/<task_id>/repair")
     def repair_task(task_id: str):
@@ -202,16 +203,19 @@ def create_app() -> Flask:
             return error_response(str(exc), 409)
         if task is None:
             return error_response("Task not found", 404)
-        return jsonify({"status": "ok", "task": task}), 202
+        return jsonify(task_response_payload(task)), 202
 
     @app.post("/tasks/clear-failed")
     def clear_failed_tasks():
         deleted_count = TASK_MANAGER.clear_failed_tasks()
-        return jsonify({"status": "ok", "deletedCount": deleted_count}), 200
+        return jsonify({
+            "status": "ok", "deletedCount": deleted_count, **TASK_MANAGER.sync_metadata()
+        }), 200
 
     @app.get("/tasks/events")
     def task_events():
-        event_queue = TASK_MANAGER.subscribe()
+        manager = TASK_MANAGER
+        subscription = manager.subscribe()
 
         @stream_with_context
         def generate():
@@ -219,16 +223,25 @@ def create_app() -> Flask:
                 # Flush the SSE response immediately so clients can transition
                 # from "connecting" even when there are no task snapshots yet.
                 yield ": connected\n\n"
+                for event in subscription.initial_events:
+                    resync = manager.subscription_resync(subscription)
+                    if resync is not None:
+                        yield f"data: {json.dumps(resync, ensure_ascii=False)}\n\n"
+                        return
+                    yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+                subscription.initial_events.clear()
                 while True:
                     try:
-                        event = event_queue.get(timeout=15)
+                        event = manager.next_subscription_event(subscription, timeout=15)
                     except queue.Empty:
                         yield ": keepalive\n\n"
                         continue
                     payload = json.dumps(event, ensure_ascii=False)
                     yield f"data: {payload}\n\n"
+                    if event["type"] == "resync":
+                        return
             finally:
-                TASK_MANAGER.unsubscribe(event_queue)
+                manager.unsubscribe(subscription)
 
         return Response(
             generate(),
@@ -270,6 +283,8 @@ def create_app() -> Flask:
         response.headers["X-PDF2ZH-Output-Mode"] = result_file.output_mode
         response.headers["X-PDF2ZH-Version"] = VERSION
         response.headers["X-PDF2ZH-Task-Id"] = task_record.task_id
+        response.headers["X-PDF2ZH-Server-Instance-Id"] = task_record.server_instance_id
+        response.headers["X-PDF2ZH-Revision"] = str(task_record.revision)
         return response
 
     return app
@@ -327,6 +342,7 @@ def validate_config_request(data: dict[str, Any]):
         "font_family": normalize_font_family(data.get("fontFamily")),
         "live_test": parse_bool(data.get("liveTest"), False),
         "llm_api": data.get("llm_api") or {},
+        **quality_request_options(data),
     }
     LOGGER.info("[%s] checking config: service=%s", job_id, service)
     return validate_service_config(request_payload, job_id)
@@ -366,6 +382,7 @@ def prepare_translation_request(
         ),
         "font_family": normalize_font_family(data.get("fontFamily")),
         "llm_api": data.get("llm_api") or {},
+        **quality_request_options(data),
         "input_path": str(input_path),
         "output_dir": str(output_dir),
     }
@@ -375,6 +392,17 @@ def prepare_translation_request(
         output_modes=output_modes,
         request_payload=request_payload,
     )
+
+
+def quality_request_options(data: dict[str, Any]) -> dict[str, Any]:
+    try:
+        entries = normalize_glossary_entries(data.get("glossaryEntries"))
+    except ValueError as error:
+        raise RequestValidationError(str(error)) from None
+    return {
+        "glossary_entries": entries,
+        "semantic_review": parse_bool(data.get("semanticReview"), False),
+    }
 
 
 def create_workspace_dir(job_id: str) -> Path:
@@ -498,13 +526,22 @@ def parse_int(value: Any, default: int, minimum: int = 0) -> int:
     return max(parsed, minimum)
 
 
+def task_response_payload(task: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": "ok", "task": task,
+        "serverInstanceId": task["serverInstanceId"], "revision": task["revision"],
+    }
+
+
 def error_response(message: str, status_code: int):
+    metadata = TASK_MANAGER.sync_metadata() if request.path.startswith("/tasks") else {}
     return (
         jsonify(
             {
                 "status": "error",
                 "message": message,
                 "diagnostics": diagnose_service_error(message),
+                **metadata,
             }
         ),
         status_code,
@@ -519,6 +556,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
+        "capabilities": {"glossaryEntries": True, "semanticReview": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
@@ -591,6 +629,7 @@ def configure_runtime_paths(data_dir: str | Path | None = None) -> None:
         if requested_dir
         else DEFAULT_TRANSLATES_DIR
     )
+    TASK_MANAGER.close()
     TASK_MANAGER = TaskManager(TRANSLATES_DIR / "tasks.json")
 
 
@@ -661,7 +700,10 @@ def main() -> None:
     configure_runtime_paths(args.data_dir)
     configure_logging(args.log_level, args.log_file)
     LOGGER.info("server starting on http://%s:%s", args.host, args.port)
-    app.run(host=args.host, port=args.port)
+    try:
+        app.run(host=args.host, port=args.port)
+    finally:
+        TASK_MANAGER.close()
 
 
 if __name__ == "__main__":

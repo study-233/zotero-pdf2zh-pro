@@ -40,6 +40,20 @@ export class ZoteroTaskImporter {
             return;
         }
 
+        const attempt = task.attempt || 1;
+        const isCurrent = (importState = "importing") => {
+            const current = this.callbacks.getTask(taskId);
+            return Boolean(
+                current &&
+                (current.attempt || 1) === attempt &&
+                current.itemID === item.id &&
+                current.status === "completed" &&
+                !current.translationSummary?.failed &&
+                !current.translationSummary?.pending &&
+                current.importState === importState,
+            );
+        };
+
         this.callbacks.updateTask(taskId, {
             importState: "importing",
             importError: undefined,
@@ -48,13 +62,15 @@ export class ZoteroTaskImporter {
         try {
             const importedOutputs = [...(task.importedOutputs || [])];
             for (const outputMode of task.outputModes) {
-                const outputKey = `${task.attempt || 1}:${outputMode}`;
+                if (!isCurrent()) return;
+                const outputKey = `${attempt}:${outputMode}`;
                 if (importedOutputs.includes(outputKey)) continue;
                 const bytes = await ServerTaskClient.fetchResult(
                     task.serverUrl,
                     task.taskId,
                     outputMode,
                 );
+                if (!isCurrent()) return;
                 const fileName =
                     task.resultFiles[outputMode] ||
                     `${task.fileName}.${outputMode}.pdf`;
@@ -63,27 +79,37 @@ export class ZoteroTaskImporter {
                     outputMode,
                     bytes,
                 };
-                await PDF2zhHelperFactory.handleOutputResponse(output, item, {
-                    ...PDF2zhHelperFactory.getServerConfig(false),
-                    service: task.service,
-                    outputModes: task.outputModes,
-                });
+                await PDF2zhHelperFactory.handleOutputResponse(
+                    output,
+                    item,
+                    {
+                        ...PDF2zhHelperFactory.getServerConfig(false),
+                        service: task.service,
+                        outputModes: task.outputModes,
+                    },
+                    isCurrent,
+                );
+                if (!isCurrent()) return;
                 importedOutputs.push(outputKey);
                 this.callbacks.updateTask(taskId, {
                     importedOutputs: [...importedOutputs],
                 });
             }
 
+            if (!isCurrent()) return;
             this.callbacks.updateTask(taskId, {
                 importState: "imported",
                 importError: undefined,
             });
             try {
-                this.callbacks.onTaskImported(taskId);
+                if (isCurrent("imported")) {
+                    this.callbacks.onTaskImported(taskId);
+                }
             } catch (error) {
                 ztoolkit.log("翻译完成回调执行失败:", error);
             }
         } catch (error) {
+            if (!isCurrent()) return;
             this.callbacks.updateTask(taskId, {
                 importState: "failed",
                 importError:

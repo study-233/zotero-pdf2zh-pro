@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import sys
 import tempfile
 import unittest
@@ -21,6 +22,8 @@ def build_pdf_payload() -> str:
 
 def task_snapshot(status: str = "queued") -> dict[str, object]:
     return {
+        "serverInstanceId": "instance-test",
+        "revision": 17,
         "taskId": "task-1",
         "fileName": "paper.pdf",
         "service": "openai",
@@ -130,6 +133,8 @@ class ServerRouteTests(unittest.TestCase):
             )
         self.assertEqual(created.status_code, 202)
         self.assertEqual(created.json["task"]["taskId"], "task-1")
+        self.assertEqual(created.json["serverInstanceId"], "instance-test")
+        self.assertEqual(created.json["revision"], 17)
 
         operations = (
             ("get_task", task_snapshot("running"), "get", "/tasks/task-1", 200),
@@ -142,6 +147,8 @@ class ServerRouteTests(unittest.TestCase):
                     response = getattr(self.client, verb)(path)
                 self.assertEqual(response.status_code, expected_status)
                 self.assertEqual(response.json["task"]["taskId"], "task-1")
+                self.assertEqual(response.json["revision"], result["revision"])
+                self.assertEqual(response.json["serverInstanceId"], result["serverInstanceId"])
 
         with patch.object(
             server_module.TASK_MANAGER,
@@ -159,7 +166,10 @@ class ServerRouteTests(unittest.TestCase):
                 server_module.TASK_MANAGER,
                 "get_result_file",
                 return_value=(
-                    SimpleNamespace(status="completed", task_id="task-1"),
+                    SimpleNamespace(
+                        status="completed", task_id="task-1",
+                        server_instance_id="instance-test", revision=17,
+                    ),
                     SimpleNamespace(
                         output_path=output_path,
                         filename=output_path.name,
@@ -171,6 +181,7 @@ class ServerRouteTests(unittest.TestCase):
             try:
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.headers["X-PDF2ZH-Task-Id"], "task-1")
+                self.assertEqual(response.headers["X-PDF2ZH-Revision"], "17")
                 self.assertEqual(response.data, b"%PDF-1.4\n")
             finally:
                 response.close()
@@ -178,6 +189,43 @@ class ServerRouteTests(unittest.TestCase):
         rejected = self.client.get("/tasks/task-1/result?mode=compare")
         self.assertEqual(rejected.status_code, 400)
         self.assertIn("outputMode", rejected.json["message"])
+
+    def test_task_list_and_errors_include_sync_metadata(self):
+        snapshot = {"serverInstanceId": "instance-test", "revision": 21, "tasks": [task_snapshot()]}
+        with patch.object(server_module.TASK_MANAGER, "list_tasks_snapshot", return_value=snapshot):
+            response = self.client.get("/tasks")
+        self.assertEqual(response.json, {"status": "ok", **snapshot})
+        response = self.client.get("/tasks/missing")
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("serverInstanceId", response.json)
+        self.assertIn("revision", response.json)
+
+    def test_sse_sends_all_initial_snapshots_then_resync_and_closes(self):
+        from task_manager import TaskManager, TaskRecord
+
+        manager = TaskManager()
+        for index in range(130):
+            record = TaskRecord(str(index), "paper.pdf", "openai", ["dual"], {}, Path("."), status="completed")
+            with manager._lock:
+                manager._tasks[record.task_id] = record
+                manager._task_changed_locked(record)
+        with patch.object(server_module, "TASK_MANAGER", manager):
+            response = self.client.get("/tasks/events", buffered=False)
+            try:
+                stream = iter(response.response)
+                self.assertEqual(next(stream), b": connected\n\n")
+                events = [json.loads(next(stream).decode()[6:]) for _ in range(130)]
+                self.assertEqual({event["task"]["taskId"] for event in events}, {str(index) for index in range(130)})
+                for _ in range(129):
+                    with manager._lock:
+                        manager._task_changed_locked(manager._tasks["0"])
+                event = json.loads(next(stream).decode()[6:])
+                self.assertEqual(event["type"], "resync")
+                with self.assertRaises(StopIteration):
+                    next(stream)
+            finally:
+                response.close()
+        self.assertFalse(manager._subscribers)
 
     def test_configuration_contract_forwards_options_and_validation(self) -> None:
         with patch.object(server_module, "validate_service_config") as validate:

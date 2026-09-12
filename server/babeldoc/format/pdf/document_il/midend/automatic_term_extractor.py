@@ -23,6 +23,7 @@ from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
 from babeldoc.format.pdf.document_il.midend.reference_filter import (
     find_reference_paragraph_ids,
 )
+from babeldoc.translator.validation import InvalidTranslation
 from babeldoc.utils.priority_thread_pool_executor import PriorityThreadPoolExecutor
 
 if TYPE_CHECKING:
@@ -193,41 +194,36 @@ class AutomaticTermExtractor:
             llm_output = llm_output[:-3]
         return llm_output.strip()
 
+    def _parse_term_response(self, llm_output: str) -> list[tuple[str, str]]:
+        try:
+            response = json.loads(self._clean_json_output(llm_output))
+        except (ValueError, TypeError, AttributeError) as error:
+            raise InvalidTranslation("invalid_term_json") from error
+        if isinstance(response, dict):
+            response = [response]
+        if not isinstance(response, list):
+            raise InvalidTranslation("invalid_term_structure")
+
+        terms = []
+        for term in response:
+            if not isinstance(term, dict):
+                raise InvalidTranslation("invalid_term_structure")
+            src_term, tgt_term = term.get("src"), term.get("tgt")
+            if (
+                not isinstance(src_term, str)
+                or not isinstance(tgt_term, str)
+                or not src_term.strip()
+                or not tgt_term.strip()
+            ):
+                raise InvalidTranslation("invalid_term_structure")
+            terms.append((src_term.strip(), tgt_term.strip()))
+        return terms
+
     def _process_llm_response(self, llm_response_text: str, request_id: str):
         try:
-            cleaned_response_text = self._clean_json_output(llm_response_text)
-            extracted_data = json.loads(cleaned_response_text)
-
-            if not isinstance(extracted_data, list):
-                logger.warning(
-                    "Request ID %s: LLM response was not a JSON list: response_type=%s",
-                    request_id,
-                    type(extracted_data).__name__,
-                )
-                return
-
-            for item in extracted_data:
-                if isinstance(item, dict) and "src" in item and "tgt" in item:
-                    src_term = str(item["src"]).strip()
-                    tgt_term = str(item["tgt"]).strip()
-                    if (
-                        src_term and tgt_term and len(src_term) < 100
-                    ):  # Basic validation
-                        self.shared_context.add_raw_extracted_term_pair(
-                            src_term, tgt_term
-                        )
-                else:
-                    logger.warning(
-                        "Request ID %s: skipping malformed item in LLM JSON response",
-                        request_id,
-                    )
-
-        except json.JSONDecodeError as e:
-            logger.error(
-                "Request ID %s: JSON parsing error: error_type=%s",
-                request_id,
-                type(e).__name__,
-            )
+            for src_term, tgt_term in self._parse_term_response(llm_response_text):
+                if len(src_term) < 100:
+                    self.shared_context.add_raw_extracted_term_pair(src_term, tgt_term)
         except Exception as e:
             logger.error(
                 "Request ID %s: error processing LLM response: error_type=%s",
@@ -344,24 +340,16 @@ class AutomaticTermExtractor:
                 rate_limit_params={
                     "paragraph_token_count": paragraph_token_count,
                     "request_json_mode": True,
+                    "validate_output": self._parse_term_response,
                 },
             )
             tracker.set_output(output)
-            cleaned_output = self._clean_json_output(output)
-            response = json.loads(cleaned_output)
-            if not isinstance(response, list):
-                response = [response]  # Ensure we have a list
 
-            for term in response:
-                if isinstance(term, dict) and "src" in term and "tgt" in term:
-                    src_term = str(term["src"]).strip()
-                    tgt_term = str(term["tgt"]).strip()
-                    if src_term == tgt_term and len(src_term) < 3:
-                        continue
-                    if src_term and tgt_term and len(src_term) < 100:
-                        self.shared_context.add_raw_extracted_term_pair(
-                            src_term, tgt_term
-                        )
+            for src_term, tgt_term in self._parse_term_response(output):
+                if src_term == tgt_term and len(src_term) < 3:
+                    continue
+                if len(src_term) < 100:
+                    self.shared_context.add_raw_extracted_term_pair(src_term, tgt_term)
 
         except Exception as e:
             logger.warning(

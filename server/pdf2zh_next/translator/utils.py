@@ -27,6 +27,7 @@ def _create_translator_instance(
     rate_limiter: BaseRateLimiter | None,
     enforce_glossary_support: bool = True,
     term_extraction: bool = False,
+    metrics_collector=None,
 ) -> (BaseTranslator, int | None, int | None):
     """Create translator instance from translator_config.
 
@@ -61,6 +62,8 @@ def _create_translator_instance(
             translator = getattr(module, f"{translate_engine_type}Translator")(
                 temp_settings, rate_limiter
             )
+            if metrics_collector is not None:
+                translator.set_metrics_collector(metrics_collector)
             if term_extraction:
                 configure = getattr(translator, "configure_for_term_extraction", None)
                 if callable(configure):
@@ -85,7 +88,7 @@ def _create_translator_instance(
     raise ValueError("No translator found")
 
 
-def get_translator(settings: SettingsModel) -> BaseTranslator:
+def get_translator(settings: SettingsModel, *, metrics_collector=None) -> BaseTranslator:
     """Get main translator instance according to translate_engine_settings."""
     translator_config = settings.translate_engine_settings
     rate_limiter = get_rate_limiter(settings.translation.qps)
@@ -95,6 +98,7 @@ def get_translator(settings: SettingsModel) -> BaseTranslator:
             translator_config=translator_config,
             rate_limiter=rate_limiter,
             enforce_glossary_support=True,
+            metrics_collector=metrics_collector,
         )
     )
     if recommended_qps:
@@ -106,7 +110,7 @@ def get_translator(settings: SettingsModel) -> BaseTranslator:
     return translator
 
 
-def get_term_translator(settings: SettingsModel) -> BaseTranslator | None:
+def get_term_translator(settings: SettingsModel, *, metrics_collector=None) -> BaseTranslator | None:
     """Get term-extraction translator instance if configured.
 
     This translator uses a potentially different engine and separate rate limit
@@ -127,6 +131,7 @@ def get_term_translator(settings: SettingsModel) -> BaseTranslator | None:
             rate_limiter=rate_limiter,
             enforce_glossary_support=False,
             term_extraction=True,
+            metrics_collector=metrics_collector,
         )
     )
     if recommended_qps:

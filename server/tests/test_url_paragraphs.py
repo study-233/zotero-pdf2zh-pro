@@ -84,7 +84,7 @@ class URLParagraphTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             cfg = SimpleNamespace(skip_references=False, min_text_length=3,
                                   disable_same_text_fallback=False, raise_if_cancelled=lambda:None)
-            path = Path(tmp)/'paragraph-recovery.json'
+            path = Path(tmp)/'paragraph-recovery.sqlite3'
             prose = 'This is a complete English paragraph about the experiment.'
             target = '这是一个关于实验的完整中文段落。'
             def documents():
@@ -96,6 +96,7 @@ class URLParagraphTests(unittest.TestCase):
             recovery.fail(docs.page[0].pdf_paragraph[0], InvalidTranslation('unchanged_translation'))
             recovery.record(docs.page[0].pdf_paragraph[1], 'succeeded', input=prose, translation=target)
             recovery.finish()
+            recovery.close()
             for _ in range(2):
                 docs = documents()
                 recovery = TranslationRecovery(path, 'same-source-config')
@@ -117,9 +118,10 @@ class URLParagraphTests(unittest.TestCase):
                 self.assertEqual(recovery.snapshot()[0], dict(total=2,succeeded=1,skipped=1,failed=0,pending=0))
                 self.assertEqual(docs.page[0].pdf_paragraph[0].unicode, URLS[0])
                 self.assertEqual(docs.page[0].pdf_paragraph[1].unicode, target)
-                entries=json.loads(path.read_text(encoding='utf-8'))['paragraphs'].values()
+                entries=recovery.entries.values()
                 url=next(e for e in entries if e['paragraphId']=='one')
                 self.assertEqual((url['reason'],url['attempts']),('url_only',0))
+                recovery.close()
 
     def test_batch_and_single_skip_without_recovery(self):
         cfg = SimpleNamespace(raise_if_cancelled=lambda:None)

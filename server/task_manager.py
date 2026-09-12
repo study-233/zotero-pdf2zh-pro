@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import logging
 import queue
 import shutil
 import threading
+import uuid
 from dataclasses import dataclass, field
 from datetime import UTC
 from datetime import datetime
@@ -46,15 +48,21 @@ class TaskRecord:
     result_files: dict[str, TranslationOutputFile] = field(default_factory=dict)
     metrics: dict[str, Any] | None = None
     translation_summary: dict | None = None
+    quality_summary: dict | None = None
     failed_paragraphs: list = field(default_factory=list)
     attempt: int = 1
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
     cancel_requested: bool = False
     cancel_callback: Callable[[], None] | None = field(default=None, repr=False)
+    cancel_event: threading.Event = field(default_factory=threading.Event, repr=False)
+    server_instance_id: str = ""
+    revision: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
+            "serverInstanceId": self.server_instance_id,
+            "revision": self.revision,
             "taskId": self.task_id,
             "fileName": self.file_name,
             "service": self.service,
@@ -69,6 +77,7 @@ class TaskRecord:
             "errorDiagnostics": self.error_diagnostics,
             "attempt": self.attempt,
             "translationSummary": self.translation_summary,
+            "qualitySummary": self.quality_summary,
             "failedParagraphs": self.failed_paragraphs,
             "canRepair": self.status in {"incomplete", "completed", "cancelled"},
             "resultFiles": {
@@ -82,7 +91,16 @@ class TaskRecord:
         }
         if self.metrics is not None:
             payload["metrics"] = self.metrics
-        return payload
+        return copy.deepcopy(payload)
+
+
+@dataclass(eq=False)
+class TaskSubscription:
+    initial_events: list[dict[str, Any]]
+    event_queue: queue.Queue[dict[str, Any]] = field(
+        default_factory=lambda: queue.Queue(maxsize=128)
+    )
+    overflow_revision: int | None = None
 
 
 class TaskManager:
@@ -90,7 +108,12 @@ class TaskManager:
         self._lock = threading.RLock()
         self._persistence_lock = threading.RLock()
         self._tasks: dict[str, TaskRecord] = {}
-        self._subscribers: set[queue.Queue[dict[str, Any]]] = set()
+        self._subscribers: set[TaskSubscription] = set()
+        self._server_instance_id = uuid.uuid4().hex
+        self._revision = 0
+        self._pending: queue.Queue[tuple[str, int] | None] = queue.Queue()
+        self._worker: threading.Thread | None = None
+        self._closed = False
         self._persistence_path = (
             Path(persistence_path) if persistence_path is not None else None
         )
@@ -98,9 +121,18 @@ class TaskManager:
 
     def list_tasks(self) -> list[dict[str, Any]]:
         with self._lock:
-            records = list(self._tasks.values())
-        records.sort(key=lambda record: record.created_at, reverse=True)
-        return [record.to_dict() for record in records]
+            records = sorted(
+                self._tasks.values(), key=lambda record: record.created_at, reverse=True
+            )
+            return [record.to_dict() for record in records]
+
+    def sync_metadata(self) -> dict[str, Any]:
+        with self._lock:
+            return {"serverInstanceId": self._server_instance_id, "revision": self._revision}
+
+    def list_tasks_snapshot(self) -> dict[str, Any]:
+        with self._lock:
+            return {**self.sync_metadata(), "tasks": self.list_tasks()}
 
     def get_task(self, task_id: str) -> dict[str, Any] | None:
         with self._lock:
@@ -128,15 +160,11 @@ class TaskManager:
             workspace_dir=workspace_dir,
             metrics=empty_metrics() if supports_request_metrics(service) else None,
         )
-        thread = threading.Thread(
-            target=self._run_task,
-            args=(task_id,),
-            daemon=True,
-            name=f"pdf2zh-task-{task_id}",
-        )
         with self._lock:
+            self._ensure_open_locked()
             self._tasks[task_id] = record
-        self._publish_event({"type": "task", "task": record.to_dict()})
+            snapshot = self._task_changed_locked(record)
+            self._pending.put_nowait((task_id, record.attempt))
         LOGGER.info(
             "[%s] task queued: file=%s service=%s output_modes=%s workspace=%s",
             task_id,
@@ -146,25 +174,43 @@ class TaskManager:
             workspace_dir,
         )
         self._save_persistent_tasks()
-        thread.start()
-        return record.to_dict()
-
-    def subscribe(self) -> queue.Queue[dict[str, Any]]:
-        event_queue: queue.Queue[dict[str, Any]] = queue.Queue(maxsize=128)
         with self._lock:
-            self._subscribers.add(event_queue)
-            records = list(self._tasks.values())
-        records.sort(key=lambda record: record.created_at, reverse=True)
-        for record in records:
-            self._enqueue_event(
-                event_queue,
-                {"type": "snapshot", "task": record.to_dict()},
+            self._start_worker_locked()
+        return snapshot
+
+    def subscribe(self) -> TaskSubscription:
+        with self._lock:
+            subscription = TaskSubscription(
+                initial_events=[
+                    {
+                        "type": "snapshot", "task": snapshot,
+                        "serverInstanceId": self._server_instance_id,
+                        "revision": snapshot["revision"],
+                    }
+                    for snapshot in self.list_tasks()
+                ]
             )
-        return event_queue
+            self._subscribers.add(subscription)
+            return subscription
 
-    def unsubscribe(self, event_queue: queue.Queue[dict[str, Any]]) -> None:
+    def unsubscribe(self, subscription: TaskSubscription) -> None:
         with self._lock:
-            self._subscribers.discard(event_queue)
+            self._subscribers.discard(subscription)
+
+    def subscription_resync(self, subscription: TaskSubscription) -> dict[str, Any] | None:
+        with self._lock:
+            if subscription.overflow_revision is None:
+                return None
+            return {"type": "resync", **self.sync_metadata()}
+
+    def next_subscription_event(
+        self, subscription: TaskSubscription, *, timeout: float = 15
+    ) -> dict[str, Any]:
+        resync = self.subscription_resync(subscription)
+        if resync is not None:
+            return resync
+        event = subscription.event_queue.get(timeout=timeout)
+        return self.subscription_resync(subscription) or event
 
     def cancel_task(self, task_id: str) -> dict[str, Any] | None:
         with self._lock:
@@ -174,18 +220,20 @@ class TaskManager:
             if record.status not in {"queued", "running", "cancelling"}:
                 return record.to_dict()
             record.cancel_requested = True
-            record.status = "cancelling"
-            record.updated_at = utc_now_iso()
-            snapshot = record.to_dict()
+            record.cancel_event.set()
+            record.status = "cancelled" if record.status == "queued" else "cancelling"
+            if record.status == "cancelled":
+                record.stage = "cancelled"
+                record.error = None
+                record.error_diagnostics = []
+            snapshot = self._task_changed_locked(record)
             cancel_callback = record.cancel_callback
 
         LOGGER.info("[%s] cancellation requested", task_id)
-        self._publish_event({"type": "task", "task": snapshot})
         if cancel_callback is not None:
             cancel_callback()
-
-        with self._lock:
-            return self._tasks[task_id].to_dict()
+        self._save_persistent_tasks()
+        return snapshot
 
     def delete_task(self, task_id: str) -> dict[str, Any] | None:
         with self._lock:
@@ -195,12 +243,13 @@ class TaskManager:
             if record.status in {"queued", "running", "cancelling"}:
                 raise ValueError("Active task cannot be deleted")
             deleted = self._tasks.pop(task_id)
+            self._deleted_locked(deleted)
+            snapshot = deleted.to_dict()
 
         shutil.rmtree(deleted.workspace_dir, ignore_errors=True)
         self._save_persistent_tasks()
-        self._publish_event({"type": "deleted", "taskId": task_id})
         LOGGER.info("[%s] task deleted", task_id)
-        return deleted.to_dict()
+        return snapshot
 
     def clear_failed_tasks(self) -> int:
         with self._lock:
@@ -210,6 +259,8 @@ class TaskManager:
                 if record.status == "failed"
             ]
             deleted_records = [self._tasks.pop(task_id) for task_id in failed_task_ids]
+            for record in deleted_records:
+                self._deleted_locked(record)
 
         for record in deleted_records:
             shutil.rmtree(record.workspace_dir, ignore_errors=True)
@@ -217,8 +268,6 @@ class TaskManager:
         self._save_persistent_tasks()
         if failed_task_ids:
             LOGGER.info("cleared failed tasks: %s", ",".join(failed_task_ids))
-        for task_id in failed_task_ids:
-            self._publish_event({"type": "deleted", "taskId": task_id})
         return len(failed_task_ids)
 
     def repair_task(self, task_id: str) -> dict[str, Any] | None:
@@ -226,6 +275,7 @@ class TaskManager:
 
     def retry_task(self, task_id: str, *, repair=False) -> dict[str, Any] | None:
         with self._lock:
+            self._ensure_open_locked()
             record = self._tasks.get(task_id)
             if record is None:
                 return None
@@ -258,25 +308,20 @@ class TaskManager:
             record.error_diagnostics = []
             record.result_files = {}
             record.translation_summary = None
+            record.quality_summary = None
             record.failed_paragraphs = []
             record.metrics = empty_metrics() if supports_request_metrics(record.service) else None
             record.attempt += 1
             record.cancel_requested = False
             record.cancel_callback = None
-            record.updated_at = utc_now_iso()
-            snapshot = record.to_dict()
-
-            thread = threading.Thread(
-                target=self._run_task,
-                args=(task_id,),
-                daemon=True,
-                name=f"pdf2zh-task-{task_id}-retry",
-            )
+            record.cancel_event = threading.Event()
+            snapshot = self._task_changed_locked(record)
+            self._pending.put_nowait((task_id, record.attempt))
 
         self._save_persistent_tasks()
-        self._publish_event({"type": "task", "task": snapshot})
         LOGGER.info("[%s] task retry queued", task_id)
-        thread.start()
+        with self._lock:
+            self._start_worker_locked()
         return snapshot
 
     def get_result_file(
@@ -304,52 +349,117 @@ class TaskManager:
                 return record, None
             return record, result_file
 
-    def _run_task(self, task_id: str) -> None:
-        with self._lock:
-            record = self._tasks[task_id]
-            record.status = "cancelling" if record.cancel_requested else "running"
-            record.updated_at = utc_now_iso()
-            request_payload = dict(record.request_payload)
-            snapshot = record.to_dict()
+    def _ensure_open_locked(self) -> None:
+        if self._closed:
+            raise ValueError("Task manager is shutting down")
 
-        self._publish_event({"type": "task", "task": snapshot})
+    def _start_worker_locked(self) -> None:
+        if self._closed or self._worker is not None:
+            return
+        self._worker = threading.Thread(
+            target=self._work, daemon=True, name="pdf2zh-task-worker"
+        )
+        self._worker.start()
+
+    def _work(self) -> None:
+        while True:
+            pending = self._pending.get()
+            try:
+                if pending is None:
+                    return
+                self._run_task(*pending)
+            finally:
+                self._pending.task_done()
+
+    def close(self, *, timeout: float | None = None) -> None:
+        callbacks = []
+        changed = False
+        with self._lock:
+            if not self._closed:
+                self._closed = True
+                for record in self._tasks.values():
+                    if record.status not in {"queued", "running", "cancelling"}:
+                        continue
+                    changed = True
+                    record.cancel_event.set()
+                    if record.status == "queued":
+                        self._finish_cancellation_locked(record)
+                    else:
+                        record.status = "cancelling"
+                    self._task_changed_locked(record)
+                    if record.cancel_callback is not None:
+                        callbacks.append(record.cancel_callback)
+                if self._worker is not None:
+                    self._pending.put_nowait(None)
+            worker = self._worker
+        for callback in callbacks:
+            callback()
+        if worker is not None:
+            worker.join(timeout=timeout)
+            if worker.is_alive():
+                raise RuntimeError("Translation worker did not stop before shutdown timeout")
+        if changed:
+            self._save_persistent_tasks()
+
+    def _run_task(self, task_id: str, attempt: int | None = None) -> None:
+        with self._lock:
+            record = self._tasks.get(task_id)
+            if record is None or (
+                attempt is not None
+                and (record.attempt != attempt or record.status != "queued")
+            ):
+                return
+            attempt = record.attempt
+            record.status = "cancelling" if record.cancel_requested else "running"
+            request_payload = copy.deepcopy(record.request_payload)
+            request_payload["review_attempt"] = attempt
+            cancel_event = record.cancel_event
+            self._task_changed_locked(record)
 
         try:
             result = asyncio.run(
                 translate_pdf_with_callbacks(
                     request_payload,
                     task_id,
+                    cancel_event=cancel_event,
                     progress_callback=lambda event: self._handle_progress_event(
-                        task_id, event
+                        task_id, event, attempt=attempt
                     ),
                     metrics_callback=lambda metrics: self._handle_metrics_event(
-                        task_id, metrics
+                        task_id, metrics, attempt=attempt
                     ),
                     on_config_ready=lambda config: self._register_cancel_callback(
                         task_id,
                         config.cancel_translation,
+                        attempt=attempt,
                     ),
                 )
             )
-        except Exception as exc:
-            self._handle_task_error(task_id, exc)
+        except (Exception, asyncio.CancelledError) as exc:
+            self._handle_task_error(task_id, exc, attempt=attempt)
             return
 
         with self._lock:
-            record = self._tasks[task_id]
+            record = self._tasks.get(task_id)
+            if record is None or record.attempt != attempt:
+                return
             record.translation_summary = result.translation_summary
+            record.quality_summary = getattr(result, "quality_summary", record.quality_summary)
             record.failed_paragraphs = result.failed_paragraphs
             incomplete = bool(result.translation_summary and (result.translation_summary.get("failed", 0) or result.translation_summary.get("pending", 0)))
-            record.status = "incomplete" if incomplete else "completed"
-            record.error = f"未完成，剩余 {result.translation_summary['failed'] + result.translation_summary.get('pending', 0)} 段，可补译" if incomplete else None
-            record.result_files = dict(result.files)
-            record.stage = record.status
-            record.stage_progress = 99.0 if incomplete else 100.0
-            record.overall_progress = 99.0 if incomplete else 100.0
-            record.updated_at = utc_now_iso()
-            snapshot = record.to_dict()
+            cancelled = record.cancel_event.is_set()
+            record.result_files = {} if cancelled else dict(result.files)
+            if cancelled:
+                self._finish_cancellation_locked(record)
+            else:
+                record.status = "incomplete" if incomplete else "completed"
+                record.stage = record.status
+                record.error = f"未完成，剩余 {result.translation_summary.get('failed', 0) + result.translation_summary.get('pending', 0)} 段，可补译" if incomplete else None
+                record.stage_progress = 99.0 if incomplete else 100.0
+                record.overall_progress = 99.0 if incomplete else 100.0
+            record.cancel_callback = None
+            self._task_changed_locked(record)
         self._save_persistent_tasks()
-        self._publish_event({"type": "task", "task": snapshot})
         LOGGER.info(
             "[%s] task %s: %s",
             task_id,
@@ -361,24 +471,29 @@ class TaskManager:
         self,
         task_id: str,
         cancel_callback: Callable[[], None],
+        *,
+        attempt: int | None = None,
     ) -> None:
         should_cancel_immediately = False
         with self._lock:
             record = self._tasks.get(task_id)
-            if record is None:
+            if record is None or (attempt is not None and record.attempt != attempt):
                 return
             record.cancel_callback = cancel_callback
-            record.updated_at = utc_now_iso()
-            should_cancel_immediately = record.cancel_requested
+            should_cancel_immediately = record.cancel_event.is_set()
 
         if should_cancel_immediately:
             cancel_callback()
 
-    def _handle_progress_event(self, task_id: str, event: dict[str, Any]) -> None:
+    def _handle_progress_event(
+        self, task_id: str, event: dict[str, Any], *, attempt: int | None = None
+    ) -> None:
         event_type = str(event.get("type") or "")
         with self._lock:
             record = self._tasks.get(task_id)
-            if record is None:
+            if record is None or (attempt is not None and record.attempt != attempt):
+                return
+            if record.status not in {"queued", "running", "cancelling"}:
                 return
             if record.status == "queued":
                 record.status = "running"
@@ -406,53 +521,55 @@ class TaskManager:
             if event_type == "translation_summary":
                 record.translation_summary = event["translationSummary"]
                 record.failed_paragraphs = event["failedParagraphs"]
+                if "qualitySummary" in event:
+                    record.quality_summary = copy.deepcopy(event["qualitySummary"])
             if event_type == "error":
                 record.error = explain_service_error(
                     str(event.get("error") or "translation failed")
                 )
                 record.error_diagnostics = diagnose_service_error(record.error)
 
-            record.updated_at = utc_now_iso()
-            snapshot = record.to_dict()
-
-        self._publish_event({"type": "task", "task": snapshot})
+            self._task_changed_locked(record)
 
     def _handle_metrics_event(
         self,
         task_id: str,
         metrics: dict[str, Any],
+        *,
+        attempt: int | None = None,
     ) -> None:
         with self._lock:
             record = self._tasks.get(task_id)
-            if record is None:
+            if record is None or (attempt is not None and record.attempt != attempt):
                 return
-            record.metrics = dict(metrics)
-            record.updated_at = utc_now_iso()
-            snapshot = record.to_dict()
-        self._publish_event({"type": "task", "task": snapshot})
+            if record.status not in {"queued", "running", "cancelling"}:
+                return
+            record.metrics = copy.deepcopy(metrics)
+            self._task_changed_locked(record)
 
-    def _handle_task_error(self, task_id: str, exc: Exception) -> None:
+    def _handle_task_error(
+        self, task_id: str, exc: BaseException, *, attempt: int | None = None
+    ) -> None:
         with self._lock:
             record = self._tasks.get(task_id)
-            if record is None:
+            if record is None or (attempt is not None and record.attempt != attempt):
                 return
 
             error_message = explain_service_error(str(exc) or exc.__class__.__name__)
-            cancelled = record.cancel_requested or "CancelledError" in error_message
-            record.status = "cancelled" if cancelled else "failed"
-            record.stage = "cancelled" if cancelled else "failed"
-            record.error = None if cancelled else error_message
-            record.error_diagnostics = (
-                [] if cancelled else diagnose_service_error(error_message)
-            )
-            record.updated_at = utc_now_iso()
-            workspace_dir = record.workspace_dir
-            snapshot = record.to_dict()
+            cancelled = record.cancel_event.is_set() or isinstance(exc, asyncio.CancelledError)
+            if cancelled:
+                self._finish_cancellation_locked(record)
+            else:
+                record.status = "failed"
+                record.stage = "failed"
+                record.error = error_message
+                record.error_diagnostics = diagnose_service_error(error_message)
+            record.cancel_callback = None
+            self._task_changed_locked(record)
 
         self._save_persistent_tasks()
-        self._publish_event({"type": "task", "task": snapshot})
         if cancelled:
-            LOGGER.info("[%s] task cancelled", task_id)
+            LOGGER.info("[%s] task %s", task_id, record.status)
             return
         LOGGER.error(
             "[%s] task failed: error_type=%s",
@@ -460,31 +577,41 @@ class TaskManager:
             type(exc).__name__,
         )
 
-    def _publish_event(self, event: dict[str, Any]) -> None:
-        with self._lock:
-            subscribers = list(self._subscribers)
-        for event_queue in subscribers:
-            self._enqueue_event(event_queue, event)
+    def _finish_cancellation_locked(self, record: TaskRecord) -> None:
+        # Shutdown stops execution without changing the user's cancellation intent.
+        interrupted = self._closed and not record.cancel_requested
+        record.status = "incomplete" if interrupted else "cancelled"
+        record.stage = record.status
+        record.error = "服务关闭中断了翻译，可补译继续" if interrupted else None
+        record.error_diagnostics = []
+        record.overall_progress = min(99.0, record.overall_progress)
 
-    @staticmethod
-    def _enqueue_event(
-        event_queue: queue.Queue[dict[str, Any]],
-        event: dict[str, Any],
-    ) -> None:
-        try:
-            event_queue.put_nowait(event)
-            return
-        except queue.Full:
-            pass
+    def _task_changed_locked(self, record: TaskRecord) -> dict[str, Any]:
+        self._revision += 1
+        record.server_instance_id = self._server_instance_id
+        record.revision = self._revision
+        record.updated_at = utc_now_iso()
+        snapshot = record.to_dict()
+        self._publish_event_locked({"type": "task", "task": snapshot, **self.sync_metadata()})
+        return snapshot
 
-        try:
-            event_queue.get_nowait()
-        except queue.Empty:
-            pass
-        try:
-            event_queue.put_nowait(event)
-        except queue.Full:
-            pass
+    def _deleted_locked(self, record: TaskRecord) -> None:
+        self._revision += 1
+        record.server_instance_id = self._server_instance_id
+        record.revision = self._revision
+        self._publish_event_locked({
+            "type": "deleted", "taskId": record.task_id, **self.sync_metadata()
+        })
+
+    def _publish_event_locked(self, event: dict[str, Any]) -> None:
+        for subscription in self._subscribers:
+            if subscription.overflow_revision is not None:
+                subscription.overflow_revision = self._revision
+                continue
+            try:
+                subscription.event_queue.put_nowait(copy.deepcopy(event))
+            except queue.Full:
+                subscription.overflow_revision = self._revision
 
     def _load_persistent_tasks(self) -> None:
         if self._persistence_path is None or not self._persistence_path.exists():
@@ -512,6 +639,9 @@ class TaskManager:
                 record.overall_progress = min(99.0, record.overall_progress)
                 record.error = "服务重启中断了翻译，可补译继续"
                 record.cancel_requested = False
+            self._revision += 1
+            record.server_instance_id = self._server_instance_id
+            record.revision = self._revision
             self._tasks[record.task_id] = record
 
     def _save_persistent_tasks(self) -> None:
@@ -523,10 +653,10 @@ class TaskManager:
             return
 
         with self._lock:
-            records = [
+            records = copy.deepcopy([
                 self._record_to_persistence(record)
                 for record in self._tasks.values()
-            ]
+            ])
 
         payload = {"tasks": records}
         try:
@@ -561,6 +691,7 @@ class TaskManager:
             "error_diagnostics": record.error_diagnostics,
             "metrics": record.metrics,
             "translation_summary": record.translation_summary,
+            "quality_summary": record.quality_summary,
             "failed_paragraphs": record.failed_paragraphs,
             "attempt": record.attempt,
             "created_at": record.created_at,
@@ -630,6 +761,7 @@ class TaskManager:
                 result_files=result_files,
                 metrics=metrics,
                 translation_summary=payload.get("translation_summary"),
+                quality_summary=payload.get("quality_summary"),
                 failed_paragraphs=list(payload.get("failed_paragraphs") or []),
                 attempt=TaskManager._coerce_int(payload.get("attempt"), 1),
                 created_at=str(payload.get("created_at") or utc_now_iso()),

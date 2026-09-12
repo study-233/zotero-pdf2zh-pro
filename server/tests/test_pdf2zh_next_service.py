@@ -102,7 +102,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
 
     def test_dedicated_term_translator_inherits_resolved_protocol_and_base(self):
         from pdf2zh_next.high_level import create_babeldoc_config
-        runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", llm_api={
+        runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", no_auto_extract_glossary=False, llm_api={
             "apiKey": "test-key", "apiUrl": "https://relay.invalid/custom/chat/completions",
             "model": "model", "apiProtocol": "auto",
         }))
@@ -118,6 +118,50 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         self.assertEqual(inherited.openai_api_protocol, "responses")
         self.assertEqual(inherited.openai_base_url, "https://relay.invalid/custom/")
         self.assertEqual(runtime.translate_engine_settings.openai_api_protocol, "auto")
+
+    def test_disabled_term_extraction_never_creates_or_probes_a_dedicated_translator(self):
+        from pdf2zh_next.high_level import create_babeldoc_config
+        runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", llm_api={
+            "apiKey": "test-key", "apiUrl": "https://relay.invalid/v1", "model": "main-model",
+        }))
+        runtime.term_extraction_engine_settings = runtime.translate_engine_settings.model_copy(
+            update={"openai_model": "different-term-model"})
+        runtime.translation.term_qps = 1
+        translator = SimpleNamespace(requires_dedicated_term_extraction_translator=True)
+        with patch("pdf2zh_next.high_level.get_translator", return_value=translator) as main, \
+             patch("pdf2zh_next.high_level.get_term_translator") as term, \
+             patch("pdf2zh_next.high_level.BabelDOCConfig") as config:
+            create_babeldoc_config(runtime, Path("/tmp/source.pdf"))
+        main.assert_called_once()
+        term.assert_not_called()
+        self.assertIs(config.call_args.kwargs["translator"], translator)
+        self.assertIs(config.call_args.kwargs["term_extraction_translator"], translator)
+        self.assertFalse(config.call_args.kwargs["auto_extract_glossary"])
+
+    def test_enabled_term_extraction_reuses_only_matching_effective_settings_and_qps(self):
+        from pdf2zh_next.high_level import create_babeldoc_config
+        for term_qps, different_model, dedicated, expected_separate in (
+            (None, False, False, False), (20, False, False, False),
+            (1, False, False, True), (None, True, False, True), (None, False, True, True),
+        ):
+            with self.subTest(term_qps=term_qps, different_model=different_model, dedicated=dedicated):
+                runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", qps=20,
+                    no_auto_extract_glossary=False, llm_api={
+                        "apiKey": "test-key", "apiUrl": "https://relay.invalid/v1", "model": "main-model",
+                    }))
+                runtime.translation.term_qps = term_qps
+                if different_model:
+                    runtime.term_extraction_engine_settings = runtime.translate_engine_settings.model_copy(
+                        update={"openai_model": "different-term-model"})
+                translator = SimpleNamespace(requires_dedicated_term_extraction_translator=dedicated)
+                term_translator = object()
+                with patch("pdf2zh_next.high_level.get_translator", return_value=translator), \
+                     patch("pdf2zh_next.high_level.get_term_translator", return_value=term_translator) as term, \
+                     patch("pdf2zh_next.high_level.BabelDOCConfig") as config:
+                    create_babeldoc_config(runtime, Path("/tmp/source.pdf"))
+                self.assertEqual(term.call_count, int(expected_separate))
+                self.assertIs(config.call_args.kwargs["term_extraction_translator"],
+                              term_translator if expected_separate else translator)
 
     def test_translation_prepares_fonts_before_babeldoc(self) -> None:
         sequence: list[str] = []
@@ -144,6 +188,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         }
 
         with (
+            TemporaryDirectory() as directory,
             patch("pdf2zh_next_service.Path.read_bytes", return_value=b"pdf"),
             patch("pdf2zh_next_service.create_runtime_settings", return_value=object()),
             patch("pdf2zh_next_service.create_babeldoc_config", return_value=config),
@@ -157,6 +202,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
                 return_value=expected_files,
             ),
         ):
+            payload["input_path"] = str(Path(directory) / "paper.pdf")
             result = asyncio.run(
                 translate_pdf_with_callbacks(
                     payload,

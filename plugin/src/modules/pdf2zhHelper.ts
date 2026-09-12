@@ -2,6 +2,7 @@ import { getPref } from "../utils/prefs";
 import { ServerConfig, PDFOperationOptions, OutputMode } from "./pdf2zhTypes";
 import { getSelectedProfile } from "./profileStore";
 import { SERVICE_NAMES } from "./llmApiManager";
+import { loadGlossaryEntries } from "./glossaryStore";
 
 export type TaskOutputResponse = {
     fileName: string;
@@ -48,6 +49,8 @@ export class PDF2zhHelperFactory {
             noWatermark: config.noWatermark,
             disableTermExtraction: config.disableTermExtraction,
             fontFamily: config.fontFamily,
+            glossaryEntries: config.glossaryEntries || [],
+            semanticReview: config.semanticReview ?? false,
         };
         if (llmApiConfig) {
             requestBody.llm_api = llmApiConfig;
@@ -59,22 +62,31 @@ export class PDF2zhHelperFactory {
         response: TaskOutputResponse,
         item: Zotero.Item,
         config: ServerConfig,
+        isCurrent: () => boolean = () => true,
     ) {
         const options = this.getPDFOptions();
-        const tempPath = PathUtils.join(PathUtils.tempDir, response.fileName);
-        await IOUtils.write(tempPath, response.bytes);
+        const tempDir = await IOUtils.createUniqueDirectory(
+            PathUtils.tempDir,
+            "pdf2zh-output-",
+        );
         try {
+            if (!isCurrent()) return;
+            const tempPath = PathUtils.join(tempDir, response.fileName);
+            await IOUtils.write(tempPath, response.bytes);
+            if (!isCurrent()) return;
             await this.addAttachment({
                 item,
                 filePath: tempPath,
                 options,
                 outputMode: response.outputMode,
                 service: config.service,
+                isCurrent,
             });
         } finally {
-            if (await this.safeExists(tempPath)) {
-                await IOUtils.remove(tempPath);
-            }
+            await IOUtils.remove(tempDir, {
+                recursive: true,
+                ignoreAbsent: true,
+            });
         }
     }
 
@@ -145,6 +157,7 @@ export class PDF2zhHelperFactory {
         options: PDFOperationOptions;
         outputMode: OutputMode;
         service: string;
+        isCurrent?: () => boolean;
     }) {
         const { item, filePath, options, outputMode, service } = params;
         const parentItemID = this.getParentItemID(item);
@@ -170,7 +183,11 @@ export class PDF2zhHelperFactory {
             title: options.rename ? newTitle : PathUtils.filename(filePath),
         });
 
-        if (options.openAfterProcess && attachment?.id) {
+        if (
+            options.openAfterProcess &&
+            attachment?.id &&
+            (params.isCurrent?.() ?? true)
+        ) {
             Zotero.Reader.open(attachment.id);
         }
     }
@@ -197,6 +214,8 @@ export class PDF2zhHelperFactory {
             disableTermExtraction:
                 getPref("disableTermExtraction")?.toString() || "true",
             fontFamily: getPref("fontFamily")?.toString() || "auto",
+            glossaryEntries: includeProfile ? loadGlossaryEntries() : [],
+            semanticReview: this.isTrue(getPref("semanticReview") ?? false),
         };
     }
 

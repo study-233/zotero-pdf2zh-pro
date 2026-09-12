@@ -16,6 +16,11 @@ import {
 import { testProfile, fetchProfileModels } from "./profileApiClient";
 import type { ServerHealthResponse } from "./pdf2zhTypes";
 import axios from "axios";
+import {
+    clearGlossaryEntries,
+    importGlossaryCsv,
+    loadGlossaryEntries,
+} from "./glossaryStore";
 
 // Chrome preference windows use XUL popups. HTML select popups can become
 // accessible without being painted by Zotero's native settings window.
@@ -31,6 +36,7 @@ function fillMenu(menu: XULMenuListElement, items: [string, string][]) {
     }
 }
 let managerWindow: Window | undefined;
+let serverCheckSequence = 0;
 function onDialogClosed(win: Window, url: string, callback: () => void) {
     const onUnload = (event: Event) => {
         // openDialog first unloads about:blank while loading the real dialog.
@@ -154,6 +160,15 @@ export async function registerPrefsScripts(window: Window) {
     element("new_serverip")?.addEventListener("change", () => {
         void refreshServerVersion();
     });
+    element("glossary-import")?.addEventListener("click", () => {
+        void importGlossary();
+    });
+    element("glossary-clear")?.addEventListener("click", () => {
+        clearGlossaryEntries();
+        refreshGlossarySummary();
+        status("glossaryResult", "术语表已清除。后续任务不再使用此表。");
+    });
+    refreshGlossarySummary();
     status("pluginVersion", version);
     try {
         refreshProfiles();
@@ -289,18 +304,75 @@ function openProfileManager() {
     }
 }
 
+function refreshGlossarySummary() {
+    const clear = element("glossary-clear") as HTMLButtonElement | null;
+    try {
+        const entries = loadGlossaryEntries();
+        status(
+            "glossarySummary",
+            entries.length
+                ? `已保存 ${entries.length} 条术语；提交任务时按目标语言应用。`
+                : "尚未导入术语表。",
+        );
+        if (clear) clear.disabled = entries.length === 0;
+    } catch (error) {
+        status("glossarySummary", String(error));
+        if (clear) clear.disabled = false;
+    }
+}
+
+async function importGlossary(): Promise<void> {
+    const button = element("glossary-import") as HTMLButtonElement | null;
+    const clear = element("glossary-clear") as HTMLButtonElement | null;
+    if (button) button.disabled = true;
+    if (clear) clear.disabled = true;
+    try {
+        const path = await new ztoolkit.FilePicker("导入术语 CSV", "open", [
+            ["CSV 文件", "*.csv"],
+        ]).open();
+        if (!path) return;
+        const bytes = await IOUtils.read(path);
+        let text: string;
+        try {
+            text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+        } catch {
+            throw new Error(
+                "文件不是有效的 UTF-8 CSV，请使用 UTF-8 编码另存后重试。原术语表已保留。",
+            );
+        }
+        const entries = importGlossaryCsv(text);
+        status(
+            "glossaryResult",
+            `已导入 ${entries.length} 条术语，替换当前术语表。`,
+        );
+    } catch (error) {
+        status(
+            "glossaryResult",
+            error instanceof Error
+                ? error.message
+                : "术语表导入失败；原表已保留。",
+        );
+    } finally {
+        if (button) button.disabled = false;
+        refreshGlossarySummary();
+    }
+}
+
 async function refreshServerVersion() {
+    const checkSequence = ++serverCheckSequence;
     const url =
         getPref("new_serverip")?.toString().trim().replace(/\/+$/, "") || "";
     const button = element("checkConnection") as HTMLButtonElement | null;
     if (button) button.disabled = true;
     status("serverStatus", "正在检查本地服务…");
+    status("qualityCapabilities", "正在检查术语表与定向校对支持…");
     try {
         if (!url) throw new Error();
         const { data } = await axios.get<ServerHealthResponse>(
             `${url}/health`,
             { timeout: 5000 },
         );
+        if (checkSequence !== serverCheckSequence) return;
         if (!["ok", "degraded"].includes(data.status || "")) throw new Error();
         status("serverVersion", data.version || "未知");
         status(
@@ -316,7 +388,19 @@ async function refreshServerVersion() {
                 : "本地服务已连接。API 可用性请使用顶部的「测试 API」。",
         );
         element("serverVersionCard")?.setAttribute("data-state", "ok");
+        const unavailable = [];
+        if (data.capabilities?.glossaryEntries !== true)
+            unavailable.push("术语表");
+        if (data.capabilities?.semanticReview !== true)
+            unavailable.push("定向校对");
+        status(
+            "qualityCapabilities",
+            unavailable.length
+                ? `当前服务端的${unavailable.join("、")}功能不可用，请升级服务端。已导入的术语表会保留；定向校对可在上方关闭。`
+                : "当前服务端支持术语表与定向校对。",
+        );
     } catch {
+        if (checkSequence !== serverCheckSequence) return;
         status("serverVersion", "—");
         status("serverStatus", "本地服务无法连接");
         status(
@@ -324,8 +408,13 @@ async function refreshServerVersion() {
             "请确认 Python 服务已启动，并检查本地服务地址。",
         );
         element("serverVersionCard")?.setAttribute("data-state", "error");
+        status(
+            "qualityCapabilities",
+            "暂时无法确认功能支持；术语表会保留，提交前将重新检查服务端。",
+        );
     } finally {
-        if (button) button.disabled = false;
+        if (button && checkSequence === serverCheckSequence)
+            button.disabled = false;
     }
 }
 

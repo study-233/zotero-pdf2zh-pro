@@ -7,6 +7,8 @@ import {
     ServerTaskEvent,
     ServerTaskSnapshot,
     ServerTaskStatus,
+    ServerTaskList,
+    ServerSyncMetadata,
 } from "./pdf2zhTypes";
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 import { ServerTaskClient } from "./serverTaskClient";
@@ -34,10 +36,21 @@ type TaskDialogArgs = {
 
 const ACTIVE_STATUSES: ServerTaskStatus[] = ["queued", "running", "cancelling"];
 
+type ServerSyncState = {
+    instanceId?: string;
+    generation: number;
+    watermark: number;
+    deleted: Map<string, number>;
+    retiredInstances: Set<string>;
+};
+
 export class PDF2zhTaskManager {
     private static tasks = new Map<string, PluginTask>();
     private static localTasksLoaded = false;
     private static savedBindings = "";
+    private static changeSequence = 0;
+    private static taskChanges = new Map<string, number>();
+    private static serverSync = new Map<string, ServerSyncState>();
 
     private static loadLocalTasks(): void {
         if (this.localTasksLoaded) return;
@@ -65,6 +78,7 @@ export class PDF2zhTaskManager {
     }
 
     private static saveLocalTasks(): void {
+        if (!this.localTasksLoaded) return;
         const tasks = [...this.tasks.values()].filter(
             (task) => task.source === "local" && task.itemID,
         );
@@ -76,6 +90,7 @@ export class PDF2zhTaskManager {
                 task.attempt,
                 task.importState,
                 task.importedOutputs,
+                task.qualitySummary,
             ]),
         );
         if (signature === this.savedBindings) return;
@@ -91,12 +106,19 @@ export class PDF2zhTaskManager {
         }
     }
     private static pollPromise: Promise<void> | null = null;
+    private static refreshAgain = false;
     private static taskListeners = new Set<() => void>();
     private static dialogWindow: Window | undefined;
     private static eventStream = new TaskEventStream({
         onTaskEvent: (serverUrl, event) =>
             PDF2zhTaskManager.handleServerTaskEvent(serverUrl, event),
-        onStateChange: () => PDF2zhTaskManager.notifyTasksChanged(),
+        onStateChange: (serverUrl, state) => {
+            PDF2zhTaskManager.notifyTaskListeners();
+            if (state === "open") {
+                PDF2zhTaskManager.syncState(serverUrl).generation += 1;
+                void PDF2zhTaskManager.refreshTasks();
+            }
+        },
     });
     private static importer = new ZoteroTaskImporter({
         getTask: (taskId) => PDF2zhTaskManager.tasks.get(taskId),
@@ -107,6 +129,7 @@ export class PDF2zhTaskManager {
     });
 
     static async processWorker() {
+        this.loadLocalTasks();
         const pane = ztoolkit.getGlobal("ZoteroPane");
         const selectedItems = pane.getSelectedItems();
         if (selectedItems.length === 0) {
@@ -178,6 +201,7 @@ export class PDF2zhTaskManager {
     }
 
     static openWindow() {
+        this.loadLocalTasks();
         if (this.dialogWindow && !this.dialogWindow.closed) {
             this.dialogWindow.focus();
             return;
@@ -253,10 +277,16 @@ export class PDF2zhTaskManager {
     static async refreshTasks(): Promise<void> {
         this.loadLocalTasks();
         if (this.pollPromise) {
+            this.refreshAgain = true;
             return this.pollPromise;
         }
 
-        this.pollPromise = this.refreshTasksInternal();
+        this.pollPromise = (async () => {
+            do {
+                this.refreshAgain = false;
+                await this.refreshTasksInternal();
+            } while (this.refreshAgain);
+        })();
         try {
             await this.pollPromise;
         } finally {
@@ -270,17 +300,16 @@ export class PDF2zhTaskManager {
             throw new Error("任务不存在");
         }
 
+        const generation = this.syncState(task.serverUrl).generation;
         const snapshot = await ServerTaskClient.cancelTask(
             task.serverUrl,
             taskId,
         );
-        if (snapshot) {
-            this.upsertTask(snapshot, task.serverUrl, {
-                itemID: task.itemID,
-                source: task.source,
-                importState: task.importState,
-                importError: task.importError,
-            });
+        if (
+            snapshot &&
+            this.canApplyResponse(task.serverUrl, generation, snapshot)
+        ) {
+            this.upsertTask(snapshot, task.serverUrl);
         }
     }
 
@@ -308,11 +337,16 @@ export class PDF2zhTaskManager {
                 source: "local",
             });
         }
+        const generation = this.syncState(task.serverUrl).generation;
         const snapshot = await ServerTaskClient.repairTask(
             task.serverUrl,
             taskId,
         );
-        if (snapshot) this.upsertTask(snapshot, task.serverUrl);
+        if (
+            snapshot &&
+            this.canApplyResponse(task.serverUrl, generation, snapshot)
+        )
+            this.upsertTask(snapshot, task.serverUrl);
         this.ensureEventStreams();
     }
 
@@ -332,17 +366,16 @@ export class PDF2zhTaskManager {
             return;
         }
 
+        const generation = this.syncState(task.serverUrl).generation;
         const snapshot = await ServerTaskClient.retryTask(
             task.serverUrl,
             taskId,
         );
-        if (snapshot) {
-            this.upsertTask(snapshot, task.serverUrl, {
-                itemID: task.itemID,
-                source: task.source,
-                importState: task.importState,
-                importError: task.importError,
-            });
+        if (
+            snapshot &&
+            this.canApplyResponse(task.serverUrl, generation, snapshot)
+        ) {
+            this.upsertTask(snapshot, task.serverUrl);
         }
         this.ensureEventStreams();
     }
@@ -365,10 +398,10 @@ export class PDF2zhTaskManager {
             throw new Error("任务不存在");
         }
 
-        await ServerTaskClient.deleteTask(task.serverUrl, taskId);
-
-        this.tasks.delete(taskId);
-        this.notifyTasksChanged();
+        const generation = this.syncState(task.serverUrl).generation;
+        const event = await ServerTaskClient.deleteTask(task.serverUrl, taskId);
+        if (this.canApplyResponse(task.serverUrl, generation, event))
+            this.handleServerTaskEvent(task.serverUrl, event);
         this.ensureEventStreams();
     }
 
@@ -382,17 +415,23 @@ export class PDF2zhTaskManager {
 
         const serverUrls = new Set(failedTasks.map((task) => task.serverUrl));
         for (const serverUrl of serverUrls) {
+            const generation = this.syncState(serverUrl).generation;
             await ServerTaskClient.clearFailedTasks(serverUrl);
+            if (generation !== this.syncState(serverUrl).generation) continue;
 
             for (const task of failedTasks) {
-                if (task.serverUrl === serverUrl) {
-                    this.tasks.delete(task.taskId);
+                if (
+                    task.serverUrl === serverUrl &&
+                    this.tasks.get(task.taskId) === task
+                ) {
+                    this.removeLocalTask(task.taskId);
                 }
             }
         }
 
         this.notifyTasksChanged();
         this.ensureEventStreams();
+        await this.refreshTasks();
     }
 
     static getEventStreamState(): {
@@ -404,21 +443,39 @@ export class PDF2zhTaskManager {
     }
 
     private static async submitTask(item: Zotero.Item, config: ServerConfig) {
+        this.loadLocalTasks();
         const fileData = await PDF2zhHelperFactory.prepareFileData(item);
         const requestBody = PDF2zhHelperFactory.buildTaskRequestBody(
             fileData,
             config,
         );
 
+        const generation = this.syncState(config.serverUrl).generation;
         const task = await ServerTaskClient.createTask(
             config.serverUrl,
             requestBody,
         );
-        this.upsertTask(task, config.serverUrl, {
-            itemID: item.id,
-            source: "local",
-            importState: "pending",
-        });
+        if (this.canApplyResponse(config.serverUrl, generation, task)) {
+            this.upsertTask(task, config.serverUrl, {
+                itemID: item.id,
+                source: "local",
+                importState: "pending",
+            });
+        } else {
+            // A restarted server can already have restored this submission.
+            // Its old response can supply the binding, never its old state.
+            const current = this.tasks.get(task.taskId);
+            if (current?.serverUrl === config.serverUrl && !current.itemID) {
+                this.updateLocalTask(task.taskId, {
+                    itemID: item.id,
+                    source: "local",
+                    importState:
+                        current.importState === "none"
+                            ? "pending"
+                            : current.importState,
+                });
+            }
+        }
         this.ensureEventStreams();
     }
 
@@ -435,31 +492,62 @@ export class PDF2zhTaskManager {
         }
 
         for (const serverUrl of serverUrls) {
-            let snapshots: ServerTaskSnapshot[];
+            const startedAt = this.changeSequence;
+            const before = new Map(this.tasks);
+            const state = this.syncState(serverUrl);
+            const generation = state.generation;
+            let list: ServerTaskList;
             try {
-                snapshots = await ServerTaskClient.listTasks(serverUrl);
+                list = await ServerTaskClient.listTasks(serverUrl);
             } catch (_error) {
                 continue;
             }
+            if (generation !== state.generation) {
+                this.refreshAgain = true;
+                continue;
+            }
+            if (!this.acceptInstance(serverUrl, list)) continue;
+            const versioned =
+                list.serverInstanceId !== undefined &&
+                list.revision !== undefined;
+            if (versioned && list.revision! < state.watermark) continue;
+            const snapshots = list.tasks;
             const serverTaskIds = new Set(
                 snapshots.map((snapshot) => snapshot.taskId),
             );
             snapshots.forEach((snapshot) => {
-                const existing = this.tasks.get(snapshot.taskId);
-                this.upsertTask(snapshot, serverUrl, {
-                    itemID: existing?.itemID,
-                    source: existing?.source || "remote",
-                    importState: existing?.importState || "none",
-                    importError: existing?.importError,
-                });
+                if (
+                    !this.tasks.has(snapshot.taskId) &&
+                    (this.taskChanges.get(snapshot.taskId) || 0) > startedAt
+                )
+                    return;
+                this.upsertTask(snapshot, serverUrl, {}, true);
             });
             for (const task of this.getTasks()) {
                 if (task.serverUrl !== serverUrl) {
                     continue;
                 }
-                if (!serverTaskIds.has(task.taskId)) {
-                    this.tasks.delete(task.taskId);
-                    this.notifyTasksChanged();
+                const newerThanList =
+                    versioned &&
+                    task.serverInstanceId === list.serverInstanceId &&
+                    (task.revision || 0) > list.revision!;
+                const canReconcile =
+                    versioned && task.serverInstanceId === list.serverInstanceId
+                        ? !newerThanList
+                        : before.get(task.taskId) === task;
+                if (
+                    !serverTaskIds.has(task.taskId) &&
+                    !newerThanList &&
+                    canReconcile
+                ) {
+                    this.removeLocalTask(task.taskId);
+                }
+            }
+            if (versioned) {
+                state.watermark = list.revision!;
+                for (const [taskId, revision] of state.deleted) {
+                    if (revision <= state.watermark)
+                        state.deleted.delete(taskId);
                 }
             }
         }
@@ -484,9 +572,52 @@ export class PDF2zhTaskManager {
         snapshot: ServerTaskSnapshot,
         serverUrl: string,
         overrides: Partial<PluginTask> = {},
+        fromList = false,
     ) {
+        if (!this.acceptInstance(serverUrl, snapshot)) return;
+        const state = this.syncState(serverUrl);
         const existing = this.tasks.get(snapshot.taskId);
+        const versioned =
+            snapshot.serverInstanceId !== undefined &&
+            snapshot.revision !== undefined;
+        const deletedRevision = state.deleted.get(snapshot.taskId);
+        if (
+            versioned &&
+            deletedRevision !== undefined &&
+            snapshot.revision! <= deletedRevision
+        )
+            return;
+        const sameInstance =
+            existing?.serverInstanceId === snapshot.serverInstanceId;
+        const stale =
+            (versioned && !fromList && snapshot.revision! <= state.watermark) ||
+            (versioned &&
+                sameInstance &&
+                existing?.revision !== undefined &&
+                snapshot.revision! <= existing.revision) ||
+            (existing &&
+                (!versioned || sameInstance) &&
+                ((snapshot.attempt || 1) < (existing.attempt || 1) ||
+                    (!versioned &&
+                        (snapshot.attempt || 1) === (existing.attempt || 1) &&
+                        snapshot.updatedAt < existing.updatedAt)));
+        if (stale) {
+            // The creation response may arrive after its first SSE events.
+            if (overrides.itemID && existing && !existing.itemID) {
+                this.updateLocalTask(snapshot.taskId, {
+                    itemID: overrides.itemID,
+                    source: "local",
+                    importState:
+                        existing.importState === "none"
+                            ? "pending"
+                            : existing.importState,
+                });
+            }
+            return;
+        }
         const nextTask: PluginTask = {
+            serverInstanceId: snapshot.serverInstanceId,
+            revision: snapshot.revision,
             taskId: snapshot.taskId,
             fileName: snapshot.fileName,
             service: snapshot.service,
@@ -508,6 +639,7 @@ export class PDF2zhTaskManager {
             metrics: snapshot.metrics,
             canRepair: snapshot.canRepair,
             translationSummary: snapshot.translationSummary,
+            qualitySummary: snapshot.qualitySummary,
             failedParagraphs: snapshot.failedParagraphs,
             importedOutputs: existing?.importedOutputs,
             serverUrl,
@@ -523,6 +655,7 @@ export class PDF2zhTaskManager {
             nextTask.importedOutputs = [];
         }
         this.tasks.set(snapshot.taskId, nextTask);
+        this.taskChanges.set(snapshot.taskId, ++this.changeSequence);
         this.notifyTasksChanged();
     }
 
@@ -538,10 +671,65 @@ export class PDF2zhTaskManager {
             ...current,
             ...patch,
         });
+        this.taskChanges.set(taskId, ++this.changeSequence);
         this.notifyTasksChanged();
     }
 
+    private static removeLocalTask(taskId: string): void {
+        this.tasks.delete(taskId);
+        this.taskChanges.set(taskId, ++this.changeSequence);
+        this.notifyTasksChanged();
+    }
+
+    private static syncState(serverUrl: string): ServerSyncState {
+        let state = this.serverSync.get(serverUrl);
+        if (!state) {
+            state = {
+                generation: 0,
+                watermark: -1,
+                deleted: new Map(),
+                retiredInstances: new Set(),
+            };
+            this.serverSync.set(serverUrl, state);
+        }
+        return state;
+    }
+
+    private static canApplyResponse(
+        serverUrl: string,
+        generation: number,
+        metadata: ServerSyncMetadata,
+    ): boolean {
+        const state = this.syncState(serverUrl);
+        return (
+            generation === state.generation ||
+            (metadata.serverInstanceId
+                ? metadata.serverInstanceId === state.instanceId
+                : !state.instanceId)
+        );
+    }
+
+    private static acceptInstance(
+        serverUrl: string,
+        metadata: ServerSyncMetadata,
+    ): boolean {
+        if (!metadata.serverInstanceId) return true;
+        const state = this.syncState(serverUrl);
+        if (state.retiredInstances.has(metadata.serverInstanceId)) return false;
+        if (state.instanceId !== metadata.serverInstanceId) {
+            if (state.instanceId) {
+                state.retiredInstances.add(state.instanceId);
+            }
+            state.generation += 1;
+            state.instanceId = metadata.serverInstanceId;
+            state.watermark = -1;
+            state.deleted.clear();
+        }
+        return true;
+    }
+
     private static ensureEventStreams() {
+        this.loadLocalTasks();
         const serverUrls = new Set<string>();
         const currentServerUrl = getPref("new_serverip")?.toString() || "";
         const dialogOpen = Boolean(
@@ -573,30 +761,47 @@ export class PDF2zhTaskManager {
         serverUrl: string,
         event: ServerTaskEvent,
     ) {
+        if (!this.acceptInstance(serverUrl, event)) return;
+        if (event.type === "resync") {
+            void this.refreshTasks();
+            return;
+        }
         if (
             (event.type === "snapshot" || event.type === "task") &&
             event.task
         ) {
-            const existing = this.tasks.get(event.task.taskId);
-            this.upsertTask(event.task, serverUrl, {
-                itemID: existing?.itemID,
-                source: existing?.source || "remote",
-                importState: existing?.importState || "none",
-                importError: existing?.importError,
-            });
+            this.upsertTask(event.task, serverUrl);
             void this.importCompletedLocalTasks();
             return;
         }
 
         if (event.type === "deleted" && event.taskId) {
-            this.tasks.delete(event.taskId);
-            this.notifyTasksChanged();
+            const state = this.syncState(serverUrl);
+            if (event.revision !== undefined) {
+                const current = this.tasks.get(event.taskId);
+                const lastRevision =
+                    current?.serverInstanceId === event.serverInstanceId
+                        ? current?.revision
+                        : undefined;
+                if (
+                    event.revision <= state.watermark ||
+                    event.revision <= (state.deleted.get(event.taskId) ?? -1) ||
+                    event.revision < (lastRevision ?? -1)
+                )
+                    return;
+                state.deleted.set(event.taskId, event.revision);
+            }
+            this.removeLocalTask(event.taskId);
             this.ensureEventStreams();
         }
     }
 
     private static notifyTasksChanged(): void {
         this.saveLocalTasks();
+        this.notifyTaskListeners();
+    }
+
+    private static notifyTaskListeners(): void {
         for (const listener of this.taskListeners) {
             try {
                 listener();

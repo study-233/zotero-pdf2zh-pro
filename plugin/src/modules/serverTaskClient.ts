@@ -5,10 +5,12 @@ import {
     DiagnosticMessage,
     OutputMode,
     ServerTaskSnapshot,
+    ServerTaskList,
+    ServerTaskEvent,
 } from "./pdf2zhTypes";
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 
-type TaskListResponse = {
+type TaskListResponse = Partial<ServerTaskList> & {
     status?: string;
     tasks?: ServerTaskSnapshot[];
     message?: string;
@@ -21,14 +23,21 @@ type TaskCreateResponse = {
 };
 
 export class ServerTaskClient {
-    static async listTasks(serverUrl: string): Promise<ServerTaskSnapshot[]> {
+    static async listTasks(serverUrl: string): Promise<ServerTaskList> {
         const response = await fetch(`${serverUrl}/tasks`);
         if (!response.ok) {
             throw new Error(await this.readErrorMessage(response));
         }
 
         const payload = (await response.json()) as TaskListResponse;
-        return payload.tasks || [];
+        if (!Array.isArray(payload.tasks)) {
+            throw new Error("服务器返回的任务列表格式不正确");
+        }
+        return {
+            tasks: payload.tasks,
+            serverInstanceId: payload.serverInstanceId,
+            revision: payload.revision,
+        };
     }
 
     static async createTask(
@@ -36,26 +45,46 @@ export class ServerTaskClient {
         requestBody: Record<string, unknown>,
     ): Promise<ServerTaskSnapshot> {
         const api = requestBody.llm_api as LLMApiData | undefined;
-        if (
+        const needsApiCheck = Boolean(
             api &&
             (api.apiProtocol === "auto" ||
                 api.apiProtocol === "responses" ||
-                Object.keys(api.requestOptions || {}).length)
-        ) {
+                Object.keys(api.requestOptions || {}).length),
+        );
+        const needsGlossary =
+            Array.isArray(requestBody.glossaryEntries) &&
+            requestBody.glossaryEntries.length > 0;
+        const needsReview = requestBody.semanticReview === true;
+        if (needsApiCheck || needsGlossary || needsReview) {
             const healthResponse = await fetch(`${serverUrl}/health`);
             if (!healthResponse.ok)
                 throw new Error(await this.readErrorMessage(healthResponse));
             const health =
                 (await healthResponse.json()) as ServerHealthResponse;
-            const prepared = prepareApiForServer(
-                api,
-                health.supportedApiProtocols,
-            );
-            requestBody = { ...requestBody, llm_api: prepared.api };
-            if (prepared.warning) {
-                new ztoolkit.ProgressWindow("API 兼容提示")
-                    .createLine({ text: prepared.warning, type: "default" })
-                    .show();
+            const unavailable = [];
+            if (needsGlossary && health.capabilities?.glossaryEntries !== true)
+                unavailable.push("术语表");
+            if (needsReview && health.capabilities?.semanticReview !== true)
+                unavailable.push("定向校对");
+            if (unavailable.length) {
+                throw new Error(
+                    `当前服务端的${unavailable.join("、")}功能不可用，请升级服务端。` +
+                        (needsGlossary
+                            ? "已保留术语表，本次未提交任务。"
+                            : "也可以在设置中关闭定向校对后提交普通翻译。"),
+                );
+            }
+            if (needsApiCheck && api) {
+                const prepared = prepareApiForServer(
+                    api,
+                    health.supportedApiProtocols,
+                );
+                requestBody = { ...requestBody, llm_api: prepared.api };
+                if (prepared.warning) {
+                    new ztoolkit.ProgressWindow("API 兼容提示")
+                        .createLine({ text: prepared.warning, type: "default" })
+                        .show();
+                }
             }
         }
         const response = await PDF2zhHelperFactory.retryOperation(() =>
@@ -97,7 +126,10 @@ export class ServerTaskClient {
         return this.postTaskAction(serverUrl, taskId, "repair");
     }
 
-    static async deleteTask(serverUrl: string, taskId: string): Promise<void> {
+    static async deleteTask(
+        serverUrl: string,
+        taskId: string,
+    ): Promise<ServerTaskEvent> {
         const response = await fetch(`${serverUrl}/tasks/${taskId}`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
@@ -105,6 +137,13 @@ export class ServerTaskClient {
         if (!response.ok) {
             throw new Error(await this.readErrorMessage(response));
         }
+        const payload = (await response.json()) as Partial<ServerTaskEvent>;
+        return {
+            type: "deleted",
+            taskId,
+            serverInstanceId: payload.serverInstanceId,
+            revision: payload.revision,
+        };
     }
 
     static async clearFailedTasks(serverUrl: string): Promise<void> {

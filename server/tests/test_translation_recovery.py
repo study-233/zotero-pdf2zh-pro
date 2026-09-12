@@ -2,6 +2,7 @@ import json
 import tempfile
 import threading
 import unittest
+from contextlib import ExitStack, contextmanager
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
@@ -127,12 +128,19 @@ class RetryAndCacheTests(unittest.TestCase):
 
 
 class RecoveryTests(unittest.TestCase):
+    @contextmanager
+    def recovery_directory(self):
+        with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
+            self.recovery_stack = stack
+            yield directory
+
     def fixtures(self, directory):
         p = PdfParagraph(debug_id="one", unicode=SOURCE, pdf_style=PdfStyle(), layout_label="text", pdf_paragraph_composition=[PdfParagraphComposition(pdf_character=PdfCharacter(char_unicode="T"))])
         docs = Document(page=[Page(page_number=0, pdf_paragraph=[p])])
         cfg = SimpleNamespace(skip_references=False, min_text_length=3, disable_same_text_fallback=False,
                               raise_if_cancelled=lambda: None, add_formula_placehold_hint=False)
-        recovery = TranslationRecovery(Path(directory)/"recovery.json", "source-and-config")
+        recovery = TranslationRecovery(Path(directory)/"recovery.sqlite3", "source-and-config")
+        self.recovery_stack.callback(recovery.close)
         cfg.recovery = recovery
         recovery.register(docs, cfg)
         translator = ILTranslator.__new__(ILTranslator)
@@ -145,14 +153,14 @@ class RecoveryTests(unittest.TestCase):
         return p, docs, cfg, recovery, translator
 
     def test_failure_is_recorded_success_restores_without_api(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with self.recovery_directory() as tmp:
             p, docs, cfg, recovery, translator = self.fixtures(tmp)
             translator.translate_engine.llm_translate.side_effect = RuntimeError("secret should not be persisted")
             translator.translate_paragraph(p, docs.page[0], Mock(), ParagraphTranslateTracker(), {}, {})
             recovery.finish()
             self.assertEqual(recovery.snapshot()[0]["failed"], 1)
             self.assertEqual(p.unicode, SOURCE)
-            self.assertNotIn("secret should", recovery.path.read_text())
+            self.assertNotIn("secret should", json.dumps(recovery.entries))
             translator.translate_engine.llm_translate.side_effect = None
             translator.translate_paragraph(p, docs.page[0], Mock(), ParagraphTranslateTracker(), {}, {})
             recovery.finish()
@@ -164,10 +172,11 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(p2.unicode, TARGET)
             self.assertEqual(recovered.snapshot()[0]["failed"], 0)
             other = TranslationRecovery(recovered.path, "different-config")
+            self.recovery_stack.callback(other.close)
             self.assertEqual(other.entries, {})
 
     def test_batch_fallback_keeps_source_string_and_recovers(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with self.recovery_directory() as tmp:
             p, docs, cfg, recovery, single = self.fixtures(tmp)
             batch = ILTranslatorLLMOnly.__new__(ILTranslatorLLMOnly)
             batch.translation_config = cfg; batch.il_translator = single
@@ -185,13 +194,13 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(recovery.snapshot()[0]["failed"], 0)
 
     def test_unprocessed_paragraph_is_not_silent_success(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with self.recovery_directory() as tmp:
             _, _, _, recovery, _ = self.fixtures(tmp)
             recovery.finish()
             self.assertEqual(recovery.snapshot()[0]["failed"], 1)
 
     def test_repair_only_requests_the_failed_paragraph(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with self.recovery_directory() as tmp:
             def pair():
                 p, docs, cfg, recovery, translator = self.fixtures(tmp)
                 second = PdfParagraph(debug_id="two", unicode=SOURCE + " A second sentence.",

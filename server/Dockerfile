@@ -24,7 +24,7 @@ COPY server/babeldoc ./babeldoc
 COPY server/pdf2zh_next ./pdf2zh_next
 COPY server/rapidocr_onnxruntime ./rapidocr_onnxruntime
 COPY server/THIRD_PARTY_NOTICES.md ./
-COPY server/server.py server/task_manager.py server/pdf2zh_next_service.py ./
+COPY server/server.py server/task_manager.py server/pdf2zh_next_service.py server/observability.py server/provider_models.py ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 

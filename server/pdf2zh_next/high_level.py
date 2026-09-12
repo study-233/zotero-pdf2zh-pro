@@ -528,27 +528,38 @@ async def _translate_in_subprocess(
                 raise cb.error
 
 
-def _get_glossaries(settings: SettingsModel) -> list[Glossary] | None:
+def _get_glossaries(settings: SettingsModel, glossary_entries=None) -> list[Glossary] | None:
     glossaries = []
-    if not settings.translation.glossaries:
-        return None
-    for file in settings.translation.glossaries.split(","):
+    for file in (settings.translation.glossaries or "").split(","):
+        if not file:
+            continue
         glossaries.append(
             Glossary.from_csv(Path(file), target_lang_out=settings.translation.lang_out)
         )
-    return glossaries
+    if glossary_entries:
+        from babeldoc.glossary import GlossaryEntry
+        from babeldoc.glossary_options import glossary_entries_for_language
+        entries = glossary_entries_for_language(glossary_entries, settings.translation.lang_out)
+        if entries:
+            glossaries.append(Glossary("Imported glossary", [
+                GlossaryEntry(row["source"], row["target"], row["tgt_lng"])
+                for row in entries
+            ]))
+    return glossaries or None
 
 
-def create_babeldoc_config(settings: SettingsModel, file: Path) -> BabelDOCConfig:
+def create_babeldoc_config(settings: SettingsModel, file: Path, *, glossary_entries=None, metrics_collector=None) -> BabelDOCConfig:
     if not isinstance(settings, SettingsModel):
         raise ValueError(f"{type(settings)} is not SettingsModel")
-    translator = get_translator(settings)
+    translator = get_translator(settings, metrics_collector=metrics_collector)
     if translator is None:
         raise ValueError("No translator found")
 
-    if (
+    if settings.translation.no_auto_extract_glossary:
+        term_extraction_translator = translator
+    elif (
         settings.term_extraction_engine_settings == settings.translate_engine_settings
-        and settings.translation.term_qps == settings.translation.qps
+        and (settings.translation.term_qps or settings.translation.qps) == settings.translation.qps
         and not getattr(
             translator, "requires_dedicated_term_extraction_translator", False
         )
@@ -573,7 +584,7 @@ def create_babeldoc_config(settings: SettingsModel, file: Path) -> BabelDOCConfi
                 "openai_api_protocol": translator.resolved_protocol,
                 "openai_base_url": str(translator.client.base_url),
             })
-        term_extraction_translator = get_term_translator(settings)
+        term_extraction_translator = get_term_translator(settings, metrics_collector=metrics_collector)
 
     # 设置分割策略
     split_strategy = None
@@ -635,7 +646,7 @@ def create_babeldoc_config(settings: SettingsModel, file: Path) -> BabelDOCConfi
         skip_scanned_detection=settings.pdf.skip_scanned_detection,
         ocr_workaround=settings.pdf.ocr_workaround,
         custom_system_prompt=settings.translation.custom_system_prompt,
-        glossaries=_get_glossaries(settings),
+        glossaries=_get_glossaries(settings, glossary_entries),
         auto_enable_ocr_workaround=settings.pdf.auto_enable_ocr_workaround,
         pool_max_workers=settings.translation.pool_max_workers,
         auto_extract_glossary=not settings.translation.no_auto_extract_glossary,

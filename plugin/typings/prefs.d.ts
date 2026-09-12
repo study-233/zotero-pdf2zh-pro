@@ -30,6 +30,9 @@ declare namespace _ZoteroTypes {
       "skipTextChecks": boolean;
       "noWatermark": boolean;
       "disableTermExtraction": boolean;
+      "glossaryEntries": string;
+      "semanticReview": boolean;
+      "reviewPreferenceMigrationVersion": number;
       "dialog-service": string;
       "dialog-serviceSelect": string;
       "selectedApiKey": string;

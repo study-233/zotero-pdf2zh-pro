@@ -74,9 +74,11 @@ export class TaskEventStream {
         });
 
         source.onopen = () => {
+            if (this.streams.get(serverUrl)?.source !== source) return;
             this.setState(serverUrl, "open");
         };
         source.onmessage = (message) => {
+            if (this.streams.get(serverUrl)?.source !== source) return;
             let event: ServerTaskEvent;
             try {
                 event = JSON.parse(message.data) as ServerTaskEvent;
@@ -86,6 +88,7 @@ export class TaskEventStream {
             this.callbacks.onTaskEvent(serverUrl, event);
         };
         source.onerror = () => {
+            if (this.streams.get(serverUrl)?.source !== source) return;
             this.setState(serverUrl, "error");
             ztoolkit.log(`任务进度事件连接异常: ${serverUrl}`);
         };

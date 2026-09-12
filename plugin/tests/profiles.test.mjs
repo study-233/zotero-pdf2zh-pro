@@ -12,7 +12,10 @@ const compile = (name) =>
             "utf8",
         ),
         {
-            compilerOptions: { module: ts.ModuleKind.ESNext },
+            compilerOptions: {
+                module: ts.ModuleKind.ESNext,
+                target: ts.ScriptTarget.ES2022,
+            },
         },
     ).outputText;
 const asModule = (code) =>
@@ -130,8 +133,13 @@ test("selection uses ID even for identical models and returns isolated nested da
 });
 
 globalThis.__profileTests.getSelectedProfile = store.getSelectedProfile;
+const glossary = await asModule(
+    "const {getPref,setPref}=globalThis.__profileTests;\n" +
+        compile("glossaryStore").replace(/^import .*;$/gm, ""),
+);
+globalThis.__profileTests.loadGlossaryEntries = glossary.loadGlossaryEntries;
 const { PDF2zhHelperFactory: helper } = await asModule(
-    "const {getPref, getSelectedProfile, SERVICE_NAMES} = globalThis.__profileTests;\n" +
+    "const {getPref, getSelectedProfile, SERVICE_NAMES,loadGlossaryEntries} = globalThis.__profileTests;\n" +
         compile("pdf2zhHelper").replace(/^import .*;$/gm, ""),
 );
 test("batch request construction keeps the captured profile after selection and edits", () => {
@@ -161,6 +169,51 @@ test("batch request construction keeps the captured profile after selection and 
             ),
         /选择翻译配置/,
     );
+});
+
+test("task payload captures the glossary and sends an actual review boolean", () => {
+    prefs.clear();
+    prefs.set("profileSchemaVersion", 1);
+    store.saveProfiles([api("a")]);
+    prefs.set("selectedApiKey", "a");
+    glossary.importGlossaryCsv("source,target,tgt_lng\ncamera,相机,zh-CN");
+    prefs.set("semanticReview", true);
+    const config = helper.getServerConfig();
+    assert.equal(config.semanticReview, true);
+    glossary.clearGlossaryEntries();
+    prefs.set("semanticReview", false);
+    const captured = helper.buildTaskRequestBody(
+        { fileName: "paper.pdf", base64: "AA==" },
+        config,
+    );
+    assert.deepEqual(captured.glossaryEntries, [
+        { source: "camera", target: "相机", tgt_lng: "zh-CN" },
+    ]);
+    assert.equal(captured.semanticReview, true);
+    const current = helper.buildTaskRequestBody(
+        { fileName: "paper.pdf", base64: "AA==" },
+        helper.getServerConfig(),
+    );
+    assert.deepEqual(current.glossaryEntries, []);
+    assert.equal(current.semanticReview, false);
+});
+
+test("new and legacy incomplete configurations explicitly disable review by default", () => {
+    prefs.clear();
+    prefs.set("profileSchemaVersion", 1);
+    store.saveProfiles([api("a")]);
+    prefs.set("selectedApiKey", "a");
+    const config = helper.getServerConfig();
+    assert.equal(config.semanticReview, false);
+    for (const value of [false, undefined]) {
+        assert.equal(
+            helper.buildTaskRequestBody(
+                { fileName: "paper.pdf", base64: "AA==" },
+                { ...config, semanticReview: value },
+            ).semanticReview,
+            false,
+        );
+    }
 });
 
 const requests = [];
