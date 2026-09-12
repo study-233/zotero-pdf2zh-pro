@@ -93,12 +93,16 @@ jobs:
           COMMIT="$(git rev-parse HEAD)"
           VERSION="${RELEASE_TAG#v}"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN_ID" > "$RUNNER_TEMP/build-run.json"
-          python - "$RUNNER_TEMP/build-run.json" "$COMMIT" <<'PY_VERIFY_RUN'
-          import json, sys
-          run = json.load(open(sys.argv[1]))
+          python - "$RUNNER_TEMP/build-run.json" "$COMMIT" "$VERSION" <<'PY_VERIFY_RUN'
+          import json, subprocess, sys
+          from pathlib import Path
+          run = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
           assert run["conclusion"] == "success" and run["status"] == "completed"
-          assert run["head_sha"] == sys.argv[2]
           assert run["path"] == ".github/workflows/build-windows-release.yml"
+          assert run["display_title"] == f"Build v{sys.argv[3]} at {sys.argv[2]}"
+          # A maintenance workflow may validate an older, unchanged release commit.
+          # The source identity is also checked against the downloaded manifest below.
+          subprocess.run(["git", "merge-base", "--is-ancestor", sys.argv[2], run["head_sha"]], check=True)
           PY_VERIFY_RUN
           gh run download "$BUILD_RUN_ID" --repo "$GITHUB_REPOSITORY" \
             --name "release-$VERSION-$COMMIT" --dir "$RUNNER_TEMP/verified-release"
@@ -158,7 +162,7 @@ jobs:
           notes = "## " + tag + " - " + section.strip() + "\n\n"
           notes += "Windows 用户：完整解压 ZIP 后双击 EXE；旧版无法启动时直接下载新版恢复，无需先卸载。首次缺少 WebView2 时需要联网自动准备。\n\nSHA-256：\n\n"
           manifest = json.loads((source / "checksums.json").read_text())
-          for name in ["zotero-pdf2zh-pro-windows-x64.zip", "zotero-pdf2zh-pro.xpi"]:
+          for name in sorted(manifest["artifacts"]):
               notes += "- `" + name + "`：`" + manifest["artifacts"][name]["sha256"] + "`\n"
           output.write_text(notes)
           PY_NOTES
@@ -166,5 +170,4 @@ jobs:
           gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
             --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/release-notes.md" --latest \
             "$source/zotero-pdf2zh-pro.xpi" "$source/update.json" \
-            "$source/zotero-pdf2zh-pro-windows-x64.zip" "$source/windows-update.json" \
-            "$source/checksums.json" "$source/zotero-pdf2zh-pro-${RELEASE_TAG#v}-source.zip"
+            "$source/zotero-pdf2zh-pro-windows-x64.zip" "$source/windows-update.json"

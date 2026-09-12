@@ -17,9 +17,14 @@ on:
         required: false
         type: boolean
         default: false
+      reuse_build_run_id:
+        description: Optional prior run whose artifact build succeeded; reuse its packages for standard validation
+        required: false
+        type: string
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: build-windows-release-${{ inputs.version }}
@@ -41,6 +46,9 @@ jobs:
         run: |
           if ($env:RELEASE_VERSION -cnotmatch '^[0-9]+\.[0-9]+\.[0-9]+$') { throw 'Expected stable semver' }
           if ($env:RELEASE_COMMIT -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected full lowercase commit SHA' }
+          $reuse = '${{ inputs.reuse_build_run_id }}'
+          if ($reuse -and $reuse -cnotmatch '^[0-9]+$') { throw 'Expected numeric prior run ID' }
+          if ($reuse -and '${{ inputs.full_validation }}' -eq 'true') { throw 'Reuse supports standard validation only' }
           git config --global core.autocrlf false
 
       - name: Checkout exact commit
@@ -70,11 +78,13 @@ jobs:
           "PDF2ZH_DATA_DIR=$env:RUNNER_TEMP\server-test-data" >> $env:GITHUB_ENV
 
       - name: Setup Node.js
+        if: inputs.reuse_build_run_id == ''
         uses: actions/setup-node@v7
         with:
           node-version: 20
 
       - name: Setup pnpm
+        if: inputs.reuse_build_run_id == ''
         uses: pnpm/action-setup@v6
         with:
           version: 10.34.5
@@ -86,12 +96,14 @@ jobs:
           enable-cache: true
 
       - name: Setup Rust
+        if: inputs.reuse_build_run_id == ''
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable-x86_64-pc-windows-msvc
           targets: x86_64-pc-windows-msvc
 
       - name: Cache Rust build
+        if: inputs.reuse_build_run_id == ''
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: windows-app/src-tauri
@@ -100,6 +112,20 @@ jobs:
       - name: Verify committed versions
         shell: bash
         run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT"
+
+      - name: Require successful core CI for the release commit
+        if: ${{ !inputs.full_validation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$RELEASE_COMMIT&status=success&per_page=100" > "$RUNNER_TEMP/core-ci.json"
+          python - "$RUNNER_TEMP/core-ci.json" "$RELEASE_COMMIT" <<'PY_CORE'
+          import json, sys
+          from pathlib import Path
+          runs = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["workflow_runs"]
+          assert any(r["head_sha"] == sys.argv[2] and r["conclusion"] == "success"
+                     and r["event"] == "push" for r in runs), "Release commit must pass core CI first"
+          PY_CORE
 
       - name: Prepare Windows GUI test environment
         shell: powershell
@@ -110,6 +136,7 @@ jobs:
           if ($preparation.Status -ne 'ready') { throw $preparation.Message }
 
       - name: Build artifacts and verify Windows startup
+        if: inputs.reuse_build_run_id == ''
         shell: bash
         run: |
           set -euo pipefail
@@ -117,6 +144,48 @@ jobs:
           test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
           git diff --exit-code
           git diff --cached --exit-code
+
+      - name: Restore packages from a completed artifact build
+        if: inputs.reuse_build_run_id != ''
+        shell: bash
+        env:
+          REUSE_RUN: ${{ inputs.reuse_build_run_id }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REUSE_RUN" > "$RUNNER_TEMP/reuse-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REUSE_RUN/jobs?filter=latest" > "$RUNNER_TEMP/reuse-jobs.json"
+          python - "$RUNNER_TEMP/reuse-run.json" "$RUNNER_TEMP/reuse-jobs.json" "$RELEASE_COMMIT" <<'PY_RUN'
+          import json, sys
+          from pathlib import Path
+          run, jobs = [json.loads(Path(p).read_text(encoding="utf-8")) for p in sys.argv[1:3]]
+          assert run["head_sha"] == sys.argv[3] and run["status"] == "completed"
+          assert run["path"] == ".github/workflows/build-windows-release.yml"
+          assert any(s["name"] == "Build artifacts and verify Windows startup" and s["conclusion"] == "success"
+                     for j in jobs["jobs"] for s in j.get("steps", []))
+          PY_RUN
+          conclusion="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REUSE_RUN" --jq '.conclusion')"
+          prefix=failed-release
+          [[ "$conclusion" == success ]] && prefix=release
+          gh run download "$REUSE_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name "$prefix-$RELEASE_VERSION-$RELEASE_COMMIT" --dir "$RUNNER_TEMP/reuse-build"
+          python - "$RUNNER_TEMP/reuse-build" "$RELEASE_VERSION" <<'PY_COPY'
+          import shutil, sys
+          from pathlib import Path
+          source, version = Path(sys.argv[1]), sys.argv[2]
+          product = "zotero-pdf2zh-pro"
+          paths = [f"plugin/build/{product}.xpi", "plugin/build/update.json",
+                   f"dist/{product}-windows-x64.zip", "dist/windows-update.json",
+                   f"dist/{product}-{version}-source.zip",
+                   f"server/dist/zotero_pdf2zh_pro-{version}-py3-none-any.whl",
+                   f"server/dist/zotero_pdf2zh_pro-{version}.tar.gz"]
+          matches = [(Path(p), list(source.rglob(Path(p).name))) for p in paths]
+          assert all(len(found) == 1 for _, found in matches), "Missing or ambiguous build artifact"
+          for target, found in matches:
+              target.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copyfile(found[0], target)
+          PY_COPY
+          uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$RELEASE_VERSION"
+          uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT" --collect
 
       - name: Plugin lint, type check and tests
         if: inputs.full_validation
