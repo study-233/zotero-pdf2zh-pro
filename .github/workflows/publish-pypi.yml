@@ -146,6 +146,34 @@ jobs:
           --check-url https://pypi.org/simple/zotero-pdf2zh-pro/
           server/dist/*
 
+      - name: Verify public PyPI files before distributing installers
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          python - "$RELEASE_TAG" <<'PY_PYPI'
+          import hashlib, json, sys, time
+          from pathlib import Path
+          from urllib.request import urlopen
+          from urllib.error import HTTPError, URLError
+          version = sys.argv[1].removeprefix("v")
+          expected = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in Path("server/dist").iterdir() if p.is_file()}
+          for attempt in range(30):
+              try:
+                  with urlopen(f"https://pypi.org/pypi/zotero-pdf2zh-pro/{version}/json", timeout=10) as response:
+                      published = {p["filename"]: p["digests"]["sha256"] for p in json.load(response)["urls"]}
+                  for name, digest in expected.items():
+                      if name in published and published[name] != digest:
+                          raise RuntimeError(f"PyPI content mismatch: {name}")
+                  if all(published.get(name) == digest for name, digest in expected.items()):
+                      print("Public PyPI wheel and sdist hashes match verified packages")
+                      break
+              except (HTTPError, URLError):
+                  pass
+              time.sleep(2)
+          else:
+              raise RuntimeError("Public PyPI files not yet verified; GitHub publication withheld")
+          PY_PYPI
+
       - name: Publish verified GitHub release
         if: inputs.publish_github
         env:
