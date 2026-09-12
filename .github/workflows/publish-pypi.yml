@@ -189,6 +189,8 @@ jobs:
           section = changelog.split("## " + tag + " - ", 1)[1].split("\n## ", 1)[0]
           notes = "## " + tag + " - " + section.strip() + "\n\n"
           notes += "Windows 用户：完整解压 ZIP 后双击 EXE；旧版无法启动时直接下载新版恢复，无需先卸载。首次缺少 WebView2 时需要联网自动准备。\n\nSHA-256：\n\n"
+          if tag == "v1.6.9":
+              notes += "已知 Windows 限制：精简用户配置缺少系统 Run 注册表键时，自启注册可能失败；扩展迁移测试中，回滚后的再次启动健康检查仍有未解决失败。标准安装、启动、升级、卸载单独验证，暂不宣称迁移全面通过。\n\n"
           manifest = json.loads((source / "checksums.json").read_text())
           for name in sorted(manifest["artifacts"]):
               notes += "- `" + name + "`：`" + manifest["artifacts"][name]["sha256"] + "`\n"

@@ -130,6 +130,11 @@ jobs:
       - name: Prepare Windows GUI test environment
         shell: powershell
         run: |
+          # auto-launch opens this Windows shell key; minimal hosted profiles may lack it.
+          # Create only the empty OS container. The GUI must write its own startup value.
+          $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+          Write-Host "Windows shell Run key exists: $(Test-Path -LiteralPath $runKey)"
+          if (-not (Test-Path -LiteralPath $runKey)) { New-Item -Path $runKey -Force | Out-Null }
           . scripts/windows/prepare-webview2.ps1 -FunctionsOnly
           $preparation = @{ Status = 'working'; Message = ''; Installer = $null }
           Invoke-WebView2Preparation -State $preparation -DiagnosticPath "$env:RUNNER_TEMP/webview2-setup.log"
