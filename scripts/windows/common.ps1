@@ -14,7 +14,7 @@ function Test-PreparationOnlyRoot {
     return $true
 }
 
-$PackageVersion = "1.6.8" # release-version
+$PackageVersion = "1.6.9" # release-version
 $ProductName = "zotero-pdf2zh-pro"
 $ServerHost = "127.0.0.1"
 $ServerPort = if ($env:PDF2ZH_WINDOWS_PORT) {

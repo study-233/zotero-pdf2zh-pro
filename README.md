@@ -14,7 +14,7 @@
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 
-当前统一版本：<!-- release-version --> `1.6.8`
+当前统一版本：<!-- release-version --> `1.6.9`
 
 [Windows 安装](#windows) · [macOS 安装](#macos) · [配置翻译 API](#api-configuration) ·
 [开始翻译](#usage) · [常见问题](#troubleshooting)
