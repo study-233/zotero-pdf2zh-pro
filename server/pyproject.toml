@@ -31,7 +31,7 @@ dependencies = [
     "ollama",
     "onnx>=1.18.0",
     "onnxruntime>=1.16.1",
-    "openai>=2.32.0,<3",
+    "openai>=2.32.0,<4",
     "opencv-python-headless>=4.10.0.84",
     "orjson>=3.10.14",
     "peewee>=3.17.8",
