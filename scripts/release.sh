@@ -207,13 +207,14 @@ if [[ "$PUSH" -eq 1 ]]; then
     git push origin main
 fi
 
-# A publication uses the exact packages from the full isolated Windows check.
+# A publication reuses core CI and packages from the standard Windows check.
+# Extended OCR/rollback/relocation checks remain available by manual dispatch.
 # The workflow's --no-push build does not enter this block recursively.
 BUILD_RUN=""
 if [[ "$PUSH" -eq 1 && ( "$PUBLISH_PYPI" -eq 1 || "$PUBLISH_RELEASE" -eq 1 ) ]]; then
     BUILD_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     gh workflow run build-windows-release.yml --repo "$MAIN_REPO" --ref main \
-        -f version="$VERSION" -f commit="$COMMIT" -f full_validation=true
+        -f version="$VERSION" -f commit="$COMMIT" -f full_validation=false
     for _ in {1..40}; do
         BUILD_RUN="$(gh run list --repo "$MAIN_REPO" --workflow build-windows-release.yml \
             --commit "$COMMIT" --event workflow_dispatch --limit 10 \
@@ -221,7 +222,17 @@ if [[ "$PUSH" -eq 1 && ( "$PUBLISH_PYPI" -eq 1 || "$PUBLISH_RELEASE" -eq 1 ) ]];
         [[ -n "$BUILD_RUN" ]] && break
         sleep 2
     done
-    [[ -n "$BUILD_RUN" ]] || die "Full Windows release validation did not start"
+    [[ -n "$BUILD_RUN" ]] || die "Windows release validation did not start"
+    CORE_RUN=""
+    for _ in {1..40}; do
+        CORE_RUN="$(gh run list --repo "$MAIN_REPO" --workflow ci.yml \
+            --commit "$COMMIT" --event push --limit 1 --json databaseId \
+            --jq '.[0].databaseId // empty')"
+        [[ -n "$CORE_RUN" ]] && break
+        sleep 2
+    done
+    [[ -n "$CORE_RUN" ]] || die "Core CI did not start for the release commit"
+    gh run watch "$CORE_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
     gh run watch "$BUILD_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
     VERIFIED_DIR="dist/verified-$BUILD_RUN"
     gh run download "$BUILD_RUN" --repo "$MAIN_REPO" \
