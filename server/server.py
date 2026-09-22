@@ -35,7 +35,7 @@ from provider_models import ModelDiscoveryError, list_provider_models
 from babeldoc.glossary_options import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
 
-VERSION = "1.6.9"
+VERSION = "1.7.0"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
 DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
 TRANSLATES_DIR = Path(
