@@ -5,16 +5,18 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  adm-zip: 0.6.0
-  js-yaml: 4.3.1
+  adm-zip: 0.6.1
+  brace-expansion@1: 1.1.18
+  brace-expansion@5: 5.0.9
+  js-yaml: 4.3.2
 
 importers:
 
   .:
     dependencies:
       zotero-plugin-toolkit:
-        specifier: 5.1.0-beta.10
-        version: 5.1.0-beta.10
+        specifier: 5.2.0
+        version: 5.2.0
     devDependencies:
       '@eslint/js':
         specifier: ^9.22.0
@@ -50,8 +52,8 @@ importers:
         specifier: ^0.3.2
         version: 0.3.5
       zotero-types:
-        specifier: ^4.1.0-beta.4
-        version: 4.1.2
+        specifier: ^4.1.3
+        version: 4.1.3
 
 packages:
 
@@ -634,8 +636,8 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  adm-zip@0.6.0:
-    resolution: {integrity: sha512-XleryMhbuksdKtofnWZ9Sk+4CUTbms4Mb/EU32SZwToAyZ5RgVos/ki8n+yr0LWHOGKuakbXTuuYNHLQjhddgg==}
+  adm-zip@0.6.1:
+    resolution: {integrity: sha512-Xwrja8nx9e5o2N1my4DsKCeKpdrnACyr1wtbPxBDgGzKzKyE9kRtBFA8mWldI+RVlD7CBZNWY/wQ2+ydwOR6kQ==}
     engines: {node: '>=14.0'}
 
   agent-base@6.0.2:
@@ -678,12 +680,12 @@ packages:
   bottleneck@2.19.5:
     resolution: {integrity: sha512-VHiNCbI1lKdl44tGrhNfU3lup0Tj/ZBMJB5/2ZbNXRCPuRCO7ed2mgcK4r17y+KB2EfuYuRaVlwNbAeaWGSpbw==}
 
-  brace-expansion@1.1.16:
-    resolution: {integrity: sha512-IDw48K2/2kRkg9LdJxurvq3lV3aBgq0REY89duEqFRthjlPdXHKMj7EnQOXVckxzgisinf3nHfrcE2FufFLXMw==}
+  brace-expansion@1.1.18:
+    resolution: {integrity: sha512-Edep/X9fGqVNmzKBVsDYIOtD+z1tuezV70LBjdCst9Tqu76lsnvRiZ6oTic1n+/BIwX6QDGAO94PN4N2SADvtw==}
 
-  brace-expansion@5.0.7:
-    resolution: {integrity: sha512-7oFy703dxfY3/NLxC1fh2SUCQ0H9rmAY+5EpDVfXjUTTs+HEwR2nYaqLv+GWcTsumwxPfiz6CzCNkwXwBUwqCA==}
-    engines: {node: 18 || 20 || >=22}
+  brace-expansion@5.0.9:
+    resolution: {integrity: sha512-ScQ4IuvIEF1TMlP7Zt+vjJ//9zlPb2SDcxWxM3bk8s6t6GGdJ7KO1dCcTidOPJKePW30LE/2cT7wCyPho9/Wxg==}
+    engines: {node: 20 || >=22}
 
   bumpp@10.4.1:
     resolution: {integrity: sha512-X/bwWs5Gbb/D7rN4aHLB7zdjiA6nGdjckM1sTHhI9oovIbEw2L5pw5S4xzk8ZTeOZ8EnwU/Ze4SoZ6/Vr3pM2Q==}
@@ -1042,8 +1044,8 @@ packages:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
-  js-yaml@4.3.1:
-    resolution: {integrity: sha512-CY6crGq313MX8GkwvB7tzgp99vjQxY1++5y10/BKN/GUfHqWaOGQMNZkBvqSzsZKWk/ijwHlWzzkLulsGHhjWQ==}
+  js-yaml@4.3.2:
+    resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
 
   json-buffer@3.0.1:
@@ -1156,7 +1158,7 @@ packages:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
   pdfjs-dist@https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/cb4ba25178e5fd5a6cfbde859d87ef763a2a20f1:
-    resolution: {gitHosted: true, integrity: sha512-XhIYLjarWpryNqmVz0w3zACej2K6FL3CYM8aKe+N9D1s1hiFUN1jXmwDsStTlPOavHswq7Oqdk/lppuWSOlRVw==, tarball: https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/cb4ba25178e5fd5a6cfbde859d87ef763a2a20f1}
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/zotero-plugin-dev/zotero-pdfjs-types/tar.gz/cb4ba25178e5fd5a6cfbde859d87ef763a2a20f1}
     version: 0.0.0
     engines: {node: '>=18'}
 
@@ -1342,12 +1344,12 @@ packages:
       conventional-changelog:
         optional: true
 
-  zotero-plugin-toolkit@5.1.0-beta.10:
-    resolution: {integrity: sha512-ubarvxwFVnkR/5piOZH/wd2w/51kkFXN+xu/NWnZs+1cnCSfMVClmecb+EaO4KX+tcydlVahVkrE5S3u/2VX9w==}
+  zotero-plugin-toolkit@5.2.0:
+    resolution: {integrity: sha512-NxEOSitQ5z/p29wUXsfwCYu69JPDm6oTNNJFNQpgEL82c74du/fJNNviPiovO5N6Ajo5piz42mCFDql7tZvdUw==}
     engines: {node: '>=18'}
 
-  zotero-types@4.1.2:
-    resolution: {integrity: sha512-i1z/j8Yv5AiKfzglNupq2imqbv0GoyEp32ga4dqi4XnCk/z4DZx12aDP4KVM4cdo6yjQFkEotjKlOWFlrdP1GA==}
+  zotero-types@4.1.3:
+    resolution: {integrity: sha512-KKp/1sKXJWZV4Lgx8E0OcwdvaQ/qk/HdxCwds37PzZIbL7Niru57o+OaRXZgfG6k3KnMQV0B9ol0gHPlOC0j8Q==}
 
 snapshots:
 
@@ -1460,7 +1462,7 @@ snapshots:
       globals: 14.0.0
       ignore: 5.3.2
       import-fresh: 3.3.1
-      js-yaml: 4.3.1
+      js-yaml: 4.3.2
       minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
@@ -1861,7 +1863,7 @@ snapshots:
 
   acorn@8.17.0: {}
 
-  adm-zip@0.6.0: {}
+  adm-zip@0.6.1: {}
 
   agent-base@6.0.2:
     dependencies:
@@ -1906,12 +1908,12 @@ snapshots:
 
   bottleneck@2.19.5: {}
 
-  brace-expansion@1.1.16:
+  brace-expansion@1.1.18:
     dependencies:
       balanced-match: 1.0.2
       concat-map: 0.0.1
 
-  brace-expansion@5.0.7:
+  brace-expansion@5.0.9:
     dependencies:
       balanced-match: 4.0.4
 
@@ -2307,7 +2309,7 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  js-yaml@4.3.1:
+  js-yaml@4.3.2:
     dependencies:
       argparse: 2.0.1
 
@@ -2361,11 +2363,11 @@ snapshots:
 
   minimatch@10.2.5:
     dependencies:
-      brace-expansion: 5.0.7
+      brace-expansion: 5.0.9
 
   minimatch@3.1.5:
     dependencies:
-      brace-expansion: 1.1.16
+      brace-expansion: 1.1.18
 
   ms@2.1.3: {}
 
@@ -2567,7 +2569,7 @@ snapshots:
   zotero-plugin-scaffold@0.3.5:
     dependencies:
       '@swc/core': 1.15.46
-      adm-zip: 0.6.0
+      adm-zip: 0.6.1
       bumpp: 10.4.1
       c12: 3.3.4
       chokidar: 4.0.3
@@ -2585,9 +2587,9 @@ snapshots:
       - '@swc/helpers'
       - magicast
 
-  zotero-plugin-toolkit@5.1.0-beta.10: {}
+  zotero-plugin-toolkit@5.2.0: {}
 
-  zotero-types@4.1.2:
+  zotero-types@4.1.3:
     dependencies:
       '@types/bluebird': 3.5.42
       '@types/react': 18.3.31
