@@ -1,0 +1,7777 @@
+{
+  "schemaVersion": 1,
+  "id": "computing",
+  "version": "2026.09.22",
+  "sourceLang": "en",
+  "targetLang": "zh-CN",
+  "sources": [
+    {
+      "id": "google-foundation",
+      "name": "Google Developers: Machine Learning Glossary (fundamentals)",
+      "url": "https://developers.google.com/machine-learning/glossary/fundamentals?hl=zh-cn",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "notice": "Copyright Google LLC. Google Developers Machine Learning Glossary content is licensed under CC BY 4.0. This project selects bilingual headings, pairs translations by heading identifier, and normalizes whitespace. No endorsement is implied. Supplied as-is without warranties; see the license disclaimer."
+    },
+    {
+      "id": "google-generative",
+      "name": "Google Developers: Machine Learning Glossary (generative)",
+      "url": "https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "notice": "Copyright Google LLC. Google Developers Machine Learning Glossary content is licensed under CC BY 4.0. This project selects bilingual headings, pairs translations by heading identifier, and normalizes whitespace. No endorsement is implied. Supplied as-is without warranties; see the license disclaimer."
+    },
+    {
+      "id": "naer-computing",
+      "name": "國家教育研究院：兩岸對照名詞-計算機學術名詞",
+      "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E8%A8%88%E7%AE%97%E6%A9%9F%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+      "license": "NAER Government Website Open Information Declaration",
+      "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+      "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-計算機學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications."
+    },
+    {
+      "id": "python",
+      "name": "Python Software Foundation and Chinese translation contributors: Python 3.13 glossary",
+      "url": "https://docs.python.org/zh-cn/3.13/glossary.html",
+      "license": "PSF-2.0",
+      "licenseUrl": "https://docs.python.org/zh-cn/3/license.html",
+      "notice": "Copyright © 2001-2026 Python Software Foundation and Python documentation contributors. Chinese translation contributors are credited in LICENSES/Python-TRANSLATORS.txt. Selected glossary headings from Python 3.13 documentation; whitespace normalized and English/Chinese labels paired. PSF License Version 2 applies; the complete license and copyright notices follow. Translation contributions were provided to the PSF under CC0-1.0. No endorsement is implied.",
+      "licenseText": "A. HISTORY OF THE SOFTWARE\n==========================\n\nPython was created in the early 1990s by Guido van Rossum at Stichting\nMathematisch Centrum (CWI, see https://www.cwi.nl) in the Netherlands\nas a successor of a language called ABC.  Guido remains Python's\nprincipal author, although it includes many contributions from others.\n\nIn 1995, Guido continued his work on Python at the Corporation for\nNational Research Initiatives (CNRI, see https://www.cnri.reston.va.us)\nin Reston, Virginia where he released several versions of the\nsoftware.\n\nIn May 2000, Guido and the Python core development team moved to\nBeOpen.com to form the BeOpen PythonLabs team.  In October of the same\nyear, the PythonLabs team moved to Digital Creations, which became\nZope Corporation.  In 2001, the Python Software Foundation (PSF, see\nhttps://www.python.org/psf/) was formed, a non-profit organization\ncreated specifically to own Python-related Intellectual Property.\nZope Corporation was a sponsoring member of the PSF.\n\nAll Python releases are Open Source (see https://opensource.org for\nthe Open Source Definition).  Historically, most, but not all, Python\nreleases have also been GPL-compatible; the table below summarizes\nthe various releases.\n\n    Release         Derived     Year        Owner       GPL-\n                    from                                compatible? (1)\n\n    0.9.0 thru 1.2              1991-1995   CWI         yes\n    1.3 thru 1.5.2  1.2         1995-1999   CNRI        yes\n    1.6             1.5.2       2000        CNRI        no\n    2.0             1.6         2000        BeOpen.com  no\n    1.6.1           1.6         2001        CNRI        yes (2)\n    2.1             2.0+1.6.1   2001        PSF         no\n    2.0.1           2.0+1.6.1   2001        PSF         yes\n    2.1.1           2.1+2.0.1   2001        PSF         yes\n    2.1.2           2.1.1       2002        PSF         yes\n    2.1.3           2.1.2       2002        PSF         yes\n    2.2 and above   2.1.1       2001-now    PSF         yes\n\nFootnotes:\n\n(1) GPL-compatible doesn't mean that we're distributing Python under\n    the GPL.  All Python licenses, unlike the GPL, let you distribute\n    a modified version without making your changes open source.  The\n    GPL-compatible licenses make it possible to combine Python with\n    other software that is released under the GPL; the others don't.\n\n(2) According to Richard Stallman, 1.6.1 is not GPL-compatible,\n    because its license has a choice of law clause.  According to\n    CNRI, however, Stallman's lawyer has told CNRI's lawyer that 1.6.1\n    is \"not incompatible\" with the GPL.\n\nThanks to the many outside volunteers who have worked under Guido's\ndirection to make these releases possible.\n\n\nB. TERMS AND CONDITIONS FOR ACCESSING OR OTHERWISE USING PYTHON\n===============================================================\n\nPython software and documentation are licensed under the\nPython Software Foundation License Version 2.\n\nStarting with Python 3.8.6, examples, recipes, and other code in\nthe documentation are dual licensed under the PSF License Version 2\nand the Zero-Clause BSD license.\n\nSome software incorporated into Python is under different licenses.\nThe licenses are listed with code falling under that license.\n\n\nPYTHON SOFTWARE FOUNDATION LICENSE VERSION 2\n--------------------------------------------\n\n1. This LICENSE AGREEMENT is between the Python Software Foundation\n(\"PSF\"), and the Individual or Organization (\"Licensee\") accessing and\notherwise using this software (\"Python\") in source or binary form and\nits associated documentation.\n\n2. Subject to the terms and conditions of this License Agreement, PSF hereby\ngrants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,\nanalyze, test, perform and/or display publicly, prepare derivative works,\ndistribute, and otherwise use Python alone or in any derivative version,\nprovided, however, that PSF's License Agreement and PSF's notice of copyright,\ni.e., \"Copyright (c) 2001-2024 Python Software Foundation; All Rights Reserved\"\nare retained in Python alone or in any derivative version prepared by Licensee.\n\n3. In the event Licensee prepares a derivative work that is based on\nor incorporates Python or any part thereof, and wants to make\nthe derivative work available to others as provided herein, then\nLicensee hereby agrees to include in any such work a brief summary of\nthe changes made to Python.\n\n4. PSF is making Python available to Licensee on an \"AS IS\"\nbasis.  PSF MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR\nIMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, PSF MAKES NO AND\nDISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS\nFOR ANY PARTICULAR PURPOSE OR THAT THE USE OF PYTHON WILL NOT\nINFRINGE ANY THIRD PARTY RIGHTS.\n\n5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON\nFOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS\nA RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING PYTHON,\nOR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.\n\n6. This License Agreement will automatically terminate upon a material\nbreach of its terms and conditions.\n\n7. Nothing in this License Agreement shall be deemed to create any\nrelationship of agency, partnership, or joint venture between PSF and\nLicensee.  This License Agreement does not grant permission to use PSF\ntrademarks or trade name in a trademark sense to endorse or promote\nproducts or services of Licensee, or any third party.\n\n8. By copying, installing or otherwise using Python, Licensee\nagrees to be bound by the terms and conditions of this License\nAgreement.\n\n\nBEOPEN.COM LICENSE AGREEMENT FOR PYTHON 2.0\n-------------------------------------------\n\nBEOPEN PYTHON OPEN SOURCE LICENSE AGREEMENT VERSION 1\n\n1. This LICENSE AGREEMENT is between BeOpen.com (\"BeOpen\"), having an\noffice at 160 Saratoga Avenue, Santa Clara, CA 95051, and the\nIndividual or Organization (\"Licensee\") accessing and otherwise using\nthis software in source or binary form and its associated\ndocumentation (\"the Software\").\n\n2. Subject to the terms and conditions of this BeOpen Python License\nAgreement, BeOpen hereby grants Licensee a non-exclusive,\nroyalty-free, world-wide license to reproduce, analyze, test, perform\nand/or display publicly, prepare derivative works, distribute, and\notherwise use the Software alone or in any derivative version,\nprovided, however, that the BeOpen Python License is retained in the\nSoftware, alone or in any derivative version prepared by Licensee.\n\n3. BeOpen is making the Software available to Licensee on an \"AS IS\"\nbasis.  BEOPEN MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR\nIMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, BEOPEN MAKES NO AND\nDISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS\nFOR ANY PARTICULAR PURPOSE OR THAT THE USE OF THE SOFTWARE WILL NOT\nINFRINGE ANY THIRD PARTY RIGHTS.\n\n4. BEOPEN SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF THE\nSOFTWARE FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS\nAS A RESULT OF USING, MODIFYING OR DISTRIBUTING THE SOFTWARE, OR ANY\nDERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.\n\n5. This License Agreement will automatically terminate upon a material\nbreach of its terms and conditions.\n\n6. This License Agreement shall be governed by and interpreted in all\nrespects by the law of the State of California, excluding conflict of\nlaw provisions.  Nothing in this License Agreement shall be deemed to\ncreate any relationship of agency, partnership, or joint venture\nbetween BeOpen and Licensee.  This License Agreement does not grant\npermission to use BeOpen trademarks or trade names in a trademark\nsense to endorse or promote products or services of Licensee, or any\nthird party.  As an exception, the \"BeOpen Python\" logos available at\nhttp://www.pythonlabs.com/logos.html may be used according to the\npermissions granted on that web page.\n\n7. By copying, installing or otherwise using the software, Licensee\nagrees to be bound by the terms and conditions of this License\nAgreement.\n\n\nCNRI LICENSE AGREEMENT FOR PYTHON 1.6.1\n---------------------------------------\n\n1. This LICENSE AGREEMENT is between the Corporation for National\nResearch Initiatives, having an office at 1895 Preston White Drive,\nReston, VA 20191 (\"CNRI\"), and the Individual or Organization\n(\"Licensee\") accessing and otherwise using Python 1.6.1 software in\nsource or binary form and its associated documentation.\n\n2. Subject to the terms and conditions of this License Agreement, CNRI\nhereby grants Licensee a nonexclusive, royalty-free, world-wide\nlicense to reproduce, analyze, test, perform and/or display publicly,\nprepare derivative works, distribute, and otherwise use Python 1.6.1\nalone or in any derivative version, provided, however, that CNRI's\nLicense Agreement and CNRI's notice of copyright, i.e., \"Copyright (c)\n1995-2001 Corporation for National Research Initiatives; All Rights\nReserved\" are retained in Python 1.6.1 alone or in any derivative\nversion prepared by Licensee.  Alternately, in lieu of CNRI's License\nAgreement, Licensee may substitute the following text (omitting the\nquotes): \"Python 1.6.1 is made available subject to the terms and\nconditions in CNRI's License Agreement.  This Agreement together with\nPython 1.6.1 may be located on the internet using the following\nunique, persistent identifier (known as a handle): 1895.22/1013.  This\nAgreement may also be obtained from a proxy server on the internet\nusing the following URL: http://hdl.handle.net/1895.22/1013\".\n\n3. In the event Licensee prepares a derivative work that is based on\nor incorporates Python 1.6.1 or any part thereof, and wants to make\nthe derivative work available to others as provided herein, then\nLicensee hereby agrees to include in any such work a brief summary of\nthe changes made to Python 1.6.1.\n\n4. CNRI is making Python 1.6.1 available to Licensee on an \"AS IS\"\nbasis.  CNRI MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR\nIMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, CNRI MAKES NO AND\nDISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS\nFOR ANY PARTICULAR PURPOSE OR THAT THE USE OF PYTHON 1.6.1 WILL NOT\nINFRINGE ANY THIRD PARTY RIGHTS.\n\n5. CNRI SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON\n1.6.1 FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS\nA RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING PYTHON 1.6.1,\nOR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.\n\n6. This License Agreement will automatically terminate upon a material\nbreach of its terms and conditions.\n\n7. This License Agreement shall be governed by the federal\nintellectual property law of the United States, including without\nlimitation the federal copyright law, and, to the extent such\nU.S. federal law does not apply, by the law of the Commonwealth of\nVirginia, excluding Virginia's conflict of law provisions.\nNotwithstanding the foregoing, with regard to derivative works based\non Python 1.6.1 that incorporate non-separable material that was\npreviously distributed under the GNU General Public License (GPL), the\nlaw of the Commonwealth of Virginia shall govern this License\nAgreement only as to issues arising under or with respect to\nParagraphs 4, 5, and 7 of this License Agreement.  Nothing in this\nLicense Agreement shall be deemed to create any relationship of\nagency, partnership, or joint venture between CNRI and Licensee.  This\nLicense Agreement does not grant permission to use CNRI trademarks or\ntrade name in a trademark sense to endorse or promote products or\nservices of Licensee, or any third party.\n\n8. By clicking on the \"ACCEPT\" button where indicated, or by copying,\ninstalling or otherwise using Python 1.6.1, Licensee agrees to be\nbound by the terms and conditions of this License Agreement.\n\n        ACCEPT\n\n\nCWI LICENSE AGREEMENT FOR PYTHON 0.9.0 THROUGH 1.2\n--------------------------------------------------\n\nCopyright (c) 1991 - 1995, Stichting Mathematisch Centrum Amsterdam,\nThe Netherlands.  All rights reserved.\n\nPermission to use, copy, modify, and distribute this software and its\ndocumentation for any purpose and without fee is hereby granted,\nprovided that the above copyright notice appear in all copies and that\nboth that copyright notice and this permission notice appear in\nsupporting documentation, and that the name of Stichting Mathematisch\nCentrum or CWI not be used in advertising or publicity pertaining to\ndistribution of the software without specific, written prior\npermission.\n\nSTICHTING MATHEMATISCH CENTRUM DISCLAIMS ALL WARRANTIES WITH REGARD TO\nTHIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND\nFITNESS, IN NO EVENT SHALL STICHTING MATHEMATISCH CENTRUM BE LIABLE\nFOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES\nWHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN\nACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT\nOF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.\n\nZERO-CLAUSE BSD LICENSE FOR CODE IN THE PYTHON DOCUMENTATION\n----------------------------------------------------------------------\n\nPermission to use, copy, modify, and/or distribute this software for any\npurpose with or without fee is hereby granted.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH\nREGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY\nAND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,\nINDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM\nLOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR\nOTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR\nPERFORMANCE OF THIS SOFTWARE.\n"
+    }
+  ],
+  "entries": [
+    {
+      "source": "abstract base class",
+      "target": "抽象基类",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-abstract-base-class"
+        }
+      ]
+    },
+    {
+      "source": "access path",
+      "target": "访问路径",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "5"
+        }
+      ]
+    },
+    {
+      "source": "access right",
+      "target": "访问权",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "6"
+        }
+      ]
+    },
+    {
+      "source": "activation function",
+      "target": "激活函数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "activation-function"
+        }
+      ]
+    },
+    {
+      "source": "agentic workflow",
+      "target": "智能体工作流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "agentic-workflow"
+        }
+      ]
+    },
+    {
+      "source": "analog data",
+      "target": "模拟数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "22"
+        }
+      ]
+    },
+    {
+      "source": "application software",
+      "target": "应用软件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "26"
+        }
+      ]
+    },
+    {
+      "source": "arithmetic operator",
+      "target": "算术运算符",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "30"
+        }
+      ]
+    },
+    {
+      "source": "artificial intelligence",
+      "target": "人工智能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "artificial-intelligence"
+        }
+      ]
+    },
+    {
+      "source": "ASCII character set",
+      "target": "ASCII 字符集",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "33"
+        }
+      ]
+    },
+    {
+      "source": "asynchronous context manager",
+      "target": "异步上下文管理器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-asynchronous-context-manager"
+        }
+      ]
+    },
+    {
+      "source": "asynchronous generator",
+      "target": "异步生成器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-asynchronous-generator"
+        }
+      ]
+    },
+    {
+      "source": "asynchronous generator function",
+      "target": "异步生成器函数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-asynchronous-generator-function"
+        }
+      ]
+    },
+    {
+      "source": "asynchronous generator iterator",
+      "target": "异步生成器迭代器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-asynchronous-generator-iterator"
+        }
+      ]
+    },
+    {
+      "source": "asynchronous iterable",
+      "target": "异步可迭代对象",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-asynchronous-iterable"
+        }
+      ]
+    },
+    {
+      "source": "asynchronous iterator",
+      "target": "异步迭代器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-asynchronous-iterator"
+        }
+      ]
+    },
+    {
+      "source": "audio compression",
+      "target": "音频压缩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "38"
+        }
+      ]
+    },
+    {
+      "source": "auto-regressive model",
+      "target": "自回归模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "auto-regressive-model"
+        }
+      ]
+    },
+    {
+      "source": "automatic evaluation",
+      "target": "自动评估",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "automatic-evaluation"
+        }
+      ]
+    },
+    {
+      "source": "automatic patching",
+      "target": "自动修补",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "44"
+        }
+      ]
+    },
+    {
+      "source": "auxiliary storage",
+      "target": "辅助存储器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "45"
+        }
+      ]
+    },
+    {
+      "source": "backpropagation",
+      "target": "反向传播",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "backpropagation"
+        }
+      ]
+    },
+    {
+      "source": "bar code",
+      "target": "条码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "53"
+        }
+      ]
+    },
+    {
+      "source": "base model",
+      "target": "基础模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "base-model"
+        }
+      ]
+    },
+    {
+      "source": "batch processing",
+      "target": "批处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "55"
+        }
+      ]
+    },
+    {
+      "source": "batch size",
+      "target": "批次大小",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "batch-size"
+        }
+      ]
+    },
+    {
+      "source": "binary classification",
+      "target": "二元分类",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "binary-classification"
+        }
+      ]
+    },
+    {
+      "source": "bit string",
+      "target": "位串",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "69"
+        }
+      ]
+    },
+    {
+      "source": "black box testing",
+      "target": "黑盒测试",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "71"
+        }
+      ]
+    },
+    {
+      "source": "block diagram",
+      "target": "框图",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "75"
+        }
+      ]
+    },
+    {
+      "source": "Boolean operation",
+      "target": "布尔运算",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "81"
+        }
+      ]
+    },
+    {
+      "source": "borrowed reference",
+      "target": "借入引用",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-borrowed-reference"
+        }
+      ]
+    },
+    {
+      "source": "bytecode",
+      "target": "字节码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-bytecode"
+        }
+      ]
+    },
+    {
+      "source": "bytes-like object",
+      "target": "字节型对象",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-bytes-like-object"
+        }
+      ]
+    },
+    {
+      "source": "callable",
+      "target": "可调用对象",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-callable"
+        }
+      ]
+    },
+    {
+      "source": "callback",
+      "target": "回调",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-callback"
+        }
+      ]
+    },
+    {
+      "source": "carriage return",
+      "target": "回车",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "113"
+        }
+      ]
+    },
+    {
+      "source": "case sensitivity",
+      "target": "大小写敏感",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "115"
+        }
+      ]
+    },
+    {
+      "source": "categorical data",
+      "target": "分类数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "categorical-data"
+        }
+      ]
+    },
+    {
+      "source": "chain-of-thought prompting",
+      "target": "思维链提示",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "chain-of-thought-prompting"
+        }
+      ]
+    },
+    {
+      "source": "character generator",
+      "target": "字符生成器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "126"
+        }
+      ]
+    },
+    {
+      "source": "character set",
+      "target": "字符集",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "128"
+        }
+      ]
+    },
+    {
+      "source": "character string",
+      "target": "字符串",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "129"
+        }
+      ]
+    },
+    {
+      "source": "circuit board",
+      "target": "电路板",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "137"
+        }
+      ]
+    },
+    {
+      "source": "class variable",
+      "target": "类变量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-class-variable"
+        }
+      ]
+    },
+    {
+      "source": "class-imbalanced dataset",
+      "target": "类别不平衡的数据集",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "class-imbalanced-dataset"
+        }
+      ]
+    },
+    {
+      "source": "classification model",
+      "target": "分类模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "classification-model"
+        }
+      ]
+    },
+    {
+      "source": "classification threshold",
+      "target": "分类阈值",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "classification-threshold"
+        }
+      ]
+    },
+    {
+      "source": "classifier",
+      "target": "分类器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "classifier"
+        }
+      ]
+    },
+    {
+      "source": "click rate",
+      "target": "点击率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "140"
+        }
+      ]
+    },
+    {
+      "source": "closure variable",
+      "target": "闭包变量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-closure-variable"
+        }
+      ]
+    },
+    {
+      "source": "cloud computing",
+      "target": "云计算",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "148"
+        }
+      ]
+    },
+    {
+      "source": "code generator",
+      "target": "代码生成器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "150"
+        }
+      ]
+    },
+    {
+      "source": "computer language",
+      "target": "计算机语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "183"
+        }
+      ]
+    },
+    {
+      "source": "computer network",
+      "target": "计算机网络",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "184"
+        }
+      ]
+    },
+    {
+      "source": "computer program",
+      "target": "计算机程序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "185"
+        }
+      ]
+    },
+    {
+      "source": "computer simulation",
+      "target": "计算机模拟",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "187"
+        }
+      ]
+    },
+    {
+      "source": "computer system",
+      "target": "计算机系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "188"
+        }
+      ]
+    },
+    {
+      "source": "computer vision",
+      "target": "计算机视觉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "190"
+        }
+      ]
+    },
+    {
+      "source": "concept description",
+      "target": "概念描述",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "193"
+        }
+      ]
+    },
+    {
+      "source": "concept formation",
+      "target": "概念形成",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "194"
+        }
+      ]
+    },
+    {
+      "source": "concept generalization",
+      "target": "概念泛化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "195"
+        }
+      ]
+    },
+    {
+      "source": "concurrent execution",
+      "target": "并发执行",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "196"
+        }
+      ]
+    },
+    {
+      "source": "concurrent modification",
+      "target": "并发修改",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-concurrent-modification"
+        }
+      ]
+    },
+    {
+      "source": "concurrent processes",
+      "target": "并发进程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "197"
+        }
+      ]
+    },
+    {
+      "source": "conditional statement",
+      "target": "条件语句",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "198"
+        }
+      ]
+    },
+    {
+      "source": "confusion matrix",
+      "target": "混淆矩阵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "confusion-matrix"
+        }
+      ]
+    },
+    {
+      "source": "context manager",
+      "target": "上下文管理器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-context-manager"
+        }
+      ]
+    },
+    {
+      "source": "context variable",
+      "target": "上下文变量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-context-variable"
+        }
+      ]
+    },
+    {
+      "source": "context window",
+      "target": "上下文窗口",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "context-window"
+        }
+      ]
+    },
+    {
+      "source": "continuous feature",
+      "target": "连续特征",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "continuous-feature"
+        }
+      ]
+    },
+    {
+      "source": "control character",
+      "target": "控制字符",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "218"
+        }
+      ]
+    },
+    {
+      "source": "control panel",
+      "target": "控制面板",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "219"
+        }
+      ]
+    },
+    {
+      "source": "conversational coding",
+      "target": "对话式编码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "conversational-coding"
+        }
+      ]
+    },
+    {
+      "source": "coroutine",
+      "target": "协程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-coroutine"
+        }
+      ]
+    },
+    {
+      "source": "coroutine function",
+      "target": "协程函数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-coroutine-function"
+        }
+      ]
+    },
+    {
+      "source": "current context",
+      "target": "当前上下文",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-current-context"
+        }
+      ]
+    },
+    {
+      "source": "custom software",
+      "target": "定制软件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "239"
+        }
+      ]
+    },
+    {
+      "source": "data acquisition",
+      "target": "数据采集",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "248"
+        }
+      ]
+    },
+    {
+      "source": "data administration",
+      "target": "数据管理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "249"
+        }
+      ]
+    },
+    {
+      "source": "data bus",
+      "target": "数据总线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "251"
+        }
+      ]
+    },
+    {
+      "source": "data communication",
+      "target": "数据通信",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "254"
+        }
+      ]
+    },
+    {
+      "source": "data compression",
+      "target": "数据压缩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "255"
+        }
+      ]
+    },
+    {
+      "source": "data dictionary",
+      "target": "数据字典",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "257"
+        }
+      ]
+    },
+    {
+      "source": "data directory",
+      "target": "数据目录",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "258"
+        }
+      ]
+    },
+    {
+      "source": "data encapsulation",
+      "target": "数据封装",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "260"
+        }
+      ]
+    },
+    {
+      "source": "data encryption",
+      "target": "数据加密",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "261"
+        }
+      ]
+    },
+    {
+      "source": "data entry",
+      "target": "数据录入",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "262"
+        }
+      ]
+    },
+    {
+      "source": "data file",
+      "target": "数据文件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "263"
+        }
+      ]
+    },
+    {
+      "source": "data flow",
+      "target": "数据流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "264"
+        }
+      ]
+    },
+    {
+      "source": "data flow diagram",
+      "target": "数据流图",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "265"
+        }
+      ]
+    },
+    {
+      "source": "data format",
+      "target": "数据格式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "266"
+        }
+      ]
+    },
+    {
+      "source": "data link",
+      "target": "数据链路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "267"
+        }
+      ]
+    },
+    {
+      "source": "data management",
+      "target": "数据管理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "268"
+        }
+      ]
+    },
+    {
+      "source": "data model",
+      "target": "数据模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "270"
+        }
+      ]
+    },
+    {
+      "source": "data protection",
+      "target": "数据保护",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "273"
+        }
+      ]
+    },
+    {
+      "source": "data race",
+      "target": "数据竞争",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-data-race"
+        }
+      ]
+    },
+    {
+      "source": "data sharing",
+      "target": "数据共享",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "275"
+        }
+      ]
+    },
+    {
+      "source": "data structure",
+      "target": "数据结构",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "277"
+        }
+      ]
+    },
+    {
+      "source": "data type",
+      "target": "数据类型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "280"
+        }
+      ]
+    },
+    {
+      "source": "data warehouse",
+      "target": "数据仓库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "281"
+        }
+      ]
+    },
+    {
+      "source": "database language",
+      "target": "数据库语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "283"
+        }
+      ]
+    },
+    {
+      "source": "de facto standard",
+      "target": "事实标准",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "286"
+        }
+      ]
+    },
+    {
+      "source": "deadlock",
+      "target": "死锁",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-deadlock"
+        }
+      ]
+    },
+    {
+      "source": "decorator",
+      "target": "装饰器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-decorator"
+        }
+      ]
+    },
+    {
+      "source": "deep model",
+      "target": "深度模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "deep-model"
+        }
+      ]
+    },
+    {
+      "source": "dense feature",
+      "target": "密集特征",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "dense-feature"
+        }
+      ]
+    },
+    {
+      "source": "descriptor",
+      "target": "描述器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-descriptor"
+        }
+      ]
+    },
+    {
+      "source": "desktop computer",
+      "target": "台式计算机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "302"
+        }
+      ]
+    },
+    {
+      "source": "diagnostic program",
+      "target": "诊断程序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "308"
+        }
+      ]
+    },
+    {
+      "source": "dialog box",
+      "target": "对话框",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "311"
+        }
+      ]
+    },
+    {
+      "source": "dictionary comprehension",
+      "target": "字典推导式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-dictionary-comprehension"
+        }
+      ]
+    },
+    {
+      "source": "dictionary view",
+      "target": "字典视图",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-dictionary-view"
+        }
+      ]
+    },
+    {
+      "source": "digital computer",
+      "target": "数字计算机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "314"
+        }
+      ]
+    },
+    {
+      "source": "digital watermark",
+      "target": "数字水印",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "316"
+        }
+      ]
+    },
+    {
+      "source": "direct access",
+      "target": "直接存取",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "318"
+        }
+      ]
+    },
+    {
+      "source": "direct address",
+      "target": "直接地址",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "320"
+        }
+      ]
+    },
+    {
+      "source": "direct prompting",
+      "target": "直接提示",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "direct-prompting"
+        }
+      ]
+    },
+    {
+      "source": "discrete data",
+      "target": "离散数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "325"
+        }
+      ]
+    },
+    {
+      "source": "discrete feature",
+      "target": "离散特征",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "discrete-feature"
+        }
+      ]
+    },
+    {
+      "source": "discrete signal",
+      "target": "离散信号",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "326"
+        }
+      ]
+    },
+    {
+      "source": "display device",
+      "target": "显示器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "329"
+        }
+      ]
+    },
+    {
+      "source": "display screen",
+      "target": "显示屏",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "330"
+        }
+      ]
+    },
+    {
+      "source": "distance learning",
+      "target": "远程学习",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "331"
+        }
+      ]
+    },
+    {
+      "source": "distributed database",
+      "target": "分布式数据库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "332"
+        }
+      ]
+    },
+    {
+      "source": "distributed processing",
+      "target": "分布式处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "333"
+        }
+      ]
+    },
+    {
+      "source": "docstring",
+      "target": "文档字符串",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-docstring"
+        }
+      ]
+    },
+    {
+      "source": "domain model",
+      "target": "领域模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "337"
+        }
+      ]
+    },
+    {
+      "source": "domain name",
+      "target": "域名",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "338"
+        }
+      ]
+    },
+    {
+      "source": "down time",
+      "target": "停机时间",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "346"
+        }
+      ]
+    },
+    {
+      "source": "downward compatibility",
+      "target": "向下兼容性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "349"
+        }
+      ]
+    },
+    {
+      "source": "duck-typing",
+      "target": "鸭子类型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-duck-typing"
+        }
+      ]
+    },
+    {
+      "source": "dynamic allocation",
+      "target": "动态分配",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "357"
+        }
+      ]
+    },
+    {
+      "source": "dynamic model",
+      "target": "动态模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "dynamic-model"
+        }
+      ]
+    },
+    {
+      "source": "electronic cash",
+      "target": "电子现金",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "366"
+        }
+      ]
+    },
+    {
+      "source": "electronic publishing",
+      "target": "电子出版",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "371"
+        }
+      ]
+    },
+    {
+      "source": "embedding layer",
+      "target": "嵌入层",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "embedding-layer"
+        }
+      ]
+    },
+    {
+      "source": "enterprise network",
+      "target": "企业网",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "383"
+        }
+      ]
+    },
+    {
+      "source": "error rate",
+      "target": "出错率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "395"
+        }
+      ]
+    },
+    {
+      "source": "exhaustive attack",
+      "target": "穷举攻击",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "402"
+        }
+      ]
+    },
+    {
+      "source": "expert system",
+      "target": "专家系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "406"
+        }
+      ]
+    },
+    {
+      "source": "extension module",
+      "target": "扩展模块",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-extension-module"
+        }
+      ]
+    },
+    {
+      "source": "factuality",
+      "target": "真实性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "factuality"
+        }
+      ]
+    },
+    {
+      "source": "fault tolerance",
+      "target": "容错",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "420"
+        }
+      ]
+    },
+    {
+      "source": "feature cross",
+      "target": "特征组合",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "feature-cross"
+        }
+      ]
+    },
+    {
+      "source": "feature engineering",
+      "target": "特征工程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "feature-engineering"
+        }
+      ]
+    },
+    {
+      "source": "feature set",
+      "target": "特征集",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "feature-set"
+        }
+      ]
+    },
+    {
+      "source": "feature vector",
+      "target": "特征向量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "feature-vector"
+        }
+      ]
+    },
+    {
+      "source": "few-shot prompting",
+      "target": "少样本提示",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "few-shot-prompting"
+        }
+      ]
+    },
+    {
+      "source": "file allocation table",
+      "target": "文件分配表",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "427"
+        }
+      ]
+    },
+    {
+      "source": "file management system",
+      "target": "文件管理系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "428"
+        }
+      ]
+    },
+    {
+      "source": "file object",
+      "target": "文件对象",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-file-object"
+        }
+      ]
+    },
+    {
+      "source": "file-like object",
+      "target": "文件型对象",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-file-like-object"
+        }
+      ]
+    },
+    {
+      "source": "fine-tuning",
+      "target": "微调",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "fine-tuning"
+        }
+      ]
+    },
+    {
+      "source": "fingerprint recognition",
+      "target": "指纹识别",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "434"
+        }
+      ]
+    },
+    {
+      "source": "first in first out",
+      "target": "先进先出",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "437"
+        }
+      ]
+    },
+    {
+      "source": "fixed point arithmetic",
+      "target": "定点运算",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "438"
+        }
+      ]
+    },
+    {
+      "source": "flash memory",
+      "target": "闪存",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "440"
+        }
+      ]
+    },
+    {
+      "source": "floating-point number",
+      "target": "浮点数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "443"
+        }
+      ]
+    },
+    {
+      "source": "floor division",
+      "target": "向下取整除法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-floor-division"
+        }
+      ]
+    },
+    {
+      "source": "foreground image",
+      "target": "前景图像",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "446"
+        }
+      ]
+    },
+    {
+      "source": "foreground processing",
+      "target": "前台处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "447"
+        }
+      ]
+    },
+    {
+      "source": "formal logic",
+      "target": "形式逻辑",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "450"
+        }
+      ]
+    },
+    {
+      "source": "foundation model",
+      "target": "基础模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "foundation-model"
+        }
+      ]
+    },
+    {
+      "source": "frame rate",
+      "target": "帧速率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "457"
+        }
+      ]
+    },
+    {
+      "source": "free variable",
+      "target": "自由变量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-free-variable"
+        }
+      ]
+    },
+    {
+      "source": "full adder",
+      "target": "全加器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "463"
+        }
+      ]
+    },
+    {
+      "source": "full subtracter",
+      "target": "全减器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "464"
+        }
+      ]
+    },
+    {
+      "source": "function annotation",
+      "target": "函数标注",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-function-annotation"
+        }
+      ]
+    },
+    {
+      "source": "function call",
+      "target": "函数调用",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "466"
+        }
+      ]
+    },
+    {
+      "source": "function library",
+      "target": "函数库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "467"
+        }
+      ]
+    },
+    {
+      "source": "functional design",
+      "target": "功能设计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "468"
+        }
+      ]
+    },
+    {
+      "source": "fuzzy logic",
+      "target": "模糊逻辑",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "470"
+        }
+      ]
+    },
+    {
+      "source": "garbage collection",
+      "target": "垃圾回收",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-garbage-collection"
+        }
+      ]
+    },
+    {
+      "source": "gate array",
+      "target": "门阵列",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "472"
+        }
+      ]
+    },
+    {
+      "source": "general-purpose computer",
+      "target": "通用计算机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "473"
+        }
+      ]
+    },
+    {
+      "source": "generalization curve",
+      "target": "泛化曲线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "generalization-curve"
+        }
+      ]
+    },
+    {
+      "source": "generative AI",
+      "target": "生成式 AI",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "generative-ai"
+        }
+      ]
+    },
+    {
+      "source": "generator expression",
+      "target": "生成器表达式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-generator-expression"
+        }
+      ]
+    },
+    {
+      "source": "generator function",
+      "target": "生成器函数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-generator-function"
+        }
+      ]
+    },
+    {
+      "source": "generator iterator",
+      "target": "生成器迭代器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-generator-iterator"
+        }
+      ]
+    },
+    {
+      "source": "generic function",
+      "target": "泛型函数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-generic-function"
+        }
+      ]
+    },
+    {
+      "source": "generic type",
+      "target": "泛型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-generic-type"
+        }
+      ]
+    },
+    {
+      "source": "genetic programming",
+      "target": "遗传编程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "476"
+        }
+      ]
+    },
+    {
+      "source": "glass-box testing",
+      "target": "白盒测试",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "479"
+        }
+      ]
+    },
+    {
+      "source": "global interpreter lock",
+      "target": "全局解释器锁",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-global-interpreter-lock"
+        }
+      ]
+    },
+    {
+      "source": "global state",
+      "target": "全局状态",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-global-state"
+        }
+      ]
+    },
+    {
+      "source": "gradient descent",
+      "target": "梯度下降法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "gradient-descent"
+        }
+      ]
+    },
+    {
+      "source": "graphic character",
+      "target": "图形字符",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "484"
+        }
+      ]
+    },
+    {
+      "source": "graphics card",
+      "target": "图形卡",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "485"
+        }
+      ]
+    },
+    {
+      "source": "graphics terminal",
+      "target": "图形终端",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "486"
+        }
+      ]
+    },
+    {
+      "source": "grid computing",
+      "target": "网格计算",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "488"
+        }
+      ]
+    },
+    {
+      "source": "grid technology",
+      "target": "网格技术",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "489"
+        }
+      ]
+    },
+    {
+      "source": "half subtracter",
+      "target": "半减器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "495"
+        }
+      ]
+    },
+    {
+      "source": "halt instruction",
+      "target": "停机指令",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "496"
+        }
+      ]
+    },
+    {
+      "source": "Hanzi recognition",
+      "target": "汉字识别",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "502"
+        }
+      ]
+    },
+    {
+      "source": "haptic display",
+      "target": "触觉显示",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "503"
+        }
+      ]
+    },
+    {
+      "source": "hidden layer",
+      "target": "隐藏层",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "hidden-layer"
+        }
+      ]
+    },
+    {
+      "source": "high-level language",
+      "target": "高级语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "521"
+        }
+      ]
+    },
+    {
+      "source": "human evaluation",
+      "target": "人工评估",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "human-evaluation"
+        }
+      ]
+    },
+    {
+      "source": "human machine interface",
+      "target": "人机界面",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "527"
+        }
+      ]
+    },
+    {
+      "source": "hybrid computer",
+      "target": "混合计算机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "528"
+        }
+      ]
+    },
+    {
+      "source": "hyperparameter",
+      "target": "超参数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "hyperparameter"
+        }
+      ]
+    },
+    {
+      "source": "image interpretation",
+      "target": "图像判读",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "543"
+        }
+      ]
+    },
+    {
+      "source": "image processing",
+      "target": "图像处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "544"
+        }
+      ]
+    },
+    {
+      "source": "implicit addressing",
+      "target": "隐式寻址",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "548"
+        }
+      ]
+    },
+    {
+      "source": "import path",
+      "target": "导入路径",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-import-path"
+        }
+      ]
+    },
+    {
+      "source": "in-context learning",
+      "target": "上下文学习",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "in-context-learning"
+        }
+      ]
+    },
+    {
+      "source": "index register",
+      "target": "变址寄存器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "554"
+        }
+      ]
+    },
+    {
+      "source": "indirect address",
+      "target": "间接地址",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "556"
+        }
+      ]
+    },
+    {
+      "source": "information base",
+      "target": "信息库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "560"
+        }
+      ]
+    },
+    {
+      "source": "information center",
+      "target": "信息中心",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "561"
+        }
+      ]
+    },
+    {
+      "source": "information explosion",
+      "target": "信息爆炸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "562"
+        }
+      ]
+    },
+    {
+      "source": "information processing",
+      "target": "信息处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "564"
+        }
+      ]
+    },
+    {
+      "source": "information resource",
+      "target": "信息资源",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "566"
+        }
+      ]
+    },
+    {
+      "source": "information security",
+      "target": "信息安全",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "568"
+        }
+      ]
+    },
+    {
+      "source": "information source",
+      "target": "信息源",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "570"
+        }
+      ]
+    },
+    {
+      "source": "information system",
+      "target": "信息系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "571"
+        }
+      ]
+    },
+    {
+      "source": "input buffer",
+      "target": "输入缓冲区",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "582"
+        }
+      ]
+    },
+    {
+      "source": "input data",
+      "target": "输入数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "583"
+        }
+      ]
+    },
+    {
+      "source": "input layer",
+      "target": "输入层",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "input-layer"
+        }
+      ]
+    },
+    {
+      "source": "instruction code",
+      "target": "指令码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "596"
+        }
+      ]
+    },
+    {
+      "source": "instruction set",
+      "target": "指令集",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "597"
+        }
+      ]
+    },
+    {
+      "source": "instruction tuning",
+      "target": "指令调优",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "instruction-tuning"
+        }
+      ]
+    },
+    {
+      "source": "integer type",
+      "target": "整型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "598"
+        }
+      ]
+    },
+    {
+      "source": "integrated software",
+      "target": "集成软件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "600"
+        }
+      ]
+    },
+    {
+      "source": "intelligent database",
+      "target": "智能数据库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "602"
+        }
+      ]
+    },
+    {
+      "source": "intelligent terminal",
+      "target": "智能终端",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "603"
+        }
+      ]
+    },
+    {
+      "source": "interactive mode",
+      "target": "交互方式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "605"
+        }
+      ]
+    },
+    {
+      "source": "interpretability",
+      "target": "可解释性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "interpretability"
+        }
+      ]
+    },
+    {
+      "source": "interpreter shutdown",
+      "target": "解释器关闭",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-interpreter-shutdown"
+        }
+      ]
+    },
+    {
+      "source": "iterable",
+      "target": "可迭代对象",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-iterable"
+        }
+      ]
+    },
+    {
+      "source": "iterator",
+      "target": "迭代器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-iterator"
+        }
+      ]
+    },
+    {
+      "source": "job processing",
+      "target": "作业处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "623"
+        }
+      ]
+    },
+    {
+      "source": "job queue",
+      "target": "作业队列",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "624"
+        }
+      ]
+    },
+    {
+      "source": "Kalman filter",
+      "target": "卡尔曼滤波器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "632"
+        }
+      ]
+    },
+    {
+      "source": "keyboard layout",
+      "target": "键盘布局",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "636"
+        }
+      ]
+    },
+    {
+      "source": "keyword argument",
+      "target": "关键字参数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-keyword-argument"
+        }
+      ]
+    },
+    {
+      "source": "knowledge acquisition",
+      "target": "知识获取",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "641"
+        }
+      ]
+    },
+    {
+      "source": "known-plaintext attack",
+      "target": "已知明文攻击",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "643"
+        }
+      ]
+    },
+    {
+      "source": "large language model",
+      "target": "大语言模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "large-language-model"
+        }
+      ]
+    },
+    {
+      "source": "laser printer",
+      "target": "激光打印机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "648"
+        }
+      ]
+    },
+    {
+      "source": "laser scanner",
+      "target": "激光扫描仪",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "649"
+        }
+      ]
+    },
+    {
+      "source": "learning rate",
+      "target": "学习速率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "learning-rate"
+        }
+      ]
+    },
+    {
+      "source": "lexical analyzer",
+      "target": "词法分析器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-lexical-analyzer"
+        }
+      ]
+    },
+    {
+      "source": "lexicographic sort",
+      "target": "词典式排序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "658"
+        }
+      ]
+    },
+    {
+      "source": "line spacing",
+      "target": "行距",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "666"
+        }
+      ]
+    },
+    {
+      "source": "line width",
+      "target": "行宽",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "667"
+        }
+      ]
+    },
+    {
+      "source": "linear model",
+      "target": "线性模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "linear-model"
+        }
+      ]
+    },
+    {
+      "source": "linear regression",
+      "target": "线性回归",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "linear-regression"
+        }
+      ]
+    },
+    {
+      "source": "list comprehension",
+      "target": "列表推导式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-list-comprehension"
+        }
+      ]
+    },
+    {
+      "source": "logic chip",
+      "target": "逻辑芯片",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "684"
+        }
+      ]
+    },
+    {
+      "source": "logic circuit",
+      "target": "逻辑电路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "685"
+        }
+      ]
+    },
+    {
+      "source": "logic device",
+      "target": "逻辑器件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "686"
+        }
+      ]
+    },
+    {
+      "source": "logic operation",
+      "target": "逻辑运算",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "687"
+        }
+      ]
+    },
+    {
+      "source": "logistic regression",
+      "target": "逻辑回归",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "logistic-regression"
+        }
+      ]
+    },
+    {
+      "source": "loop body",
+      "target": "循环体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "693"
+        }
+      ]
+    },
+    {
+      "source": "loss curve",
+      "target": "损失曲线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "loss-curve"
+        }
+      ]
+    },
+    {
+      "source": "loss function",
+      "target": "损失函数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "loss-function"
+        }
+      ]
+    },
+    {
+      "source": "lossless compression",
+      "target": "无损压缩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "695"
+        }
+      ]
+    },
+    {
+      "source": "lossy compression",
+      "target": "有损压缩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "696"
+        }
+      ]
+    },
+    {
+      "source": "low-level language",
+      "target": "低级语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "697"
+        }
+      ]
+    },
+    {
+      "source": "machine address",
+      "target": "机器地址",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "700"
+        }
+      ]
+    },
+    {
+      "source": "machine code",
+      "target": "机器码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "701"
+        }
+      ]
+    },
+    {
+      "source": "machine learning",
+      "target": "机器学习",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "machine-learning"
+        }
+      ]
+    },
+    {
+      "source": "machine translation",
+      "target": "机器翻译",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing",
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "702"
+        },
+        {
+          "id": "google-generative",
+          "entry": "machine-translation"
+        }
+      ]
+    },
+    {
+      "source": "magic method",
+      "target": "魔术方法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-magic-method"
+        }
+      ]
+    },
+    {
+      "source": "magnetic disk",
+      "target": "磁盘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "705"
+        }
+      ]
+    },
+    {
+      "source": "main program",
+      "target": "主程序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "706"
+        }
+      ]
+    },
+    {
+      "source": "main storage",
+      "target": "主存储器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "707"
+        }
+      ]
+    },
+    {
+      "source": "majority class",
+      "target": "多数类",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "majority-class"
+        }
+      ]
+    },
+    {
+      "source": "mass storage",
+      "target": "海量存储器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "724"
+        }
+      ]
+    },
+    {
+      "source": "mathematical expression",
+      "target": "数学表达式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "728"
+        }
+      ]
+    },
+    {
+      "source": "memory bank",
+      "target": "存储体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "739"
+        }
+      ]
+    },
+    {
+      "source": "memory cell",
+      "target": "存储单元",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "740"
+        }
+      ]
+    },
+    {
+      "source": "memory chip",
+      "target": "内存芯片",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "741"
+        }
+      ]
+    },
+    {
+      "source": "memory dump",
+      "target": "内存转储",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "742"
+        }
+      ]
+    },
+    {
+      "source": "memory management",
+      "target": "存储管理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "743"
+        }
+      ]
+    },
+    {
+      "source": "meta path finder",
+      "target": "元路径查找器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-meta-path-finder"
+        }
+      ]
+    },
+    {
+      "source": "metaclass",
+      "target": "元类",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-metaclass"
+        }
+      ]
+    },
+    {
+      "source": "method resolution order",
+      "target": "方法解析顺序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-method-resolution-order"
+        }
+      ]
+    },
+    {
+      "source": "mini-batch",
+      "target": "小批次",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "mini-batch"
+        }
+      ]
+    },
+    {
+      "source": "minority class",
+      "target": "少数类",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "minority-class"
+        }
+      ]
+    },
+    {
+      "source": "mixture of experts",
+      "target": "混合专家",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "mixture-of-experts"
+        }
+      ]
+    },
+    {
+      "source": "mobile computing",
+      "target": "移动计算",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "763"
+        }
+      ]
+    },
+    {
+      "source": "model cascading",
+      "target": "模型级联",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "model-cascading"
+        }
+      ]
+    },
+    {
+      "source": "model router",
+      "target": "模型路由器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "model-router"
+        }
+      ]
+    },
+    {
+      "source": "modular design",
+      "target": "模块化设计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "769"
+        }
+      ]
+    },
+    {
+      "source": "modular software",
+      "target": "模块化软件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "770"
+        }
+      ]
+    },
+    {
+      "source": "module spec",
+      "target": "模块规格",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-module-spec"
+        }
+      ]
+    },
+    {
+      "source": "mouse pointer",
+      "target": "鼠标指针",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "783"
+        }
+      ]
+    },
+    {
+      "source": "multi-class classification",
+      "target": "多类别分类",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "multi-class-classification"
+        }
+      ]
+    },
+    {
+      "source": "multiuser systems",
+      "target": "多用户系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "793"
+        }
+      ]
+    },
+    {
+      "source": "named tuple",
+      "target": "具名元组",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-named-tuple"
+        }
+      ]
+    },
+    {
+      "source": "namespace",
+      "target": "命名空间",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-namespace"
+        }
+      ]
+    },
+    {
+      "source": "namespace package",
+      "target": "命名空间包",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-namespace-package"
+        }
+      ]
+    },
+    {
+      "source": "native code",
+      "target": "原生代码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-native-code"
+        }
+      ]
+    },
+    {
+      "source": "negative class",
+      "target": "负类别",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "negative-class"
+        }
+      ]
+    },
+    {
+      "source": "nested scope",
+      "target": "嵌套作用域",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-nested-scope"
+        }
+      ]
+    },
+    {
+      "source": "network administrator",
+      "target": "网络管理员",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "805"
+        }
+      ]
+    },
+    {
+      "source": "network file system",
+      "target": "网络文件系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "810"
+        }
+      ]
+    },
+    {
+      "source": "network protocol",
+      "target": "网络协议",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "811"
+        }
+      ]
+    },
+    {
+      "source": "nonstationarity",
+      "target": "非平稳性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "nonstationarity"
+        }
+      ]
+    },
+    {
+      "source": "normal form",
+      "target": "范式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "816"
+        }
+      ]
+    },
+    {
+      "source": "notebook computer",
+      "target": "笔记本式计算机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "821"
+        }
+      ]
+    },
+    {
+      "source": "null address",
+      "target": "空地址",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "822"
+        }
+      ]
+    },
+    {
+      "source": "null pointer",
+      "target": "空指针",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "823"
+        }
+      ]
+    },
+    {
+      "source": "null string",
+      "target": "空串",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "824"
+        }
+      ]
+    },
+    {
+      "source": "numerical data",
+      "target": "数值数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "numerical-data"
+        }
+      ]
+    },
+    {
+      "source": "object program",
+      "target": "目标程序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "829"
+        }
+      ]
+    },
+    {
+      "source": "octal system",
+      "target": "八进制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "830"
+        }
+      ]
+    },
+    {
+      "source": "offline inference",
+      "target": "离线推理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "offline-inference"
+        }
+      ]
+    },
+    {
+      "source": "one-hot encoding",
+      "target": "独热编码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "one-hot-encoding"
+        }
+      ]
+    },
+    {
+      "source": "one-shot prompting",
+      "target": "单样本提示",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "one-shot-prompting"
+        }
+      ]
+    },
+    {
+      "source": "online inference",
+      "target": "在线推理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "online-inference"
+        }
+      ]
+    },
+    {
+      "source": "operation code",
+      "target": "操作码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "842"
+        }
+      ]
+    },
+    {
+      "source": "operation exception",
+      "target": "操作异常",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "843"
+        }
+      ]
+    },
+    {
+      "source": "operational amplifier",
+      "target": "运算放大器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "844"
+        }
+      ]
+    },
+    {
+      "source": "optical character recognition",
+      "target": "光学字符识别",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "851"
+        }
+      ]
+    },
+    {
+      "source": "optical disk drive",
+      "target": "光盘驱动器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "852"
+        }
+      ]
+    },
+    {
+      "source": "optical drive",
+      "target": "光驱",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "855"
+        }
+      ]
+    },
+    {
+      "source": "output data",
+      "target": "输出数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "862"
+        }
+      ]
+    },
+    {
+      "source": "output device",
+      "target": "输出设备",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "863"
+        }
+      ]
+    },
+    {
+      "source": "output layer",
+      "target": "输出层",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "output-layer"
+        }
+      ]
+    },
+    {
+      "source": "overfitting",
+      "target": "过拟合",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "overfitting"
+        }
+      ]
+    },
+    {
+      "source": "page layout",
+      "target": "页面布局",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "880"
+        }
+      ]
+    },
+    {
+      "source": "parallel operation",
+      "target": "并行操作",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "896"
+        }
+      ]
+    },
+    {
+      "source": "parallel port",
+      "target": "并行端口",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "897"
+        }
+      ]
+    },
+    {
+      "source": "parallel processing",
+      "target": "并行处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "898"
+        }
+      ]
+    },
+    {
+      "source": "parallel transmission",
+      "target": "并行传输",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "899"
+        }
+      ]
+    },
+    {
+      "source": "parameter passing",
+      "target": "参数传递",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "902"
+        }
+      ]
+    },
+    {
+      "source": "parameter-efficient tuning",
+      "target": "参数高效调优",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "parameter-efficient-tuning"
+        }
+      ]
+    },
+    {
+      "source": "parent node",
+      "target": "父结点",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "903"
+        }
+      ]
+    },
+    {
+      "source": "parent type",
+      "target": "父类型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "904"
+        }
+      ]
+    },
+    {
+      "source": "parity check",
+      "target": "奇偶检验",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "906"
+        }
+      ]
+    },
+    {
+      "source": "pass by address",
+      "target": "按址传递",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "909"
+        }
+      ]
+    },
+    {
+      "source": "pass by value",
+      "target": "按值传递",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "911"
+        }
+      ]
+    },
+    {
+      "source": "path based finder",
+      "target": "基于路径的查找器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-path-based-finder"
+        }
+      ]
+    },
+    {
+      "source": "path entry",
+      "target": "路径入口",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-path-entry"
+        }
+      ]
+    },
+    {
+      "source": "path entry finder",
+      "target": "路径入口查找器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-path-entry-finder"
+        }
+      ]
+    },
+    {
+      "source": "path entry hook",
+      "target": "路径入口钩子",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-path-entry-hook"
+        }
+      ]
+    },
+    {
+      "source": "path-like object",
+      "target": "路径类对象",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-path-like-object"
+        }
+      ]
+    },
+    {
+      "source": "pattern matching",
+      "target": "模式匹配",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "919"
+        }
+      ]
+    },
+    {
+      "source": "pattern recognition",
+      "target": "模式识别",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "920"
+        }
+      ]
+    },
+    {
+      "source": "peripheral equipment",
+      "target": "外围设备",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "926"
+        }
+      ]
+    },
+    {
+      "source": "physical address",
+      "target": "物理地址",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "935"
+        }
+      ]
+    },
+    {
+      "source": "physical record",
+      "target": "物理记录",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "936"
+        }
+      ]
+    },
+    {
+      "source": "portable computer",
+      "target": "便携式计算机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "964"
+        }
+      ]
+    },
+    {
+      "source": "positional argument",
+      "target": "位置参数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-positional-argument"
+        }
+      ]
+    },
+    {
+      "source": "positive class",
+      "target": "正类别",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "positive-class"
+        }
+      ]
+    },
+    {
+      "source": "post-trained model",
+      "target": "后训练模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "post-trained-model"
+        }
+      ]
+    },
+    {
+      "source": "pre-trained model",
+      "target": "预训练模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "pre-trained-model"
+        }
+      ]
+    },
+    {
+      "source": "pre-training",
+      "target": "预训练",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "pre-training"
+        }
+      ]
+    },
+    {
+      "source": "print buffer",
+      "target": "打印缓冲区",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "979"
+        }
+      ]
+    },
+    {
+      "source": "print preview",
+      "target": "打印预览",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "980"
+        }
+      ]
+    },
+    {
+      "source": "print server",
+      "target": "打印服务器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "981"
+        }
+      ]
+    },
+    {
+      "source": "private key",
+      "target": "私钥",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "988"
+        }
+      ]
+    },
+    {
+      "source": "privileged instruction",
+      "target": "特权指令",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "990"
+        }
+      ]
+    },
+    {
+      "source": "procedural language",
+      "target": "过程语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "993"
+        }
+      ]
+    },
+    {
+      "source": "production rule",
+      "target": "产生式规则",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "998"
+        }
+      ]
+    },
+    {
+      "source": "program library",
+      "target": "程序库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1001"
+        }
+      ]
+    },
+    {
+      "source": "programming language",
+      "target": "程序设计语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1007"
+        }
+      ]
+    },
+    {
+      "source": "prompt design",
+      "target": "提示设计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "prompt-design"
+        }
+      ]
+    },
+    {
+      "source": "prompt engineering",
+      "target": "提示工程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "prompt-engineering"
+        }
+      ]
+    },
+    {
+      "source": "prompt set",
+      "target": "提示集",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "prompt-set"
+        }
+      ]
+    },
+    {
+      "source": "prompt tuning",
+      "target": "提示调优",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "prompt-tuning"
+        }
+      ]
+    },
+    {
+      "source": "prompt-based learning",
+      "target": "基于提示的学习",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "prompt-based-learning"
+        }
+      ]
+    },
+    {
+      "source": "propagation delay",
+      "target": "传播延迟",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1010"
+        }
+      ]
+    },
+    {
+      "source": "proprietary software",
+      "target": "专有软件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1011"
+        }
+      ]
+    },
+    {
+      "source": "proxy labels",
+      "target": "代理标签",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "proxy-labels"
+        }
+      ]
+    },
+    {
+      "source": "proxy server",
+      "target": "代理服务器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1015"
+        }
+      ]
+    },
+    {
+      "source": "public key",
+      "target": "公钥",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1016"
+        }
+      ]
+    },
+    {
+      "source": "push technology",
+      "target": "推送技术",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1021"
+        }
+      ]
+    },
+    {
+      "source": "qualified name",
+      "target": "限定名称",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-qualified-name"
+        }
+      ]
+    },
+    {
+      "source": "quality of service",
+      "target": "服务质量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1024"
+        }
+      ]
+    },
+    {
+      "source": "query language",
+      "target": "查询语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1027"
+        }
+      ]
+    },
+    {
+      "source": "race condition",
+      "target": "竞争条件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-race-condition"
+        }
+      ]
+    },
+    {
+      "source": "radio button",
+      "target": "单选按钮",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1032"
+        }
+      ]
+    },
+    {
+      "source": "random number",
+      "target": "随机数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1038"
+        }
+      ]
+    },
+    {
+      "source": "raster display",
+      "target": "光栅显示",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1039"
+        }
+      ]
+    },
+    {
+      "source": "real-time animation",
+      "target": "实时动画",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1048"
+        }
+      ]
+    },
+    {
+      "source": "recovery time",
+      "target": "恢复时间",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1055"
+        }
+      ]
+    },
+    {
+      "source": "redundant code",
+      "target": "冗余码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1060"
+        }
+      ]
+    },
+    {
+      "source": "reference count",
+      "target": "引用计数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-reference-count"
+        }
+      ]
+    },
+    {
+      "source": "reference text",
+      "target": "参考文本",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "reference-text"
+        }
+      ]
+    },
+    {
+      "source": "refresh cycle",
+      "target": "刷新周期",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1064"
+        }
+      ]
+    },
+    {
+      "source": "region fill",
+      "target": "区域填充",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1065"
+        }
+      ]
+    },
+    {
+      "source": "regression model",
+      "target": "回归模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "regression-model"
+        }
+      ]
+    },
+    {
+      "source": "relational calculus",
+      "target": "关系演算",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1070"
+        }
+      ]
+    },
+    {
+      "source": "relational data model",
+      "target": "关系数据模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1071"
+        }
+      ]
+    },
+    {
+      "source": "relational database",
+      "target": "关系数据库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1072"
+        }
+      ]
+    },
+    {
+      "source": "relational model",
+      "target": "关系模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1073"
+        }
+      ]
+    },
+    {
+      "source": "relative address",
+      "target": "相对地址",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1074"
+        }
+      ]
+    },
+    {
+      "source": "relocatable address",
+      "target": "可重定位地址",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1078"
+        }
+      ]
+    },
+    {
+      "source": "remote batch processing",
+      "target": "远程批处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1079"
+        }
+      ]
+    },
+    {
+      "source": "remote database access",
+      "target": "远程数据库访问",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1080"
+        }
+      ]
+    },
+    {
+      "source": "remote maintenance",
+      "target": "远程维护",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1082"
+        }
+      ]
+    },
+    {
+      "source": "reserved character",
+      "target": "保留字符",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1096"
+        }
+      ]
+    },
+    {
+      "source": "reserved word",
+      "target": "保留字",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1097"
+        }
+      ]
+    },
+    {
+      "source": "resident program",
+      "target": "驻留程序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1100"
+        }
+      ]
+    },
+    {
+      "source": "resource allocation",
+      "target": "资源分配",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1105"
+        }
+      ]
+    },
+    {
+      "source": "response time",
+      "target": "响应时间",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1107"
+        }
+      ]
+    },
+    {
+      "source": "Return key",
+      "target": "回车键",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1114"
+        }
+      ]
+    },
+    {
+      "source": "return statement",
+      "target": "返回语句",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1115"
+        }
+      ]
+    },
+    {
+      "source": "reverse engineering",
+      "target": "逆向工程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1118"
+        }
+      ]
+    },
+    {
+      "source": "rewritable optical disk",
+      "target": "可重写光盘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1120"
+        }
+      ]
+    },
+    {
+      "source": "rich media",
+      "target": "富媒体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1122"
+        }
+      ]
+    },
+    {
+      "source": "rich text",
+      "target": "富文本",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1123"
+        }
+      ]
+    },
+    {
+      "source": "risk analysis",
+      "target": "风险分析",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1128"
+        }
+      ]
+    },
+    {
+      "source": "risk assessment",
+      "target": "风险评估",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1129"
+        }
+      ]
+    },
+    {
+      "source": "robot system",
+      "target": "机器人系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1133"
+        }
+      ]
+    },
+    {
+      "source": "role prompting",
+      "target": "角色提示",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "role-prompting"
+        }
+      ]
+    },
+    {
+      "source": "root directory",
+      "target": "根目录",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1139"
+        }
+      ]
+    },
+    {
+      "source": "root node",
+      "target": "根结点",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1140"
+        }
+      ]
+    },
+    {
+      "source": "run time",
+      "target": "运行时间",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1143"
+        }
+      ]
+    },
+    {
+      "source": "sample and hold device",
+      "target": "采样保持器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1146"
+        }
+      ]
+    },
+    {
+      "source": "sampling rate",
+      "target": "采样率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1148"
+        }
+      ]
+    },
+    {
+      "source": "scalar processor",
+      "target": "标量处理机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1155"
+        }
+      ]
+    },
+    {
+      "source": "scale factor",
+      "target": "比例因子",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1158"
+        }
+      ]
+    },
+    {
+      "source": "scientific visualization",
+      "target": "科学可视化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1168"
+        }
+      ]
+    },
+    {
+      "source": "screen dump",
+      "target": "屏幕转储",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1172"
+        }
+      ]
+    },
+    {
+      "source": "screen editor",
+      "target": "屏幕编辑器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1173"
+        }
+      ]
+    },
+    {
+      "source": "scroll bar",
+      "target": "滚动条",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1176"
+        }
+      ]
+    },
+    {
+      "source": "scroll wheel",
+      "target": "滚动轮",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1177"
+        }
+      ]
+    },
+    {
+      "source": "seamless integration",
+      "target": "无缝集成",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1179"
+        }
+      ]
+    },
+    {
+      "source": "search and replace",
+      "target": "搜索并替换",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1181"
+        }
+      ]
+    },
+    {
+      "source": "search engine",
+      "target": "搜索引擎",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1182"
+        }
+      ]
+    },
+    {
+      "source": "search key",
+      "target": "搜索关键字",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1183"
+        }
+      ]
+    },
+    {
+      "source": "search path",
+      "target": "搜索路径",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1184"
+        }
+      ]
+    },
+    {
+      "source": "search space",
+      "target": "搜索空间",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1186"
+        }
+      ]
+    },
+    {
+      "source": "secure channel",
+      "target": "安全信道",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1191"
+        }
+      ]
+    },
+    {
+      "source": "security level",
+      "target": "安全级别",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1193"
+        }
+      ]
+    },
+    {
+      "source": "security log",
+      "target": "安全日志",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1194"
+        }
+      ]
+    },
+    {
+      "source": "sensitive information",
+      "target": "敏感信息",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1202"
+        }
+      ]
+    },
+    {
+      "source": "sequential access",
+      "target": "顺序存取",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1208"
+        }
+      ]
+    },
+    {
+      "source": "sequential algorithm",
+      "target": "顺序算法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1210"
+        }
+      ]
+    },
+    {
+      "source": "sequential circuit",
+      "target": "时序电路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1211"
+        }
+      ]
+    },
+    {
+      "source": "serial interface",
+      "target": "串行接口",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1213"
+        }
+      ]
+    },
+    {
+      "source": "serial port",
+      "target": "串行端口",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1214"
+        }
+      ]
+    },
+    {
+      "source": "set comprehension",
+      "target": "集合推导式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-set-comprehension"
+        }
+      ]
+    },
+    {
+      "source": "seven-segment display",
+      "target": "七段显示器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1225"
+        }
+      ]
+    },
+    {
+      "source": "shared data",
+      "target": "共享数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1228"
+        }
+      ]
+    },
+    {
+      "source": "shared resource",
+      "target": "共享资源",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1229"
+        }
+      ]
+    },
+    {
+      "source": "shift register",
+      "target": "移位寄存器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1233"
+        }
+      ]
+    },
+    {
+      "source": "shortcut key",
+      "target": "快捷键",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1234"
+        }
+      ]
+    },
+    {
+      "source": "sigmoid function",
+      "target": "S 型函数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "sigmoid-function"
+        }
+      ]
+    },
+    {
+      "source": "simultaneous processing",
+      "target": "同时处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1240"
+        }
+      ]
+    },
+    {
+      "source": "single dispatch",
+      "target": "单分派",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-single-dispatch"
+        }
+      ]
+    },
+    {
+      "source": "sleep mode",
+      "target": "睡眠方式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1246"
+        }
+      ]
+    },
+    {
+      "source": "snapshot dump",
+      "target": "快照转储",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1254"
+        }
+      ]
+    },
+    {
+      "source": "soft copy",
+      "target": "软拷贝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1255"
+        }
+      ]
+    },
+    {
+      "source": "soft prompt tuning",
+      "target": "软提示调优",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "soft-prompt-tuning"
+        }
+      ]
+    },
+    {
+      "source": "software engineering",
+      "target": "软件工程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1257"
+        }
+      ]
+    },
+    {
+      "source": "software library",
+      "target": "软件库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1258"
+        }
+      ]
+    },
+    {
+      "source": "software package",
+      "target": "软件包",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1259"
+        }
+      ]
+    },
+    {
+      "source": "software piracy",
+      "target": "软件盗版",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1260"
+        }
+      ]
+    },
+    {
+      "source": "sort algorithm",
+      "target": "排序算法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1262"
+        }
+      ]
+    },
+    {
+      "source": "sort key",
+      "target": "排序关键字",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1263"
+        }
+      ]
+    },
+    {
+      "source": "sound card",
+      "target": "声卡",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1266"
+        }
+      ]
+    },
+    {
+      "source": "source data",
+      "target": "源数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1269"
+        }
+      ]
+    },
+    {
+      "source": "source file",
+      "target": "源文件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1270"
+        }
+      ]
+    },
+    {
+      "source": "source language",
+      "target": "源语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1271"
+        }
+      ]
+    },
+    {
+      "source": "source program",
+      "target": "源程序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1272"
+        }
+      ]
+    },
+    {
+      "source": "sparse feature",
+      "target": "稀疏特征",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "sparse-feature"
+        }
+      ]
+    },
+    {
+      "source": "sparse vector",
+      "target": "稀疏向量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "sparse-vector"
+        }
+      ]
+    },
+    {
+      "source": "special method",
+      "target": "特殊方法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-special-method"
+        }
+      ]
+    },
+    {
+      "source": "speech analysis",
+      "target": "语音分析",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1281"
+        }
+      ]
+    },
+    {
+      "source": "speech coding",
+      "target": "语音编码",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1282"
+        }
+      ]
+    },
+    {
+      "source": "speech compression",
+      "target": "语音压缩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1283"
+        }
+      ]
+    },
+    {
+      "source": "speech input",
+      "target": "语音输入",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1284"
+        }
+      ]
+    },
+    {
+      "source": "speech output",
+      "target": "语音输出",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1285"
+        }
+      ]
+    },
+    {
+      "source": "speech recognition",
+      "target": "语音识别",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1286"
+        }
+      ]
+    },
+    {
+      "source": "speech signal",
+      "target": "语音信号",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1287"
+        }
+      ]
+    },
+    {
+      "source": "speech synthesis",
+      "target": "语音合成",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1288"
+        }
+      ]
+    },
+    {
+      "source": "split screen",
+      "target": "分屏",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1290"
+        }
+      ]
+    },
+    {
+      "source": "square wave",
+      "target": "方波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1297"
+        }
+      ]
+    },
+    {
+      "source": "stable state",
+      "target": "稳态",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1298"
+        }
+      ]
+    },
+    {
+      "source": "stack pointer",
+      "target": "栈指针",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1300"
+        }
+      ]
+    },
+    {
+      "source": "standard library",
+      "target": "标准库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-standard-library"
+        }
+      ]
+    },
+    {
+      "source": "start bit",
+      "target": "起始位",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1303"
+        }
+      ]
+    },
+    {
+      "source": "static allocation",
+      "target": "静态分配",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1307"
+        }
+      ]
+    },
+    {
+      "source": "static image",
+      "target": "静态图像",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1308"
+        }
+      ]
+    },
+    {
+      "source": "static inference",
+      "target": "静态推理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "static-inference"
+        }
+      ]
+    },
+    {
+      "source": "static type checker",
+      "target": "静态类型检查器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-static-type-checker"
+        }
+      ]
+    },
+    {
+      "source": "strong reference",
+      "target": "强引用",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-strong-reference"
+        }
+      ]
+    },
+    {
+      "source": "structured design",
+      "target": "结构化设计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1319"
+        }
+      ]
+    },
+    {
+      "source": "supervised machine learning",
+      "target": "监督式机器学习",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "supervised-machine-learning"
+        }
+      ]
+    },
+    {
+      "source": "support software",
+      "target": "支持软件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1335"
+        }
+      ]
+    },
+    {
+      "source": "symbolic address",
+      "target": "符号地址",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1338"
+        }
+      ]
+    },
+    {
+      "source": "symbolic language",
+      "target": "符号语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1339"
+        }
+      ]
+    },
+    {
+      "source": "sync signal",
+      "target": "同步信号",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1340"
+        }
+      ]
+    },
+    {
+      "source": "synchronous protocol",
+      "target": "同步协议",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1342"
+        }
+      ]
+    },
+    {
+      "source": "synchronous transmission",
+      "target": "同步传输",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1343"
+        }
+      ]
+    },
+    {
+      "source": "synthetic feature",
+      "target": "合成特征",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "synthetic-feature"
+        }
+      ]
+    },
+    {
+      "source": "system software",
+      "target": "系统软件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1348"
+        }
+      ]
+    },
+    {
+      "source": "table lookup",
+      "target": "查表",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1349"
+        }
+      ]
+    },
+    {
+      "source": "target computer",
+      "target": "目标计算机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1358"
+        }
+      ]
+    },
+    {
+      "source": "target language",
+      "target": "目标语言",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1359"
+        }
+      ]
+    },
+    {
+      "source": "target program",
+      "target": "目标程序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1360"
+        }
+      ]
+    },
+    {
+      "source": "test data",
+      "target": "测试数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1373"
+        }
+      ]
+    },
+    {
+      "source": "test loss",
+      "target": "测试损失",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "test-loss"
+        }
+      ]
+    },
+    {
+      "source": "text editing",
+      "target": "文本编辑",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1375"
+        }
+      ]
+    },
+    {
+      "source": "text encoding",
+      "target": "文本编码格式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-text-encoding"
+        }
+      ]
+    },
+    {
+      "source": "text file",
+      "target": "文本文件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-text-file"
+        }
+      ]
+    },
+    {
+      "source": "text processing",
+      "target": "文本处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1376"
+        }
+      ]
+    },
+    {
+      "source": "thread-safe",
+      "target": "线程安全",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-thread-safe"
+        }
+      ]
+    },
+    {
+      "source": "time sharing",
+      "target": "分时",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1388"
+        }
+      ]
+    },
+    {
+      "source": "time slicing",
+      "target": "时间分片",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1389"
+        }
+      ]
+    },
+    {
+      "source": "timing signal",
+      "target": "定时信号",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1393"
+        }
+      ]
+    },
+    {
+      "source": "top-down programming",
+      "target": "自顶向下程序设计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1400"
+        }
+      ]
+    },
+    {
+      "source": "top-level domain name",
+      "target": "顶级域名",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1401"
+        }
+      ]
+    },
+    {
+      "source": "touch screen",
+      "target": "触摸屏",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1404"
+        }
+      ]
+    },
+    {
+      "source": "training loss",
+      "target": "训练损失",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "training-loss"
+        }
+      ]
+    },
+    {
+      "source": "training set",
+      "target": "训练集",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "training-set"
+        }
+      ]
+    },
+    {
+      "source": "transaction processing",
+      "target": "事务处理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1410"
+        }
+      ]
+    },
+    {
+      "source": "tree structure",
+      "target": "树结构",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1421"
+        }
+      ]
+    },
+    {
+      "source": "triple-quoted string",
+      "target": "三引号字符串",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-triple-quoted-string"
+        }
+      ]
+    },
+    {
+      "source": "trusted computer system",
+      "target": "可信计算机系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1428"
+        }
+      ]
+    },
+    {
+      "source": "truth table",
+      "target": "真值表",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1429"
+        }
+      ]
+    },
+    {
+      "source": "Turing machine",
+      "target": "图灵机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1431"
+        }
+      ]
+    },
+    {
+      "source": "turnaround time",
+      "target": "周转时间",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1432"
+        }
+      ]
+    },
+    {
+      "source": "twisted pair",
+      "target": "双绞线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1433"
+        }
+      ]
+    },
+    {
+      "source": "two-address instruction",
+      "target": "双地址指令",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1434"
+        }
+      ]
+    },
+    {
+      "source": "type alias",
+      "target": "类型别名",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-type-alias"
+        }
+      ]
+    },
+    {
+      "source": "type hint",
+      "target": "类型注解",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-type-hint"
+        }
+      ]
+    },
+    {
+      "source": "unconditional jump",
+      "target": "无条件跳转",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1443"
+        }
+      ]
+    },
+    {
+      "source": "underfitting",
+      "target": "欠拟合",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "underfitting"
+        }
+      ]
+    },
+    {
+      "source": "unit test",
+      "target": "单元测试",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1455"
+        }
+      ]
+    },
+    {
+      "source": "universal newlines",
+      "target": "通用换行",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-universal-newlines"
+        }
+      ]
+    },
+    {
+      "source": "unlabeled example",
+      "target": "无标签样本",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "unlabeled-example"
+        }
+      ]
+    },
+    {
+      "source": "unsupervised machine learning",
+      "target": "非监督式机器学习",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "unsupervised-machine-learning"
+        }
+      ]
+    },
+    {
+      "source": "user data",
+      "target": "用户数据",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1467"
+        }
+      ]
+    },
+    {
+      "source": "user group",
+      "target": "用户组",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1469"
+        }
+      ]
+    },
+    {
+      "source": "user interface",
+      "target": "用户界面",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1470"
+        }
+      ]
+    },
+    {
+      "source": "user manual",
+      "target": "用户手册",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1471"
+        }
+      ]
+    },
+    {
+      "source": "utility program",
+      "target": "实用程序",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1473"
+        }
+      ]
+    },
+    {
+      "source": "validation loss",
+      "target": "验证损失",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "validation-loss"
+        }
+      ]
+    },
+    {
+      "source": "validation set",
+      "target": "验证集",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "validation-set"
+        }
+      ]
+    },
+    {
+      "source": "variable annotation",
+      "target": "变量标注",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-variable-annotation"
+        }
+      ]
+    },
+    {
+      "source": "verification test",
+      "target": "验证测试",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1478"
+        }
+      ]
+    },
+    {
+      "source": "very large scale integration",
+      "target": "超大规模集成",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1479"
+        }
+      ]
+    },
+    {
+      "source": "video compression",
+      "target": "视频压缩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1480"
+        }
+      ]
+    },
+    {
+      "source": "virtual environment",
+      "target": "虚拟环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-virtual-environment"
+        }
+      ]
+    },
+    {
+      "source": "virtual machine",
+      "target": "虚拟机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "python"
+      ],
+      "sourceRefs": [
+        {
+          "id": "python",
+          "entry": "term-virtual-machine"
+        }
+      ]
+    },
+    {
+      "source": "virtual peripheral",
+      "target": "虚拟外设",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1486"
+        }
+      ]
+    },
+    {
+      "source": "volatile storage",
+      "target": "易失性存储器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1495"
+        }
+      ]
+    },
+    {
+      "source": "wait state",
+      "target": "等待状态",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1498"
+        }
+      ]
+    },
+    {
+      "source": "weighted sum",
+      "target": "加权和",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-foundation"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-foundation",
+          "entry": "weighted-sum"
+        }
+      ]
+    },
+    {
+      "source": "white box testing",
+      "target": "白盒测试",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1503"
+        }
+      ]
+    },
+    {
+      "source": "wildcard character",
+      "target": "通配字符",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1505"
+        }
+      ]
+    },
+    {
+      "source": "word length",
+      "target": "字长",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-computing"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-computing",
+          "entry": "1514"
+        }
+      ]
+    },
+    {
+      "source": "zero-shot prompting",
+      "target": "零样本提示",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "google-generative"
+      ],
+      "sourceRefs": [
+        {
+          "id": "google-generative",
+          "entry": "zero-shot-prompting"
+        }
+      ]
+    }
+  ]
+}

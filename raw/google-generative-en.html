@@ -1,0 +1,4577 @@
+
+
+
+
+
+
+
+
+
+<!doctype html>
+<html 
+      lang="en"
+      dir="ltr">
+  <head>
+    <meta name="google-signin-client-id" content="721724668570-nbkv1cfusk7kk4eni4pjvepaus73b13t.apps.googleusercontent.com"><meta name="google-signin-scope"
+          content="profile email https://www.googleapis.com/auth/developerprofiles https://www.googleapis.com/auth/developerprofiles.award https://www.googleapis.com/auth/devprofiles.full_control.firstparty"><meta property="og:site_name" content="Google for Developers">
+    <meta property="og:type" content="website"><meta name="theme-color" content="#fff"><meta charset="utf-8">
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+
+    <link rel="manifest" href="/_pwa/developers/manifest.json"
+          crossorigin="use-credentials">
+    <link rel="preconnect" href="//www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="//fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="//www.google-analytics.com" crossorigin><link rel="stylesheet" href="//fonts.googleapis.com/css?family=Google+Sans:400,500|Roboto:400,400italic,500,500italic,700,700italic|Roboto+Mono:400,500,700&display=swap">
+      <link rel="stylesheet"
+            href="//fonts.googleapis.com/css2?family=Material+Icons&family=Material+Symbols+Outlined&display=block"><link rel="stylesheet" href="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/css/app.css">
+      <link rel="shortcut icon" href="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/favicon-new.png">
+    <link rel="apple-touch-icon" href="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/touchicon-180-new.png"><link rel="canonical" href="https://developers.google.com/machine-learning/glossary/generative"><link rel="search" type="application/opensearchdescription+xml"
+            title="Google for Developers" href="https://developers.google.com/s/opensearch.xml">
+      <link rel="alternate" hreflang="en"
+          href="https://developers.google.com/machine-learning/glossary/generative" /><link rel="alternate" hreflang="x-default" href="https://developers.google.com/machine-learning/glossary/generative" /><link rel="alternate" hreflang="ar"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=ar" /><link rel="alternate" hreflang="bn"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=bn" /><link rel="alternate" hreflang="zh-Hans"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn" /><link rel="alternate" hreflang="zh-Hant"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=zh-tw" /><link rel="alternate" hreflang="fa"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=fa" /><link rel="alternate" hreflang="fr"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=fr" /><link rel="alternate" hreflang="de"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=de" /><link rel="alternate" hreflang="he"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=he" /><link rel="alternate" hreflang="hi"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=hi" /><link rel="alternate" hreflang="id"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=id" /><link rel="alternate" hreflang="it"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=it" /><link rel="alternate" hreflang="ja"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=ja" /><link rel="alternate" hreflang="ko"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=ko" /><link rel="alternate" hreflang="pl"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=pl" /><link rel="alternate" hreflang="pt-BR"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=pt-br" /><link rel="alternate" hreflang="ru"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=ru" /><link rel="alternate" hreflang="es-419"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=es-419" /><link rel="alternate" hreflang="th"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=th" /><link rel="alternate" hreflang="tr"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=tr" /><link rel="alternate" hreflang="vi"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=vi" /><title>Machine Learning Glossary: Generative AI &nbsp;|&nbsp; Google for Developers</title>
+
+<meta property="og:title" content="Machine Learning Glossary: Generative AI &nbsp;|&nbsp; Google for Developers"><meta property="og:url" content="https://developers.google.com/machine-learning/glossary/generative"><meta property="og:image" content="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/opengraph/white.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="675"><meta property="og:locale" content="en"><meta name="twitter:card" content="summary_large_image"><script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    
+    "headline": "Machine Learning Glossary: Generative AI"
+  }
+</script><script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Machine Learning",
+      "item": "https://developers.google.com/machine-learning"
+    },{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Machine Learning Glossary: Generative AI",
+      "item": "https://developers.google.com/machine-learning/glossary/generative"
+    }]
+  }
+  </script>
+  
+
+  
+
+  
+
+
+    </head>
+  <body class="color-scheme--light"
+        template="page"
+        theme="white"
+        type="article"
+        
+        
+        
+        layout="docs"
+        
+        
+        
+        
+        
+          
+            concierge='closed'
+          
+        
+        display-toc
+        pending>
+  
+    <devsite-progress type="indeterminate" id="app-progress"></devsite-progress>
+  
+  
+    <a href="#main-content" class="skip-link button">
+      
+      Skip to main content
+    </a>
+    <section class="devsite-wrapper">
+      <devsite-cookie-notification-bar></devsite-cookie-notification-bar>
+        <devsite-header role="banner">
+  
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="devsite-header--inner" data-nosnippet>
+  <div class="devsite-top-logo-row-wrapper-wrapper">
+    <div class="devsite-top-logo-row-wrapper">
+      <div class="devsite-top-logo-row">
+        <button type="button" id="devsite-hamburger-menu"
+          class="devsite-header-icon-button button-flat material-icons gc-analytics-event"
+          data-category="Site-Wide Custom Events"
+          data-label="Navigation menu button"
+          visually-hidden
+          aria-label="Open menu">
+        </button>
+        
+<div class="devsite-product-name-wrapper">
+
+  
+    
+  
+
+
+
+  
+  
+  <span class="devsite-product-name">
+    <ul class="devsite-breadcrumb-list"
+  >
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+    
+    
+      
+      
+        
+  <a href="https://developers.google.com/machine-learning"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Upper Header"
+      
+        data-value="1"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="1"
+      
+        track-metadata-eventdetail="Machine Learning"
+      
+    >
+    
+          Machine Learning
+        
+  </a>
+  
+      
+    
+  </li>
+  
+</ul>
+  </span>
+
+</div>
+        <div class="devsite-top-logo-row-middle">
+          <div class="devsite-header-upper-tabs">
+            
+              
+              
+  <devsite-tabs class="upper-tabs">
+
+    <nav class="devsite-tabs-wrapper" aria-label="Upper tabs">
+      
+        
+          <tab  >
+            
+    <a href="https://developers.google.com/machine-learning/foundational-courses"
+    class="devsite-tabs-content gc-analytics-event "
+      track-metadata-eventdetail="https://developers.google.com/machine-learning/foundational-courses"
+    
+       track-type="nav"
+       track-metadata-position="nav - foundational courses"
+       track-metadata-module="primary nav"
+       
+       
+         
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Tab: Foundational courses"
+         
+           track-name="foundational courses"
+         
+       >
+    Foundational courses
+  
+    </a>
+    
+  
+          </tab>
+        
+      
+        
+          <tab  >
+            
+    <a href="https://developers.google.com/machine-learning/advanced-courses"
+    class="devsite-tabs-content gc-analytics-event "
+      track-metadata-eventdetail="https://developers.google.com/machine-learning/advanced-courses"
+    
+       track-type="nav"
+       track-metadata-position="nav - advanced courses"
+       track-metadata-module="primary nav"
+       
+       
+         
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Tab: Advanced courses"
+         
+           track-name="advanced courses"
+         
+       >
+    Advanced courses
+  
+    </a>
+    
+  
+          </tab>
+        
+      
+        
+          <tab  >
+            
+    <a href="https://developers.google.com/machine-learning/guides"
+    class="devsite-tabs-content gc-analytics-event "
+      track-metadata-eventdetail="https://developers.google.com/machine-learning/guides"
+    
+       track-type="nav"
+       track-metadata-position="nav - guides"
+       track-metadata-module="primary nav"
+       
+       
+         
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Tab: Guides"
+         
+           track-name="guides"
+         
+       >
+    Guides
+  
+    </a>
+    
+  
+          </tab>
+        
+      
+        
+          <tab class="devsite-dropdown
+    
+    
+    
+    ">
+  
+    <a href="https://developers.google.com/machine-learning/glossary"
+    class="devsite-tabs-content gc-analytics-event "
+      track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary"
+    
+       track-type="nav"
+       track-metadata-position="nav - glossary"
+       track-metadata-module="primary nav"
+       
+       
+         
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Tab: Glossary"
+         
+           track-name="glossary"
+         
+       >
+    Glossary
+  
+    </a>
+    
+      <button
+         aria-haspopup="menu"
+         aria-expanded="false"
+         aria-label="Dropdown menu for Glossary"
+         track-type="nav"
+         track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary"
+         track-metadata-position="nav - glossary"
+         track-metadata-module="primary nav"
+         
+          
+            data-category="Site-Wide Custom Events"
+          
+            data-label="Tab: Glossary"
+          
+            track-name="glossary"
+          
+        
+         class="devsite-tabs-dropdown-toggle devsite-icon devsite-icon-arrow-drop-down"></button>
+    
+  
+  <div class="devsite-tabs-dropdown" role="menu" aria-label="submenu" hidden>
+    <div class="devsite-tabs-dropdown-content">
+      
+      
+        <div class="devsite-tabs-dropdown-column
+                    ">
+          
+            <ul class="devsite-tabs-dropdown-section
+                       ">
+              
+              
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      All terms
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/agent"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/agent"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      Agentic
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/clustering"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/clustering"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      Clustering
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/df"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/df"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      Decision Forests
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/fundamentals"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/fundamentals"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      Fundamentals
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/googlecloud"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/googlecloud"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      GCP
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/generative"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/generative"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      Generative AI
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/metrics"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/metrics"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      Metrics
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/responsible-ai"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/responsible-ai"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      Responsible AI
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/tensorflow"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/tensorflow"
+                     track-metadata-position="nav - glossary"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      TensorFlow
+                    </div>
+                    
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </div>
+      
+    </div>
+  </div>
+</tab>
+        
+      
+    </nav>
+
+  </devsite-tabs>
+
+            
+           </div>
+          
+<devsite-search
+    enable-signin
+    enable-search
+    enable-suggestions
+      enable-query-completion
+    
+    enable-search-summaries
+    project-name="Machine Learning"
+    tenant-name="Google for Developers"
+    project-scope="/machine-learning"
+    url-scoped="https://developers.google.com/s/results/machine-learning"
+    
+    
+    
+    >
+  <form class="devsite-search-form" action="https://developers.google.com/s/results" method="GET">
+    <div class="devsite-search-container">
+      <button type="button"
+              search-open
+              class="devsite-search-button devsite-header-icon-button button-flat material-icons"
+              
+              aria-label="Open search"></button>
+      <div class="devsite-searchbox">
+        <input
+          aria-activedescendant=""
+          aria-autocomplete="list"
+          
+          aria-label="Search"
+          aria-expanded="false"
+          aria-haspopup="listbox"
+          autocomplete="off"
+          class="devsite-search-field devsite-search-query"
+          name="q"
+          
+          placeholder="Search"
+          role="combobox"
+          type="text"
+          value=""
+          >
+          <div class="devsite-search-image material-icons" aria-hidden="true">
+            
+              <svg class="devsite-search-ai-image" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g clip-path="url(#clip0_6641_386)">
+                    <path d="M19.6 21L13.3 14.7C12.8 15.1 12.225 15.4167 11.575 15.65C10.925 15.8833 10.2333 16 9.5 16C7.68333 16 6.14167 15.375 4.875 14.125C3.625 12.8583 3 11.3167 3 9.5C3 7.68333 3.625 6.15 4.875 4.9C6.14167 3.63333 7.68333 3 9.5 3C10.0167 3 10.5167 3.05833 11 3.175C11.4833 3.275 11.9417 3.43333 12.375 3.65L10.825 5.2C10.6083 5.13333 10.3917 5.08333 10.175 5.05C9.95833 5.01667 9.73333 5 9.5 5C8.25 5 7.18333 5.44167 6.3 6.325C5.43333 7.19167 5 8.25 5 9.5C5 10.75 5.43333 11.8167 6.3 12.7C7.18333 13.5667 8.25 14 9.5 14C10.6667 14 11.6667 13.625 12.5 12.875C13.35 12.1083 13.8417 11.15 13.975 10H15.975C15.925 10.6333 15.7833 11.2333 15.55 11.8C15.3333 12.3667 15.05 12.8667 14.7 13.3L21 19.6L19.6 21ZM17.5 12C17.5 10.4667 16.9667 9.16667 15.9 8.1C14.8333 7.03333 13.5333 6.5 12 6.5C13.5333 6.5 14.8333 5.96667 15.9 4.9C16.9667 3.83333 17.5 2.53333 17.5 0.999999C17.5 2.53333 18.0333 3.83333 19.1 4.9C20.1667 5.96667 21.4667 6.5 23 6.5C21.4667 6.5 20.1667 7.03333 19.1 8.1C18.0333 9.16667 17.5 10.4667 17.5 12Z" fill="#5F6368"/>
+                  </g>
+                <defs>
+                <clipPath id="clip0_6641_386">
+                <rect width="24" height="24" fill="white"/>
+                </clipPath>
+                </defs>
+              </svg>
+            
+          </div>
+          <div class="devsite-search-shortcut-icon-container" aria-hidden="true">
+            <kbd class="devsite-search-shortcut-icon">/</kbd>
+          </div>
+      </div>
+    </div>
+  </form>
+  <button type="button"
+          search-close
+          class="devsite-search-button devsite-header-icon-button button-flat material-icons"
+          
+          aria-label="Close search"></button>
+</devsite-search>
+
+        </div>
+
+        
+
+          
+
+          
+
+          
+
+          
+
+          
+<devsite-language-selector>
+  <ul role="presentation">
+    
+    
+    <li role="presentation">
+      <a role="menuitem" lang="en"
+        >English</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="de"
+        >Deutsch</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="es"
+        >Español</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="es_419"
+        >Español – América Latina</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="fr"
+        >Français</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="id"
+        >Indonesia</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="it"
+        >Italiano</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="pl"
+        >Polski</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="pt_br"
+        >Português – Brasil</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="vi"
+        >Tiếng Việt</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="tr"
+        >Türkçe</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ru"
+        >Русский</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="he"
+        >עברית</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ar"
+        >العربيّة</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="fa"
+        >فارسی</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="hi"
+        >हिंदी</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="bn"
+        >বাংলা</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="th"
+        >ภาษาไทย</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="zh_cn"
+        >中文 – 简体</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="zh_tw"
+        >中文 – 繁體</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ja"
+        >日本語</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ko"
+        >한국어</a>
+    </li>
+    
+  </ul>
+</devsite-language-selector>
+
+
+          
+
+        
+
+        
+          <devsite-user 
+                        
+                        
+                          enable-profiles
+                        
+                        
+                          fp-auth
+                        
+                        id="devsite-user">
+            
+              
+              <span class="button devsite-top-button" aria-hidden="true" visually-hidden>Sign in</span>
+            
+          </devsite-user>
+        
+        
+        
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="devsite-collapsible-section
+    
+      devsite-header-no-lower-tabs
+    ">
+    <div class="devsite-header-background">
+      
+        
+      
+      
+    </div>
+  </div>
+
+</div>
+
+
+
+  
+</devsite-header>
+        <devsite-book-nav scrollbars hidden>
+          
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="devsite-book-nav-filter"
+     hidden>
+  <span class="filter-list-icon material-icons" aria-hidden="true"></span>
+  <input type="text"
+         placeholder="Filter"
+         
+         aria-label="Type to filter"
+         role="searchbox">
+  
+  <span class="filter-clear-button hidden"
+        data-title="Clear filter"
+        aria-label="Clear filter"
+        role="button"
+        tabindex="0"></span>
+</div>
+
+<nav class="devsite-book-nav devsite-nav nocontent" data-nosnippet
+     aria-label="Side menu">
+  <div class="devsite-mobile-header">
+    <button type="button"
+            id="devsite-close-nav"
+            class="devsite-header-icon-button button-flat material-icons gc-analytics-event"
+            data-category="Site-Wide Custom Events"
+            data-label="Close navigation"
+            aria-label="Close navigation">
+    </button>
+    <div class="devsite-product-name-wrapper">
+
+  
+    
+  
+
+
+  
+      <span class="devsite-product-name">
+        
+        
+        <ul class="devsite-breadcrumb-list"
+  >
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+    
+    
+      
+      
+        
+  <a href="https://developers.google.com/machine-learning"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Upper Header"
+      
+        data-value="1"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="1"
+      
+        track-metadata-eventdetail="Machine Learning"
+      
+    >
+    
+          Machine Learning
+        
+  </a>
+  
+      
+    
+  </li>
+  
+</ul>
+      </span>
+    
+
+</div>
+  </div>
+
+  <div class="devsite-book-nav-wrapper">
+    <div class="devsite-mobile-nav-top">
+      
+        <ul class="devsite-nav-list">
+          
+            <li class="devsite-nav-item">
+              
+  
+  <a href="/machine-learning/foundational-courses"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: Foundational courses"
+      
+        track-name="foundational courses"
+      
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Foundational courses"
+     track-type="globalNav"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Foundational courses
+   </span>
+    
+  
+  </a>
+  
+
+  
+              
+            </li>
+          
+            <li class="devsite-nav-item">
+              
+  
+  <a href="/machine-learning/advanced-courses"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: Advanced courses"
+      
+        track-name="advanced courses"
+      
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Advanced courses"
+     track-type="globalNav"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Advanced courses
+   </span>
+    
+  
+  </a>
+  
+
+  
+              
+            </li>
+          
+            <li class="devsite-nav-item">
+              
+  
+  <a href="/machine-learning/guides"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: Guides"
+      
+        track-name="guides"
+      
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Guides"
+     track-type="globalNav"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Guides
+   </span>
+    
+  
+  </a>
+  
+
+  
+              
+            </li>
+          
+            <li class="devsite-nav-item">
+              
+  
+  <a href="/machine-learning/glossary"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: Glossary"
+      
+        track-name="glossary"
+      
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Glossary"
+     track-type="globalNav"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Glossary
+   </span>
+    
+  
+  </a>
+  
+
+  
+    <ul class="devsite-nav-responsive-tabs devsite-nav-has-menu
+               ">
+      
+<li class="devsite-nav-item">
+
+  
+  <span
+    
+       class="devsite-nav-title"
+       tooltip
+    
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: Glossary"
+      
+        track-name="glossary"
+      
+    >
+  
+    <span class="devsite-nav-text" tooltip menu="Glossary">
+      More
+   </span>
+    
+    <span class="devsite-nav-icon material-icons" data-icon="forward"
+          menu="Glossary">
+    </span>
+    
+  
+  </span>
+  
+
+</li>
+
+    </ul>
+  
+              
+            </li>
+          
+          
+          
+        </ul>
+      
+    </div>
+    
+      <div class="devsite-mobile-nav-bottom">
+        
+        
+          
+    
+  
+    
+  
+    
+  
+    
+      
+      <ul class="devsite-nav-list" menu="Glossary"
+          aria-label="Side menu" hidden>
+        
+          
+            
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: All terms"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      All terms
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/agent"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Agentic"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Agentic
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/clustering"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Clustering"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Clustering
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/df"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Decision Forests"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Decision Forests
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/fundamentals"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Fundamentals"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Fundamentals
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/googlecloud"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: GCP"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      GCP
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/generative"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Generative AI"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Generative AI
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/metrics"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Metrics"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Metrics
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/responsible-ai"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Responsible AI"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Responsible AI
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/tensorflow"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: TensorFlow"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      TensorFlow
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+          
+        
+      </ul>
+    
+  
+        
+        
+      </div>
+    
+  </div>
+</nav>
+          
+        </devsite-book-nav>
+      
+      <section id="gc-wrapper">
+        <main role="main" id="main-content" class="devsite-main-content"
+            
+              
+              has-sidebar
+            >
+          <div class="devsite-sidebar">
+            <div class="devsite-sidebar-content">
+                
+                <devsite-toc class="devsite-nav"
+                            role="navigation"
+                            aria-label="On this page"
+                            depth="2"
+                            scrollbars
+                            data-nosnippet
+                  ></devsite-toc>
+                <devsite-recommendations-sidebar class="nocontent devsite-nav" data-nosnippet>
+                </devsite-recommendations-sidebar>
+            </div>
+          </div>
+          <devsite-content>
+            
+              
+
+
+
+
+
+
+
+
+
+
+<article class="devsite-article"><style>
+      /* Styles inlined from /machine-learning/glossary/glossary.css */
+/* Drop display of empty description row */
+.devsite-product-description-row {
+  display: none;
+}
+
+h2.glossary {
+  border: none;
+  padding-top: 25px;
+  margin-top: 30px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+h2.hide-from-toc {
+  border-bottom: none;
+  border-top: 1px solid #ebebeb;
+  padding-top: 1%;
+  margin-bottom: 1px;
+}
+
+a.glossary-anchor {
+  display: block;
+  padding-top: 40px;
+}
+
+@media screen and (min-width: 720px) {
+
+  /* Styling for intersection/union images in IoU entry */
+  /* Place images side by side if not on phone */
+  #intersection-union-side-by-side img {
+    display: inline-block;
+    width: 45%;
+    margin-right: 4.5%;
+  }
+
+  /* Styling for tables in sparse representation section */
+  /* Use two-column layout if not on phone */
+  #sparse-dense-tables {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    column-count: 2;
+    column-width: 45%;
+  }
+
+  #sparse-dense-tables table {
+    break-after: column;
+  }
+}
+
+#sparse-dense-tables table caption {
+  background: none;
+}
+
+#sparse-dense-tables table tr.elided-rows td {
+  text-align: center;
+}
+
+.glossary-icon-container {
+  float: right;
+  position: relative;
+  top: -34px;
+}
+
+/* Push glossary icons 40px to the left
+ * to match 40px of right padding
+ * applied to heading elements
+ */
+h2 + .glossary-icon-container {
+  right: 40px;
+}
+
+.glossary-icon {
+  color: transparent;
+  float: left;
+  font-size: 5px;
+  position: relative;
+}
+
+.glossary-icon[title='Agentic'], .glossary-icon[data-title='Agentic'],
+.glossary-icon[title='Responsible AI'], .glossary-icon[data-title='Responsible AI'],
+.glossary-icon[title='Generative AI'], .glossary-icon[data-title='Generative AI'],
+.glossary-icon[title='Metric'], .glossary-icon[data-title='Metric'],
+.glossary-icon[title='ML Fundamentals'], .glossary-icon[data-title='ML Fundamentals'],
+.glossary-icon[title='Recommendation Systems'], .glossary-icon[data-title='Recommendation Systems'],
+.glossary-icon[title='Image Models'], .glossary-icon[data-title='Image Models'],
+.glossary-icon[title='Clustering'], .glossary-icon[data-title='Clustering'],
+.glossary-icon[title='Language Evaluation'], .glossary-icon[data-title='Language Evaluation'],
+.glossary-icon[title='Sequence Models'], .glossary-icon[data-title='Sequence Models'],
+.glossary-icon[title='Decision Forests'], .glossary-icon[data-title='Decision Forests']
+{
+  font-size: 7px;
+  top: 4px;
+  letter-spacing: -2.5px;
+}
+
+.glossary-icon[title='Agentic']::after, .glossary-icon[data-title='Agentic']::after,
+.glossary-icon[title='Responsible AI']::after, .glossary-icon[data-title='Responsible AI']::after,
+.glossary-icon[title='Generative AI']::after, .glossary-icon[data-title='Generative AI']::after,
+.glossary-icon[title='Metric']::after, .glossary-icon[data-title='Metric']::after,
+.glossary-icon[title='ML Fundamentals']::after, .glossary-icon[data-title='ML Fundamentals']::after,
+.glossary-icon[title='Recommendation Systems']::after, .glossary-icon[data-title='Recommendation Systems']::after,
+.glossary-icon[title='Image Models']::after, .glossary-icon[data-title='Image Models']::after,
+.glossary-icon[title='Clustering']::after, .glossary-icon[data-title='Clustering']::after,
+.glossary-icon[title='Language Evaluation'], .glossary-icon[data-title='Language Evaluation']::after,
+.glossary-icon[title='Sequence Models'], .glossary-icon[data-title='Sequence Models']::after,
+.glossary-icon[title='Decision Forests'], .glossary-icon[data-title='Decision Forests']::after
+{
+  color: initial;
+  font-size: 25px;
+  text-align: center;
+}
+
+.glossary-icon[title='Agentic']::after, .glossary-icon[data-title='Agentic']::after {
+  content: '🕵';
+  width: 32px;
+}
+
+.glossary-icon[title='Responsible AI']::after, .glossary-icon[data-title='Responsible AI']::after {
+  content: '⚖️';
+  width: 32px;
+}
+
+.glossary-icon[title='Generative AI']::after, .glossary-icon[data-title='Generative AI']::after {
+  content: '🎨';
+  width: 32px;
+}
+
+.glossary-icon[title='Metric']::after, .glossary-icon[data-title='Metric']::after {
+  content: '📏';
+  width: 32px;
+}
+
+.glossary-icon[title='ML Fundamentals']::after, .glossary-icon[data-title='ML Fundamentals']::after {
+  content: '🐣';
+  width: 32px;
+}
+
+.glossary-icon[title='Image Models']::after, .glossary-icon[data-title='Image Models']::after {
+  content: '🖼️';
+  width: 32px;
+}
+
+.glossary-icon[title='Clustering']::after, .glossary-icon[data-title='Clustering']::after {
+  content: '🍇';
+  width: 32px;
+}
+
+.glossary-icon[title='Language Evaluation']::after, .glossary-icon[data-title='Language Evaluation']::after {
+  content: '🔤';
+  width: 32px;
+}
+
+.glossary-icon[title='Sequence Models']::after, .glossary-icon[data-title='Sequence Models']::after {
+  content: '🔺→🟦→🟡';
+  width: 96px;
+  font-size: 1vw;
+}
+
+.glossary-icon[title='Decision Forests']::after, .glossary-icon[data-title='Decision Forests']::after {
+  content: '🌳🌲🌳';
+  width: 64px;
+  letter-spacing: -0.45em;
+  font-size: 1vw;
+}
+
+.glossary-icon[title='Recommendation Systems']::after, .glossary-icon[data-title='Recommendation Systems']::after {
+  content: '👎👍';
+  width: 64px;
+}
+
+.glossary-icon[title='Google Cloud']::after, .glossary-icon[data-title='Google Cloud']::after {
+  background-position: center;
+  background-repeat: no-repeat;
+  content: "";
+  width: 37px;
+  background-image: url(https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png);
+  background-size: 28px 28px;
+  height: 29px;
+  position: absolute;
+  left: 0;
+}
+
+.glossary-icon[title='Reinforcement Learning'], .glossary-icon[data-title='Reinforcement Learning'] {
+  font-size: 7px;
+  top: 4px;
+}
+
+.glossary-icon[title='Reinforcement Learning']::after, .glossary-icon[data-title='Reinforcement Learning']::after {
+  color: rgb(139, 0, 0);
+  content: 'RL';
+  font-size: 25px;
+  text-align: center;
+  width: 32px;
+}
+
+.glossary-icon[title='TensorFlow']::after, .glossary-icon[data-title='TensorFlow']::after {
+  background-position: center;
+  background-repeat: no-repeat;
+  content: "";
+  width: 30px;
+  background-image: url(https://developers.google.com/site-assets/logo-tensorflow.svg);
+  background-size: 26px 26px;
+  height: 28px;
+  position: absolute;
+  left: 0;
+}
+
+      </style>
+  
+  
+  
+  
+  
+
+  <div class="devsite-article-meta nocontent" role="navigation" data-nosnippet>
+    
+    
+    <ul class="devsite-breadcrumb-list"
+  
+    aria-label="Breadcrumb">
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+    
+    
+      
+        
+  <a href="https://developers.google.com/"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Breadcrumbs"
+      
+        data-value="1"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="1"
+      
+        track-metadata-eventdetail=""
+      
+    >
+    
+          Home
+        
+  </a>
+  
+      
+    
+  </li>
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+      
+      <div class="devsite-breadcrumb-guillemet material-icons" aria-hidden="true"></div>
+    
+    
+    
+      
+        
+  <a href="https://developers.google.com/products"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Breadcrumbs"
+      
+        data-value="2"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="2"
+      
+        track-metadata-eventdetail=""
+      
+    >
+    
+          Products
+        
+  </a>
+  
+      
+    
+  </li>
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+      
+      <div class="devsite-breadcrumb-guillemet material-icons" aria-hidden="true"></div>
+    
+    
+    
+      
+        
+  <a href="https://developers.google.com/machine-learning"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Breadcrumbs"
+      
+        data-value="3"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="3"
+      
+        track-metadata-eventdetail="Machine Learning"
+      
+    >
+    
+          Machine Learning
+        
+  </a>
+  
+      
+    
+  </li>
+  
+</ul>
+    
+      
+    <devsite-thumb-rating position="header">
+    </devsite-thumb-rating>
+  
+    
+  </div>
+  
+    <devsite-feedback
+  position="header"
+  project-name="Machine Learning"
+  product-id="5005867"
+  bucket=""
+  context=""
+  version="t-devsite-webserver-20260915-r00-rc00.480402789007080698"
+  data-label="Send Feedback Button"
+  track-type="feedback"
+  track-name="sendFeedbackLink"
+  track-metadata-position="header"
+  class="nocontent"
+  data-nosnippet
+  
+  
+  
+    project-icon="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/touchicon-180-new.png"
+  
+  
+  
+  >
+
+  <button>
+  
+    
+    Send feedback
+  
+  </button>
+</devsite-feedback>
+  
+    <h1 class="devsite-page-title" tabindex="-1">
+      Machine Learning Glossary: Generative AI<devsite-actions hidden data-nosnippet><devsite-feature-tooltip
+      ack-key="AckCollectionsBookmarkTooltipDismiss"
+      analytics-category="Site-Wide Custom Events"
+      analytics-action-show="Callout Profile displayed"
+      analytics-action-close="Callout Profile dismissed"
+      analytics-label="Create Collection Callout"
+      class="devsite-page-bookmark-tooltip nocontent"
+      data-nosnippet
+      dismiss-button="true"
+      id="devsite-collections-dropdown"
+      
+      dismiss-button-text="Dismiss"
+
+      
+      close-button-text="Got it">
+
+    
+    
+      <devsite-bookmark></devsite-bookmark>
+    
+
+    <span slot="popout-heading">
+      
+      Stay organized with collections
+    </span>
+    <span slot="popout-contents">
+      
+      Save and categorize content based on your preferences.
+    </span>
+  </devsite-feature-tooltip>
+    <devsite-llm-tools></devsite-llm-tools></devsite-actions>
+  
+      
+    </h1>
+  <div class="devsite-page-title-meta"><devsite-view-release-notes></devsite-view-release-notes></div>
+  
+
+  <devsite-toc class="devsite-nav"
+    depth="2"
+    devsite-toc-embedded
+    >
+  </devsite-toc>
+  <div class="devsite-article-body clearfix
+  ">
+
+  
+    
+      <devsite-key-takeaways-panel role="region" aria-labelledby="key-takeaways-panel-title">
+  <div class="devsite-key-takeaways-panel-header" aria-labelledby="key-takeaways-panel-title" aria-expanded="false" role="button" tabindex="0">
+    
+    <img src="/_static/images/icons/spark.svg" alt="Spark icon" />
+    <div class="devsite-key-takeaways-panel-title">
+      
+      <h2 class="no-link hide-from-toc" id="key-takeaways-panel-title" data-tooltip="Generated with AI">Page Summary</h2>
+    </div>
+    <span
+      class="material-icons devsite-key-takeaways-panel-toggle-button" aria-hidden="true"></span>
+  </div>
+  <div class="devsite-key-takeaways-panel-content">
+    <devsite-feedback
+      product-id="5123748"
+      bucket="8963846920012181156"
+      disable-product-feedback>
+      <button
+        class="button-flat button-primary devsite-key-takeaways-report-button"
+        
+        data-title="Report Key Takeaways!"
+        
+        aria-label="Report Key Takeaways!">
+        <span
+          class="material-icons"
+          
+          aria-label="Report Key Takeaways!"
+          >outlined_flag</span
+        >
+      </button>
+    </devsite-feedback>
+    <ul class="devsite-key-takeaways-panel-list">
+      
+        <li>
+          <p>Generative AI encompasses models that produce original content like text and images, using techniques like pre-training and fine-tuning to achieve this.</p>
+
+        </li>
+      
+        <li>
+          <p>Prompt engineering is crucial for guiding LLMs, involving crafting effective prompts to elicit desired outputs, with methods like zero-shot, one-shot, and few-shot prompting.</p>
+
+        </li>
+      
+        <li>
+          <p>Fine-tuning techniques, including distillation, instruction tuning, and parameter-efficient methods like LoRA, adapt pre-trained models for specific tasks while optimizing performance and resource usage.</p>
+
+        </li>
+      
+        <li>
+          <p>LLMs utilize context windows to process information, employ contextualized language embeddings for nuanced understanding, and can be integrated into systems like RAG and model cascading for enhanced capabilities.</p>
+
+        </li>
+      
+        <li>
+          <p>Prompt-based learning allows LLMs to adapt to tasks without extensive retraining, leveraging their knowledge base to respond to various instructions and inputs.</p>
+
+        </li>
+      
+    </ul>
+  </div>
+</devsite-key-takeaways-panel>
+    
+    
+<p>
+<devsite-mathjax config="TeX-AMS-MML_SVG"></devsite-mathjax></p>
+
+
+
+<p>This page contains Generative AI glossary terms. For all glossary terms,
+<a href="/machine-learning/glossary">click here</a>.</p>
+
+<p><a class="glossary-anchor" name="a"></a>
+<h2 class="glossary" id="a" data-text="A" tabindex="-1">A</h2></p>
+
+<p><a class="glossary-anchor" name="adaptation"></a>
+<h2 class="hide-from-toc" id="adaptation" data-text=" adaptation" tabindex="-1"> adaptation</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Synonym for tuning or <a href="#fine-tuning"><strong>fine-tuning</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="agent"></a>
+<h2 class="hide-from-toc" id="agent" data-text=" agent" tabindex="-1"> agent</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Agentic">#agent</div>
+</div></p>
+
+<p>Software that can reason about user inputs in order
+to plan and execute actions on behalf of the user.</p>
+
+
+
+<p>In <a href="/machine-learning/glossary#reinforcement_learning"><strong>reinforcement learning</strong></a>,
+an agent is the entity that uses a
+<a href="/machine-learning/glossary#policy"><strong>policy</strong></a> to maximize the expected <a href="/machine-learning/glossary#return"><strong>return</strong></a> gained from
+transitioning between <a href="/machine-learning/glossary#state"><strong>states</strong></a> of the
+<a href="/machine-learning/glossary#environment"><strong>environment</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="agentic"></a>
+<h2 class="hide-from-toc" id="agentic" data-text=" agentic" tabindex="-1"> agentic</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Agentic">#agent</div>
+</div></p>
+
+<p>The adjective form of <a href="#agent"><strong>agent</strong></a>. Agentic refers to the qualities
+that agents possess (such as autonomy).</p>
+
+<p><a class="glossary-anchor" name="agentic-workflow"></a>
+<h2 class="hide-from-toc" id="agentic-workflow" data-text=" agentic workflow" tabindex="-1"> agentic workflow</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Agentic">#agent</div>
+</div></p>
+
+<p>A dynamic process in which an <a href="#agent"><strong>agent</strong></a> autonomously plans and
+executes actions to achieve a goal. The process may involve reasoning,
+invoking external tools, and self-correcting its plan.</p>
+
+
+
+<p><a class="glossary-anchor" name="AI-slop"></a>
+<h2 class="hide-from-toc" id="ai-slop" data-text=" AI slop" tabindex="-1"> AI slop</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Output from a <a href="#generative-AI"><strong>generative AI</strong></a> system that favors
+quantity over quality. For example, a web page with AI slop is filled
+with cheaply produced, AI-generated, low-quality content.</p>
+
+<p><a class="glossary-anchor" name="automatic_evaluation"></a>
+<a name="automatic-evaluation"></a>
+<h2 class="hide-from-toc" id="automatic-evaluation" data-text=" automatic evaluation " tabindex="-1"> automatic evaluation </h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Using software to judge the quality of a model&#39;s output.</p>
+
+<p>When model output is relatively straightforward, a script or program can
+compare the model&#39;s output to a <a href="#golden-response"><strong>golden response</strong></a>.
+This type of automatic evaluation is sometimes called
+<strong>programmatic evaluation</strong>. Metrics such as <a href="/machine-learning/glossary#ROUGE"><strong>ROUGE</strong></a> or
+<a href="/machine-learning/glossary#BLEU"><strong>BLEU</strong></a> are often useful for programmatic evaluation.</p>
+
+<p>When model output is complex or has
+<a href="#no-one-right-answer"><strong>no one right answer</strong></a>, a separate ML program called an
+<a href="#autorater-evaluation"><strong>autorater</strong></a> sometimes performs the automatic
+evaluation.</p>
+
+<p>Contrast with <a href="#human-evaluation"><strong>human evaluation</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="autorater_evaluation"></a>
+<a name="autorater-evaluation"></a>
+<h2 class="hide-from-toc" id="autorater-evaluation" data-text=" autorater evaluation " tabindex="-1"> autorater evaluation </h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div>
+A hybrid mechanism for judging the quality of a
+<a href="#generative-AI"><strong>generative AI</strong></a> model&#39;s output that combines
+<a href="#human-evaluation"><strong>human evaluation</strong></a> with
+<a href="#automatic-evaluation"><strong>automatic evaluation</strong></a>.
+An autorater is an ML model trained on data created by
+<a href="#human-evaluation"><strong>human evaluation</strong></a>. Ideally, an autorater
+learns to mimic a human evaluator.</p>
+
+<p>Prebuilt autoraters are available, but the best autoraters are
+fine-tuned specifically to the task you are evaluating.</p>
+<aside class="note"><strong>Note:</strong><span> A running autorater is a fully automated process; humans
+      &quot;only&quot; provide data that helps <em>train</em> an autorater.</span></aside>
+<p><a class="glossary-anchor" name="auto-regressive-model"></a>
+<h2 class="hide-from-toc" id="auto-regressive-model" data-text=" auto-regressive model " tabindex="-1"> auto-regressive model </h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="/machine-learning/glossary#model"><strong>model</strong></a> that infers a prediction based on its own previous
+predictions. For example, auto-regressive language models predict the next
+<a href="/machine-learning/glossary#token"><strong>token</strong></a> based on the previously predicted tokens.
+All <a href="/machine-learning/glossary#transformer"><strong>Transformer</strong></a>-based
+<a href="#large-language-model"><strong>large language models</strong></a> are auto-regressive.</p>
+
+<p>In contrast, <a href="/machine-learning/glossary#GAN"><strong>GAN</strong></a>-based image models are usually not auto-regressive
+since they generate an image in a single forward-pass and not iteratively in
+steps. However, certain image generation models <em>are</em> auto-regressive because
+they generate an image in steps.</p>
+
+<p><a class="glossary-anchor" name="b"></a>
+<h2 class="glossary" id="b" data-text="B" tabindex="-1">B</h2></p>
+
+
+
+<p><a class="glossary-anchor" name="base-model"></a>
+<h2 class="hide-from-toc" id="base-model" data-text=" base model" tabindex="-1"> base model</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#pre-trained-model"><strong>pre-trained model</strong></a> that can serve as the starting
+point for <a href="#fine-tuning"><strong>fine-tuning</strong></a> to address specific tasks or
+applications.</p>
+
+<p>See also <a href="#pre-trained-model"><strong>pre-trained model</strong></a>
+and <a href="#foundation-model"><strong>foundation model</strong></a>.</p>
+
+
+
+
+
+<p><a class="glossary-anchor" name="c"></a>
+<h2 class="glossary" id="c" data-text="C" tabindex="-1">C</h2></p>
+
+<p><a class="glossary-anchor" name="chain-of-thought-prompting"></a>
+<h2 class="hide-from-toc" id="chain-of-thought-prompting" data-text=" chain-of-thought prompting" tabindex="-1"> chain-of-thought prompting</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#prompt-engineering"><strong>prompt engineering</strong></a> technique that encourages
+a <a href="#large-language-model"><strong>large language model</strong></a> (LLM) to explain its
+reasoning, step by step. For example, consider the following prompt, paying
+particular attention to the second sentence:</p>
+
+<blockquote>
+<p>How many g forces would a driver experience in a car that goes from 0 to 60
+miles per hour in 7 seconds? In the answer, show all relevant calculations.</p>
+</blockquote>
+
+<p>The LLM&#39;s <a href="#response"><strong>response</strong></a> would likely:</p>
+
+<ul>
+<li>Show a sequence of physics formulas, plugging in the values 0, 60, and 7
+in appropriate places.</li>
+<li>Explain why it chose those formulas and what the various variables mean.</li>
+</ul>
+
+<p>Chain-of-thought prompting forces the LLM to perform all the calculations,
+which might lead to a more correct answer. In addition, chain-of-thought
+prompting enables the user to examine the LLM&#39;s steps to determine whether
+or not the answer makes sense.</p>
+
+
+
+<p><a class="glossary-anchor" name="chat"></a>
+<h2 class="hide-from-toc" id="chat" data-text=" chat" tabindex="-1"> chat</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The contents of a back-and-forth dialogue with an ML system, typically a
+<a href="#large-language-model"><strong>large language model</strong></a>.
+The previous interaction in a chat
+(what you typed and how the large language model responded) becomes the
+context for subsequent parts of the chat.</p>
+
+<p>A <strong>chatbot</strong> is an application of a large language model.</p>
+
+
+
+<p><a class="glossary-anchor" name="contextualized_language_embedding"></a>
+<h2 class="hide-from-toc" id="contextualized-language-embedding" data-text=" contextualized language embedding" tabindex="-1"> contextualized language embedding</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>An <a href="/machine-learning/glossary#embedding_vector"><strong>embedding</strong></a> that comes close to &quot;understanding&quot; words
+and phrases in ways that fluent human speakers can. Contextualized language
+embeddings can understand complex syntax, semantics, and context.</p>
+
+<p>For example, consider embeddings of the English word <em>cow</em>. Older embeddings
+such as <a href="https://wikipedia.org/wiki/Word2vec">word2vec</a> can represent English
+words such that the distance in the <a href="/machine-learning/glossary#embedding_space"><strong>embedding space</strong></a>
+from <em>cow</em> to <em>bull</em> is similar to the distance from <em>ewe</em> (female sheep) to
+<em>ram</em> (male sheep) or from <em>female</em> to <em>male</em>. Contextualized language
+embeddings can go a step further by recognizing that English speakers sometimes
+casually use the word <em>cow</em> to mean either cow or bull.</p>
+
+<p><a class="glossary-anchor" name="context_window"></a>
+<h2 class="hide-from-toc" id="context-window" data-text=" context window" tabindex="-1"> context window</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The number of <a href="/machine-learning/glossary#token"><strong>tokens</strong></a> a model can process in a given
+<a href="#prompt"><strong>prompt</strong></a>. The larger the context window, the more information
+the model can use to provide coherent and consistent <a href="#response"><strong>responses</strong></a>
+to the prompt.</p>
+
+<p><a class="glossary-anchor" name="conversational-coding"></a>
+<h2 class="hide-from-toc" id="conversational-coding" data-text="conversational coding" tabindex="-1">conversational coding</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>An iterative dialog between you and a generative AI model for the purpose
+of creating software. You issue a prompt describing some software. Then,
+the model uses that description to generate code. Then, you issue a new
+prompt to address the flaws in the previous prompt or in the generated
+code, and the model generates updated code. You two keep going back and
+forth until the generated software is good enough.</p>
+
+<p>Conversation coding is essentially the original meaning of
+<a href="#vibe-coding"><strong>vibe coding</strong></a>.</p>
+
+<p>Contrast with <a href="#specificational-coding"><strong>specificational coding</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="d"></a>
+<h2 class="glossary" id="d" data-text="D" tabindex="-1">D</h2></p>
+
+<p><a class="glossary-anchor" name="direct-prompting"></a>
+<h2 class="hide-from-toc" id="direct-prompting" data-text=" direct prompting " tabindex="-1"> direct prompting </h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Synonym for <a href="#zero-shot-prompting"><strong>zero-shot prompting</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="distillation"></a>
+<h2 class="hide-from-toc" id="distillation" data-text=" distillation" tabindex="-1"> distillation</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The process of reducing the size of one <a href="/machine-learning/glossary#model"><strong>model</strong></a> (known as the
+<strong>teacher</strong>) into a smaller model (known as the <strong>student</strong>) that emulates
+the original model&#39;s predictions as faithfully as possible. Distillation
+is useful because the smaller model has two key benefits over the larger
+model (the teacher):</p>
+
+<ul>
+<li>Faster inference time</li>
+<li>Reduced memory and energy usage</li>
+</ul>
+
+<p>However, the student&#39;s predictions are typically not as good as
+the teacher&#39;s predictions.</p>
+
+<p>Distillation trains the student model to minimize a
+<a href="/machine-learning/glossary#loss-function"><strong>loss function</strong></a> based on the difference between the outputs
+of the predictions of the student and teacher models.</p>
+
+<p>Compare and contrast distillation with the following terms:</p>
+
+<ul>
+<li><a href="#fine-tuning"><strong>fine-tuning</strong></a></li>
+<li><a href="#prompt-based-learning"><strong>prompt-based learning</strong></a></li>
+</ul>
+
+<p>See <a href="/machine-learning/crash-course/llm/tuning">LLMs: Fine-tuning, distillation, and prompt
+engineering</a>
+in Machine Learning Crash Course for more information.</p>
+
+
+
+<p><a class="glossary-anchor" name="e"></a>
+<h2 class="glossary" id="e" data-text="E" tabindex="-1">E</h2></p>
+
+
+
+
+
+
+
+<p><a class="glossary-anchor" name="evals"></a>
+<h2 class="hide-from-toc" id="evals" data-text=" evals" tabindex="-1"> evals</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Metric">#Metric</div>
+</div></p>
+
+<p>Primarily used as an abbreviation for <a href="#LLM-evaluations"><strong>LLM evaluations</strong></a>.
+More broadly, <strong>evals</strong> is an abbreviation for any form of
+<a href="#evaluation"><strong>evaluation</strong></a>.</p>
+
+
+
+<p><a class="glossary-anchor" name="evaluation"></a>
+<h2 class="hide-from-toc" id="evaluation" data-text=" evaluation" tabindex="-1"> evaluation</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Metric">#Metric</div>
+</div></p>
+
+<p>The process of measuring a model&#39;s quality or comparing different models
+against each other.</p>
+
+<p>To evaluate a <a href="/machine-learning/glossary#supervised_machine_learning"><strong>supervised machine learning</strong></a>
+model, you typically judge it against a <a href="/machine-learning/glossary#validation_set"><strong>validation set</strong></a>
+and a <a href="/machine-learning/glossary#test_set"><strong>test set</strong></a>. <a href="#LLM-evaluations"><strong>Evaluating a LLM</strong></a>
+typically involves broader quality and safety assessments.</p>
+
+<p><a class="glossary-anchor" name="f"></a>
+<h2 class="glossary" id="f" data-text="F" tabindex="-1">F</h2></p>
+
+<p><a class="glossary-anchor" name="factuality"></a>
+<h2 class="hide-from-toc" id="factuality" data-text=" factuality" tabindex="-1"> factuality</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Within the ML world, a property describing a model whose output is based
+on reality. Factuality is a concept rather than a metric.
+For example, suppose you send the following <a href="#prompt"><strong>prompt</strong></a>
+to a <a href="#large-language-model"><strong>large language model</strong></a>:</p>
+
+<blockquote>
+<p>What is the chemical formula for table salt?</p>
+</blockquote>
+
+<p>A model optimizing factuality would respond:</p>
+
+<blockquote>
+<p>NaCl</p>
+</blockquote>
+
+<p>It is tempting to assume that all models should be based on factuality.
+However, some prompts, such as the following, should cause a generative AI model
+to optimize <em>creativity</em> rather than <em>factuality</em>.</p>
+
+<blockquote>
+<p>Tell me a limerick about an astronaut and a caterpillar.</p>
+</blockquote>
+
+<p>It is unlikely that the resulting limerick would be based on reality.</p>
+
+<p>Contrast with <a href="/machine-learning/glossary#groundedness"><strong>groundedness</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="fast-decay"></a>
+<h2 class="hide-from-toc" id="fast-decay" data-text=" fast decay" tabindex="-1"> fast decay</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="/machine-learning/glossary#training"><strong>training</strong></a> technique to improve the performance of
+<a href="#large-language-model"><strong>LLMs</strong></a>. Fast decay involves rapidly decreasing
+the <a href="/machine-learning/glossary#learning_rate"><strong>learning rate</strong></a> during training.
+This strategy helps prevent the model from <a href="/machine-learning/glossary#overfitting"><strong>overfitting</strong></a> to
+the training data, and improves <a href="/machine-learning/glossary#generalization"><strong>generalization</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="few-shot-prompting"></a>
+<h2 class="hide-from-toc" id="few-shot-prompting" data-text=" few-shot prompting" tabindex="-1"> few-shot prompting</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#prompt"><strong>prompt</strong></a> that contains more than one (a &quot;few&quot;) example
+demonstrating how the <a href="#large-language-model"><strong>large language model</strong></a>
+should respond. For example, the following lengthy prompt contains two
+examples showing a large language model how to answer a query.</p>
+
+<table>
+  <tr> <th>Parts of one prompt</th> <th>Notes</th> </tr>
+  <tr>
+    <td><tt>What is the official currency of the specified country?</tt></td>
+    <td>The question you want the LLM to answer.</td>
+  </tr>
+  <tr> <td><tt>France: EUR</tt></td>         <td>One example.</td> </tr>
+  <tr> <td><tt>United Kingdom: GBP</tt></td> <td>Another example.</td> </tr>
+  <tr> <td><tt>India:</tt></td>              <td>The actual query.</td> </tr>
+</table>
+
+<p>Few-shot prompting generally produces more desirable results than
+<a href="#zero-shot-prompting"><strong>zero-shot prompting</strong></a> and
+<a href="#one-shot-prompting"><strong>one-shot prompting</strong></a>. However, few-shot prompting
+requires a lengthier prompt.</p>
+
+<p>Few-shot prompting is a form of <a href="/machine-learning/glossary#few-shot_learning"><strong>few-shot learning</strong></a>
+applied to <a href="#prompt-based-learning"><strong>prompt-based learning</strong></a>.</p>
+
+<p>See <a href="https://developers.google.com/machine-learning/crash-course/llm/tuning#prompt_engineering">Prompt
+engineering</a>
+in Machine Learning Crash Course for more information.</p>
+
+<p><a class="glossary-anchor" name="fine-tuning"></a>
+<h2 class="hide-from-toc" id="fine-tuning" data-text="fine-tuning" tabindex="-1">fine-tuning</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A second, task-specific training pass performed on a
+<a href="#pre-trained-model"><strong>pre-trained model</strong></a> to refine its parameters for a
+specific use case. For example, the full training sequence for some
+<a href="#large-language-model"><strong>large language models</strong></a> is as follows:</p>
+
+<ol>
+<li><strong>Pre-training:</strong> Train a large language model on a vast <em>general</em> dataset,
+such as all the English language Wikipedia pages.</li>
+<li><strong>Fine-tuning:</strong> Train the pre-trained model to perform a <em>specific</em> task,
+such as responding to medical queries. Fine-tuning typically involves
+hundreds or thousands of examples focused on the specific task.</li>
+</ol>
+
+<p>As another example, the full training sequence for a large image model is as
+follows:</p>
+
+<ol>
+<li><strong>Pre-training:</strong> Train a large image model on a vast <em>general</em> image
+dataset, such as all the images in Wikimedia commons.</li>
+<li><strong>Fine-tuning:</strong> Train the pre-trained model to perform a <em>specific</em> task,
+such as generating images of orcas.</li>
+</ol>
+
+<p>Fine-tuning can entail any combination of the following strategies:</p>
+
+<ul>
+<li>Modifying <em>all</em> of the pre-trained model&#39;s existing
+<a href="/machine-learning/glossary#parameter"><strong>parameters</strong></a>. This is sometimes called <strong>full fine-tuning</strong>.</li>
+<li>Modifying only <em>some</em> of the pre-trained model&#39;s existing parameters
+(typically, the layers closest to the <a href="/machine-learning/glossary#output_layer"><strong>output layer</strong></a>),
+while keeping other existing parameters unchanged (typically, the layers
+closest to the <a href="/machine-learning/glossary#input-layer"><strong>input layer</strong></a>). See
+<a href="#parameter-efficient-tuning"><strong>parameter-efficient tuning</strong></a>.</li>
+<li>Adding more layers, typically on top of the existing layers closest to the
+output layer.</li>
+</ul>
+
+<p>Fine-tuning is a form of <a href="/machine-learning/glossary#transfer_learning"><strong>transfer learning</strong></a>.
+As such, fine-tuning might use a different loss function or a different model
+type than those used to train the pre-trained model. For example, you could
+fine-tune a pre-trained large image model to produce a regression model that
+returns the number of birds in an input image.</p>
+
+
+
+<p>Compare and contrast fine-tuning with the following terms:</p>
+
+<ul>
+<li><a href="#distillation"><strong>distillation</strong></a></li>
+<li><a href="#prompt-based-learning"><strong>prompt-based learning</strong></a></li>
+</ul>
+
+<p>See <a href="https://developers.google.com/machine-learning/crash-course/llm/tuning#fine-tuning">Fine-tuning</a>
+in Machine Learning Crash Course for more information.</p>
+
+<p><a class="glossary-anchor" name="Flash-model"></a>
+<h2 class="hide-from-toc" id="flash-model" data-text=" Flash model" tabindex="-1"> Flash model</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A family of relatively small <a href="#Gemini"><strong>Gemini</strong></a> models optimized for speed
+and low <a href="#latency"><strong>latency</strong></a>. Flash models are designed for a wide
+range of applications where quick responses and high throughput are crucial.</p>
+
+<p><a class="glossary-anchor" name="foundation-model"></a>
+<h2 class="hide-from-toc" id="foundation-model" data-text="foundation model" tabindex="-1">foundation model</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Metric">#Metric</div>
+</div></p>
+
+<p>A very large <a href="#pre-trained-model"><strong>pre-trained model</strong></a> trained on an enormous
+and diverse <a href="/machine-learning/glossary#training-set"><strong>training set</strong></a>. A foundation model can do both
+of the following:</p>
+
+<ul>
+<li>Respond well to a wide range of requests.</li>
+<li>Serve as a <a href="#base-model"><strong>base model</strong></a> for additional
+<a href="#fine-tuning"><strong>fine-tuning</strong></a> or other customization.</li>
+</ul>
+
+<p>In other words, a foundation model is already very capable in a general sense
+but can be further customized to become even more useful for a specific task.</p>
+
+</span></aside>
+<p><a class="glossary-anchor" name="fraction-of-successes"></a>
+<h2 class="hide-from-toc" id="fraction-of-successes" data-text="fraction of successes" tabindex="-1">fraction of successes</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Metric">#Metric</div>
+</div></p>
+
+<p>A metric for evaluating an ML model&#39;s <a href="#generated-text"><strong>generated text</strong></a>.
+The fraction of successes is the number of &quot;successful&quot; generated text
+outputs divided by the total number of generated text outputs. For example,
+if a <a href="#large-language-model"><strong>large language model</strong></a> generated 10 blocks
+of code, five of which were successful, then the fraction of successes
+would be 50%.</p>
+
+<p>Although fraction of successes is broadly useful throughout statistics,
+within ML, this metric is primarily useful for measuring verifiable tasks
+like code generation or math problems.</p>
+
+<p><a class="glossary-anchor" name="g"></a>
+<h2 class="glossary" id="g" data-text="G" tabindex="-1">G</h2></p>
+
+
+
+
+
+<p><a class="glossary-anchor" name="Gemini"></a>
+<h2 class="hide-from-toc" id="gemini" data-text=" Gemini" tabindex="-1"> Gemini</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The ecosystem comprising Google&#39;s most advanced AI. Elements of this ecosystem
+include:</p>
+
+<ul>
+<li>Various <a href="#Gemini-models"><strong>Gemini models</strong></a>.</li>
+<li>The interactive conversational interface to a Gemini model.
+Users type prompts and Gemini responds to those prompts.</li>
+<li>Various Gemini APIs.</li>
+<li>Various business products based on Gemini models; for example,
+<a href="https://cloud.google.com/products/gemini">Gemini for Google Cloud</a>.</li>
+</ul>
+
+
+
+<p><a class="glossary-anchor" name="Gemini-models"></a>
+<h2 class="hide-from-toc" id="gemini-models" data-text=" Gemini models" tabindex="-1"> Gemini models</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Agentic">#agent</div>
+</div></p>
+
+<p>Google&#39;s state-of-the-art <a href="/machine-learning/glossary#Transformer"><strong>Transformer</strong></a>-based
+<a href="/machine-learning/glossary#multimodal-model"><strong>multimodal models</strong></a>. Gemini models are specifically
+designed to integrate with <a href="#agent"><strong>agents</strong></a>.</p>
+
+<p>Users can interact with Gemini models in a variety of ways, including through
+an interactive dialog interface and through SDKs.</p>
+
+<p><a class="glossary-anchor" name="Gemma"></a>
+<h2 class="hide-from-toc" id="gemma" data-text=" Gemma" tabindex="-1"> Gemma</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A family of lightweight open models built from the same
+research and technology used to create the <a href="#Gemini"><strong>Gemini</strong></a> models. Several
+different Gemma models are available, each providing different features, such as
+vision, code, and instruction following. See <a href="https://ai.google.dev/gemma">Gemma</a>
+for details.</p>
+
+<p><a class="glossary-anchor" name="genAI"></a>
+<h2 class="hide-from-toc" id="genai-or-genai" data-text=" GenAI or genAI" tabindex="-1"> GenAI or genAI</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Abbreviation for <a href="#generative-ai"><strong>generative AI</strong></a>.</p>
+
+
+
+<p><a class="glossary-anchor" name="generated-text"></a>
+<h2 class="hide-from-toc" id="generated-text" data-text=" generated text " tabindex="-1"> generated text </h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>In general, the text that an ML model outputs. When evaluating large
+language models, some metrics compare generated text against
+<a href="#reference-text"><strong>reference text</strong></a>. For example, suppose you are
+trying to determine how effectively an ML model translates from French
+to Dutch. In this case:</p>
+
+<ul>
+<li>The <em>generated text</em> is the Dutch translation that the ML model outputs.</li>
+<li>The <em>reference text</em> is the Dutch translation that a human translator (or
+software) creates.</li>
+</ul>
+
+<p>Note that some evaluation strategies don&#39;t involve reference text.</p>
+
+<p><a class="glossary-anchor" name="generative-ai"></a>
+<a name="generative-AI"></a>
+<h2 class="hide-from-toc" id="generative-ai" data-text=" generative AI" tabindex="-1"> generative AI</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>An emerging transformative field with no formal definition.
+That said, most experts agree that generative AI models can
+create (&quot;generate&quot;) content that is all of the following:</p>
+
+<ul>
+<li>complex</li>
+<li>coherent</li>
+<li>original</li>
+</ul>
+
+<p>Examples of generative AI include:</p>
+
+<ul>
+<li><a href="#large-language-model"><strong>Large language models</strong></a>, which can generate
+sophisticated original text and answer questions.</li>
+<li>Image generation model, which can produce unique images.</li>
+<li>Audio and music generation models, which can compose original music or
+generate realistic speech.</li>
+<li>Video generation models, which can generate original videos.</li>
+</ul>
+
+<p>Some earlier technologies, including <a href="/machine-learning/glossary#Long_Short-Term_Memory"><strong>LSTMs</strong></a>
+and <a href="/machine-learning/glossary#recurrent_neural_network"><strong>RNNs</strong></a>, can also generate original and
+coherent content. Some experts view these earlier technologies as
+generative AI, while others feel that true generative AI requires more complex
+output than those earlier technologies can produce.</p>
+
+<p>Contrast with <a href="/machine-learning/glossary#predictive-ML"><strong>predictive ML</strong></a>.</p>
+
+
+
+<p><a class="glossary-anchor" name="golden_response"></a>
+<a name="golden-response"></a>
+<h2 class="hide-from-toc" id="golden-response" data-text=" golden response" tabindex="-1"> golden response</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#response"><strong>response</strong></a> known to be good. For example, given the following
+<a href="#prompt"><strong>prompt</strong></a>:</p>
+
+<blockquote>
+<p>2 + 2</p>
+</blockquote>
+
+<p>The golden response is hopefully:</p>
+
+<blockquote>
+<p>4</p>
+</blockquote>
+<aside class="note"><strong>Note:</strong><span> Some organizations define additional terms such as <em>silver response</em> and
+<em>platinum response</em> for responses of lower or higher quality, respectively,
+than the golden response. For example, an organization might use <em>platinum
+response</em> to indicate a golden response generated by an expert and then
+further vetted by other experts.</span></aside>
+<section class="expandable">
+
+<h4 class="showalways" id="click-here-for-notes-about-golden-response-and-reference-text." data-text=" Click here for notes about golden response and reference text. " tabindex="-1">
+Click here for notes about golden response and reference text.
+</h4>
+
+<div class="expand-background">
+<p>
+Some evaluation metrics, such as <a href="/machine-learning/glossary#ROUGE"><b>ROUGE</b></a>, compare
+<a href="#reference-text"><b>reference text</b></a> to a model's
+<a href="#generated-text"><b>generated text</b></a>.
+When there is a single right answer to a prompt, the golden response typically
+serves as the reference text.
+</p>
+
+<p>
+Some prompts have <a href="#no-one-right-answer"><b>no one right answer</b></a>.
+For example, the prompt <i>Summarize this document</i> would likely have many
+right answers. For such prompts, reference text is often impractical because
+a model can generate a very wide range of possible summaries. However, a golden
+response might be helpful in this situation. For example, a golden response
+containing a good document summary can help train an
+<a href="/machine-learning/glossary/autorater-evaluation"><b>autorater</b></a> to discover patterns of good
+document summaries.
+</p>
+
+</div>
+
+<hr />
+</section>
+
+
+
+
+
+<p><a class="glossary-anchor" name="GPT"></a>
+<h2 class="hide-from-toc" id="gpt-generative-pre-trained-transformer" data-text=" GPT (Generative Pre-trained Transformer)" tabindex="-1"> GPT (Generative Pre-trained Transformer)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A family of <a href="/machine-learning/glossary#Transformer"><strong>Transformer</strong></a>-based
+<a href="#large-language-model"><strong>large language models</strong></a> developed by
+<a href="https://openai.com/">OpenAI</a>.</p>
+
+<p>GPT variants can apply to multiple <a href="/machine-learning/glossary#modality"><strong>modalities</strong></a>, including:</p>
+
+<ul>
+<li>image generation (for example, ImageGPT)</li>
+<li>text-to-image generation (for example,
+<a href="https://openai.com/blog/dall-e/">DALL-E</a>).</li>
+</ul>
+
+<p><a class="glossary-anchor" name="h"></a>
+<h2 class="glossary" id="h" data-text="H" tabindex="-1">H</h2></p>
+
+<p><a class="glossary-anchor" name="hallucination"></a>
+<h2 class="hide-from-toc" id="hallucination" data-text=" hallucination" tabindex="-1"> hallucination</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The production of plausible-seeming but factually incorrect output by a
+<a href="#generative-AI"><strong>generative AI</strong></a> model that purports to be making an
+assertion about the real world.
+For example, a generative AI model that claims that Barack Obama died in 1865
+is <em>hallucinating</em>.</p>
+
+<p><a class="glossary-anchor" name="human_evaluation"></a>
+<a name="human-evaluation"></a>
+<h2 class="hide-from-toc" id="human-evaluation" data-text=" human evaluation" tabindex="-1"> human evaluation</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A process in which <em>people</em> judge the quality of an ML model&#39;s output;
+for example, having bilingual people judge the quality of an ML translation
+model. Human evaluation is particularly useful for judging models that have
+<a href="#no-one-right-answer"><strong>no one right answer</strong></a>.</p>
+
+<p>Contrast with <a href="#automatic_evaluation"><strong>automatic evaluation</strong></a> and
+<a href="#autorater-evaluation"><strong>autorater evaluation</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="human-in-the-loop"></a>
+<h2 class="hide-from-toc" id="human-in-the-loop-hitl" data-text=" human in the loop (HITL)" tabindex="-1"> human in the loop (HITL)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A loosely-defined idiom that could mean either of the following:</p>
+
+<ul>
+<li>A policy of viewing <a href="#generative-AI"><strong>generative AI</strong></a> output critically or
+skeptically.</li>
+<li>A strategy or system for ensuring that people help shape, evaluate, and refine
+a model&#39;s behavior. Keeping a human in the loop enables an AI to benefit from
+both machine intelligence and human intelligence. For example, a system in
+which an AI generates code which software engineers then review is a
+human-in-the-loop system.</li>
+</ul>
+
+<p><a class="glossary-anchor" name="i"></a>
+<h2 class="glossary" id="i" data-text="I" tabindex="-1">I</h2></p>
+
+<p><a class="glossary-anchor" name="in-context-learning"></a>
+<h2 class="hide-from-toc" id="in-context-learning" data-text="in-context learning" tabindex="-1">in-context learning</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Synonym for <a href="#few-shot-prompting"><strong>few-shot prompting</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="inference"></a>
+<h2 class="hide-from-toc" id="inference" data-text=" inference" tabindex="-1"> inference</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="ML Fundamentals">#fundamentals</div>
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>In traditional machine learning, the process of making predictions by
+applying a trained model to <a href="/machine-learning/glossary#unlabeled_example"><strong>unlabeled examples</strong></a>.
+See <a href="/machine-learning/intro-to-ml/supervised">Supervised Learning</a>
+in the Intro to ML course to learn more.</p>
+
+<p>In <a href="#large-language-model"><strong>large language models</strong></a>, inference is the
+process of using a trained model to generate a <a href="#response"><strong>response</strong></a>
+to an input <a href="#prompt"><strong>prompt</strong></a>.</p>
+
+<p>Inference has a somewhat different meaning in statistics. See the
+<a href="https://wikipedia.org/wiki/Statistical_inference" target="T">
+Wikipedia article on statistical inference</a> for details.</p>
+
+<p><a class="glossary-anchor" name="instruction-tuning"></a>
+<h2 class="hide-from-toc" id="instruction-tuning" data-text=" instruction tuning" tabindex="-1"> instruction tuning</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A form of <a href="#fine-tuning"><strong>fine-tuning</strong></a> that improves a
+<a href="#generative-AI"><strong>generative AI</strong></a> model&#39;s ability to follow
+instructions. Instruction tuning involves training a model on a series
+of instruction prompts, typically covering a wide
+variety of tasks. The resulting instruction-tuned model then tends to
+generate useful <a href="#response"><strong>responses</strong></a> to
+<a href="#zero-shot-prompting"><strong>zero-shot prompts</strong></a> across a variety of tasks.</p>
+
+<p>Compare and contrast with:</p>
+
+<ul>
+<li><a href="#parameter-efficient-tuning"><strong>parameter-efficient tuning</strong></a></li>
+<li><a href="#prompt-tuning"><strong>prompt tuning</strong></a></li>
+</ul>
+
+
+
+<p><a class="glossary-anchor" name="l"></a>
+<h2 class="glossary" id="l" data-text="L" tabindex="-1">L</h2></p>
+
+<p><a class="glossary-anchor" name="large-language-model"></a>
+<h2 class="hide-from-toc" id="large-language-model" data-text=" large language model" tabindex="-1"> large language model</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>At a minimum, a <a href="/machine-learning/glossary#language-model"><strong>language model</strong></a> having a very high number
+of <a href="/machine-learning/glossary#parameter"><strong>parameters</strong></a>. More informally, any
+<a href="/machine-learning/glossary#Transformer"><b>Transformer</b></a>-based language model, such as
+<a href="#Gemini"><b>Gemini</b></a> or <a href="#GPT"><b>GPT</b></a>.</p>
+
+<p>See <a href="/machine-learning/crash-course/llm">Large language models (LLMs)</a>
+in Machine Learning Crash Course for more information.</p>
+
+<p><a class="glossary-anchor" name="latency"></a>
+<h2 class="hide-from-toc" id="latency" data-text=" latency" tabindex="-1"> latency</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The time it takes for a model to process input and generate a response.
+A <em>high</em> latency response takes takes longer to generate than a
+<em>low</em> latency response.</p>
+
+<p>Factors that influence latency of
+<a href="#large-language-model"><strong>large language models</strong></a> include:</p>
+
+<ul>
+<li>Input and output <a href="/machine-learning/glossary#token"><strong>token</strong></a> lengths</li>
+<li>Model complexity</li>
+<li>The infrastructure the model runs on</li>
+</ul>
+
+<p>Optimizing for latency is crucial for creating responsive and user-friendly
+applications.</p>
+
+<p><a class="glossary-anchor" name="LLM"></a>
+<h2 class="hide-from-toc" id="llm" data-text=" LLM" tabindex="-1"> LLM</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Abbreviation for <a href="#large-language-model"><strong>large language model</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="LLM-evaluation"></a>
+<a name="LLM-evaluations"></a>
+<h2 class="hide-from-toc" id="llm-evaluations-evals" data-text=" LLM evaluations (evals)" tabindex="-1"> LLM evaluations (evals)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Metric">#Metric</div>
+</div></p>
+
+<p>A set of metrics and benchmarks for assessing the performance of
+<a href="#large-language-model"><strong>large language models</strong></a> (LLMs). At a high level,
+LLM evaluations:</p>
+
+<ul>
+<li>Help researchers identify areas where LLMs need improvement.</li>
+<li>Are useful in comparing different LLMs and identifying the best LLM for a
+particular task.</li>
+<li>Help ensure that LLMs are safe and ethical to use.</li>
+</ul>
+
+
+
+<p>See <a href="/machine-learning/crash-course/linear-regression">Large language
+models (LLMs)</a>
+in Machine Learning Crash Course for more information.</p>
+
+<p><a class="glossary-anchor" name="LoRA"></a>
+<h2 class="hide-from-toc" id="lora" data-text=" LoRA" tabindex="-1"> LoRA</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Abbreviation for <a href="#Low-Rank-Adaptability"><strong>Low-Rank Adaptability</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="Low-Rank-Adaptability"></a>
+<h2 class="hide-from-toc" id="low-rank-adaptability-lora" data-text=" Low-Rank Adaptability (LoRA)" tabindex="-1"> Low-Rank Adaptability (LoRA)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#parameter-efficient-tuning"><strong>parameter-efficient</strong></a> technique for
+<a href="#fine-tuning"><strong>fine tuning</strong></a> that &quot;freezes&quot; the model&#39;s pre-trained
+weights (such that they can no longer be modified) and then inserts a small set
+of trainable weights into the model. This set of trainable weights (also known
+as &quot;update matrixes&quot;) is considerably smaller than the base model and is
+therefore much faster to train.</p>
+
+<p>LoRA provides the following benefits:</p>
+
+<ul>
+<li>Improves the quality of a model&#39;s predictions for the domain where the fine
+tuning is applied.</li>
+<li>Fine-tunes faster than techniques that require fine-tuning <em>all</em> of a model&#39;s
+parameters.</li>
+<li>Reduces the computational cost of <a href="#inference"><strong>inference</strong></a> by enabling
+concurrent serving of multiple specialized models sharing the same base
+model.</li>
+</ul>
+
+<section class="expandable">
+
+<h4 class="showalways" id="click-the-icon-to-learn-more-about-update-matrixes-in-lora." data-text=" Click the icon to learn more about update matrixes in LoRA. " tabindex="-1">
+Click the icon to learn more about update matrixes in LoRA.
+</h4>
+
+<div class="expand-background">
+
+The update matrixes used in LoRA consist of
+<a href="https://wikipedia.org/wiki/Rank_factorization">rank decomposition matrixes</a>,
+which are derived from the base model to help filter out noise and
+focus training on the most important features of the model.
+
+</div>
+
+<hr />
+</section>
+
+
+
+<p><a class="glossary-anchor" name="m"></a>
+<h2 class="glossary" id="m" data-text="M" tabindex="-1">M</h2></p>
+
+<p><a class="glossary-anchor" name="machine_translation"></a>
+<a name="machine-translation"></a>
+<h2 class="hide-from-toc" id="machine-translation" data-text=" machine translation" tabindex="-1"> machine translation</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Using software (typically, a machine learning model) to convert text from
+one human language to another human language, for example, from English to
+Japanese.</p>
+
+</li>
+</ul>
+
+<p><a class="glossary-anchor" name="mean-average-precision-at-k"></a>
+<h2 class="hide-from-toc" id="mean-average-precision-at-k-mapk" data-text=" mean average precision at k (mAP@k)" tabindex="-1"> mean average precision at k (mAP@k)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Metric">#Metric</div>
+</div></p>
+
+<p>The statistical mean of all
+<a href="/machine-learning/glossary#average-precision-at-k"><strong>average precision at k</strong></a> scores across
+a validation dataset. One use of mean average precision at k is to judge
+the quality of recommendations generated by a
+<a href="/machine-learning/glossary#recommendation-system"><strong>recommendation system</strong></a>.</p>
+
+<p>Although the phrase &quot;mean average&quot; sounds redundant, the name of
+the metric is appropriate. After all, this metric finds the mean
+of multiple <em>average precision at k</em> values.</p>
+
+<section class="expandable">
+
+<h4 class="showalways" id="click-the-icon-to-see-an-example." data-text=" Click the icon to see an example. " tabindex="-1">
+Click the icon to see an example.
+</h4>
+
+<div class="expand-background">
+
+<p>Suppose you build a recommendation system that generates a personalized
+list of recommended novels for each user. Based on feedback from selected
+users, you calculate the following five average precision at k scores (one
+score per user):</p>
+
+<ul>
+  <li>0.73</li>
+  <li>0.77</li>
+  <li>0.67</li>
+  <li>0.82</li>
+  <li>0.76</li>
+</ul>
+
+<p>The mean Average Precision at K is therefore:</p>
+
+<div>
+$$\text{mean } = \frac{\text{0.73 + 0.77 + 0.67 + 0.82 + 0.76}}
+                      {\text{5}} = \text{0.75}$$
+</div>
+
+</div>
+
+<hr />
+</section>
+
+<p><a class="glossary-anchor" name="mixture-of-experts"></a>
+<h2 class="hide-from-toc" id="mixture-of-experts" data-text=" mixture of experts" tabindex="-1"> mixture of experts</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A scheme to increase <a href="/machine-learning/glossary#neural-network"><strong>neural network</strong></a> efficiency by
+using only a subset of its parameters (known as an <strong>expert</strong>) to process
+a given input <a href="/machine-learning/glossary#token"><strong>token</strong></a> or <a href="/machine-learning/glossary#example"><strong>example</strong></a>. A
+<strong>gating network</strong> routes each input token or example to the proper expert(s).</p>
+
+<p>For details, see either of the following papers:</p>
+
+<ul>
+<li><a href="https://arxiv.org/abs/1701.06538">Outrageously Large Neural Networks: The
+Sparsely-Gated Mixture-of-Experts Layer</a></li>
+<li><a href="https://research.google/blog/mixture-of-experts-with-expert-choice-routing/?m=1">Mixture-of-Experts with Expert Choice
+Routing</a></li>
+</ul>
+
+<p><a class="glossary-anchor" name="MMIT"></a>
+<h2 class="hide-from-toc" id="mmit" data-text=" MMIT" tabindex="-1"> MMIT</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Abbreviation for
+<a href="/machine-learning/glossary#multimodal-instruction-tuned"><strong>multimodal instruction-tuned</strong></a>.</p>
+
+
+
+<p><a class="glossary-anchor" name="model_cascading"></a>
+<h2 class="hide-from-toc" id="model-cascading" data-text=" model cascading" tabindex="-1"> model cascading</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A system that picks the ideal <a href="/machine-learning/glossary#model"><strong>model</strong></a> for a specific inference
+query.</p>
+
+<p>Imagine a group of models, ranging from very large (lots of
+<a href="/machine-learning/glossary#parameter"><strong>parameters</strong></a>) to much smaller (far fewer parameters).
+Very large models consume more computational resources at
+<a href="#inference"><strong>inference</strong></a> time than smaller models. However, very large
+models can typically infer more complex requests than smaller models.
+Model cascading determines the complexity of the inference query and then
+picks the appropriate model to perform the inference.
+The main motivation for model cascading is to reduce inference costs by
+generally selecting smaller models, and only selecting a larger model for more
+complex queries.</p>
+
+<p>Imagine that a small model runs on a phone and a larger version of that model
+runs on a remote server. Good model cascading reduces cost and
+<a href="#latency"><strong>latency</strong></a> by enabling the smaller model to handle simple requests
+and only calling the remote model to handle complex requests.</p>
+
+<p>See also <a href="#model_router"><strong>model router</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="model_router"></a>
+<h2 class="hide-from-toc" id="model-router" data-text=" model router" tabindex="-1"> model router</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The algorithm that determines the ideal <a href="/machine-learning/glossary#model"><strong>model</strong></a> for
+<a href="#inference"><strong>inference</strong></a> in <a href="#model_cascading"><strong>model cascading</strong></a>.
+A model router is itself typically a machine learning model that
+gradually learns how to pick the best model for a given input.
+However, a model router could sometimes be a simpler,
+non-machine learning algorithm.</p>
+
+<p><a class="glossary-anchor" name="MOE"></a>
+<h2 class="hide-from-toc" id="moe" data-text=" MOE" tabindex="-1"> MOE</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Abbreviation for <a href="#mixture-of-experts"><strong>mixture of experts</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="MT"></a>
+<h2 class="hide-from-toc" id="mt" data-text=" MT" tabindex="-1"> MT</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Abbreviation for <a href="#machine-translation"><strong>machine translation</strong></a>.</p>
+
+
+
+<p><a class="glossary-anchor" name="n"></a>
+<h2 class="glossary" id="n" data-text="N" tabindex="-1">N</h2></p>
+
+<p><a class="glossary-anchor" name="Nano"></a>
+<h2 class="hide-from-toc" id="nano" data-text=" Nano" tabindex="-1"> Nano</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A relatively small <a href="#Gemini-models"><strong>Gemini model</strong></a> designed for on-device
+use. See <a href="https://deepmind.google/models/gemini/nano">Gemini Nano</a> for details.</p>
+
+
+
+<p>See also <a href="#Pro"><strong>Pro</strong></a> and <a href="#Ultra"><strong>Ultra</strong></a>.</p>
+
+</li>
+</ul>
+
+<p><a class="glossary-anchor" name="no-one-right-answer"></a>
+<h2 class="hide-from-toc" id="no-one-right-answer-nora" data-text=" no one right answer (NORA)" tabindex="-1"> no one right answer (NORA)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#prompt"><strong>prompt</strong></a> having <em>multiple</em> correct <a href="#response"><strong>responses</strong></a>.
+For example, the following prompt has no one right answer:</p>
+
+<blockquote>
+<p>Tell me a funny joke about elephants.</p>
+</blockquote>
+
+<p><a href="#evaluation"><strong>Evaluating</strong></a> the responses to no one right answer prompts
+is usually far more subjective than evaluating prompts with
+<a href="#one-right-answer"><strong>one right answer</strong></a>. For example, evaluating an elephant
+joke requires a systematic way to determine how funny the joke is.</p>
+
+
+
+<p><a class="glossary-anchor" name="NORA"></a>
+<h2 class="hide-from-toc" id="nora" data-text=" NORA" tabindex="-1"> NORA</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Abbreviation for <a href="#no-one-right-answer"><strong>no one right answer</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="Notebook-LM"></a>
+<h2 class="hide-from-toc" id="notebook-lm" data-text=" Notebook LM" tabindex="-1"> Notebook LM</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A Gemini-based tool that enables users to upload documents and then
+use <a href="#prompt"><strong>prompts</strong></a> to ask questions about, summarize, or organize
+those documents. For example, an author could upload several short stories
+and ask Notebook LM to find their common themes or to identify which one would
+make the best movie.</p>
+
+<p><a class="glossary-anchor" name="o"></a>
+<h2 class="glossary" id="o" data-text="O" tabindex="-1">O</h2></p>
+
+</span></aside>
+<p><a class="glossary-anchor" name="one-right-answer"></a>
+<h2 class="hide-from-toc" id="one-right-answer-ora" data-text=" one right answer (ORA)" tabindex="-1"> one right answer (ORA)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#prompt"><strong>prompt</strong></a> having a <em>single</em> correct <a href="#response"><strong>response</strong></a>.
+For example, consider the following prompt:</p>
+
+<blockquote>
+<p>True or false: Saturn is bigger than Mars.</p>
+</blockquote>
+
+<p>The only correct response is <em>true</em>.</p>
+
+<p>Contrast with <a href="#no-one-right-answer"><strong>no one right answer</strong></a>.</p>
+
+
+
+<p><a class="glossary-anchor" name="one-shot-prompting"></a>
+<h2 class="hide-from-toc" id="one-shot-prompting" data-text=" one-shot prompting" tabindex="-1"> one-shot prompting</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#prompt"><strong>prompt</strong></a> that contains <em>one</em> example demonstrating how the
+<a href="#large-language-model"><strong>large language model</strong></a> should respond. For example,
+the following prompt contains one example showing a large language model how
+it should answer a query.</p>
+
+<table>
+  <tr> <th>Parts of one prompt</th> <th>Notes</th> </tr>
+  <tr>
+    <td><tt>What is the official currency of the specified country?</tt></td>
+    <td>The question you want the LLM to answer.</td>
+  </tr>
+  <tr> <td><tt>France: EUR</tt></td>         <td>One example.</td> </tr>
+  <tr> <td><tt>India:</tt></td>              <td>The actual query.</td> </tr>
+</table>
+
+<p>Compare and contrast <strong>one-shot prompting</strong> with the following terms:</p>
+
+<ul>
+<li><a href="#zero-shot-prompting"><strong>zero-shot prompting</strong></a></li>
+<li><a href="#few-shot-prompting"><strong>few-shot prompting</strong></a></li>
+</ul>
+
+<p><a class="glossary-anchor" name="ORA"></a>
+<h2 class="hide-from-toc" id="ora" data-text=" ORA" tabindex="-1"> ORA</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Abbreviation for <a href="#one-right-answer"><strong>one right answer</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="p"></a>
+<h2 class="glossary" id="p" data-text="P" tabindex="-1">P</h2></p>
+
+<p><a class="glossary-anchor" name="parameter-efficient-tuning"></a>
+<h2 class="hide-from-toc" id="parameter-efficient-tuning" data-text=" parameter-efficient tuning" tabindex="-1"> parameter-efficient tuning</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A set of techniques to <a href="#fine-tuning"><strong>fine-tune</strong></a> a large
+<a href="#pre-trained-model"><strong>pre-trained language model (PLM)</strong></a>
+more efficiently than full <a href="#fine-tuning"><strong>fine-tuning</strong></a>. Parameter-efficient
+tuning typically fine-tunes far fewer <a href="/machine-learning/glossary#parameter"><strong>parameters</strong></a> than full
+fine-tuning, yet generally produces a
+<a href="#large-language-model"><strong>large language model</strong></a> that performs
+as well (or almost as well) as a large language model built from full
+fine-tuning.</p>
+
+
+
+<p>Compare and contrast parameter-efficient tuning with:</p>
+
+<ul>
+<li><a href="#instruction-tuning"><strong>instruction tuning</strong></a></li>
+<li><a href="#prompt-tuning"><strong>prompt tuning</strong></a></li>
+</ul>
+
+<p>Parameter-efficient tuning is also known as <strong>parameter-efficient fine-tuning</strong>.</p>
+
+<p><a class="glossary-anchor" name="pax"></a>
+<h2 class="hide-from-toc" id="pax" data-text=" Pax" tabindex="-1"> Pax</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A programming framework designed for training large-scale
+<a href="/machine-learning/glossary#neural-network"><strong>neural network</strong></a> <a href="/machine-learning/glossary#model"><strong>models</strong></a> so large
+that they span multiple <a href="/machine-learning/glossary#TPU"><strong>TPU</strong></a>
+<a href="/machine-learning/glossary#accelerator-chip"><strong>accelerator chip</strong></a> <a href="/machine-learning/glossary#TPU_slice"><strong>slices</strong></a>
+or <a href="/machine-learning/glossary#TPU_Pod"><strong>pods</strong></a>.</p>
+
+<p>Pax is built on <a href="/machine-learning/glossary#flax"><strong>Flax</strong></a>, which is built on <a href="/machine-learning/glossary#JAX"><strong>JAX</strong></a>.</p>
+
+<p>
+<img src="/static/machine-learning/glossary/images/Pax.png"
+     width="300"
+     loading="lazy"
+     alt="Diagram indicating Pax's position in the software stack.
+          Pax is built on top of JAX. Pax itself consists of three
+          layers. The bottom layer contains TensorStore and Flax.
+          The middle layer contains Optax and Flaxformer. The top
+          layer contains Praxis Modeling Library. Fiddle is built
+          on top of Pax."
+>
+</p>
+
+
+
+
+
+
+
+<p><a class="glossary-anchor" name="PLM"></a>
+<h2 class="hide-from-toc" id="plm" data-text=" PLM" tabindex="-1"> PLM</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Abbreviation for <a href="#pre-trained-model"><strong>pre-trained language model</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="post-trained-model"></a>
+<h2 class="hide-from-toc" id="post-trained-model" data-text=" post-trained model" tabindex="-1"> post-trained model</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Loosely-defined term that typically refers to a
+<a href="#pre-trained-model"><strong>pre-trained model</strong></a> that has gone through some
+post-processing, such as one or more of the following:</p>
+
+<ul>
+<li><a href="#distillation"><strong>Distillation</strong></a></li>
+<li><a href="#fine-tuning"><strong>Fine-tuning</strong></a></li>
+<li><a href="#instruction-tuning"><strong>Instruction tuning</strong></a></li>
+</ul>
+
+<p><a class="glossary-anchor" name="pre-trained-model"></a>
+<h2 class="hide-from-toc" id="pre-trained-model" data-text=" pre-trained model" tabindex="-1"> pre-trained model</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Although this term could refer to any trained <a href="/machine-learning/glossary#model"><strong>model</strong></a> or
+trained <a href="/machine-learning/glossary#embedding_vector"><strong>embedding vector</strong></a>, pre-trained model now
+typically refers to a trained <a href="#large-language-model"><strong>large language model</strong></a>
+or other form of trained <a href="#generative-AI"><strong>generative AI</strong></a> model.</p>
+
+<p>See also <a href="#base-model"><strong>base model</strong></a> and
+<a href="#foundation-model"><strong>foundation model</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="pre-training"></a>
+<h2 class="hide-from-toc" id="pre-training" data-text=" pre-training" tabindex="-1"> pre-training</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The initial <a href="/machine-learning/glossary#training"><strong>training</strong></a> of a model on a large
+<a href="/machine-learning/glossary#dataset"><strong>dataset</strong></a>. Some pre-trained models
+are clumsy giants and must typically be refined through additional training.
+For example, ML experts might pre-train a
+<a href="#large-language-model"><strong>large language model</strong></a> on a vast text dataset,
+such as all the English pages in Wikipedia. Following pre-training, the
+resulting model might be further refined through any of the following
+techniques:</p>
+
+<ul>
+<li><a href="#distillation"><strong>distillation</strong></a></li>
+<li><a href="#fine-tuning"><strong>fine-tuning</strong></a></li>
+<li><a href="#instruction-tuning"><strong>instruction tuning</strong></a></li>
+<li><a href="#parameter-efficient-tuning"><strong>parameter-efficient tuning</strong></a></li>
+<li><a href="#prompt-tuning"><strong>prompt-tuning</strong></a></li>
+</ul>
+
+<p><a class="glossary-anchor" name="Pro"></a>
+<h2 class="hide-from-toc" id="pro" data-text=" Pro" tabindex="-1"> Pro</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#Gemini-models"><strong>Gemini model</strong></a> with fewer <a href="/machine-learning/glossary#parameter"><strong>parameters</strong></a>
+than <a href="#Ultra"><strong>Ultra</strong></a> but more parameters than <a href="#Nano"><strong>Nano</strong></a>. See
+<a href="https://deepmind.google/models/gemini/pro/">Gemini Pro</a>
+for details.</p>
+
+
+
+<p><a class="glossary-anchor" name="prompt"></a>
+<h2 class="hide-from-toc" id="prompt" data-text=" prompt" tabindex="-1"> prompt</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Any text entered as input to a <a href="#large-language-model"><strong>large language model</strong></a>
+to condition the model to behave in a certain way. Prompts can be as short as a
+phrase or arbitrarily long (for example, the entire text of a novel). Prompts
+fall into multiple categories, including those shown in the following table:</p>
+
+<table>
+  <tr><th>Prompt category</th> <th>Example</th> <th>Notes</th></tr>
+  <tr>
+    <td>Question</td>
+    <td><tt>How fast can a pigeon fly?</tt></td>
+  </tr>
+  <tr>
+    <td>Instruction</td>
+    <td><tt>Write a funny poem about arbitrage.</tt></td>
+    <td>A prompt that asks the large language model to <i>do</i> something.</td>
+  </tr>
+  <tr>
+    <td>Example</td>
+    <td><tt>Translate Markdown code to HTML. For example:
+        <br/>
+        Markdown: * list item
+        <br/>
+        HTML: &lt;ul&gt; &lt;li&gt;list item&lt;/li&gt; &lt;/ul&gt;</tt></td>
+    <td>The first sentence in this example prompt is an instruction.
+        The remainder of the prompt is the example. </td>
+  </tr>
+  <tr>
+    <td><a href="#role-prompting"><b>Role</b></a></td>
+    <td><tt>Explain why gradient descent is used in machine learning training to
+        a PhD in Physics.</tt></td>
+    <td>The first part of the sentence is an instruction; the phrase
+        "to a PhD in Physics" is the role portion.</td>
+  </tr>
+  <tr>
+    <td>Partial input for the model to complete</td>
+    <td><tt>The Prime Minister of the United Kingdom lives at</tt></td>
+    <td>A partial input prompt can either end abruptly (as this example does)
+        or end with an underscore.</td>
+  </tr>
+</table>
+
+<p>A <a href="#generative-AI"><strong>generative AI</strong></a> model can respond to a prompt with text,
+code, images, <a href="/machine-learning/glossary#embedding_vector"><strong>embeddings</strong></a>, videos…almost anything.</p>
+
+<p><a class="glossary-anchor" name="prompt-based-learning"></a>
+<h2 class="hide-from-toc" id="prompt-based-learning" data-text=" prompt-based learning" tabindex="-1"> prompt-based learning</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A capability of certain <a href="/machine-learning/glossary#model"><strong>models</strong></a> that enables them to adapt
+their behavior in response to arbitrary text input (<a href="#prompt"><strong>prompts</strong></a>).
+In a typical prompt-based learning paradigm, a
+<a href="#large-language-model"><strong>large language model</strong></a> responds to a prompt by
+generating text. For example, suppose a user enters the following prompt:</p>
+
+<blockquote>
+<p>Summarize Newton&#39;s Third Law of Motion.</p>
+</blockquote>
+
+<p>A model capable of prompt-based learning isn&#39;t specifically trained to answer
+the previous prompt. Rather, the model &quot;knows&quot; a lot of facts about physics,
+a lot about general language rules, and a lot about what constitutes generally
+useful answers. That knowledge is sufficient to provide a (hopefully) useful
+answer. Additional human feedback (&quot;That answer was too complicated.&quot; or
+&quot;What&#39;s a reaction?&quot;) enables some prompt-based learning systems to gradually
+improve the usefulness of their answers.</p>
+
+<p><a class="glossary-anchor" name="prompt-design"></a>
+<h2 class="hide-from-toc" id="prompt-design" data-text=" prompt design" tabindex="-1"> prompt design</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Synonym for <a href="#prompt-engineering"><strong>prompt engineering</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="prompt-engineering"></a>
+<h2 class="hide-from-toc" id="prompt-engineering" data-text=" prompt engineering" tabindex="-1"> prompt engineering</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The art of creating <a href="#prompt"><strong>prompts</strong></a> that elicit the desired
+<a href="#response"><strong>responses</strong></a> from a
+<a href="#large-language-model"><strong>large language model</strong></a>. Humans perform prompt
+engineering. Writing well-structured prompts is an essential part of ensuring
+useful responses from a large language model. Prompt engineering depends on
+many factors, including:</p>
+
+<ul>
+<li>The dataset used to <a href="#pre-training"><strong>pre-train</strong></a> and possibly
+<a href="#fine-tuning"><strong>fine-tune</strong></a> the large language model.</li>
+<li>The <a href="#temperature"><strong>temperature</strong></a> and other decoding parameters that the
+model uses to generate responses.</li>
+</ul>
+
+<p><a href="#prompt-design"><strong>Prompt design</strong></a> is a synonym for prompt engineering.</p>
+
+<p>See
+<a href="https://developers.generativeai.google/guide/prompt_best_practices">Introduction to prompt design</a>
+for more details on writing helpful prompts.</p>
+
+<p><a class="glossary-anchor" name="prompt-set"></a>
+<h2 class="hide-from-toc" id="prompt-set" data-text=" prompt set" tabindex="-1"> prompt set</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A group of <a href="#prompt"><strong>prompts</strong></a> for <a href="#evaluation"><strong>evaluating</strong></a> a
+<a href="#large-language-model"><strong>large language model</strong></a>. For example, the following
+illustration shows a prompt set consisting of three prompts:</p>
+
+<p>
+<img src="/static/machine-learning/glossary/images/PromptSet.png"
+     loading="lazy"
+     width="670"
+     alt="Three prompts to an LLM produce three responses. The three prompts
+          are the prompt set. The three responses are the response set."
+>
+</p>
+
+<p>Good prompt sets consist of a sufficiently &quot;wide&quot; collection of prompts to
+thoroughly evaluate the safety and helpfulness of a large language model.
+
+
+<p>See also <a href="#response-set"><strong>response set</strong></a>.</p>
+
+<p><a class="glossary-anchor" name="prompt-tuning"></a>
+<h2 class="hide-from-toc" id="prompt-tuning" data-text=" prompt tuning" tabindex="-1"> prompt tuning</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#parameter-efficient-tuning"><strong>parameter efficient tuning</strong></a> mechanism
+that learns a &quot;prefix&quot; that the system prepends to the
+actual <a href="#prompt"><strong>prompt</strong></a>.</p>
+
+<p>One variation of prompt tuning—sometimes called <strong>prefix tuning</strong>—is to
+prepend the prefix at <em>every layer</em>. In contrast, most prompt tuning only
+adds a prefix to the <a href="/machine-learning/glossary#input-layer"><strong>input layer</strong></a>.</p>
+
+<section class="expandable">
+
+<h4 class="showalways" id="click-the-icon-to-learn-more-about-prefixes." data-text=" Click the icon to learn more about prefixes. " tabindex="-1">
+Click the icon to learn more about prefixes.
+</h4>
+
+<div class="expand-background">
+<p>For prompt tuning, the "prefix" (also known as a "soft prompt") is a
+handful of learned, task-specific vectors prepended to the text token
+embeddings from the actual prompt. The system learns the soft prompt by
+freezing all other model parameters and fine-tuning on a specific task.</p>
+</div>
+
+<hr />
+</section>
+
+<p><a class="glossary-anchor" name="r"></a>
+<h2 class="glossary" id="r" data-text="R" tabindex="-1">R</h2></p>
+
+</li>
+</ul>
+
+<p><a class="glossary-anchor" name="reference_text"></a>
+<a name="reference-text"></a>
+<h2 class="hide-from-toc" id="reference-text" data-text=" reference text" tabindex="-1"> reference text</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>An expert&#39;s response to a <a href="#prompt"><strong>prompt</strong></a>. For example, given the
+following prompt:</p>
+
+<blockquote>
+<p>Translate the question &quot;What is your name?&quot; from English to French.</p>
+</blockquote>
+
+<p>An expert&#39;s response might be:</p>
+
+<blockquote>
+<p>Comment vous appelez-vous?</p>
+</blockquote>
+
+<p>Various metrics (such as <a href="/machine-learning/glossary#ROUGE"><strong>ROUGE</strong></a>) measure the degree to which the
+reference text matches an ML model&#39;s <a href="#generated-text"><strong>generated text</strong></a>.</p>
+<aside class="note"><strong>Note:</strong><span> The expert is typically a human but could be an ML model.</span></aside>
+<p><a class="glossary-anchor" name="reflection"></a>
+<h2 class="hide-from-toc" id="reflection" data-text=" reflection " tabindex="-1"> reflection </h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+  <div class="glossary-icon" title="Agentic">#agent</div>
+</div></p>
+
+<p>A strategy for improving the quality of an
+<a href="#agentic-workflow"><strong>agentic workflow</strong></a> by examining (reflecting on) a
+step&#39;s output before passing that output to the next step.</p>
+
+<p>The examiner is often the same <a href="#LLM"><strong>LLM</strong></a> that generated the response
+(though it could be a different LLM).
+How could the same LLM that generated a response be a fair judge of its
+own response? The &quot;trick&quot; is to put the LLM in a critical (reflective)
+mindset. This process is analogous to a writer who uses a creative
+mindset to write a first draft and then switches to a critical mindset to
+edit it.</p>
+
+<p>For example, imagine an agentic workflow whose first step is to create
+text for coffee mugs. The prompt for this step might be:</p>
+
+<blockquote>
+<p>You are a creative. Generate humorous, original text of less than 50
+characters suitable for a coffee mug.</p>
+</blockquote>
+
+<p>Now imagine the following reflective prompt:</p>
+
+<blockquote>
+<p>You are a coffee drinker. Would you find the preceding response humorous?</p>
+</blockquote>
+
+<p>The workflow might then only pass text that receives a high reflection score
+to the next stage.</p>
+
+<p><a class="glossary-anchor" name="RLHF"></a>
+<h2 class="hide-from-toc" id="reinforcement-learning-from-human-feedback-rlhf" data-text=" Reinforcement Learning from Human Feedback (RLHF)" tabindex="-1"> Reinforcement Learning from Human Feedback (RLHF)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Using feedback from human raters to improve the quality of a model&#39;s
+<a href="#response"><strong>responses</strong></a>. For example, an RLHF mechanism can ask users to
+rate the quality of a model&#39;s response with a 👍 or 👎 emoji. The system
+can then adjust its future responses based on that feedback.</p>
+
+
+
+<p><a class="glossary-anchor" name="response"></a>
+<h2 class="hide-from-toc" id="response" data-text=" response" tabindex="-1"> response</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The text, images, audio, or video that a <a href="#generative-AI"><strong>generative AI</strong></a>
+model <a href="#inference"><strong>infers</strong></a>. In other words, a <a href="#prompt"><strong>prompt</strong></a> is
+the <em>input</em> to a generative AI model and the response is the <em>output</em>.</p>
+
+<p><a class="glossary-anchor" name="response-set"></a>
+<h2 class="hide-from-toc" id="response-set" data-text=" response set" tabindex="-1"> response set</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The collection of <a href="#response"><strong>responses</strong></a> a
+<a href="#large-language-model"><strong>large language model</strong></a> returns to an input
+<a href="#prompt-set"><strong>prompt set</strong></a>.</p>
+
+
+
+
+
+<p><a class="glossary-anchor" name="role-prompting"></a>
+<h2 class="hide-from-toc" id="role-prompting" data-text=" role prompting " tabindex="-1"> role prompting </h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#prompt"><strong>prompt</strong></a>, typically beginning with the pronoun <strong>you</strong>, that
+tells a <a href="#generative-AI"><strong>generative AI</strong></a> model to pretend to be a certain
+person or a certain role when generating the <a href="#response"><strong>response</strong></a>.
+Role prompting can help a generative AI model get into the right &quot;mindset&quot;
+in order to generate a more useful response. For example, any of the
+following role prompts might be appropriate depending on the kind of
+response you are seeking:</p>
+
+<blockquote>
+<p>You have a PhD in computer science.</p>
+</blockquote>
+
+<blockquote>
+<p>You are a software engineer who enjoys giving patient explanations about
+Python to new programming students.</p>
+</blockquote>
+
+<blockquote>
+<p>You are an action hero with a very particular set of programming skills.
+Assure me that you will find a particular item in a Python list.</p>
+</blockquote>
+
+<p><a class="glossary-anchor" name="s"></a>
+<h2 class="glossary" id="s" data-text="S" tabindex="-1">S</h2></p>
+
+<p><a class="glossary-anchor" name="soft_prompt_tuning"></a>
+<h2 class="hide-from-toc" id="soft-prompt-tuning" data-text=" soft prompt tuning" tabindex="-1"> soft prompt tuning</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A technique for tuning a <a href="#large-language-model"><strong>large language model</strong></a>
+for a particular task, without resource intensive
+<a href="#fine-tuning"><strong>fine-tuning</strong></a>. Instead of retraining all the
+<a href="/machine-learning/glossary#weight"><strong>weights</strong></a> in the model, soft prompt tuning
+automatically adjusts a <a href="#prompt"><strong>prompt</strong></a> to achieve the same goal.</p>
+
+<p>Given a textual prompt, soft prompt tuning
+typically appends additional token embeddings to the prompt and uses
+backpropagation to optimize the input.</p>
+
+<p>A &quot;hard&quot; prompt contains actual tokens instead of token embeddings.</p>
+
+<p><a class="glossary-anchor" name="specificational-coding"></a>
+<h2 class="hide-from-toc" id="specificational-coding" data-text="specificational coding" tabindex="-1">specificational coding</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The process of writing and maintaining a file in a human language (for example,
+English) that describes software. You can then tell a generative AI model or
+another software engineer to create the software that fulfills that description.</p>
+
+<p>Automatically-generated code generally requires iteration. In specificational
+coding, you iterate on the description file. By contrast, in
+<a href="#conversational-coding"><strong>conversational coding</strong></a>, you iterate within the
+prompt box. In practice, automatic code generation sometimes involves a
+combination of <em>both</em> specificational coding and conversational coding.</p>
+
+
+
+<p><a class="glossary-anchor" name="t"></a>
+<h2 class="glossary" id="t" data-text="T" tabindex="-1">T</h2></p>
+
+<p><a class="glossary-anchor" name="temperature"></a>
+<h2 class="hide-from-toc" id="temperature" data-text=" temperature" tabindex="-1"> temperature</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="/machine-learning/glossary#hyperparameter"><strong>hyperparameter</strong></a> that controls the degree of randomness
+of a model&#39;s output. Higher temperatures result in more random output,
+while lower temperatures result in less random output.</p>
+
+<p>Choosing the best temperature depends on the specific application and
+or string values.</p>
+
+
+
+
+
+
+
+
+
+<p><a class="glossary-anchor" name="u"></a>
+<h2 class="glossary" id="u" data-text="U" tabindex="-1">U</h2></p>
+
+<p><a class="glossary-anchor" name="Ultra"></a>
+<h2 class="hide-from-toc" id="ultra" data-text=" Ultra" tabindex="-1"> Ultra</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>The <a href="#Gemini-models"><strong>Gemini model</strong></a> with the most
+<a href="/machine-learning/glossary#parameter"><strong>parameters</strong></a>.
+See <a href="https://deepmind.google/models/gemini/ultra/">Gemini Ultra</a>
+for details.</p>
+
+
+
+<p>See also <a href="#Pro"><strong>Pro</strong></a> and <a href="#Nano"><strong>Nano</strong></a>.</p>
+
+
+
+<p><a class="glossary-anchor" name="v"></a>
+<h2 class="glossary" id="v" data-text="V" tabindex="-1">V</h2></p>
+
+<p><a class="glossary-anchor" name="Vertex"></a>
+<h2 class="hide-from-toc" id="vertex" data-text=" Vertex " tabindex="-1"> Vertex </h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Google Cloud">#GoogleCloud</div>
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div>
+Google Cloud&#39;s platform for AI and machine learning. Vertex provides tools
+and infrastructure for building, deploying, and managing AI applications,
+including access to <a href="#Gemini"><strong>Gemini</strong></a> models.</p>
+
+<p><a class="glossary-anchor" name="vibe-coding"></a>
+<h2 class="hide-from-toc" id="vibe-coding" data-text=" vibe coding" tabindex="-1"> vibe coding</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>Prompting a generative AI model to create software. That is, your prompts
+describe the software&#39;s purpose and features, which a generative AI model
+translates into source code. The generated code doesn&#39;t always match your
+intentions, so vibe coding usually requires iteration.</p>
+
+<p><a href="https://wikipedia.org/wiki/Andrej_Karpathy">Andrej Karpathy</a> coined the term
+vibe coding in this <a href="https://x.com/karpathy/status/1886192184808149383">X post</a>.
+In the X post, Karpathy describes it as &quot;a new kind of coding...where you fully
+give in to the vibes...&quot; So, the term originally implied an intentionally loose
+approach to creating software in which you might not even examine the generated
+code. However, the term has rapidly evolved in many circles to now mean <em>any</em>
+form of AI-generated coding.</p>
+
+<p>For a more detailed description of vibe coding, see
+
+<a href="https://cloud.google.com/discover/what-is-vibe-coding">What is vibe coding?</a>.
+
+
+<p>In addition, compare and contrast vibe coding with:</p>
+
+<ul>
+<li><a href="#specificational-coding"><strong>specificational coding</strong></a></li>
+<li><a href="#conversational-coding"><strong>conversational coding</strong></a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+<p><a class="glossary-anchor" name="z"></a>
+<h2 class="glossary" id="z" data-text="Z" tabindex="-1">Z</h2></p>
+
+<p><a class="glossary-anchor" name="zero-shot-prompting"></a>
+<h2 class="hide-from-toc" id="zero-shot-prompting" data-text=" zero-shot prompting" tabindex="-1"> zero-shot prompting</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Generative AI">#generativeAI</div>
+</div></p>
+
+<p>A <a href="#prompt"><strong>prompt</strong></a> that does <em>not</em> provide an example of how you want
+the <a href="#large-language-model"><strong>large language model</strong></a> to respond. For example:</p>
+
+<table>
+  <tr> <th>Parts of one prompt</th> <th>Notes</th> </tr>
+  <tr>
+    <td><tt>What is the official currency of the specified country?</tt></td>
+    <td>The question you want the LLM to answer.</td>
+  </tr>
+  <tr> <td><tt>India:</tt></td>              <td>The actual query.</td> </tr>
+</table>
+
+<p>The large language model might respond with any of the following:</p>
+
+<ul>
+<li>Rupee</li>
+<li>INR</li>
+<li>₹</li>
+<li>Indian rupee</li>
+<li>The rupee</li>
+<li>The Indian rupee</li>
+</ul>
+
+<p>All of the answers are correct, though you might prefer a particular format.</p>
+
+<p>Compare and contrast <strong>zero-shot prompting</strong> with the following terms:</p>
+
+<ul>
+<li><a href="#one-shot-prompting"><strong>one-shot prompting</strong></a></li>
+<li><a href="#few-shot-prompting"><strong>few-shot prompting</strong></a></li>
+</ul>
+  
+
+  
+</div>
+
+  
+    
+      <devsite-recommendations display="in-page" hidden yield>
+      </devsite-recommendations>
+    
+    
+      
+    <devsite-thumb-rating position="footer">
+    </devsite-thumb-rating>
+  
+       
+         <devsite-feedback
+  position="footer"
+  project-name="Machine Learning"
+  product-id="5005867"
+  bucket=""
+  context=""
+  version="t-devsite-webserver-20260915-r00-rc00.480402789007080698"
+  data-label="Send Feedback Button"
+  track-type="feedback"
+  track-name="sendFeedbackLink"
+  track-metadata-position="footer"
+  class="nocontent"
+  data-nosnippet
+  
+  
+  
+    project-icon="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/touchicon-180-new.png"
+  
+  
+  
+  >
+
+  <button>
+  
+    
+    Send feedback
+  
+  </button>
+</devsite-feedback>
+       
+    
+    
+      <devsite-recommendations id="recommendations-link" yield></devsite-recommendations>
+    
+  
+
+  <div class="devsite-floating-action-buttons"></div></article>
+
+
+<devsite-content-footer class="nocontent" data-nosnippet>
+  <p>Except as otherwise noted, the content of this page is licensed under the <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 License</a>, and code samples are licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0 License</a>. For details, see the <a href="https://developers.google.com/site-policies">Google Developers Site Policies</a>. Java is a registered trademark of Oracle and/or its affiliates.</p>
+  <p>Last updated 2026-04-13 UTC.</p>
+</devsite-content-footer>
+
+
+<devsite-notification
+>
+</devsite-notification>
+
+
+  
+<div class="devsite-content-data">
+  
+    
+    
+    <template class="devsite-thumb-rating-feedback">
+      <devsite-feedback
+  position="thumb-rating"
+  project-name="Machine Learning"
+  product-id="5005867"
+  bucket=""
+  context=""
+  version="t-devsite-webserver-20260915-r00-rc00.480402789007080698"
+  data-label="Send Feedback Button"
+  track-type="feedback"
+  track-name="sendFeedbackLink"
+  track-metadata-position="thumb-rating"
+  class="nocontent"
+  data-nosnippet
+  
+  
+  
+    project-icon="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/touchicon-180-new.png"
+  
+  
+  
+  >
+
+  <button>
+  
+    Need to tell us more?
+  
+  </button>
+</devsite-feedback>
+    </template>
+  
+  
+    <template class="devsite-content-data-template">
+      [[["Easy to understand","easyToUnderstand","thumb-up"],["Solved my problem","solvedMyProblem","thumb-up"],["Other","otherUp","thumb-up"]],[["Missing the information I need","missingTheInformationINeed","thumb-down"],["Too complicated / too many steps","tooComplicatedTooManySteps","thumb-down"],["Out of date","outOfDate","thumb-down"],["Samples / code issue","samplesCodeIssue","thumb-down"],["Other","otherDown","thumb-down"]],["Last updated 2026-04-13 UTC."],[],[]]
+    </template>
+  
+</div>
+            
+          </devsite-content>
+        </main>
+        <devsite-footer-promos class="devsite-footer">
+          
+            
+          
+        </devsite-footer-promos>
+        <devsite-footer-linkboxes class="devsite-footer">
+          
+            
+<nav class="devsite-footer-linkboxes nocontent"
+     aria-label="Footer links"
+     data-nosnippet>
+  
+  <ul class="devsite-footer-linkboxes-list">
+    
+    <li class="devsite-footer-linkbox ">
+    <h3 class="devsite-footer-linkbox-heading no-link">Engage</h3>
+      <ul class="devsite-footer-linkbox-list">
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="/program"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 1)"
+            >
+            
+          
+            Google Developer Program
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="/community"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 2)"
+            >
+            
+          
+            Google Developer Groups
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="/community/experts"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 3)"
+            >
+            
+          
+            Google Developer Experts
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="/community/accelerators"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 4)"
+            >
+            
+          
+            Accelerators
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="/community/nvidia"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 5)"
+            >
+            
+              
+              
+            
+          
+            Google Cloud & NVIDIA
+          
+          </a>
+          
+          
+        </li>
+        
+      </ul>
+    </li>
+    
+    <li class="devsite-footer-linkbox ">
+    <h3 class="devsite-footer-linkbox-heading no-link">Connect</h3>
+      <ul class="devsite-footer-linkbox-list">
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="//googledevelopers.blogspot.com"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 1)"
+            >
+            
+          
+            Blog
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://bsky.app/profile/developers.google.com"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 2)"
+            >
+            
+          
+            Bluesky
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://www.instagram.com/googlefordevs/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 3)"
+            >
+            
+          
+            Instagram
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://www.linkedin.com/showcase/googledevelopers/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 4)"
+            >
+            
+          
+            LinkedIn
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="//twitter.com/googledevs"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 5)"
+            >
+            
+          
+            X (Twitter)
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="//www.youtube.com/user/GoogleDevelopers"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 6)"
+            >
+            
+              
+              
+            
+          
+            YouTube
+          
+          </a>
+          
+          
+        </li>
+        
+      </ul>
+    </li>
+    
+    <li class="devsite-footer-linkbox ">
+    <h3 class="devsite-footer-linkbox-heading no-link">Build</h3>
+      <ul class="devsite-footer-linkbox-list">
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developer.android.com/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 1)"
+            >
+            
+          
+            Android
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developer.chrome.com/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 2)"
+            >
+            
+          
+            Chrome
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://firebase.google.com/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 3)"
+            >
+            
+          
+            Firebase
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://aistudio.google.com/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 4)"
+            >
+            
+          
+            Google AI Studio
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://antigravity.google/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 5)"
+            >
+            
+          
+            Google Antigravity
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://cloud.google.com/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 6)"
+            >
+            
+          
+            Google Cloud
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://play.google.com/console/about/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 7)"
+            >
+            
+          
+            Google Play
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="/products"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 8)"
+            >
+            
+              
+              
+            
+          
+            View all
+          
+          </a>
+          
+          
+        </li>
+        
+      </ul>
+    </li>
+    
+  </ul>
+  
+</nav>
+          
+        </devsite-footer-linkboxes>
+        <devsite-footer-utility class="devsite-footer">
+          
+            
+
+<div class="devsite-footer-utility nocontent" data-nosnippet>
+  
+  
+  <nav class="devsite-footer-sites" aria-label="Other Google Developers websites">
+    <a href="https://developers.google.com/"
+       class="devsite-footer-sites-logo-link gc-analytics-event"
+       data-category="Site-Wide Custom Events"
+       data-label="Footer Google Developers Link">
+      <picture>
+        
+        <img class="devsite-footer-sites-logo"
+             src="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/lockup-google-for-developers.svg"
+             loading="lazy"
+             alt="Google Developers">
+      </picture>
+    </a>
+    <ul class="devsite-footer-sites-list">
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//developer.android.com"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Android Link"
+         
+         >
+          Android
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//developer.chrome.com/home"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Chrome Link"
+         
+         >
+          Chrome
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//firebase.google.com"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Firebase Link"
+         
+         >
+          Firebase
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//cloud.google.com"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Google Cloud Platform Link"
+         
+         >
+          Google Cloud Platform
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//ai.google.dev/"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Google AI Link"
+         
+         >
+          Google AI
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="/products"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer All products Link"
+         
+         >
+          All products
+        </a>
+      </li>
+      
+    </ul>
+  </nav>
+  
+
+  
+  <nav class="devsite-footer-utility-links" aria-label="Utility links">
+    
+    <ul class="devsite-footer-utility-list">
+      
+      <li class="devsite-footer-utility-item
+                 ">
+        
+        
+        <a class="devsite-footer-utility-link gc-analytics-event"
+           href="/terms/site-terms"
+           data-category="Site-Wide Custom Events"
+           data-label="Footer Terms link"
+         >
+          Terms
+        </a>
+        
+      </li>
+      
+      <li class="devsite-footer-utility-item
+                 ">
+        
+        
+        <a class="devsite-footer-utility-link gc-analytics-event"
+           href="//policies.google.com/privacy"
+           data-category="Site-Wide Custom Events"
+           data-label="Footer Privacy link"
+         >
+          Privacy
+        </a>
+        
+      </li>
+      
+      <li class="devsite-footer-utility-item
+                 glue-cookie-notification-bar-control">
+        
+        
+        <a class="devsite-footer-utility-link gc-analytics-event"
+           href="#"
+           data-category="Site-Wide Custom Events"
+           data-label="Footer Manage cookies link"
+         
+           aria-hidden="true"
+         >
+          Manage cookies
+        </a>
+        
+      </li>
+      
+    </ul>
+    
+    
+<devsite-language-selector>
+  <ul role="presentation">
+    
+    
+    <li role="presentation">
+      <a role="menuitem" lang="en"
+        >English</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="de"
+        >Deutsch</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="es"
+        >Español</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="es_419"
+        >Español – América Latina</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="fr"
+        >Français</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="id"
+        >Indonesia</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="it"
+        >Italiano</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="pl"
+        >Polski</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="pt_br"
+        >Português – Brasil</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="vi"
+        >Tiếng Việt</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="tr"
+        >Türkçe</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ru"
+        >Русский</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="he"
+        >עברית</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ar"
+        >العربيّة</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="fa"
+        >فارسی</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="hi"
+        >हिंदी</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="bn"
+        >বাংলা</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="th"
+        >ภาษาไทย</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="zh_cn"
+        >中文 – 简体</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="zh_tw"
+        >中文 – 繁體</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ja"
+        >日本語</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ko"
+        >한국어</a>
+    </li>
+    
+  </ul>
+</devsite-language-selector>
+
+  </nav>
+</div>
+          
+        </devsite-footer-utility>
+        <devsite-panel>
+          
+        </devsite-panel>
+        
+          <devsite-concierge
+  
+  
+    data-info-panel
+  
+  
+    data-ai-panel
+  
+  
+  
+  
+    data-api-explorer-panel
+  >
+</devsite-concierge>
+        
+      </section>
+      </section>
+    <devsite-sitemask></devsite-sitemask>
+    <devsite-snackbar></devsite-snackbar>
+    <devsite-tooltip ></devsite-tooltip>
+    <devsite-heading-link></devsite-heading-link>
+    <devsite-analytics>
+      
+        <script type="application/json" analytics>[{&#34;dimensions&#34;: {&#34;dimension1&#34;: &#34;Signed out&#34;, &#34;dimension6&#34;: &#34;en&#34;, &#34;dimension11&#34;: false, &#34;dimension3&#34;: false, &#34;dimension4&#34;: &#34;Machine Learning&#34;, &#34;dimension5&#34;: &#34;en&#34;}, &#34;gaid&#34;: &#34;UA-24532603-1&#34;, &#34;metrics&#34;: {&#34;ratings_count&#34;: &#34;metric2&#34;, &#34;ratings_value&#34;: &#34;metric1&#34;}, &#34;purpose&#34;: 1}, {&#34;dimensions&#34;: {&#34;dimension1&#34;: &#34;Signed out&#34;, &#34;dimension6&#34;: &#34;en&#34;, &#34;dimension11&#34;: false, &#34;dimension3&#34;: false, &#34;dimension4&#34;: &#34;Machine Learning&#34;, &#34;dimension5&#34;: &#34;en&#34;}, &#34;gaid&#34;: &#34;UA-105980039-1&#34;, &#34;metrics&#34;: {&#34;ratings_count&#34;: &#34;metric2&#34;, &#34;ratings_value&#34;: &#34;metric1&#34;}, &#34;purpose&#34;: 0}]</script>
+<script type="application/json" tag-management>{&#34;at&#34;: &#34;True&#34;, &#34;ga4&#34;: [{&#34;id&#34;: &#34;G-272J68FCRF&#34;, &#34;purpose&#34;: 1}, {&#34;id&#34;: &#34;G-PRD3Z0HRX3&#34;, &#34;purpose&#34;: 0}], &#34;ga4p&#34;: [{&#34;id&#34;: &#34;G-272J68FCRF&#34;, &#34;purpose&#34;: 1}], &#34;gtm&#34;: [{&#34;id&#34;: &#34;GTM-T98GCPGN&#34;, &#34;purpose&#34;: 1}], &#34;parameters&#34;: {&#34;internalUser&#34;: &#34;False&#34;, &#34;language&#34;: {&#34;machineTranslated&#34;: &#34;False&#34;, &#34;requested&#34;: &#34;en&#34;, &#34;served&#34;: &#34;en&#34;}, &#34;pageType&#34;: &#34;article&#34;, &#34;projectName&#34;: &#34;Machine Learning&#34;, &#34;signedIn&#34;: &#34;False&#34;, &#34;tenant&#34;: &#34;developers&#34;, &#34;recommendations&#34;: {&#34;sourcePage&#34;: &#34;&#34;, &#34;sourceType&#34;: 0, &#34;sourceRank&#34;: 0, &#34;sourceIdenticalDescriptions&#34;: 0, &#34;sourceTitleWords&#34;: 0, &#34;sourceDescriptionWords&#34;: 0, &#34;experiment&#34;: &#34;&#34;}, &#34;experiment&#34;: {&#34;ids&#34;: &#34;&#34;}}}</script>
+      
+    </devsite-analytics>
+    
+      <devsite-badger></devsite-badger>
+    
+    
+    
+    
+<script nonce="j9ukP7hZ2o+JnuElhnybRl2FwKDjN2">
+  
+  (function(d,e,v,s,i,t,E){d['GoogleDevelopersObject']=i;
+    t=e.createElement(v);t.async=1;t.src=s;E=e.getElementsByTagName(v)[0];
+    E.parentNode.insertBefore(t,E);})(window, document, 'script',
+    'https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/js/app_loader.js', '[1,"en",null,"/js/devsite_app_module.js","https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87","https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers","https://developers-dot-devsite-v2-prod.appspot.com",null,null,["/_pwa/developers/manifest.json","https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/images/video-placeholder.svg","https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/favicon-new.png","https://fonts.googleapis.com/css?family=Google+Sans:400,500|Roboto:400,400italic,500,500italic,700,700italic|Roboto+Mono:400,500,700&display=swap"],1,null,[1,6,8,12,14,17,21,25,50,52,63,70,75,76,80,87,91,92,93,97,98,100,101,102,103,104,105,107,108,109,110,112,113,116,117,118,120,122,124,125,126,127,129,130,131,132,133,134,135,136,138,140,141,147,148,149,151,152,156,157,158,159,161,163,164,168,169,170,179,180,182,183,186,191,193,196],"AIzaSyAP-jjEJBzmIyKR4F-3XITp8yM9T1gEEI8","AIzaSyB6xiKGDR5O3Ak2okS4rLkauxGUG7XP0hg","developers.google.com","AIzaSyAQk0fBONSGUqCNznf6Krs82Ap1-NV6J4o","AIzaSyCCxcqdrZ_7QMeLCRY20bh_SXdAYqy70KY",null,null,null,["Cloud__enable_cloudx_experiment_ids","Profiles__enable_page_saving","Concierge__enable_key_takeaways_new_ui","DevPro__remove_eu_tax_intake_form","Profiles__enable_stripe_subscription_management","DevPro__enable_devpro_offers","Profiles__require_profile_eligibility_for_signin","Cloud__enable_cloud_shell_fte_user_flow","DevPro__enable_google_payments_buyflow","DevPro__enable_vertex_credit_card","MiscFeatureFlags__remove_cross_domain_tracking_params","MiscFeatureFlags__enable_view_transitions","EngEduTelemetry__enable_engedu_telemetry","Profiles__enable_completecodelab_endpoint","DevPro__enable_g1_integration","MiscFeatureFlags__enable_appearance_cookies","Cloud__enable_free_trial_server_call","Search__enable_ai_eligibility_checks","TpcFeatures__proxy_prod_host","Search__enable_dynamic_content_confidential_banner","DevPro__enable_firebase_workspaces_card","Search__enable_page_map","DevPro__enable_cloud_innovators_plus","Analytics__enable_clearcut_logging","MiscFeatureFlags__enable_explicit_template_dependencies","CloudShell__cloud_shell_button","Analytics__enable_devpro_interaction_logging","Cloud__cache_serialized_dynamic_content","DevPro__enable_payments_first_batch","DevPro__enable_embed_profile_creation","Search__enable_ai_search_summaries_restricted","Cloud__enable_cloud_shell","Experiments__reqs_query_experiments","DevPro__enable_google_one_card","Cloud__enable_cloud_dlp_service","MiscFeatureFlags__enable_firebase_utm","DevPro__enable_enterprise","Concierge__enable_concierge_restricted","TpcFeatures__enable_unmirrored_page_left_nav","DevPro__enable_free_benefits","Cloud__fast_free_trial","Profiles__enable_user_type","DevPro__enable_credits_banner","SignIn__enable_l1_signup_flow","DevPro__enable_devsite_captcha","Concierge__enable_remove_info_panel_tags","Profiles__enable_developer_profile_benefits_ui_redesign","MiscFeatureFlags__enable_project_variables","Concierge__enable_devsite_llm_tools","Search__enable_ai_search_summaries","MiscFeatureFlags__enable_variable_operator_index_yaml","Profiles__enable_auto_apply_credits","Concierge__enable_actions_menu","Search__enable_ai_search_summaries_for_all","CloudShell__cloud_code_overflow_menu","MiscFeatureFlags__fix_lower_breadcrumbs","MiscFeatureFlags__developers_footer_image","MiscFeatureFlags__developers_footer_dark_image","Profiles__enable_public_developer_profiles","Profiles__enable_dashboard_curated_recommendations","Concierge__enable_key_takeaways","Profiles__enable_developer_profiles_callout","Profiles__enable_awarding_url","Profiles__enable_developer_profile_pages_as_content","Profiles__enable_complete_playlist_endpoint","Concierge__enable_pushui","DevPro__enable_developer_subscriptions","Significatio__enable_by_tenant","Profiles__enable_targeted_hero","Profiles__enable_playlist_community_acl","DevPro__enable_g1_ineligible_redirect","Profiles__enable_recognition_badges","DevPro__enable_nvidia_credits_card","MiscFeatureFlags__enable_explain_this_code","MiscFeatureFlags__enable_framebox_badge_methods","Search__enable_suggestions_from_borg","MiscFeatureFlags__gdp_dashboard_reskin_enabled","Profiles__enable_purchase_prompts","Profiles__enable_join_program_group_endpoint","Concierge__enable_concierge","DevPro__enable_code_assist","AIStudioInteractionsToggle__interactions_are_default","Cloud__enable_legacy_calculator_redirect","Profiles__enable_release_notes_notifications","BookNav__enable_tenant_cache_key","Profiles__enable_callout_notifications","MiscFeatureFlags__enable_variable_operator","Profiles__enable_profile_collections","Profiles__enable_completequiz_endpoint"],null,null,"AIzaSyBLEMok-5suZ67qRPzx0qUtbnLmyT_kCVE","https://developerscontentserving-pa.clients6.google.com","AIzaSyCM4QpTRSqP5qI4Dvjt4OAScIN8sOUlO-k","https://developerscontentsearch-pa.clients6.google.com",1,4,null,"https://developerprofiles-pa.clients6.google.com",[1,"developers","Google for Developers","developers.google.com",null,"developers-dot-devsite-v2-prod.appspot.com",null,null,[1,1,[1],null,null,null,null,null,null,null,null,[1],null,null,null,null,null,null,[1],[1,null,null,[1,20],"/recommendations/information"],null,null,null,[1,1,1],[1,1,null,1,1,null,null,["/meridian"]],[1,null,null,null,null,null,null,["/admob","/ad-manager/mobile-ads-sdk","/ml-kit"]],null,[null,["/meridian","/youtube/devices/"]],1,null,[1]],null,[null,null,null,null,null,null,"/images/lockup-new.svg","/images/touchicon-180-new.png",null,null,null,null,1,null,null,null,null,null,null,null,null,1,null,null,null,"/images/lockup-dark-theme-new.svg",[]],[],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,[6,1,14,15,20,22,23,29,32,36],null,[[null,null,null,[3,7,10,2,39,17,4,32,24,11,12,13,34,15,25],null,null,[1,[["docType","Choose a content type",[["Tutorial",null,null,null,null,null,null,null,null,"Tutorial"],["Guide",null,null,null,null,null,null,null,null,"Guide"],["Sample",null,null,null,null,null,null,null,null,"Sample"]]],["product","Choose a product",[["Android",null,null,null,null,null,null,null,null,"Android"],["ARCore",null,null,null,null,null,null,null,null,"ARCore"],["ChromeOS",null,null,null,null,null,null,null,null,"ChromeOS"],["Firebase",null,null,null,null,null,null,null,null,"Firebase"],["Flutter",null,null,null,null,null,null,null,null,"Flutter"],["Assistant",null,null,null,null,null,null,null,null,"Google Assistant"],["GoogleCloud",null,null,null,null,null,null,null,null,"Google Cloud"],["GoogleMapsPlatform",null,null,null,null,null,null,null,null,"Google Maps Platform"],["GooglePay",null,null,null,null,null,null,null,null,"Google Pay & Google Wallet"],["GooglePlay",null,null,null,null,null,null,null,null,"Google Play"],["Tensorflow",null,null,null,null,null,null,null,null,"TensorFlow"]]],["category","Choose a topic",[["AiAndMachineLearning",null,null,null,null,null,null,null,null,"AI and Machine Learning"],["Data",null,null,null,null,null,null,null,null,"Data"],["Enterprise",null,null,null,null,null,null,null,null,"Enterprise"],["Gaming",null,null,null,null,null,null,null,null,"Gaming"],["Mobile",null,null,null,null,null,null,null,null,"Mobile"],["Web",null,null,null,null,null,null,null,null,"Web"]]]]]],[1,1],null,1],[[["UA-24532603-1"],["UA-22084204-5"],null,null,["UA-24532603-5"],["GTM-T98GCPGN"],null,[["G-272J68FCRF"],null,null,[["G-272J68FCRF",2]]],[["UA-24532603-1",2]],null,[["UA-24532603-5",2]],[["GTM-T98GCPGN",2]],1],[[16,13],[6,5],[3,2],[11,8],[5,4],[15,12],[12,9],[14,11],[13,10],[1,1],[4,3]],[[2,2],[1,1]]],null,4,null,null,null,null,null,null,null,null,null,null,null,null,null,"developers.devsite.google",null,null,null,null,null,[]],null,"pk_live_5170syrHvgGVmSx9sBrnWtA5luvk9BwnVcvIi7HizpwauFG96WedXsuXh790rtij9AmGllqPtMLfhe2RSwD6Pn38V00uBCydV4m",1,1,"https://developerscontentinsights-pa.clients6.google.com","AIzaSyCg-ZUslalsEbXMfIo9ZP8qufZgo3LSBDU","AIzaSyDxT0vkxnY_KeINtA4LSePJO-4MAZPMRsE","https://developers.clients6.google.com",["https://codeassist.google.com","https://code-assist-free-tier.corp.google.com"],null,"AIzaSyBQom12tzI-rybN7Sf-KfeL4nwm-Rf7PmI\n",null,null,"https://developers.googleapis.com"]')
+  
+</script>
+
+    <devsite-a11y-announce></devsite-a11y-announce>
+  </body>
+</html>

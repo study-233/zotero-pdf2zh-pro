@@ -1,0 +1,6487 @@
+{
+  "schemaVersion": 1,
+  "id": "physics",
+  "version": "2026.09.22",
+  "sourceLang": "en",
+  "targetLang": "zh-CN",
+  "sources": [
+    {
+      "id": "naer-physics",
+      "name": "國家教育研究院：兩岸對照名詞-物理學學術名詞",
+      "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E7%89%A9%E7%90%86%E5%AD%B8%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+      "license": "NAER Government Website Open Information Declaration",
+      "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+      "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-物理學學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications."
+    }
+  ],
+  "entries": [
+    {
+      "source": "absolute error",
+      "target": "绝对误差",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "9"
+        }
+      ]
+    },
+    {
+      "source": "absolute humidity",
+      "target": "绝对湿度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "10"
+        }
+      ]
+    },
+    {
+      "source": "absolute motion",
+      "target": "绝对运动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "11"
+        }
+      ]
+    },
+    {
+      "source": "absorbed dose",
+      "target": "吸收剂量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "12"
+        }
+      ]
+    },
+    {
+      "source": "acceleration of gravity",
+      "target": "重力加速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "14"
+        }
+      ]
+    },
+    {
+      "source": "accidental error",
+      "target": "偶然误差",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "16"
+        }
+      ]
+    },
+    {
+      "source": "air humidity",
+      "target": "空气的湿度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "18"
+        }
+      ]
+    },
+    {
+      "source": "amorphous solid",
+      "target": "非晶态固体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "21"
+        }
+      ]
+    },
+    {
+      "source": "angle of friction",
+      "target": "摩擦角",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "24"
+        }
+      ]
+    },
+    {
+      "source": "angular acceleration",
+      "target": "角加速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "25"
+        }
+      ]
+    },
+    {
+      "source": "angular displacement",
+      "target": "角位移",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "26"
+        }
+      ]
+    },
+    {
+      "source": "angular momentum",
+      "target": "角动量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "27"
+        }
+      ]
+    },
+    {
+      "source": "angular velocity",
+      "target": "角速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "28"
+        }
+      ]
+    },
+    {
+      "source": "antireflecting film",
+      "target": "减反射膜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "30"
+        }
+      ]
+    },
+    {
+      "source": "antireflection coating",
+      "target": "减反射膜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "31"
+        }
+      ]
+    },
+    {
+      "source": "Archimedes principle",
+      "target": "阿基米德原理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "32"
+        }
+      ]
+    },
+    {
+      "source": "artificial earth satellite",
+      "target": "人造地球卫星",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "33"
+        }
+      ]
+    },
+    {
+      "source": "artificial precipitation",
+      "target": "人工降水",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "34"
+        }
+      ]
+    },
+    {
+      "source": "atomic magnetic moment",
+      "target": "原子磁矩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "36"
+        }
+      ]
+    },
+    {
+      "source": "atomic nucleus",
+      "target": "原子核",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "37"
+        }
+      ]
+    },
+    {
+      "source": "atomic spectrum of hydrogen",
+      "target": "氢原子光谱",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "38"
+        }
+      ]
+    },
+    {
+      "source": "atomic structure",
+      "target": "原子结构",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "39"
+        }
+      ]
+    },
+    {
+      "source": "automatic control",
+      "target": "自动控制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "40"
+        }
+      ]
+    },
+    {
+      "source": "average life",
+      "target": "平均寿命",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "42"
+        }
+      ]
+    },
+    {
+      "source": "average velocity",
+      "target": "平均速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "43"
+        }
+      ]
+    },
+    {
+      "source": "Bernoulli equation",
+      "target": "伯努利方程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "49"
+        }
+      ]
+    },
+    {
+      "source": "binaural localization",
+      "target": "双耳定位",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "51"
+        }
+      ]
+    },
+    {
+      "source": "Biot-Savart law",
+      "target": "毕奥-萨伐尔定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "52"
+        }
+      ]
+    },
+    {
+      "source": "black body radiation",
+      "target": "黑体辐射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "54"
+        }
+      ]
+    },
+    {
+      "source": "black hole",
+      "target": "黑洞",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "55"
+        }
+      ]
+    },
+    {
+      "source": "boiling point",
+      "target": "沸点",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "57"
+        }
+      ]
+    },
+    {
+      "source": "Boltzmann constant",
+      "target": "玻耳兹曼常量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "58"
+        }
+      ]
+    },
+    {
+      "source": "Boyle law",
+      "target": "玻意耳定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "60"
+        }
+      ]
+    },
+    {
+      "source": "breeder reactor",
+      "target": "增殖堆",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "61"
+        }
+      ]
+    },
+    {
+      "source": "Brownian motion",
+      "target": "布朗运动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "62"
+        }
+      ]
+    },
+    {
+      "source": "bubble chamber",
+      "target": "泡室",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "63"
+        }
+      ]
+    },
+    {
+      "source": "camera tube",
+      "target": "摄像管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "65"
+        }
+      ]
+    },
+    {
+      "source": "capacitive reactance",
+      "target": "容抗",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "67"
+        }
+      ]
+    },
+    {
+      "source": "cathode ray",
+      "target": "阴极射线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "72"
+        }
+      ]
+    },
+    {
+      "source": "center of gravity",
+      "target": "重心",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "74"
+        }
+      ]
+    },
+    {
+      "source": "center of mass",
+      "target": "质心",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "75"
+        }
+      ]
+    },
+    {
+      "source": "centripetal acceleration",
+      "target": "向心加速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "77"
+        }
+      ]
+    },
+    {
+      "source": "chain reaction",
+      "target": "链式反应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "78"
+        }
+      ]
+    },
+    {
+      "source": "charge carrier",
+      "target": "载流子",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "79"
+        }
+      ]
+    },
+    {
+      "source": "Charles law",
+      "target": "查理定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "80"
+        }
+      ]
+    },
+    {
+      "source": "cloud chamber",
+      "target": "云室",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "81"
+        }
+      ]
+    },
+    {
+      "source": "coefficient of kinetic friction",
+      "target": "动摩擦因数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "83"
+        }
+      ]
+    },
+    {
+      "source": "coefficient of rolling friction",
+      "target": "滚动摩擦因数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "84"
+        }
+      ]
+    },
+    {
+      "source": "collective model",
+      "target": "集体模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "85"
+        }
+      ]
+    },
+    {
+      "source": "communication network",
+      "target": "通信网络",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "88"
+        }
+      ]
+    },
+    {
+      "source": "compound pendulum",
+      "target": "复摆",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "90"
+        }
+      ]
+    },
+    {
+      "source": "Compton effect",
+      "target": "康普顿效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "91"
+        }
+      ]
+    },
+    {
+      "source": "condensed state",
+      "target": "凝聚态",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "93"
+        }
+      ]
+    },
+    {
+      "source": "conservative force",
+      "target": "保守力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "97"
+        }
+      ]
+    },
+    {
+      "source": "contact angle",
+      "target": "接触角",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "98"
+        }
+      ]
+    },
+    {
+      "source": "contact potential difference",
+      "target": "接触电势差",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "99"
+        }
+      ]
+    },
+    {
+      "source": "continuity equation",
+      "target": "连续性方程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "100"
+        }
+      ]
+    },
+    {
+      "source": "coordinate system",
+      "target": "坐标系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "103"
+        }
+      ]
+    },
+    {
+      "source": "Copernican system",
+      "target": "哥白尼体系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "104"
+        }
+      ]
+    },
+    {
+      "source": "corona discharge",
+      "target": "电晕放电",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "107"
+        }
+      ]
+    },
+    {
+      "source": "cosmic rays",
+      "target": "宇宙射线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "108"
+        }
+      ]
+    },
+    {
+      "source": "Coulomb force",
+      "target": "库仑力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "112"
+        }
+      ]
+    },
+    {
+      "source": "Coulomb law",
+      "target": "库仑定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "113"
+        }
+      ]
+    },
+    {
+      "source": "critical state",
+      "target": "临界态",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "116"
+        }
+      ]
+    },
+    {
+      "source": "current transformer",
+      "target": "电流互感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "118"
+        }
+      ]
+    },
+    {
+      "source": "damped vibration",
+      "target": "阻尼振动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "120"
+        }
+      ]
+    },
+    {
+      "source": "DC power transmission",
+      "target": "直流输电",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "121"
+        }
+      ]
+    },
+    {
+      "source": "de Broglie wave",
+      "target": "德布罗意波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "122"
+        }
+      ]
+    },
+    {
+      "source": "delta connection",
+      "target": "三角形接法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "124"
+        }
+      ]
+    },
+    {
+      "source": "diamagnetic substance",
+      "target": "抗磁质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "128"
+        }
+      ]
+    },
+    {
+      "source": "dielectric polarization",
+      "target": "电介质的极化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "130"
+        }
+      ]
+    },
+    {
+      "source": "diffraction grating",
+      "target": "衍射光栅",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "131"
+        }
+      ]
+    },
+    {
+      "source": "diffraction of light",
+      "target": "光的衍射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "132"
+        }
+      ]
+    },
+    {
+      "source": "diffraction of wave",
+      "target": "波的衍射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "133"
+        }
+      ]
+    },
+    {
+      "source": "digital camera",
+      "target": "数码相机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "134"
+        }
+      ]
+    },
+    {
+      "source": "digital circuit",
+      "target": "数字电路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "135"
+        }
+      ]
+    },
+    {
+      "source": "digital communication",
+      "target": "数字通信",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "136"
+        }
+      ]
+    },
+    {
+      "source": "digital television system",
+      "target": "数字电视",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "137"
+        }
+      ]
+    },
+    {
+      "source": "dispersion of light",
+      "target": "光的色散",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "138"
+        }
+      ]
+    },
+    {
+      "source": "displacement current",
+      "target": "位移电流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "140"
+        }
+      ]
+    },
+    {
+      "source": "distance of distinct vision",
+      "target": "明视距离",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "141"
+        }
+      ]
+    },
+    {
+      "source": "doped semiconductor",
+      "target": "杂质半导体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "142"
+        }
+      ]
+    },
+    {
+      "source": "Doppler effect",
+      "target": "多普勒效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "143"
+        }
+      ]
+    },
+    {
+      "source": "double-slit interference",
+      "target": "双缝干涉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "144"
+        }
+      ]
+    },
+    {
+      "source": "dry cell",
+      "target": "干电池",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "145"
+        }
+      ]
+    },
+    {
+      "source": "eddy current",
+      "target": "涡电流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "148"
+        }
+      ]
+    },
+    {
+      "source": "effective resistance",
+      "target": "有效电阻",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "149"
+        }
+      ]
+    },
+    {
+      "source": "elastic deformation",
+      "target": "弹性形变",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "151"
+        }
+      ]
+    },
+    {
+      "source": "elastic force",
+      "target": "弹力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "152"
+        }
+      ]
+    },
+    {
+      "source": "elastic limit",
+      "target": "弹性限度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "153"
+        }
+      ]
+    },
+    {
+      "source": "electric charge",
+      "target": "电荷",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "155"
+        }
+      ]
+    },
+    {
+      "source": "electric circuit",
+      "target": "电路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "156"
+        }
+      ]
+    },
+    {
+      "source": "electric current",
+      "target": "电流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "157"
+        }
+      ]
+    },
+    {
+      "source": "electric displacement",
+      "target": "电位移",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "158"
+        }
+      ]
+    },
+    {
+      "source": "electric field",
+      "target": "电场",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "159"
+        }
+      ]
+    },
+    {
+      "source": "electric field intensity",
+      "target": "电场强度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "160"
+        }
+      ]
+    },
+    {
+      "source": "electric field line",
+      "target": "电场线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "161"
+        }
+      ]
+    },
+    {
+      "source": "electric field strength",
+      "target": "电场强度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "162"
+        }
+      ]
+    },
+    {
+      "source": "electric flux",
+      "target": "电通量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "163"
+        }
+      ]
+    },
+    {
+      "source": "electric potential",
+      "target": "电势",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "166"
+        }
+      ]
+    },
+    {
+      "source": "electric potential difference",
+      "target": "电势差",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "167"
+        }
+      ]
+    },
+    {
+      "source": "electric power",
+      "target": "电功率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "168"
+        }
+      ]
+    },
+    {
+      "source": "electric power network",
+      "target": "电力网",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "169"
+        }
+      ]
+    },
+    {
+      "source": "electrification by friction",
+      "target": "摩擦起电",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "170"
+        }
+      ]
+    },
+    {
+      "source": "electromagnetic damping",
+      "target": "电磁阻尼",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "174"
+        }
+      ]
+    },
+    {
+      "source": "electromagnetic induction",
+      "target": "电磁感应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "175"
+        }
+      ]
+    },
+    {
+      "source": "electromagnetic interaction",
+      "target": "电磁相互作用",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "176"
+        }
+      ]
+    },
+    {
+      "source": "electromagnetic pollution",
+      "target": "电磁污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "177"
+        }
+      ]
+    },
+    {
+      "source": "electromagnetic relay",
+      "target": "电磁继电器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "178"
+        }
+      ]
+    },
+    {
+      "source": "electromagnetic wave",
+      "target": "电磁波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "179"
+        }
+      ]
+    },
+    {
+      "source": "electromagnetic wave spectrum",
+      "target": "电磁波谱",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "180"
+        }
+      ]
+    },
+    {
+      "source": "electron cloud",
+      "target": "电子云",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "182"
+        }
+      ]
+    },
+    {
+      "source": "electron emission",
+      "target": "电子发射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "183"
+        }
+      ]
+    },
+    {
+      "source": "electron microscope",
+      "target": "电子显微镜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "184"
+        }
+      ]
+    },
+    {
+      "source": "electrostatic field",
+      "target": "静电场",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "187"
+        }
+      ]
+    },
+    {
+      "source": "electrostatic induction",
+      "target": "静电感应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "188"
+        }
+      ]
+    },
+    {
+      "source": "electrostatic precipitation",
+      "target": "静电除尘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "189"
+        }
+      ]
+    },
+    {
+      "source": "electrostatic screening",
+      "target": "静电屏蔽",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "190"
+        }
+      ]
+    },
+    {
+      "source": "electrostatic shielding",
+      "target": "静电屏蔽",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "191"
+        }
+      ]
+    },
+    {
+      "source": "electrostatic spraying",
+      "target": "静电喷涂",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "192"
+        }
+      ]
+    },
+    {
+      "source": "elementary charge",
+      "target": "元电荷",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "193"
+        }
+      ]
+    },
+    {
+      "source": "elementary particle",
+      "target": "基本粒子",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "194"
+        }
+      ]
+    },
+    {
+      "source": "energy density",
+      "target": "能量密度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "197"
+        }
+      ]
+    },
+    {
+      "source": "energy dissipation",
+      "target": "能量耗散",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "198"
+        }
+      ]
+    },
+    {
+      "source": "energy-saving lamp",
+      "target": "节能灯",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "199"
+        }
+      ]
+    },
+    {
+      "source": "equilibrium state",
+      "target": "平衡态",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "200"
+        }
+      ]
+    },
+    {
+      "source": "equipotential surface",
+      "target": "等势面",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "201"
+        }
+      ]
+    },
+    {
+      "source": "external force",
+      "target": "外力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "204"
+        }
+      ]
+    },
+    {
+      "source": "Faraday law of electrolysis",
+      "target": "法拉第电解定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "206"
+        }
+      ]
+    },
+    {
+      "source": "Faraday law of electromagnetic induction",
+      "target": "法拉第电磁感应定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "207"
+        }
+      ]
+    },
+    {
+      "source": "ferromagnetic substance",
+      "target": "铁磁质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "212"
+        }
+      ]
+    },
+    {
+      "source": "fiber-optic communications",
+      "target": "光纤通信",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "214"
+        }
+      ]
+    },
+    {
+      "source": "first cosmic velocity",
+      "target": "第一宇宙速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "217"
+        }
+      ]
+    },
+    {
+      "source": "fluid mechanics",
+      "target": "流体力学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "220"
+        }
+      ]
+    },
+    {
+      "source": "fluorescent lamp",
+      "target": "日光灯",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "222"
+        }
+      ]
+    },
+    {
+      "source": "focal power",
+      "target": "光焦度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "223"
+        }
+      ]
+    },
+    {
+      "source": "forced vibration",
+      "target": "受迫振动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "225"
+        }
+      ]
+    },
+    {
+      "source": "Franck-Hertz experiment",
+      "target": "弗兰克-赫兹实验",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "226"
+        }
+      ]
+    },
+    {
+      "source": "Fraunhofer diffraction",
+      "target": "夫琅禾费衍射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "227"
+        }
+      ]
+    },
+    {
+      "source": "free vibration",
+      "target": "自由振动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "228"
+        }
+      ]
+    },
+    {
+      "source": "Fresnel bimirror",
+      "target": "菲涅耳双镜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "229"
+        }
+      ]
+    },
+    {
+      "source": "Fresnel diffraction",
+      "target": "菲涅耳衍射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "230"
+        }
+      ]
+    },
+    {
+      "source": "Fresnel formula",
+      "target": "菲涅耳公式",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "231"
+        }
+      ]
+    },
+    {
+      "source": "fuel cell",
+      "target": "燃料电池",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "233"
+        }
+      ]
+    },
+    {
+      "source": "Galilean transformation",
+      "target": "伽利略变换",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "235"
+        }
+      ]
+    },
+    {
+      "source": "gas discharge",
+      "target": "气体放电",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "237"
+        }
+      ]
+    },
+    {
+      "source": "gas laser",
+      "target": "气体激光器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "238"
+        }
+      ]
+    },
+    {
+      "source": "gaseous discharge lamp",
+      "target": "气体放电灯",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "239"
+        }
+      ]
+    },
+    {
+      "source": "gate circuit",
+      "target": "门电路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "241"
+        }
+      ]
+    },
+    {
+      "source": "gating circuit",
+      "target": "门电路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "242"
+        }
+      ]
+    },
+    {
+      "source": "Gauss theorem",
+      "target": "高斯定理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "243"
+        }
+      ]
+    },
+    {
+      "source": "Gay-Lussac law",
+      "target": "盖-吕萨克定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "244"
+        }
+      ]
+    },
+    {
+      "source": "general relativity",
+      "target": "广义相对论",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "246"
+        }
+      ]
+    },
+    {
+      "source": "geomagnetic field",
+      "target": "地磁场",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "249"
+        }
+      ]
+    },
+    {
+      "source": "geostationary satellite orbit",
+      "target": "地球静止卫星轨道",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "250"
+        }
+      ]
+    },
+    {
+      "source": "geosynchronous orbit",
+      "target": "地球同步轨道",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "251"
+        }
+      ]
+    },
+    {
+      "source": "glow discharge",
+      "target": "辉光放电",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "253"
+        }
+      ]
+    },
+    {
+      "source": "gravitational field",
+      "target": "引力场",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "254"
+        }
+      ]
+    },
+    {
+      "source": "gravitational mass",
+      "target": "引力质量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "255"
+        }
+      ]
+    },
+    {
+      "source": "gravitational potential energy",
+      "target": "引力势能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "256"
+        }
+      ]
+    },
+    {
+      "source": "gravity potential energy",
+      "target": "重力势能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "258"
+        }
+      ]
+    },
+    {
+      "source": "ground wave",
+      "target": "地波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "260"
+        }
+      ]
+    },
+    {
+      "source": "half-wave loss",
+      "target": "半波损失",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "262"
+        }
+      ]
+    },
+    {
+      "source": "Hall effect",
+      "target": "霍尔效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "263"
+        }
+      ]
+    },
+    {
+      "source": "hall element",
+      "target": "霍尔元件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "264"
+        }
+      ]
+    },
+    {
+      "source": "hard magnetic material",
+      "target": "硬磁材料",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "265"
+        }
+      ]
+    },
+    {
+      "source": "heliocentric theory",
+      "target": "日心说",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "267"
+        }
+      ]
+    },
+    {
+      "source": "high pressure mercury lamp",
+      "target": "高压汞灯",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "269"
+        }
+      ]
+    },
+    {
+      "source": "Hooke law",
+      "target": "胡克定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "271"
+        }
+      ]
+    },
+    {
+      "source": "Huygens-Fresnel principle",
+      "target": "惠更斯-菲涅耳原理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "273"
+        }
+      ]
+    },
+    {
+      "source": "hydrostatic pressure",
+      "target": "流体的静压强",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "275"
+        }
+      ]
+    },
+    {
+      "source": "IC card",
+      "target": "IC卡",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "277"
+        }
+      ]
+    },
+    {
+      "source": "ideal fluid",
+      "target": "理想流体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "278"
+        }
+      ]
+    },
+    {
+      "source": "ideal gas",
+      "target": "理想气体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "279"
+        }
+      ]
+    },
+    {
+      "source": "ideal gas equation of state",
+      "target": "理想气体状态方程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "280"
+        }
+      ]
+    },
+    {
+      "source": "impedance matching",
+      "target": "阻抗匹配",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "283"
+        }
+      ]
+    },
+    {
+      "source": "incandescent lamp",
+      "target": "白炽灯",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "285"
+        }
+      ]
+    },
+    {
+      "source": "inclined plane",
+      "target": "斜面",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "286"
+        }
+      ]
+    },
+    {
+      "source": "induction coil",
+      "target": "感应圈",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "287"
+        }
+      ]
+    },
+    {
+      "source": "induction current",
+      "target": "感应电流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "288"
+        }
+      ]
+    },
+    {
+      "source": "induction electromotive force",
+      "target": "感应电动势",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "289"
+        }
+      ]
+    },
+    {
+      "source": "inductive reactance",
+      "target": "感抗",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "290"
+        }
+      ]
+    },
+    {
+      "source": "inertial centrifugal force",
+      "target": "惯性离心力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "294"
+        }
+      ]
+    },
+    {
+      "source": "inertial force",
+      "target": "惯性力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "295"
+        }
+      ]
+    },
+    {
+      "source": "inertial mass",
+      "target": "惯性质量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "296"
+        }
+      ]
+    },
+    {
+      "source": "infrasonic wave",
+      "target": "次声波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "297"
+        }
+      ]
+    },
+    {
+      "source": "input resistance",
+      "target": "输入电阻",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "298"
+        }
+      ]
+    },
+    {
+      "source": "instantaneous velocity",
+      "target": "瞬时速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "299"
+        }
+      ]
+    },
+    {
+      "source": "intensity of sound",
+      "target": "声强",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "303"
+        }
+      ]
+    },
+    {
+      "source": "interference of light",
+      "target": "光的干涉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "304"
+        }
+      ]
+    },
+    {
+      "source": "intermolecular force",
+      "target": "分子间力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "305"
+        }
+      ]
+    },
+    {
+      "source": "internal energy",
+      "target": "内能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "306"
+        }
+      ]
+    },
+    {
+      "source": "internal force",
+      "target": "内力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "307"
+        }
+      ]
+    },
+    {
+      "source": "internal photoelectric effect",
+      "target": "内光电效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "308"
+        }
+      ]
+    },
+    {
+      "source": "intrinsic semiconductor",
+      "target": "本征半导体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "311"
+        }
+      ]
+    },
+    {
+      "source": "ionization chamber",
+      "target": "电离室",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "313"
+        }
+      ]
+    },
+    {
+      "source": "isobaric spin",
+      "target": "同位旋",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "315"
+        }
+      ]
+    },
+    {
+      "source": "isotopic spin",
+      "target": "同位旋",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "317"
+        }
+      ]
+    },
+    {
+      "source": "Joule law",
+      "target": "焦耳定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "318"
+        }
+      ]
+    },
+    {
+      "source": "Kepler law",
+      "target": "开普勒定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "320"
+        }
+      ]
+    },
+    {
+      "source": "kinetic energy",
+      "target": "动能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "322"
+        }
+      ]
+    },
+    {
+      "source": "Kirchhoff equations",
+      "target": "基尔霍夫方程组",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "324"
+        }
+      ]
+    },
+    {
+      "source": "laminar flow",
+      "target": "层流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "325"
+        }
+      ]
+    },
+    {
+      "source": "laser amplifier",
+      "target": "激光放大器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "327"
+        }
+      ]
+    },
+    {
+      "source": "laser range finder",
+      "target": "激光测距仪",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "328"
+        }
+      ]
+    },
+    {
+      "source": "law of conservation of angular momentum",
+      "target": "角动量守恒定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "329"
+        }
+      ]
+    },
+    {
+      "source": "law of conservation of charge",
+      "target": "电荷守恒定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "330"
+        }
+      ]
+    },
+    {
+      "source": "law of conservation of mechanical energy",
+      "target": "机械能守恒定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "331"
+        }
+      ]
+    },
+    {
+      "source": "law of conservation of momentum",
+      "target": "动量守恒定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "332"
+        }
+      ]
+    },
+    {
+      "source": "law of inertia",
+      "target": "惯性定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "333"
+        }
+      ]
+    },
+    {
+      "source": "law of universal gravitation",
+      "target": "万有引力定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "334"
+        }
+      ]
+    },
+    {
+      "source": "laws of thermodynamics",
+      "target": "热力学定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "335"
+        }
+      ]
+    },
+    {
+      "source": "lead accumulator",
+      "target": "铅蓄电池",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "336"
+        }
+      ]
+    },
+    {
+      "source": "Lenz law",
+      "target": "楞次定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "339"
+        }
+      ]
+    },
+    {
+      "source": "Leyden jar",
+      "target": "莱顿瓶",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "343"
+        }
+      ]
+    },
+    {
+      "source": "light absorption",
+      "target": "光的吸收",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "345"
+        }
+      ]
+    },
+    {
+      "source": "linear accelerator",
+      "target": "直线加速器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "349"
+        }
+      ]
+    },
+    {
+      "source": "linear motor",
+      "target": "直线电动机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "350"
+        }
+      ]
+    },
+    {
+      "source": "liquid crystal",
+      "target": "液晶",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "352"
+        }
+      ]
+    },
+    {
+      "source": "liquid drop model",
+      "target": "液滴模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "353"
+        }
+      ]
+    },
+    {
+      "source": "liquid laser",
+      "target": "液体激光器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "354"
+        }
+      ]
+    },
+    {
+      "source": "lithium cell",
+      "target": "锂电池",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "355"
+        }
+      ]
+    },
+    {
+      "source": "Lloyd mirror",
+      "target": "劳埃德镜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "356"
+        }
+      ]
+    },
+    {
+      "source": "logical circuit",
+      "target": "逻辑电路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "357"
+        }
+      ]
+    },
+    {
+      "source": "Lorentz force",
+      "target": "洛伦兹力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "358"
+        }
+      ]
+    },
+    {
+      "source": "Lorentz transformation",
+      "target": "洛伦兹变换",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "359"
+        }
+      ]
+    },
+    {
+      "source": "luminous flux",
+      "target": "光通量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "363"
+        }
+      ]
+    },
+    {
+      "source": "luminous intensity",
+      "target": "发光强度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "364"
+        }
+      ]
+    },
+    {
+      "source": "maglev train",
+      "target": "磁浮列车",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "365"
+        }
+      ]
+    },
+    {
+      "source": "magnetic card",
+      "target": "磁卡",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "367"
+        }
+      ]
+    },
+    {
+      "source": "magnetic circuit",
+      "target": "磁路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "368"
+        }
+      ]
+    },
+    {
+      "source": "magnetic domain",
+      "target": "磁畴",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "369"
+        }
+      ]
+    },
+    {
+      "source": "magnetic energy density",
+      "target": "磁能密度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "370"
+        }
+      ]
+    },
+    {
+      "source": "magnetic field",
+      "target": "磁场",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "371"
+        }
+      ]
+    },
+    {
+      "source": "magnetic field intensity",
+      "target": "磁场强度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "372"
+        }
+      ]
+    },
+    {
+      "source": "magnetic field strength",
+      "target": "磁场强度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "373"
+        }
+      ]
+    },
+    {
+      "source": "magnetic flux",
+      "target": "磁通量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "374"
+        }
+      ]
+    },
+    {
+      "source": "magnetic flux linkage",
+      "target": "磁链",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "375"
+        }
+      ]
+    },
+    {
+      "source": "magnetic focusing",
+      "target": "磁聚焦",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "376"
+        }
+      ]
+    },
+    {
+      "source": "magnetic induction",
+      "target": "磁感应强度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "377"
+        }
+      ]
+    },
+    {
+      "source": "magnetic medium",
+      "target": "磁介质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "378"
+        }
+      ]
+    },
+    {
+      "source": "magnetic moment",
+      "target": "磁矩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "379"
+        }
+      ]
+    },
+    {
+      "source": "magnetic permeability",
+      "target": "磁导率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "380"
+        }
+      ]
+    },
+    {
+      "source": "magnetic shielding",
+      "target": "磁屏蔽",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "382"
+        }
+      ]
+    },
+    {
+      "source": "magnetic suspension train",
+      "target": "磁浮列车",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "383"
+        }
+      ]
+    },
+    {
+      "source": "magnetohydrodynamic generator",
+      "target": "磁流体发电机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "386"
+        }
+      ]
+    },
+    {
+      "source": "mass point",
+      "target": "质点",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "389"
+        }
+      ]
+    },
+    {
+      "source": "mass spectrometer",
+      "target": "质谱仪",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "390"
+        }
+      ]
+    },
+    {
+      "source": "mass-energy relation",
+      "target": "质能关系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "391"
+        }
+      ]
+    },
+    {
+      "source": "Maxwell equations",
+      "target": "麦克斯韦方程组",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "392"
+        }
+      ]
+    },
+    {
+      "source": "Maxwell velocity distribution",
+      "target": "麦克斯韦速度分布",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "393"
+        }
+      ]
+    },
+    {
+      "source": "mean life",
+      "target": "平均寿命",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "394"
+        }
+      ]
+    },
+    {
+      "source": "mean lifetime",
+      "target": "平均寿命",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "395"
+        }
+      ]
+    },
+    {
+      "source": "mean velocity",
+      "target": "平均速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "396"
+        }
+      ]
+    },
+    {
+      "source": "mechanical energy",
+      "target": "机械能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "397"
+        }
+      ]
+    },
+    {
+      "source": "mechanical wave",
+      "target": "机械波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "398"
+        }
+      ]
+    },
+    {
+      "source": "melting point",
+      "target": "熔点",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "399"
+        }
+      ]
+    },
+    {
+      "source": "mercury vapor lamp",
+      "target": "汞灯",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "402"
+        }
+      ]
+    },
+    {
+      "source": "metal detector",
+      "target": "金属探测器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "404"
+        }
+      ]
+    },
+    {
+      "source": "Michelson interferometer",
+      "target": "迈克耳孙干涉仪",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "405"
+        }
+      ]
+    },
+    {
+      "source": "Michelson-Morley experiment",
+      "target": "迈克耳孙-莫雷实验",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "406"
+        }
+      ]
+    },
+    {
+      "source": "microelectronic technique",
+      "target": "微电子技术",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "407"
+        }
+      ]
+    },
+    {
+      "source": "micrometer caliper",
+      "target": "螺旋测微器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "408"
+        }
+      ]
+    },
+    {
+      "source": "microwave oven",
+      "target": "微波炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "410"
+        }
+      ]
+    },
+    {
+      "source": "microwave relay communication",
+      "target": "微波中继通信",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "411"
+        }
+      ]
+    },
+    {
+      "source": "Millikan oil-drop experiment",
+      "target": "密立根油滴实验",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "413"
+        }
+      ]
+    },
+    {
+      "source": "molecular current",
+      "target": "分子电流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "418"
+        }
+      ]
+    },
+    {
+      "source": "moment of force",
+      "target": "力矩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "420"
+        }
+      ]
+    },
+    {
+      "source": "moment of inertia",
+      "target": "转动惯量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "421"
+        }
+      ]
+    },
+    {
+      "source": "musical quality",
+      "target": "音色",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "423"
+        }
+      ]
+    },
+    {
+      "source": "musical scale",
+      "target": "音阶",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "424"
+        }
+      ]
+    },
+    {
+      "source": "musical tone",
+      "target": "乐音",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "425"
+        }
+      ]
+    },
+    {
+      "source": "mutual induction",
+      "target": "互感",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "426"
+        }
+      ]
+    },
+    {
+      "source": "NC machine tool",
+      "target": "数控机床",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "429"
+        }
+      ]
+    },
+    {
+      "source": "neon lamp",
+      "target": "霓虹灯",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "430"
+        }
+      ]
+    },
+    {
+      "source": "neon light",
+      "target": "霓虹灯",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "431"
+        }
+      ]
+    },
+    {
+      "source": "neutron star",
+      "target": "中子星",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "433"
+        }
+      ]
+    },
+    {
+      "source": "Newton first law",
+      "target": "牛顿第一定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "435"
+        }
+      ]
+    },
+    {
+      "source": "Newton laws of motion",
+      "target": "牛顿运动定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "436"
+        }
+      ]
+    },
+    {
+      "source": "Newton ring",
+      "target": "牛顿环",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "437"
+        }
+      ]
+    },
+    {
+      "source": "Newton second law",
+      "target": "牛顿第二定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "438"
+        }
+      ]
+    },
+    {
+      "source": "Newton third law",
+      "target": "牛顿第三定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "439"
+        }
+      ]
+    },
+    {
+      "source": "non-crystalline solid",
+      "target": "非晶态固体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "442"
+        }
+      ]
+    },
+    {
+      "source": "nonconservative force",
+      "target": "非保守力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "443"
+        }
+      ]
+    },
+    {
+      "source": "noninertial system",
+      "target": "非惯性系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "444"
+        }
+      ]
+    },
+    {
+      "source": "nuclear battery",
+      "target": "核电池",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "445"
+        }
+      ]
+    },
+    {
+      "source": "nuclear force",
+      "target": "核力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "446"
+        }
+      ]
+    },
+    {
+      "source": "nuclear reaction",
+      "target": "核反应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "447"
+        }
+      ]
+    },
+    {
+      "source": "nuclear reactor",
+      "target": "核反应堆",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "448"
+        }
+      ]
+    },
+    {
+      "source": "numerical control machine tool",
+      "target": "数控机床",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "451"
+        }
+      ]
+    },
+    {
+      "source": "Ohm law",
+      "target": "欧姆定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "452"
+        }
+      ]
+    },
+    {
+      "source": "optic-fiber communication",
+      "target": "光纤通信",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "453"
+        }
+      ]
+    },
+    {
+      "source": "optical Doppler effect",
+      "target": "光的多普勒效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "455"
+        }
+      ]
+    },
+    {
+      "source": "optical fiber",
+      "target": "光导纤维",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "456"
+        }
+      ]
+    },
+    {
+      "source": "optical fiber communication",
+      "target": "光纤通信",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "457"
+        }
+      ]
+    },
+    {
+      "source": "optical sound recording",
+      "target": "光学录声",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "458"
+        }
+      ]
+    },
+    {
+      "source": "optical spectrum",
+      "target": "光谱",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "459"
+        }
+      ]
+    },
+    {
+      "source": "oscilloscope tube",
+      "target": "示波管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "460"
+        }
+      ]
+    },
+    {
+      "source": "outer space",
+      "target": "太空",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "461"
+        }
+      ]
+    },
+    {
+      "source": "output resistance",
+      "target": "输出电阻",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "462"
+        }
+      ]
+    },
+    {
+      "source": "parallel axis theorem",
+      "target": "平行轴定理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "463"
+        }
+      ]
+    },
+    {
+      "source": "paramagnetic substance",
+      "target": "顺磁质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "464"
+        }
+      ]
+    },
+    {
+      "source": "parity conservation",
+      "target": "宇称守恒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "466"
+        }
+      ]
+    },
+    {
+      "source": "parity nonconservation",
+      "target": "宇称不守恒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "467"
+        }
+      ]
+    },
+    {
+      "source": "Pascal law",
+      "target": "帕斯卡定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "469"
+        }
+      ]
+    },
+    {
+      "source": "Pauli exclusion principle",
+      "target": "泡利不相容原理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "471"
+        }
+      ]
+    },
+    {
+      "source": "perfectly elastic collision",
+      "target": "完全弹性碰撞",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "472"
+        }
+      ]
+    },
+    {
+      "source": "perfectly inelastic collision",
+      "target": "完全非弹性碰撞",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "473"
+        }
+      ]
+    },
+    {
+      "source": "periodic table of elements",
+      "target": "元素周期表",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "474"
+        }
+      ]
+    },
+    {
+      "source": "permanent magnet",
+      "target": "永磁体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "475"
+        }
+      ]
+    },
+    {
+      "source": "persistence of vision",
+      "target": "视觉暂留",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "477"
+        }
+      ]
+    },
+    {
+      "source": "phase diagram",
+      "target": "相图",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "479"
+        }
+      ]
+    },
+    {
+      "source": "phase equilibrium",
+      "target": "相平衡",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "480"
+        }
+      ]
+    },
+    {
+      "source": "phase transition",
+      "target": "相变",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "481"
+        }
+      ]
+    },
+    {
+      "source": "photoelectric cell",
+      "target": "光电池",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "484"
+        }
+      ]
+    },
+    {
+      "source": "photoelectric effect",
+      "target": "光电效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "485"
+        }
+      ]
+    },
+    {
+      "source": "photoelectric tube",
+      "target": "光电管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "486"
+        }
+      ]
+    },
+    {
+      "source": "pickup tube",
+      "target": "摄像管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "489"
+        }
+      ]
+    },
+    {
+      "source": "picture tube",
+      "target": "显像管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "490"
+        }
+      ]
+    },
+    {
+      "source": "piezoelectric buzzer",
+      "target": "压电蜂鸣器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "491"
+        }
+      ]
+    },
+    {
+      "source": "piezoelectric effect",
+      "target": "压电效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "492"
+        }
+      ]
+    },
+    {
+      "source": "plastic deformation",
+      "target": "塑性形变",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "494"
+        }
+      ]
+    },
+    {
+      "source": "PN junction",
+      "target": "PN结",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "495"
+        }
+      ]
+    },
+    {
+      "source": "point discharge",
+      "target": "尖端放电",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "496"
+        }
+      ]
+    },
+    {
+      "source": "polarized light",
+      "target": "偏振光",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "498"
+        }
+      ]
+    },
+    {
+      "source": "position vector",
+      "target": "位置矢量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "501"
+        }
+      ]
+    },
+    {
+      "source": "potential energy",
+      "target": "势能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "502"
+        }
+      ]
+    },
+    {
+      "source": "potential gradient",
+      "target": "电势梯度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "503"
+        }
+      ]
+    },
+    {
+      "source": "potential transformer",
+      "target": "电压互感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "504"
+        }
+      ]
+    },
+    {
+      "source": "Poynting vector",
+      "target": "坡印廷矢量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "506"
+        }
+      ]
+    },
+    {
+      "source": "primary rainbow",
+      "target": "虹",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "508"
+        }
+      ]
+    },
+    {
+      "source": "programmed control",
+      "target": "程序控制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "509"
+        }
+      ]
+    },
+    {
+      "source": "projectile motion",
+      "target": "抛体运动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "510"
+        }
+      ]
+    },
+    {
+      "source": "proportional counter",
+      "target": "正比计数器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "511"
+        }
+      ]
+    },
+    {
+      "source": "quality factor",
+      "target": "品质因数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "513"
+        }
+      ]
+    },
+    {
+      "source": "quantum mechanics",
+      "target": "量子力学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "514"
+        }
+      ]
+    },
+    {
+      "source": "quark model",
+      "target": "夸克模型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "515"
+        }
+      ]
+    },
+    {
+      "source": "radiation protection",
+      "target": "辐射防护",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "517"
+        }
+      ]
+    },
+    {
+      "source": "radio navigation",
+      "target": "无线电导航",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "518"
+        }
+      ]
+    },
+    {
+      "source": "radio telescope",
+      "target": "射电望远镜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "519"
+        }
+      ]
+    },
+    {
+      "source": "radio wave",
+      "target": "无线电波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "520"
+        }
+      ]
+    },
+    {
+      "source": "radioactive dating",
+      "target": "放射性年代测定",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "521"
+        }
+      ]
+    },
+    {
+      "source": "radioactive decay",
+      "target": "放射性衰变",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "522"
+        }
+      ]
+    },
+    {
+      "source": "radioactive series",
+      "target": "放射系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "523"
+        }
+      ]
+    },
+    {
+      "source": "radioactive tracer method",
+      "target": "放射性示踪法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "524"
+        }
+      ]
+    },
+    {
+      "source": "reaction cross-section",
+      "target": "反应截面",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "530"
+        }
+      ]
+    },
+    {
+      "source": "reaction energy",
+      "target": "反应能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "531"
+        }
+      ]
+    },
+    {
+      "source": "real image",
+      "target": "实像",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "532"
+        }
+      ]
+    },
+    {
+      "source": "reference frame",
+      "target": "参考系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "533"
+        }
+      ]
+    },
+    {
+      "source": "reference system",
+      "target": "参考系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "534"
+        }
+      ]
+    },
+    {
+      "source": "reflection of light",
+      "target": "光的反射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "535"
+        }
+      ]
+    },
+    {
+      "source": "refraction of light",
+      "target": "光的折射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "536"
+        }
+      ]
+    },
+    {
+      "source": "refractive index",
+      "target": "折射率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "537"
+        }
+      ]
+    },
+    {
+      "source": "relative error",
+      "target": "相对误差",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "539"
+        }
+      ]
+    },
+    {
+      "source": "relative humidity",
+      "target": "相对湿度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "540"
+        }
+      ]
+    },
+    {
+      "source": "relative motion",
+      "target": "相对运动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "541"
+        }
+      ]
+    },
+    {
+      "source": "relativity of simultaneity",
+      "target": "同时性的相对性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "542"
+        }
+      ]
+    },
+    {
+      "source": "relativity principle",
+      "target": "相对性原理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "543"
+        }
+      ]
+    },
+    {
+      "source": "remote control",
+      "target": "遥控",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "544"
+        }
+      ]
+    },
+    {
+      "source": "remote controller",
+      "target": "遥控器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "545"
+        }
+      ]
+    },
+    {
+      "source": "remote sensing technology",
+      "target": "遥感技术",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "546"
+        }
+      ]
+    },
+    {
+      "source": "residual magnetism",
+      "target": "剩磁",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "547"
+        }
+      ]
+    },
+    {
+      "source": "resistance element",
+      "target": "电阻元件",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "549"
+        }
+      ]
+    },
+    {
+      "source": "resistance thermometer",
+      "target": "电阻温度计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "550"
+        }
+      ]
+    },
+    {
+      "source": "resolution of force",
+      "target": "力的分解",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "551"
+        }
+      ]
+    },
+    {
+      "source": "resonance state",
+      "target": "共振态",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "553"
+        }
+      ]
+    },
+    {
+      "source": "rest energy",
+      "target": "静能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "554"
+        }
+      ]
+    },
+    {
+      "source": "reversibility of optical path",
+      "target": "光路可逆性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "556"
+        }
+      ]
+    },
+    {
+      "source": "rigid body",
+      "target": "刚体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "557"
+        }
+      ]
+    },
+    {
+      "source": "rolling friction",
+      "target": "滚动摩擦",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "560"
+        }
+      ]
+    },
+    {
+      "source": "saturated vapor pressure",
+      "target": "饱和蒸汽压",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "561"
+        }
+      ]
+    },
+    {
+      "source": "scattering of light",
+      "target": "光的散射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "565"
+        }
+      ]
+    },
+    {
+      "source": "scintillation counter",
+      "target": "闪烁计数器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "567"
+        }
+      ]
+    },
+    {
+      "source": "second cosmic velocity",
+      "target": "第二宇宙速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "568"
+        }
+      ]
+    },
+    {
+      "source": "secondary rainbow",
+      "target": "霓",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "569"
+        }
+      ]
+    },
+    {
+      "source": "semiconductor chip",
+      "target": "半导体芯片",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "573"
+        }
+      ]
+    },
+    {
+      "source": "semiconductor laser",
+      "target": "半导体激光器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "574"
+        }
+      ]
+    },
+    {
+      "source": "semiconductor triode",
+      "target": "半导体三极管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "575"
+        }
+      ]
+    },
+    {
+      "source": "signal-to-noise ratio",
+      "target": "信噪比",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "579"
+        }
+      ]
+    },
+    {
+      "source": "significant figure",
+      "target": "有效数字",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "580"
+        }
+      ]
+    },
+    {
+      "source": "silicon steel sheet",
+      "target": "硅钢片",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "581"
+        }
+      ]
+    },
+    {
+      "source": "simple harmonic motion",
+      "target": "简谐运动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "582"
+        }
+      ]
+    },
+    {
+      "source": "simple harmonic wave",
+      "target": "简谐波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "583"
+        }
+      ]
+    },
+    {
+      "source": "simple machine",
+      "target": "简单机械",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "584"
+        }
+      ]
+    },
+    {
+      "source": "simple pendulum",
+      "target": "单摆",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "585"
+        }
+      ]
+    },
+    {
+      "source": "sky wave",
+      "target": "天波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "586"
+        }
+      ]
+    },
+    {
+      "source": "sliding friction",
+      "target": "滑动摩擦",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "587"
+        }
+      ]
+    },
+    {
+      "source": "sodium lamp",
+      "target": "钠灯",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "588"
+        }
+      ]
+    },
+    {
+      "source": "soft magnetic material",
+      "target": "软磁材料",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "589"
+        }
+      ]
+    },
+    {
+      "source": "solar energy",
+      "target": "太阳能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "591"
+        }
+      ]
+    },
+    {
+      "source": "solid state laser",
+      "target": "固体激光器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "592"
+        }
+      ]
+    },
+    {
+      "source": "sound pressure",
+      "target": "声压",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "595"
+        }
+      ]
+    },
+    {
+      "source": "sound velocity",
+      "target": "声速",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "596"
+        }
+      ]
+    },
+    {
+      "source": "sound wave",
+      "target": "声波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "597"
+        }
+      ]
+    },
+    {
+      "source": "spark discharge",
+      "target": "火花放电",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "599"
+        }
+      ]
+    },
+    {
+      "source": "specific charge",
+      "target": "比荷",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "600"
+        }
+      ]
+    },
+    {
+      "source": "specific gravity",
+      "target": "比重",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "601"
+        }
+      ]
+    },
+    {
+      "source": "standing wave",
+      "target": "驻波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "605"
+        }
+      ]
+    },
+    {
+      "source": "star connection",
+      "target": "星型接法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "606"
+        }
+      ]
+    },
+    {
+      "source": "steady current",
+      "target": "恒定电流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "607"
+        }
+      ]
+    },
+    {
+      "source": "steady flow",
+      "target": "定常流动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "608"
+        }
+      ]
+    },
+    {
+      "source": "Stern-Gerlach experiment",
+      "target": "施特恩-格拉赫实验",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "610"
+        }
+      ]
+    },
+    {
+      "source": "strange particle",
+      "target": "奇异粒子",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "613"
+        }
+      ]
+    },
+    {
+      "source": "stream line",
+      "target": "流线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "614"
+        }
+      ]
+    },
+    {
+      "source": "stream tube",
+      "target": "流管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "615"
+        }
+      ]
+    },
+    {
+      "source": "strobe photography",
+      "target": "频闪摄影",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "618"
+        }
+      ]
+    },
+    {
+      "source": "stroboscopic photography",
+      "target": "频闪摄影",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "619"
+        }
+      ]
+    },
+    {
+      "source": "strong interaction",
+      "target": "强相互作用",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "620"
+        }
+      ]
+    },
+    {
+      "source": "sun-synchronous orbit",
+      "target": "太阳同步轨道",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "622"
+        }
+      ]
+    },
+    {
+      "source": "supercooled liquid",
+      "target": "过冷液体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "624"
+        }
+      ]
+    },
+    {
+      "source": "superheated liquid",
+      "target": "过热液体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "625"
+        }
+      ]
+    },
+    {
+      "source": "surface energy",
+      "target": "表面能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "627"
+        }
+      ]
+    },
+    {
+      "source": "surface tension",
+      "target": "表面张力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "628"
+        }
+      ]
+    },
+    {
+      "source": "surface tension coefficient",
+      "target": "表面张力系数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "629"
+        }
+      ]
+    },
+    {
+      "source": "synchronous communication satellite",
+      "target": "同步轨道通信卫星",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "631"
+        }
+      ]
+    },
+    {
+      "source": "system of particles",
+      "target": "质点系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "632"
+        }
+      ]
+    },
+    {
+      "source": "systematic error",
+      "target": "系统误差",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "633"
+        }
+      ]
+    },
+    {
+      "source": "temperature coefficient of resistance",
+      "target": "电阻温度系数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "638"
+        }
+      ]
+    },
+    {
+      "source": "terminal voltage",
+      "target": "端电压",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "639"
+        }
+      ]
+    },
+    {
+      "source": "thermocouple thermometer",
+      "target": "热电偶温度计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "641"
+        }
+      ]
+    },
+    {
+      "source": "thermodynamic laws",
+      "target": "热力学定律",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "642"
+        }
+      ]
+    },
+    {
+      "source": "thermoelectric effect",
+      "target": "温差电效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "643"
+        }
+      ]
+    },
+    {
+      "source": "thick lens",
+      "target": "厚透镜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "645"
+        }
+      ]
+    },
+    {
+      "source": "thin lens",
+      "target": "薄透镜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "646"
+        }
+      ]
+    },
+    {
+      "source": "third cosmic velocity",
+      "target": "第三宇宙速度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "647"
+        }
+      ]
+    },
+    {
+      "source": "three phase four wire system",
+      "target": "三相四线制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "648"
+        }
+      ]
+    },
+    {
+      "source": "three phase three wire system",
+      "target": "三相三线制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "649"
+        }
+      ]
+    },
+    {
+      "source": "three phase transformer",
+      "target": "三相变压器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "650"
+        }
+      ]
+    },
+    {
+      "source": "three-phase three-wire system",
+      "target": "三相三线制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "652"
+        }
+      ]
+    },
+    {
+      "source": "time-delay relay",
+      "target": "延时继电器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "654"
+        }
+      ]
+    },
+    {
+      "source": "total internal reflection",
+      "target": "全反射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "656"
+        }
+      ]
+    },
+    {
+      "source": "total reflection",
+      "target": "全反射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "657"
+        }
+      ]
+    },
+    {
+      "source": "transistor amplifier",
+      "target": "晶体管放大器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "660"
+        }
+      ]
+    },
+    {
+      "source": "truth table",
+      "target": "真值表",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "661"
+        }
+      ]
+    },
+    {
+      "source": "turbulent flow",
+      "target": "湍流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "664"
+        }
+      ]
+    },
+    {
+      "source": "ultrasonic wave",
+      "target": "超声波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "665"
+        }
+      ]
+    },
+    {
+      "source": "uncertainty principle",
+      "target": "不确定原理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "667"
+        }
+      ]
+    },
+    {
+      "source": "uniform motion in a straight line",
+      "target": "匀速直线运动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "668"
+        }
+      ]
+    },
+    {
+      "source": "universal gravitation",
+      "target": "万有引力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "669"
+        }
+      ]
+    },
+    {
+      "source": "vacuum gauge",
+      "target": "真空规",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "671"
+        }
+      ]
+    },
+    {
+      "source": "vacuum pump",
+      "target": "真空泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "672"
+        }
+      ]
+    },
+    {
+      "source": "vacuum tube",
+      "target": "真空管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "673"
+        }
+      ]
+    },
+    {
+      "source": "vernier caliper",
+      "target": "游标卡尺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "677"
+        }
+      ]
+    },
+    {
+      "source": "viewing angle",
+      "target": "视角",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "678"
+        }
+      ]
+    },
+    {
+      "source": "virtual image",
+      "target": "虚像",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "679"
+        }
+      ]
+    },
+    {
+      "source": "viscous fluid",
+      "target": "粘性流体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "680"
+        }
+      ]
+    },
+    {
+      "source": "visual angle",
+      "target": "视角",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "681"
+        }
+      ]
+    },
+    {
+      "source": "volt-ampere characteristics",
+      "target": "伏安特性曲线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "682"
+        }
+      ]
+    },
+    {
+      "source": "voltage transformer",
+      "target": "电压互感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "683"
+        }
+      ]
+    },
+    {
+      "source": "voltmeter-ammeter method",
+      "target": "伏安法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "684"
+        }
+      ]
+    },
+    {
+      "source": "vortex electric field",
+      "target": "涡旋电场",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "686"
+        }
+      ]
+    },
+    {
+      "source": "vortex field",
+      "target": "旋涡场",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "687"
+        }
+      ]
+    },
+    {
+      "source": "wave diffraction",
+      "target": "波的衍射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "688"
+        }
+      ]
+    },
+    {
+      "source": "wave function",
+      "target": "波函数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "689"
+        }
+      ]
+    },
+    {
+      "source": "wave interference",
+      "target": "波的干涉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "690"
+        }
+      ]
+    },
+    {
+      "source": "wave-particle dualism",
+      "target": "波粒二象性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "691"
+        }
+      ]
+    },
+    {
+      "source": "wave-particle duality",
+      "target": "波粒二象性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "692"
+        }
+      ]
+    },
+    {
+      "source": "weak interaction",
+      "target": "弱相互作用",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "694"
+        }
+      ]
+    },
+    {
+      "source": "Wheatstone bridge",
+      "target": "惠斯通电桥",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "698"
+        }
+      ]
+    },
+    {
+      "source": "wheel and axle",
+      "target": "轮轴",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "699"
+        }
+      ]
+    },
+    {
+      "source": "white dwarf",
+      "target": "白矮星",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "700"
+        }
+      ]
+    },
+    {
+      "source": "wide-angle lens",
+      "target": "广角镜头",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-physics"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-physics",
+          "entry": "701"
+        }
+      ]
+    }
+  ]
+}

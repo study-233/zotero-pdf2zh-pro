@@ -1,0 +1,565 @@
+[
+  {
+    "id": "naer-computing",
+    "name": "國家教育研究院：兩岸對照名詞-計算機學術名詞",
+    "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E8%A8%88%E7%AE%97%E6%A9%9F%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+    "license": "NAER Government Website Open Information Declaration",
+    "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+    "format": "naer-csv",
+    "targetColumn": "中國大陸譯名",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/兩岸對照名詞-計算機.csv",
+        "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E8%A8%88%E7%AE%97%E6%A9%9F%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+        "sha256": "d8d65ba4097d45dd1c5d6b737fc942a1bd92d74d76ce6d6fb5348001b11b75bd"
+      }
+    ],
+    "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-計算機學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications.",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/NAER.html",
+        "url": "https://terms.naer.edu.tw/mysite/about/2/",
+        "sha256": "c0508b8b3686bf61512261339f40004f9389db5ab3b3ab92fa6ffffcfbe4082f"
+      }
+    ]
+  },
+  {
+    "id": "naer-mechanical",
+    "name": "國家教育研究院：兩岸對照名詞-機械學術名詞",
+    "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E6%A9%9F%E6%A2%B0%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+    "license": "NAER Government Website Open Information Declaration",
+    "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+    "format": "naer-csv",
+    "targetColumn": "中國大陸譯名",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/兩岸對照名詞-機械.csv",
+        "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E6%A9%9F%E6%A2%B0%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+        "sha256": "64f803606c23684202a0191c9eaf68a4cbfd92a5c7e29cb0a4f34e7f4acde3ef"
+      }
+    ],
+    "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-機械學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications.",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/NAER.html",
+        "url": "https://terms.naer.edu.tw/mysite/about/2/",
+        "sha256": "c0508b8b3686bf61512261339f40004f9389db5ab3b3ab92fa6ffffcfbe4082f"
+      }
+    ]
+  },
+  {
+    "id": "naer-civil",
+    "name": "國家教育研究院：土木工程學術名詞",
+    "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%9C%9F%E6%9C%A8%E5%B7%A5%E7%A8%8B%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+    "license": "NAER Government Website Open Information Declaration",
+    "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+    "format": "naer-csv",
+    "targetColumn": "中文名稱",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/土木工程.csv",
+        "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%9C%9F%E6%9C%A8%E5%B7%A5%E7%A8%8B%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+        "sha256": "d7b4b305b33abffd94fb0a34f867a27af20f228b441bfff979caa28bed878412"
+      }
+    ],
+    "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：土木工程學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications.",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/NAER.html",
+        "url": "https://terms.naer.edu.tw/mysite/about/2/",
+        "sha256": "c0508b8b3686bf61512261339f40004f9389db5ab3b3ab92fa6ffffcfbe4082f"
+      }
+    ]
+  },
+  {
+    "id": "naer-physics",
+    "name": "國家教育研究院：兩岸對照名詞-物理學學術名詞",
+    "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E7%89%A9%E7%90%86%E5%AD%B8%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+    "license": "NAER Government Website Open Information Declaration",
+    "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+    "format": "naer-csv",
+    "targetColumn": "中國大陸譯名",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/兩岸對照名詞-物理學.csv",
+        "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E7%89%A9%E7%90%86%E5%AD%B8%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+        "sha256": "fabe4c6b2917f2ba8a587b3c1a1e8eae907a6ed8ef477eac047a5af5a9f172f9"
+      }
+    ],
+    "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-物理學學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications.",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/NAER.html",
+        "url": "https://terms.naer.edu.tw/mysite/about/2/",
+        "sha256": "c0508b8b3686bf61512261339f40004f9389db5ab3b3ab92fa6ffffcfbe4082f"
+      }
+    ]
+  },
+  {
+    "id": "naer-environment",
+    "name": "國家教育研究院：兩岸對照名詞-環境保護學術名詞",
+    "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E7%92%B0%E5%A2%83%E4%BF%9D%E8%AD%B7%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+    "license": "NAER Government Website Open Information Declaration",
+    "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+    "format": "naer-csv",
+    "targetColumn": "中國大陸譯名",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/兩岸對照名詞-環境保護.csv",
+        "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E7%92%B0%E5%A2%83%E4%BF%9D%E8%AD%B7%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+        "sha256": "198e135d16c2f4fb3298a8f8fdc3cccd66b3a150dfee30bd7472cfa6dc398f2a"
+      }
+    ],
+    "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-環境保護學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications.",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/NAER.html",
+        "url": "https://terms.naer.edu.tw/mysite/about/2/",
+        "sha256": "c0508b8b3686bf61512261339f40004f9389db5ab3b3ab92fa6ffffcfbe4082f"
+      }
+    ]
+  },
+  {
+    "id": "naer-medicine",
+    "name": "國家教育研究院：兩岸對照名詞-醫學學術名詞",
+    "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E9%86%AB%E5%AD%B8%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+    "license": "NAER Government Website Open Information Declaration",
+    "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+    "format": "naer-csv",
+    "targetColumn": "中國大陸譯名",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/兩岸對照名詞-醫學.csv",
+        "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E9%86%AB%E5%AD%B8%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+        "sha256": "242feb13d93913ebecccccf43ab0340dd5f75ed4c6d8e4044e16db60f85d54e9"
+      }
+    ],
+    "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-醫學學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications.",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/NAER.html",
+        "url": "https://terms.naer.edu.tw/mysite/about/2/",
+        "sha256": "c0508b8b3686bf61512261339f40004f9389db5ab3b3ab92fa6ffffcfbe4082f"
+      }
+    ]
+  },
+  {
+    "id": "python",
+    "name": "Python Software Foundation and Chinese translation contributors: Python 3.13 glossary",
+    "url": "https://docs.python.org/zh-cn/3.13/glossary.html",
+    "license": "PSF-2.0",
+    "licenseUrl": "https://docs.python.org/zh-cn/3/license.html",
+    "format": "python-glossary",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/python.html",
+        "url": "https://docs.python.org/zh-cn/3.13/glossary.html",
+        "sha256": "d2cf5ecc92480bc7a83a67cb86636624fd48eb290725eca92906fa6d5a8b2072"
+      }
+    ],
+    "notice": "Copyright © 2001-2026 Python Software Foundation and Python documentation contributors. Chinese translation contributors are credited in LICENSES/Python-TRANSLATORS.txt. Selected glossary headings from Python 3.13 documentation; whitespace normalized and English/Chinese labels paired. PSF License Version 2 applies; the complete license and copyright notices follow. Translation contributions were provided to the PSF under CC0-1.0. No endorsement is implied.",
+    "includeLicenseText": "LICENSES/PSF-2.0.txt",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/PSF-2.0.txt",
+        "url": "https://raw.githubusercontent.com/python/cpython/v3.13.0/LICENSE",
+        "sha256": "78b12c3a81360b357002334f0e70ea0e92eebf7a9b358805c03c48484945f3bb"
+      },
+      {
+        "file": "LICENSES/Python-documentation-license.html",
+        "url": "https://docs.python.org/zh-cn/3.13/license.html",
+        "sha256": "83cf012cce1842e1a5f00bf904a50464d8ee78a88371c754ec22c0e085b5625c"
+      },
+      {
+        "file": "LICENSES/Python-zh-CN-README.rst",
+        "url": "https://raw.githubusercontent.com/python/python-docs-zh-cn/master/README.rst",
+        "sha256": "6eec50c732f18f2fd245474aab83aa714b14377e59d6565bcad410187c3f7049"
+      },
+      {
+        "file": "LICENSES/Python-TRANSLATORS.txt",
+        "url": "https://raw.githubusercontent.com/python/python-docs-zh-cn/master/TRANSLATORS",
+        "sha256": "33ed7203bc35124fabdceb2c3fd14e33542ffe0cf00b998c7ca87549fb3df692"
+      },
+      {
+        "file": "LICENSES/CC0-1.0.txt",
+        "url": "https://raw.githubusercontent.com/creativecommons/cc-legal-tools-data/main/docs/publicdomain/zero/1.0/legalcode.txt",
+        "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+      }
+    ]
+  },
+  {
+    "id": "google-foundation",
+    "name": "Google Developers: Machine Learning Glossary (fundamentals)",
+    "url": "https://developers.google.com/machine-learning/glossary/fundamentals?hl=zh-cn",
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "format": "google-glossary",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/google-foundation-en.html",
+        "url": "https://developers.google.com/machine-learning/glossary/fundamentals?hl=en",
+        "sha256": "ad32a9f2c55755a609723666b04b63d68959e5f5f7625cb752cf6aa493d6d43e"
+      },
+      {
+        "file": "raw/google-foundation-zh.html",
+        "url": "https://developers.google.com/machine-learning/glossary/fundamentals?hl=zh-cn",
+        "sha256": "45fd584e9ccaf3658f1a09b6e6bce77629e7e0084577903fb56a0b6eebcbba26"
+      }
+    ],
+    "notice": "Copyright Google LLC. Google Developers Machine Learning Glossary content is licensed under CC BY 4.0. This project selects bilingual headings, pairs translations by heading identifier, and normalizes whitespace. No endorsement is implied. Supplied as-is without warranties; see the license disclaimer.",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/CC-BY-4.0.txt",
+        "url": "https://raw.githubusercontent.com/creativecommons/cc-legal-tools-data/main/docs/licenses/by/4.0/legalcode.txt",
+        "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+      },
+      {
+        "file": "LICENSES/Google-site-policies.html",
+        "url": "https://developers.google.com/terms/site-policies",
+        "sha256": "b0da7bbc28e22ddc9d3740fe4704f3cb81163e56b94a4229251683b08c7f95f5"
+      }
+    ]
+  },
+  {
+    "id": "google-generative",
+    "name": "Google Developers: Machine Learning Glossary (generative)",
+    "url": "https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn",
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "format": "google-glossary",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/google-generative-en.html",
+        "url": "https://developers.google.com/machine-learning/glossary/generative?hl=en",
+        "sha256": "c83773256b8d09a2ab428da92420fe50a4188d7846fc216bc7a063b82a472232"
+      },
+      {
+        "file": "raw/google-generative-zh.html",
+        "url": "https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn",
+        "sha256": "a9d4f49b0c5e63c4781b7b344f068a75543f9617ea1b5507cb9b2fedeede9b60"
+      }
+    ],
+    "notice": "Copyright Google LLC. Google Developers Machine Learning Glossary content is licensed under CC BY 4.0. This project selects bilingual headings, pairs translations by heading identifier, and normalizes whitespace. No endorsement is implied. Supplied as-is without warranties; see the license disclaimer.",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/CC-BY-4.0.txt",
+        "url": "https://raw.githubusercontent.com/creativecommons/cc-legal-tools-data/main/docs/licenses/by/4.0/legalcode.txt",
+        "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+      },
+      {
+        "file": "LICENSES/Google-site-policies.html",
+        "url": "https://developers.google.com/terms/site-policies",
+        "sha256": "b0da7bbc28e22ddc9d3740fe4704f3cb81163e56b94a4229251683b08c7f95f5"
+      }
+    ]
+  },
+  {
+    "id": "gemet",
+    "name": "European Environment Agency: GEMET 4.2.3 preferred labels",
+    "url": "https://www.eionet.europa.eu/gemet/en/exports/rdf/latest",
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "format": "gemet-translations",
+    "retrieved": "2026-09-22",
+    "inputs": [
+      {
+        "file": "raw/gemet-44.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F44&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "061c972b7279f15e107133051ce271539a2fd1430f66115b3d50f04183c4052d",
+        "entryId": "44"
+      },
+      {
+        "file": "raw/gemet-265.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F265&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "def4fe8367e505aa3f6f191e97fbe43c5eb4480aeadf2f983867112571688f9b",
+        "entryId": "265"
+      },
+      {
+        "file": "raw/gemet-270.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F270&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "f405a0090f3d2c2b5848390a7dde2e30b9d645c572dc334ee387e3296b3e6b5b",
+        "entryId": "270"
+      },
+      {
+        "file": "raw/gemet-505.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F505&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "eb0bbb5d93d4eb53922736e0a277455a2e6494ff6a28c1b55e4c685ab2a11da5",
+        "entryId": "505"
+      },
+      {
+        "file": "raw/gemet-798.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F798&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "8f2d4fbedfb7c4d6481cea4c019f8a600b2ed9701a4c4b04ca890cd7e1a6a283",
+        "entryId": "798"
+      },
+      {
+        "file": "raw/gemet-947.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F947&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "3e59b25b441a19635796af1e22235c3fd9ca95c8e5b399ea5f5dbb244ada0dc1",
+        "entryId": "947"
+      },
+      {
+        "file": "raw/gemet-826.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F826&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "73ef2be4ab736daa6227b452d6db46efe81e4ba663ceecfa57b1a54fbd6c832f",
+        "entryId": "826"
+      },
+      {
+        "file": "raw/gemet-827.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F827&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "a02ab118503dea8790a0b07cf79d0361ecfcf37c1967d7f83209cd0f3e5d328f",
+        "entryId": "827"
+      },
+      {
+        "file": "raw/gemet-883.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F883&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "082371900374f06e0784dec347f31d0f94fa4c12b25738f5d8dcece4efbe8829",
+        "entryId": "883"
+      },
+      {
+        "file": "raw/gemet-1168.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F1168&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "4bbb9008a57e2615591e1c25306036f49a05306117dfa587b1769feb8a519ac5",
+        "entryId": "1168"
+      },
+      {
+        "file": "raw/gemet-1173.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F1173&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "bb6a22cb26ca643600f3eb4f6a13cfffc865dd63acac06c7a58c21a8e44094b6",
+        "entryId": "1173"
+      },
+      {
+        "file": "raw/gemet-1536.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F1536&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "b266c503baffabb374811bb97d427a57619f96f6033cfc298b3a229803b10f6b",
+        "entryId": "1536"
+      },
+      {
+        "file": "raw/gemet-1471.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F1471&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "63f6358b6824acfa477687e226ef36fcf1e0b7f8097e95e1026fa931ec5a33bc",
+        "entryId": "1471"
+      },
+      {
+        "file": "raw/gemet-1466.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F1466&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "1f9dd3d27654ff2c47c7cc6db7e0068f8e43d65bb61b597f4c6ed83a8d499f42",
+        "entryId": "1466"
+      },
+      {
+        "file": "raw/gemet-2036.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F2036&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "098d02b928332ca9129add3d3acabd4af1b1adc57933dd769aa766f8d98b2c97",
+        "entryId": "2036"
+      },
+      {
+        "file": "raw/gemet-2105.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F2105&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "c9bbd3c816ca61b80505f69ca2b1de1a6bac1407b6c91ab63abfe2a20ea8ae2f",
+        "entryId": "2105"
+      },
+      {
+        "file": "raw/gemet-2339.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F2339&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "4a0c8ec3fd7503967e185ee94c63cc51a9d6097980880edd22c961ac6fc18082",
+        "entryId": "2339"
+      },
+      {
+        "file": "raw/gemet-2519.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F2519&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "e3385780aa049999a3987019ebe728dcf5bfdb3f51d8fdb1818ad979fd939e3d",
+        "entryId": "2519"
+      },
+      {
+        "file": "raw/gemet-15135.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F15135&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "e418115ce8e44a5d53d6d68fdeb3f49ac4aefe16a975af07ed84d898f304ca11",
+        "entryId": "15135"
+      },
+      {
+        "file": "raw/gemet-2530.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F2530&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "4b12cea20e916c4297ac42d334539e6fc2d0c34b1926a94f41bce5cc469e5e9b",
+        "entryId": "2530"
+      },
+      {
+        "file": "raw/gemet-2733.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F2733&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "540d0d64de95d66a7ba66bf67ac2dbf5c03ee7a2a9da6a4d0ca5273a26b80521",
+        "entryId": "2733"
+      },
+      {
+        "file": "raw/gemet-2814.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F2814&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "594f02a77f871378375597937b367bd6c33800c8d0d8da5242b185f70a0b9e3e",
+        "entryId": "2814"
+      },
+      {
+        "file": "raw/gemet-2830.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F2830&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "08539e24d879fa9cb61610ed231638ca301c088605d5b41e4bac23e9dc19d1ae",
+        "entryId": "2830"
+      },
+      {
+        "file": "raw/gemet-3007.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F3007&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "eb09a5f484d9d301e61ebe425aea61cc3b1343e8e259f6ae14f7f93128785642",
+        "entryId": "3007"
+      },
+      {
+        "file": "raw/gemet-3410.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F3410&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "5181ac3dc96868091dde1de639eb8be5e042d95cae9c6b6a058ce28f54b8394a",
+        "entryId": "3410"
+      },
+      {
+        "file": "raw/gemet-3763.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F3763&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "bc7a04178134799515c709be67b995cde0311946cf295bce568aa2a15ef46a46",
+        "entryId": "3763"
+      },
+      {
+        "file": "raw/gemet-3780.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F3780&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "d2fc23904cd7d93d137f9f39ba3e0b0da71f4c5aa1a0f89625ec3d8ce1118045",
+        "entryId": "3780"
+      },
+      {
+        "file": "raw/gemet-3854.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F3854&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "a3d35a2ac18bcc0b5c6e428f6f20b123b13bded2e3153df48840603209dbb61a",
+        "entryId": "3854"
+      },
+      {
+        "file": "raw/gemet-4678.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F4678&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "e2eb29b2ebfdd24e10986661dbf3dcecc9f756b760bf38213938b52e1cdd6147",
+        "entryId": "4678"
+      },
+      {
+        "file": "raw/gemet-5537.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F5537&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "654718cb8b23dc4449a2f90cbf0465d58d3293b677ad817a32a907b897712116",
+        "entryId": "5537"
+      },
+      {
+        "file": "raw/gemet-13577.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F13577&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "dcac94f3ff033976945ec6367446fb9ed1ed3f0ab07f9fbc60593d4e050bab96",
+        "entryId": "13577"
+      },
+      {
+        "file": "raw/gemet-5626.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F5626&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "c2684aa668327990e64081eb575d06fe6985e7ae5e50adf4b3c31cea6961bccb",
+        "entryId": "5626"
+      },
+      {
+        "file": "raw/gemet-15255.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F15255&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "dc2c09f661cbb60b372f974120a416853fb9f86547296b7423337e810da32227",
+        "entryId": "15255"
+      },
+      {
+        "file": "raw/gemet-6451.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F6451&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "e879cd1dcfaea19ffde0f8966ef954de6104b6b09eabb7572ebeb5496e84eef2",
+        "entryId": "6451"
+      },
+      {
+        "file": "raw/gemet-7015.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F7015&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "cb602bb51964c2147d69197a6f2850ec0f13f07dfa9a28a05562d539bb323abe",
+        "entryId": "7015"
+      },
+      {
+        "file": "raw/gemet-15271.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F15271&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "78f8c375f0219f37ab33c2f3a0f4ba4c2c072085845ba6642dd521e1f0775b2d",
+        "entryId": "15271"
+      },
+      {
+        "file": "raw/gemet-7236.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F7236&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "16b7f7d119717c8e9b60fb9196956ed844088549711ad0fc1d53707ba0ea1a92",
+        "entryId": "7236"
+      },
+      {
+        "file": "raw/gemet-7858.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F7858&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "d0d993b69836fe882fd2cd9708a5420f6a17d429f94a75bb055fbc5d6c7a4b63",
+        "entryId": "7858"
+      },
+      {
+        "file": "raw/gemet-8202.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F8202&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "b0399815734f65517b3c7e36e69f5e8e07db60d71f6c7275e0967fc0b2f8b38e",
+        "entryId": "8202"
+      },
+      {
+        "file": "raw/gemet-8229.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F8229&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "abbe0e93fd62fb6a65363b53e474ce9fb3f5aeff657d1b19b6fb5adf91fe919d",
+        "entryId": "8229"
+      },
+      {
+        "file": "raw/gemet-9092.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F9092&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "15856c5d2d8b8b4468464bba44d7c06e6e21c22412f376d6644afa2578e2f6a7",
+        "entryId": "9092"
+      },
+      {
+        "file": "raw/gemet-9127.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F9127&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "00fdcc97289bfd5e31cf1947133a37daacb67bc87abea8880b115aeff207dba7",
+        "entryId": "9127"
+      },
+      {
+        "file": "raw/gemet-9159.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F9159&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "e5eaac3ade6a5ab753ca8346dd436ece8ffb2b48fbe6dc6d874b849f9cf36d4a",
+        "entryId": "9159"
+      },
+      {
+        "file": "raw/gemet-9210.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F9210&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "bf5beeed536cd63b924c7ab35022c852e6c217e0d9d63115868f17820a38651a",
+        "entryId": "9210"
+      },
+      {
+        "file": "raw/gemet-9214.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F9214&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "3c11aefa29320a58a5e408a9a21669ad59b0191794b5bbee83958558ba8a73d2",
+        "entryId": "9214"
+      },
+      {
+        "file": "raw/gemet-9297.json",
+        "url": "https://www.eionet.europa.eu/gemet/getAllTranslationsForConcept?concept_uri=http%3A%2F%2Fwww.eionet.europa.eu%2Fgemet%2Fconcept%2F9297&property_uri=http%3A%2F%2Fwww.w3.org%2F2004%2F02%2Fskos%2Fcore%23prefLabel",
+        "sha256": "ca25712cb76b93838456f7a61d7d52aa678a4c379d9fc914038ccf90561d5165",
+        "entryId": "9297"
+      }
+    ],
+    "notice": "European Environment Agency, GEMET 4.2.3. Preferred labels reused under CC BY 4.0. This project selected English and Simplified Chinese labels using concept identifiers; no definitions are reproduced. Selection and formatting are modified; no endorsement is implied. Supplied as-is without warranties; see the license disclaimer.",
+    "licenseFiles": [
+      {
+        "file": "LICENSES/CC-BY-4.0.txt",
+        "url": "https://raw.githubusercontent.com/creativecommons/cc-legal-tools-data/main/docs/licenses/by/4.0/legalcode.txt",
+        "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+      },
+      {
+        "file": "LICENSES/GEMET-license.html",
+        "url": "https://www.eionet.europa.eu/gemet/en/exports/rdf/latest",
+        "sha256": "8d41e07a690c39a43545834da53d86b45b3627f6577645145bf3173099f59706"
+      }
+    ]
+  }
+]

@@ -1,0 +1,5633 @@
+{
+  "schemaVersion": 1,
+  "id": "medicine",
+  "version": "2026.09.22",
+  "sourceLang": "en",
+  "targetLang": "zh-CN",
+  "sources": [
+    {
+      "id": "naer-medicine",
+      "name": "國家教育研究院：兩岸對照名詞-醫學學術名詞",
+      "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E9%86%AB%E5%AD%B8%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+      "license": "NAER Government Website Open Information Declaration",
+      "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+      "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-醫學學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications."
+    }
+  ],
+  "entries": [
+    {
+      "source": "abdominal muscle",
+      "target": "腹肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "1"
+        }
+      ]
+    },
+    {
+      "source": "abducent nerve",
+      "target": "展神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "2"
+        }
+      ]
+    },
+    {
+      "source": "accessory nerve",
+      "target": "副神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "5"
+        }
+      ]
+    },
+    {
+      "source": "Action potential",
+      "target": "动作电位",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "8"
+        }
+      ]
+    },
+    {
+      "source": "adipose tissue",
+      "target": "脂肪组织",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "10"
+        }
+      ]
+    },
+    {
+      "source": "adrenal gland",
+      "target": "肾上腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "11"
+        }
+      ]
+    },
+    {
+      "source": "Adverse Drug Reaction",
+      "target": "药品不良反应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "12"
+        }
+      ]
+    },
+    {
+      "source": "ammonia poisoning",
+      "target": "氨中毒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "19"
+        }
+      ]
+    },
+    {
+      "source": "amniotic fluid",
+      "target": "羊水",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "21"
+        }
+      ]
+    },
+    {
+      "source": "anal prolapse",
+      "target": "脱肛",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "24"
+        }
+      ]
+    },
+    {
+      "source": "angina pectoris",
+      "target": "心绞痛",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "27"
+        }
+      ]
+    },
+    {
+      "source": "ankle joint",
+      "target": "踝关节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "28"
+        }
+      ]
+    },
+    {
+      "source": "anterior axillary line",
+      "target": "腋前线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "29"
+        }
+      ]
+    },
+    {
+      "source": "anterior cranial fossa",
+      "target": "颅前窝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "30"
+        }
+      ]
+    },
+    {
+      "source": "anterior median line",
+      "target": "前正中线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "31"
+        }
+      ]
+    },
+    {
+      "source": "aqueous humor",
+      "target": "房水",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "37"
+        }
+      ]
+    },
+    {
+      "source": "artificial insemination",
+      "target": "人工授精",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "41"
+        }
+      ]
+    },
+    {
+      "source": "artificial limb",
+      "target": "假肢",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "42"
+        }
+      ]
+    },
+    {
+      "source": "artificial respiration",
+      "target": "人工呼吸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "43"
+        }
+      ]
+    },
+    {
+      "source": "asthma",
+      "target": "哮喘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "47"
+        }
+      ]
+    },
+    {
+      "source": "atlantoaxial joint",
+      "target": "寰枢关节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "51"
+        }
+      ]
+    },
+    {
+      "source": "atlantooccipital joint",
+      "target": "寰枕关节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "52"
+        }
+      ]
+    },
+    {
+      "source": "atmospheric pollution",
+      "target": "大气污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "53"
+        }
+      ]
+    },
+    {
+      "source": "atrioventricular bundle",
+      "target": "房室束",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "54"
+        }
+      ]
+    },
+    {
+      "source": "atrioventricular node",
+      "target": "房室结",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "55"
+        }
+      ]
+    },
+    {
+      "source": "auditory nerve",
+      "target": "听神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "58"
+        }
+      ]
+    },
+    {
+      "source": "autonomic nervous system",
+      "target": "自主神经系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "61"
+        }
+      ]
+    },
+    {
+      "source": "axillary artery",
+      "target": "腋动脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "62"
+        }
+      ]
+    },
+    {
+      "source": "axillary lymph nodes",
+      "target": "腋淋巴结",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "63"
+        }
+      ]
+    },
+    {
+      "source": "balanced diet",
+      "target": "平衡膳食",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "67"
+        }
+      ]
+    },
+    {
+      "source": "basal metabolism",
+      "target": "基础代谢",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "68"
+        }
+      ]
+    },
+    {
+      "source": "basilic vein",
+      "target": "贵要静脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "69"
+        }
+      ]
+    },
+    {
+      "source": "benzene poisoning",
+      "target": "苯中毒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "71"
+        }
+      ]
+    },
+    {
+      "source": "biceps brachii",
+      "target": "肱二头肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "73"
+        }
+      ]
+    },
+    {
+      "source": "bicuspid teeth",
+      "target": "双尖牙",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "74"
+        }
+      ]
+    },
+    {
+      "source": "birth control",
+      "target": "节育",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "79"
+        }
+      ]
+    },
+    {
+      "source": "bladder cancer",
+      "target": "膀胱癌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "80"
+        }
+      ]
+    },
+    {
+      "source": "blood bank",
+      "target": "血库",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "82"
+        }
+      ]
+    },
+    {
+      "source": "blood capillary",
+      "target": "毛细血管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "83"
+        }
+      ]
+    },
+    {
+      "source": "Blood coagulation",
+      "target": "血液凝固",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "84"
+        }
+      ]
+    },
+    {
+      "source": "blood plasma",
+      "target": "血浆",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "85"
+        }
+      ]
+    },
+    {
+      "source": "blood pressure",
+      "target": "血压",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "86"
+        }
+      ]
+    },
+    {
+      "source": "blood serum",
+      "target": "血清",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "87"
+        }
+      ]
+    },
+    {
+      "source": "blood stain",
+      "target": "血痕",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "88"
+        }
+      ]
+    },
+    {
+      "source": "blood transfusion",
+      "target": "输血",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "89"
+        }
+      ]
+    },
+    {
+      "source": "blood type",
+      "target": "血型",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "90"
+        }
+      ]
+    },
+    {
+      "source": "blood-brain barrier",
+      "target": "血-脑屏障",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "91"
+        }
+      ]
+    },
+    {
+      "source": "body fluid",
+      "target": "体液",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "93"
+        }
+      ]
+    },
+    {
+      "source": "body temperature",
+      "target": "体温",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "94"
+        }
+      ]
+    },
+    {
+      "source": "bone age",
+      "target": "骨龄",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "96"
+        }
+      ]
+    },
+    {
+      "source": "bone marrow",
+      "target": "骨髓",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "97"
+        }
+      ]
+    },
+    {
+      "source": "bony labyrinth",
+      "target": "骨迷路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "100"
+        }
+      ]
+    },
+    {
+      "source": "boric acid",
+      "target": "硼酸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "101"
+        }
+      ]
+    },
+    {
+      "source": "brachial artery",
+      "target": "肱动脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "102"
+        }
+      ]
+    },
+    {
+      "source": "brain stem",
+      "target": "脑干",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "104"
+        }
+      ]
+    },
+    {
+      "source": "breast carcinoma",
+      "target": "乳腺癌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "105"
+        }
+      ]
+    },
+    {
+      "source": "breast milk",
+      "target": "母乳",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "106"
+        }
+      ]
+    },
+    {
+      "source": "bronchiectasis",
+      "target": "支气管扩张",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "108"
+        }
+      ]
+    },
+    {
+      "source": "bronchitis",
+      "target": "支气管炎",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "109"
+        }
+      ]
+    },
+    {
+      "source": "cancer of colon",
+      "target": "结肠癌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "114"
+        }
+      ]
+    },
+    {
+      "source": "carbon monoxide poisoning",
+      "target": "一氧化碳中毒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "117"
+        }
+      ]
+    },
+    {
+      "source": "cardiac asthma",
+      "target": "心源性哮喘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "119"
+        }
+      ]
+    },
+    {
+      "source": "cardiac cycle",
+      "target": "心动周期",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "120"
+        }
+      ]
+    },
+    {
+      "source": "cardiac muscle",
+      "target": "心肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "121"
+        }
+      ]
+    },
+    {
+      "source": "cardiovascular system",
+      "target": "心血管系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "123"
+        }
+      ]
+    },
+    {
+      "source": "carpal bones",
+      "target": "腕骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "124"
+        }
+      ]
+    },
+    {
+      "source": "case fatality rate",
+      "target": "病死率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "127"
+        }
+      ]
+    },
+    {
+      "source": "cause of disease",
+      "target": "病因",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "129"
+        }
+      ]
+    },
+    {
+      "source": "central nervous system",
+      "target": "中枢神经系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "131"
+        }
+      ]
+    },
+    {
+      "source": "cerebral cortex",
+      "target": "大脑皮质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "133"
+        }
+      ]
+    },
+    {
+      "source": "cerebral hemisphere",
+      "target": "大脑半球",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "134"
+        }
+      ]
+    },
+    {
+      "source": "cerebral hemorrhage",
+      "target": "脑出血",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "135"
+        }
+      ]
+    },
+    {
+      "source": "cervical carcinoma",
+      "target": "宫颈癌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "136"
+        }
+      ]
+    },
+    {
+      "source": "cervical plexus",
+      "target": "颈丛",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "137"
+        }
+      ]
+    },
+    {
+      "source": "cervical spondylosis",
+      "target": "颈椎病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "138"
+        }
+      ]
+    },
+    {
+      "source": "cervical vertebra",
+      "target": "颈椎",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "139"
+        }
+      ]
+    },
+    {
+      "source": "chemical pollution",
+      "target": "化学性污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "140"
+        }
+      ]
+    },
+    {
+      "source": "ciliary body",
+      "target": "睫状体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "147"
+        }
+      ]
+    },
+    {
+      "source": "cirrhosis of liver",
+      "target": "肝硬化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "148"
+        }
+      ]
+    },
+    {
+      "source": "climacteric period",
+      "target": "更年期",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "152"
+        }
+      ]
+    },
+    {
+      "source": "cold injury",
+      "target": "冻伤",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "154"
+        }
+      ]
+    },
+    {
+      "source": "colicky pain",
+      "target": "绞痛",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "155"
+        }
+      ]
+    },
+    {
+      "source": "color blindness",
+      "target": "色盲",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "157"
+        }
+      ]
+    },
+    {
+      "source": "color weakness",
+      "target": "色弱",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "158"
+        }
+      ]
+    },
+    {
+      "source": "common carotid artery",
+      "target": "颈总动脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "160"
+        }
+      ]
+    },
+    {
+      "source": "common cold",
+      "target": "感冒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "161"
+        }
+      ]
+    },
+    {
+      "source": "common iliac artery",
+      "target": "髂总动脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "162"
+        }
+      ]
+    },
+    {
+      "source": "compact bone",
+      "target": "骨密质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "164"
+        }
+      ]
+    },
+    {
+      "source": "compound prescription",
+      "target": "复方",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "165"
+        }
+      ]
+    },
+    {
+      "source": "concussion of brain",
+      "target": "脑震荡",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "167"
+        }
+      ]
+    },
+    {
+      "source": "connective tissue",
+      "target": "结缔组织",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "170"
+        }
+      ]
+    },
+    {
+      "source": "cor pulmonale",
+      "target": "肺源性心脏病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "176"
+        }
+      ]
+    },
+    {
+      "source": "coronal suture",
+      "target": "冠状缝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "178"
+        }
+      ]
+    },
+    {
+      "source": "coronary artery",
+      "target": "冠状动脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "179"
+        }
+      ]
+    },
+    {
+      "source": "coronary heart disease",
+      "target": "冠心病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "180"
+        }
+      ]
+    },
+    {
+      "source": "costal arch",
+      "target": "肋弓",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "183"
+        }
+      ]
+    },
+    {
+      "source": "costal bone",
+      "target": "肋骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "184"
+        }
+      ]
+    },
+    {
+      "source": "costal cartilage",
+      "target": "肋软骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "185"
+        }
+      ]
+    },
+    {
+      "source": "covering epithelium",
+      "target": "被覆上皮",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "187"
+        }
+      ]
+    },
+    {
+      "source": "cranial nerves",
+      "target": "脑神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "188"
+        }
+      ]
+    },
+    {
+      "source": "curative effect",
+      "target": "疗效",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "192"
+        }
+      ]
+    },
+    {
+      "source": "cure rate",
+      "target": "治愈率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "194"
+        }
+      ]
+    },
+    {
+      "source": "cuspid teeth",
+      "target": "尖牙",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "195"
+        }
+      ]
+    },
+    {
+      "source": "death rate",
+      "target": "死亡率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "199"
+        }
+      ]
+    },
+    {
+      "source": "deciduous teeth",
+      "target": "乳牙",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "200"
+        }
+      ]
+    },
+    {
+      "source": "deep vein",
+      "target": "深静脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "201"
+        }
+      ]
+    },
+    {
+      "source": "deferent duct",
+      "target": "输精管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "202"
+        }
+      ]
+    },
+    {
+      "source": "Dengue fever",
+      "target": "登革热",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "207"
+        }
+      ]
+    },
+    {
+      "source": "dense connective tissue",
+      "target": "致密结缔组织",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "208"
+        }
+      ]
+    },
+    {
+      "source": "dental calculus",
+      "target": "牙石",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "209"
+        }
+      ]
+    },
+    {
+      "source": "dental caries",
+      "target": "龋齿",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "210"
+        }
+      ]
+    },
+    {
+      "source": "dental pulp",
+      "target": "牙髓",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "211"
+        }
+      ]
+    },
+    {
+      "source": "development age",
+      "target": "发育年龄",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "218"
+        }
+      ]
+    },
+    {
+      "source": "diabetes mellitus",
+      "target": "糖尿病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "219"
+        }
+      ]
+    },
+    {
+      "source": "digestive gland",
+      "target": "消化腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "225"
+        }
+      ]
+    },
+    {
+      "source": "digestive tract",
+      "target": "消化管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "226"
+        }
+      ]
+    },
+    {
+      "source": "dizygotic twins",
+      "target": "双卵孪生",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "232"
+        }
+      ]
+    },
+    {
+      "source": "dorsal thalamus",
+      "target": "背侧丘脑",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "235"
+        }
+      ]
+    },
+    {
+      "source": "Drug compatibility",
+      "target": "药物配伍",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "240"
+        }
+      ]
+    },
+    {
+      "source": "drug resistance",
+      "target": "耐药性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "243"
+        }
+      ]
+    },
+    {
+      "source": "elbow joint",
+      "target": "肘关节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "252"
+        }
+      ]
+    },
+    {
+      "source": "electric shock",
+      "target": "触电",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "253"
+        }
+      ]
+    },
+    {
+      "source": "emphysema",
+      "target": "肺气肿",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "257"
+        }
+      ]
+    },
+    {
+      "source": "endocrine gland",
+      "target": "内分泌腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "260"
+        }
+      ]
+    },
+    {
+      "source": "endocrine system",
+      "target": "内分泌系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "261"
+        }
+      ]
+    },
+    {
+      "source": "epithelial tissue",
+      "target": "上皮组织",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "269"
+        }
+      ]
+    },
+    {
+      "source": "erector spinae",
+      "target": "竖脊肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "270"
+        }
+      ]
+    },
+    {
+      "source": "esophagus cancer",
+      "target": "食管癌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "275"
+        }
+      ]
+    },
+    {
+      "source": "essential amino acid",
+      "target": "必需氨基酸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "276"
+        }
+      ]
+    },
+    {
+      "source": "essential fatty acid",
+      "target": "必需脂肪酸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "277"
+        }
+      ]
+    },
+    {
+      "source": "ethmoid bone",
+      "target": "筛骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "278"
+        }
+      ]
+    },
+    {
+      "source": "external acoustic meatus",
+      "target": "外耳道",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "282"
+        }
+      ]
+    },
+    {
+      "source": "external jugular vein",
+      "target": "颈外静脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "283"
+        }
+      ]
+    },
+    {
+      "source": "extrapyramidal system",
+      "target": "锥体外系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "284"
+        }
+      ]
+    },
+    {
+      "source": "facial muscles",
+      "target": "面肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "290"
+        }
+      ]
+    },
+    {
+      "source": "facial nerve",
+      "target": "面神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "291"
+        }
+      ]
+    },
+    {
+      "source": "fat-soluble vitamin",
+      "target": "脂溶性维生素",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "293"
+        }
+      ]
+    },
+    {
+      "source": "fatty acid",
+      "target": "脂肪酸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "295"
+        }
+      ]
+    },
+    {
+      "source": "fatty liver",
+      "target": "脂肪肝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "296"
+        }
+      ]
+    },
+    {
+      "source": "female external genital organs",
+      "target": "女性外生殖器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "298"
+        }
+      ]
+    },
+    {
+      "source": "female genital organ",
+      "target": "女性生殖器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "299"
+        }
+      ]
+    },
+    {
+      "source": "femoral artery",
+      "target": "股动脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "300"
+        }
+      ]
+    },
+    {
+      "source": "femoral nerve",
+      "target": "股神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "301"
+        }
+      ]
+    },
+    {
+      "source": "fiber bundle",
+      "target": "纤维束",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "306"
+        }
+      ]
+    },
+    {
+      "source": "first aid",
+      "target": "急救",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "310"
+        }
+      ]
+    },
+    {
+      "source": "folic acid",
+      "target": "叶酸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "313"
+        }
+      ]
+    },
+    {
+      "source": "food additives",
+      "target": "食品添加剂",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "314"
+        }
+      ]
+    },
+    {
+      "source": "food contamination",
+      "target": "食品污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "315"
+        }
+      ]
+    },
+    {
+      "source": "food poisoning",
+      "target": "食物中毒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "316"
+        }
+      ]
+    },
+    {
+      "source": "fourth ventricle",
+      "target": "第四脑室",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "318"
+        }
+      ]
+    },
+    {
+      "source": "frontal bone",
+      "target": "额骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "319"
+        }
+      ]
+    },
+    {
+      "source": "gall bladder",
+      "target": "胆囊",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "323"
+        }
+      ]
+    },
+    {
+      "source": "ganglia of sympathetic trunk",
+      "target": "交感干神经节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "324"
+        }
+      ]
+    },
+    {
+      "source": "gastric juice",
+      "target": "胃液",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "325"
+        }
+      ]
+    },
+    {
+      "source": "gastric ulcer",
+      "target": "胃溃疡",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "326"
+        }
+      ]
+    },
+    {
+      "source": "glandular epithelium",
+      "target": "腺上皮",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "329"
+        }
+      ]
+    },
+    {
+      "source": "glenohumeral joint",
+      "target": "肩关节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "331"
+        }
+      ]
+    },
+    {
+      "source": "glossopharyngeal nerve",
+      "target": "舌咽神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "332"
+        }
+      ]
+    },
+    {
+      "source": "gluteus maximus",
+      "target": "臀大肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "335"
+        }
+      ]
+    },
+    {
+      "source": "gonadal hormone",
+      "target": "性激素",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "338"
+        }
+      ]
+    },
+    {
+      "source": "gray matter",
+      "target": "灰质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "341"
+        }
+      ]
+    },
+    {
+      "source": "great saphenous vein",
+      "target": "大隐静脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "342"
+        }
+      ]
+    },
+    {
+      "source": "growth and development",
+      "target": "生长发育",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "343"
+        }
+      ]
+    },
+    {
+      "source": "heart failure",
+      "target": "心力衰竭",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "354"
+        }
+      ]
+    },
+    {
+      "source": "heart rate",
+      "target": "心率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "355"
+        }
+      ]
+    },
+    {
+      "source": "heart sound",
+      "target": "心音",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "356"
+        }
+      ]
+    },
+    {
+      "source": "heat cramp",
+      "target": "热痉挛",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "357"
+        }
+      ]
+    },
+    {
+      "source": "heat stroke",
+      "target": "中暑",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "358"
+        }
+      ]
+    },
+    {
+      "source": "high density lipoprotein",
+      "target": "高密度脂蛋白",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "367"
+        }
+      ]
+    },
+    {
+      "source": "hip joint",
+      "target": "髋关节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "368"
+        }
+      ]
+    },
+    {
+      "source": "hyoid bone",
+      "target": "舌骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "375"
+        }
+      ]
+    },
+    {
+      "source": "hypoglossal nerve",
+      "target": "舌下神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "382"
+        }
+      ]
+    },
+    {
+      "source": "hypoxia",
+      "target": "缺氧",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "385"
+        }
+      ]
+    },
+    {
+      "source": "iliac crest",
+      "target": "髂嵴",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "387"
+        }
+      ]
+    },
+    {
+      "source": "incidence of a disease",
+      "target": "发病率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "391"
+        }
+      ]
+    },
+    {
+      "source": "incisor teeth",
+      "target": "切牙",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "392"
+        }
+      ]
+    },
+    {
+      "source": "incubation period",
+      "target": "潜伏期",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "393"
+        }
+      ]
+    },
+    {
+      "source": "induced abortion",
+      "target": "人工流产",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "394"
+        }
+      ]
+    },
+    {
+      "source": "infant mortality",
+      "target": "婴儿死亡率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "398"
+        }
+      ]
+    },
+    {
+      "source": "infection rate",
+      "target": "感染率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "402"
+        }
+      ]
+    },
+    {
+      "source": "infectious diseases",
+      "target": "传染病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "403"
+        }
+      ]
+    },
+    {
+      "source": "inferior nasal concha",
+      "target": "下鼻甲",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "404"
+        }
+      ]
+    },
+    {
+      "source": "inferior vena cava",
+      "target": "下腔静脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "405"
+        }
+      ]
+    },
+    {
+      "source": "inguinal canal",
+      "target": "腹股沟管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "410"
+        }
+      ]
+    },
+    {
+      "source": "intercostales externi",
+      "target": "肋间外肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "415"
+        }
+      ]
+    },
+    {
+      "source": "intercostales interni",
+      "target": "肋间内肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "416"
+        }
+      ]
+    },
+    {
+      "source": "internal ear",
+      "target": "内耳",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "417"
+        }
+      ]
+    },
+    {
+      "source": "internal jugular vein",
+      "target": "颈内静脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "418"
+        }
+      ]
+    },
+    {
+      "source": "interspinal ligaments",
+      "target": "棘间韧带",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "419"
+        }
+      ]
+    },
+    {
+      "source": "intervertebral discs",
+      "target": "椎间盘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "420"
+        }
+      ]
+    },
+    {
+      "source": "iodine tincture",
+      "target": "碘酒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "422"
+        }
+      ]
+    },
+    {
+      "source": "iron deficiency anemia",
+      "target": "缺铁性贫血",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "424"
+        }
+      ]
+    },
+    {
+      "source": "joints of hand",
+      "target": "手关节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "428"
+        }
+      ]
+    },
+    {
+      "source": "knee joint",
+      "target": "膝关节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "431"
+        }
+      ]
+    },
+    {
+      "source": "lacrimal fluid",
+      "target": "泪液",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "432"
+        }
+      ]
+    },
+    {
+      "source": "lacrimal gland",
+      "target": "泪腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "433"
+        }
+      ]
+    },
+    {
+      "source": "lacrimal passages",
+      "target": "泪道",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "434"
+        }
+      ]
+    },
+    {
+      "source": "Lactose intolerance",
+      "target": "乳糖不耐症",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "436"
+        }
+      ]
+    },
+    {
+      "source": "lambdoid suture",
+      "target": "人字缝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "438"
+        }
+      ]
+    },
+    {
+      "source": "lateral malleolus",
+      "target": "外踝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "441"
+        }
+      ]
+    },
+    {
+      "source": "lateral ventricle",
+      "target": "侧脑室",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "442"
+        }
+      ]
+    },
+    {
+      "source": "latissimus dorsi",
+      "target": "背阔肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "443"
+        }
+      ]
+    },
+    {
+      "source": "left atrium",
+      "target": "左心房",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "444"
+        }
+      ]
+    },
+    {
+      "source": "left ventricle",
+      "target": "左心室",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "445"
+        }
+      ]
+    },
+    {
+      "source": "life expectancy",
+      "target": "预期寿命",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "453"
+        }
+      ]
+    },
+    {
+      "source": "life table",
+      "target": "生命表",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "454"
+        }
+      ]
+    },
+    {
+      "source": "ligamenta flava",
+      "target": "黄韧带",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "455"
+        }
+      ]
+    },
+    {
+      "source": "linea alba",
+      "target": "腹白线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "456"
+        }
+      ]
+    },
+    {
+      "source": "liver cancer",
+      "target": "肝癌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "460"
+        }
+      ]
+    },
+    {
+      "source": "loose connective tissue",
+      "target": "疏松结缔组织",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "461"
+        }
+      ]
+    },
+    {
+      "source": "low density lipoprotein",
+      "target": "低密度脂蛋白",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "462"
+        }
+      ]
+    },
+    {
+      "source": "lumbar vertebra",
+      "target": "腰椎",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "463"
+        }
+      ]
+    },
+    {
+      "source": "lung",
+      "target": "肺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "464"
+        }
+      ]
+    },
+    {
+      "source": "lung cancer",
+      "target": "肺癌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "465"
+        }
+      ]
+    },
+    {
+      "source": "lymph node",
+      "target": "淋巴结",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "466"
+        }
+      ]
+    },
+    {
+      "source": "lymphatic system",
+      "target": "淋巴系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "467"
+        }
+      ]
+    },
+    {
+      "source": "lymphatic tissue",
+      "target": "淋巴组织",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "468"
+        }
+      ]
+    },
+    {
+      "source": "lymphoid organ",
+      "target": "淋巴器官",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "469"
+        }
+      ]
+    },
+    {
+      "source": "major salivary glands",
+      "target": "大唾液腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "470"
+        }
+      ]
+    },
+    {
+      "source": "male genital organ",
+      "target": "男性生殖器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "472"
+        }
+      ]
+    },
+    {
+      "source": "masticatory muscles",
+      "target": "咀嚼肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "477"
+        }
+      ]
+    },
+    {
+      "source": "maternal mortality rate",
+      "target": "孕产妇死亡率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "478"
+        }
+      ]
+    },
+    {
+      "source": "median cubital vein",
+      "target": "肘正中静脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "482"
+        }
+      ]
+    },
+    {
+      "source": "median nerve",
+      "target": "正中神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "483"
+        }
+      ]
+    },
+    {
+      "source": "medical order",
+      "target": "医嘱",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "486"
+        }
+      ]
+    },
+    {
+      "source": "medical record",
+      "target": "病案",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "487"
+        }
+      ]
+    },
+    {
+      "source": "membranous labyrinth",
+      "target": "膜迷路",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "490"
+        }
+      ]
+    },
+    {
+      "source": "mercurial poisoning",
+      "target": "汞中毒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "495"
+        }
+      ]
+    },
+    {
+      "source": "mercuric chloride",
+      "target": "氯化汞",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "496"
+        }
+      ]
+    },
+    {
+      "source": "metacarpal bones",
+      "target": "掌骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "498"
+        }
+      ]
+    },
+    {
+      "source": "metallic poisoning",
+      "target": "金属中毒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "499"
+        }
+      ]
+    },
+    {
+      "source": "metatarsal bones",
+      "target": "跖骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "502"
+        }
+      ]
+    },
+    {
+      "source": "midaxillary line",
+      "target": "腋中线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "504"
+        }
+      ]
+    },
+    {
+      "source": "midclavicular line",
+      "target": "锁骨中线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "505"
+        }
+      ]
+    },
+    {
+      "source": "middle cranial fossa",
+      "target": "颅中窝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "506"
+        }
+      ]
+    },
+    {
+      "source": "middle ear",
+      "target": "中耳",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "507"
+        }
+      ]
+    },
+    {
+      "source": "mitral stenosis",
+      "target": "二尖瓣狭窄",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "514"
+        }
+      ]
+    },
+    {
+      "source": "monozygotic twins",
+      "target": "单卵孪生",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "518"
+        }
+      ]
+    },
+    {
+      "source": "mons pubis",
+      "target": "阴阜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "519"
+        }
+      ]
+    },
+    {
+      "source": "motor neuron",
+      "target": "运动神经元",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "521"
+        }
+      ]
+    },
+    {
+      "source": "mountain sickness",
+      "target": "高山病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "522"
+        }
+      ]
+    },
+    {
+      "source": "mucous membrane of nose",
+      "target": "鼻黏膜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "523"
+        }
+      ]
+    },
+    {
+      "source": "muscle tissue",
+      "target": "肌肉组织",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "524"
+        }
+      ]
+    },
+    {
+      "source": "muscles of back",
+      "target": "背肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "525"
+        }
+      ]
+    },
+    {
+      "source": "mushroom poisoning",
+      "target": "毒蕈中毒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "526"
+        }
+      ]
+    },
+    {
+      "source": "nasal bone",
+      "target": "鼻骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "528"
+        }
+      ]
+    },
+    {
+      "source": "nasolabial fold",
+      "target": "鼻唇沟",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "529"
+        }
+      ]
+    },
+    {
+      "source": "nasopharyngeal carcinoma",
+      "target": "鼻咽癌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "530"
+        }
+      ]
+    },
+    {
+      "source": "negative feedback",
+      "target": "负反馈",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "533"
+        }
+      ]
+    },
+    {
+      "source": "nerve ending",
+      "target": "神经末梢",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "535"
+        }
+      ]
+    },
+    {
+      "source": "nerve fiber",
+      "target": "神经纤维",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "536"
+        }
+      ]
+    },
+    {
+      "source": "nerve tissue",
+      "target": "神经组织",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "537"
+        }
+      ]
+    },
+    {
+      "source": "nervous system",
+      "target": "神经系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "538"
+        }
+      ]
+    },
+    {
+      "source": "nicotinic acid",
+      "target": "烟酸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "546"
+        }
+      ]
+    },
+    {
+      "source": "nitrite poisoning",
+      "target": "亚硝酸盐中毒",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "548"
+        }
+      ]
+    },
+    {
+      "source": "non-essential amino acid",
+      "target": "非必需氨基酸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "550"
+        }
+      ]
+    },
+    {
+      "source": "nuclear medicine",
+      "target": "核医学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "551"
+        }
+      ]
+    },
+    {
+      "source": "nutrition deficiency",
+      "target": "营养缺乏",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "556"
+        }
+      ]
+    },
+    {
+      "source": "nutritional anemia",
+      "target": "营养性贫血",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "557"
+        }
+      ]
+    },
+    {
+      "source": "obliquus externus abdominis",
+      "target": "腹外斜肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "559"
+        }
+      ]
+    },
+    {
+      "source": "occipital bone",
+      "target": "枕骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "560"
+        }
+      ]
+    },
+    {
+      "source": "occupational disease",
+      "target": "职业病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "561"
+        }
+      ]
+    },
+    {
+      "source": "oculomotor nerve",
+      "target": "动眼神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "562"
+        }
+      ]
+    },
+    {
+      "source": "olecranon process of ulna",
+      "target": "尺骨鹰嘴",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "563"
+        }
+      ]
+    },
+    {
+      "source": "olfactory nerve",
+      "target": "嗅神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "564"
+        }
+      ]
+    },
+    {
+      "source": "optic nerve",
+      "target": "视神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "565"
+        }
+      ]
+    },
+    {
+      "source": "optical radiation",
+      "target": "光辐射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "566"
+        }
+      ]
+    },
+    {
+      "source": "oral cavity",
+      "target": "口腔",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "568"
+        }
+      ]
+    },
+    {
+      "source": "oral lips",
+      "target": "口唇",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "569"
+        }
+      ]
+    },
+    {
+      "source": "orthostatic hypotension",
+      "target": "直立性低血压",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "571"
+        }
+      ]
+    },
+    {
+      "source": "otitis media",
+      "target": "中耳炎",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "572"
+        }
+      ]
+    },
+    {
+      "source": "palatine bone",
+      "target": "腭骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "577"
+        }
+      ]
+    },
+    {
+      "source": "pancreatic islet",
+      "target": "胰岛",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "581"
+        }
+      ]
+    },
+    {
+      "source": "pantothenic acid",
+      "target": "泛酸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "583"
+        }
+      ]
+    },
+    {
+      "source": "parathyroid gland",
+      "target": "甲状旁腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "586"
+        }
+      ]
+    },
+    {
+      "source": "Parentage Analysis",
+      "target": "亲子鉴定",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "587"
+        }
+      ]
+    },
+    {
+      "source": "parietal bone",
+      "target": "顶骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "588"
+        }
+      ]
+    },
+    {
+      "source": "parotid gland",
+      "target": "腮腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "589"
+        }
+      ]
+    },
+    {
+      "source": "pectoralis major",
+      "target": "胸大肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "595"
+        }
+      ]
+    },
+    {
+      "source": "pectoralis minor",
+      "target": "胸小肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "596"
+        }
+      ]
+    },
+    {
+      "source": "pelvic inflammatory disease",
+      "target": "盆腔炎",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "598"
+        }
+      ]
+    },
+    {
+      "source": "periodontal disease",
+      "target": "牙周病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "603"
+        }
+      ]
+    },
+    {
+      "source": "peripheral nervous system",
+      "target": "周围神经系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "605"
+        }
+      ]
+    },
+    {
+      "source": "permanent teeth",
+      "target": "恒牙",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "608"
+        }
+      ]
+    },
+    {
+      "source": "phrenic nerve",
+      "target": "膈神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "617"
+        }
+      ]
+    },
+    {
+      "source": "pigeon breast",
+      "target": "鸡胸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "619"
+        }
+      ]
+    },
+    {
+      "source": "pineal body",
+      "target": "松果体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "620"
+        }
+      ]
+    },
+    {
+      "source": "pleura",
+      "target": "胸膜",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "624"
+        }
+      ]
+    },
+    {
+      "source": "pleural effusion",
+      "target": "胸腔积液",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "625"
+        }
+      ]
+    },
+    {
+      "source": "pleurisy",
+      "target": "胸膜炎",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "626"
+        }
+      ]
+    },
+    {
+      "source": "pneumoconiosis",
+      "target": "尘肺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "627"
+        }
+      ]
+    },
+    {
+      "source": "pneumonia",
+      "target": "肺炎",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "628"
+        }
+      ]
+    },
+    {
+      "source": "pneumothorax",
+      "target": "气胸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "629"
+        }
+      ]
+    },
+    {
+      "source": "polyunsaturated fatty acid",
+      "target": "多不饱和脂肪酸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "635"
+        }
+      ]
+    },
+    {
+      "source": "popliteal space",
+      "target": "腘窝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "636"
+        }
+      ]
+    },
+    {
+      "source": "posterior axillary line",
+      "target": "腋后线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "637"
+        }
+      ]
+    },
+    {
+      "source": "posterior cranial fossa",
+      "target": "颅后窝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "638"
+        }
+      ]
+    },
+    {
+      "source": "posterior median line",
+      "target": "后正中线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "639"
+        }
+      ]
+    },
+    {
+      "source": "premature infant",
+      "target": "早产儿",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "641"
+        }
+      ]
+    },
+    {
+      "source": "pulmonary circulation",
+      "target": "肺循环",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "650"
+        }
+      ]
+    },
+    {
+      "source": "pulmonary tuberculosis",
+      "target": "肺结核",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "651"
+        }
+      ]
+    },
+    {
+      "source": "pyramidal system",
+      "target": "锥体系",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "654"
+        }
+      ]
+    },
+    {
+      "source": "quadriceps femoris",
+      "target": "股四头肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "655"
+        }
+      ]
+    },
+    {
+      "source": "radial artery",
+      "target": "桡动脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "659"
+        }
+      ]
+    },
+    {
+      "source": "radial nerve",
+      "target": "桡神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "660"
+        }
+      ]
+    },
+    {
+      "source": "radiation disease",
+      "target": "放射病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "661"
+        }
+      ]
+    },
+    {
+      "source": "radioactive contamination",
+      "target": "放射性污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "662"
+        }
+      ]
+    },
+    {
+      "source": "rectus abdominis",
+      "target": "腹直肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "669"
+        }
+      ]
+    },
+    {
+      "source": "reflex arc",
+      "target": "反射弧",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "671"
+        }
+      ]
+    },
+    {
+      "source": "relapsing fever",
+      "target": "回归热",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "673"
+        }
+      ]
+    },
+    {
+      "source": "renal calculus",
+      "target": "肾结石",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "674"
+        }
+      ]
+    },
+    {
+      "source": "Renal glucose threshold",
+      "target": "肾糖阈",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "675"
+        }
+      ]
+    },
+    {
+      "source": "resistance to drugs",
+      "target": "抗药性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "676"
+        }
+      ]
+    },
+    {
+      "source": "respiration",
+      "target": "呼吸",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "677"
+        }
+      ]
+    },
+    {
+      "source": "Respiratory center",
+      "target": "呼吸中枢",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "678"
+        }
+      ]
+    },
+    {
+      "source": "respiratory failure",
+      "target": "呼吸衰竭",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "679"
+        }
+      ]
+    },
+    {
+      "source": "respiratory system",
+      "target": "呼吸系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "680"
+        }
+      ]
+    },
+    {
+      "source": "reticular tissue",
+      "target": "网状组织",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "682"
+        }
+      ]
+    },
+    {
+      "source": "rheumatic heart disease",
+      "target": "风湿性心脏病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "684"
+        }
+      ]
+    },
+    {
+      "source": "right atrium",
+      "target": "右心房",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "688"
+        }
+      ]
+    },
+    {
+      "source": "right ventricle",
+      "target": "右心室",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "689"
+        }
+      ]
+    },
+    {
+      "source": "sacral plexus",
+      "target": "骶丛",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "693"
+        }
+      ]
+    },
+    {
+      "source": "sagittal suture",
+      "target": "矢状缝",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "695"
+        }
+      ]
+    },
+    {
+      "source": "scapular line",
+      "target": "肩胛线",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "702"
+        }
+      ]
+    },
+    {
+      "source": "scarlet fever",
+      "target": "猩红热",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "703"
+        }
+      ]
+    },
+    {
+      "source": "secondary sex characteristics",
+      "target": "第二性征",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "708"
+        }
+      ]
+    },
+    {
+      "source": "sensory neuron",
+      "target": "感觉神经元",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "713"
+        }
+      ]
+    },
+    {
+      "source": "serratus anterior muscle",
+      "target": "前锯肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "716"
+        }
+      ]
+    },
+    {
+      "source": "sexual prematurity",
+      "target": "性早熟",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "718"
+        }
+      ]
+    },
+    {
+      "source": "sheath of rectus abdominis",
+      "target": "腹直肌鞘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "719"
+        }
+      ]
+    },
+    {
+      "source": "shock wave",
+      "target": "冲击波",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "722"
+        }
+      ]
+    },
+    {
+      "source": "side effect",
+      "target": "副作用",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "724"
+        }
+      ]
+    },
+    {
+      "source": "sinoatrial node",
+      "target": "窦房结",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "725"
+        }
+      ]
+    },
+    {
+      "source": "skeletal muscle",
+      "target": "骨骼肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "727"
+        }
+      ]
+    },
+    {
+      "source": "small saphenous vein",
+      "target": "小隐静脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "729"
+        }
+      ]
+    },
+    {
+      "source": "smooth muscle",
+      "target": "平滑肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "731"
+        }
+      ]
+    },
+    {
+      "source": "snow blindness",
+      "target": "雪盲",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "732"
+        }
+      ]
+    },
+    {
+      "source": "somatic nerve",
+      "target": "躯体神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "733"
+        }
+      ]
+    },
+    {
+      "source": "somatic nervous system",
+      "target": "躯体神经系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "734"
+        }
+      ]
+    },
+    {
+      "source": "sphenoid bone",
+      "target": "蝶骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "741"
+        }
+      ]
+    },
+    {
+      "source": "spinal cord",
+      "target": "脊髓",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "742"
+        }
+      ]
+    },
+    {
+      "source": "spinal nerves",
+      "target": "脊神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "743"
+        }
+      ]
+    },
+    {
+      "source": "spongy bone",
+      "target": "骨松质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "747"
+        }
+      ]
+    },
+    {
+      "source": "sternal angle",
+      "target": "胸骨角",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "753"
+        }
+      ]
+    },
+    {
+      "source": "stomach cancer",
+      "target": "胃癌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "760"
+        }
+      ]
+    },
+    {
+      "source": "Stress response",
+      "target": "应激反应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "762"
+        }
+      ]
+    },
+    {
+      "source": "sublingual gland",
+      "target": "舌下腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "764"
+        }
+      ]
+    },
+    {
+      "source": "submandibular lymph nodes",
+      "target": "下颌下淋巴结",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "765"
+        }
+      ]
+    },
+    {
+      "source": "submaxillary gland",
+      "target": "颌下腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "766"
+        }
+      ]
+    },
+    {
+      "source": "sudden death",
+      "target": "猝死",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "769"
+        }
+      ]
+    },
+    {
+      "source": "superciliary arch",
+      "target": "眉弓",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "771"
+        }
+      ]
+    },
+    {
+      "source": "superficial inguinal lymph nodes",
+      "target": "腹股沟浅淋巴结",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "772"
+        }
+      ]
+    },
+    {
+      "source": "superficial temporal artery",
+      "target": "颞浅动脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "773"
+        }
+      ]
+    },
+    {
+      "source": "superficial vein",
+      "target": "浅静脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "774"
+        }
+      ]
+    },
+    {
+      "source": "supraspinal ligament",
+      "target": "棘上韧带",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "775"
+        }
+      ]
+    },
+    {
+      "source": "sympathetic ganglion",
+      "target": "交感神经节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "779"
+        }
+      ]
+    },
+    {
+      "source": "systemic circulation",
+      "target": "体循环",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "783"
+        }
+      ]
+    },
+    {
+      "source": "tactile sensation",
+      "target": "触觉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "784"
+        }
+      ]
+    },
+    {
+      "source": "tarsal bones",
+      "target": "跗骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "785"
+        }
+      ]
+    },
+    {
+      "source": "temporal bone",
+      "target": "颞骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "787"
+        }
+      ]
+    },
+    {
+      "source": "temporomandibular joint",
+      "target": "颞下颌关节",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "788"
+        }
+      ]
+    },
+    {
+      "source": "tendo calcaneus",
+      "target": "跟腱",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "790"
+        }
+      ]
+    },
+    {
+      "source": "test-tube baby",
+      "target": "试管婴儿",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "791"
+        }
+      ]
+    },
+    {
+      "source": "third ventricle",
+      "target": "第三脑室",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "795"
+        }
+      ]
+    },
+    {
+      "source": "thoracic cage",
+      "target": "胸廓",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "796"
+        }
+      ]
+    },
+    {
+      "source": "thoracic duct",
+      "target": "胸导管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "797"
+        }
+      ]
+    },
+    {
+      "source": "thoracic vertebra",
+      "target": "胸椎",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "798"
+        }
+      ]
+    },
+    {
+      "source": "thyroid gland",
+      "target": "甲状腺",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "803"
+        }
+      ]
+    },
+    {
+      "source": "tinea pedis",
+      "target": "足癣",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "806"
+        }
+      ]
+    },
+    {
+      "source": "trachea",
+      "target": "气管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "813"
+        }
+      ]
+    },
+    {
+      "source": "transversus abdominis",
+      "target": "腹横肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "818"
+        }
+      ]
+    },
+    {
+      "source": "triceps brachii",
+      "target": "肱三头肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "822"
+        }
+      ]
+    },
+    {
+      "source": "triceps surae",
+      "target": "小腿三头肌",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "823"
+        }
+      ]
+    },
+    {
+      "source": "trigeminal nerve",
+      "target": "三叉神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "824"
+        }
+      ]
+    },
+    {
+      "source": "trochlear nerve",
+      "target": "滑车神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "825"
+        }
+      ]
+    },
+    {
+      "source": "tsutsugamushi disease",
+      "target": "恙虫病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "826"
+        }
+      ]
+    },
+    {
+      "source": "tuberculosis of intestine",
+      "target": "肠结核",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "827"
+        }
+      ]
+    },
+    {
+      "source": "ulnar artery",
+      "target": "尺动脉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "834"
+        }
+      ]
+    },
+    {
+      "source": "upper respiratory tract",
+      "target": "上呼吸道",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "835"
+        }
+      ]
+    },
+    {
+      "source": "urinary bladder",
+      "target": "膀胱",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "839"
+        }
+      ]
+    },
+    {
+      "source": "uterine tube",
+      "target": "输卵管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "842"
+        }
+      ]
+    },
+    {
+      "source": "vagus nerve",
+      "target": "迷走神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "845"
+        }
+      ]
+    },
+    {
+      "source": "vermiform appendix",
+      "target": "阑尾",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "851"
+        }
+      ]
+    },
+    {
+      "source": "vertebral column",
+      "target": "脊柱",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "853"
+        }
+      ]
+    },
+    {
+      "source": "visceral nerve",
+      "target": "内脏神经",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "855"
+        }
+      ]
+    },
+    {
+      "source": "visual acuity",
+      "target": "视力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "856"
+        }
+      ]
+    },
+    {
+      "source": "visual field",
+      "target": "视野",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "857"
+        }
+      ]
+    },
+    {
+      "source": "visual perception",
+      "target": "视觉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "858"
+        }
+      ]
+    },
+    {
+      "source": "vital capacity",
+      "target": "肺活量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "859"
+        }
+      ]
+    },
+    {
+      "source": "vitamin A",
+      "target": "维生素A",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "861"
+        }
+      ]
+    },
+    {
+      "source": "vitamin C",
+      "target": "维生素C",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "866"
+        }
+      ]
+    },
+    {
+      "source": "vitamin D",
+      "target": "维生素D",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "867"
+        }
+      ]
+    },
+    {
+      "source": "vitamin deficiency",
+      "target": "维生素缺乏病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "868"
+        }
+      ]
+    },
+    {
+      "source": "vitamin K",
+      "target": "维生素K",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "869"
+        }
+      ]
+    },
+    {
+      "source": "vitreous body",
+      "target": "玻璃体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "870"
+        }
+      ]
+    },
+    {
+      "source": "water-soluble vitamin",
+      "target": "水溶性维生素",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "873"
+        }
+      ]
+    },
+    {
+      "source": "white matter",
+      "target": "白质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "875"
+        }
+      ]
+    },
+    {
+      "source": "whooping cough",
+      "target": "百日咳",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "877"
+        }
+      ]
+    },
+    {
+      "source": "wisdom tooth",
+      "target": "智齿",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "880"
+        }
+      ]
+    },
+    {
+      "source": "xiphoid process",
+      "target": "剑突",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "881"
+        }
+      ]
+    },
+    {
+      "source": "zygomatic bone",
+      "target": "颧骨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-medicine"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-medicine",
+          "entry": "885"
+        }
+      ]
+    }
+  ]
+}

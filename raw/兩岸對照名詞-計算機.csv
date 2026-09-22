@@ -1,0 +1,1533 @@
+﻿序號,英文名稱,中文名稱,中國大陸譯名,來源網站
+1,(uncompressing); decompress,解壓縮,解压[缩]【动】,https://terms.naer.edu.tw/
+2,abort,打斷；放棄；異常中止；中斷；故障(測試；發射)；飛行故障；空中損壞,夭折【动】,https://terms.naer.edu.tw/
+3,accelerator,加速器,加速器,https://terms.naer.edu.tw/
+4,access,存取；進接；讀取；進出；擷取；,访问,https://terms.naer.edu.tw/
+5,access path,存取路徑,访问路径,https://terms.naer.edu.tw/
+6,access right,存取權；使用權限,访问权,https://terms.naer.edu.tw/
+7,accountability,可歸責性,可核查性,https://terms.naer.edu.tw/
+8,accumulator,存儲器；累加器；蓄電池；儲能電路,累加器,https://terms.naer.edu.tw/
+9,acknowledgment,應答,确认,https://terms.naer.edu.tw/
+10,adapter; adaptor,adapter 接頭；配接器；轉接器；接合器。adaptor 配接器,适配器,https://terms.naer.edu.tw/
+11,address,位址；地址,地址,https://terms.naer.edu.tw/
+12,address resolution protocol，ARP,位址解析協定,地址解析协议,https://terms.naer.edu.tw/
+13,addressing,尋址；選址；定址,寻址,https://terms.naer.edu.tw/
+14,affirmation,收信確認,认定,https://terms.naer.edu.tw/
+15,agent,代理者,代理,https://terms.naer.edu.tw/
+16,alarm,警報信號；警鈴；警報機,报警,https://terms.naer.edu.tw/
+17,algorithm,演算法(一套規則；方法),算法,https://terms.naer.edu.tw/
+18,alignment,調正；對齊；對準；；排列成行；軸線平行性,对齐,https://terms.naer.edu.tw/
+19,allocation,分配；配置；指派；配置算法,分配,https://terms.naer.edu.tw/
+20,alphabet,字符,字母表,https://terms.naer.edu.tw/
+21,alphanumeric,文數,字母数字的【形】,https://terms.naer.edu.tw/
+22,analog data,類比資料,模拟数据,https://terms.naer.edu.tw/
+23,analog-to-digital converter (ADC),類比-數位轉換器,模数转换器,https://terms.naer.edu.tw/
+24,AND gate,及閘,“与”门,https://terms.naer.edu.tw/
+25,animation,動畫,动画,https://terms.naer.edu.tw/
+26,application software,應用軟體,应用软件,https://terms.naer.edu.tw/
+27,arbitration,仲裁,仲裁,https://terms.naer.edu.tw/
+28,architecture,架構；結構,体系结构,https://terms.naer.edu.tw/
+29,arithmetic and logic unit,算術與邏輯單元,运算器,https://terms.naer.edu.tw/
+30,arithmetic operator,算術運算子,算术运算符,https://terms.naer.edu.tw/
+31,array,陣列,数组,https://terms.naer.edu.tw/
+32,artificial intelligence (AI),人工智慧,人工智能,https://terms.naer.edu.tw/
+33,ASCII character set,美國資訊交換標準碼字元集,ASCII 字符集,https://terms.naer.edu.tw/
+34,assembler,組合程式；組譯器,汇编器,https://terms.naer.edu.tw/
+35,assignment,指定；賦值,赋值,https://terms.naer.edu.tw/
+36,asynchronous,異步；非同步；異步的；非同步的,异步的【形】,https://terms.naer.edu.tw/
+37,attribute,屬性；特徵,属性,https://terms.naer.edu.tw/
+38,audio compression,聲頻壓縮,音频压缩,https://terms.naer.edu.tw/
+39,audit,審計；稽核；查帳,审核,https://terms.naer.edu.tw/
+40,authentication,鑑別；鑑定；鑑認；驗證；認證,鉴别,https://terms.naer.edu.tw/
+41,automated information system (AIS),自動化資訊系統,自动化信息系统,https://terms.naer.edu.tw/
+42,automated office,自動化辦公室,自动化办公室,https://terms.naer.edu.tw/
+43,automated teller machine,自動櫃員機,自动柜员机,https://terms.naer.edu.tw/
+44,automatic patching,自動修補系統,自动修补,https://terms.naer.edu.tw/
+45,auxiliary storage,輔助儲存器；輔助記憶體,辅助存储器,https://terms.naer.edu.tw/
+46,availability,可用性,可用性,https://terms.naer.edu.tw/
+47,background,後台；背景；底色,后台,https://terms.naer.edu.tw/
+48,background,後台；背景；底色,背景,https://terms.naer.edu.tw/
+49,backup,後備；備用；備份；備製,后备,https://terms.naer.edu.tw/
+50,backward recovery,反向恢復,反向恢复,https://terms.naer.edu.tw/
+51,bacterium,細菌,细菌[程序],https://terms.naer.edu.tw/
+52,banner,標題,横幅,https://terms.naer.edu.tw/
+53,bar code,條碼,条码,https://terms.naer.edu.tw/
+54,baseline,基線,基线,https://terms.naer.edu.tw/
+55,batch processing,批次處理；整批處理；程序組處理；成批處理,批处理,https://terms.naer.edu.tw/
+56,beacon,信標,信标,https://terms.naer.edu.tw/
+57,before image,前影像,前像,https://terms.naer.edu.tw/
+58,benchmark,基準；系統測試規範,基准测试,https://terms.naer.edu.tw/
+59,benign environment,良性病毒環境,良性环境,https://terms.naer.edu.tw/
+60,beta test,貝他測試,β测试,https://terms.naer.edu.tw/
+61,bias,偏差；偏移；偏壓,偏移,https://terms.naer.edu.tw/
+62,big endian,大端式,大端式的【形】,https://terms.naer.edu.tw/
+63,binary,二進制；二元,二进制,https://terms.naer.edu.tw/
+64,bind,連結；結合,绑定【动】,https://terms.naer.edu.tw/
+65,biometric,生物特徵量測學,生物测定的【形】,https://terms.naer.edu.tw/
+66,bipolar,雙極；雙極性,双极[性]的【形】,https://terms.naer.edu.tw/
+67,bistable,雙穩的,双稳[态]的【形】,https://terms.naer.edu.tw/
+68,bit,位元；比,[二进制]位,https://terms.naer.edu.tw/
+69,bit string,位元串,位串,https://terms.naer.edu.tw/
+70,bitmap,位元映像,位图,https://terms.naer.edu.tw/
+71,black box testing,黑箱測試,黑盒测试,https://terms.naer.edu.tw/
+72,blink,閃爍；閃視,闪烁【动】,https://terms.naer.edu.tw/
+73,block,塊；段；資料段；成塊；區塊；阻擋,块,https://terms.naer.edu.tw/
+74,block,塊；段；資料段；成塊；區塊；阻擋,阻塞【动】,https://terms.naer.edu.tw/
+75,block diagram,方塊圖,框图,https://terms.naer.edu.tw/
+76,board,板；接線板；交換台(電話),板,https://terms.naer.edu.tw/
+77,board computer,板電腦,单板计算机,https://terms.naer.edu.tw/
+78,bomb,炸彈,炸弹,https://terms.naer.edu.tw/
+79,bombing,病毒惡意轟炸,轰炸,https://terms.naer.edu.tw/
+80,Boolean,布林運算,布尔的【形】,https://terms.naer.edu.tw/
+81,Boolean operation,布林運算,布尔运算,https://terms.naer.edu.tw/
+82,boot,引導；啟動,引导【动】,https://terms.naer.edu.tw/
+83,bootstrap,自舉；自我啟動；啟動程式,自展程序,https://terms.naer.edu.tw/
+84,border,邊界,边框,https://terms.naer.edu.tw/
+85,bot,執行重複功能程式,[网上]机器人,https://terms.naer.edu.tw/
+86,bottom-up,由下而上,自底向上的【形】,https://terms.naer.edu.tw/
+87,bounding box,定界框,限界框,https://terms.naer.edu.tw/
+88,branch,分支；轉移；；分路；支路；分局；支局,分支,https://terms.naer.edu.tw/
+89,breach,破壞；違反,攻破,https://terms.naer.edu.tw/
+90,break,破裂；中斷；斷線；斷路；截斷,停歇,https://terms.naer.edu.tw/
+91,breakpoint,分界點；斷點；暫停點,断点,https://terms.naer.edu.tw/
+92,browse,瀏覽,浏览【动】,https://terms.naer.edu.tw/
+93,brute-force attack,蠻力攻擊；蠻攻,蛮干攻击,https://terms.naer.edu.tw/
+94,buffer,緩衝；緩衝器；緩衝區,缓冲器,https://terms.naer.edu.tw/
+95,bug,錯誤,隐错,https://terms.naer.edu.tw/
+96,built-in,內建,内置的【形】,https://terms.naer.edu.tw/
+97,bulletin board,佈告欄,公告板,https://terms.naer.edu.tw/
+98,bulletin board system (BBS),電子佈告欄系統,公告板系统,https://terms.naer.edu.tw/
+99,bus,匯流排,总线,https://terms.naer.edu.tw/
+100,bypass,旁路；跳過；略過,旁路,https://terms.naer.edu.tw/
+101,byte,位元組；拜,字节,https://terms.naer.edu.tw/
+102,cache,高速緩衝記憶體；快取,高速缓存,https://terms.naer.edu.tw/
+103,calculator,計算器,计算器,https://terms.naer.edu.tw/
+104,calendar program,行事曆程式,日历程序,https://terms.naer.edu.tw/
+105,call,呼叫；撥叫；召用,调用,https://terms.naer.edu.tw/
+106,callback,回撥；回叫；回呼,回叫,https://terms.naer.edu.tw/
+107,CAM,凸輪、電腦輔助製造,计算机辅助制造,https://terms.naer.edu.tw/
+108,campus wide information system,校園資訊系統,校园信息系统,https://terms.naer.edu.tw/
+109,capture,擷取,捕获【动】,https://terms.naer.edu.tw/
+110,card,卡；板,卡,https://terms.naer.edu.tw/
+111,card cage,卡片機架,插件箱,https://terms.naer.edu.tw/
+112,cardinal number,基數,基数,https://terms.naer.edu.tw/
+113,carriage return,輸送筒轉回；回車,回车,https://terms.naer.edu.tw/
+114,carry,進位,进位【动】,https://terms.naer.edu.tw/
+115,case sensitivity,大小寫敏感,大小写敏感,https://terms.naer.edu.tw/
+116,cell,細胞(行動通訊系統中的一個服務區),小区,https://terms.naer.edu.tw/
+117,cell,細胞(行動通訊系統中的一個服務區),单元,https://terms.naer.edu.tw/
+118,cell,細胞(行動通訊系統中的一個服務區),表元,https://terms.naer.edu.tw/
+119,certificate,憑證,证书,https://terms.naer.edu.tw/
+120,certification,認證,认证,https://terms.naer.edu.tw/
+121,chaining,鍊接；鏈結,链接,https://terms.naer.edu.tw/
+122,change file,變更檔案,变更文件,https://terms.naer.edu.tw/
+123,channel,通道,通道,https://terms.naer.edu.tw/
+124,character,字符；字元,字符,https://terms.naer.edu.tw/
+125,character display device,字元顯示裝置,字符显示器,https://terms.naer.edu.tw/
+126,character generator,字元產生器,字符生成器,https://terms.naer.edu.tw/
+127,character printer,字元列印機,字符打印机,https://terms.naer.edu.tw/
+128,character set,字元集,字符集,https://terms.naer.edu.tw/
+129,character string,字串；字元字串,字符串,https://terms.naer.edu.tw/
+130,check bit,核對位元,检验位,https://terms.naer.edu.tw/
+131,checkout,檢測；檢驗；結賬,检查（出）,https://terms.naer.edu.tw/
+132,checkpoint,核對點；檢查點；查驗點,检查点,https://terms.naer.edu.tw/
+133,checksum,核對和；檢查總和,检验（查）和,https://terms.naer.edu.tw/
+134,chip,晶片,芯片,https://terms.naer.edu.tw/
+135,cipher,凱撒加密法；密碼,密码,https://terms.naer.edu.tw/
+136,ciphertext,密文,密文,https://terms.naer.edu.tw/
+137,circuit board,電路板,电路板,https://terms.naer.edu.tw/
+138,clear,清除,清除【动】,https://terms.naer.edu.tw/
+139,click,按；鍵音,单击【动】,https://terms.naer.edu.tw/
+140,click rate,鍵擊率,点击率,https://terms.naer.edu.tw/
+141,clickthrough,點選連結,击通量,https://terms.naer.edu.tw/
+142,client,客戶,客户,https://terms.naer.edu.tw/
+143,client-server,主從,客户-服务器的【形】,https://terms.naer.edu.tw/
+144,clipboard,剪輯板,剪贴板,https://terms.naer.edu.tw/
+145,clock rate,時鐘率,时钟[速]率,https://terms.naer.edu.tw/
+146,clone,仿製品,克隆【动】,https://terms.naer.edu.tw/
+147,closed system,封閉系統；封閉性系統,封闭系统,https://terms.naer.edu.tw/
+148,cloud computing,雲端計算；雲端運算,云计算,https://terms.naer.edu.tw/
+149,code by section-position,區位碼,区位码,https://terms.naer.edu.tw/
+150,code generator,碼產生器,代码生成器,https://terms.naer.edu.tw/
+151,codec,編碼譯碼器；編解碼器,压缩解压缩器,https://terms.naer.edu.tw/
+152,coded set,編碼集,编码集,https://terms.naer.edu.tw/
+153,collision,碰撞,碰撞,https://terms.naer.edu.tw/
+154,color map,色彩圖,[彩]色图,https://terms.naer.edu.tw/
+155,color monitor,彩色螢幕,彩色监视器,https://terms.naer.edu.tw/
+156,color printer,彩色列印機,彩色打印机,https://terms.naer.edu.tw/
+157,color scanner,彩色掃瞄器,彩色扫描仪,https://terms.naer.edu.tw/
+158,command,命令,命令,https://terms.naer.edu.tw/
+159,compact,緊密；均收,紧缩【动】,https://terms.naer.edu.tw/
+160,compact disc,光碟,光盘（碟）,https://terms.naer.edu.tw/
+161,compact disk; CD,光碟,光盘（碟）,https://terms.naer.edu.tw/
+162,comparator,比較器,比较器,https://terms.naer.edu.tw/
+163,compartmentalization,象限化分割,隔间化,https://terms.naer.edu.tw/
+164,compatibility,相容性,兼容性,https://terms.naer.edu.tw/
+165,compilation,編譯,编译,https://terms.naer.edu.tw/
+166,compiler,編譯程式；編譯器,编译器,https://terms.naer.edu.tw/
+167,complement,補數；互補色；補角,补码,https://terms.naer.edu.tw/
+168,complexity,複雜性,复杂性,https://terms.naer.edu.tw/
+169,compromise,破解,泄密,https://terms.naer.edu.tw/
+170,computer,電腦；計算機,计算机,https://terms.naer.edu.tw/
+171,computer aided design and manufacturing，CAD/CAM,電腦輔助設計及製造,计算机辅助设计与制造,https://terms.naer.edu.tw/
+172,computer art,藝術,计算机艺术,https://terms.naer.edu.tw/
+173,computer center,計算機中心,计算中心,https://terms.naer.edu.tw/
+174,computer crime,計算機犯罪；電腦犯罪,计算机犯罪,https://terms.naer.edu.tw/
+175,computer fraud,電腦詐欺,计算机诈骗,https://terms.naer.edu.tw/
+176,computer game,電腦遊戲,计算机游戏,https://terms.naer.edu.tw/
+177,computer generation,電腦世代,计算机代,https://terms.naer.edu.tw/
+178,computer graphics,電腦圖形；計算機圖學,计算机图形技术,https://terms.naer.edu.tw/
+179,computer instruction,計算機指令,计算机指令,https://terms.naer.edu.tw/
+180,computer instruction,計算機指令,计算机教学,https://terms.naer.edu.tw/
+181,computer integrated manufacturing，CIM,電腦整合製造,计算机集成制造,https://terms.naer.edu.tw/
+182,computer Intrusion,計算機侵入,计算机入侵,https://terms.naer.edu.tw/
+183,computer language,電腦語言；計算機語言；機器語言,计算机语言,https://terms.naer.edu.tw/
+184,computer network,計算機網路；電腦網路,计算机网络,https://terms.naer.edu.tw/
+185,computer program,電腦程式,计算机程序,https://terms.naer.edu.tw/
+186,computer security (COMPUSEC),計算機安全性,计算机安全,https://terms.naer.edu.tw/
+187,computer simulation,計算機模擬,计算机模拟,https://terms.naer.edu.tw/
+188,computer system,計算機系統,计算机系统,https://terms.naer.edu.tw/
+189,computer typesetting,電腦排版,计算机排版,https://terms.naer.edu.tw/
+190,computer vision,電腦；電腦視覺,计算机视觉,https://terms.naer.edu.tw/
+191,computer word,計算機字,计算机字,https://terms.naer.edu.tw/
+192,concatenate,序連；連接,拼接【动】,https://terms.naer.edu.tw/
+193,concept description,概念描述,概念描述,https://terms.naer.edu.tw/
+194,concept formation,概念形成,概念形成,https://terms.naer.edu.tw/
+195,concept generalization,概念生成,概念泛化,https://terms.naer.edu.tw/
+196,concurrent execution,同作執行,并发执行,https://terms.naer.edu.tw/
+197,concurrent processes,同作處理,并发进程,https://terms.naer.edu.tw/
+198,conditional statement,條件敘述,条件语句,https://terms.naer.edu.tw/
+199,configuration management (CM),組態管理；配置管理,配置管理,https://terms.naer.edu.tw/
+200,congestion,擁擠；擁塞；阻塞,拥塞,https://terms.naer.edu.tw/
+201,connectability,可連接性,可连通性,https://terms.naer.edu.tw/
+202,connection,連接,连接,https://terms.naer.edu.tw/
+203,connectivity,連接性,连通性,https://terms.naer.edu.tw/
+204,connector,連接器；連接符號,连接器,https://terms.naer.edu.tw/
+205,consistency,一致,一致性,https://terms.naer.edu.tw/
+206,console; CON,控制台；主控制板,控制台,https://terms.naer.edu.tw/
+207,constant,常數,常量,https://terms.naer.edu.tw/
+208,constraint,約束,约束,https://terms.naer.edu.tw/
+209,container,容器,容器,https://terms.naer.edu.tw/
+210,content provider,內容提供者,内容提供方,https://terms.naer.edu.tw/
+211,context,上下文,上下文,https://terms.naer.edu.tw/
+212,contextual search,上下文搜尋,上下文搜索,https://terms.naer.edu.tw/
+213,contingency procedure,偶發事故程序,应急过程,https://terms.naer.edu.tw/
+214,continuous forms,連續報表,连续格式纸,https://terms.naer.edu.tw/
+215,contraction,收縮,收缩,https://terms.naer.edu.tw/
+216,contrast,對比,反差,https://terms.naer.edu.tw/
+217,control,控制,控件,https://terms.naer.edu.tw/
+218,control character,控制字元,控制字符,https://terms.naer.edu.tw/
+219,control panel,控制面板,控制面板,https://terms.naer.edu.tw/
+220,controller,控制器,控制器,https://terms.naer.edu.tw/
+221,convention,規約；約定；慣例,约定,https://terms.naer.edu.tw/
+222,conversational,交談式,会话式的【形】,https://terms.naer.edu.tw/
+223,conversion,轉換,转换,https://terms.naer.edu.tw/
+224,converter,變流器；轉換器；轉換程式,转换器,https://terms.naer.edu.tw/
+225,copy,複製；抄寫；拷貝；複本,副本,https://terms.naer.edu.tw/
+226,copy,複製；抄寫；拷貝；複本,拷贝【动】,https://terms.naer.edu.tw/
+227,counter,計數器,计数器,https://terms.naer.edu.tw/
+228,courseware,教材；教學軟體,课件,https://terms.naer.edu.tw/
+229,CPU,中央處理單元,中央处理器,https://terms.naer.edu.tw/
+230,crash,當機；故障的；系統故障,崩溃【动】,https://terms.naer.edu.tw/
+231,credentials,證件,凭证,https://terms.naer.edu.tw/
+232,critical error,臨界錯誤,要害差错,https://terms.naer.edu.tw/
+233,critical path,關鍵路徑,关键路线,https://terms.naer.edu.tw/
+234,cryptoanalysis,密碼分析,密码分析,https://terms.naer.edu.tw/
+235,cryptography,密碼學；密碼；密碼打字機,密码学,https://terms.naer.edu.tw/
+236,cryptology,密碼術；暗碼學；密碼學,密码术,https://terms.naer.edu.tw/
+237,cursor,游標,游标,https://terms.naer.edu.tw/
+238,cursor,游標,光标,https://terms.naer.edu.tw/
+239,custom software,定製軟體,定制软件,https://terms.naer.edu.tw/
+240,customize,自定；定制；設定客戶規格,定制【动】,https://terms.naer.edu.tw/
+241,cut and paste,剪貼,剪贴,https://terms.naer.edu.tw/
+242,cyberspace,異度空間,信息空间,https://terms.naer.edu.tw/
+243,cybersquatter,網路蟑螂,域名抢注者,https://terms.naer.edu.tw/
+244,cycle,循環；週期,周期,https://terms.naer.edu.tw/
+245,cylinder,磁柱；圓柱,柱面,https://terms.naer.edu.tw/
+246,daemon,常駐程式,守护程序,https://terms.naer.edu.tw/
+247,data,資料；數據,数据,https://terms.naer.edu.tw/
+248,data acquisition,資料獲取；數據獲取,数据采集,https://terms.naer.edu.tw/
+249,data administration,資料管理,数据管理,https://terms.naer.edu.tw/
+250,data administrator (DA),資料管理者；資料管理程式,数据管理员,https://terms.naer.edu.tw/
+251,data bus,資料匯流排,数据总线,https://terms.naer.edu.tw/
+252,data circuit,數據電路,数据电路,https://terms.naer.edu.tw/
+253,data collection,資料收集,数据汇集,https://terms.naer.edu.tw/
+254,data communication,資料通訊；數據通訊,数据通信,https://terms.naer.edu.tw/
+255,data compression,資料壓縮；數據壓縮,数据压缩,https://terms.naer.edu.tw/
+256,data concentrator,資料集中器；數據集中機,数据集中器,https://terms.naer.edu.tw/
+257,data dictionary,資料字典,数据字典,https://terms.naer.edu.tw/
+258,data directory,資料目錄,数据目录,https://terms.naer.edu.tw/
+259,data element,資料元件；資料元,数据元[素],https://terms.naer.edu.tw/
+260,data encapsulation,資料封閉性,数据封装,https://terms.naer.edu.tw/
+261,data encryption,資料加密,数据加密,https://terms.naer.edu.tw/
+262,data entry,資料登錄,数据录入,https://terms.naer.edu.tw/
+263,data file,資料檔案,数据文件,https://terms.naer.edu.tw/
+264,data flow,資料流；資料流程,数据流,https://terms.naer.edu.tw/
+265,data flow diagram,資料流程圖,数据流图,https://terms.naer.edu.tw/
+266,data format,資料格式,数据格式,https://terms.naer.edu.tw/
+267,data link,數據鏈路；資料連結,数据链路,https://terms.naer.edu.tw/
+268,data management,資料管理,数据管理,https://terms.naer.edu.tw/
+269,data mining,資料挖掘,数据采掘,https://terms.naer.edu.tw/
+270,data model,資料模型,数据模型,https://terms.naer.edu.tw/
+271,data network,數據網路；資料網路,数据网,https://terms.naer.edu.tw/
+272,data processing (DP),資料處理,数据处理,https://terms.naer.edu.tw/
+273,data protection,資料保護,数据保护,https://terms.naer.edu.tw/
+274,data rate,資料速率；資料率；資料傳輸率,数据率,https://terms.naer.edu.tw/
+275,data sharing,資料共享,数据共享,https://terms.naer.edu.tw/
+276,data station,資料站；數據站,数据站,https://terms.naer.edu.tw/
+277,data structure,資料結構,数据结构,https://terms.naer.edu.tw/
+278,data switching exchange (DSE),資料交換中心,数据交换机,https://terms.naer.edu.tw/
+279,data terminal equipment (DTE),數據終端設備,数据终端设备,https://terms.naer.edu.tw/
+280,data type,資料類型,数据类型,https://terms.naer.edu.tw/
+281,data warehouse,資料儲倉,数据仓库,https://terms.naer.edu.tw/
+282,database,資料庫,数据库,https://terms.naer.edu.tw/
+283,database language,資料庫語言,数据库语言,https://terms.naer.edu.tw/
+284,database management system (DBMS),資料庫管理系統,数据库管理系统,https://terms.naer.edu.tw/
+285,date and time stamp,日期及時間戳記,日时戳,https://terms.naer.edu.tw/
+286,de facto standard,實際的標準,事实标准,https://terms.naer.edu.tw/
+287,deadlock,死鎖；鎖死,死锁,https://terms.naer.edu.tw/
+288,debug,除錯,调试【动】,https://terms.naer.edu.tw/
+289,debugger,除錯器,调试程序,https://terms.naer.edu.tw/
+290,decipher,解密,解密【动】,https://terms.naer.edu.tw/
+291,declaration,宣告,声明,https://terms.naer.edu.tw/
+292,decode,解碼,译码【动】,https://terms.naer.edu.tw/
+293,decryption,解密,解密,https://terms.naer.edu.tw/
+294,default,預設；內定,默认的【形】,https://terms.naer.edu.tw/
+295,deference,推遲,延期,https://terms.naer.edu.tw/
+296,definition,定義；確定,清晰度,https://terms.naer.edu.tw/
+297,delete,刪除,删除,https://terms.naer.edu.tw/
+298,delimiter,定界符,定界符,https://terms.naer.edu.tw/
+299,demonstration,示範,演示,https://terms.naer.edu.tw/
+300,descriptor,描述符,描述符,https://terms.naer.edu.tw/
+301,desktop,桌上,桌面,https://terms.naer.edu.tw/
+302,desktop computer,桌上計算機,台式计算机,https://terms.naer.edu.tw/
+303,destination,目的地；目的；收報局；收報台；終點局,目的地,https://terms.naer.edu.tw/
+304,detection,檢測；偵測；檢波,检测,https://terms.naer.edu.tw/
+305,developer,顯影器,开发者,https://terms.naer.edu.tw/
+306,deviation,偏差,偏离,https://terms.naer.edu.tw/
+307,device,裝置；設備,器件,https://terms.naer.edu.tw/
+308,diagnostic program,偵錯程式；診斷程式,诊断程序,https://terms.naer.edu.tw/
+309,diagram,圖（解）,图,https://terms.naer.edu.tw/
+310,dialog,DIALOG系統、對話、交談,对话,https://terms.naer.edu.tw/
+311,dialog box,對話框,对话框,https://terms.naer.edu.tw/
+312,dictionary attack,字典式攻擊,字典式攻击,https://terms.naer.edu.tw/
+313,digital,數位；數位的；數位式的,数字的【形】,https://terms.naer.edu.tw/
+314,digital computer,數位計算機；數位電腦,数字计算机,https://terms.naer.edu.tw/
+315,digital video disc (DVD),數位視訊光碟,数字影碟,https://terms.naer.edu.tw/
+316,digital watermark,數位浮水印,数字水印,https://terms.naer.edu.tw/
+317,digitizer,數化器,数字化仪,https://terms.naer.edu.tw/
+318,direct access,直接存取,直接存取,https://terms.naer.edu.tw/
+319,direct access storage,直接存取儲存器,直接存储器,https://terms.naer.edu.tw/
+320,direct address,直接位址,直接地址,https://terms.naer.edu.tw/
+321,directed graph；digraph,有向圖,有向图,https://terms.naer.edu.tw/
+322,disassemble,分解；拆卸；解組合,反汇编【动】,https://terms.naer.edu.tw/
+323,disc,磁碟,光盘,https://terms.naer.edu.tw/
+324,disclosure,公佈；解密,泄露,https://terms.naer.edu.tw/
+325,discrete data,離散資料；離散的資料,离散数据,https://terms.naer.edu.tw/
+326,discrete signal,離散信號,离散信号,https://terms.naer.edu.tw/
+327,disk,磁碟,[磁]盘,https://terms.naer.edu.tw/
+328,display,顯示；顯示器,显示【动】,https://terms.naer.edu.tw/
+329,display device,顯示裝置,显示器,https://terms.naer.edu.tw/
+330,display screen,顯示螢幕,显示屏,https://terms.naer.edu.tw/
+331,distance learning,遠距教學,远程学习,https://terms.naer.edu.tw/
+332,distributed database,分散式資料庫,分布式数据库,https://terms.naer.edu.tw/
+333,distributed processing,分散式處理,分布式处理,https://terms.naer.edu.tw/
+334,distribution group,分佈群(組)；分配群(組),分发组,https://terms.naer.edu.tw/
+335,dock,碼頭,入坞【动】,https://terms.naer.edu.tw/
+336,document,文件,文档（件）,https://terms.naer.edu.tw/
+337,domain model,領域模型,领域模型,https://terms.naer.edu.tw/
+338,domain name,領域名稱,域名,https://terms.naer.edu.tw/
+339,domain slamming,域遠程通話服務,域名抢占,https://terms.naer.edu.tw/
+340,dongle,伺服器鑰,软件保护器,https://terms.naer.edu.tw/
+341,dopant,摻雜物,掺杂剂,https://terms.naer.edu.tw/
+342,DOS,磁碟作業系統,磁盘操作系统,https://terms.naer.edu.tw/
+343,dot-matrix printer,點矩陣式列印機,点阵打印机,https://terms.naer.edu.tw/
+344,double precision,雙倍精度；雙精確度,双精度的【形】,https://terms.naer.edu.tw/
+345,double-click,快按兩次；雙擊,双击【动】,https://terms.naer.edu.tw/
+346,down time,停機時間,停机时间,https://terms.naer.edu.tw/
+347,download,下載,下载【动】,https://terms.naer.edu.tw/
+348,downstream,下游,下游,https://terms.naer.edu.tw/
+349,downward compatibility,向下相容性,向下兼容性,https://terms.naer.edu.tw/
+350,drag,牽曳,拖[动]【动】,https://terms.naer.edu.tw/
+351,drag and drop,拖曳及放下,拖放【动】,https://terms.naer.edu.tw/
+352,drop-dead halt,完全停機，突然停機,死机,https://terms.naer.edu.tw/
+353,dummy,虛擬,哑的【形】,https://terms.naer.edu.tw/
+354,dummy instruction,虛擬指令,哑指令,https://terms.naer.edu.tw/
+355,dump,傾印；倒出,转储,https://terms.naer.edu.tw/
+356,duplex printer,雙工列印機,双面打印机,https://terms.naer.edu.tw/
+357,dynamic allocation,動態分配,动态分配,https://terms.naer.edu.tw/
+358,e-business,電子化企業,电子商务,https://terms.naer.edu.tw/
+359,e-commerce,電子商務,电子商业,https://terms.naer.edu.tw/
+360,e-currency,电子貨幣；电子流通,电子货币,https://terms.naer.edu.tw/
+361,e-govemment affairs,電子政務,电子政务,https://terms.naer.edu.tw/
+362,e-zine,電子雜誌,电子杂志,https://terms.naer.edu.tw/
+363,e-zine；electronic magazine,電子雜誌,电子杂志,https://terms.naer.edu.tw/
+364,edit,編輯,编辑【动】,https://terms.naer.edu.tw/
+365,editor,編輯器；編輯程式,编辑器,https://terms.naer.edu.tw/
+366,electronic cash,電子錢,电子现金,https://terms.naer.edu.tw/
+367,electronic document interchange (EDI),電子文件交換,电子文档交换,https://terms.naer.edu.tw/
+368,electronic form,電子表格,电子表格,https://terms.naer.edu.tw/
+369,electronic funds transfer ；EFT,電子轉帳,电子转账,https://terms.naer.edu.tw/
+370,electronic paper,電子紙,电子纸[张],https://terms.naer.edu.tw/
+371,electronic publishing,電子出版,电子出版,https://terms.naer.edu.tw/
+372,electronic wallet；wallet,電子錢包,电子钱包,https://terms.naer.edu.tw/
+373,embedded,嵌式,嵌入式的【形】,https://terms.naer.edu.tw/
+374,emoticons,心情符號；表情圖像,情绪符,https://terms.naer.edu.tw/
+375,empty medium,空媒體,空媒体,https://terms.naer.edu.tw/
+376,emulation,仿真；模倣,仿真,https://terms.naer.edu.tw/
+377,enable,賦能,使能【动】,https://terms.naer.edu.tw/
+378,encode,編碼,编码【动】,https://terms.naer.edu.tw/
+379,encoder,編碼器,编码器,https://terms.naer.edu.tw/
+380,encrypt,加密,加密【动】,https://terms.naer.edu.tw/
+381,end to end encryption,端對端加密,端对端加密,https://terms.naer.edu.tw/
+382,engine,機；引擎；發動機,引擎,https://terms.naer.edu.tw/
+383,enterprise network,企業網路,企业网,https://terms.naer.edu.tw/
+384,entity,實體；實質；實體物,实体,https://terms.naer.edu.tw/
+385,entrance,入口,入口,https://terms.naer.edu.tw/
+386,entrapment,設陷阱;防侵陷阱,设陷,https://terms.naer.edu.tw/
+387,envelope,包跡；封頭；波封,包封,https://terms.naer.edu.tw/
+388,environment,環境,环境,https://terms.naer.edu.tw/
+389,equivalence,等值；等價；等效,等价,https://terms.naer.edu.tw/
+390,equivalence gate,等效閘,“同”门,https://terms.naer.edu.tw/
+391,erasable storage,可抹除儲存；可抹除儲存器,可擦存储器,https://terms.naer.edu.tw/
+392,erase,抹除；擦除,擦除【动】,https://terms.naer.edu.tw/
+393,error,錯誤；誤差,误差,https://terms.naer.edu.tw/
+394,error,錯誤；誤差,差错,https://terms.naer.edu.tw/
+395,error rate,錯誤率,出错率,https://terms.naer.edu.tw/
+396,error ratio,錯誤比,出错比[率],https://terms.naer.edu.tw/
+397,escape character (ESC),逸出字元；分離字元,转义字符,https://terms.naer.edu.tw/
+398,exception,異常；例外,异常,https://terms.naer.edu.tw/
+399,EXCLUSIVE-OR gate,互斥或閘,“异或”门,https://terms.naer.edu.tw/
+400,EXCLUSIVE-OR operation,互斥或作業,“异或”运算,https://terms.naer.edu.tw/
+401,execution,執行；執行過程,执行,https://terms.naer.edu.tw/
+402,exhaustive attack,窮舉攻擊,穷举攻击,https://terms.naer.edu.tw/
+403,exit,出口，跳出,退出【动】,https://terms.naer.edu.tw/
+404,expand,擴充,扩大【动】,https://terms.naer.edu.tw/
+405,expansion board,擴充板,扩充板,https://terms.naer.edu.tw/
+406,expert system,專家系統,专家系统,https://terms.naer.edu.tw/
+407,explosion-proof,防爆器,防爆的【形】,https://terms.naer.edu.tw/
+408,export/import,輸出/輸入,引出引入的【形】,https://terms.naer.edu.tw/
+409,exposure,曝光,暴露,https://terms.naer.edu.tw/
+410,expression,表式；陳式,表达式,https://terms.naer.edu.tw/
+411,extend,延伸；擴充,扩展,https://terms.naer.edu.tw/
+412,extendability,可延伸性,可扩展性,https://terms.naer.edu.tw/
+413,extract,擷取；抽取；萃取,抽取【动】,https://terms.naer.edu.tw/
+414,fact,事實,事实,https://terms.naer.edu.tw/
+415,failsafe,失效仍安全；故障安全,故障保险的【形】,https://terms.naer.edu.tw/
+416,failsoft,故障弱化,故障弱化的【形】,https://terms.naer.edu.tw/
+417,failure recovery,故障恢復,失效[后]恢复,https://terms.naer.edu.tw/
+418,fan-in,扇入,扇入,https://terms.naer.edu.tw/
+419,fan-out,扇出,扇出,https://terms.naer.edu.tw/
+420,fault tolerance,故障容許度,容错,https://terms.naer.edu.tw/
+421,feasibility,可行性,可行性,https://terms.naer.edu.tw/
+422,feature,特徵,特征,https://terms.naer.edu.tw/
+423,field,欄位；域；欄；圖場；場,字段,https://terms.naer.edu.tw/
+424,FIFO,先進先出,先进先出,https://terms.naer.edu.tw/
+425,fifth generation language,第五代語言,第五代语言,https://terms.naer.edu.tw/
+426,file,檔案；歸檔,文件,https://terms.naer.edu.tw/
+427,file allocation table,檔案配置表,文件分配表,https://terms.naer.edu.tw/
+428,file management system,檔案管理系統,文件管理系统,https://terms.naer.edu.tw/
+429,fill,填充,填充【动】,https://terms.naer.edu.tw/
+430,filler,填料；資料墊,填充符,https://terms.naer.edu.tw/
+431,filter,過濾器；濾波器,过滤器,https://terms.naer.edu.tw/
+432,find,尋找,查找,https://terms.naer.edu.tw/
+433,fingerprint,指紋,指纹,https://terms.naer.edu.tw/
+434,fingerprint recognition,指紋辨識,指纹识别,https://terms.naer.edu.tw/
+435,firmware,韌體,固件,https://terms.naer.edu.tw/
+436,first generation language,第一代語言,第一代语言,https://terms.naer.edu.tw/
+437,first in first out,先進先出,先进先出,https://terms.naer.edu.tw/
+438,fixed point arithmetic,定點運算；定點算術,定点运算,https://terms.naer.edu.tw/
+439,flash card,閃光卡,闪卡,https://terms.naer.edu.tw/
+440,flash memory,快閃記憶體,闪存,https://terms.naer.edu.tw/
+441,flat file,平坦檔；平面檔,平面文件,https://terms.naer.edu.tw/
+442,flaw,裂隙；瑕疪；缺陷；隙痕；斷裂；弗老風；橫推斷層 ; 疵裂；疵點；缺點；橫推斷層；捩斷層；走向滑斷層；裂縫；裂紋；裂痕,瑕点,https://terms.naer.edu.tw/
+443,floating-point number,浮點數,浮点数,https://terms.naer.edu.tw/
+444,flowchart,流程圖,流程图,https://terms.naer.edu.tw/
+445,foreground,前景；前台,前台的【形】,https://terms.naer.edu.tw/
+446,foreground image,前景影像,前景图像,https://terms.naer.edu.tw/
+447,foreground processing,前台處理,前台处理,https://terms.naer.edu.tw/
+448,fork,FORK指令、叉路,分叉,https://terms.naer.edu.tw/
+449,form factor,形狀因數,形状因子,https://terms.naer.edu.tw/
+450,formal logic,形式邏輯,形式逻辑,https://terms.naer.edu.tw/
+451,format,格式；製作格式,格式,https://terms.naer.edu.tw/
+452,format effector,格式控號；格式控制字元,格式控制符,https://terms.naer.edu.tw/
+453,formatting,格式化中,格式化,https://terms.naer.edu.tw/
+454,fourth generation language,第四代語言,第四代语言,https://terms.naer.edu.tw/
+455,fragmentation,儲存片；片段儲存；分割,分段,https://terms.naer.edu.tw/
+456,frame,框；資訊框,框架,https://terms.naer.edu.tw/
+457,frame rate,框速率；框率,帧速率,https://terms.naer.edu.tw/
+458,frame relay,訊框中繼,帧中继[协议],https://terms.naer.edu.tw/
+459,framework,框架,框架,https://terms.naer.edu.tw/
+460,frequently asked questions(FAQ),常見問題,常问问题,https://terms.naer.edu.tw/
+461,front-end processor(FEP),前端處理器,前端处理器,https://terms.naer.edu.tw/
+462,FTP,檔案傳送協定,文件传送协议,https://terms.naer.edu.tw/
+463,full adder,全加器,全加器,https://terms.naer.edu.tw/
+464,full subtracter,全減法器；全減器,全减器,https://terms.naer.edu.tw/
+465,function,函數；功能,函数,https://terms.naer.edu.tw/
+466,function call,函數呼叫,函数调用,https://terms.naer.edu.tw/
+467,function library,函數程式館,函数库,https://terms.naer.edu.tw/
+468,functional design,功能設計,功能设计,https://terms.naer.edu.tw/
+469,fuzzy computing,乏晰計算,模糊计算技术,https://terms.naer.edu.tw/
+470,fuzzy logic,乏晰邏輯,模糊逻辑,https://terms.naer.edu.tw/
+471,gate,閘,门,https://terms.naer.edu.tw/
+472,gate array,閘陣列,门阵列,https://terms.naer.edu.tw/
+473,general-purpose computer,通用型電腦,通用计算机,https://terms.naer.edu.tw/
+474,generalization,簡約化；類化；一般化；概推；推廣；通則化；概化；類推；推論；廣義化；普遍化；全身化,泛化,https://terms.naer.edu.tw/
+475,generator,產生器,生成器,https://terms.naer.edu.tw/
+476,genetic programming,基因程式設計,遗传编程,https://terms.naer.edu.tw/
+477,gestural input,姿態輸入,姿势输入,https://terms.naer.edu.tw/
+478,ghost,重影,重影,https://terms.naer.edu.tw/
+479,glass-box testing,玻璃箱測試,白盒测试,https://terms.naer.edu.tw/
+480,global search and replace,總體搜尋與取代,全程搜索并替换,https://terms.naer.edu.tw/
+481,glove input,手套式輸入裝置,手套输入,https://terms.naer.edu.tw/
+482,grammar,文法,语法,https://terms.naer.edu.tw/
+483,graph,圖形；圖,图,https://terms.naer.edu.tw/
+484,graphic character,圖號；圖形字元；圖示字元,图形字符,https://terms.naer.edu.tw/
+485,graphics card,圖形卡,图形卡,https://terms.naer.edu.tw/
+486,graphics terminal,圖形終端機,图形终端,https://terms.naer.edu.tw/
+487,gray level,灰階,灰度[级],https://terms.naer.edu.tw/
+488,grid computing,網格式運算,网格计算,https://terms.naer.edu.tw/
+489,grid technology,柵工藝；柵技術；格子工藝；格子技術,网格技术,https://terms.naer.edu.tw/
+490,gridline,網格線，網柵線,网格线,https://terms.naer.edu.tw/
+491,groupware,群組軟體,群件,https://terms.naer.edu.tw/
+492,guard,防護,守卫,https://terms.naer.edu.tw/
+493,GUI,圖形使用者介面,图形用户界面,https://terms.naer.edu.tw/
+494,half adder,半加器,半加器,https://terms.naer.edu.tw/
+495,half subtracter,半減器,半减器,https://terms.naer.edu.tw/
+496,halt instruction,停機指令；暫停指令,停机指令,https://terms.naer.edu.tw/
+497,handle,處置；柄,句柄,https://terms.naer.edu.tw/
+498,handshaking,交握,联络,https://terms.naer.edu.tw/
+499,Hanzi,漢字(音譯),汉字,https://terms.naer.edu.tw/
+500,Hanzi input,漢字輸入,汉字输入,https://terms.naer.edu.tw/
+501,Hanzi output,漢字輸出,汉字输出,https://terms.naer.edu.tw/
+502,Hanzi recognition,漢字辨識,汉字识别,https://terms.naer.edu.tw/
+503,haptic display,觸覺顯示,触觉显示,https://terms.naer.edu.tw/
+504,hard,硬的,硬的【形】,https://terms.naer.edu.tw/
+505,hard copy,硬複製；硬拷貝,硬拷贝（副本）,https://terms.naer.edu.tw/
+506,hard disk,硬碟,硬[磁]盘,https://terms.naer.edu.tw/
+507,hard disk drive(HDD),硬式磁碟機,硬盘驱动器,https://terms.naer.edu.tw/
+508,hard error,硬體錯誤,硬[差]错,https://terms.naer.edu.tw/
+509,hardware,硬體,硬件,https://terms.naer.edu.tw/
+510,head,頭；磁頭,磁头,https://terms.naer.edu.tw/
+511,head mounted display,頭戴顯示裝置,盔装显示器,https://terms.naer.edu.tw/
+512,header,標頭,首部,https://terms.naer.edu.tw/
+513,heap,堆,堆,https://terms.naer.edu.tw/
+514,help desk,服務桌,帮助台,https://terms.naer.edu.tw/
+515,heuristic method,試探法,探试法,https://terms.naer.edu.tw/
+516,hexadecimal,十六進位,十六进制的【形】,https://terms.naer.edu.tw/
+517,hide,隱藏,隐藏【动】,https://terms.naer.edu.tw/
+518,hierarchical,階層式,层次的【形】,https://terms.naer.edu.tw/
+519,high byte,高位元組,高[位]字节,https://terms.naer.edu.tw/
+520,high end,高層次；高級型,高端的【形】,https://terms.naer.edu.tw/
+521,high-level language,高階語言,高级语言,https://terms.naer.edu.tw/
+522,hop,中繼段,跳[段],https://terms.naer.edu.tw/
+523,host computer,主電腦,[宿]主计算机,https://terms.naer.edu.tw/
+524,housekeeping,內務處理,内务处理,https://terms.naer.edu.tw/
+525,HTML; Hypertext Markup Language,超文件標示語言,超文本置标语言,https://terms.naer.edu.tw/
+526,hue,色相；色彩,色调,https://terms.naer.edu.tw/
+527,human machine interface,人機介面,人机界面,https://terms.naer.edu.tw/
+528,hybrid computer,併合計算機,混合计算机,https://terms.naer.edu.tw/
+529,hyperlink,超鏈結,超链接,https://terms.naer.edu.tw/
+530,hypermedia,超媒體,超媒体,https://terms.naer.edu.tw/
+531,hypertext,超文件,超文本,https://terms.naer.edu.tw/
+532,I/O; input/output,輸入/輸出；輸出入,输入输出的【形】,https://terms.naer.edu.tw/
+533,icon,圖像；圖符,图符,https://terms.naer.edu.tw/
+534,identifier,識別符；標識符號；識別碼,标识符,https://terms.naer.edu.tw/
+535,identity gate,恆等閘,“全同”门,https://terms.naer.edu.tw/
+536,ideogram,表意文字,表意字,https://terms.naer.edu.tw/
+537,idle,閒置,[空]闲【形】,https://terms.naer.edu.tw/
+538,if then rule,若─則規則,“若-则”规则,https://terms.naer.edu.tw/
+539,IF-AND-ONLY-IF gate,若且唯若閘,“等价”门,https://terms.naer.edu.tw/
+540,IF-THEN gate,若則閘,“蕴涵”门,https://terms.naer.edu.tw/
+541,illegal,非法存取；非法的,非法的【形】,https://terms.naer.edu.tw/
+542,image,影像,图像,https://terms.naer.edu.tw/
+543,image interpretation,影像解譯,图像判读,https://terms.naer.edu.tw/
+544,image processing,影像處理,图像处理,https://terms.naer.edu.tw/
+545,imaging,成像,成像,https://terms.naer.edu.tw/
+546,implementation,實施,实现,https://terms.naer.edu.tw/
+547,implication,蘊含；隱含式,蕴涵,https://terms.naer.edu.tw/
+548,implicit addressing,隱含定址,隐式寻址,https://terms.naer.edu.tw/
+549,inclusion,包含,包含,https://terms.naer.edu.tw/
+550,INCLUSIVE-OR gate,兼或閘,“或”门,https://terms.naer.edu.tw/
+551,increment,增量,增量,https://terms.naer.edu.tw/
+552,increment,增量,递增【动】,https://terms.naer.edu.tw/
+553,index,索引；指標,索引,https://terms.naer.edu.tw/
+554,index register,索引暫存器,变址寄存器,https://terms.naer.edu.tw/
+555,indicator,指示器；指示元,指标,https://terms.naer.edu.tw/
+556,indirect address,間接位址,间接地址,https://terms.naer.edu.tw/
+557,indirect instruction,間接指令,间接指令,https://terms.naer.edu.tw/
+558,infection,傳染,感染,https://terms.naer.edu.tw/
+559,information,資訊；消息,信息,https://terms.naer.edu.tw/
+560,information base,資訊庫,信息库,https://terms.naer.edu.tw/
+561,information center,資訊中心,信息中心,https://terms.naer.edu.tw/
+562,information explosion,資訊爆炸,信息爆炸,https://terms.naer.edu.tw/
+563,information object,資訊物件,信息客体,https://terms.naer.edu.tw/
+564,information processing,資訊處理,信息处理,https://terms.naer.edu.tw/
+565,information provider,資訊提供者,信息提供方,https://terms.naer.edu.tw/
+566,information resource,資訊資源,信息资源,https://terms.naer.edu.tw/
+567,information retrieval(IR),資訊檢索,信息检索,https://terms.naer.edu.tw/
+568,information security,資訊安全,信息安全,https://terms.naer.edu.tw/
+569,information sink,資訊槽,信息汇,https://terms.naer.edu.tw/
+570,information source,資訊源,信息源,https://terms.naer.edu.tw/
+571,information system,資訊系統,信息系统,https://terms.naer.edu.tw/
+572,information technology; IT,資訊技術,信息技术,https://terms.naer.edu.tw/
+573,information warehouse,資訊倉庫,信息仓库,https://terms.naer.edu.tw/
+574,information warfare,資訊戰爭,信息战争,https://terms.naer.edu.tw/
+575,inhibit,禁止,禁止【动】,https://terms.naer.edu.tw/
+576,initial state,初始狀態,初[始]状态,https://terms.naer.edu.tw/
+577,initialization,初始化,初始化,https://terms.naer.edu.tw/
+578,inkjet printer,噴墨印表機,喷墨打印机,https://terms.naer.edu.tw/
+579,inline,進線；嵌入；在一直線上的；聯機的；[液壓]進油管路,直插式的【形】,https://terms.naer.edu.tw/
+580,inoculate,接種劑,接种【动】,https://terms.naer.edu.tw/
+581,input,輸入,输入的【形】,https://terms.naer.edu.tw/
+582,input buffer,輸入緩衝器,输入缓冲区,https://terms.naer.edu.tw/
+583,input data,輸入資料,输入数据,https://terms.naer.edu.tw/
+584,input unit,輸入裝置,输入设备,https://terms.naer.edu.tw/
+585,input/output,輸入/輸出；輸出入,输入输出的【形】,https://terms.naer.edu.tw/
+586,input/output bus,輸入輸出匯流排,输入输出总线,https://terms.naer.edu.tw/
+587,input/output channel,輸入輸出通道,输入输出通道,https://terms.naer.edu.tw/
+588,input/output unit,輸入輸出裝置；輸入輸出單元,输入输出设备,https://terms.naer.edu.tw/
+589,inquiry,詢問,查询,https://terms.naer.edu.tw/
+590,insert,插入,插入【动】,https://terms.naer.edu.tw/
+591,inspection,檢驗,审查,https://terms.naer.edu.tw/
+592,install,安裝,安装【动】,https://terms.naer.edu.tw/
+593,instance,實例,实例,https://terms.naer.edu.tw/
+594,instantiation,例示,例示,https://terms.naer.edu.tw/
+595,instruction,指令,指令,https://terms.naer.edu.tw/
+596,instruction code,指令代碼；指令碼,指令码,https://terms.naer.edu.tw/
+597,instruction set,指令集,指令集,https://terms.naer.edu.tw/
+598,integer type,整數型態,整型,https://terms.naer.edu.tw/
+599,integrated circuit ; IC,積體電路,集成电路,https://terms.naer.edu.tw/
+600,integrated software,整合軟體,集成软件,https://terms.naer.edu.tw/
+601,intelligence,智慧,智能,https://terms.naer.edu.tw/
+602,intelligent database,智慧資料庫,智能数据库,https://terms.naer.edu.tw/
+603,intelligent terminal,智慧終端機,智能终端,https://terms.naer.edu.tw/
+604,interaction,交互作用,交互[作用],https://terms.naer.edu.tw/
+605,interactive mode,交談模式；交作模,交互方式,https://terms.naer.edu.tw/
+606,interconnectivity,網間連結,互连通性,https://terms.naer.edu.tw/
+607,interface,介面,接口,https://terms.naer.edu.tw/
+608,interlock,互鎖,互锁【动】,https://terms.naer.edu.tw/
+609,intermediate equipment,中間設備,中间设备,https://terms.naer.edu.tw/
+610,intermediate node,中間節點；中間結點,中间结点,https://terms.naer.edu.tw/
+611,intermittent error,間歇性錯誤,间歇差错,https://terms.naer.edu.tw/
+612,Internet of Things； the,物聯網,物联网,https://terms.naer.edu.tw/
+613,interoperability,可交互運作性；互動能力,互操作性,https://terms.naer.edu.tw/
+614,interpret,解譯,解释【动】,https://terms.naer.edu.tw/
+615,interpreter,解譯器,解释器,https://terms.naer.edu.tw/
+616,interrogating,訊問；查詢,询问,https://terms.naer.edu.tw/
+617,interrupt,中斷；岔斷,中断,https://terms.naer.edu.tw/
+618,intruder,入侵者；侵入者,入侵者,https://terms.naer.edu.tw/
+619,invoke,引動,启用【动】,https://terms.naer.edu.tw/
+620,iteration,疊代,迭代,https://terms.naer.edu.tw/
+621,jitter,抖動；(信號)跳動；干擾,抖动,https://terms.naer.edu.tw/
+622,job,工件,作业,https://terms.naer.edu.tw/
+623,job processing,工件處理,作业处理,https://terms.naer.edu.tw/
+624,job queue,工件佇列,作业队列,https://terms.naer.edu.tw/
+625,join,聯合；結合；或,并,https://terms.naer.edu.tw/
+626,journal,日誌；期刊,日志,https://terms.naer.edu.tw/
+627,joystick,搖桿,操纵杆,https://terms.naer.edu.tw/
+628,JPEG,JPEG（圖像壓縮）標準；聯合圖像專家群,静止图像压缩（JPEG）标准,https://terms.naer.edu.tw/
+629,jump,跳越；跳位,跳[转]【动】,https://terms.naer.edu.tw/
+630,jump instruction,跳越指令；跳位指令,跳[转]指令,https://terms.naer.edu.tw/
+631,k,千,[大]千（1024）,https://terms.naer.edu.tw/
+632,Kalman filter,卡門濾波器,卡尔曼滤波器,https://terms.naer.edu.tw/
+633,kernel,核心；核心要點,内核,https://terms.naer.edu.tw/
+634,key,鍵；鑰；關鍵,密钥,https://terms.naer.edu.tw/
+635,keyboard,鍵盤,键盘,https://terms.naer.edu.tw/
+636,keyboard layout,鍵盤布局,键盘布局,https://terms.naer.edu.tw/
+637,keypad,鍵板；小鍵盤,小键盘,https://terms.naer.edu.tw/
+638,keyword,關鍵字；保留字,关键字,https://terms.naer.edu.tw/
+639,kludge,拙集,权宜件,https://terms.naer.edu.tw/
+640,knowledge,知識,知识,https://terms.naer.edu.tw/
+641,knowledge acquisition,知識獲取,知识获取,https://terms.naer.edu.tw/
+642,knowledge base (K-base; KB),知識庫,知识库,https://terms.naer.edu.tw/
+643,known-plaintext attack,已知的明文攻擊,已知明文攻击,https://terms.naer.edu.tw/
+644,label,標號；標記；標籤,标号,https://terms.naer.edu.tw/
+645,language,語言,语言,https://terms.naer.edu.tw/
+646,laptop computer,膝上型電腦,膝上计算机,https://terms.naer.edu.tw/
+647,large-scale integration (LSI）,大型積體電路,大规模集成,https://terms.naer.edu.tw/
+648,laser printer,雷射列印機,激光打印机,https://terms.naer.edu.tw/
+649,laser scanner,雷射掃瞄器,激光扫描仪,https://terms.naer.edu.tw/
+650,"last in, first out；LIFO",後進先出,后进先出,https://terms.naer.edu.tw/
+651,latch,閂；鎖存器,锁存器,https://terms.naer.edu.tw/
+652,layer,網路層；層；階層,层,https://terms.naer.edu.tw/
+653,layout,布局；布置；列印格式,布局,https://terms.naer.edu.tw/
+654,leaf,葉；樹結構端節點,叶,https://terms.naer.edu.tw/
+655,learning,學習,学习,https://terms.naer.edu.tw/
+656,left justified,向左對齊,左整版的【形】,https://terms.naer.edu.tw/
+657,legacy,舊有；傳統,遗留（产）,https://terms.naer.edu.tw/
+658,lexicographic sort,詞典排序,词典式排序,https://terms.naer.edu.tw/
+659,library,程式館,[文件]库,https://terms.naer.edu.tw/
+660,life cycle,生命週期,生存周期,https://terms.naer.edu.tw/
+661,lightpen,光筆,光笔,https://terms.naer.edu.tw/
+662,limiter,限制器；限幅器,限幅器,https://terms.naer.edu.tw/
+663,line,列；線路,线路,https://terms.naer.edu.tw/
+664,line feed character (LF),饋行字元；換行字元,换行字符,https://terms.naer.edu.tw/
+665,line printer,列印機,行式打印机,https://terms.naer.edu.tw/
+666,line spacing,列間距,行距,https://terms.naer.edu.tw/
+667,line width,行寬度,行宽,https://terms.naer.edu.tw/
+668,linear,線性,线性的【形】,https://terms.naer.edu.tw/
+669,link,鏈結；連線,链接【动】,https://terms.naer.edu.tw/
+670,liquid-crystal display (LCD),液晶顯示器,液晶显示器,https://terms.naer.edu.tw/
+671,list,列表；串列；顯示,列表【动】,https://terms.naer.edu.tw/
+672,list,列表；串列；顯示,[列]表,https://terms.naer.edu.tw/
+673,little endian,小端讀取,小尾数法的【形】,https://terms.naer.edu.tw/
+674,liveware,活體,活件,https://terms.naer.edu.tw/
+675,load,負荷；載入,装入【动】,https://terms.naer.edu.tw/
+676,load and go,載入並執行；載入並運行,装入并执行,https://terms.naer.edu.tw/
+677,loader,載入器,装入器,https://terms.naer.edu.tw/
+678,local,區域的；局部；區性,局部的【形】,https://terms.naer.edu.tw/
+679,local host,本地主機,本[主]机,https://terms.naer.edu.tw/
+680,lock,鎖定,加锁【动】,https://terms.naer.edu.tw/
+681,log,日誌；對數,[记]日志【动】,https://terms.naer.edu.tw/
+682,logic,邏輯,逻辑,https://terms.naer.edu.tw/
+683,logic bomb,邏輯炸彈,逻辑炸弹,https://terms.naer.edu.tw/
+684,logic chip,邏輯晶片,逻辑芯片,https://terms.naer.edu.tw/
+685,logic circuit,邏輯電路,逻辑电路,https://terms.naer.edu.tw/
+686,logic device,邏輯裝置,逻辑器件,https://terms.naer.edu.tw/
+687,logic operation,邏輯運算,逻辑运算,https://terms.naer.edu.tw/
+688,login,登入,注册【动】,https://terms.naer.edu.tw/
+689,logoff,註銷,注销【动】,https://terms.naer.edu.tw/
+690,logon,登入,注册【动】,https://terms.naer.edu.tw/
+691,logout,註銷；登出,注销【动】,https://terms.naer.edu.tw/
+692,loop,迴路；環；循環；環路；回線；環形天線；程式中一群重複指令,循环,https://terms.naer.edu.tw/
+693,loop body,迴路本體,循环体,https://terms.naer.edu.tw/
+694,loophole,漏洞,漏洞,https://terms.naer.edu.tw/
+695,lossless compression,無損壓縮,无损压缩,https://terms.naer.edu.tw/
+696,lossy compression,有損壓縮,有损压缩,https://terms.naer.edu.tw/
+697,low-level language,低階語言,低级语言,https://terms.naer.edu.tw/
+698,lowercase,小寫,小写[字母]的【形】,https://terms.naer.edu.tw/
+699,luminosity,亮度,光度,https://terms.naer.edu.tw/
+700,machine address,機器位址,机器地址,https://terms.naer.edu.tw/
+701,machine code,機器碼；指令碼,机器码,https://terms.naer.edu.tw/
+702,machine translation,機器翻譯,机器翻译,https://terms.naer.edu.tw/
+703,macroinstruction,巨集指令；巨指令,宏指令,https://terms.naer.edu.tw/
+704,magnetic card,磁性卡片；磁卡,磁卡,https://terms.naer.edu.tw/
+705,magnetic disk,磁碟,磁盘,https://terms.naer.edu.tw/
+706,main program,主程式；主程序,主程序,https://terms.naer.edu.tw/
+707,main storage,主儲存器,主存储器,https://terms.naer.edu.tw/
+708,mainframe,主機；大型電腦,主机,https://terms.naer.edu.tw/
+709,mainframe computer,主機電腦；計算機主機,特大型计算机,https://terms.naer.edu.tw/
+710,maintainability,維護性；可維護性；可維修性,可维护性,https://terms.naer.edu.tw/
+711,majority,多數,择多[运算]符,https://terms.naer.edu.tw/
+712,majority gate,多數閘,择多门,https://terms.naer.edu.tw/
+713,majority operation,多數決運算；多數運算,择多运算,https://terms.naer.edu.tw/
+714,male connector,公連接器,阳连接器,https://terms.naer.edu.tw/
+715,malware,有毒軟體,恶意件,https://terms.naer.edu.tw/
+716,man machine interface，MMI,人機介面,人机界面,https://terms.naer.edu.tw/
+717,manager,管理器；經理,管理器,https://terms.naer.edu.tw/
+718,map,映射；映成表；地區圖；圖解；映像；標定（網）；圖；圖像；變換；變址,映像,https://terms.naer.edu.tw/
+719,map,映射；映成表；地區圖；圖解；映像；標定（網）；圖；圖像；變換；變址,映射【动】,https://terms.naer.edu.tw/
+720,markup language,標示語言；標記語言,置标语言,https://terms.naer.edu.tw/
+721,mask,遮罩；遮蔽,掩码,https://terms.naer.edu.tw/
+722,mask,遮罩；遮蔽,屏蔽【动】,https://terms.naer.edu.tw/
+723,masquerade,冒充,冒充,https://terms.naer.edu.tw/
+724,mass storage,大量儲存；大量資料儲存器；大容量儲存器,海量存储器,https://terms.naer.edu.tw/
+725,massively parallel processing(MPP),大規模平行處理,大规模并行处理,https://terms.naer.edu.tw/
+726,master station,主站；主台；主控台；主控站；總局；主局,主站,https://terms.naer.edu.tw/
+727,matching,匹配；符合；比較；微調；配合,匹配,https://terms.naer.edu.tw/
+728,mathematical expression,數學表式,数学表达式,https://terms.naer.edu.tw/
+729,mean time between failures (MTBF),平均無故障時間；故障平均間隔時間；故障間隔平均時間,平均故障间隔时间,https://terms.naer.edu.tw/
+730,mean time to failure (MTTF),故障前平均時間；產生錯誤的平均時間；平均存活時間,平均故障前时间,https://terms.naer.edu.tw/
+731,mean time to repair (MTTR),平均修復時間；平均修理時間；需要修理的平均時間,平均修复时间,https://terms.naer.edu.tw/
+732,media,媒體；傳輸介質；介質；媒介質(midium的複數),介质,https://terms.naer.edu.tw/
+733,media,媒體；傳輸介質；介質；媒介質(midium的複數),媒体,https://terms.naer.edu.tw/
+734,medium scale integration,中型積體化；中型積體電路,中规模集成,https://terms.naer.edu.tw/
+735,megaflops,每秒百萬浮點運算,百万次浮点运算每秒,https://terms.naer.edu.tw/
+736,member,成員；構件,成员,https://terms.naer.edu.tw/
+737,memo pad,記事平板,记事簿,https://terms.naer.edu.tw/
+738,memory,記憶體；記憶,内存[储器],https://terms.naer.edu.tw/
+739,memory bank,記憶庫,存储体,https://terms.naer.edu.tw/
+740,memory cell,記憶格；儲存單元,存储单元,https://terms.naer.edu.tw/
+741,memory chip,記憶體晶片,内存芯片,https://terms.naer.edu.tw/
+742,memory dump,記憶體傾印,内存转储,https://terms.naer.edu.tw/
+743,memory management,記憶體管理,存储管理,https://terms.naer.edu.tw/
+744,memory-resident,常駐記憶體,常驻内存的【形】,https://terms.naer.edu.tw/
+745,menu,菜單；功能表；選項單,选单,https://terms.naer.edu.tw/
+746,menu item,選項單項目,选单项,https://terms.naer.edu.tw/
+747,merge,合併；併入；歸併；合併程序；拼接,归并【动】,https://terms.naer.edu.tw/
+748,metadata,解釋用資料；元數據；元資料,元数据,https://terms.naer.edu.tw/
+749,metafile,元檔案,元文件,https://terms.naer.edu.tw/
+750,metalanguage,元語言,元语言,https://terms.naer.edu.tw/
+751,MFLOPS,每秒百萬浮點運算,百万次浮点运算每秒,https://terms.naer.edu.tw/
+752,microchip,微晶片,微芯片,https://terms.naer.edu.tw/
+753,microcircuit,微電路,微电路,https://terms.naer.edu.tw/
+754,microcomputer,微電腦；微算機；微（型）計算機,微型计算机,https://terms.naer.edu.tw/
+755,microimage,微影像；微縮圖像,缩微图像,https://terms.naer.edu.tw/
+756,microinstruction,微指令,微指令,https://terms.naer.edu.tw/
+757,microprocessor,微處理器；微處理機,微处理器,https://terms.naer.edu.tw/
+758,middleware,中間軟體,中间件,https://terms.naer.edu.tw/
+759,midrange computer,中型電腦,中型计算机,https://terms.naer.edu.tw/
+760,migration,遷移,迁移,https://terms.naer.edu.tw/
+761,minicomputer,迷你電腦,小型计算机,https://terms.naer.edu.tw/
+762,mnemonic,助憶,助忆符,https://terms.naer.edu.tw/
+763,mobile computing,移動計算,移动计算,https://terms.naer.edu.tw/
+764,model,模型；型號,模型,https://terms.naer.edu.tw/
+765,modeling,成型；模型建立；模型化,建模,https://terms.naer.edu.tw/
+766,modem,數據機,调制解调器,https://terms.naer.edu.tw/
+767,modifiability,可修改性,可修改性,https://terms.naer.edu.tw/
+768,modification,修改；修正,修改,https://terms.naer.edu.tw/
+769,modular design,模組化設計；積木式設計,模块化设计,https://terms.naer.edu.tw/
+770,modular software,模組性；積木性；模組化,模块化软件,https://terms.naer.edu.tw/
+771,modularity,模組性；積木性；模組化,模块度,https://terms.naer.edu.tw/
+772,module,模組；程序塊；組件,模块,https://terms.naer.edu.tw/
+773,monadic,一元的,一元的【形】,https://terms.naer.edu.tw/
+774,monitor,監視器；監視程式；監督；(電腦)顯示器；；監控器；監聽；監視；監控,监视器,https://terms.naer.edu.tw/
+775,monitor,監視器；監視程式；監督；(電腦)顯示器；；監控器；監聽；監視；監控,监控程序,https://terms.naer.edu.tw/
+776,monomedia,單一媒體,单媒体的【形】,https://terms.naer.edu.tw/
+777,monostable,單穩,单稳的【形】,https://terms.naer.edu.tw/
+778,Moore’s Law,摩爾定律,摩尔定律,https://terms.naer.edu.tw/
+779,morphing,漸變,变形,https://terms.naer.edu.tw/
+780,motherboard,母板,母板,https://terms.naer.edu.tw/
+781,mount,裝上；裝置；座,装[上]【动】,https://terms.naer.edu.tw/
+782,mouse,滑鼠；游標控制器；鼠標器,鼠标[器],https://terms.naer.edu.tw/
+783,mouse pointer,滑鼠指標,鼠标指针,https://terms.naer.edu.tw/
+784,multiboot,多重開機,多重引导,https://terms.naer.edu.tw/
+785,multifunction peripheral(MFP),多功週邊,多功能外设,https://terms.naer.edu.tw/
+786,multilayer,多層,多层的【形】,https://terms.naer.edu.tw/
+787,multimedia,多媒體,多媒体,https://terms.naer.edu.tw/
+788,multiplier,乘數；乘法器；倍增器,乘法器,https://terms.naer.edu.tw/
+789,multiprocessing,多處理器,多重处理,https://terms.naer.edu.tw/
+790,multiprocessor,多處理器,多处理器机,https://terms.naer.edu.tw/
+791,multiprogramming,多程式；多重規劃,多道程序设计,https://terms.naer.edu.tw/
+792,multitasking,多任務；多重任務,多任务处理,https://terms.naer.edu.tw/
+793,multiuser systems,多用戶系統,多用户系统,https://terms.naer.edu.tw/
+794,musical instrument digital interface，MIDI,樂器數位介面,乐器数字接口,https://terms.naer.edu.tw/
+795,namespace,名稱空間,名称空间,https://terms.naer.edu.tw/
+796,naming authority,命名機構,命名机构,https://terms.naer.edu.tw/
+797,NAND gate,反及閘,“与非”门,https://terms.naer.edu.tw/
+798,navigation,導航；領航,导航,https://terms.naer.edu.tw/
+799,negation,非；負；否定,“反”[运算],https://terms.naer.edu.tw/
+800,negative acknowledge character (NAK),負確認字元；反確認字元,否认[字]符,https://terms.naer.edu.tw/
+801,negative image,負影像,负像,https://terms.naer.edu.tw/
+802,nest,巢,嵌套【动】,https://terms.naer.edu.tw/
+803,net address,網路位址,网址,https://terms.naer.edu.tw/
+804,netspionage,網路間諜,网络间谍,https://terms.naer.edu.tw/
+805,network administrator,網路管理者,网络管理员,https://terms.naer.edu.tw/
+806,network agent,網路代理者,网络代理,https://terms.naer.edu.tw/
+807,network browser,網路瀏覽器,网络浏览器,https://terms.naer.edu.tw/
+808,network computer(NC),網路電腦,网络计算机,https://terms.naer.edu.tw/
+809,network database,網路資料庫,网络数据库,https://terms.naer.edu.tw/
+810,network file system,網路檔案系統,网络文件系统,https://terms.naer.edu.tw/
+811,network protocol,網路協定,网络协议,https://terms.naer.edu.tw/
+812,network weaving,網路迂回,网络迂回,https://terms.naer.edu.tw/
+813,networking,網路連結,联网,https://terms.naer.edu.tw/
+814,no operation instruction (no-op),不作業指令,空操作指令,https://terms.naer.edu.tw/
+815,NOR gate,非或閘,“或非”门,https://terms.naer.edu.tw/
+816,normal form,正常形式；正規形式,范式,https://terms.naer.edu.tw/
+817,normalization,正規化；規格化；規範化；標準化；正常化,规格化,https://terms.naer.edu.tw/
+818,NOT gate,反閘,“非”门,https://terms.naer.edu.tw/
+819,notarization,公證,公证,https://terms.naer.edu.tw/
+820,notation,記法；表示法；記號；記數法；符號,记法,https://terms.naer.edu.tw/
+821,notebook computer,筆記型電腦,笔记本式计算机,https://terms.naer.edu.tw/
+822,null address,空位址,空地址,https://terms.naer.edu.tw/
+823,null pointer,空指標,空指针,https://terms.naer.edu.tw/
+824,null string,空值字串；空字串 ,空串,https://terms.naer.edu.tw/
+825,numerical,數值的；數位的,数值的【形】,https://terms.naer.edu.tw/
+826,O-ROM disk,光學唯讀碟,只读光盘,https://terms.naer.edu.tw/
+827,object code,目標碼；目的碼,目标[程序]码,https://terms.naer.edu.tw/
+828,object computer,目標計算機,目标计算机,https://terms.naer.edu.tw/
+829,object program,目標程式；目的程式,目标程序,https://terms.naer.edu.tw/
+830,octal system,八進制,八进制,https://terms.naer.edu.tw/
+831,office automation (OA),辦公室自動化,办公自动化,https://terms.naer.edu.tw/
+832,offline,離線,脱机的【形】,https://terms.naer.edu.tw/
+833,offset,偏移；偏置；推移；殘留誤差；補償；抵銷；分支；支距；剩餘偏差,偏移量,https://terms.naer.edu.tw/
+834,on-board computer,機載電腦,单板计算机,https://terms.naer.edu.tw/
+835,on-screen keyboard,螢幕鍵盤,屏上键盘,https://terms.naer.edu.tw/
+836,online,線上,联机的【形】,https://terms.naer.edu.tw/
+837,online transaction processing; OLTP,線上交易處理,联机事务处理,https://terms.naer.edu.tw/
+838,operand,運算元,操作数,https://terms.naer.edu.tw/
+839,operating system(OS),作業系統,操作系统,https://terms.naer.edu.tw/
+840,operation,作業；操作；運算,运算,https://terms.naer.edu.tw/
+841,operation,作業；操作；運算,操作,https://terms.naer.edu.tw/
+842,operation code,運算碼；操作碼；作業碼,操作码,https://terms.naer.edu.tw/
+843,operation exception,作業異常,操作异常,https://terms.naer.edu.tw/
+844,operational amplifier,運算放大器,运算放大器,https://terms.naer.edu.tw/
+845,operator,運算子；操作員；運算符；接線生,操作符,https://terms.naer.edu.tw/
+846,operator console,操作員控制台,操作员控制台,https://terms.naer.edu.tw/
+847,operator control panel,操作員控制面板,操作员控制面板,https://terms.naer.edu.tw/
+848,operator precedence,運算子在先,操作符先后次序,https://terms.naer.edu.tw/
+849,optical character,光學字元,光学字符,https://terms.naer.edu.tw/
+850,optical character reader,感光字元閱讀器；光學字元閱讀機,光学字符阅读机,https://terms.naer.edu.tw/
+851,optical character recognition,感光字元辨識；光學字元辨識,光学字符识别,https://terms.naer.edu.tw/
+852,optical disk drive,光碟驅動機,光盘驱动器,https://terms.naer.edu.tw/
+853,optical disk storage,光磁碟儲存,光盘存储器,https://terms.naer.edu.tw/
+854,optical disk； optical disc,光碟,光盘,https://terms.naer.edu.tw/
+855,optical drive,光學驅動機,光驱,https://terms.naer.edu.tw/
+856,optical fiber,光纖,光纤,https://terms.naer.edu.tw/
+857,optical head,光學磁頭,光盘头,https://terms.naer.edu.tw/
+858,option,選項；任選,选项,https://terms.naer.edu.tw/
+859,OR gate,或閘,“或”门,https://terms.naer.edu.tw/
+860,order,次序；次；級；命令；訂單；訂購；階,次序,https://terms.naer.edu.tw/
+861,order,次序；次；級；命令；訂單；訂購；階,定序【动】,https://terms.naer.edu.tw/
+862,output data,輸出資料,输出数据,https://terms.naer.edu.tw/
+863,output device,輸出裝置,输出设备,https://terms.naer.edu.tw/
+864,outsourcing,委外服務,外包,https://terms.naer.edu.tw/
+865,overflow,溢位；超限；溢出話(報)務；(計算機位元)溢出,溢出,https://terms.naer.edu.tw/
+866,overhead,管理負擔(操作系統)、間接費用、負擔、架空、附加,开销,https://terms.naer.edu.tw/
+867,overlay,覆蓋,覆盖【动】,https://terms.naer.edu.tw/
+868,overprint,附加印刷；重印,叠印【动】,https://terms.naer.edu.tw/
+869,override,置換；超越；克服；替換值,越控【动】,https://terms.naer.edu.tw/
+870,overstrike,重打,叠打【动】,https://terms.naer.edu.tw/
+871,overwritable disk,可重寫式磁碟,可盖写光盘,https://terms.naer.edu.tw/
+872,overwrite,重寫,盖写【动】,https://terms.naer.edu.tw/
+873,pack,包裝；磁碟組；壓縮；縮緊；縮整；聚集；包裹；組裝；封裝,紧缩【动】,https://terms.naer.edu.tw/
+874,package,包；套裝軟體；組件；程式包,[程序]包,https://terms.naer.edu.tw/
+875,packing,壓縮；包裝,压紧,https://terms.naer.edu.tw/
+876,padding,填塞；填補；整墊；墊塞；填充；補白,填塞,https://terms.naer.edu.tw/
+877,padlocking,加鎖,加锁,https://terms.naer.edu.tw/
+878,page,頁；分頁；頁（面）；頁式；版面,页[面],https://terms.naer.edu.tw/
+879,page description language(PDL),頁描述語言,页面描述语言,https://terms.naer.edu.tw/
+880,page layout,頁面布置,页面布局,https://terms.naer.edu.tw/
+881,page printer,頁式列印機,页式打印机,https://terms.naer.edu.tw/
+882,pagination,編頁,分页,https://terms.naer.edu.tw/
+883,paging,分頁；調頁,调页,https://terms.naer.edu.tw/
+884,Paintbrush,繪圖軟體、塗抹刷,画笔,https://terms.naer.edu.tw/
+885,palette,調色,调色板,https://terms.naer.edu.tw/
+886,palmtop computer,掌上型電腦,掌上计算机,https://terms.naer.edu.tw/
+887,panning,平移；攝像機水平移動,摇摄,https://terms.naer.edu.tw/
+888,paper feed,饋紙；饋紙機件,送纸机构,https://terms.naer.edu.tw/
+889,paper skip,跑紙,跑纸,https://terms.naer.edu.tw/
+890,paperless office,無紙辦公室,无纸办公室,https://terms.naer.edu.tw/
+891,paradigm,典範；範例,范例,https://terms.naer.edu.tw/
+892,parallel,平行；並列；併列,并行的【形】,https://terms.naer.edu.tw/
+893,parallel,平行；並列；併列,并联的【形】,https://terms.naer.edu.tw/
+894,parallel computing,平行計算,并行计算[技术],https://terms.naer.edu.tw/
+895,parallel interface,平行介面,并行接口[规范],https://terms.naer.edu.tw/
+896,parallel operation,平行運算,并行操作,https://terms.naer.edu.tw/
+897,parallel port,平行埠,并行端口,https://terms.naer.edu.tw/
+898,parallel processing,平行處理,并行处理,https://terms.naer.edu.tw/
+899,parallel transmission,平行傳輸,并行传输,https://terms.naer.edu.tw/
+900,parameter,參數,参数,https://terms.naer.edu.tw/
+901,parameter association,參數結合；參數關聯,参数结合,https://terms.naer.edu.tw/
+902,parameter passing,參數傳遞,参数传递,https://terms.naer.edu.tw/
+903,parent node,上代節點,父结点,https://terms.naer.edu.tw/
+904,parent type,上代類型,父类型,https://terms.naer.edu.tw/
+905,parity,同位；奇偶,奇偶性,https://terms.naer.edu.tw/
+906,parity check,同位檢查；同位核對,奇偶检验,https://terms.naer.edu.tw/
+907,parse,剖析；語法分析,剖析【动】,https://terms.naer.edu.tw/
+908,partition,分區；分割；區間；劃分,分区,https://terms.naer.edu.tw/
+909,pass by address,按址傳遞,按址传递,https://terms.naer.edu.tw/
+910,pass by reference,引址傳遞,引址传递,https://terms.naer.edu.tw/
+911,pass by value,按值傳遞,按值传递,https://terms.naer.edu.tw/
+912,password,通行碼；密碼；暗碼,口令,https://terms.naer.edu.tw/
+913,password attack,密碼攻擊,口令攻击,https://terms.naer.edu.tw/
+914,paste,貼補；補貼；糊；膠；膏,粘贴【动】,https://terms.naer.edu.tw/
+915,patch,修補；插線,补丁,https://terms.naer.edu.tw/
+916,patch,修補；插線,补修【动】,https://terms.naer.edu.tw/
+917,pathname,路徑名稱；路徑名,路径名,https://terms.naer.edu.tw/
+918,pattern,型樣；圖型,模式,https://terms.naer.edu.tw/
+919,pattern matching,型樣匹配；模式匹配；模式配對,模式匹配,https://terms.naer.edu.tw/
+920,pattern recognition,型樣辨識；圖形識別,模式识别,https://terms.naer.edu.tw/
+921,payload,酬載,净荷,https://terms.naer.edu.tw/
+922,PC board,印刷電路板,印制电路板,https://terms.naer.edu.tw/
+923,PDA,個人數位助理,个人数字助理,https://terms.naer.edu.tw/
+924,penetration,穿透,渗入,https://terms.naer.edu.tw/
+925,period,週期；期間；時期；句點,周期,https://terms.naer.edu.tw/
+926,peripheral equipment,週邊設備,外围设备,https://terms.naer.edu.tw/
+927,peripheral power supply (PPS),周邊電源,外围电源,https://terms.naer.edu.tw/
+928,permission,允許,许可[权],https://terms.naer.edu.tw/
+929,persistence,持續,余辉,https://terms.naer.edu.tw/
+930,personal computer (PC),個人電腦,个人计算机,https://terms.naer.edu.tw/
+931,photocomposer,照片排版機,照排机,https://terms.naer.edu.tw/
+932,phototypesetter,照相排版機,照排机,https://terms.naer.edu.tw/
+933,physical,實體,物理的【形】,https://terms.naer.edu.tw/
+934,physical,實體,实物的【形】,https://terms.naer.edu.tw/
+935,physical address,實體位址,物理地址,https://terms.naer.edu.tw/
+936,physical record,實體記錄,物理记录,https://terms.naer.edu.tw/
+937,pictogram,圖示,图符,https://terms.naer.edu.tw/
+938,picture processing,圖象處理,图片处理,https://terms.naer.edu.tw/
+939,piggyback entry,揹負進入,驮入,https://terms.naer.edu.tw/
+940,ping,ping 命令；ICMP回音檢查,查检[协议],https://terms.naer.edu.tw/
+941,ping,ping 命令；ICMP回音檢查,查验【动】,https://terms.naer.edu.tw/
+942,piracy,侵犯專利權,盗版,https://terms.naer.edu.tw/
+943,pitch,間距；字符間距,间距,https://terms.naer.edu.tw/
+944,pixel,像素,像素,https://terms.naer.edu.tw/
+945,placeholder,佔位,占位符,https://terms.naer.edu.tw/
+946,plaintext,明文,明文,https://terms.naer.edu.tw/
+947,platform,平台,平台,https://terms.naer.edu.tw/
+948,playback,播放；回放,重放,https://terms.naer.edu.tw/
+949,player,參加者,播放器,https://terms.naer.edu.tw/
+950,plotter,繪圖器,绘图机,https://terms.naer.edu.tw/
+951,plug and play (PnP),隨插即用,即插即用,https://terms.naer.edu.tw/
+952,plug-compatible,插接相容,插件兼容的【形】,https://terms.naer.edu.tw/
+953,plug-in,插入；外掛程式,插件,https://terms.naer.edu.tw/
+954,plugboard,插頭板；插線板,插件板,https://terms.naer.edu.tw/
+955,pocket calculator,口袋型計算器,袖珍计算器,https://terms.naer.edu.tw/
+956,point of sales； POS,銷售點,销售点,https://terms.naer.edu.tw/
+957,pointer,指標,指针,https://terms.naer.edu.tw/
+958,polling,輪詢,探询,https://terms.naer.edu.tw/
+959,pop up menu,爆出選項單,弹出式选单,https://terms.naer.edu.tw/
+960,populate,填充,入住【动】,https://terms.naer.edu.tw/
+961,populate,填充,插装【动】,https://terms.naer.edu.tw/
+962,port,埠；轉移,移植【动】,https://terms.naer.edu.tw/
+963,portability,可攜性,可移植性,https://terms.naer.edu.tw/
+964,portable computer,可攜電腦,便携式计算机,https://terms.naer.edu.tw/
+965,portal,入口網站,门廊,https://terms.naer.edu.tw/
+966,postamble,後同步碼,后同步码,https://terms.naer.edu.tw/
+967,postcodition,後置條件,后[置]条件,https://terms.naer.edu.tw/
+968,postmortem dump,事後傾印,善后转储,https://terms.naer.edu.tw/
+969,potential recipient,潛在接受者,潜在接收方,https://terms.naer.edu.tw/
+970,power-on self-test(POST),開機自我檢測,加电自检,https://terms.naer.edu.tw/
+971,preamble,前文,前置码,https://terms.naer.edu.tw/
+972,predicate,述詞,谓词,https://terms.naer.edu.tw/
+973,prefetch,預取,预取【动】,https://terms.naer.edu.tw/
+974,preset,預設,预置【动】,https://terms.naer.edu.tw/
+975,preview,預視；預覽,预览,https://terms.naer.edu.tw/
+976,primary key,主鍵,主键码,https://terms.naer.edu.tw/
+977,primitive,基元；原始,原语,https://terms.naer.edu.tw/
+978,print,列印；印,打印【动】,https://terms.naer.edu.tw/
+979,print buffer,列印緩衝區,打印缓冲区,https://terms.naer.edu.tw/
+980,print preview,列印預視,打印预览,https://terms.naer.edu.tw/
+981,print server,列印伺服器,打印服务器,https://terms.naer.edu.tw/
+982,print through,列印通過,透印,https://terms.naer.edu.tw/
+983,printed circuit board (PCB),印刷電路板,印制电路板,https://terms.naer.edu.tw/
+984,printer,列印機,打印机,https://terms.naer.edu.tw/
+985,printout,印出,打印输出,https://terms.naer.edu.tw/
+986,priority,優先,优先级,https://terms.naer.edu.tw/
+987,privacy,隱私,隐私[权],https://terms.naer.edu.tw/
+988,private key,私密金鑰,私钥,https://terms.naer.edu.tw/
+989,private management domain (PRMD),專用管理領域,专用管理域,https://terms.naer.edu.tw/
+990,privileged instruction,特權指令,特权指令,https://terms.naer.edu.tw/
+991,privileges,特權,特权,https://terms.naer.edu.tw/
+992,probe,探針,探查件,https://terms.naer.edu.tw/
+993,procedural language,程序語言,过程语言,https://terms.naer.edu.tw/
+994,procedure,程序,过程,https://terms.naer.edu.tw/
+995,process,處理；過程,过程,https://terms.naer.edu.tw/
+996,processing,處理,处理,https://terms.naer.edu.tw/
+997,processor,處理機；處理器,处理器,https://terms.naer.edu.tw/
+998,production rule,生產規則,产生式规则,https://terms.naer.edu.tw/
+999,profile,設定檔；外形；輪廓,轮廓,https://terms.naer.edu.tw/
+1000,program,程式；節目,程序,https://terms.naer.edu.tw/
+1001,program library,程式館；館存程式,程序库,https://terms.naer.edu.tw/
+1002,programmable logic array (PLA),可程式邏輯陣列,可编程逻辑阵列,https://terms.naer.edu.tw/
+1003,programmable read-only memory; PROM,可程式唯讀記憶體,可编程只读存储器,https://terms.naer.edu.tw/
+1004,programmed input/output,程控輸入輸出,程控输入输出,https://terms.naer.edu.tw/
+1005,programmer,程式設計師；程式員,程序员,https://terms.naer.edu.tw/
+1006,programming,程式設計；規劃；程式,程序设计,https://terms.naer.edu.tw/
+1007,programming language,程式設計語言；程式規劃語言,程序设计语言,https://terms.naer.edu.tw/
+1008,prompt,候答訊號；提示號；提示符號；提示字元,提示,https://terms.naer.edu.tw/
+1009,propagation,傳播,传播,https://terms.naer.edu.tw/
+1010,propagation delay,傳播延遲；傳導延遲,传播延迟,https://terms.naer.edu.tw/
+1011,proprietary software,專屬軟體,专有软件,https://terms.naer.edu.tw/
+1012,prototype,原型；標準型態；雛型；試作,原型,https://terms.naer.edu.tw/
+1013,prototyping,原型設計,原型制作,https://terms.naer.edu.tw/
+1014,proxy,代理伺服器,[网络]代理,https://terms.naer.edu.tw/
+1015,proxy server,代理伺服器,代理服务器,https://terms.naer.edu.tw/
+1016,public key,公用鍵,公钥,https://terms.naer.edu.tw/
+1017,puck,定位盤,定标器,https://terms.naer.edu.tw/
+1018,pull-down menu,下拉項目表；懸垂功能表,下拉式选单,https://terms.naer.edu.tw/
+1019,purge,清除；去除,净化【动】,https://terms.naer.edu.tw/
+1020,push,推；放入,推[入] 【动】,https://terms.naer.edu.tw/
+1021,push technology,{網路廣告}推播技術,推送技术,https://terms.naer.edu.tw/
+1022,put,put 命令,放入【动】,https://terms.naer.edu.tw/
+1023,quality assurance (QA),品質保證,质量保证,https://terms.naer.edu.tw/
+1024,quality of service,服務品質,服务质量,https://terms.naer.edu.tw/
+1025,quantization,量化；量子化；分層,量子化,https://terms.naer.edu.tw/
+1026,quantum,量子；量程；時間片（分時系統用）,量子,https://terms.naer.edu.tw/
+1027,query language,查詢語言；詢問語言,查询语言,https://terms.naer.edu.tw/
+1028,queue,隊列；佇列,队列,https://terms.naer.edu.tw/
+1029,queue,隊列；佇列,排队【动】,https://terms.naer.edu.tw/
+1030,quit,退出；結束,退出,https://terms.naer.edu.tw/
+1031,QWERTY keyboard,Qwerty鍵盤,QWERTY键盘,https://terms.naer.edu.tw/
+1032,radio button,無線電鈕,单选按钮,https://terms.naer.edu.tw/
+1033,radix,數基,基数,https://terms.naer.edu.tw/
+1034,radix complement,數基補數,基数补码,https://terms.naer.edu.tw/
+1035,radix notation,基數記法,基数记法,https://terms.naer.edu.tw/
+1036,raise,導致；引發,引发【动】,https://terms.naer.edu.tw/
+1037,random access memory; RAM,隨機存取記憶體,随机存储器,https://terms.naer.edu.tw/
+1038,random number,隨機數；亂數,随机数,https://terms.naer.edu.tw/
+1039,raster display,光柵顯示器,光栅显示,https://terms.naer.edu.tw/
+1040,read,讀；讀出；讀取,读【动】,https://terms.naer.edu.tw/
+1041,read head,讀出頭,读头,https://terms.naer.edu.tw/
+1042,read-only memory; ROM,唯讀記憶體,只读存储器,https://terms.naer.edu.tw/
+1043,read/write head,讀寫頭,读写头,https://terms.naer.edu.tw/
+1044,reader,閱讀機,阅读器,https://terms.naer.edu.tw/
+1045,ready,就緒；備妥,就绪,https://terms.naer.edu.tw/
+1046,real memory,真實記憶體,实[际]存储器,https://terms.naer.edu.tw/
+1047,real-time,即時,实时的【形】,https://terms.naer.edu.tw/
+1048,real-time animation,即時動畫；實時動畫,实时动画,https://terms.naer.edu.tw/
+1049,real-time operating system (RTOS),實時操作系統,实时操作系统,https://terms.naer.edu.tw/
+1050,reboot,再啟動,再引导【动】,https://terms.naer.edu.tw/
+1051,receipt notification,接收通知,收到通知,https://terms.naer.edu.tw/
+1052,record,記錄,记录,https://terms.naer.edu.tw/
+1053,record,記錄,记录【动】,https://terms.naer.edu.tw/
+1054,recovery,恢復；復元；回復,恢复,https://terms.naer.edu.tw/
+1055,recovery time,恢復時間；復原時間；回復時間,恢复时间,https://terms.naer.edu.tw/
+1056,recursion,遞迴,递归,https://terms.naer.edu.tw/
+1057,reduce,縮減；歸約,缩小【动】,https://terms.naer.edu.tw/
+1058,redundacy,冗餘；多備,冗余度,https://terms.naer.edu.tw/
+1059,redundacy,冗餘；多備,冗余,https://terms.naer.edu.tw/
+1060,redundant code,冗餘碼,冗余码,https://terms.naer.edu.tw/
+1061,reference,參考資料；參考,引用【动】,https://terms.naer.edu.tw/
+1062,reference edge,參考邊,基准边,https://terms.naer.edu.tw/
+1063,refresh,再新；重清；復新,刷新,https://terms.naer.edu.tw/
+1064,refresh cycle,再新週期,刷新周期,https://terms.naer.edu.tw/
+1065,region fill,區域填充,区域填充,https://terms.naer.edu.tw/
+1066,register,暫存器；紀錄器,寄存器,https://terms.naer.edu.tw/
+1067,registration,登記,对准,https://terms.naer.edu.tw/
+1068,registration,登記,登记,https://terms.naer.edu.tw/
+1069,registration authority,註冊機構,登记机构,https://terms.naer.edu.tw/
+1070,relational calculus,關連式微積分,关系演算,https://terms.naer.edu.tw/
+1071,relational data model,關連式資料模型,关系数据模型,https://terms.naer.edu.tw/
+1072,relational database,關連式資料庫,关系数据库,https://terms.naer.edu.tw/
+1073,relational model,關連式模型,关系模型,https://terms.naer.edu.tw/
+1074,relative address,相對位址,相对地址,https://terms.naer.edu.tw/
+1075,release,釋放；鬆開,释放【动】,https://terms.naer.edu.tw/
+1076,release,釋放；鬆開,发布【动】,https://terms.naer.edu.tw/
+1077,reliability,可靠度；可靠性,可靠性,https://terms.naer.edu.tw/
+1078,relocatable address,可重置位址,可重定位地址,https://terms.naer.edu.tw/
+1079,remote batch processing,遠程整批處理,远程批处理,https://terms.naer.edu.tw/
+1080,remote database access,遠程資料庫存取,远程数据库访问,https://terms.naer.edu.tw/
+1081,remote login,遠程登入,远程注册,https://terms.naer.edu.tw/
+1082,remote maintenance,遠程維護,远程维护,https://terms.naer.edu.tw/
+1083,rendering,轉列,绘制,https://terms.naer.edu.tw/
+1084,reorganization,重組,重组,https://terms.naer.edu.tw/
+1085,repeater,轉發器；中繼器；中繼站；增音機,中继器,https://terms.naer.edu.tw/
+1086,replacement,更換,替换,https://terms.naer.edu.tw/
+1087,replay,重播,重放,https://terms.naer.edu.tw/
+1088,replication,複製,[同步]复制,https://terms.naer.edu.tw/
+1089,reply,答覆,回复【动】,https://terms.naer.edu.tw/
+1090,report,報表,报告,https://terms.naer.edu.tw/
+1091,repository,儲存庫,储存库,https://terms.naer.edu.tw/
+1092,repudiation,否認,抵赖,https://terms.naer.edu.tw/
+1093,Request for Discussion (RFD),請求討論,请求讨论,https://terms.naer.edu.tw/
+1094,rerun,重作,重新运行,https://terms.naer.edu.tw/
+1095,rescue point,救援點,拯救点,https://terms.naer.edu.tw/
+1096,reserved character,保留字元,保留字符,https://terms.naer.edu.tw/
+1097,reserved word,保留字,保留字,https://terms.naer.edu.tw/
+1098,reset,重設；重新開始；重置；重置載波,复位【动】,https://terms.naer.edu.tw/
+1099,resident,駐存；駐留；常駐；駐留的,驻留的【形】,https://terms.naer.edu.tw/
+1100,resident program,常駐程式,驻留程序,https://terms.naer.edu.tw/
+1101,resize,重調大小,重定大小【动】,https://terms.naer.edu.tw/
+1102,resolution,解析度,分辨率,https://terms.naer.edu.tw/
+1103,resolve,（位址）解析,[地址]解算【动】,https://terms.naer.edu.tw/
+1104,resource,資源,资源,https://terms.naer.edu.tw/
+1105,resource allocation,資源分配；資源配置,资源分配,https://terms.naer.edu.tw/
+1106,response,回應；響應,响应,https://terms.naer.edu.tw/
+1107,response time,回應時間,响应时间,https://terms.naer.edu.tw/
+1108,restart,重新開始；再啟動,重新启动【动】,https://terms.naer.edu.tw/
+1109,restore,復原,复原【动】,https://terms.naer.edu.tw/
+1110,retrace,回掃,回扫,https://terms.naer.edu.tw/
+1111,retrieval,檢索,检索,https://terms.naer.edu.tw/
+1112,retro virus,反防毒病毒,抗防病毒,https://terms.naer.edu.tw/
+1113,return,折回；轉回；返回；回程；回路；回線,返回【动】,https://terms.naer.edu.tw/
+1114,Return key,return 鍵,回车键,https://terms.naer.edu.tw/
+1115,return statement,回覆敘述,返回语句,https://terms.naer.edu.tw/
+1116,return to zero(RZ),歸零,归零,https://terms.naer.edu.tw/
+1117,reusability,可再用性,可重用性,https://terms.naer.edu.tw/
+1118,reverse engineering,反向工程,逆向工程,https://terms.naer.edu.tw/
+1119,reverse search,反轉搜尋,逆向搜萦,https://terms.naer.edu.tw/
+1120,rewritable optical disk,可再寫光碟,可重写光盘,https://terms.naer.edu.tw/
+1121,ribbon cartridge,色帶匣,色带盒,https://terms.naer.edu.tw/
+1122,rich media,豐富媒體,富媒体,https://terms.naer.edu.tw/
+1123,rich text,豐富文字；加強文字,富文本,https://terms.naer.edu.tw/
+1124,right click,右按鍵,右单击【动】,https://terms.naer.edu.tw/
+1125,right justify,靠右對齊,右整版【动】,https://terms.naer.edu.tw/
+1126,right-aligned,向右對齊,右对齐的【形】,https://terms.naer.edu.tw/
+1127,risk,風險,风险,https://terms.naer.edu.tw/
+1128,risk analysis,風險分析,风险分析,https://terms.naer.edu.tw/
+1129,risk assessment,風險評估,风险评估,https://terms.naer.edu.tw/
+1130,rlogin,遠程登錄,远程注册协议,https://terms.naer.edu.tw/
+1131,rlogin,遠程登錄,远程注册【动】,https://terms.naer.edu.tw/
+1132,robot,機器人,机器人,https://terms.naer.edu.tw/
+1133,robot system,機器人系統,机器人系统,https://terms.naer.edu.tw/
+1134,robust,堅固的；強健的,健壮的【形】,https://terms.naer.edu.tw/
+1135,roll in,滾入,转入【动】,https://terms.naer.edu.tw/
+1136,roll out,滾出,转出【动】,https://terms.naer.edu.tw/
+1137,rollback,回轉；轉返,卷回,https://terms.naer.edu.tw/
+1138,root,根；樹根,根,https://terms.naer.edu.tw/
+1139,root directory,根目錄,根目录,https://terms.naer.edu.tw/
+1140,root node,根節點,根结点,https://terms.naer.edu.tw/
+1141,rotate,旋轉,旋转【动】,https://terms.naer.edu.tw/
+1142,routine,子程式；常式,例程,https://terms.naer.edu.tw/
+1143,run time,運行時間,运行时间,https://terms.naer.edu.tw/
+1144,run-length encoding,運行長度編碼,行程长度编码,https://terms.naer.edu.tw/
+1145,runtime,運轉時間；執行期；運行時間,运行期,https://terms.naer.edu.tw/
+1146,sample and hold device,抽樣保持裝置；取樣保持裝置；取樣保值裝器,采样保持器,https://terms.naer.edu.tw/
+1147,sampling,取樣；抽樣,采样,https://terms.naer.edu.tw/
+1148,sampling rate,取樣頻率；取樣率；抽樣率,采样率,https://terms.naer.edu.tw/
+1149,sanitizing,消毒,净化,https://terms.naer.edu.tw/
+1150,satellite computer,衛星計算機；輔助計算機,卫星计算机,https://terms.naer.edu.tw/
+1151,save,保存；存；節省；保留,保存,https://terms.naer.edu.tw/
+1152,scaffolding,過渡支架,脚手架,https://terms.naer.edu.tw/
+1153,scalability,可擴縮性；可調(尺寸之)能力,可缩放性,https://terms.naer.edu.tw/
+1154,scalar,純量；純量的,标量,https://terms.naer.edu.tw/
+1155,scalar processor,純量處理機,标量处理机,https://terms.naer.edu.tw/
+1156,scale,標度；尺度；音階；比例尺；規模,定标【动】,https://terms.naer.edu.tw/
+1157,scale,標度；尺度；音階；比例尺；規模,比例缩放【动】,https://terms.naer.edu.tw/
+1158,scale factor,比例因數；標度因數,比例因子,https://terms.naer.edu.tw/
+1159,scan,掃瞄,扫描【动】,https://terms.naer.edu.tw/
+1160,scan line,掃瞄線,扫描线（行）,https://terms.naer.edu.tw/
+1161,scanner,掃瞄器；掃瞄程序,扫描器（仪）,https://terms.naer.edu.tw/
+1162,scavenge,提取,拣剩【动】,https://terms.naer.edu.tw/
+1163,scene,場面；場景,景物,https://terms.naer.edu.tw/
+1164,scene,場面；場景,场景,https://terms.naer.edu.tw/
+1165,scene analysis,景物分析,景物分析,https://terms.naer.edu.tw/
+1166,scheduler,排程器,调度程序,https://terms.naer.edu.tw/
+1167,schema,簡圖；概要；綱目,模式,https://terms.naer.edu.tw/
+1168,scientific visualization,科學視覺化,科学可视化,https://terms.naer.edu.tw/
+1169,scope,範疇顯示器；示波器,作用域,https://terms.naer.edu.tw/
+1170,scrambler,拌碼器；攪亂器,加扰器,https://terms.naer.edu.tw/
+1171,screen,螢幕；屏幕；篩選,屏[幕],https://terms.naer.edu.tw/
+1172,screen dump,螢幕傾印,屏幕转储,https://terms.naer.edu.tw/
+1173,screen editor,螢幕編輯器,屏幕编辑器,https://terms.naer.edu.tw/
+1174,screen saver,螢幕保護器,护屏软件,https://terms.naer.edu.tw/
+1175,script,手跡；劇本；原本；腳本,脚本,https://terms.naer.edu.tw/
+1176,scroll bar,捲棒,滚动条,https://terms.naer.edu.tw/
+1177,scroll wheel,捲輪；翻捲輪；捲動輪,滚动轮,https://terms.naer.edu.tw/
+1178,scrolling,捲動；卷軸,滚动,https://terms.naer.edu.tw/
+1179,seamless integration,無縫整合,无缝集成,https://terms.naer.edu.tw/
+1180,search,搜尋；搜索,搜索,https://terms.naer.edu.tw/
+1181,search and replace,搜尋與取代,搜索并替换,https://terms.naer.edu.tw/
+1182,search engine,搜尋引擎,搜索引擎,https://terms.naer.edu.tw/
+1183,search key,搜尋鍵,搜索关键字,https://terms.naer.edu.tw/
+1184,search path,搜尋路徑,搜索路径,https://terms.naer.edu.tw/
+1185,search robot,搜尋機器人,搜索机器人,https://terms.naer.edu.tw/
+1186,search space,搜尋空間,搜索空间,https://terms.naer.edu.tw/
+1187,second-generation language (2GL),第二代語言,第二代语言,https://terms.naer.edu.tw/
+1188,secondary storage,輔助儲存器,辅存,https://terms.naer.edu.tw/
+1189,secret key,密鑰,秘密密钥,https://terms.naer.edu.tw/
+1190,sector,扇區,扇区,https://terms.naer.edu.tw/
+1191,secure channel,保全通道,安全信道,https://terms.naer.edu.tw/
+1192,security,保全；安全,安全,https://terms.naer.edu.tw/
+1193,security level,保全等級,安全级别,https://terms.naer.edu.tw/
+1194,security log,保全日誌,安全日志,https://terms.naer.edu.tw/
+1195,See abnormal end,異常終止,反常结束,https://terms.naer.edu.tw/
+1196,seed,種,种子,https://terms.naer.edu.tw/
+1197,seek,尋覓；尋找,寻道【动】,https://terms.naer.edu.tw/
+1198,seek time,尋覓時間,寻道用时,https://terms.naer.edu.tw/
+1199,selected cell,被選單元,选中单元,https://terms.naer.edu.tw/
+1200,self-adapting,自適,自适应的【形】,https://terms.naer.edu.tw/
+1201,semantics,語意；語意學,语义,https://terms.naer.edu.tw/
+1202,sensitive information,敏感資訊,敏感信息,https://terms.naer.edu.tw/
+1203,sensitivity,靈敏度；敏感度；敏感性,敏感度,https://terms.naer.edu.tw/
+1204,sensor,感測器,传感器,https://terms.naer.edu.tw/
+1205,sentence,句,句子,https://terms.naer.edu.tw/
+1206,separator,分離符；分離器,分隔符,https://terms.naer.edu.tw/
+1207,sequence,順序；序列,序列,https://terms.naer.edu.tw/
+1208,sequential access,順序存取,顺序存取,https://terms.naer.edu.tw/
+1209,sequential access storage,順序存取儲存,顺序存储器,https://terms.naer.edu.tw/
+1210,sequential algorithm,順序演算法,顺序算法,https://terms.naer.edu.tw/
+1211,sequential circuit,順序電路,时序电路,https://terms.naer.edu.tw/
+1212,serial,串聯；序列；串列,串行的【形】,https://terms.naer.edu.tw/
+1213,serial interface,串列介面,串行接口,https://terms.naer.edu.tw/
+1214,serial port,串聯埠；串行端口；串行出入口,串行端口,https://terms.naer.edu.tw/
+1215,serial printer,串列列印機,串行打印机,https://terms.naer.edu.tw/
+1216,servelet,小服務程式,小服务程序,https://terms.naer.edu.tw/
+1217,server,伺服器,服务器,https://terms.naer.edu.tw/
+1218,service,服務,服务,https://terms.naer.edu.tw/
+1219,service access point (SAP),服務進接點,服务接入点,https://terms.naer.edu.tw/
+1220,servomechanism,伺服機構,伺服机构,https://terms.naer.edu.tw/
+1221,session,對話；場次；通信期；交談,会话[期],https://terms.naer.edu.tw/
+1222,set,集（合）；組；集合,系,https://terms.naer.edu.tw/
+1223,set,集（合）；組；集合,设置【动】,https://terms.naer.edu.tw/
+1224,setting,設定,布景,https://terms.naer.edu.tw/
+1225,seven-segment display,七段顯示,七段显示器,https://terms.naer.edu.tw/
+1226,sex changer,公母變換器,插头插座变换器,https://terms.naer.edu.tw/
+1227,shading,遮掩；阻蔽,明暗处理,https://terms.naer.edu.tw/
+1228,shared data,共享資料,共享数据,https://terms.naer.edu.tw/
+1229,shared resource,共享資源,共享资源,https://terms.naer.edu.tw/
+1230,shell,殼；外殼,外壳,https://terms.naer.edu.tw/
+1231,shielding,屏蔽；掩蓋,屏蔽,https://terms.naer.edu.tw/
+1232,shift,移位；偏移；移動；位移；漂移；頻移；輪班,移位,https://terms.naer.edu.tw/
+1233,shift register,移位暫存器,移位寄存器,https://terms.naer.edu.tw/
+1234,shortcut key,捷徑鍵,快捷键,https://terms.naer.edu.tw/
+1235,shrinking,縮小,收小,https://terms.naer.edu.tw/
+1236,signature,簽章,特征标记,https://terms.naer.edu.tw/
+1237,signature,簽章,签名,https://terms.naer.edu.tw/
+1238,simulation,模擬；模擬實驗,模拟,https://terms.naer.edu.tw/
+1239,simultaneous,同時,同时的【形】,https://terms.naer.edu.tw/
+1240,simultaneous processing,同時處理,同时处理,https://terms.naer.edu.tw/
+1241,single-board,單板,单板的【形】,https://terms.naer.edu.tw/
+1242,single-precision,單精準度,单精度的【形】,https://terms.naer.edu.tw/
+1243,single-step,單步；單級的；單段的,单步的【形】,https://terms.naer.edu.tw/
+1244,site,現場;地點,站点,https://terms.naer.edu.tw/
+1245,skip,跨越,跳过【动】,https://terms.naer.edu.tw/
+1246,sleep mode,休眠模式,睡眠方式,https://terms.naer.edu.tw/
+1247,small-scale integration(SSI),小型積體；小規模積體,小规模集成,https://terms.naer.edu.tw/
+1248,smart card,精明卡,灵巧卡,https://terms.naer.edu.tw/
+1249,smart home,智慧家庭,灵巧家庭,https://terms.naer.edu.tw/
+1250,smart terminal,智慧型終端機,灵巧终端,https://terms.naer.edu.tw/
+1251,smiley,情感符號,情绪符,https://terms.naer.edu.tw/
+1252,smoke test,冒煙測試,烟雾测试,https://terms.naer.edu.tw/
+1253,smooth,平滑,平滑【动】,https://terms.naer.edu.tw/
+1254,snapshot dump,快照傾印；迅速傾印,快照转储,https://terms.naer.edu.tw/
+1255,soft copy,軟複製；軟拷貝,软拷贝,https://terms.naer.edu.tw/
+1256,software,軟體,软件,https://terms.naer.edu.tw/
+1257,software engineering,軟體工程,软件工程,https://terms.naer.edu.tw/
+1258,software library,軟體程式館,软件库,https://terms.naer.edu.tw/
+1259,software package,套裝軟體,软件包,https://terms.naer.edu.tw/
+1260,software piracy,軟體盜版,软件盗版,https://terms.naer.edu.tw/
+1261,sort,排序；分類,归类【动】,https://terms.naer.edu.tw/
+1262,sort algorithm,排序演算法,排序算法,https://terms.naer.edu.tw/
+1263,sort key,排序鑰,排序关键字,https://terms.naer.edu.tw/
+1264,sort pass,排序遍,排序遍,https://terms.naer.edu.tw/
+1265,sorter,排序器,排序程序,https://terms.naer.edu.tw/
+1266,sound card,音效卡,声卡,https://terms.naer.edu.tw/
+1267,source,源；原始；起源；訊號源；電源；波源,源,https://terms.naer.edu.tw/
+1268,source code,原始碼,源[代]码,https://terms.naer.edu.tw/
+1269,source data,原始資料,源数据,https://terms.naer.edu.tw/
+1270,source file,原始檔案,源文件,https://terms.naer.edu.tw/
+1271,source language,原始語言；根源語言,源语言,https://terms.naer.edu.tw/
+1272,source program,原始程式；根源程式,源程序,https://terms.naer.edu.tw/
+1273,space,空間；空格；太空；間隔,空间,https://terms.naer.edu.tw/
+1274,space,空間；空格；太空；間隔,空格,https://terms.naer.edu.tw/
+1275,spamming,濫發,滥邮,https://terms.naer.edu.tw/
+1276,speaker identification,說者識別,说话人辨识,https://terms.naer.edu.tw/
+1277,special character,特別字元；特殊字元,专用字符,https://terms.naer.edu.tw/
+1278,specification,規格；說明書,规格说明,https://terms.naer.edu.tw/
+1279,specification language,規格語言,规约语言,https://terms.naer.edu.tw/
+1280,speech,話音；語音；語言；說話,语音,https://terms.naer.edu.tw/
+1281,speech analysis,語音分析,语音分析,https://terms.naer.edu.tw/
+1282,speech coding,語音編碼,语音编码,https://terms.naer.edu.tw/
+1283,speech compression,語音壓縮,语音压缩,https://terms.naer.edu.tw/
+1284,speech input,話音輸入,语音输入,https://terms.naer.edu.tw/
+1285,speech output,語音輸出,语音输出,https://terms.naer.edu.tw/
+1286,speech recognition,話音辨識,语音识别,https://terms.naer.edu.tw/
+1287,speech signal,語音訊號,语音信号,https://terms.naer.edu.tw/
+1288,speech synthesis,話音合成,语音合成,https://terms.naer.edu.tw/
+1289,spline,雲規；樣條,样条,https://terms.naer.edu.tw/
+1290,split screen,分割螢幕,分屏,https://terms.naer.edu.tw/
+1291,spoken command,口說命令,口述命令,https://terms.naer.edu.tw/
+1292,spoken menu,口說選項單,口述选单,https://terms.naer.edu.tw/
+1293,spoken vocabulary,口說詞彙,口述词表,https://terms.naer.edu.tw/
+1294,spoofing,電子欺騙,哄骗【动】,https://terms.naer.edu.tw/
+1295,spooling,排存；線上週邊同時作業；週邊同作,假脱机,https://terms.naer.edu.tw/
+1296,spreadsheet,試算表,电子表格,https://terms.naer.edu.tw/
+1297,square wave,方形波；矩形波；方波,方波,https://terms.naer.edu.tw/
+1298,stable state,穩定狀態,稳态,https://terms.naer.edu.tw/
+1299,stack,堆疊；疊列；堆疊器,栈,https://terms.naer.edu.tw/
+1300,stack pointer,堆疊指標,栈指针,https://terms.naer.edu.tw/
+1301,standard ASCII,美國標準資訊交換碼,标准ASCII字符集,https://terms.naer.edu.tw/
+1302,Standard Generalized Markup Language,標準通用標示語言,标准通用置标语言,https://terms.naer.edu.tw/
+1303,start bit,起始位元,起始位,https://terms.naer.edu.tw/
+1304,start-of-frame,框架頭,帧首,https://terms.naer.edu.tw/
+1305,startup,起動,启动,https://terms.naer.edu.tw/
+1306,statement,敘述；陳述,语句,https://terms.naer.edu.tw/
+1307,static allocation,靜態配置,静态分配,https://terms.naer.edu.tw/
+1308,static image,靜態影像,静态图像,https://terms.naer.edu.tw/
+1309,status,狀態；地位,状态,https://terms.naer.edu.tw/
+1310,step,步；步驟,步,https://terms.naer.edu.tw/
+1311,storage,儲存，儲存器,存储器,https://terms.naer.edu.tw/
+1312,storage,儲存；儲存器,存储,https://terms.naer.edu.tw/
+1313,store-and-forward,存放及轉送,存储转发,https://terms.naer.edu.tw/
+1314,streaming,串流,流送,https://terms.naer.edu.tw/
+1315,stretch,伸展,抻挤【动】,https://terms.naer.edu.tw/
+1316,string,字列；字串；串,串,https://terms.naer.edu.tw/
+1317,stroke,筆畫；衝程,笔画,https://terms.naer.edu.tw/
+1318,structure,結構,结构,https://terms.naer.edu.tw/
+1319,structured design,結構化程式設計,结构化设计,https://terms.naer.edu.tw/
+1320,style,式樣,样式,https://terms.naer.edu.tw/
+1321,style sheet,式樣表單,样式［表］单,https://terms.naer.edu.tw/
+1322,subdirectory,子目錄,子目录,https://terms.naer.edu.tw/
+1323,submission,提交,提交,https://terms.naer.edu.tw/
+1324,subprogram,子程式；次程式；子程序,子程序,https://terms.naer.edu.tw/
+1325,subroutine,次常式；副常式,子例程,https://terms.naer.edu.tw/
+1326,subscriber,用戶；(電話)用戶；訂購戶,订户,https://terms.naer.edu.tw/
+1327,subscript,下標；附標,下标,https://terms.naer.edu.tw/
+1328,substitution,替代,代换,https://terms.naer.edu.tw/
+1329,substrate,基體；基底,衬底,https://terms.naer.edu.tw/
+1330,subtracter,減法器,减法器,https://terms.naer.edu.tw/
+1331,suite,套件,套件,https://terms.naer.edu.tw/
+1332,summer,加法器,求和器,https://terms.naer.edu.tw/
+1333,super-large-scale integration (SLSI),極大型積體,超级大规模集成,https://terms.naer.edu.tw/
+1334,superscript,上標,上标,https://terms.naer.edu.tw/
+1335,support software,支援軟體,支持软件,https://terms.naer.edu.tw/
+1336,suspend,懸置；停止；中止；懸掛；中繼；停話,挂起【动】,https://terms.naer.edu.tw/
+1337,swapping,調換,对换,https://terms.naer.edu.tw/
+1338,symbolic address,符號位址,符号地址,https://terms.naer.edu.tw/
+1339,symbolic language,符號語言,符号语言,https://terms.naer.edu.tw/
+1340,sync signal,同步信號,同步信号,https://terms.naer.edu.tw/
+1341,synchronization,同步；同步化,同步[化],https://terms.naer.edu.tw/
+1342,synchronous protocol,同步協定,同步协议,https://terms.naer.edu.tw/
+1343,synchronous transmission,同步傳輸,同步传输,https://terms.naer.edu.tw/
+1344,syntax,語法,句法,https://terms.naer.edu.tw/
+1345,synthesis,合成；合成(法),合成,https://terms.naer.edu.tw/
+1346,synthesizer,合成器；合成裝置,合成器,https://terms.naer.edu.tw/
+1347,system administrator; sysadmin,系統管理者,系统管理员,https://terms.naer.edu.tw/
+1348,system software,系統軟體,系统软件,https://terms.naer.edu.tw/
+1349,table lookup,查表,查表,https://terms.naer.edu.tw/
+1350,tabulate,列表,制表【动】,https://terms.naer.edu.tw/
+1351,tactile glove,觸覺手套,触觉手套,https://terms.naer.edu.tw/
+1352,tag,標籤；鍵,标志,https://terms.naer.edu.tw/
+1353,tailgate,跟進,跟进【动】,https://terms.naer.edu.tw/
+1354,tap,分接頭,分接头,https://terms.naer.edu.tw/
+1355,tape,磁帶,磁带,https://terms.naer.edu.tw/
+1356,tape unit,磁帶機,磁带机,https://terms.naer.edu.tw/
+1357,target,目標,目标,https://terms.naer.edu.tw/
+1358,target computer,靶標計算機,目标计算机,https://terms.naer.edu.tw/
+1359,target language,靶語言；目標語言,目标语言,https://terms.naer.edu.tw/
+1360,target program,靶標程式；目標程式,目标程序,https://terms.naer.edu.tw/
+1361,task,任務,任务,https://terms.naer.edu.tw/
+1362,telecommuting,遠程交換,在家办公,https://terms.naer.edu.tw/
+1363,telepresence,遙現,遥现,https://terms.naer.edu.tw/
+1364,teleprocessing,電傳處理,远程处理【动】,https://terms.naer.edu.tw/
+1365,teletext TV,電傳視訊,图文电视,https://terms.naer.edu.tw/
+1366,Telnet,遠端登錄；遠端服務、電信網路；TELNET協定(終端機模擬協定),远程登录协议,https://terms.naer.edu.tw/
+1367,Tempest,防信息洩漏,防信息泄露,https://terms.naer.edu.tw/
+1368,template,模板,模板,https://terms.naer.edu.tw/
+1369,tens complement,10之補數,[对]十的补码,https://terms.naer.edu.tw/
+1370,terminal,終端機,终端,https://terms.naer.edu.tw/
+1371,terminate,終止,端接【动】,https://terms.naer.edu.tw/
+1372,terminator,終止器,终结符,https://terms.naer.edu.tw/
+1373,test data,測試資料,测试数据,https://terms.naer.edu.tw/
+1374,text,正文；本文；電文,文本,https://terms.naer.edu.tw/
+1375,text editing,正文編輯,文本编辑,https://terms.naer.edu.tw/
+1376,text processing,正文處理,文本处理,https://terms.naer.edu.tw/
+1377,text-to-speech conversion,文字至語音轉換,文语转换,https://terms.naer.edu.tw/
+1378,third generation language,第三代語言,第三代语言,https://terms.naer.edu.tw/
+1379,third-generation computer,第三代計算機,第三代计算机,https://terms.naer.edu.tw/
+1380,thrashing,猛移；往復移動,[系统]颠簸,https://terms.naer.edu.tw/
+1381,thread,線；穿線；引線,线程,https://terms.naer.edu.tw/
+1382,threat,威脅,威胁,https://terms.naer.edu.tw/
+1383,threshold,定限；門檻；臨界(值),阈[值],https://terms.naer.edu.tw/
+1384,thumbnail,拇指甲,微缩图,https://terms.naer.edu.tw/
+1385,tiling,磚式,填片,https://terms.naer.edu.tw/
+1386,time and date stamp,時日戳；時間日期戳記,日时戳,https://terms.naer.edu.tw/
+1387,time bomb,定時炸彈,定时炸弹,https://terms.naer.edu.tw/
+1388,time sharing,分時,分时,https://terms.naer.edu.tw/
+1389,time slicing,時間截分,时间分片,https://terms.naer.edu.tw/
+1390,timeout,逾時；時限,超时,https://terms.naer.edu.tw/
+1391,timer,計時器,计时器,https://terms.naer.edu.tw/
+1392,timestamp,時戳；時間戳記,时戳,https://terms.naer.edu.tw/
+1393,timing signal,計時信號,定时信号,https://terms.naer.edu.tw/
+1394,title bar,標題條,标题条,https://terms.naer.edu.tw/
+1395,tone,音調；音；單音；純音；色調,色调,https://terms.naer.edu.tw/
+1396,toner,色劑；碳粉,色粉,https://terms.naer.edu.tw/
+1397,toolbar,工具列,工具条[栏],https://terms.naer.edu.tw/
+1398,toolbox,工具箱,工具箱,https://terms.naer.edu.tw/
+1399,toolkit,工具箱；套件,工具箱,https://terms.naer.edu.tw/
+1400,top-down programming,自上而下程式設計,自顶向下程序设计,https://terms.naer.edu.tw/
+1401,top-level domain name,頂層領域名稱,顶级域名,https://terms.naer.edu.tw/
+1402,topic group,主題群組,话题组,https://terms.naer.edu.tw/
+1403,topology,拓撲學；布局；拓撲;(網路的)形狀結構,拓扑,https://terms.naer.edu.tw/
+1404,touch screen,觸控螢幕,触摸屏,https://terms.naer.edu.tw/
+1405,trace,追蹤,[踪]迹,https://terms.naer.edu.tw/
+1406,track,磁軌,跟踪【动】,https://terms.naer.edu.tw/
+1407,track,磁軌,[声像]轨迹,https://terms.naer.edu.tw/
+1408,track,磁軌,[磁]道,https://terms.naer.edu.tw/
+1409,transaction,交易；異動,事务[元],https://terms.naer.edu.tw/
+1410,transaction processing,異動處理,事务处理,https://terms.naer.edu.tw/
+1411,transcribe,轉錄,转录【动】,https://terms.naer.edu.tw/
+1412,transfer,轉移；傳送；傳輸；傳遞,传送【动】,https://terms.naer.edu.tw/
+1413,transfer rate,傳送率,传送率,https://terms.naer.edu.tw/
+1414,transform,變換,变换【动】,https://terms.naer.edu.tw/
+1415,translate,翻譯；移位；轉換,翻译【动】,https://terms.naer.edu.tw/
+1416,translating,位移,平移,https://terms.naer.edu.tw/
+1417,Transmission Control Protocol/Internet Protocol; TCP/IP,傳輸控制協定/網際網路協定,传输控制与网际协议,https://terms.naer.edu.tw/
+1418,trap,陷阱,陷阱,https://terms.naer.edu.tw/
+1419,trapdoor,陷門,陷门,https://terms.naer.edu.tw/
+1420,tree,樹,树,https://terms.naer.edu.tw/
+1421,tree structure,樹狀結構,树结构,https://terms.naer.edu.tw/
+1422,tributary station,支流站；受控站,支站,https://terms.naer.edu.tw/
+1423,trichromatic,三色,三色的【形】,https://terms.naer.edu.tw/
+1424,trigger,觸發；觸發器,触发【动】,https://terms.naer.edu.tw/
+1425,troubleshoot,故障檢修,故障排查【动】,https://terms.naer.edu.tw/
+1426,truncation,修剪,截断,https://terms.naer.edu.tw/
+1427,trunk,幹線；中繼線,干线,https://terms.naer.edu.tw/
+1428,trusted computer system,可信賴的電腦系統,可信计算机系统,https://terms.naer.edu.tw/
+1429,truth table,真值表,真值表,https://terms.naer.edu.tw/
+1430,tunneling,透納,隧穿,https://terms.naer.edu.tw/
+1431,Turing machine,杜林機,图灵机,https://terms.naer.edu.tw/
+1432,turnaround time,轉迴時間,周转时间,https://terms.naer.edu.tw/
+1433,twisted pair,雙絞線；絞對線,双绞线,https://terms.naer.edu.tw/
+1434,two-address instruction,二址指令,双地址指令,https://terms.naer.edu.tw/
+1435,two-dimensional,二維,二维的【形】,https://terms.naer.edu.tw/
+1436,two's complement,2補數,[对]二的补码,https://terms.naer.edu.tw/
+1437,type,類型；型態,键入【动】,https://terms.naer.edu.tw/
+1438,type,類型；型態,[类]型,https://terms.naer.edu.tw/
+1439,ubiquitous computing (UC),遍存計算,无处不在的计算,https://terms.naer.edu.tw/
+1440,ultra-large-scale integration(ULSI),超大型積體電路,特大规模集成,https://terms.naer.edu.tw/
+1441,unary,一元關係；一元的,一元的【形】,https://terms.naer.edu.tw/
+1442,uncertainty,不確定性,不确定性,https://terms.naer.edu.tw/
+1443,unconditional jump,無條件跳越；無條件跳位,无条件跳转,https://terms.naer.edu.tw/
+1444,undelete,取消刪除,恢复所删,https://terms.naer.edu.tw/
+1445,underflow,下溢；欠位；低於下限,下溢,https://terms.naer.edu.tw/
+1446,underline,底線,下划线【动】,https://terms.naer.edu.tw/
+1447,undo,取消；廢除,撤消所做【动】,https://terms.naer.edu.tw/
+1448,undock,出塢；駛離碼頭,离坞【动】,https://terms.naer.edu.tw/
+1449,Unicode,萬國碼,统一码,https://terms.naer.edu.tw/
+1450,Unified Modeling Language; UML,統一模型化語言,统一建模语言,https://terms.naer.edu.tw/
+1451,Uniform Resource Identifier; URI,一致資源識別符號,统一资源标识符,https://terms.naer.edu.tw/
+1452,union,聯合；聯集；聯盟,联合[号],https://terms.naer.edu.tw/
+1453,union,聯合；聯集；聯盟,并,https://terms.naer.edu.tw/
+1454,unit,單位；單元；部件；裝置；設備；器,单元,https://terms.naer.edu.tw/
+1455,unit test,單元測試,单元测试,https://terms.naer.edu.tw/
+1456,Universal Resource Locator; URL,環球資源定位器,统一资源定位地址,https://terms.naer.edu.tw/
+1457,universal serial bus; USB,通用序列匯流排；通用串列匯流排,通用串行总线,https://terms.naer.edu.tw/
+1458,Universal Time Coordinate (UTC),國際標準時間,世界协调时,https://terms.naer.edu.tw/
+1459,UNIX,UNIX作業系統,UNIX 操作系统,https://terms.naer.edu.tw/
+1460,up time,順時；開機時間；可操作時間,待用时间,https://terms.naer.edu.tw/
+1461,update,更新；修正,更新【动】,https://terms.naer.edu.tw/
+1462,upgrade,升級；提高質量,升级【动】,https://terms.naer.edu.tw/
+1463,upload,上傳；上載,上载【动】,https://terms.naer.edu.tw/
+1464,upward-compatible,向上相容,向上兼容的【形】,https://terms.naer.edu.tw/
+1465,user,用戶；使用者,用户,https://terms.naer.edu.tw/
+1466,user agent (UA),使用者代理,用户代理,https://terms.naer.edu.tw/
+1467,user data,使用者資料,用户数据,https://terms.naer.edu.tw/
+1468,user friendly,使用者親和性；用戶滿意介面,[对]用户友好的【形】,https://terms.naer.edu.tw/
+1469,user group,用戶群；用戶組,用户组,https://terms.naer.edu.tw/
+1470,user interface,使用者介面；用戶介面,用户界面,https://terms.naer.edu.tw/
+1471,user manual,使用者手冊,用户手册,https://terms.naer.edu.tw/
+1472,user profile,用戶設定檔；用者概況；用戶簡要；用戶特定檔,用户简档,https://terms.naer.edu.tw/
+1473,utility program,公用程式；公用常式,实用程序,https://terms.naer.edu.tw/
+1474,value,值；價值,值,https://terms.naer.edu.tw/
+1475,value added network,加值網路,增值网,https://terms.naer.edu.tw/
+1476,variable,變數,变量,https://terms.naer.edu.tw/
+1477,verification,驗證,验证,https://terms.naer.edu.tw/
+1478,verification test,驗證測試,验证测试,https://terms.naer.edu.tw/
+1479,very large scale integration,超大型積體電路,超大规模集成,https://terms.naer.edu.tw/
+1480,video compression,視訊壓縮,视频压缩,https://terms.naer.edu.tw/
+1481,videodisc,影像磁碟,影碟,https://terms.naer.edu.tw/
+1482,view,視野；觀點,视图,https://terms.naer.edu.tw/
+1483,virtual,虛擬,虚拟的【形】,https://terms.naer.edu.tw/
+1484,virtual memory (VM),虛擬記憶體,虚存,https://terms.naer.edu.tw/
+1485,virtual path,虛擬路徑,虚通路,https://terms.naer.edu.tw/
+1486,virtual peripheral,虛擬週邊設備,虚拟外设,https://terms.naer.edu.tw/
+1487,virtual reality (VR),虛擬實境,虚拟现实,https://terms.naer.edu.tw/
+1488,virus,病毒,病毒,https://terms.naer.edu.tw/
+1489,visibility,可見性,可见性,https://terms.naer.edu.tw/
+1490,vision system,視覺系統,视觉系统,https://terms.naer.edu.tw/
+1491,visualization,視覺化,可视化,https://terms.naer.edu.tw/
+1492,vocoder,聲碼器；語音編碼器,声码器,https://terms.naer.edu.tw/
+1493,voice control,語音控制,话音控制,https://terms.naer.edu.tw/
+1494,voice recognition,語音辨識,话音识别,https://terms.naer.edu.tw/
+1495,volatile storage,依電性儲存器,易失性存储器,https://terms.naer.edu.tw/
+1496,vulnerability,易損性；脆弱度；脆弱性,脆弱点,https://terms.naer.edu.tw/
+1497,wafer,晶片；晶元；圓片；大晶片；薄片；干膠片,圆片,https://terms.naer.edu.tw/
+1498,wait state,等待狀態,等待状态,https://terms.naer.edu.tw/
+1499,walk-through,走查,走查,https://terms.naer.edu.tw/
+1500,watchdog timer,監視計時器；看門狗計時器,把关[定时]器,https://terms.naer.edu.tw/
+1501,watermark,浮水印,水印,https://terms.naer.edu.tw/
+1502,What-You-See-Before-You-Get-It,所得前所見,所见先所得的【形】,https://terms.naer.edu.tw/
+1503,white box testing,白箱測試,白盒测试,https://terms.naer.edu.tw/
+1504,whiteboard,白板,白板,https://terms.naer.edu.tw/
+1505,wildcard character,通配字元；通用字元,通配字符,https://terms.naer.edu.tw/
+1506,window,視窗；窗；窗口,窗口,https://terms.naer.edu.tw/
+1507,windowing,開視窗,开窗口,https://terms.naer.edu.tw/
+1508,Windows,視窗；窗口；視窗作業系統,视窗操作系统,https://terms.naer.edu.tw/
+1509,wire-pin printer,針式印表機；點陣印表機,针式打印机,https://terms.naer.edu.tw/
+1510,wireless,無線,无线的【形】,https://terms.naer.edu.tw/
+1511,wiretapping,搭線,搭窃,https://terms.naer.edu.tw/
+1512,wizard,精靈,向导,https://terms.naer.edu.tw/
+1513,word,字組,字,https://terms.naer.edu.tw/
+1514,word length,字長,字长,https://terms.naer.edu.tw/
+1515,word processing,文字處理,字处理,https://terms.naer.edu.tw/
+1516,workstation,工作站,工作站,https://terms.naer.edu.tw/
+1517,worm,蟲,蠕虫,https://terms.naer.edu.tw/
+1518,wraparound,環繞；回歸；裹包,绕回,https://terms.naer.edu.tw/
+1519,write,寫,写【动】,https://terms.naer.edu.tw/
+1520,write head,寫入頭,写[磁]头,https://terms.naer.edu.tw/
+1521,write protection,寫保護,防写[器],https://terms.naer.edu.tw/
+1522,write-many,多次寫入,多次写的【形】,https://terms.naer.edu.tw/
+1523,write-once,單次寫入,一次写的【形】,https://terms.naer.edu.tw/
+1524,WYSIWYG,所見即所得,所见即所得的【形】,https://terms.naer.edu.tw/
+1525,XML,可延伸標示語言,可扩展置标语言,https://terms.naer.edu.tw/
+1526,XOR gate,互斥或閘,“异”门,https://terms.naer.edu.tw/
+1527,yellow pages,黃頁；黃頁(分類)簿；電話號碼簿之非住宅分類部份,黄页,https://terms.naer.edu.tw/
+1528,zero out,零化,置零【动】,https://terms.naer.edu.tw/
+1529,zero suppression,消零；零抑制,消零,https://terms.naer.edu.tw/
+1530,zerofill,填零,填零【动】,https://terms.naer.edu.tw/
+1531,zombie computer,殭屍電腦,“蛇神”机,https://terms.naer.edu.tw/
+1532,zooming,調焦,变焦,https://terms.naer.edu.tw/

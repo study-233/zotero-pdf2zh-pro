@@ -1,0 +1,3461 @@
+{
+  "schemaVersion": 1,
+  "id": "environment",
+  "version": "2026.09.22",
+  "sourceLang": "en",
+  "targetLang": "zh-CN",
+  "sources": [
+    {
+      "id": "gemet",
+      "name": "European Environment Agency: GEMET 4.2.3 preferred labels",
+      "url": "https://www.eionet.europa.eu/gemet/en/exports/rdf/latest",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "notice": "European Environment Agency, GEMET 4.2.3. Preferred labels reused under CC BY 4.0. This project selected English and Simplified Chinese labels using concept identifiers; no definitions are reproduced. Selection and formatting are modified; no endorsement is implied. Supplied as-is without warranties; see the license disclaimer."
+    },
+    {
+      "id": "naer-environment",
+      "name": "國家教育研究院：兩岸對照名詞-環境保護學術名詞",
+      "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E7%92%B0%E5%A2%83%E4%BF%9D%E8%AD%B7%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+      "license": "NAER Government Website Open Information Declaration",
+      "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+      "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-環境保護學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications."
+    }
+  ],
+  "entries": [
+    {
+      "source": "acid deposition",
+      "target": "酸沉降",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "2"
+        }
+      ]
+    },
+    {
+      "source": "acid fog",
+      "target": "酸雾",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "3"
+        }
+      ]
+    },
+    {
+      "source": "acid rain",
+      "target": "酸雨",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "4"
+        }
+      ]
+    },
+    {
+      "source": "acidification",
+      "target": "酸化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "44"
+        }
+      ]
+    },
+    {
+      "source": "activated sludge",
+      "target": "活性污泥",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "5"
+        }
+      ]
+    },
+    {
+      "source": "air pollution",
+      "target": "空气污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "265"
+        }
+      ]
+    },
+    {
+      "source": "air quality",
+      "target": "空气质量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "270"
+        }
+      ]
+    },
+    {
+      "source": "algae bloom",
+      "target": "藻花",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "9"
+        }
+      ]
+    },
+    {
+      "source": "algae toxin",
+      "target": "藻毒素",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "10"
+        }
+      ]
+    },
+    {
+      "source": "aquatic ecosystem",
+      "target": "水生生态系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "505"
+        }
+      ]
+    },
+    {
+      "source": "artificial environment",
+      "target": "人工环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "11"
+        }
+      ]
+    },
+    {
+      "source": "atmospheric deposition",
+      "target": "大气沉降",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "12"
+        }
+      ]
+    },
+    {
+      "source": "atmospheric environment",
+      "target": "大气环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "13"
+        }
+      ]
+    },
+    {
+      "source": "background noise",
+      "target": "背景噪声",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "14"
+        }
+      ]
+    },
+    {
+      "source": "bacterial toxin",
+      "target": "细菌毒素",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "15"
+        }
+      ]
+    },
+    {
+      "source": "biochemical oxygen demand",
+      "target": "生化需氧量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "947"
+        }
+      ]
+    },
+    {
+      "source": "biodegradation",
+      "target": "生物降解",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "826"
+        }
+      ]
+    },
+    {
+      "source": "biodiversity",
+      "target": "生物多样性",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "827"
+        }
+      ]
+    },
+    {
+      "source": "biological indicator",
+      "target": "生物指标",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "21"
+        }
+      ]
+    },
+    {
+      "source": "biological pollution",
+      "target": "生物污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "22"
+        }
+      ]
+    },
+    {
+      "source": "biological purification",
+      "target": "生物净化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "23"
+        }
+      ]
+    },
+    {
+      "source": "biomass",
+      "target": "生物量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "883"
+        }
+      ]
+    },
+    {
+      "source": "biotic environment",
+      "target": "生物环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "27"
+        }
+      ]
+    },
+    {
+      "source": "carbon dioxide",
+      "target": "二氧化碳",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "1168"
+        }
+      ]
+    },
+    {
+      "source": "carbon footprint",
+      "target": "碳足迹",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "28"
+        }
+      ]
+    },
+    {
+      "source": "carbon monoxide",
+      "target": "一氧化碳",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "1173"
+        }
+      ]
+    },
+    {
+      "source": "carbon source",
+      "target": "碳源",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "29"
+        }
+      ]
+    },
+    {
+      "source": "chemical oxygen demand",
+      "target": "化学需氧量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "1536"
+        }
+      ]
+    },
+    {
+      "source": "climate protection",
+      "target": "气候保护",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "1466"
+        }
+      ]
+    },
+    {
+      "source": "concentration monitoring",
+      "target": "浓度监测",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "32"
+        }
+      ]
+    },
+    {
+      "source": "conservation-oriented society",
+      "target": "节约型社会",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "33"
+        }
+      ]
+    },
+    {
+      "source": "cosmic environment",
+      "target": "宇宙环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "34"
+        }
+      ]
+    },
+    {
+      "source": "courtyard environment",
+      "target": "院落环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "35"
+        }
+      ]
+    },
+    {
+      "source": "cumulative action",
+      "target": "蓄积作用",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "36"
+        }
+      ]
+    },
+    {
+      "source": "deforestation",
+      "target": "森林砍伐",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "2036"
+        }
+      ]
+    },
+    {
+      "source": "desertification",
+      "target": "沙漠化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "2105"
+        }
+      ]
+    },
+    {
+      "source": "digital environmental protection",
+      "target": "数字环境保护",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "42"
+        }
+      ]
+    },
+    {
+      "source": "domestic refuse",
+      "target": "生活垃圾",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "44"
+        }
+      ]
+    },
+    {
+      "source": "drinking water",
+      "target": "饮用水",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "2339"
+        }
+      ]
+    },
+    {
+      "source": "eco pond",
+      "target": "生态塘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "48"
+        }
+      ]
+    },
+    {
+      "source": "eco-industrial park",
+      "target": "生态工业园区",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "50"
+        }
+      ]
+    },
+    {
+      "source": "ecological assessment",
+      "target": "生态评价",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "52"
+        }
+      ]
+    },
+    {
+      "source": "ecological degeneration",
+      "target": "生态退化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "53"
+        }
+      ]
+    },
+    {
+      "source": "ecological demonstration area",
+      "target": "生态示范区",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "54"
+        }
+      ]
+    },
+    {
+      "source": "ecological design",
+      "target": "生态设计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "55"
+        }
+      ]
+    },
+    {
+      "source": "ecological footprint",
+      "target": "生态足迹",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "57"
+        }
+      ]
+    },
+    {
+      "source": "ecological migration",
+      "target": "生态移民",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "59"
+        }
+      ]
+    },
+    {
+      "source": "ecological restoration",
+      "target": "生态恢复",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "60"
+        }
+      ]
+    },
+    {
+      "source": "ecosystem",
+      "target": "生态系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "2519"
+        }
+      ]
+    },
+    {
+      "source": "ecotoxicology",
+      "target": "生态毒性学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "2530"
+        }
+      ]
+    },
+    {
+      "source": "El-Nino phenomenon",
+      "target": "厄尔尼诺现象",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "62"
+        }
+      ]
+    },
+    {
+      "source": "electromagnetic pollution",
+      "target": "电磁污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "63"
+        }
+      ]
+    },
+    {
+      "source": "emergency monitoring",
+      "target": "应急监测",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "64"
+        }
+      ]
+    },
+    {
+      "source": "energy flow",
+      "target": "能量流动",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "65"
+        }
+      ]
+    },
+    {
+      "source": "energy policy",
+      "target": "能源政策",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "2733"
+        }
+      ]
+    },
+    {
+      "source": "energy recovery",
+      "target": "能量回收",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "66"
+        }
+      ]
+    },
+    {
+      "source": "environmental acoustics",
+      "target": "环境声学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "68"
+        }
+      ]
+    },
+    {
+      "source": "environmental background value",
+      "target": "环境背景值",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "71"
+        }
+      ]
+    },
+    {
+      "source": "environmental biology",
+      "target": "环境生物学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "72"
+        }
+      ]
+    },
+    {
+      "source": "environmental capacity",
+      "target": "环境容量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "73"
+        }
+      ]
+    },
+    {
+      "source": "environmental carrying capacity",
+      "target": "环境承载力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "74"
+        }
+      ]
+    },
+    {
+      "source": "environmental chemistry",
+      "target": "环境化学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "75"
+        }
+      ]
+    },
+    {
+      "source": "environmental crisis",
+      "target": "环境危机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "76"
+        }
+      ]
+    },
+    {
+      "source": "environmental degradation",
+      "target": "环境退化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "77"
+        }
+      ]
+    },
+    {
+      "source": "environmental design",
+      "target": "环境设计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "78"
+        }
+      ]
+    },
+    {
+      "source": "environmental ecology",
+      "target": "环境生态学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "80"
+        }
+      ]
+    },
+    {
+      "source": "environmental education",
+      "target": "环境教育",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "2814"
+        }
+      ]
+    },
+    {
+      "source": "environmental effect",
+      "target": "环境效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "81"
+        }
+      ]
+    },
+    {
+      "source": "environmental electromagnetics",
+      "target": "环境电磁学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "82"
+        }
+      ]
+    },
+    {
+      "source": "environmental emergency response",
+      "target": "环境应急",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "84"
+        }
+      ]
+    },
+    {
+      "source": "environmental engineering",
+      "target": "环境工程学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "85"
+        }
+      ]
+    },
+    {
+      "source": "environmental evolution",
+      "target": "环境演化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "86"
+        }
+      ]
+    },
+    {
+      "source": "environmental exposure",
+      "target": "环境暴露",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "87"
+        }
+      ]
+    },
+    {
+      "source": "environmental forecasting",
+      "target": "环境预测",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "88"
+        }
+      ]
+    },
+    {
+      "source": "environmental function",
+      "target": "环境功能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "89"
+        }
+      ]
+    },
+    {
+      "source": "environmental geoscience",
+      "target": "环境地学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "90"
+        }
+      ]
+    },
+    {
+      "source": "environmental hormone",
+      "target": "环境激素",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "92"
+        }
+      ]
+    },
+    {
+      "source": "environmental impact assessment",
+      "target": "环境影响评估",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "2830"
+        }
+      ]
+    },
+    {
+      "source": "environmental information",
+      "target": "环境信息",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "94"
+        }
+      ]
+    },
+    {
+      "source": "environmental label",
+      "target": "环境标志",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "95"
+        }
+      ]
+    },
+    {
+      "source": "environmental mapping",
+      "target": "环境制图",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "96"
+        }
+      ]
+    },
+    {
+      "source": "environmental medicine",
+      "target": "环境医学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "97"
+        }
+      ]
+    },
+    {
+      "source": "environmental monitoring",
+      "target": "环境监测",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "98"
+        }
+      ]
+    },
+    {
+      "source": "environmental optics",
+      "target": "环境光学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "99"
+        }
+      ]
+    },
+    {
+      "source": "environmental physics",
+      "target": "环境物理学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "100"
+        }
+      ]
+    },
+    {
+      "source": "environmental pollution",
+      "target": "环境污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "101"
+        }
+      ]
+    },
+    {
+      "source": "environmental protection",
+      "target": "环境保护",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "103"
+        }
+      ]
+    },
+    {
+      "source": "environmental quality",
+      "target": "环境质量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "104"
+        }
+      ]
+    },
+    {
+      "source": "environmental quality assessment",
+      "target": "环境质量评价",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "105"
+        }
+      ]
+    },
+    {
+      "source": "environmental refugees",
+      "target": "环境难民",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "107"
+        }
+      ]
+    },
+    {
+      "source": "environmental remote sensing",
+      "target": "环境遥感",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "109"
+        }
+      ]
+    },
+    {
+      "source": "environmental risk",
+      "target": "环境风险",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "111"
+        }
+      ]
+    },
+    {
+      "source": "environmental risk assessment",
+      "target": "环境风险评价",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "112"
+        }
+      ]
+    },
+    {
+      "source": "environmental satellite",
+      "target": "环境卫星",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "113"
+        }
+      ]
+    },
+    {
+      "source": "environmental sciences",
+      "target": "环境科学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "114"
+        }
+      ]
+    },
+    {
+      "source": "environmental self-purification",
+      "target": "环境自净",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "116"
+        }
+      ]
+    },
+    {
+      "source": "environmental structure",
+      "target": "环境结构",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "117"
+        }
+      ]
+    },
+    {
+      "source": "environmental system",
+      "target": "环境系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "118"
+        }
+      ]
+    },
+    {
+      "source": "environmental therapy",
+      "target": "环境疗法",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "119"
+        }
+      ]
+    },
+    {
+      "source": "eutrophication",
+      "target": "富营养化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "3007"
+        }
+      ]
+    },
+    {
+      "source": "fertilizer pollution",
+      "target": "化肥污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "122"
+        }
+      ]
+    },
+    {
+      "source": "fine particulate",
+      "target": "细颗粒物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "123"
+        }
+      ]
+    },
+    {
+      "source": "fluctuation noise",
+      "target": "起伏噪声",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "124"
+        }
+      ]
+    },
+    {
+      "source": "food safety",
+      "target": "食品安全",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "126"
+        }
+      ]
+    },
+    {
+      "source": "forest conservation",
+      "target": "森林保护",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "3410"
+        }
+      ]
+    },
+    {
+      "source": "global environment",
+      "target": "全球环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "128"
+        }
+      ]
+    },
+    {
+      "source": "global warming",
+      "target": "全球变暖",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "129"
+        }
+      ]
+    },
+    {
+      "source": "green consumption",
+      "target": "绿色消费",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "130"
+        }
+      ]
+    },
+    {
+      "source": "green design",
+      "target": "绿色设计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "131"
+        }
+      ]
+    },
+    {
+      "source": "green food",
+      "target": "绿色食品",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "132"
+        }
+      ]
+    },
+    {
+      "source": "green package",
+      "target": "绿色包装",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "133"
+        }
+      ]
+    },
+    {
+      "source": "green product",
+      "target": "绿色产品",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "134"
+        }
+      ]
+    },
+    {
+      "source": "green revolution",
+      "target": "绿色革命",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "135"
+        }
+      ]
+    },
+    {
+      "source": "greenhouse effect",
+      "target": "温室效应",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "137"
+        }
+      ]
+    },
+    {
+      "source": "greenhouse gas",
+      "target": "温室气体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "3763"
+        }
+      ]
+    },
+    {
+      "source": "greenhouse gases",
+      "target": "温室气体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "136"
+        }
+      ]
+    },
+    {
+      "source": "groundwater",
+      "target": "地下水",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "3780"
+        }
+      ]
+    },
+    {
+      "source": "groundwater pollution",
+      "target": "地下水污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "139"
+        }
+      ]
+    },
+    {
+      "source": "hazardous chemical",
+      "target": "危险化学品",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "140"
+        }
+      ]
+    },
+    {
+      "source": "hazardous waste",
+      "target": "危险废物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "141"
+        }
+      ]
+    },
+    {
+      "source": "heavy metal pollution",
+      "target": "重金属污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "142"
+        }
+      ]
+    },
+    {
+      "source": "impulsive noise",
+      "target": "脉冲噪声",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "143"
+        }
+      ]
+    },
+    {
+      "source": "indicator organism",
+      "target": "指示生物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "144"
+        }
+      ]
+    },
+    {
+      "source": "inorganic pollutant",
+      "target": "无机污染物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "147"
+        }
+      ]
+    },
+    {
+      "source": "itai-itai disease",
+      "target": "痛痛病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "148"
+        }
+      ]
+    },
+    {
+      "source": "La Nina phenomenon",
+      "target": "拉尼娜现象",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "149"
+        }
+      ]
+    },
+    {
+      "source": "land subsidence",
+      "target": "地面沉降",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "150"
+        }
+      ]
+    },
+    {
+      "source": "land treatment system",
+      "target": "土地处理系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "151"
+        }
+      ]
+    },
+    {
+      "source": "land use",
+      "target": "土地使用",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "4678"
+        }
+      ]
+    },
+    {
+      "source": "landfill",
+      "target": "土地填埋",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "152"
+        }
+      ]
+    },
+    {
+      "source": "landfill site",
+      "target": "填埋场",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "153"
+        }
+      ]
+    },
+    {
+      "source": "light pollution",
+      "target": "光污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "155"
+        }
+      ]
+    },
+    {
+      "source": "loss of biodiversity",
+      "target": "生物多样性减少",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "156"
+        }
+      ]
+    },
+    {
+      "source": "low carbon economy",
+      "target": "低碳经济",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "157"
+        }
+      ]
+    },
+    {
+      "source": "marine pollution",
+      "target": "海洋污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "158"
+        }
+      ]
+    },
+    {
+      "source": "material cycle",
+      "target": "物质循环",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "159"
+        }
+      ]
+    },
+    {
+      "source": "membrane separation",
+      "target": "膜分离",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "160"
+        }
+      ]
+    },
+    {
+      "source": "Minamata disease",
+      "target": "水俣病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "161"
+        }
+      ]
+    },
+    {
+      "source": "mold toxin",
+      "target": "霉菌毒素",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "162"
+        }
+      ]
+    },
+    {
+      "source": "moving pollution source",
+      "target": "移动污染源",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "163"
+        }
+      ]
+    },
+    {
+      "source": "municipal refuse",
+      "target": "城市垃圾",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "165"
+        }
+      ]
+    },
+    {
+      "source": "mycotoxin",
+      "target": "真菌毒素",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "166"
+        }
+      ]
+    },
+    {
+      "source": "national park",
+      "target": "国家公园",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "167"
+        }
+      ]
+    },
+    {
+      "source": "natural conservation",
+      "target": "自然保护",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "168"
+        }
+      ]
+    },
+    {
+      "source": "natural environment",
+      "target": "自然环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "169"
+        }
+      ]
+    },
+    {
+      "source": "natural reserve",
+      "target": "自然保护区",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "170"
+        }
+      ]
+    },
+    {
+      "source": "nature conservation",
+      "target": "自然保护",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "5537"
+        }
+      ]
+    },
+    {
+      "source": "noise",
+      "target": "噪声",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "171"
+        }
+      ]
+    },
+    {
+      "source": "noise abatement",
+      "target": "噪声控制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "5626"
+        }
+      ]
+    },
+    {
+      "source": "noise induced hearing loss",
+      "target": "噪声性耳聋",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "172"
+        }
+      ]
+    },
+    {
+      "source": "noise level",
+      "target": "噪声级",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "174"
+        }
+      ]
+    },
+    {
+      "source": "noise pollution",
+      "target": "噪声污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "175"
+        }
+      ]
+    },
+    {
+      "source": "noise radiation",
+      "target": "噪声辐射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "176"
+        }
+      ]
+    },
+    {
+      "source": "noise source",
+      "target": "噪声源",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "178"
+        }
+      ]
+    },
+    {
+      "source": "noise source monitoring",
+      "target": "噪声源监测",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "179"
+        }
+      ]
+    },
+    {
+      "source": "nuclear safety",
+      "target": "核安全",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "181"
+        }
+      ]
+    },
+    {
+      "source": "nuclear waste",
+      "target": "核废物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "182"
+        }
+      ]
+    },
+    {
+      "source": "odor masking",
+      "target": "恶臭掩蔽",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "183"
+        }
+      ]
+    },
+    {
+      "source": "organic agriculture",
+      "target": "有机农业",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "185"
+        }
+      ]
+    },
+    {
+      "source": "organic food",
+      "target": "有机食品",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "186"
+        }
+      ]
+    },
+    {
+      "source": "organic pollutant",
+      "target": "有机污染物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "187"
+        }
+      ]
+    },
+    {
+      "source": "ozone hole",
+      "target": "臭氧空洞",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "188"
+        }
+      ]
+    },
+    {
+      "source": "particulate matter",
+      "target": "颗粒物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "189"
+        },
+        {
+          "id": "naer-environment",
+          "entry": "189"
+        }
+      ]
+    },
+    {
+      "source": "pesticide pollution",
+      "target": "农药污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "191"
+        }
+      ]
+    },
+    {
+      "source": "pesticide residue",
+      "target": "农药残留",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "192"
+        }
+      ]
+    },
+    {
+      "source": "photochemical smog",
+      "target": "光化学烟雾",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "193"
+        }
+      ]
+    },
+    {
+      "source": "pollutant",
+      "target": "污染物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "195"
+        }
+      ]
+    },
+    {
+      "source": "pollution chemistry",
+      "target": "污染化学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "196"
+        }
+      ]
+    },
+    {
+      "source": "pollution control",
+      "target": "污染控制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "6451"
+        }
+      ]
+    },
+    {
+      "source": "pollution ecology",
+      "target": "污染生态学",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "197"
+        }
+      ]
+    },
+    {
+      "source": "pollution prevention and control",
+      "target": "污染防治",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "198"
+        }
+      ]
+    },
+    {
+      "source": "pollution source",
+      "target": "污染源",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "199"
+        }
+      ]
+    },
+    {
+      "source": "pollution sources monitoring",
+      "target": "污染源监测",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "200"
+        }
+      ]
+    },
+    {
+      "source": "primary environment",
+      "target": "原生环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "202"
+        }
+      ]
+    },
+    {
+      "source": "primary pollutant",
+      "target": "一次污染物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "203"
+        }
+      ]
+    },
+    {
+      "source": "public nuisance",
+      "target": "公害",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "205"
+        }
+      ]
+    },
+    {
+      "source": "public nuisance disease",
+      "target": "公害病",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "206"
+        }
+      ]
+    },
+    {
+      "source": "radioactive deposit",
+      "target": "放射性沉降物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "207"
+        }
+      ]
+    },
+    {
+      "source": "radioactive dust",
+      "target": "放射性尘埃",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "208"
+        }
+      ]
+    },
+    {
+      "source": "random noise",
+      "target": "无规噪声",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "211"
+        }
+      ]
+    },
+    {
+      "source": "reclaimed water",
+      "target": "中水",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "212"
+        }
+      ]
+    },
+    {
+      "source": "recycling",
+      "target": "回收",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "7015"
+        }
+      ]
+    },
+    {
+      "source": "red tide",
+      "target": "赤潮",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "213"
+        }
+      ]
+    },
+    {
+      "source": "regenerative material",
+      "target": "再生材料",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "215"
+        }
+      ]
+    },
+    {
+      "source": "regional environment",
+      "target": "区域环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "216"
+        }
+      ]
+    },
+    {
+      "source": "resource recovery of waste",
+      "target": "废物资源化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "217"
+        }
+      ]
+    },
+    {
+      "source": "risk assessment",
+      "target": "风险评估",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "7236"
+        }
+      ]
+    },
+    {
+      "source": "sand storm",
+      "target": "沙尘暴",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "219"
+        }
+      ]
+    },
+    {
+      "source": "sanitary landfill",
+      "target": "卫生填埋",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "220"
+        }
+      ]
+    },
+    {
+      "source": "seawater intrusion",
+      "target": "海水入侵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "221"
+        }
+      ]
+    },
+    {
+      "source": "secondary environment",
+      "target": "次生环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "222"
+        }
+      ]
+    },
+    {
+      "source": "secondary pollutant",
+      "target": "二次污染物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "223"
+        }
+      ]
+    },
+    {
+      "source": "settlement environment",
+      "target": "聚落环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "224"
+        }
+      ]
+    },
+    {
+      "source": "sewage pond",
+      "target": "污水塘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "225"
+        }
+      ]
+    },
+    {
+      "source": "sludge",
+      "target": "污泥",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "227"
+        }
+      ]
+    },
+    {
+      "source": "sludge conditioning",
+      "target": "污泥调理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "228"
+        }
+      ]
+    },
+    {
+      "source": "sludge digestion",
+      "target": "污泥消化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "229"
+        }
+      ]
+    },
+    {
+      "source": "smog",
+      "target": "烟雾",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "230"
+        }
+      ]
+    },
+    {
+      "source": "social environment",
+      "target": "社会环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "231"
+        }
+      ]
+    },
+    {
+      "source": "soil environment",
+      "target": "土壤环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "232"
+        }
+      ]
+    },
+    {
+      "source": "soil erosion",
+      "target": "土壤侵蚀",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "7858"
+        }
+      ]
+    },
+    {
+      "source": "soil pollution",
+      "target": "土壤污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "233"
+        }
+      ]
+    },
+    {
+      "source": "solid waste",
+      "target": "固体废物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "234"
+        }
+      ]
+    },
+    {
+      "source": "sound insulation",
+      "target": "隔声",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "235"
+        }
+      ]
+    },
+    {
+      "source": "source reduction",
+      "target": "源削减",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "237"
+        }
+      ]
+    },
+    {
+      "source": "space junk",
+      "target": "太空垃圾",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "238"
+        }
+      ]
+    },
+    {
+      "source": "stationary pollution source",
+      "target": "固定污染源",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "239"
+        }
+      ]
+    },
+    {
+      "source": "steady noise",
+      "target": "稳态噪声",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "240"
+        }
+      ]
+    },
+    {
+      "source": "subjective assessment of noise",
+      "target": "噪声主观评价",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "241"
+        }
+      ]
+    },
+    {
+      "source": "sulphur dioxide",
+      "target": "二氧化硫",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "8202"
+        }
+      ]
+    },
+    {
+      "source": "surface water",
+      "target": "地表水",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "8229"
+        }
+      ]
+    },
+    {
+      "source": "surface water pollution",
+      "target": "地表水污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "242"
+        }
+      ]
+    },
+    {
+      "source": "sustainable development",
+      "target": "可持续发展",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "243"
+        }
+      ]
+    },
+    {
+      "source": "target organ",
+      "target": "靶器官",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "244"
+        }
+      ]
+    },
+    {
+      "source": "target organism",
+      "target": "靶生物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "245"
+        }
+      ]
+    },
+    {
+      "source": "thermal comfort",
+      "target": "热舒适",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "246"
+        }
+      ]
+    },
+    {
+      "source": "thermal decomposition of waste",
+      "target": "废物热解",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "247"
+        }
+      ]
+    },
+    {
+      "source": "thermal pollution",
+      "target": "热污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "249"
+        }
+      ]
+    },
+    {
+      "source": "total quantity monitoring",
+      "target": "总量监测",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "254"
+        }
+      ]
+    },
+    {
+      "source": "transient noise",
+      "target": "瞬态噪声",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "257"
+        }
+      ]
+    },
+    {
+      "source": "urban environment",
+      "target": "城市环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "258"
+        }
+      ]
+    },
+    {
+      "source": "vibration absorption",
+      "target": "吸振",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "259"
+        }
+      ]
+    },
+    {
+      "source": "vibration isolation",
+      "target": "隔振",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "260"
+        }
+      ]
+    },
+    {
+      "source": "vibration pollution",
+      "target": "振动污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "261"
+        }
+      ]
+    },
+    {
+      "source": "vibration reduction",
+      "target": "减振",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "262"
+        }
+      ]
+    },
+    {
+      "source": "village environment",
+      "target": "村落环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "263"
+        }
+      ]
+    },
+    {
+      "source": "waste exchange",
+      "target": "废物交换",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "265"
+        }
+      ]
+    },
+    {
+      "source": "waste heat",
+      "target": "废热",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "266"
+        }
+      ]
+    },
+    {
+      "source": "waste management",
+      "target": "废物管理",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "9092"
+        }
+      ]
+    },
+    {
+      "source": "waste minimization",
+      "target": "废物最少化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "267"
+        }
+      ]
+    },
+    {
+      "source": "waste packaging",
+      "target": "废物包装",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "268"
+        }
+      ]
+    },
+    {
+      "source": "waste prevention",
+      "target": "废物预防",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "269"
+        }
+      ]
+    },
+    {
+      "source": "waste solidification",
+      "target": "废物固化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "271"
+        }
+      ]
+    },
+    {
+      "source": "waste water",
+      "target": "废水",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "9127"
+        }
+      ]
+    },
+    {
+      "source": "wastewater irrigation",
+      "target": "污水灌溉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "272"
+        }
+      ]
+    },
+    {
+      "source": "wastewater treatment plant",
+      "target": "污水处理厂",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "273"
+        }
+      ]
+    },
+    {
+      "source": "water bloom",
+      "target": "水华",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "274"
+        }
+      ]
+    },
+    {
+      "source": "water environment",
+      "target": "水环境",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "275"
+        }
+      ]
+    },
+    {
+      "source": "water pollution",
+      "target": "水污染",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "276"
+        }
+      ]
+    },
+    {
+      "source": "water purification",
+      "target": "水净化",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "9210"
+        }
+      ]
+    },
+    {
+      "source": "water quality",
+      "target": "水质",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "9214"
+        }
+      ]
+    },
+    {
+      "source": "wet deposition",
+      "target": "湿沉降",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "277"
+        }
+      ]
+    },
+    {
+      "source": "wetland",
+      "target": "湿地",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "gemet"
+      ],
+      "sourceRefs": [
+        {
+          "id": "gemet",
+          "entry": "9297"
+        }
+      ]
+    },
+    {
+      "source": "world heritage site",
+      "target": "世界遗产地",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "279"
+        }
+      ]
+    },
+    {
+      "source": "Yokkaichi asthma",
+      "target": "四日市哮喘",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-environment"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-environment",
+          "entry": "280"
+        }
+      ]
+    }
+  ]
+}

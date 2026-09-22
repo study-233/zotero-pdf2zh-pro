@@ -1,0 +1,2575 @@
+{
+  "schemaVersion": 1,
+  "id": "building",
+  "version": "2026.09.22",
+  "sourceLang": "en",
+  "targetLang": "zh-CN",
+  "sources": [
+    {
+      "id": "naer-civil",
+      "name": "國家教育研究院：土木工程學術名詞",
+      "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%9C%9F%E6%9C%A8%E5%B7%A5%E7%A8%8B%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+      "license": "NAER Government Website Open Information Declaration",
+      "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+      "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：土木工程學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications."
+    },
+    {
+      "id": "naer-mechanical",
+      "name": "國家教育研究院：兩岸對照名詞-機械學術名詞",
+      "url": "https://opendata.naer.edu.tw/%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E/%E5%9C%8B%E5%AE%B6%E6%95%99%E8%82%B2%E7%A0%94%E7%A9%B6%E9%99%A2-%E5%85%A9%E5%B2%B8%E5%B0%8D%E7%85%A7%E5%90%8D%E8%A9%9E-%E6%A9%9F%E6%A2%B0%E5%AD%B8%E8%A1%93%E5%90%8D%E8%A9%9E.csv",
+      "license": "NAER Government Website Open Information Declaration",
+      "licenseUrl": "https://terms.naer.edu.tw/mysite/about/2/",
+      "notice": "Copyright ©2021 National Academy for Educational Research, R.O.C. Source: 國家教育研究院：兩岸對照名詞-機械學術名詞. Reused under the NAER Government Website Open Information Declaration; attribution retained. This project selects and normalizes terms. Civil-engineering entries additionally contain individually recorded editorial adaptations to Simplified Chinese usage. No endorsement by NAER or status as a mainland national standard is implied. See curation.json for modifications."
+    }
+  ],
+  "entries": [
+    {
+      "source": "abrasion-resistant fan",
+      "target": "耐磨通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "9"
+        }
+      ]
+    },
+    {
+      "source": "absolute humidity",
+      "target": "绝对湿度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "65"
+        }
+      ]
+    },
+    {
+      "source": "absolute pressure transducer",
+      "target": "绝压传感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "16"
+        }
+      ]
+    },
+    {
+      "source": "absorption coefficient",
+      "target": "吸收系数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "94"
+        }
+      ]
+    },
+    {
+      "source": "air change rate",
+      "target": "换气次数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "604"
+        }
+      ]
+    },
+    {
+      "source": "air conditioner",
+      "target": "空气调节器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "46"
+        }
+      ]
+    },
+    {
+      "source": "air conditioning",
+      "target": "空调",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "609"
+        }
+      ]
+    },
+    {
+      "source": "air consumption",
+      "target": "耗气量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "48"
+        }
+      ]
+    },
+    {
+      "source": "air cooling",
+      "target": "气冷",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "49"
+        }
+      ]
+    },
+    {
+      "source": "air dryer",
+      "target": "空气干燥器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "50"
+        }
+      ]
+    },
+    {
+      "source": "air duct",
+      "target": "风管",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "622"
+        }
+      ]
+    },
+    {
+      "source": "air filter",
+      "target": "空气过滤器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "631"
+        }
+      ]
+    },
+    {
+      "source": "air heat exchanger",
+      "target": "空气换热器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "53"
+        }
+      ]
+    },
+    {
+      "source": "air heater",
+      "target": "暖风器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "54"
+        }
+      ]
+    },
+    {
+      "source": "air plenum",
+      "target": "风室",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "56"
+        }
+      ]
+    },
+    {
+      "source": "air preheater",
+      "target": "空气预热器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "57"
+        }
+      ]
+    },
+    {
+      "source": "air-cooled compressor",
+      "target": "风冷式压缩机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "60"
+        }
+      ]
+    },
+    {
+      "source": "anti-corrosion pump",
+      "target": "耐腐蚀泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "81"
+        }
+      ]
+    },
+    {
+      "source": "atmospheric hot water boiler",
+      "target": "常压热水锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "106"
+        }
+      ]
+    },
+    {
+      "source": "axial-flow compressor",
+      "target": "轴流式压缩机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "139"
+        }
+      ]
+    },
+    {
+      "source": "axial-flow fan",
+      "target": "轴流式通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "140"
+        }
+      ]
+    },
+    {
+      "source": "axial-flow pump",
+      "target": "轴流泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "141"
+        }
+      ]
+    },
+    {
+      "source": "balanced draft boiler",
+      "target": "平衡通风锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "151"
+        }
+      ]
+    },
+    {
+      "source": "bearing capacity",
+      "target": "承载力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "2242"
+        }
+      ]
+    },
+    {
+      "source": "bending moment",
+      "target": "弯矩",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "2314"
+        }
+      ]
+    },
+    {
+      "source": "bifurcated fan",
+      "target": "分路通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "197"
+        }
+      ]
+    },
+    {
+      "source": "biomass-fired boiler",
+      "target": "生物质燃料锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "203"
+        }
+      ]
+    },
+    {
+      "source": "Boiler control",
+      "target": "锅炉控制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "230"
+        }
+      ]
+    },
+    {
+      "source": "boiler feed pump",
+      "target": "锅炉给水泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "231"
+        }
+      ]
+    },
+    {
+      "source": "boiler unit",
+      "target": "锅炉机组",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "232"
+        }
+      ]
+    },
+    {
+      "source": "booster pump",
+      "target": "增压泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "237"
+        }
+      ]
+    },
+    {
+      "source": "building",
+      "target": "建筑物",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "3117"
+        }
+      ]
+    },
+    {
+      "source": "building envelope",
+      "target": "建筑围护结构",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "3147"
+        }
+      ]
+    },
+    {
+      "source": "building material",
+      "target": "建筑材料",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "3166"
+        }
+      ]
+    },
+    {
+      "source": "canned motor pump",
+      "target": "屏蔽电泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "299"
+        }
+      ]
+    },
+    {
+      "source": "cast-iron boiler",
+      "target": "铸铁锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "324"
+        }
+      ]
+    },
+    {
+      "source": "centrifugal fan",
+      "target": "离心式通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "345"
+        }
+      ]
+    },
+    {
+      "source": "centrifugal pump",
+      "target": "离心泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "348"
+        }
+      ]
+    },
+    {
+      "source": "circulating water pump",
+      "target": "循环水泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "371"
+        }
+      ]
+    },
+    {
+      "source": "coal-fired boiler",
+      "target": "燃煤锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "386"
+        }
+      ]
+    },
+    {
+      "source": "coefficient of thermal expansion",
+      "target": "热膨胀系数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "4534"
+        }
+      ]
+    },
+    {
+      "source": "compressive strength",
+      "target": "抗压强度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "5062"
+        }
+      ]
+    },
+    {
+      "source": "concrete",
+      "target": "混凝土",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "5124"
+        }
+      ]
+    },
+    {
+      "source": "concrete pump",
+      "target": "混凝土输送泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "459"
+        }
+      ]
+    },
+    {
+      "source": "concrete pump truck",
+      "target": "混凝土泵车",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "460"
+        }
+      ]
+    },
+    {
+      "source": "condensate pump",
+      "target": "凝结水泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "467"
+        }
+      ]
+    },
+    {
+      "source": "condensing boiler",
+      "target": "冷凝式锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "469"
+        }
+      ]
+    },
+    {
+      "source": "constant-head flowmeter",
+      "target": "恒定压头流量计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "477"
+        }
+      ]
+    },
+    {
+      "source": "contra-rotating fan",
+      "target": "对旋式通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "491"
+        }
+      ]
+    },
+    {
+      "source": "controlled circulation boiler",
+      "target": "控制循环锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "499"
+        }
+      ]
+    },
+    {
+      "source": "convection",
+      "target": "对流",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "5678"
+        }
+      ]
+    },
+    {
+      "source": "cooling load",
+      "target": "冷负荷",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "5713"
+        }
+      ]
+    },
+    {
+      "source": "cooling tower",
+      "target": "冷却塔",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "5717"
+        }
+      ]
+    },
+    {
+      "source": "corrosion-resistant fan",
+      "target": "耐腐蚀通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "535"
+        }
+      ]
+    },
+    {
+      "source": "curtain wall",
+      "target": "幕墙",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "6258"
+        }
+      ]
+    },
+    {
+      "source": "dead load",
+      "target": "恒载",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "6488"
+        }
+      ]
+    },
+    {
+      "source": "deflection",
+      "target": "挠度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "6615"
+        }
+      ]
+    },
+    {
+      "source": "dew point",
+      "target": "露点",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "6970"
+        }
+      ]
+    },
+    {
+      "source": "diaphragm metering pump",
+      "target": "隔膜计量泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "658"
+        }
+      ]
+    },
+    {
+      "source": "diaphragm pump",
+      "target": "隔膜泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "659"
+        }
+      ]
+    },
+    {
+      "source": "differential pressure levelmeter",
+      "target": "差压液位计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "683"
+        }
+      ]
+    },
+    {
+      "source": "differential pressure transducer",
+      "target": "差压传感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "684"
+        }
+      ]
+    },
+    {
+      "source": "dual-pressure valve",
+      "target": "双压阀",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "758"
+        }
+      ]
+    },
+    {
+      "source": "ducted fan",
+      "target": "管道输送通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "759"
+        }
+      ]
+    },
+    {
+      "source": "dust fan",
+      "target": "排尘通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "764"
+        }
+      ]
+    },
+    {
+      "source": "elastic modulus",
+      "target": "弹性模量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "8304"
+        }
+      ]
+    },
+    {
+      "source": "electric boiler",
+      "target": "电加热锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "787"
+        }
+      ]
+    },
+    {
+      "source": "energy conservation",
+      "target": "节能",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "8660"
+        }
+      ]
+    },
+    {
+      "source": "energy consumption",
+      "target": "能耗",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "8661"
+        }
+      ]
+    },
+    {
+      "source": "fire water pump",
+      "target": "消防泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "925"
+        }
+      ]
+    },
+    {
+      "source": "fire-tube boiler",
+      "target": "火管锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "927"
+        }
+      ]
+    },
+    {
+      "source": "float flowmeter",
+      "target": "浮子流量计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "962"
+        }
+      ]
+    },
+    {
+      "source": "flow control valve",
+      "target": "流量控制阀",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "966"
+        }
+      ]
+    },
+    {
+      "source": "Flow regulator",
+      "target": "流量调节器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "968"
+        }
+      ]
+    },
+    {
+      "source": "Flow transducers",
+      "target": "流量传感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "969"
+        }
+      ]
+    },
+    {
+      "source": "formwork",
+      "target": "模板",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "10303"
+        }
+      ]
+    },
+    {
+      "source": "foundation",
+      "target": "基础",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "10320"
+        }
+      ]
+    },
+    {
+      "source": "gas duct",
+      "target": "烟道",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1064"
+        }
+      ]
+    },
+    {
+      "source": "gas-fuel-fired boiler",
+      "target": "气体燃料锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1072"
+        }
+      ]
+    },
+    {
+      "source": "gas-tight fan",
+      "target": "气密式通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1073"
+        }
+      ]
+    },
+    {
+      "source": "gauge pressure",
+      "target": "表压",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1079"
+        }
+      ]
+    },
+    {
+      "source": "gauge pressure transducer",
+      "target": "表压传感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1080"
+        }
+      ]
+    },
+    {
+      "source": "general purpose fan",
+      "target": "通用通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1098"
+        }
+      ]
+    },
+    {
+      "source": "heat capacity",
+      "target": "热容量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "11672"
+        }
+      ]
+    },
+    {
+      "source": "heat exchanger",
+      "target": "换热器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1154"
+        }
+      ]
+    },
+    {
+      "source": "heat flux",
+      "target": "热通量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "11687"
+        }
+      ]
+    },
+    {
+      "source": "heat flux transducer",
+      "target": "热流传感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1156"
+        }
+      ]
+    },
+    {
+      "source": "heat gain",
+      "target": "得热",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "11688"
+        }
+      ]
+    },
+    {
+      "source": "heat loss",
+      "target": "热损失",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "11693"
+        }
+      ]
+    },
+    {
+      "source": "heat pump",
+      "target": "热泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1157"
+        }
+      ]
+    },
+    {
+      "source": "heat-pipe boiler",
+      "target": "热管锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1163"
+        }
+      ]
+    },
+    {
+      "source": "high-pressure boiler",
+      "target": "高压锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1180"
+        }
+      ]
+    },
+    {
+      "source": "horizontal pump",
+      "target": "卧式泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1205"
+        }
+      ]
+    },
+    {
+      "source": "hose pump",
+      "target": "软管泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1208"
+        }
+      ]
+    },
+    {
+      "source": "hot gas fan",
+      "target": "热气通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1212"
+        }
+      ]
+    },
+    {
+      "source": "hot water boiler",
+      "target": "热水锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1215"
+        }
+      ]
+    },
+    {
+      "source": "Humidity regulator",
+      "target": "湿度调节器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1217"
+        }
+      ]
+    },
+    {
+      "source": "induction unit",
+      "target": "诱导器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1277"
+        }
+      ]
+    },
+    {
+      "source": "industrial boiler",
+      "target": "工业锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1282"
+        }
+      ]
+    },
+    {
+      "source": "inline pump",
+      "target": "管道泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1300"
+        }
+      ]
+    },
+    {
+      "source": "jet fan",
+      "target": "射流式通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1349"
+        }
+      ]
+    },
+    {
+      "source": "jet pump",
+      "target": "射流泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1350"
+        }
+      ]
+    },
+    {
+      "source": "latent heat",
+      "target": "潜热",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "13728"
+        }
+      ]
+    },
+    {
+      "source": "liquid-fuel-fired boiler",
+      "target": "液体燃料锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1439"
+        }
+      ]
+    },
+    {
+      "source": "live load",
+      "target": "活荷载",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "14192"
+        }
+      ]
+    },
+    {
+      "source": "low-pressure boiler",
+      "target": "低压锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1463"
+        }
+      ]
+    },
+    {
+      "source": "magnetic drive pump",
+      "target": "磁力泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1490"
+        }
+      ]
+    },
+    {
+      "source": "masonry",
+      "target": "砌体",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "14766"
+        }
+      ]
+    },
+    {
+      "source": "medium-pressure boiler",
+      "target": "中压锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1552"
+        }
+      ]
+    },
+    {
+      "source": "metering pump",
+      "target": "计量泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1565"
+        }
+      ]
+    },
+    {
+      "source": "mixed-cooling compressor",
+      "target": "混冷式压缩机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1601"
+        }
+      ]
+    },
+    {
+      "source": "mixed-flow fan",
+      "target": "混流式通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1602"
+        }
+      ]
+    },
+    {
+      "source": "mixed-flow pump",
+      "target": "混流泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1603"
+        }
+      ]
+    },
+    {
+      "source": "moisture content",
+      "target": "含水量",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "15460"
+        }
+      ]
+    },
+    {
+      "source": "motor pump",
+      "target": "电动泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1648"
+        }
+      ]
+    },
+    {
+      "source": "multi-stage fan",
+      "target": "多级通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1667"
+        }
+      ]
+    },
+    {
+      "source": "multiblade fan",
+      "target": "多叶通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1671"
+        }
+      ]
+    },
+    {
+      "source": "natural circulation boiler",
+      "target": "自然循环锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1687"
+        }
+      ]
+    },
+    {
+      "source": "natural ventilation",
+      "target": "自然通风",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "15931"
+        }
+      ]
+    },
+    {
+      "source": "noise control",
+      "target": "噪声控制",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "16147"
+        }
+      ]
+    },
+    {
+      "source": "nonclogging fan",
+      "target": "抗阻塞通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1713"
+        }
+      ]
+    },
+    {
+      "source": "oblique-flow fan",
+      "target": "斜流通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1735"
+        }
+      ]
+    },
+    {
+      "source": "oil-fired boiler",
+      "target": "燃油锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1749"
+        }
+      ]
+    },
+    {
+      "source": "overflow valve",
+      "target": "溢流阀",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1795"
+        }
+      ]
+    },
+    {
+      "source": "partition fan",
+      "target": "间壁式通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1817"
+        }
+      ]
+    },
+    {
+      "source": "peak load boiler",
+      "target": "尖峰负荷锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1832"
+        }
+      ]
+    },
+    {
+      "source": "piston pump",
+      "target": "活塞泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1885"
+        }
+      ]
+    },
+    {
+      "source": "pitched roof",
+      "target": "坡屋顶",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "18019"
+        }
+      ]
+    },
+    {
+      "source": "plunger metering pump",
+      "target": "柱塞计量泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1915"
+        }
+      ]
+    },
+    {
+      "source": "positive-displacement pump",
+      "target": "容积式泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1961"
+        }
+      ]
+    },
+    {
+      "source": "pressure control valve",
+      "target": "压力控制阀",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1987"
+        }
+      ]
+    },
+    {
+      "source": "pressure gauge",
+      "target": "压力计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1988"
+        }
+      ]
+    },
+    {
+      "source": "pressure reducing valve",
+      "target": "减压阀",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1989"
+        }
+      ]
+    },
+    {
+      "source": "pressure transducer",
+      "target": "压力传感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1991"
+        }
+      ]
+    },
+    {
+      "source": "pressure-filled thermometer",
+      "target": "压力式温度计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "1993"
+        }
+      ]
+    },
+    {
+      "source": "proportional flow control valve",
+      "target": "比例流量阀",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2026"
+        }
+      ]
+    },
+    {
+      "source": "pump head",
+      "target": "泵扬程",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2045"
+        }
+      ]
+    },
+    {
+      "source": "radiant temperature",
+      "target": "辐射温度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "19770"
+        }
+      ]
+    },
+    {
+      "source": "radiation",
+      "target": "辐射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "19771"
+        }
+      ]
+    },
+    {
+      "source": "radiation heatflowmeter",
+      "target": "辐射热流计",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2072"
+        }
+      ]
+    },
+    {
+      "source": "reciprocating pump",
+      "target": "往复泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2105"
+        }
+      ]
+    },
+    {
+      "source": "refrigerating apparatus",
+      "target": "制冷设备",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2125"
+        }
+      ]
+    },
+    {
+      "source": "refrigerating machine",
+      "target": "制冷机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2126"
+        }
+      ]
+    },
+    {
+      "source": "refrigerating system",
+      "target": "制冷系统",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2127"
+        }
+      ]
+    },
+    {
+      "source": "regenerative pump",
+      "target": "旋涡泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2131"
+        }
+      ]
+    },
+    {
+      "source": "reinforced concrete",
+      "target": "钢筋混凝土",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "20426"
+        }
+      ]
+    },
+    {
+      "source": "reinforcement",
+      "target": "钢筋",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "20441"
+        }
+      ]
+    },
+    {
+      "source": "relative humidity",
+      "target": "相对湿度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "20462"
+        }
+      ]
+    },
+    {
+      "source": "return flow compressor",
+      "target": "逆流式压缩机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2166"
+        }
+      ]
+    },
+    {
+      "source": "ring-shaped fan",
+      "target": "环形通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2186"
+        }
+      ]
+    },
+    {
+      "source": "rotary pump",
+      "target": "回转泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2219"
+        }
+      ]
+    },
+    {
+      "source": "rotodynamic pump",
+      "target": "回转动力式泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2220"
+        }
+      ]
+    },
+    {
+      "source": "screw pump",
+      "target": "螺杆泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2268"
+        }
+      ]
+    },
+    {
+      "source": "self-priming pump",
+      "target": "自吸泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2302"
+        }
+      ]
+    },
+    {
+      "source": "sensible heat",
+      "target": "显热",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "21969"
+        }
+      ]
+    },
+    {
+      "source": "settlement",
+      "target": "沉降",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "22056"
+        }
+      ]
+    },
+    {
+      "source": "sewage pump",
+      "target": "污水泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2325"
+        }
+      ]
+    },
+    {
+      "source": "shear force",
+      "target": "剪力",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "22158"
+        }
+      ]
+    },
+    {
+      "source": "shear wall",
+      "target": "剪力墙",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "22183"
+        }
+      ]
+    },
+    {
+      "source": "smoke-ventilating fan",
+      "target": "排烟通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2399"
+        }
+      ]
+    },
+    {
+      "source": "solar radiation",
+      "target": "太阳辐射",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "23080"
+        }
+      ]
+    },
+    {
+      "source": "sound pressure transducer",
+      "target": "声压传感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2415"
+        }
+      ]
+    },
+    {
+      "source": "special purpose fan",
+      "target": "专用通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2439"
+        }
+      ]
+    },
+    {
+      "source": "specific heat",
+      "target": "比热",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "23281"
+        }
+      ]
+    },
+    {
+      "source": "steam boiler",
+      "target": "蒸汽锅炉",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2513"
+        }
+      ]
+    },
+    {
+      "source": "steam pump",
+      "target": "蒸汽泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2514"
+        }
+      ]
+    },
+    {
+      "source": "steam trap",
+      "target": "疏水阀",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2515"
+        }
+      ]
+    },
+    {
+      "source": "stiffness",
+      "target": "刚度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "23863"
+        }
+      ]
+    },
+    {
+      "source": "temperature transducer",
+      "target": "温度传感器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2644"
+        }
+      ]
+    },
+    {
+      "source": "thermal analysis instrument",
+      "target": "热分析仪器",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2655"
+        }
+      ]
+    },
+    {
+      "source": "thermal comfort",
+      "target": "热舒适",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "25085"
+        }
+      ]
+    },
+    {
+      "source": "thermal conductivity",
+      "target": "导热系数",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "25087"
+        }
+      ]
+    },
+    {
+      "source": "thermal diffusivity",
+      "target": "热扩散率",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "25091"
+        }
+      ]
+    },
+    {
+      "source": "thermal expansion",
+      "target": "热膨胀",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "25097"
+        }
+      ]
+    },
+    {
+      "source": "thermal insulation",
+      "target": "隔热",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "25104"
+        }
+      ]
+    },
+    {
+      "source": "thermal resistance",
+      "target": "热阻",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "25116"
+        }
+      ]
+    },
+    {
+      "source": "tube axial fan",
+      "target": "管式轴流通风机",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2764"
+        }
+      ]
+    },
+    {
+      "source": "vacuum pump",
+      "target": "真空泵",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-mechanical"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-mechanical",
+          "entry": "2841"
+        }
+      ]
+    },
+    {
+      "source": "vapor pressure",
+      "target": "蒸气压",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "26765"
+        }
+      ]
+    },
+    {
+      "source": "waterproofing",
+      "target": "防水",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "27447"
+        }
+      ]
+    },
+    {
+      "source": "wet bulb temperature",
+      "target": "湿球温度",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "27652"
+        }
+      ]
+    },
+    {
+      "source": "wind load",
+      "target": "风荷载",
+      "tgt_lng": "zh-CN",
+      "sourceIds": [
+        "naer-civil"
+      ],
+      "sourceRefs": [
+        {
+          "id": "naer-civil",
+          "entry": "27781"
+        }
+      ]
+    }
+  ]
+}

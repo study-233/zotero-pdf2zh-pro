@@ -1,0 +1,310 @@
+
+
+<!doctype html>
+<html>
+  <head>
+    <title>
+      
+  Download files
+
+    </title>
+
+    
+      <link rel="stylesheet" type="text/css" href="/gemet/static/thesaurus/css/style.css" />
+      <link rel="stylesheet" type="text/css" href="/gemet/static/thesaurus/css/bootstrap.min.css">
+      <!--   <link rel="stylesheet" type="text/css" href="/gemet/static/thesaurus/css/bootstrap-theme.min.css"> -->
+      <link rel="stylesheet" type="text/css" href="/gemet/static/thesaurus/css/materialize.min.css">
+      <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+      <link rel="stylesheet" type="text/css" href="/gemet/static/thesaurus/css/select2.min.css" />
+    
+  </head>
+
+  <body>
+
+      <nav></nav>
+
+      <div class="content container">
+        
+
+  <h1>Download GEMET</h1>
+
+  <!-- Download -->
+  <div id="download" class="side-bar box visible">
+    <h3 class="h6 no-margin-top">Labels and definitions in RDF</h3>
+    <form id="definitions-form" method="post">
+      <input type="hidden" name="csrfmiddlewaretoken" value="vFVM91DeIHpdYRIAGeil38xStVPWVlv5RLPrR2p91dYqBfCmA0dxkt1RKcY8au3O">
+      <p><label for="id_language_names">Choose the language:</label> <select name="language_names" id="id_language_names">
+  <option value="ar">Arabic</option>
+
+  <option value="hy">Armenian</option>
+
+  <option value="az">Azerbaijani</option>
+
+  <option value="eu">Basque</option>
+
+  <option value="bg">Bulgarian</option>
+
+  <option value="ca">Catalan</option>
+
+  <option value="zh-CN">Chinese</option>
+
+  <option value="hr">Croatian</option>
+
+  <option value="cs">Czech</option>
+
+  <option value="da">Danish</option>
+
+  <option value="nl">Dutch</option>
+
+  <option value="en" selected>English</option>
+
+  <option value="en-US">English (US)</option>
+
+  <option value="et">Estonian</option>
+
+  <option value="fi">Finnish</option>
+
+  <option value="fr">French</option>
+
+  <option value="ka">Georgian</option>
+
+  <option value="de">German</option>
+
+  <option value="el">Greek</option>
+
+  <option value="hu">Hungarian</option>
+
+  <option value="is">Icelandic</option>
+
+  <option value="ga">Irish</option>
+
+  <option value="it">Italian</option>
+
+  <option value="lv">Latvian</option>
+
+  <option value="lt">Lithuanian</option>
+
+  <option value="mt">Maltese</option>
+
+  <option value="no">Norwegian</option>
+
+  <option value="pl">Polish</option>
+
+  <option value="pt">Portuguese</option>
+
+  <option value="ro">Romanian</option>
+
+  <option value="ru">Russian</option>
+
+  <option value="sk">Slovak</option>
+
+  <option value="sl">Slovenian</option>
+
+  <option value="es">Spanish</option>
+
+  <option value="sv">Swedish</option>
+
+  <option value="tr">Turkish</option>
+
+  <option value="uk">Ukrainian</option>
+
+</select></p>
+      <button type="submit" name="type" value="definitions">Download labels and definitions</button>
+    </form>
+    <hr />
+    <h3 class="h6">Supergroups, groups and themes in RDF</h3>
+    <form id="groups-form" method="post">
+      <input type="hidden" name="csrfmiddlewaretoken" value="vFVM91DeIHpdYRIAGeil38xStVPWVlv5RLPrR2p91dYqBfCmA0dxkt1RKcY8au3O">
+      <p><label for="id_language_names">Choose the language:</label> <select name="language_names" id="id_language_names">
+  <option value="ar">Arabic</option>
+
+  <option value="hy">Armenian</option>
+
+  <option value="az">Azerbaijani</option>
+
+  <option value="eu">Basque</option>
+
+  <option value="bg">Bulgarian</option>
+
+  <option value="ca">Catalan</option>
+
+  <option value="zh-CN">Chinese</option>
+
+  <option value="hr">Croatian</option>
+
+  <option value="cs">Czech</option>
+
+  <option value="da">Danish</option>
+
+  <option value="nl">Dutch</option>
+
+  <option value="en" selected>English</option>
+
+  <option value="en-US">English (US)</option>
+
+  <option value="et">Estonian</option>
+
+  <option value="fi">Finnish</option>
+
+  <option value="fr">French</option>
+
+  <option value="ka">Georgian</option>
+
+  <option value="de">German</option>
+
+  <option value="el">Greek</option>
+
+  <option value="hu">Hungarian</option>
+
+  <option value="is">Icelandic</option>
+
+  <option value="ga">Irish</option>
+
+  <option value="it">Italian</option>
+
+  <option value="lv">Latvian</option>
+
+  <option value="lt">Lithuanian</option>
+
+  <option value="mt">Maltese</option>
+
+  <option value="no">Norwegian</option>
+
+  <option value="pl">Polish</option>
+
+  <option value="pt">Portuguese</option>
+
+  <option value="ro">Romanian</option>
+
+  <option value="ru">Russian</option>
+
+  <option value="sk">Slovak</option>
+
+  <option value="sl">Slovenian</option>
+
+  <option value="es">Spanish</option>
+
+  <option value="sv">Swedish</option>
+
+  <option value="tr">Turkish</option>
+
+  <option value="uk">Ukrainian</option>
+
+</select></p>
+      <button type="submit" name="type" value="groups">Download groups and themes</button>
+    </form>
+  </div>
+
+  <!-- General structure -->
+  <div style="width: 70%">
+  <h3 class="h3">General structure</h3>
+
+  
+    <div class="alert alert-warning">
+      The download links below refer to the latest version (4.2.3) of GEMET.
+      To download a previous version, use this <a href="/gemet/en/changes/">link</a>.
+    </div>
+  
+
+  
+
+  <ul class="listing">
+    <li>
+      <a href="/gemet/exports/latest/gemet-backbone.html">
+          Themes and groups relationships as simple HTML importable into MS-Access</a>
+    </li>
+    <li>
+      <a href="/gemet/exports/latest/gemet-backbone.rdf">
+          Themes and groups relationships as RDF</a>
+    </li>
+    <li>
+      <a href="/gemet/exports/latest/gemet-definitions.html">
+          Labels and definitions as simple HTML table importable into MS-Access</a>
+    </li>
+    <li>
+      <a href="/gemet/exports/latest/gemet-groups.html">
+          Supergroups, groups and themes as simple HTML tables importable into MS-Access</a>
+    </li>
+    <li>
+      <a href="/gemet/exports/latest/gemet-relations.html">
+          Relations in simple HTML importable into MS-Access</a>
+     </li>
+    <li>
+      <a href="/gemet/exports/latest/gemet-skoscore.rdf">
+          SKOS broader and narrower relations as RDF</a>
+     </li>
+    <li>
+      <a href="/gemet/exports/latest/gemetThesaurus.rdf">
+          An object for the Concept Scheme</a>
+    </li>
+    <li>
+      <a href="/gemet/latest/gemet.rdf.gz">
+         Entire GEMET thesaurus in SKOS format
+      </a>
+    </li>
+  </ul>
+  <h3 class="h3">Licence</h3>
+  <ul>
+    <li>
+      <a href="https://creativecommons.org/licenses/by/4.0/">
+        Attribution 4.0 International (CC BY 4.0)
+      </a>
+    </li>
+  </ul>
+  </div>
+
+
+      </div>
+
+      <div class="footer-menu">
+        
+          <a href="/gemet/en/themes/">GEMET</a>
+           |
+          <a href="/gemet/en/exports/rdf/latest">Download</a>
+          &nbsp;|&nbsp;
+          <a href="/gemet/en/alphabets/">Alphabets</a>
+          &nbsp;|&nbsp;
+          <a href="/gemet/en/about/">About GEMET</a>
+          &nbsp;|&nbsp;
+          <a href="/gemet/en/webservices/">Web Services</a>
+          &nbsp;|&nbsp;
+          <a href="/gemet/en/definition-sources/">Definition sources</a>
+          &nbsp;|&nbsp;
+          <a href="/gemet/en/changes/">History of changes</a>
+          &nbsp;|&nbsp;
+          <a href="mailto:gemet@eea.europa.eu">Contact</a>
+
+          
+            &nbsp;|&nbsp;
+            <a href="/gemet/auth/login/">Login</a>
+          
+
+        
+        
+        
+      </div>
+    </div>
+
+    <div class="backdrop-site"></div>
+    <script src="/gemet/static/thesaurus/js/jquery.min.js"></script>
+    <script src="/gemet/static/thesaurus/js/bootstrap.min.js"></script>
+    <script src="/gemet/static/thesaurus/js/main.js"></script>
+    <script src="/gemet/static/thesaurus/js/materialize.min.js"></script>
+
+    
+      <script type="text/javascript">
+        var _paq = window._paq || [];
+        /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+        _paq.push(['trackPageView']);
+        _paq.push(['enableLinkTracking']);
+        (function() {
+          var u="https://matomo.eea.europa.eu/";
+          _paq.push(['setTrackerUrl', u+'matomo.php']);
+          _paq.push(['setSiteId', '38']);
+          var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+          g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+        })();
+      </script>
+    
+</body>
+</html>

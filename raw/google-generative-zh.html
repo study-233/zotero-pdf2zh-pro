@@ -1,0 +1,4142 @@
+
+
+
+
+
+
+
+
+
+<!doctype html>
+<html 
+      lang="zh-CN-x-mtfrom-en"
+      dir="ltr">
+  <head>
+    <meta name="google-signin-client-id" content="721724668570-nbkv1cfusk7kk4eni4pjvepaus73b13t.apps.googleusercontent.com"><meta name="google-signin-scope"
+          content="profile email https://www.googleapis.com/auth/developerprofiles https://www.googleapis.com/auth/developerprofiles.award https://www.googleapis.com/auth/devprofiles.full_control.firstparty"><meta property="og:site_name" content="Google for Developers">
+    <meta property="og:type" content="website"><meta name="theme-color" content="#fff"><meta charset="utf-8">
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+
+    <link rel="manifest" href="/_pwa/developers/manifest.json"
+          crossorigin="use-credentials">
+    <link rel="preconnect" href="//www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="//fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="//www.google-analytics.com" crossorigin><link rel="stylesheet" href="//fonts.googleapis.com/css?family=Google+Sans:400,500|Roboto:400,400italic,500,500italic,700,700italic|Roboto+Mono:400,500,700&display=swap">
+      <link rel="stylesheet"
+            href="//fonts.googleapis.com/css2?family=Material+Icons&family=Material+Symbols+Outlined&display=block"><link rel="stylesheet" href="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/css/app.css">
+      <link rel="shortcut icon" href="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/favicon-new.png">
+    <link rel="apple-touch-icon" href="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/touchicon-180-new.png"><link rel="canonical" href="https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn"><link rel="search" type="application/opensearchdescription+xml"
+            title="Google for Developers" href="https://developers.google.com/s/opensearch.xml?hl=zh-cn">
+      <link rel="alternate" hreflang="en"
+          href="https://developers.google.com/machine-learning/glossary/generative" /><link rel="alternate" hreflang="x-default" href="https://developers.google.com/machine-learning/glossary/generative" /><link rel="alternate" hreflang="ar"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=ar" /><link rel="alternate" hreflang="bn"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=bn" /><link rel="alternate" hreflang="zh-Hans"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn" /><link rel="alternate" hreflang="zh-Hant"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=zh-tw" /><link rel="alternate" hreflang="fa"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=fa" /><link rel="alternate" hreflang="fr"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=fr" /><link rel="alternate" hreflang="de"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=de" /><link rel="alternate" hreflang="he"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=he" /><link rel="alternate" hreflang="hi"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=hi" /><link rel="alternate" hreflang="id"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=id" /><link rel="alternate" hreflang="it"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=it" /><link rel="alternate" hreflang="ja"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=ja" /><link rel="alternate" hreflang="ko"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=ko" /><link rel="alternate" hreflang="pl"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=pl" /><link rel="alternate" hreflang="pt-BR"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=pt-br" /><link rel="alternate" hreflang="ru"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=ru" /><link rel="alternate" hreflang="es-419"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=es-419" /><link rel="alternate" hreflang="th"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=th" /><link rel="alternate" hreflang="tr"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=tr" /><link rel="alternate" hreflang="vi"
+          href="https://developers.google.com/machine-learning/glossary/generative?hl=vi" /><title>机器学习术语表：生成式 AI &nbsp;|&nbsp; Machine Learning &nbsp;|&nbsp; Google for Developers</title>
+
+<meta property="og:title" content="机器学习术语表：生成式 AI &nbsp;|&nbsp; Machine Learning &nbsp;|&nbsp; Google for Developers"><meta property="og:url" content="https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn"><meta property="og:image" content="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/opengraph/white.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="675"><meta property="og:locale" content="zh_cn"><meta name="twitter:card" content="summary_large_image"><script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    
+    "headline": "机器学习术语表：生成式 AI"
+  }
+</script><script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Machine Learning",
+      "item": "https://developers.google.com/machine-learning"
+    },{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "机器学习术语表：生成式 AI",
+      "item": "https://developers.google.com/machine-learning/glossary/generative"
+    }]
+  }
+  </script><link rel="alternate machine-translated-from" hreflang="en"
+        href="https://developers.google.com/machine-learning/glossary/generative?hl=en">
+  
+
+  
+
+  
+
+
+    </head>
+  <body class="color-scheme--light"
+        template="page"
+        theme="white"
+        type="article"
+        
+        
+        
+        layout="docs"
+        
+        
+        
+        
+        
+          
+            concierge='closed'
+          
+        
+        display-toc
+        pending>
+  
+    <devsite-progress type="indeterminate" id="app-progress"></devsite-progress>
+  
+  
+    <a href="#main-content" class="skip-link button">
+      
+      跳至主要内容
+    </a>
+    <section class="devsite-wrapper">
+      <devsite-cookie-notification-bar></devsite-cookie-notification-bar>
+        <devsite-header role="banner">
+  
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="devsite-header--inner" data-nosnippet>
+  <div class="devsite-top-logo-row-wrapper-wrapper">
+    <div class="devsite-top-logo-row-wrapper">
+      <div class="devsite-top-logo-row">
+        <button type="button" id="devsite-hamburger-menu"
+          class="devsite-header-icon-button button-flat material-icons gc-analytics-event"
+          data-category="Site-Wide Custom Events"
+          data-label="Navigation menu button"
+          visually-hidden
+          aria-label="打开菜单">
+        </button>
+        
+<div class="devsite-product-name-wrapper">
+
+  
+    
+  
+
+
+
+  
+  
+  <span class="devsite-product-name">
+    <ul class="devsite-breadcrumb-list"
+  >
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+    
+    
+      
+      
+        
+  <a href="https://developers.google.com/machine-learning?hl=zh-cn"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Upper Header"
+      
+        data-value="1"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="1"
+      
+        track-metadata-eventdetail="Machine Learning"
+      
+    >
+    
+          Machine Learning
+        
+  </a>
+  
+      
+    
+  </li>
+  
+</ul>
+  </span>
+
+</div>
+        <div class="devsite-top-logo-row-middle">
+          <div class="devsite-header-upper-tabs">
+            
+              
+              
+  <devsite-tabs class="upper-tabs">
+
+    <nav class="devsite-tabs-wrapper" aria-label="上面的标签页">
+      
+        
+          <tab  >
+            
+    <a href="https://developers.google.com/machine-learning/foundational-courses?hl=zh-cn"
+    class="devsite-tabs-content gc-analytics-event "
+      track-metadata-eventdetail="https://developers.google.com/machine-learning/foundational-courses?hl=zh-cn"
+    
+       track-type="nav"
+       track-metadata-position="nav - 基础课程"
+       track-metadata-module="primary nav"
+       
+       
+         
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Tab: 基础课程"
+         
+           track-name="基础课程"
+         
+       >
+    基础课程
+  
+    </a>
+    
+  
+          </tab>
+        
+      
+        
+          <tab  >
+            
+    <a href="https://developers.google.com/machine-learning/advanced-courses?hl=zh-cn"
+    class="devsite-tabs-content gc-analytics-event "
+      track-metadata-eventdetail="https://developers.google.com/machine-learning/advanced-courses?hl=zh-cn"
+    
+       track-type="nav"
+       track-metadata-position="nav - 高级课程"
+       track-metadata-module="primary nav"
+       
+       
+         
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Tab: 高级课程"
+         
+           track-name="高级课程"
+         
+       >
+    高级课程
+  
+    </a>
+    
+  
+          </tab>
+        
+      
+        
+          <tab  >
+            
+    <a href="https://developers.google.com/machine-learning/guides?hl=zh-cn"
+    class="devsite-tabs-content gc-analytics-event "
+      track-metadata-eventdetail="https://developers.google.com/machine-learning/guides?hl=zh-cn"
+    
+       track-type="nav"
+       track-metadata-position="nav - 指南"
+       track-metadata-module="primary nav"
+       
+       
+         
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Tab: 指南"
+         
+           track-name="指南"
+         
+       >
+    指南
+  
+    </a>
+    
+  
+          </tab>
+        
+      
+        
+          <tab class="devsite-dropdown
+    
+    
+    
+    ">
+  
+    <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn"
+    class="devsite-tabs-content gc-analytics-event "
+      track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary?hl=zh-cn"
+    
+       track-type="nav"
+       track-metadata-position="nav - 术语库"
+       track-metadata-module="primary nav"
+       
+       
+         
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Tab: 术语库"
+         
+           track-name="术语库"
+         
+       >
+    术语库
+  
+    </a>
+    
+      <button
+         aria-haspopup="menu"
+         aria-expanded="false"
+         aria-label="以下项的下拉菜单 术语库"
+         track-type="nav"
+         track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary?hl=zh-cn"
+         track-metadata-position="nav - 术语库"
+         track-metadata-module="primary nav"
+         
+          
+            data-category="Site-Wide Custom Events"
+          
+            data-label="Tab: 术语库"
+          
+            track-name="术语库"
+          
+        
+         class="devsite-tabs-dropdown-toggle devsite-icon devsite-icon-arrow-drop-down"></button>
+    
+  
+  <div class="devsite-tabs-dropdown" role="menu" aria-label="submenu" hidden>
+    <div class="devsite-tabs-dropdown-content">
+      
+      
+        <div class="devsite-tabs-dropdown-column
+                    ">
+          
+            <ul class="devsite-tabs-dropdown-section
+                       ">
+              
+              
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      所有字词
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/agent?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/agent?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      代理式
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/clustering?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/clustering?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      聚簇
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/df?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/df?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      决策森林
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/fundamentals?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/fundamentals?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      基础知识
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/googlecloud?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/googlecloud?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      GCP
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      生成式 AI
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/metrics?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/metrics?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      指标
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/responsible-ai?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/responsible-ai?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      Responsible AI
+                    </div>
+                    
+                  </a>
+                </li>
+              
+                <li class="devsite-nav-item">
+                  <a href="https://developers.google.com/machine-learning/glossary/tensorflow?hl=zh-cn"
+                    
+                     track-type="nav"
+                     track-metadata-eventdetail="https://developers.google.com/machine-learning/glossary/tensorflow?hl=zh-cn"
+                     track-metadata-position="nav - 术语库"
+                     track-metadata-module="tertiary nav"
+                     
+                     tooltip
+                  >
+                    
+                    <div class="devsite-nav-item-title">
+                      TensorFlow
+                    </div>
+                    
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </div>
+      
+    </div>
+  </div>
+</tab>
+        
+      
+    </nav>
+
+  </devsite-tabs>
+
+            
+           </div>
+          
+<devsite-search
+    enable-signin
+    enable-search
+    enable-suggestions
+      enable-query-completion
+    
+    enable-search-summaries
+    project-name="Machine Learning"
+    tenant-name="Google for Developers"
+    project-scope="/machine-learning"
+    url-scoped="https://developers.google.com/s/results/machine-learning?hl=zh-cn"
+    
+    
+    
+    >
+  <form class="devsite-search-form" action="https://developers.google.com/s/results?hl=zh-cn" method="GET">
+    <div class="devsite-search-container">
+      <button type="button"
+              search-open
+              class="devsite-search-button devsite-header-icon-button button-flat material-icons"
+              
+              aria-label="打开搜索框"></button>
+      <div class="devsite-searchbox">
+        <input
+          aria-activedescendant=""
+          aria-autocomplete="list"
+          
+          aria-label="搜索"
+          aria-expanded="false"
+          aria-haspopup="listbox"
+          autocomplete="off"
+          class="devsite-search-field devsite-search-query"
+          name="q"
+          
+          placeholder="搜索"
+          role="combobox"
+          type="text"
+          value=""
+          >
+          <div class="devsite-search-image material-icons" aria-hidden="true">
+            
+              <svg class="devsite-search-ai-image" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g clip-path="url(#clip0_6641_386)">
+                    <path d="M19.6 21L13.3 14.7C12.8 15.1 12.225 15.4167 11.575 15.65C10.925 15.8833 10.2333 16 9.5 16C7.68333 16 6.14167 15.375 4.875 14.125C3.625 12.8583 3 11.3167 3 9.5C3 7.68333 3.625 6.15 4.875 4.9C6.14167 3.63333 7.68333 3 9.5 3C10.0167 3 10.5167 3.05833 11 3.175C11.4833 3.275 11.9417 3.43333 12.375 3.65L10.825 5.2C10.6083 5.13333 10.3917 5.08333 10.175 5.05C9.95833 5.01667 9.73333 5 9.5 5C8.25 5 7.18333 5.44167 6.3 6.325C5.43333 7.19167 5 8.25 5 9.5C5 10.75 5.43333 11.8167 6.3 12.7C7.18333 13.5667 8.25 14 9.5 14C10.6667 14 11.6667 13.625 12.5 12.875C13.35 12.1083 13.8417 11.15 13.975 10H15.975C15.925 10.6333 15.7833 11.2333 15.55 11.8C15.3333 12.3667 15.05 12.8667 14.7 13.3L21 19.6L19.6 21ZM17.5 12C17.5 10.4667 16.9667 9.16667 15.9 8.1C14.8333 7.03333 13.5333 6.5 12 6.5C13.5333 6.5 14.8333 5.96667 15.9 4.9C16.9667 3.83333 17.5 2.53333 17.5 0.999999C17.5 2.53333 18.0333 3.83333 19.1 4.9C20.1667 5.96667 21.4667 6.5 23 6.5C21.4667 6.5 20.1667 7.03333 19.1 8.1C18.0333 9.16667 17.5 10.4667 17.5 12Z" fill="#5F6368"/>
+                  </g>
+                <defs>
+                <clipPath id="clip0_6641_386">
+                <rect width="24" height="24" fill="white"/>
+                </clipPath>
+                </defs>
+              </svg>
+            
+          </div>
+          <div class="devsite-search-shortcut-icon-container" aria-hidden="true">
+            <kbd class="devsite-search-shortcut-icon">/</kbd>
+          </div>
+      </div>
+    </div>
+  </form>
+  <button type="button"
+          search-close
+          class="devsite-search-button devsite-header-icon-button button-flat material-icons"
+          
+          aria-label="关闭搜索框"></button>
+</devsite-search>
+
+        </div>
+
+        
+
+          
+
+          
+
+          
+
+          
+
+          
+<devsite-language-selector>
+  <ul role="presentation">
+    
+    
+    <li role="presentation">
+      <a role="menuitem" lang="en"
+        >English</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="de"
+        >Deutsch</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="es"
+        >Español</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="es_419"
+        >Español – América Latina</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="fr"
+        >Français</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="id"
+        >Indonesia</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="it"
+        >Italiano</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="pl"
+        >Polski</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="pt_br"
+        >Português – Brasil</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="vi"
+        >Tiếng Việt</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="tr"
+        >Türkçe</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ru"
+        >Русский</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="he"
+        >עברית</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ar"
+        >العربيّة</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="fa"
+        >فارسی</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="hi"
+        >हिंदी</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="bn"
+        >বাংলা</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="th"
+        >ภาษาไทย</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="zh_cn"
+        >中文 – 简体</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="zh_tw"
+        >中文 – 繁體</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ja"
+        >日本語</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ko"
+        >한국어</a>
+    </li>
+    
+  </ul>
+</devsite-language-selector>
+
+
+          
+
+        
+
+        
+          <devsite-user 
+                        
+                        
+                          enable-profiles
+                        
+                        
+                          fp-auth
+                        
+                        id="devsite-user">
+            
+              
+              <span class="button devsite-top-button" aria-hidden="true" visually-hidden>登录</span>
+            
+          </devsite-user>
+        
+        
+        
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="devsite-collapsible-section
+    
+      devsite-header-no-lower-tabs
+    ">
+    <div class="devsite-header-background">
+      
+        
+      
+      
+    </div>
+  </div>
+
+</div>
+
+
+
+  
+</devsite-header>
+        <devsite-book-nav scrollbars hidden>
+          
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="devsite-book-nav-filter"
+     hidden>
+  <span class="filter-list-icon material-icons" aria-hidden="true"></span>
+  <input type="text"
+         placeholder="过滤条件"
+         
+         aria-label="输入文本以进行过滤"
+         role="searchbox">
+  
+  <span class="filter-clear-button hidden"
+        data-title="清除过滤条件"
+        aria-label="清除过滤条件"
+        role="button"
+        tabindex="0"></span>
+</div>
+
+<nav class="devsite-book-nav devsite-nav nocontent" data-nosnippet
+     aria-label="侧边菜单">
+  <div class="devsite-mobile-header">
+    <button type="button"
+            id="devsite-close-nav"
+            class="devsite-header-icon-button button-flat material-icons gc-analytics-event"
+            data-category="Site-Wide Custom Events"
+            data-label="Close navigation"
+            aria-label="关闭导航栏">
+    </button>
+    <div class="devsite-product-name-wrapper">
+
+  
+    
+  
+
+
+  
+      <span class="devsite-product-name">
+        
+        
+        <ul class="devsite-breadcrumb-list"
+  >
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+    
+    
+      
+      
+        
+  <a href="https://developers.google.com/machine-learning?hl=zh-cn"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Upper Header"
+      
+        data-value="1"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="1"
+      
+        track-metadata-eventdetail="Machine Learning"
+      
+    >
+    
+          Machine Learning
+        
+  </a>
+  
+      
+    
+  </li>
+  
+</ul>
+      </span>
+    
+
+</div>
+  </div>
+
+  <div class="devsite-book-nav-wrapper">
+    <div class="devsite-mobile-nav-top">
+      
+        <ul class="devsite-nav-list">
+          
+            <li class="devsite-nav-item">
+              
+  
+  <a href="/machine-learning/foundational-courses"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: 基础课程"
+      
+        track-name="基础课程"
+      
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 基础课程"
+     track-type="globalNav"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      基础课程
+   </span>
+    
+  
+  </a>
+  
+
+  
+              
+            </li>
+          
+            <li class="devsite-nav-item">
+              
+  
+  <a href="/machine-learning/advanced-courses"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: 高级课程"
+      
+        track-name="高级课程"
+      
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 高级课程"
+     track-type="globalNav"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      高级课程
+   </span>
+    
+  
+  </a>
+  
+
+  
+              
+            </li>
+          
+            <li class="devsite-nav-item">
+              
+  
+  <a href="/machine-learning/guides"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: 指南"
+      
+        track-name="指南"
+      
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 指南"
+     track-type="globalNav"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      指南
+   </span>
+    
+  
+  </a>
+  
+
+  
+              
+            </li>
+          
+            <li class="devsite-nav-item">
+              
+  
+  <a href="/machine-learning/glossary"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: 术语库"
+      
+        track-name="术语库"
+      
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 术语库"
+     track-type="globalNav"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      术语库
+   </span>
+    
+  
+  </a>
+  
+
+  
+    <ul class="devsite-nav-responsive-tabs devsite-nav-has-menu
+               ">
+      
+<li class="devsite-nav-item">
+
+  
+  <span
+    
+       class="devsite-nav-title"
+       tooltip
+    
+    
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Tab: 术语库"
+      
+        track-name="术语库"
+      
+    >
+  
+    <span class="devsite-nav-text" tooltip menu="术语库">
+      更多
+   </span>
+    
+    <span class="devsite-nav-icon material-icons" data-icon="forward"
+          menu="术语库">
+    </span>
+    
+  
+  </span>
+  
+
+</li>
+
+    </ul>
+  
+              
+            </li>
+          
+          
+          
+        </ul>
+      
+    </div>
+    
+      <div class="devsite-mobile-nav-bottom">
+        
+        
+          
+    
+  
+    
+  
+    
+  
+    
+      
+      <ul class="devsite-nav-list" menu="术语库"
+          aria-label="侧边菜单" hidden>
+        
+          
+            
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 所有字词"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      所有字词
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/agent"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 代理式"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      代理式
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/clustering"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 聚簇"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      聚簇
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/df"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 决策森林"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      决策森林
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/fundamentals"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 基础知识"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      基础知识
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/googlecloud"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: GCP"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      GCP
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/generative"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 生成式 AI"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      生成式 AI
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/metrics"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: 指标"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      指标
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/responsible-ai"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: Responsible AI"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      Responsible AI
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+              
+<li class="devsite-nav-item">
+
+  
+  <a href="/machine-learning/glossary/tensorflow"
+    
+       class="devsite-nav-title gc-analytics-event
+              
+              "
+    
+
+    
+     data-category="Site-Wide Custom Events"
+     data-label="Responsive Tab: TensorFlow"
+     track-type="navMenu"
+     track-metadata-eventDetail="globalMenu"
+     track-metadata-position="nav">
+  
+    <span class="devsite-nav-text" tooltip >
+      TensorFlow
+   </span>
+    
+  
+  </a>
+  
+
+</li>
+
+            
+          
+        
+      </ul>
+    
+  
+        
+        
+      </div>
+    
+  </div>
+</nav>
+          
+        </devsite-book-nav>
+      
+      <section id="gc-wrapper">
+        <main role="main" id="main-content" class="devsite-main-content"
+            
+              
+              has-sidebar
+            >
+          <div class="devsite-sidebar">
+            <div class="devsite-sidebar-content">
+                
+                <devsite-toc class="devsite-nav"
+                            role="navigation"
+                            aria-label="本页内容"
+                            depth="2"
+                            scrollbars
+                            data-nosnippet
+                  ></devsite-toc>
+                <devsite-recommendations-sidebar class="nocontent devsite-nav" data-nosnippet>
+                </devsite-recommendations-sidebar>
+            </div>
+          </div>
+          <devsite-content>
+            
+              
+
+
+
+
+
+
+
+
+
+
+<article class="devsite-article"><style>
+      /* Styles inlined from /machine-learning/glossary/glossary.css */
+/* Drop display of empty description row */
+.devsite-product-description-row {
+  display: none;
+}
+
+h2.glossary {
+  border: none;
+  padding-top: 25px;
+  margin-top: 30px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+h2.hide-from-toc {
+  border-bottom: none;
+  border-top: 1px solid #ebebeb;
+  padding-top: 1%;
+  margin-bottom: 1px;
+}
+
+a.glossary-anchor {
+  display: block;
+  padding-top: 40px;
+}
+
+@media screen and (min-width: 720px) {
+
+  /* Styling for intersection/union images in IoU entry */
+  /* Place images side by side if not on phone */
+  #intersection-union-side-by-side img {
+    display: inline-block;
+    width: 45%;
+    margin-right: 4.5%;
+  }
+
+  /* Styling for tables in sparse representation section */
+  /* Use two-column layout if not on phone */
+  #sparse-dense-tables {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    column-count: 2;
+    column-width: 45%;
+  }
+
+  #sparse-dense-tables table {
+    break-after: column;
+  }
+}
+
+#sparse-dense-tables table caption {
+  background: none;
+}
+
+#sparse-dense-tables table tr.elided-rows td {
+  text-align: center;
+}
+
+.glossary-icon-container {
+  float: right;
+  position: relative;
+  top: -34px;
+}
+
+/* Push glossary icons 40px to the left
+ * to match 40px of right padding
+ * applied to heading elements
+ */
+h2 + .glossary-icon-container {
+  right: 40px;
+}
+
+.glossary-icon {
+  color: transparent;
+  float: left;
+  font-size: 5px;
+  position: relative;
+}
+
+.glossary-icon[title='Agentic'], .glossary-icon[data-title='Agentic'],
+.glossary-icon[title='Responsible AI'], .glossary-icon[data-title='Responsible AI'],
+.glossary-icon[title='Generative AI'], .glossary-icon[data-title='Generative AI'],
+.glossary-icon[title='Metric'], .glossary-icon[data-title='Metric'],
+.glossary-icon[title='ML Fundamentals'], .glossary-icon[data-title='ML Fundamentals'],
+.glossary-icon[title='Recommendation Systems'], .glossary-icon[data-title='Recommendation Systems'],
+.glossary-icon[title='Image Models'], .glossary-icon[data-title='Image Models'],
+.glossary-icon[title='Clustering'], .glossary-icon[data-title='Clustering'],
+.glossary-icon[title='Language Evaluation'], .glossary-icon[data-title='Language Evaluation'],
+.glossary-icon[title='Sequence Models'], .glossary-icon[data-title='Sequence Models'],
+.glossary-icon[title='Decision Forests'], .glossary-icon[data-title='Decision Forests']
+{
+  font-size: 7px;
+  top: 4px;
+  letter-spacing: -2.5px;
+}
+
+.glossary-icon[title='Agentic']::after, .glossary-icon[data-title='Agentic']::after,
+.glossary-icon[title='Responsible AI']::after, .glossary-icon[data-title='Responsible AI']::after,
+.glossary-icon[title='Generative AI']::after, .glossary-icon[data-title='Generative AI']::after,
+.glossary-icon[title='Metric']::after, .glossary-icon[data-title='Metric']::after,
+.glossary-icon[title='ML Fundamentals']::after, .glossary-icon[data-title='ML Fundamentals']::after,
+.glossary-icon[title='Recommendation Systems']::after, .glossary-icon[data-title='Recommendation Systems']::after,
+.glossary-icon[title='Image Models']::after, .glossary-icon[data-title='Image Models']::after,
+.glossary-icon[title='Clustering']::after, .glossary-icon[data-title='Clustering']::after,
+.glossary-icon[title='Language Evaluation'], .glossary-icon[data-title='Language Evaluation']::after,
+.glossary-icon[title='Sequence Models'], .glossary-icon[data-title='Sequence Models']::after,
+.glossary-icon[title='Decision Forests'], .glossary-icon[data-title='Decision Forests']::after
+{
+  color: initial;
+  font-size: 25px;
+  text-align: center;
+}
+
+.glossary-icon[title='Agentic']::after, .glossary-icon[data-title='Agentic']::after {
+  content: '🕵';
+  width: 32px;
+}
+
+.glossary-icon[title='Responsible AI']::after, .glossary-icon[data-title='Responsible AI']::after {
+  content: '⚖️';
+  width: 32px;
+}
+
+.glossary-icon[title='Generative AI']::after, .glossary-icon[data-title='Generative AI']::after {
+  content: '🎨';
+  width: 32px;
+}
+
+.glossary-icon[title='Metric']::after, .glossary-icon[data-title='Metric']::after {
+  content: '📏';
+  width: 32px;
+}
+
+.glossary-icon[title='ML Fundamentals']::after, .glossary-icon[data-title='ML Fundamentals']::after {
+  content: '🐣';
+  width: 32px;
+}
+
+.glossary-icon[title='Image Models']::after, .glossary-icon[data-title='Image Models']::after {
+  content: '🖼️';
+  width: 32px;
+}
+
+.glossary-icon[title='Clustering']::after, .glossary-icon[data-title='Clustering']::after {
+  content: '🍇';
+  width: 32px;
+}
+
+.glossary-icon[title='Language Evaluation']::after, .glossary-icon[data-title='Language Evaluation']::after {
+  content: '🔤';
+  width: 32px;
+}
+
+.glossary-icon[title='Sequence Models']::after, .glossary-icon[data-title='Sequence Models']::after {
+  content: '🔺→🟦→🟡';
+  width: 96px;
+  font-size: 1vw;
+}
+
+.glossary-icon[title='Decision Forests']::after, .glossary-icon[data-title='Decision Forests']::after {
+  content: '🌳🌲🌳';
+  width: 64px;
+  letter-spacing: -0.45em;
+  font-size: 1vw;
+}
+
+.glossary-icon[title='Recommendation Systems']::after, .glossary-icon[data-title='Recommendation Systems']::after {
+  content: '👎👍';
+  width: 64px;
+}
+
+.glossary-icon[title='Google Cloud']::after, .glossary-icon[data-title='Google Cloud']::after {
+  background-position: center;
+  background-repeat: no-repeat;
+  content: "";
+  width: 37px;
+  background-image: url(https://www.gstatic.com/images/branding/product/1x/google_cloud_48dp.png);
+  background-size: 28px 28px;
+  height: 29px;
+  position: absolute;
+  left: 0;
+}
+
+.glossary-icon[title='Reinforcement Learning'], .glossary-icon[data-title='Reinforcement Learning'] {
+  font-size: 7px;
+  top: 4px;
+}
+
+.glossary-icon[title='Reinforcement Learning']::after, .glossary-icon[data-title='Reinforcement Learning']::after {
+  color: rgb(139, 0, 0);
+  content: 'RL';
+  font-size: 25px;
+  text-align: center;
+  width: 32px;
+}
+
+.glossary-icon[title='TensorFlow']::after, .glossary-icon[data-title='TensorFlow']::after {
+  background-position: center;
+  background-repeat: no-repeat;
+  content: "";
+  width: 30px;
+  background-image: url(https://developers.google.com/site-assets/logo-tensorflow.svg);
+  background-size: 26px 26px;
+  height: 28px;
+  position: absolute;
+  left: 0;
+}
+
+      </style>
+  
+  
+  
+  
+  
+    <div class="devsite-banner devsite-banner-translated nocontent">
+      <div class="devsite-banner-message">
+        <div class="devsite-banner-message-text">
+          <img src="https://developers.google.com/_static/images/translated.svg?hl=zh-cn"
+               class="devsite-banner-translated-image invert"
+               alt="">
+          <span class="devsite-banner-translated-text">
+            
+            Google 会使用 AI 技术将内容翻译成您偏好的语言。AI 翻译可能包含错误。
+          </span>
+        </div>
+        <devsite-switch-to-english-button></devsite-switch-to-english-button>
+      </div>
+    </div>
+  
+
+  <div class="devsite-article-meta nocontent" role="navigation" data-nosnippet>
+    
+    
+    <ul class="devsite-breadcrumb-list"
+  
+    aria-label="面包屑导航">
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+    
+    
+      
+        
+  <a href="https://developers.google.com/?hl=zh-cn"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Breadcrumbs"
+      
+        data-value="1"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="1"
+      
+        track-metadata-eventdetail=""
+      
+    >
+    
+          首页
+        
+  </a>
+  
+      
+    
+  </li>
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+      
+      <div class="devsite-breadcrumb-guillemet material-icons" aria-hidden="true"></div>
+    
+    
+    
+      
+        
+  <a href="https://developers.google.com/products?hl=zh-cn"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Breadcrumbs"
+      
+        data-value="2"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="2"
+      
+        track-metadata-eventdetail=""
+      
+    >
+    
+          产品
+        
+  </a>
+  
+      
+    
+  </li>
+  
+  <li class="devsite-breadcrumb-item
+             ">
+    
+      
+      <div class="devsite-breadcrumb-guillemet material-icons" aria-hidden="true"></div>
+    
+    
+    
+      
+        
+  <a href="https://developers.google.com/machine-learning?hl=zh-cn"
+      
+        class="devsite-breadcrumb-link gc-analytics-event"
+      
+        data-category="Site-Wide Custom Events"
+      
+        data-label="Breadcrumbs"
+      
+        data-value="3"
+      
+        track-type="globalNav"
+      
+        track-name="breadcrumb"
+      
+        track-metadata-position="3"
+      
+        track-metadata-eventdetail="Machine Learning"
+      
+    >
+    
+          Machine Learning
+        
+  </a>
+  
+      
+    
+  </li>
+  
+</ul>
+    
+      
+    <devsite-thumb-rating position="header">
+    </devsite-thumb-rating>
+  
+    
+  </div>
+  
+    <devsite-feedback
+  position="header"
+  project-name="Machine Learning"
+  product-id="5005867"
+  bucket=""
+  context=""
+  version="t-devsite-webserver-20260915-r00-rc00.480402789007080698"
+  data-label="Send Feedback Button"
+  track-type="feedback"
+  track-name="sendFeedbackLink"
+  track-metadata-position="header"
+  class="nocontent"
+  data-nosnippet
+  
+  
+  
+    project-icon="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/touchicon-180-new.png"
+  
+  
+  
+  >
+
+  <button>
+  
+    
+    发送反馈
+  
+  </button>
+</devsite-feedback>
+  
+    <h1 class="devsite-page-title" tabindex="-1">
+      机器学习术语表：生成式 AI<devsite-actions hidden data-nosnippet><devsite-feature-tooltip
+      ack-key="AckCollectionsBookmarkTooltipDismiss"
+      analytics-category="Site-Wide Custom Events"
+      analytics-action-show="Callout Profile displayed"
+      analytics-action-close="Callout Profile dismissed"
+      analytics-label="Create Collection Callout"
+      class="devsite-page-bookmark-tooltip nocontent"
+      data-nosnippet
+      dismiss-button="true"
+      id="devsite-collections-dropdown"
+      
+      dismiss-button-text="关闭"
+
+      
+      close-button-text="知道了">
+
+    
+    
+      <devsite-bookmark></devsite-bookmark>
+    
+
+    <span slot="popout-heading">
+      
+      使用集合让一切井井有条
+    </span>
+    <span slot="popout-contents">
+      
+      根据您的偏好保存内容并对其进行分类。
+    </span>
+  </devsite-feature-tooltip>
+    <devsite-llm-tools></devsite-llm-tools></devsite-actions>
+  
+      
+    </h1>
+  <div class="devsite-page-title-meta"><devsite-view-release-notes></devsite-view-release-notes></div>
+  
+
+  <devsite-toc class="devsite-nav"
+    depth="2"
+    devsite-toc-embedded
+    >
+  </devsite-toc>
+  <div class="devsite-article-body clearfix
+  ">
+
+  
+    
+    
+    
+<p>
+<devsite-mathjax config="TeX-AMS-MML_SVG"></devsite-mathjax></p>
+
+
+
+<p>本页面包含生成式 AI 术语表中的术语。如需查看所有术语，请<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn">点击此处</a>。</p>
+
+<p><a class="glossary-anchor" name="a"></a>
+</p><h2 class="glossary" data-text="A" id="a" tabindex="-1">A</h2><p></p>
+
+<p><a class="glossary-anchor" name="adaptation"></a>
+</p><h2 class="hide-from-toc" data-text=" 改编" id="adaptation" tabindex="-1"> 改编</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>与调优或<a href="#fine-tuning"><strong>微调</strong></a>的含义相同。</p>
+
+<p><a class="glossary-anchor" name="agent"></a>
+</p><h2 class="hide-from-toc" data-text=" 代理" id="agent" tabindex="-1"> 代理</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="代理式">#agent</div>
+</div><p></p>
+
+<p>能够对用户输入进行推理，以便代表用户规划和执行操作的软件。</p>
+
+
+
+<p>在<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#reinforcement_learning"><strong>强化学习</strong></a>中，智能体是使用<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#policy"><strong>政策</strong></a>来最大限度提高从<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#environment"><strong>环境</strong></a>的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#state"><strong>状态</strong></a>转换中获得的预期<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#return"><strong>回报</strong></a>的实体。</p>
+
+<p><a class="glossary-anchor" name="agentic"></a>
+</p><h2 class="hide-from-toc" data-text=" 代理型" id="agentic" tabindex="-1"> 代理型</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="代理式">#agent</div>
+</div><p></p>
+
+<p><a href="#agent"><strong>agent</strong></a> 的形容词形式。Agentic 是指智能体所具备的特质（例如自主性）。</p>
+
+<p><a class="glossary-anchor" name="agentic-workflow"></a>
+</p><h2 class="hide-from-toc" data-text=" 智能体工作流" id="agentic-workflow" tabindex="-1"> 智能体工作流</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="代理式">#agent</div>
+</div><p></p>
+
+<p>一种动态流程，其中<a href="#agent"><strong>智能体</strong></a>自主规划和执行行动以实现目标。该过程可能涉及推理、调用外部工具和自行纠正方案。</p>
+
+
+
+</p><p><a class="glossary-anchor" name="AI-slop"></a>
+</p><h2 class="hide-from-toc" data-text=" AI 生成的垃圾" id="ai-slop" tabindex="-1"> AI 生成的垃圾</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#generative-AI"><strong>生成式 AI</strong></a> 系统生成的输出，侧重于数量而非质量。例如，包含 AI 生成的垃圾的网页充斥着低成本制作的 AI 生成的低质量内容。</p>
+
+<p><a class="glossary-anchor" name="automatic_evaluation"></a>
+<a name="automatic-evaluation"></a>
+</p><h2 class="hide-from-toc" data-text=" 自动评估" id="automatic-evaluation" tabindex="-1"> 自动评估</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>使用软件来判断模型输出的质量。</p>
+
+<p>如果模型输出相对简单，脚本或程序可以将模型输出与<a href="#golden-response"><strong>标准回答</strong></a>进行比较。这种类型的自动评估有时称为<strong>程序化评估</strong>。<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#ROUGE"><strong>ROUGE</strong></a> 或 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#BLEU"><strong>BLEU</strong></a> 等指标通常有助于进行程序化评估。</p>
+
+<p>如果模型输出复杂或<a href="#no-one-right-answer"><strong>没有唯一正确的答案</strong></a>，则有时会由一个名为<a href="#autorater-evaluation"><strong>自动评分器</strong></a>的单独机器学习程序执行自动评估。</p>
+
+<p>与<a href="#human-evaluation"><strong>人工评估</strong></a>相对。</p>
+
+<p><a class="glossary-anchor" name="autorater_evaluation"></a>
+<a name="autorater-evaluation"></a>
+</p><h2 class="hide-from-toc" data-text=" 自动评估器评估" id="autorater-evaluation" tabindex="-1"> 自动评估器评估</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div>
+一种用于评判<a href="#generative-AI"><strong>生成式 AI</strong></a> 模型输出质量的混合机制，它将<a href="#human-evaluation"><strong>人工评估</strong></a>与<a href="#automatic-evaluation"><strong>自动评估</strong></a>相结合。自动评估器是一种基于<a href="#human-evaluation"><strong>人工评估</strong></a>生成的数据训练的机器学习模型。理想情况下，自动评估器会学习模仿人类评估者。<p></p>
+
+<p>虽然有预建的自动评分器，但最好是专门针对您要评估的任务进行微调的自动评分器。</p>
+<aside class="note"><strong>注意</strong>：<span> 正在运行的自动评分器是一个完全自动化的流程；人类“仅”提供有助于<em>训练</em>自动评分器的数据。</span></aside>
+<p><a class="glossary-anchor" name="auto-regressive-model"></a>
+</p><h2 class="hide-from-toc" data-text=" 自回归模型" id="auto-regressive-model" tabindex="-1"> 自回归模型</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#model"><strong>模型</strong></a>，可根据其自身的先前预测推断预测结果。例如，自回归语言模型会根据之前预测的 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#token"><strong>token</strong></a> 来预测下一个 token。所有基于 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#transformer"><strong>Transformer</strong></a> 的<a href="#large-language-model"><strong>大语言模型</strong></a>都是自回归模型。</p>
+
+<p>相比之下，基于 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#GAN"><strong>GAN</strong></a> 的图像模型通常不是自回归的，因为它们通过一次前向传递生成图片，而不是以迭代方式分步生成图像。不过，某些图片生成模型<em>是</em>自回归模型，因为它们会分步生成图片。</p>
+
+<p><a class="glossary-anchor" name="b"></a>
+</p><h2 class="glossary" data-text="B" id="b" tabindex="-1">B</h2><p></p>
+
+
+
+</p><p><a class="glossary-anchor" name="base-model"></a>
+</p><h2 class="hide-from-toc" data-text=" 基础模型" id="base-model" tabindex="-1"> 基础模型</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种<a href="#pre-trained-model"><strong>预训练模型</strong></a>，可作为<a href="#fine-tuning"><strong>微调</strong></a>的起点，以解决特定任务或应用问题。</p>
+
+<p>另请参阅<a href="#pre-trained-model"><strong>预训练模型</strong></a>和<a href="#foundation-model"><strong>基础模型</strong></a>。</p>
+
+
+
+
+
+</p><p><a class="glossary-anchor" name="c"></a>
+</p><h2 class="glossary" data-text="C" id="c" tabindex="-1">C</h2><p></p>
+
+<p><a class="glossary-anchor" name="chain-of-thought-prompting"></a>
+</p><h2 class="hide-from-toc" data-text=" 思维链提示" id="chain-of-thought-prompting" tabindex="-1"> 思维链提示</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种<a href="#prompt-engineering"><strong>提示工程</strong></a>技术，可鼓励<a href="#large-language-model"><strong>大语言模型</strong></a> (LLM) 逐步说明其推理过程。例如，请考虑以下提示，并特别注意第二句话：</p>
+
+<blockquote>
+<p>如果一辆汽车从 0 加速到 60 英里/小时需要 7 秒，那么驾驶员会感受到多少 g 的重力？在回答中，显示所有相关计算。</p>
+</blockquote>
+
+<p>LLM 的<a href="#response"><strong>回答</strong></a>可能会：</p>
+
+<ul>
+<li>显示一系列物理公式，并在适当的位置代入值 0、60 和 7。</li>
+<li>说明系统为何选择这些公式，以及各种变量的含义。</li>
+</ul>
+
+<p>思维链提示会强制 LLM 执行所有计算，这可能会得出更正确的答案。此外，通过思维链提示，用户可以检查 LLM 的步骤，以确定回答是否合理。</p>
+
+
+
+<p><a class="glossary-anchor" name="chat"></a>
+</p><h2 class="hide-from-toc" data-text=" 聊天" id="chat" tabindex="-1"> 聊天</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>与机器学习系统（通常是<a href="#large-language-model"><strong>大语言模型</strong></a>）进行来回对话的内容。
+聊天中的上一次互动（您输入的内容以及大语言模型的回答）会成为聊天后续部分的上下文。</p>
+
+<p><strong>聊天机器人</strong>是大语言模型的一种应用。</p>
+
+
+
+</p><p><a class="glossary-anchor" name="contextualized_language_embedding"></a>
+</p><h2 class="hide-from-toc" data-text=" 情境化语言嵌入" id="contextualized-language-embedding" tabindex="-1"> 情境化语言嵌入</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种接近于“理解”字词和短语的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#embedding_vector"><strong>嵌入</strong></a>，其理解方式与流利的人类说话者类似。情境化语言嵌入可以理解复杂的语法、语义和上下文。</p>
+
+<p>例如，假设有英文单词 <em>cow</em> 的嵌入。<a href="https://wikipedia.org/wiki/Word2vec">word2vec</a> 等旧版嵌入可以表示英语单词，使得<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#embedding_space"><strong>嵌入空间</strong></a>中从 <em>cow 到 <em>bull 的距离与从 <em>ewe（母羊）到 <em>ram（公羊）或从 <em>female</em> 到 <em>male</em> 的距离相似。</em></em></em></em>情境化语言嵌入可以更进一步，识别出英语使用者有时会随意使用 <em>cow</em> 一词来表示母牛或公牛。</p>
+
+<p><a class="glossary-anchor" name="context_window"></a>
+</p><h2 class="hide-from-toc" data-text=" 上下文窗口" id="context-window" tabindex="-1"> 上下文窗口</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>模型可在给定<a href="#prompt"><strong>提示</strong></a>中处理的 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#token"><strong>token</strong></a> 数量。上下文窗口越大，模型可用于提供连贯一致的提示<a href="#response"><strong>回答</strong></a>的信息就越多。</p>
+
+<p><a class="glossary-anchor" name="conversational-coding"></a>
+</p><h2 class="hide-from-toc" data-text="对话式编码" id="conversational-coding" tabindex="-1">对话式编码</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>您与生成式 AI 模型之间为创建软件而进行的迭代对话。您发出一个描述某种软件的提示。然后，模型会使用该说明生成代码。然后，您发出新的提示来解决之前提示或生成的代码中的缺陷，模型会生成更新后的代码。您和 AI 会不断来回迭代，直到生成的软件足够好为止。</p>
+
+<p>对话编码本质上是<a href="#vibe-coding"><strong>氛围编程 (vibe coding)</strong></a>的原始含义。</p>
+
+<p>与<a href="#specificational-coding"><strong>规范化编码</strong></a>相对。</p>
+
+<p><a class="glossary-anchor" name="d"></a>
+</p><h2 class="glossary" data-text="D" id="d" tabindex="-1">D</h2><p></p>
+
+<p><a class="glossary-anchor" name="direct-prompting"></a>
+</p><h2 class="hide-from-toc" data-text=" 直接提示" id="direct-prompting" tabindex="-1"> 直接提示</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>与<a href="#zero-shot-prompting"><strong>零样本提示</strong></a>的含义相同。</p>
+
+<p><a class="glossary-anchor" name="distillation"></a>
+</p><h2 class="hide-from-toc" data-text=" 蒸馏" id="distillation" tabindex="-1"> 蒸馏</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>将一个<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#model"><strong>模型</strong></a>（称为<strong>教师</strong>）的大小缩减为较小的模型（称为<strong>学生</strong>）的过程，该较小的模型尽可能忠实地模拟原始模型的预测结果。知识蒸馏之所以有用，是因为较小的模型比较大的模型（教师模型）具有以下两个主要优势：</p>
+
+<ul>
+<li>推理时间更短</li>
+<li>减少了内存和能耗用量</li>
+</ul>
+
+<p>不过，学生的预测通常不如教师的预测。</p>
+
+<p>蒸馏训练学生模型，以最大限度地减少基于学生模型和教师模型预测输出之间差异的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#loss-function"><strong>损失函数</strong></a>。</p>
+
+<p>比较和对比蒸馏与以下术语：</p>
+
+<ul>
+<li><a href="#fine-tuning"><strong>微调</strong></a></li>
+<li><a href="#prompt-based-learning"><strong>基于提示的学习</strong></a></li>
+</ul>
+
+<p>如需了解详情，请参阅机器学习速成课程中的 <a href="https://developers.google.com/machine-learning/crash-course/llm/tuning?hl=zh-cn">LLM：微调、蒸馏和提示工程</a>。</p>
+
+
+
+</p><p><a class="glossary-anchor" name="e"></a>
+</p><h2 class="glossary" data-text="E" id="e" tabindex="-1">E</h2><p></p>
+
+
+
+
+
+
+
+</p><p><a class="glossary-anchor" name="evals"></a>
+</p><h2 class="hide-from-toc" data-text=" evals" id="evals" tabindex="-1"> evals</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="指标">#Metric</div>
+</div><p></p>
+
+<p>主要用作 <a href="#LLM-evaluations"><strong>LLM 评估</strong></a>的缩写。
+更广泛地说，<strong>evals</strong> 是任何形式的<a href="#evaluation"><strong>评估</strong></a>的缩写。</p>
+
+
+
+<p><a class="glossary-anchor" name="evaluation"></a>
+</p><h2 class="hide-from-toc" data-text=" 评估" id="evaluation" tabindex="-1"> 评估</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="指标">#Metric</div>
+</div><p></p>
+
+<p>衡量模型质量或比较不同模型的过程。</p>
+
+<p>若要评估<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#supervised_machine_learning"><strong>监督式机器学习</strong></a>模型，您通常需要根据<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#validation_set"><strong>验证集</strong></a>和<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#test_set"><strong>测试集</strong></a>来判断模型的效果。<a href="#LLM-evaluations"><strong>评估 LLM</strong></a> 通常涉及更广泛的质量和安全性评估。</p>
+
+<p><a class="glossary-anchor" name="f"></a>
+</p><h2 class="glossary" data-text="F" id="f" tabindex="-1">F</h2><p></p>
+
+<p><a class="glossary-anchor" name="factuality"></a>
+</p><h2 class="hide-from-toc" data-text=" 真实性" id="factuality" tabindex="-1"> 真实性</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>在机器学习领域中，一种描述模型的属性，该模型的输出基于现实。事实性是一个概念，而不是一个指标。例如，假设您向<a href="#large-language-model"><strong>大语言模型</strong></a>发送以下<a href="#prompt"><strong>提示</strong></a>：</p>
+
+<blockquote>
+<p>食盐的化学式是什么？</p>
+</blockquote>
+
+<p>如果模型侧重于事实性，则会回答：</p>
+
+<blockquote>
+<p>NaCl</p>
+</blockquote>
+
+<p>人们很容易认为所有模型都应基于事实。不过，某些提示（例如以下提示）应促使生成式 AI 模型优化<em>创意性</em>，而不是<em>事实性</em>。</p>
+
+<blockquote>
+<p>给我讲一个关于宇航员和毛毛虫的五行打油诗。</p>
+</blockquote>
+
+<p>这样创作出的五行打油诗不太可能基于现实。</p>
+
+<p>与<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#groundedness"><strong>事实依据</strong></a>相对。</p>
+
+<p><a class="glossary-anchor" name="fast-decay"></a>
+</p><h2 class="hide-from-toc" data-text=" 快速衰减" id="fast-decay" tabindex="-1"> 快速衰减</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种用于提升 <a href="#large-language-model"><strong>大语言模型</strong></a> 性能的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#training"><strong>训练</strong></a>技术。快速衰减是指在训练期间快速降低<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#learning_rate"><strong>学习速率</strong></a>。此策略有助于防止模型对训练数据出现<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#overfitting"><strong>过拟合</strong></a>，并提高<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#generalization"><strong>泛化</strong></a>能力。</p>
+
+<p><a class="glossary-anchor" name="few-shot-prompting"></a>
+</p><h2 class="hide-from-toc" data-text=" 少样本提示" id="few-shot-prompting" tabindex="-1"> 少样本提示</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>包含多个（“少量”）示例的<a href="#prompt"><strong>提示</strong></a>，用于演示<a href="#large-language-model"><strong>大语言模型</strong></a>应如何回答。例如，以下冗长的提示包含两个示例，向大语言模型展示了如何回答查询。</p>
+
+<table>
+  <tbody><tr> <th>一个提示的组成部分</th> <th>备注</th> </tr>
+  <tr>
+    <td><tt>指定国家/地区的官方货币是什么？</tt></td>
+    <td>您希望 LLM 回答的问题。</td>
+  </tr>
+  <tr> <td><tt>法国：欧元</tt></td>         <td>举个例子。</td> </tr>
+  <tr> <td><tt>英国：英镑</tt></td> <td>再举一个例子。</td> </tr>
+  <tr> <td><tt>印度</tt>：</td>              <td>实际查询。</td> </tr>
+</tbody></table>
+
+<p>与<a href="#zero-shot-prompting"><strong>零样本提示</strong></a>和<a href="#one-shot-prompting"><strong>单样本提示</strong></a>相比，少样本提示通常会产生更理想的结果。不过，少样本提示需要更长的提示。</p>
+
+<p>少样本提示是一种应用于<a href="#prompt-based-learning"><strong>基于提示的学习</strong></a>的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#few-shot_learning"><strong>少量样本学习</strong></a>。</p>
+
+<p>如需了解详情，请参阅机器学习速成课程中的<a href="https://developers.google.com/machine-learning/crash-course/llm/tuning?hl=zh-cn#prompt_engineering">提示工程</a>。</p>
+
+<p><a class="glossary-anchor" name="fine-tuning"></a>
+</p><h2 class="hide-from-toc" data-text="微调" id="fine-tuning" tabindex="-1">微调</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>对<a href="#pre-trained-model"><strong>预训练模型</strong></a>执行的第二次特定任务训练，以针对特定应用场景优化其参数。例如，某些<a href="#large-language-model"><strong>大型语言模型</strong></a>的完整训练序列如下所示：</p>
+
+<ol>
+<li><strong>预训练</strong>：在海量<em>通用</em>数据集（例如所有英文版维基百科页面）上训练大语言模型。</li>
+<li><strong>微调</strong>：训练预训练模型以执行<em>特定</em>任务，例如回答医疗查询。微调通常涉及数百或数千个专注于特定任务的示例。</li>
+</ol>
+
+<p>再举一个例子，大型图片模型的完整训练序列如下所示：</p>
+
+<ol>
+<li><strong>预训练</strong>：在庞大的<em>通用</em>图片数据集（例如 Wikimedia Commons 中的所有图片）上训练大型图片模型。</li>
+<li><strong>微调</strong>：训练预训练模型以执行<em>特定</em>任务，例如生成虎鲸的图片。</li>
+</ol>
+
+<p>微调可能需要采用以下策略的任意组合：</p>
+
+<ul>
+<li>修改预训练模型的所有现有<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#parameter"><strong>参数</strong></a>。<em></em>这有时称为“完全微调”。<strong></strong></li>
+<li>仅修改预训练模型的部分现有参数（通常是离<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#output_layer"><strong>输出层</strong></a>最近的层），同时保持其他现有参数不变（通常是离<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#input-layer"><strong>输入层</strong></a>最近的层）。<em></em>请参阅<a href="#parameter-efficient-tuning"><strong>参数高效微调</strong></a>。</li>
+<li>添加更多层，通常是在最接近输出层的现有层之上添加。</li>
+</ul>
+
+<p>微调是一种<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#transfer_learning"><strong>迁移学习</strong></a>。因此，微调可能会使用与训练预训练模型时所用的损失函数或模型类型不同的损失函数或模型类型。例如，您可以对预训练的大型图像模型进行微调，以生成一个回归模型，该模型可返回输入图像中鸟的数量。</p>
+
+
+
+<p>比较和对比微调与以下术语：</p>
+
+<ul>
+<li><a href="#distillation"><strong>蒸馏</strong></a></li>
+<li><a href="#prompt-based-learning"><strong>基于提示的学习</strong></a></li>
+</ul>
+
+<p>如需了解详情，请参阅机器学习速成课程中的<a href="https://developers.google.com/machine-learning/crash-course/llm/tuning?hl=zh-cn#fine-tuning">微调</a>。</p>
+
+<p><a class="glossary-anchor" name="Flash-model"></a>
+</p><h2 class="hide-from-toc" data-text=" Flash 模型" id="flash-model" tabindex="-1"> Flash 模型</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一系列相对较小的 <a href="#Gemini"><strong>Gemini</strong></a> 模型，经过优化，可实现高速度和低<a href="#latency"><strong>延迟时间</strong></a>。Flash 模型专为需要快速响应和高吞吐量的各种应用而设计。</p>
+
+<p><a class="glossary-anchor" name="foundation-model"></a>
+</p><h2 class="hide-from-toc" data-text="基础模型" id="foundation-model" tabindex="-1">基础模型</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="指标">#Metric</div>
+</div><p></p>
+
+<p>一种非常大的<a href="#pre-trained-model"><strong>预训练模型</strong></a>，使用庞大而多样的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#training-set"><strong>训练集</strong></a>进行训练。基础模型可以执行以下两项操作：</p>
+
+<ul>
+<li>能够很好地响应各种请求。</li>
+<li>用作其他<a href="#fine-tuning"><strong>微调</strong></a>或其他自定义设置的<a href="#base-model"><strong>基础模型</strong></a>。</li>
+</ul>
+
+<p>换句话说，基础模型在一般意义上已经非常强大，但可以进一步自定义，以便在特定任务中发挥更大作用。</p>
+
+</span></aside>
+<p><a class="glossary-anchor" name="fraction-of-successes"></a>
+</p><h2 class="hide-from-toc" data-text="成功次数所占的比例" id="fraction-of-successes" tabindex="-1">成功次数所占的比例</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="指标">#Metric</div>
+</div><p></p>
+
+<p>用于评估机器学习模型<a href="#generated-text"><strong>生成文本</strong></a>的指标。成功率是指“成功”生成的文本输出数量除以生成的文本输出总数量。例如，如果某个<a href="#large-language-model"><strong>大语言模型</strong></a>生成了 10 个代码块，其中 5 个成功生成，那么成功率就是 50%。</p>
+
+<p>虽然成功率在整个统计学中都非常有用，但在机器学习中，此指标主要用于衡量可验证的任务，例如代码生成或数学问题。</p>
+
+<p><a class="glossary-anchor" name="g"></a>
+</p><h2 class="glossary" data-text="G" id="g" tabindex="-1">G</h2><p></p>
+
+
+
+
+
+</p><p><a class="glossary-anchor" name="Gemini"></a>
+</p><h2 class="hide-from-toc" data-text=" Gemini" id="gemini" tabindex="-1"> Gemini</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>由 Google 最先进的 AI 组成的生态系统。此生态系统的要素包括：</p>
+
+<ul>
+<li>各种 <a href="#Gemini-models"><strong>Gemini 模型</strong></a>。</li>
+<li>与 Gemini 模型进行交互的对话界面。
+用户输入提示，Gemini 会针对这些提示做出回答。</li>
+<li>各种 Gemini API。</li>
+<li>基于 Gemini 模型的各种商业产品；例如 <a href="https://cloud.google.com/products/gemini?hl=zh-cn">Gemini for Google Cloud</a>。</li>
+</ul>
+
+
+
+<p><a class="glossary-anchor" name="Gemini-models"></a>
+</p><h2 class="hide-from-toc" data-text=" Gemini 模型" id="gemini-models" tabindex="-1"> Gemini 模型</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="代理式">#agent</div>
+</div><p></p>
+
+<p>Google 基于先进的 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#Transformer"><strong>Transformer</strong></a> 的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#multimodal-model"><strong>多模态模型</strong></a>。Gemini 模型专为与<a href="#agent"><strong>智能体</strong></a>集成而设计。</p>
+
+<p>用户可以通过多种方式与 Gemini 模型互动，包括通过交互式对话界面和 SDK。</p>
+
+<p><a class="glossary-anchor" name="Gemma"></a>
+</p><h2 class="hide-from-toc" data-text=" Gemma" id="gemma" tabindex="-1"> Gemma</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一系列轻量级开放模型，采用与 <a href="#Gemini"><strong>Gemini</strong></a> 模型相同的研究成果和技术构建而成。有多种不同的 Gemma 模型可供选择，每种模型都提供不同的功能，例如视觉、代码和指令遵循。如需了解详情，请参阅 <a href="https://ai.google.dev/gemma?hl=zh-cn">Gemma</a>。</p>
+
+<p><a class="glossary-anchor" name="genAI"></a>
+</p><h2 class="hide-from-toc" data-text=" GenAI 或 genAI" id="genai-or-genai" tabindex="-1"> GenAI 或 genAI</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#generative-ai"><strong>生成式 AI</strong></a> 的缩写。</p>
+
+
+
+<p><a class="glossary-anchor" name="generated-text"></a>
+</p><h2 class="hide-from-toc" data-text=" 生成的文本" id="generated-text" tabindex="-1"> 生成的文本</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一般来说，指机器学习模型输出的文本。在评估大型语言模型时，某些指标会将生成的文本与<a href="#reference-text"><strong>参考文本</strong></a>进行比较。例如，假设您要确定某个机器学习模型从法语翻译为荷兰语的有效性。在此示例中：</p>
+
+<ul>
+<li><em>生成的文本</em>是机器学习模型输出的荷兰语翻译。</li>
+<li><em>参考文本</em>是人工翻译人员（或软件）创建的荷兰语译文。</li>
+</ul>
+
+<p>请注意，某些评估策略不涉及参考文本。</p>
+
+<p><a class="glossary-anchor" name="generative-ai"></a>
+<a name="generative-AI"></a>
+</p><h2 class="hide-from-toc" data-text=" 生成式 AI" id="generative-ai" tabindex="-1"> 生成式 AI</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一个新兴的变革性领域，没有正式定义。
+不过，大多数专家都认为，生成式 AI 模型可以创建（“生成”）以下类型的内容：</p>
+
+<ul>
+<li>复杂</li>
+<li>连贯</li>
+<li>原图</li>
+</ul>
+
+<p>生成式 AI 的示例包括：</p>
+
+<ul>
+<li><a href="#large-language-model"><strong>大语言模型</strong></a>，可以生成复杂的原创文本并回答问题。</li>
+<li>图片生成模型，可生成独一无二的图片。</li>
+<li>音频和音乐生成模型，可以创作原创音乐或生成逼真的语音。</li>
+<li>视频生成模型，可生成原创视频。</li>
+</ul>
+
+<p>一些较早的技术（包括 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#Long_Short-Term_Memory"><strong>LSTM</strong></a> 和 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#recurrent_neural_network"><strong>RNN</strong></a>）也可以生成原创且连贯的内容。一些专家认为这些早期技术属于生成式 AI，而另一些专家则认为，真正的生成式 AI 需要生成比这些早期技术更复杂的输出。</p>
+
+<p>与<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#predictive-ML"><strong>预测性机器学习</strong></a>相对。</p>
+
+
+
+</p><p><a class="glossary-anchor" name="golden_response"></a>
+<a name="golden-response"></a>
+</p><h2 class="hide-from-toc" data-text=" 黄金回答" id="golden-response" tabindex="-1"> 黄金回答</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>已知为良好的<a href="#response"><strong>响应</strong></a>。例如，假设有以下<a href="#prompt"><strong>提示</strong></a>：</p>
+
+<blockquote>
+<p>2 + 2</p>
+</blockquote>
+
+<p>理想的回答是：</p>
+
+<blockquote>
+<p>4</p>
+</blockquote>
+<aside class="note"><strong>注意</strong>：<span> 有些组织会定义其他术语，例如<em>白银回答</em>和<em>白金回答</em>，分别表示质量低于或高于黄金回答的回答。例如，组织可以使用<em>白金响应</em>来表示由专家生成并经过其他专家进一步审核的黄金响应。</span></aside>
+<section class="expandable">
+
+<h4 class="showalways" data-text=" 点击此处可查看有关黄金回答和参考文本的注释。" id="click-here-for-notes-about-golden-response-and-reference-text." tabindex="-1">
+点击此处可查看有关黄金回答和参考文本的注释。</h4>
+
+<div class="expand-background">
+<p>
+某些评估指标（例如 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#ROUGE"><b>ROUGE</b></a>）会将<a href="#reference-text"><b>参考文本</b></a>与模型的<a href="#generated-text"><b>生成文本</b></a>进行比较。如果提示只有一个正确答案，则黄金回答通常用作参考文本。</p>
+
+<p>
+有些提示<a href="#no-one-right-answer"><b>没有唯一正确的答案</b></a>。例如，提示“总结此文档”可能有许多正确答案。<i></i>对于此类提示，参考文本通常不切实际，因为模型可以生成非常广泛的可能摘要。不过，在这种情况下，黄金回答可能会很有用。例如，包含优质文档摘要的黄金回答有助于训练<a href="https://developers.google.com/machine-learning/glossary/autorater-evaluation?hl=zh-cn"><b>自动评估器</b></a>，以发现优质文档摘要的模式。
+</p>
+
+</div>
+
+<hr />
+</section>
+
+
+
+
+
+</p><p><a class="glossary-anchor" name="GPT"></a>
+</p><h2 class="hide-from-toc" data-text=" GPT（生成式预训练转换器）" id="gpt-generative-pre-trained-transformer" tabindex="-1"> GPT（生成式预训练转换器）</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>由 <a href="https://openai.com/">OpenAI</a> 开发的一系列基于 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#Transformer"><strong>Transformer</strong></a> 的<a href="#large-language-model"><strong>大语言模型</strong></a>。</p>
+
+<p>GPT 变体可应用于多种<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#modality"><strong>模态</strong></a>，包括：</p>
+
+<ul>
+<li>图片生成（例如 ImageGPT）</li>
+<li>文生图（例如 <a href="https://openai.com/blog/dall-e/">DALL-E</a>）。</li>
+</ul>
+
+<p><a class="glossary-anchor" name="h"></a>
+</p><h2 class="glossary" data-text="H" id="h" tabindex="-1">H</h2><p></p>
+
+<p><a class="glossary-anchor" name="hallucination"></a>
+</p><h2 class="hide-from-toc" data-text=" 幻觉" id="hallucination" tabindex="-1"> 幻觉</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#generative-AI"><strong>生成式 AI</strong></a> 模型生成看似合理但实际上不正确的输出，并且声称对现实世界做出断言。例如，如果生成式 AI 模型声称巴拉克·奥巴马于 1865 年去世，则表示该模型出现了<em>幻觉</em>。</p>
+
+<p><a class="glossary-anchor" name="human_evaluation"></a>
+<a name="human-evaluation"></a>
+</p><h2 class="hide-from-toc" data-text=" 人工评估" id="human-evaluation" tabindex="-1"> 人工评估</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种由<em>人</em>来评判机器学习模型输出质量的过程；例如，让双语人士评判机器学习翻译模型的质量。对于<a href="#no-one-right-answer"><strong>没有唯一正确答案</strong></a>的模型，人工评估尤其有用。</p>
+
+<p>与<a href="#automatic_evaluation"><strong>自动评估</strong></a>和<a href="#autorater-evaluation"><strong>自动评分器评估</strong></a>形成对比。</p>
+
+<p><a class="glossary-anchor" name="human-in-the-loop"></a>
+</p><h2 class="hide-from-toc" data-text=" 人机协同 (HITL)" id="human-in-the-loop-hitl" tabindex="-1"> 人机协同 (HITL)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种定义宽泛的表达方式，可能表示以下任一含义：</p>
+
+<ul>
+<li>以批判性或怀疑性态度看待<a href="#generative-AI"><strong>生成式 AI</strong></a> 输出的政策。</li>
+<li>一种策略或系统，用于确保人们帮助塑造、评估和改进模型的行为。人机协同可使 AI 同时受益于机器智能和人类智能。例如，在 AI 生成代码后由软件工程师审核的系统就是一个人机协同系统。</li>
+</ul>
+
+<p><a class="glossary-anchor" name="i"></a>
+</p><h2 class="glossary" data-text="I" id="i" tabindex="-1">I</h2><p></p>
+
+<p><a class="glossary-anchor" name="in-context-learning"></a>
+</p><h2 class="hide-from-toc" data-text="上下文学习" id="in-context-learning" tabindex="-1">上下文学习</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>与<a href="#few-shot-prompting"><strong>少样本提示</strong></a>的含义相同。</p>
+
+<p><a class="glossary-anchor" name="inference"></a>
+</p><h2 class="hide-from-toc" data-text=" 推理" id="inference" tabindex="-1"> 推理</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="机器学习基础知识">#fundamentals</div>
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>在传统机器学习中，通过将训练过的模型应用于<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#unlabeled_example"><strong>无标签样本</strong></a>来做出预测的过程。
+如需了解详情，请参阅“机器学习简介”课程中的<a href="https://developers.google.com/machine-learning/intro-to-ml/supervised?hl=zh-cn">监督式学习</a>。</p>
+
+<p>在<a href="#large-language-model"><strong>大语言模型</strong></a>中，推理是指使用训练好的模型针对输入<a href="#prompt"><strong>提示</strong></a>生成<a href="#response"><strong>回答</strong></a>的过程。</p>
+
+<p>推理在统计学中具有略有不同的含义。如需了解详情，请参阅<a href="https://wikipedia.org/wiki/Statistical_inference" target="T">
+维基百科中有关统计学推断的文章</a>。</p>
+
+<p><a class="glossary-anchor" name="instruction-tuning"></a>
+</p><h2 class="hide-from-toc" data-text=" 指令调优" id="instruction-tuning" tabindex="-1"> 指令调优</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种<a href="#fine-tuning"><strong>微调</strong></a>形式，可提高<a href="#generative-AI"><strong>生成式 AI</strong></a> 模型遵循指令的能力。指令调优是指使用一系列指令提示训练模型，这些指令提示通常涵盖各种各样的任务。经过指令调优的模型往往能够针对各种任务的<a href="#zero-shot-prompting"><strong>零样本提示</strong></a>生成实用的<a href="#response"><strong>回答</strong></a>。</p>
+
+<p>比较和对比：</p>
+
+<ul>
+<li><a href="#parameter-efficient-tuning"><strong>参数高效调优</strong></a></li>
+<li><a href="#prompt-tuning"><strong>提示调优</strong></a></li>
+</ul>
+
+
+
+<p><a class="glossary-anchor" name="l"></a>
+</p><h2 class="glossary" data-text="L" id="l" tabindex="-1">L</h2><p></p>
+
+<p><a class="glossary-anchor" name="large-language-model"></a>
+</p><h2 class="hide-from-toc" data-text=" 大语言模型" id="large-language-model" tabindex="-1"> 大语言模型</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>至少是一个具有大量<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#parameter"><strong>参数</strong></a>的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#language-model"><strong>语言模型</strong></a>。更通俗地说，任何基于 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#Transformer"><b>Transformer</b></a> 的语言模型，例如 <a href="#Gemini"><b>Gemini</b></a> 或 <a href="#GPT"><b>GPT</b></a>。</p>
+
+<p>如需了解详情，请参阅机器学习速成课程中的<a href="https://developers.google.com/machine-learning/crash-course/llm?hl=zh-cn">大语言模型 (LLM)</a>。</p>
+
+<p><a class="glossary-anchor" name="latency"></a>
+</p><h2 class="hide-from-toc" data-text=" 延迟时间" id="latency" tabindex="-1"> 延迟时间</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>模型处理输入并生成回答所需的时间。
+<em>高</em>延迟响应的生成时间比<em>低</em>延迟响应长。</p>
+
+<p>影响<a href="#large-language-model"><strong>大语言模型</strong></a>延迟时间的因素包括：</p>
+
+<ul>
+<li>输入和输出 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#token"><strong>token</strong></a> 长度</li>
+<li>模型的复杂程度</li>
+<li>模型运行的基础设施</li>
+</ul>
+
+<p>优化延迟时间对于打造响应迅速且人性化的应用至关重要。</p>
+
+<p><a class="glossary-anchor" name="LLM"></a>
+</p><h2 class="hide-from-toc" data-text=" LLM" id="llm" tabindex="-1"> LLM</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#large-language-model"><strong>大语言模型</strong></a>的缩写。</p>
+
+<p><a class="glossary-anchor" name="LLM-evaluation"></a>
+<a name="LLM-evaluations"></a>
+</p><h2 class="hide-from-toc" data-text=" LLM 评估" id="llm-evaluations-evals" tabindex="-1"> LLM 评估</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="指标">#Metric</div>
+</div><p></p>
+
+<p>用于评估<a href="#large-language-model"><strong>大型语言模型</strong></a> (LLM) 性能的一组指标和基准。概括来讲，大语言模型评估：</p>
+
+<ul>
+<li>帮助研究人员确定 LLM 需要改进的方面。</li>
+<li>有助于比较不同的 LLM，并确定最适合特定任务的 LLM。</li>
+<li>帮助确保 LLM 的使用安全且合乎道德。</li>
+</ul>
+
+
+
+<p>如需了解详情，请参阅机器学习速成课程中的<a href="https://developers.google.com/machine-learning/crash-course/linear-regression?hl=zh-cn">大型语言模型 (LLM)</a>。</p>
+
+<p><a class="glossary-anchor" name="LoRA"></a>
+</p><h2 class="hide-from-toc" data-text=" LoRA" id="lora" tabindex="-1"> LoRA</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#Low-Rank-Adaptability"><strong>低秩适应性</strong></a>的缩写。</p>
+
+<p><a class="glossary-anchor" name="Low-Rank-Adaptability"></a>
+</p><h2 class="hide-from-toc" data-text=" 低秩自适应 (LoRA)" id="low-rank-adaptability-lora" tabindex="-1"> 低秩自适应 (LoRA)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种<a href="#parameter-efficient-tuning"><strong>参数高效</strong></a>的<a href="#fine-tuning"><strong>微调</strong></a>技术，用于“冻结”模型的预训练权重（使其无法再被修改），然后在模型中插入一小部分可训练的权重。这组可训练的权重（也称为“更新矩阵”）比基础模型小得多，因此训练速度也快得多。</p>
+
+<p>LoRA 具有以下优势：</p>
+
+<ul>
+<li>提高模型在应用微调的网域中的预测质量。</li>
+<li>与需要微调模型<em>所有</em>参数的技术相比，微调速度更快。</li>
+<li>通过支持同时部署多个共享同一基础模型的专用模型，降低<a href="#inference"><strong>推理</strong></a>的计算成本。</li>
+</ul>
+
+<section class="expandable">
+
+<h4 class="showalways" data-text=" 点击相应图标，详细了解 LoRA 中的更新矩阵。 " id="click-the-icon-to-learn-more-about-update-matrixes-in-lora." tabindex="-1">
+点击相应图标，详细了解 LoRA 中的更新矩阵。
+</h4>
+
+<div class="expand-background">
+
+LoRA 中使用的更新矩阵由<a href="https://wikipedia.org/wiki/Rank_factorization">秩分解矩阵</a>组成，这些矩阵源自基础模型，有助于滤除噪声并将训练重点放在模型最重要的特征上。
+
+</div>
+
+<hr />
+</section>
+
+
+
+<p><a class="glossary-anchor" name="m"></a>
+</p><h2 class="glossary" data-text="M" id="m" tabindex="-1">M</h2><p></p>
+
+<p><a class="glossary-anchor" name="machine_translation"></a>
+<a name="machine-translation"></a>
+</p><h2 class="hide-from-toc" data-text=" 机器翻译" id="machine-translation" tabindex="-1"> 机器翻译</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>使用软件（通常是机器学习模型）将文本从一种人类语言转换为另一种人类语言，例如从英语转换为日语。</p>
+
+</li>
+</ul>
+
+<p><a class="glossary-anchor" name="mean-average-precision-at-k"></a>
+</p><h2 class="hide-from-toc" data-text=" 前 k 名的平均精确率均值 (mAP@k)" id="mean-average-precision-at-k-mapk" tabindex="-1"> 前 k 名的平均精确率均值 (mAP@k)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="指标">#Metric</div>
+</div><p></p>
+
+<p>验证数据集中所有 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#average-precision-at-k"><strong>k 处的平均精确率</strong></a>得分的统计平均值。平均精确率（前 k 个）的一个用途是判断<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#recommendation-system"><strong>推荐系统</strong></a>生成的推荐的质量。</p>
+
+<p>虽然“平均平均值”一词听起来有些冗余，但该指标的名称是合适的。毕竟，此指标会计算多个 <em>k 值处的平均精确率</em>的平均值。</p>
+
+<section class="expandable">
+
+<h4 class="showalways" data-text=" 点击相应图标即可查看示例。 " id="click-the-icon-to-see-an-example." tabindex="-1">
+点击相应图标即可查看示例。
+</h4>
+
+<div class="expand-background">
+
+<p>假设您构建了一个推荐系统，用于为每位用户生成个性化的推荐小说列表。根据所选用户的反馈，您计算出以下 5 个平均精确率（每个用户一个分数）：</p>
+
+<ul>
+  <li>0.73</li>
+  <li>0.77</li>
+  <li>0.67</li>
+  <li>0.82</li>
+  <li>0.76</li>
+</ul>
+
+<p>因此，前 K 名的平均精确率均值为：</p>
+
+<div>
+$$\text{mean } = \frac{\text{0.73 + 0.77 + 0.67 + 0.82 + 0.76}}
+                      {\text{5}} = \text{0.75}$$
+</div>
+
+</div>
+
+<hr />
+</section>
+
+<p><a class="glossary-anchor" name="mixture-of-experts"></a>
+</p><h2 class="hide-from-toc" data-text=" 混合专家" id="mixture-of-experts" tabindex="-1"> 混合专家</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><strong>一种通过仅使用一部分参数（称为“专家”）来处理给定输入<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#token"><strong>令牌</strong></a>或<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#example"><strong>示例</strong></a>来提高<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#neural-network"><strong>神经网络</strong></a>效率的方案。</strong><strong>门控网络</strong>会将每个输入 token 或示例路由到合适的专家。</p>
+
+<p>如需了解详情，请参阅以下任一论文：</p>
+
+<ul>
+<li><a href="https://arxiv.org/abs/1701.06538">Outrageously Large Neural Networks: The
+Sparsely-Gated Mixture-of-Experts Layer</a></li>
+<li><a href="https://research.google/blog/mixture-of-experts-with-expert-choice-routing/?m=1&hl=zh-cn">具有专家选择路由功能的混合专家模型</a></li>
+</ul>
+
+<p><a class="glossary-anchor" name="MMIT"></a>
+</p><h2 class="hide-from-toc" data-text=" MMIT" id="mmit" tabindex="-1"> MMIT</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#multimodal-instruction-tuned"><strong>多模态指令调优</strong></a>的缩写。</p>
+
+
+
+</p><p><a class="glossary-anchor" name="model_cascading"></a>
+</p><h2 class="hide-from-toc" data-text=" 模型级联" id="model-cascading" tabindex="-1"> 模型级联</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种可为特定推理查询选择理想 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#model"><strong>模型</strong></a>的系统。</p>
+
+<p>假设有一组模型，从非常大（大量<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#parameter"><strong>形参</strong></a>）到小得多（形参少得多）。与较小的模型相比，超大型模型在<a href="#inference"><strong>推理</strong></a>时会消耗更多计算资源。不过，超大型模型通常可以推理出比小型模型更复杂的请求。模型级联会确定推理查询的复杂程度，然后选择合适的模型来执行推理。
+模型级联的主要目的是通过选择较小的模型来降低推理费用，只有在处理更复杂的查询时才选择较大的模型。</p>
+
+<p>假设有一个小型模型在手机上运行，而该模型的较大版本在远程服务器上运行。良好的模型级联可让较小的模型处理简单请求，仅在处理复杂请求时调用远程模型，从而降低成本和<a href="#latency"><strong>延迟时间</strong></a>。</p>
+
+<p>另请参阅<a href="#model_router"><strong>模型路由器</strong></a>。</p>
+
+<p><a class="glossary-anchor" name="model_router"></a>
+</p><h2 class="hide-from-toc" data-text=" 模型路由器" id="model-router" tabindex="-1"> 模型路由器</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>用于在<a href="#model_cascading"><strong>模型级联</strong></a>中确定理想<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#model"><strong>模型</strong></a>以进行<a href="#inference"><strong>推理</strong></a>的算法。
+模型路由器本身通常是一个机器学习模型，它会逐渐学习如何为给定的输入选择最佳模型。不过，模型路由器有时可能是一种更简单的非机器学习算法。</p>
+
+<p><a class="glossary-anchor" name="MOE"></a>
+</p><h2 class="hide-from-toc" data-text=" MOE" id="moe" tabindex="-1"> MOE</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#mixture-of-experts"><strong>专家混合</strong></a>的缩写。</p>
+
+<p><a class="glossary-anchor" name="MT"></a>
+</p><h2 class="hide-from-toc" data-text=" MT" id="mt" tabindex="-1"> MT</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#machine-translation"><strong>机器翻译</strong></a>的缩写。</p>
+
+
+
+</p><p><a class="glossary-anchor" name="n"></a>
+</p><h2 class="glossary" data-text="否" id="n" tabindex="-1">否</h2><p></p>
+
+<p><a class="glossary-anchor" name="Nano"></a>
+</p><h2 class="hide-from-toc" data-text=" Nano" id="nano" tabindex="-1"> Nano</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一款相对较小的 <a href="#Gemini-models"><strong>Gemini 模型</strong></a>，专为在设备上使用而设计。如需了解详情，请参阅 <a href="https://deepmind.google/models/gemini/nano?hl=zh-cn">Gemini Nano</a>。</p>
+
+
+
+<p>另请参阅 <a href="#Pro"><strong>Pro</strong></a> 和 <a href="#Ultra"><strong>Ultra</strong></a>。</p>
+
+</li>
+</ul>
+
+<p><a class="glossary-anchor" name="no-one-right-answer"></a>
+</p><h2 class="hide-from-toc" data-text=" 没有唯一正确答案 (NORA)" id="no-one-right-answer-nora" tabindex="-1"> 没有唯一正确答案 (NORA)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>具有<em>多个</em>正确<a href="#response"><strong>回答</strong></a>的<a href="#prompt"><strong>提示</strong></a>。
+例如，以下提示没有唯一正确的答案：</p>
+
+<blockquote>
+<p>给我讲个关于大象的有趣笑话。</p>
+</blockquote>
+
+<p><a href="#evaluation"><strong>评估</strong></a>“没有唯一正确答案”问题的回答通常比评估<a href="#one-right-answer"><strong>有唯一正确答案</strong></a>的问题的回答更具主观性。例如，评估一个大象笑话需要一种系统性的方法来确定该笑话有多好笑。</p>
+
+
+
+<p><a class="glossary-anchor" name="NORA"></a>
+</p><h2 class="hide-from-toc" data-text=" NORA" id="nora" tabindex="-1"> NORA</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#no-one-right-answer"><strong>没有唯一正确答案</strong></a>的缩写。</p>
+
+<p><a class="glossary-anchor" name="Notebook-LM"></a>
+</p><h2 class="hide-from-toc" data-text=" 笔记本 LM" id="notebook-lm" tabindex="-1"> 笔记本 LM</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一款基于 Gemini 的工具，可让用户上传文档，然后使用<a href="#prompt"><strong>提示</strong></a>来提问、总结或整理这些文档。例如，作者可以上传几篇短篇小说，让 NotebookLM 找出它们的共同主题，或确定哪篇最适合改编成电影。</p>
+
+<p><a class="glossary-anchor" name="o"></a>
+</p><h2 class="glossary" data-text="O" id="o" tabindex="-1">O</h2><p></p>
+
+</span></aside>
+<p><a class="glossary-anchor" name="one-right-answer"></a>
+</p><h2 class="hide-from-toc" data-text=" 一个正确答案 (ORA)" id="one-right-answer-ora" tabindex="-1"> 一个正确答案 (ORA)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>具有<em>单个</em>正确<a href="#response"><strong>回答</strong></a>的<a href="#prompt"><strong>提示</strong></a>。
+例如，请看以下提示：</p>
+
+<blockquote>
+<p>判断对错：土星比火星大。</p>
+</blockquote>
+
+<p>唯一正确的回答是<em>正确</em>。</p>
+
+<p>与<a href="#no-one-right-answer"><strong>没有唯一正确答案</strong></a>形成对比。</p>
+
+
+
+<p><a class="glossary-anchor" name="one-shot-prompting"></a>
+</p><h2 class="hide-from-toc" data-text=" 单样本提示" id="one-shot-prompting" tabindex="-1"> 单样本提示</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>包含<em>一个</em>示例的<a href="#prompt"><strong>提示</strong></a>，用于演示<a href="#large-language-model"><strong>大语言模型</strong></a>应如何回答。例如，以下提示包含一个示例，用于向大语言模型展示应如何回答查询。</p>
+
+<table>
+  <tbody><tr> <th>一个提示的组成部分</th> <th>备注</th> </tr>
+  <tr>
+    <td><tt>指定国家/地区的官方货币是什么？</tt></td>
+    <td>您希望 LLM 回答的问题。</td>
+  </tr>
+  <tr> <td><tt>法国：欧元</tt></td>         <td>举个例子。</td> </tr>
+  <tr> <td><tt>印度</tt>：</td>              <td>实际查询。</td> </tr>
+</tbody></table>
+
+<p>比较并对比<strong>单样本提示</strong>与以下术语：</p>
+
+<ul>
+<li><a href="#zero-shot-prompting"><strong>零样本提示</strong></a></li>
+<li><a href="#few-shot-prompting"><strong>少样本提示</strong></a></li>
+</ul>
+
+<p><a class="glossary-anchor" name="ORA"></a>
+</p><h2 class="hide-from-toc" data-text=" ORA" id="ora" tabindex="-1"> ORA</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#one-right-answer"><strong>一个正确答案</strong></a>的缩写。</p>
+
+<p><a class="glossary-anchor" name="p"></a>
+</p><h2 class="glossary" data-text="P" id="p" tabindex="-1">P</h2><p></p>
+
+<p><a class="glossary-anchor" name="parameter-efficient-tuning"></a>
+</p><h2 class="hide-from-toc" data-text=" 参数高效调优" id="parameter-efficient-tuning" tabindex="-1"> 参数高效调优</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一组用于比完全<a href="#fine-tuning"><strong>微调</strong></a>更高效地<a href="#fine-tuning"><strong>微调</strong></a>大型<a href="#pre-trained-model"><strong>预训练语言模型 (PLM)</strong></a>的技术。与完全微调相比，参数高效调优通常会微调少得多的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#parameter"><strong>参数</strong></a>，但通常会生成性能与完全微调构建的大语言模型相当（或几乎相当）的<a href="#large-language-model"><strong>大语言模型</strong></a>。</p>
+
+
+
+<p>比较参数高效调优与以下方法的异同：</p>
+
+<ul>
+<li><a href="#instruction-tuning"><strong>指令调优</strong></a></li>
+<li><a href="#prompt-tuning"><strong>提示调优</strong></a></li>
+</ul>
+
+<p>参数高效调优也称为<strong>参数高效微调</strong>。</p>
+
+<p><a class="glossary-anchor" name="pax"></a>
+</p><h2 class="hide-from-toc" data-text=" Pax" id="pax" tabindex="-1"> Pax</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种编程框架，旨在训练大规模<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#neural-network"><strong>神经网络</strong></a> <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#model"><strong>模型</strong></a>，这些模型非常庞大，以至于需要跨多个 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#TPU"><strong>TPU</strong></a>
+<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#accelerator-chip"><strong>加速器芯片</strong></a> <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#TPU_slice"><strong>切片</strong></a>或 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#TPU_Pod"><strong>Pod</strong></a>。</p>
+
+<p>Pax 基于 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#flax"><strong>Flax</strong></a> 构建，而 Flax 基于 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#JAX"><strong>JAX</strong></a> 构建。</p>
+
+<p>
+<img alt="图表，显示了 Pax 在软件堆栈中的位置。
+          Pax 基于 JAX 构建。Pax 本身由三个层组成。底层包含 TensorStore 和 Flax。中间层包含 Optax 和 Flaxformer。顶层包含 Praxis Modeling Library。Fiddle 基于 Pax 构建。" loading="lazy" src="https://developers.google.com/static/machine-learning/glossary/images/Pax.png?hl=zh-cn" width="300" />
+</p>
+
+
+
+
+
+
+
+<p><a class="glossary-anchor" name="PLM"></a>
+</p><h2 class="hide-from-toc" data-text=" PLM" id="plm" tabindex="-1"> PLM</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#pre-trained-model"><strong>预训练语言模型</strong></a>的缩写。</p>
+
+<p><a class="glossary-anchor" name="post-trained-model"></a>
+</p><h2 class="hide-from-toc" data-text=" 后训练模型" id="post-trained-model" tabindex="-1"> 后训练模型</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一个宽泛定义的术语，通常是指经过一些后处理（例如以下一项或多项）的<a href="#pre-trained-model"><strong>预训练模型</strong></a>：</p>
+
+<ul>
+<li><a href="#distillation"><strong>蒸馏</strong></a></li>
+<li><a href="#fine-tuning"><strong>微调</strong></a></li>
+<li><a href="#instruction-tuning"><strong>指令调优</strong></a></li>
+</ul>
+
+<p><a class="glossary-anchor" name="pre-trained-model"></a>
+</p><h2 class="hide-from-toc" data-text=" 预训练模型" id="pre-trained-model" tabindex="-1"> 预训练模型</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>虽然此术语可以指任何经过训练的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#model"><strong>模型</strong></a>或经过训练的<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#embedding_vector"><strong>嵌入向量</strong></a>，但预训练模型现在通常是指经过训练的<a href="#large-language-model"><strong>大语言模型</strong></a>或其他形式的经过训练的<a href="#generative-AI"><strong>生成式 AI</strong></a> 模型。</p>
+
+<p>另请参阅<a href="#base-model"><strong>基础模型</strong></a>和<a href="#foundation-model"><strong>基础模型</strong></a>。</p>
+
+<p><a class="glossary-anchor" name="pre-training"></a>
+</p><h2 class="hide-from-toc" data-text=" 预训练" id="pre-training" tabindex="-1"> 预训练</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>在大型<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#dataset"><strong>数据集</strong></a>上对模型进行初始<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#training"><strong>训练</strong></a>。有些预训练模型是笨拙的巨人，通常必须通过额外的训练来改进。
+例如，机器学习专家可能会使用庞大的文本数据集（例如维基百科中的所有英文网页）预训练<a href="#large-language-model"><strong>大语言模型</strong></a>。预训练完成后，可以通过以下任一技术进一步优化生成的模型：</p>
+
+<ul>
+<li><a href="#distillation"><strong>蒸馏</strong></a></li>
+<li><a href="#fine-tuning"><strong>微调</strong></a></li>
+<li><a href="#instruction-tuning"><strong>指令调优</strong></a></li>
+<li><a href="#parameter-efficient-tuning"><strong>参数高效调优</strong></a></li>
+<li><a href="#prompt-tuning"><strong>提示调优</strong></a></li>
+</ul>
+
+<p><a class="glossary-anchor" name="Pro"></a>
+</p><h2 class="hide-from-toc" data-text=" Pro" id="pro" tabindex="-1"> Pro</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#Gemini-models"><strong>Gemini 模型</strong></a>，<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#parameter"><strong>参数</strong></a>数量少于 <a href="#Ultra"><strong>Ultra</strong></a>，但多于 <a href="#Nano"><strong>Nano</strong></a>。如需了解详情，请参阅 <a href="https://deepmind.google/models/gemini/pro/?hl=zh-cn">Gemini Pro</a>。</p>
+
+
+
+<p><a class="glossary-anchor" name="prompt"></a>
+</p><h2 class="hide-from-toc" data-text=" 提示" id="prompt" tabindex="-1"> 提示</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>作为输入内容输入到<a href="#large-language-model"><strong>大语言模型</strong></a>中的任何文本，用于让模型以某种特定方式运作。提示可以短至一个短语，也可以任意长（例如，整本小说的文本）。提示可分为多种类别，包括下表所示的类别：</p>
+
+<table>
+  <tbody><tr><th>提示类别</th> <th>示例</th> <th>备注</th></tr>
+  <tr>
+    <td>问题</td>
+    <td><tt>鸽子能飞多快？</tt></td>
+  </tr>
+  <tr>
+    <td>指令</td>
+    <td><tt>写一首关于套利的趣味小诗。</tt></td>
+    <td>要求大语言模型<i>执行</i>某种操作的提示。</td>
+  </tr>
+  <tr>
+    <td>示例</td>
+    <td><tt>将 Markdown 代码转换为 HTML。例如：
+        <br />
+        Markdown：* 列表项
+        <br />
+        HTML：&lt;ul> &lt;li>列表项&lt;/li> &lt;/ul></tt></td>
+    <td>此示例提示中的第一句话是一条指令。
+        提示的其余部分是示例。</td>
+  </tr>
+  <tr>
+    <td><a href="#role-prompting"><b>角色</b></a></td>
+    <td><tt>向物理学博士解释为什么在机器学习训练中使用梯度下降法。</tt></td>
+    <td>句子的第一部分是指令；“物理学博士”一词是角色部分。</td>
+  </tr>
+  <tr>
+    <td>供模型补全的部分输入</td>
+    <td><tt>英国首相居住在</tt></td>
+    <td>部分输入提示可以突然结束（如本例所示），也可以以下划线结尾。</td>
+  </tr>
+</tbody></table>
+
+<p><a href="#generative-AI"><strong>生成式 AI</strong></a> 模型可以根据提示生成文本、代码、图片、<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#embedding_vector"><strong>嵌入</strong></a>、视频…几乎任何内容。</p>
+
+<p><a class="glossary-anchor" name="prompt-based-learning"></a>
+</p><h2 class="hide-from-toc" data-text=" 基于提示的学习" id="prompt-based-learning" tabindex="-1"> 基于提示的学习</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>某些<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#model"><strong>模型</strong></a>的一项功能，可让模型根据任意文本输入（<a href="#prompt"><strong>提示</strong></a>）调整其行为。在典型的基于提示的学习范式中，<a href="#large-language-model"><strong>大语言模型</strong></a>通过生成文本来响应提示。例如，假设用户输入了以下提示：</p>
+
+<blockquote>
+<p>总结牛顿第三运动定律。</p>
+</blockquote>
+
+<p>能够基于提示进行学习的模型并非专门经过训练来回答之前的提示。相反，模型“知道”很多关于物理学的事实、很多关于一般语言规则的知识，以及很多关于哪些答案通常有用的知识。这些知识足以提供（希望）有用的答案。其他人类反馈（例如“这个回答太复杂了”或“什么是反应？”）使一些基于提示的学习系统能够逐步提高回答的实用性。</p>
+
+<p><a class="glossary-anchor" name="prompt-design"></a>
+</p><h2 class="hide-from-toc" data-text=" 提示设计" id="prompt-design" tabindex="-1"> 提示设计</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>与<a href="#prompt-engineering"><strong>提示工程</strong></a>的含义相同。</p>
+
+<p><a class="glossary-anchor" name="prompt-engineering"></a>
+</p><h2 class="hide-from-toc" data-text=" 提示工程" id="prompt-engineering" tabindex="-1"> 提示工程</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>创建<a href="#prompt"><strong>提示</strong></a>的艺术，这些提示可从<a href="#large-language-model"><strong>大语言模型</strong></a>中引出所需的<a href="#response"><strong>回答</strong></a>。人类执行提示工程。编写结构化良好的提示是确保从大语言模型获得有用回答的重要环节。提示工程取决于多种因素，包括：</p>
+
+<ul>
+<li>用于<a href="#pre-training"><strong>预训练</strong></a>和可能<a href="#fine-tuning"><strong>微调</strong></a>大语言模型的数据集。</li>
+<li>模型用于生成回答的<a href="#temperature"><strong>温度</strong></a>和其他解码参数。</li>
+</ul>
+
+<p><a href="#prompt-design"><strong>提示设计</strong></a>是提示工程的同义词。</p>
+
+<p>如需详细了解如何撰写有用的提示，请参阅<a href="https://developers.generativeai.google/guide/prompt_best_practices?hl=zh-cn">提示设计简介</a>。</p>
+
+<p><a class="glossary-anchor" name="prompt-set"></a>
+</p><h2 class="hide-from-toc" data-text=" 提示集" id="prompt-set" tabindex="-1"> 提示集</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>用于<a href="#large-language-model"><strong>评估</strong></a><a href="#evaluation"><strong></strong></a>大语言模型的一组<a href="#prompt"><strong>提示</strong></a>。例如，下图显示了一个包含三个提示的提示集：</p>
+
+<p>
+<img alt="向 LLM 发出三个提示，会生成三个回答。这三个提示就是提示集。这三个响应就是响应集。" loading="lazy" src="https://developers.google.com/static/machine-learning/glossary/images/PromptSet.png?hl=zh-cn" width="670" />
+</p>
+
+<p>优秀的提示集包含足够“广泛”的提示，可用于全面评估大语言模型的安全性和实用性。
+
+</p><p>另请参阅<a href="#response-set"><strong>回答集</strong></a>。</p>
+
+<p><a class="glossary-anchor" name="prompt-tuning"></a>
+</p><h2 class="hide-from-toc" data-text=" 提示调优" id="prompt-tuning" tabindex="-1"> 提示调优</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种<a href="#parameter-efficient-tuning"><strong>参数高效调优</strong></a>机制，用于学习系统预先添加到实际<a href="#prompt"><strong>提示</strong></a>中的“前缀”。</p>
+
+<p>提示调优的一种变体（有时称为“前缀调优”）是在<em>每个层</em>前面添加前缀。<strong></strong>相比之下，大多数提示调优仅向<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#input-layer"><strong>输入层</strong></a>添加前缀。</p>
+
+<section class="expandable">
+
+<h4 class="showalways" data-text=" 点击相应图标可详细了解前缀。 " id="click-the-icon-to-learn-more-about-prefixes." tabindex="-1">
+点击相应图标可详细了解前缀。
+</h4>
+
+<div class="expand-background">
+<p>对于提示调优，“前缀”（也称为“软提示”）是一小部分学习到的特定于任务的向量，这些向量会添加到实际提示的文本令牌嵌入之前。系统通过冻结所有其他模型参数并针对特定任务进行微调来学习软提示。</p>
+</div>
+
+<hr />
+</section>
+
+<p><a class="glossary-anchor" name="r"></a>
+</p><h2 class="glossary" data-text="R" id="r" tabindex="-1">R</h2><p></p>
+
+</li>
+</ul>
+
+<p><a class="glossary-anchor" name="reference_text"></a>
+<a name="reference-text"></a>
+</p><h2 class="hide-from-toc" data-text=" 参考文本" id="reference-text" tabindex="-1"> 参考文本</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>专家对<a href="#prompt"><strong>提示</strong></a>的回答。例如，假设有以下提示：</p>
+
+<blockquote>
+<p>将问题“What is your name?”从英语翻译成法语。</p>
+</blockquote>
+
+<p>专家的回答可能是：</p>
+
+<blockquote>
+<p>Comment vous appelez-vous?</p>
+</blockquote>
+
+<p>各种指标（例如 <a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#ROUGE"><strong>ROUGE</strong></a>）用于衡量参考文本与机器学习模型<a href="#generated-text"><strong>生成的文本</strong></a>的匹配程度。</p>
+<aside class="note"><strong>注意</strong>：<span> 专家通常是人类，但也可能是机器学习模型。</span></aside>
+<p><a class="glossary-anchor" name="reflection"></a>
+</p><h2 class="hide-from-toc" data-text=" 反思" id="reflection" tabindex="-1"> 反思</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+  <div class="glossary-icon" title="代理式">#agent</div>
+</div><p></p>
+
+<p>一种用于提高<a href="#agentic-workflow"><strong>智能体工作流</strong></a>质量的策略，即在将某一步骤的输出传递给下一步骤之前，先检查（反思）该输出。</p>
+
+<p>检查者通常是生成回答的同一 <a href="#LLM"><strong>LLM</strong></a>（不过也可能是其他 LLM）。生成回答的 LLM 如何才能公平地评判自己的回答？“诀窍”是让 LLM 处于批判性（反思性）思维模式。这个过程类似于作家先以创意的心态撰写初稿，然后切换到批判性思维模式进行编辑。</p>
+
+<p>例如，假设有一个智能体工作流，其第一步是为咖啡杯创建文字。此步骤的提示可能如下所示：</p>
+
+<blockquote>
+<p>您是创作者。生成幽默风趣且不超过 50 个字符的原创文字，适合印在咖啡杯上。</p>
+</blockquote>
+
+<p>现在，假设有以下反思性提示：</p>
+
+<blockquote>
+<p>您是咖啡饮用者。您会觉得上述回答幽默吗？</p>
+</blockquote>
+
+<p>然后，工作流可能只会将获得高反思得分的文本传递到下一阶段。</p>
+
+<p><a class="glossary-anchor" name="RLHF"></a>
+</p><h2 class="hide-from-toc" data-text=" 基于人类反馈的强化学习 (RLHF)" id="reinforcement-learning-from-human-feedback-rlhf" tabindex="-1"> 基于人类反馈的强化学习 (RLHF)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>使用人工评估者的反馈来提高模型<a href="#response"><strong>回答</strong></a>的质量。例如，RLHF 机制可以要求用户使用 👍 或 👎 表情符号对模型回答的质量进行评分。然后，系统可以根据该反馈调整其未来的回答。</p>
+
+
+
+</p><p><a class="glossary-anchor" name="response"></a>
+</p><h2 class="hide-from-toc" data-text=" Response" id="response" tabindex="-1"> Response</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#generative-AI"><strong>生成式 AI</strong></a> 模型<a href="#inference"><strong>推理</strong></a>出的文字、图片、音频或视频。换句话说，<a href="#prompt"><strong>提示</strong></a>是生成式 AI 模型的<em>输入</em>，而回答是<em>输出</em>。</p>
+
+<p><a class="glossary-anchor" name="response-set"></a>
+</p><h2 class="hide-from-toc" data-text=" 回答集" id="response-set" tabindex="-1"> 回答集</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#large-language-model"><strong>大语言模型</strong></a>针对输入<a href="#prompt-set"><strong>提示集</strong></a>返回的<a href="#response"><strong>回答</strong></a>集合。</p>
+
+
+
+
+
+</p><p><a class="glossary-anchor" name="role-prompting"></a>
+</p><h2 class="hide-from-toc" data-text=" 角色提示" id="role-prompting" tabindex="-1"> 角色提示</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><strong>一种<a href="#prompt"><strong>提示</strong></a>，通常以代词“你”开头，用于告知<a href="#generative-AI"><strong>生成式 AI</strong></a> 模型在生成<a href="#response"><strong>回答</strong></a>时假装成特定的人或扮演特定的角色。
+</strong>角色提示可帮助生成式 AI 模型进入正确的“思维模式”，从而生成更有用的回答。例如，根据您希望获得的回答类型，以下任何角色提示都可能适用：</p>
+
+<blockquote>
+<p>您拥有计算机科学博士学位。</p>
+</blockquote>
+
+<blockquote>
+<p>您是一名软件工程师，喜欢耐心地向新学程序设计的学生讲解 Python。</p>
+</blockquote>
+
+<blockquote>
+<p>您是一位行动英雄，拥有非常专业的编程技能。
+向我保证，您会在 Python 列表中找到特定项。</p>
+</blockquote>
+
+<p><a class="glossary-anchor" name="s"></a>
+</p><h2 class="glossary" data-text="S" id="s" tabindex="-1">S</h2><p></p>
+
+<p><a class="glossary-anchor" name="soft_prompt_tuning"></a>
+</p><h2 class="hide-from-toc" data-text=" 软提示调优" id="soft-prompt-tuning" tabindex="-1"> 软提示调优</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种用于针对特定任务调整<a href="#large-language-model"><strong>大语言模型</strong></a>的技术，无需资源密集型<a href="#fine-tuning"><strong>微调</strong></a>。与重新训练模型中的所有<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#weight"><strong>权重</strong></a>不同，软提示调优会自动调整<a href="#prompt"><strong>提示</strong></a>，以实现相同的目标。</p>
+
+<p>在给定文本提示的情况下，软提示调整通常会将额外的令牌嵌入附加到提示中，并使用反向传播来优化输入。</p>
+
+<p>“硬”提示包含实际的令牌，而不是令牌嵌入。</p>
+
+<p><a class="glossary-anchor" name="specificational-coding"></a>
+</p><h2 class="hide-from-toc" data-text="规范化编码" id="specificational-coding" tabindex="-1">规范化编码</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>以人类语言（例如英语）编写和维护描述软件的文件的过程。然后，您可以让生成式 AI 模型或其他软件工程师创建符合该描述的软件。</p>
+
+<p>自动生成的代码通常需要迭代。在规范化编码中，您需要迭代说明文件。相比之下，在<a href="#conversational-coding"><strong>对话式编码</strong></a>中，您可以在提示框内进行迭代。在实践中，自动代码生成有时会涉及规范化编码和对话式编码的<em>组合</em>。</p>
+
+
+
+<p><a class="glossary-anchor" name="t"></a>
+</p><h2 class="glossary" data-text="T" id="t" tabindex="-1">T</h2><p></p>
+
+<p><a class="glossary-anchor" name="temperature"></a>
+</p><h2 class="hide-from-toc" data-text=" 温度" id="temperature" tabindex="-1"> 温度</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>一种<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#hyperparameter"><strong>超参数</strong></a>，用于控制模型输出的随机程度。温度越高，输出就越随机；温度越低，输出就越不随机。</p>
+
+<p>选择最佳温度取决于具体的应用和/或字符串值。</p>
+
+
+
+
+
+
+
+
+
+</p><p><a class="glossary-anchor" name="u"></a>
+</p><h2 class="glossary" data-text="U" id="u" tabindex="-1">U</h2><p></p>
+
+<p><a class="glossary-anchor" name="Ultra"></a>
+</p><h2 class="hide-from-toc" data-text=" Ultra" id="ultra" tabindex="-1"> Ultra</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>具有最多<a href="https://developers.google.com/machine-learning/glossary?hl=zh-cn#parameter"><strong>形参</strong></a>的 <a href="#Gemini-models"><strong>Gemini 模型</strong></a>。
+如需了解详情，请参阅 <a href="https://deepmind.google/models/gemini/ultra/?hl=zh-cn">Gemini Ultra</a>。</p>
+
+
+
+<p>另请参阅 <a href="#Pro"><strong>Pro</strong></a> 和 <a href="#Nano"><strong>Nano</strong></a>。</p>
+
+
+
+</p><p><a class="glossary-anchor" name="v"></a>
+</p><h2 class="glossary" data-text="V" id="v" tabindex="-1">V</h2><p></p>
+
+<p><a class="glossary-anchor" name="Vertex"></a>
+</p><h2 class="hide-from-toc" data-text=" Vertex " id="vertex" tabindex="-1"> Vertex </h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="Google Cloud">#GoogleCloud</div>
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div>
+Google Cloud 的 AI 和机器学习平台。Vertex 提供用于构建、部署和管理 AI 应用的工具和基础设施，包括对 <a href="#Gemini"><strong>Gemini</strong></a> 模型的访问权限。<p></p>
+
+<p><a class="glossary-anchor" name="vibe-coding"></a>
+</p><h2 class="hide-from-toc" data-text=" 氛围编程 (vibe coding)" id="vibe-coding" tabindex="-1"> 氛围编程 (vibe coding)</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p>提示生成式 AI 模型创建软件。也就是说，您的提示会描述软件的用途和功能，生成式 AI 模型会将这些描述转换为源代码。生成的代码并不总是符合您的意图，因此氛围编程通常需要迭代。</p>
+
+<p><a href="https://wikipedia.org/wiki/Andrej_Karpathy">Andrej Karpathy</a> 在这篇 <a href="https://x.com/karpathy/status/1886192184808149383">X 帖子</a>中创造了“氛围编程 (vibe coding)”一词。在 X 帖子中，Karpathy 将其描述为“一种新型编码...完全沉浸在氛围中...”。因此，该术语最初是指一种有意宽松的软件创建方法，您甚至可能不会检查生成的代码。不过，在许多圈子里，该术语已迅速演变为指<em>任何</em>形式的 AI 生成的编码。</p>
+
+<p>如需详细了解氛围编程 (vibe coding)，请参阅
+<a href="https://cloud.google.com/discover/what-is-vibe-coding?hl=zh-cn">什么是氛围编程 (vibe coding)？</a>。
+
+
+</p><p>此外，请将氛围编程与以下内容进行比较和对比：</p>
+
+<ul>
+<li><a href="#specificational-coding"><strong>规范化编码</strong></a></li>
+<li><a href="#conversational-coding"><strong>对话式编码</strong></a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+</p><p><a class="glossary-anchor" name="z"></a>
+</p><h2 class="glossary" data-text="Z" id="z" tabindex="-1">Z</h2><p></p>
+
+<p><a class="glossary-anchor" name="zero-shot-prompting"></a>
+</p><h2 class="hide-from-toc" data-text=" 零样本提示" id="zero-shot-prompting" tabindex="-1"> 零样本提示</h2>
+<div class="glossary-icon-container">
+  <div class="glossary-icon" title="生成式 AI">#generativeAI</div>
+</div><p></p>
+
+<p><a href="#prompt"><strong>提示</strong></a><em>未</em>提供示例来展示您希望<a href="#large-language-model"><strong>大语言模型</strong></a>如何回答。例如：</p>
+
+<table>
+  <tbody><tr> <th>一个提示的组成部分</th> <th>备注</th> </tr>
+  <tr>
+    <td><tt>指定国家/地区的官方货币是什么？</tt></td>
+    <td>您希望 LLM 回答的问题。</td>
+  </tr>
+  <tr> <td><tt>印度</tt>：</td>              <td>实际查询。</td> </tr>
+</tbody></table>
+
+<p>大语言模型可能会提供以下任一回答：</p>
+
+<ul>
+<li>卢比符号</li>
+<li>印度卢比</li>
+<li>₹</li>
+<li>印度卢比</li>
+<li>卢比</li>
+<li>印度卢比</li>
+</ul>
+
+<p>所有答案都是正确的，不过您可能更喜欢某种特定格式。</p>
+
+<p>比较和对比<strong>零样本提示</strong>与以下术语：</p>
+
+<ul>
+<li><a href="#one-shot-prompting"><strong>单样本提示</strong></a></li>
+<li><a href="#few-shot-prompting"><strong>少样本提示</strong></a></li>
+</ul>
+
+  
+  
+
+  
+</div>
+
+  
+    
+      <devsite-recommendations display="in-page" hidden yield>
+      </devsite-recommendations>
+    
+    
+      
+    <devsite-thumb-rating position="footer">
+    </devsite-thumb-rating>
+  
+       
+         <devsite-feedback
+  position="footer"
+  project-name="Machine Learning"
+  product-id="5005867"
+  bucket=""
+  context=""
+  version="t-devsite-webserver-20260915-r00-rc00.480402789007080698"
+  data-label="Send Feedback Button"
+  track-type="feedback"
+  track-name="sendFeedbackLink"
+  track-metadata-position="footer"
+  class="nocontent"
+  data-nosnippet
+  
+  
+  
+    project-icon="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/touchicon-180-new.png"
+  
+  
+  
+  >
+
+  <button>
+  
+    
+    发送反馈
+  
+  </button>
+</devsite-feedback>
+       
+    
+    
+      <devsite-recommendations id="recommendations-link" yield></devsite-recommendations>
+    
+  
+
+  <div class="devsite-floating-action-buttons"></div></article>
+
+
+<devsite-content-footer class="nocontent" data-nosnippet>
+  <p>如未另行说明，那么本页面中的内容已根据<a href="https://creativecommons.org/licenses/by/4.0/">知识共享署名 4.0 许可</a>获得了许可，并且代码示例已根据 <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0 许可</a>获得了许可。有关详情，请参阅 <a href="https://developers.google.com/site-policies?hl=zh-cn">Google 开发者网站政策</a>。Java 是 Oracle 和/或其关联公司的注册商标。</p>
+  <p>最后更新时间 (UTC)：2026-04-13。</p>
+</devsite-content-footer>
+
+
+<devsite-notification
+>
+</devsite-notification>
+
+
+  
+<div class="devsite-content-data">
+  
+    
+    
+    <template class="devsite-thumb-rating-feedback">
+      <devsite-feedback
+  position="thumb-rating"
+  project-name="Machine Learning"
+  product-id="5005867"
+  bucket=""
+  context=""
+  version="t-devsite-webserver-20260915-r00-rc00.480402789007080698"
+  data-label="Send Feedback Button"
+  track-type="feedback"
+  track-name="sendFeedbackLink"
+  track-metadata-position="thumb-rating"
+  class="nocontent"
+  data-nosnippet
+  
+  
+  
+    project-icon="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/touchicon-180-new.png"
+  
+  
+  
+  >
+
+  <button>
+  
+    需要向我们提供更多信息？
+  
+  </button>
+</devsite-feedback>
+    </template>
+  
+  
+    <template class="devsite-content-data-template">
+      [[["易于理解","easyToUnderstand","thumb-up"],["解决了我的问题","solvedMyProblem","thumb-up"],["其他","otherUp","thumb-up"]],[["没有我需要的信息","missingTheInformationINeed","thumb-down"],["太复杂/步骤太多","tooComplicatedTooManySteps","thumb-down"],["内容需要更新","outOfDate","thumb-down"],["翻译问题","translationIssue","thumb-down"],["示例/代码问题","samplesCodeIssue","thumb-down"],["其他","otherDown","thumb-down"]],["最后更新时间 (UTC)：2026-04-13。"],[],[]]
+    </template>
+  
+</div>
+            
+          </devsite-content>
+        </main>
+        <devsite-footer-promos class="devsite-footer">
+          
+            
+          
+        </devsite-footer-promos>
+        <devsite-footer-linkboxes class="devsite-footer">
+          
+            
+<nav class="devsite-footer-linkboxes nocontent"
+     aria-label="页脚链接"
+     data-nosnippet>
+  
+  <ul class="devsite-footer-linkboxes-list">
+    
+    <li class="devsite-footer-linkbox ">
+    <h3 class="devsite-footer-linkbox-heading no-link">互动</h3>
+      <ul class="devsite-footer-linkbox-list">
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developers.google.com/program?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 1)"
+            >
+            
+          
+            Google Developer Program
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developers.google.com/community?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 2)"
+            >
+            
+          
+            Google Developer Groups
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developers.google.com/community/experts?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 3)"
+            >
+            
+          
+            Google Developer Experts
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developers.google.com/community/accelerators?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 4)"
+            >
+            
+          
+            Accelerators
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developers.google.com/community/nvidia?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 5)"
+            >
+            
+              
+              
+            
+          
+            Google Cloud & NVIDIA
+          
+          </a>
+          
+          
+        </li>
+        
+      </ul>
+    </li>
+    
+    <li class="devsite-footer-linkbox ">
+    <h3 class="devsite-footer-linkbox-heading no-link">关注</h3>
+      <ul class="devsite-footer-linkbox-list">
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="//googledevelopers.blogspot.com"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 1)"
+            >
+            
+          
+            博客
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://bsky.app/profile/developers.google.com"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 2)"
+            >
+            
+          
+            Bluesky
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://www.instagram.com/googlefordevs/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 3)"
+            >
+            
+          
+            Instagram
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://www.linkedin.com/showcase/googledevelopers/"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 4)"
+            >
+            
+          
+            LinkedIn
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="//twitter.com/googledevs"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 5)"
+            >
+            
+          
+            X (Twitter)
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="//www.youtube.com/user/GoogleDevelopers?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 6)"
+            >
+            
+              
+              
+            
+          
+            YouTube
+          
+          </a>
+          
+          
+        </li>
+        
+      </ul>
+    </li>
+    
+    <li class="devsite-footer-linkbox ">
+    <h3 class="devsite-footer-linkbox-heading no-link">构建</h3>
+      <ul class="devsite-footer-linkbox-list">
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developer.android.com/?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 1)"
+            >
+            
+          
+            Android
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developer.chrome.com/?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 2)"
+            >
+            
+          
+            Chrome
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://firebase.google.com/?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 3)"
+            >
+            
+          
+            Firebase
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://aistudio.google.com/?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 4)"
+            >
+            
+          
+            Google AI Studio
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://antigravity.google/?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 5)"
+            >
+            
+          
+            Google Antigravity
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://cloud.google.com/?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 6)"
+            >
+            
+          
+            Google Cloud
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://play.google.com/console/about/?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 7)"
+            >
+            
+          
+            Google Play
+          
+          </a>
+          
+          
+        </li>
+        
+        <li class="devsite-footer-linkbox-item">
+          
+          <a href="https://developers.google.com/products?hl=zh-cn"
+             class="devsite-footer-linkbox-link gc-analytics-event"
+             data-category="Site-Wide Custom Events"
+            
+             data-label="Footer Link (index 8)"
+            >
+            
+              
+              
+            
+          
+            View all
+          
+          </a>
+          
+          
+        </li>
+        
+      </ul>
+    </li>
+    
+  </ul>
+  
+</nav>
+          
+        </devsite-footer-linkboxes>
+        <devsite-footer-utility class="devsite-footer">
+          
+            
+
+<div class="devsite-footer-utility nocontent" data-nosnippet>
+  
+  
+  <nav class="devsite-footer-sites" aria-label="其他 Google Developers 网站">
+    <a href="https://developers.google.com/?hl=zh-cn"
+       class="devsite-footer-sites-logo-link gc-analytics-event"
+       data-category="Site-Wide Custom Events"
+       data-label="Footer Google Developers Link">
+      <picture>
+        
+        <img class="devsite-footer-sites-logo"
+             src="https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/lockup-google-for-developers.svg"
+             loading="lazy"
+             alt="Google Developers">
+      </picture>
+    </a>
+    <ul class="devsite-footer-sites-list">
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//developer.android.com?hl=zh-cn"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Android Link"
+         
+         >
+          Android
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//developer.chrome.com/home?hl=zh-cn"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Chrome Link"
+         
+         >
+          Chrome
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//firebase.google.com?hl=zh-cn"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Firebase Link"
+         
+         >
+          Firebase
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//cloud.google.com?hl=zh-cn"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Google Cloud Platform Link"
+         
+         >
+          Google Cloud Platform
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="//ai.google.dev/?hl=zh-cn"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer Google AI Link"
+         
+         >
+          Google AI
+        </a>
+      </li>
+      
+      <li class="devsite-footer-sites-item">
+        <a href="https://developers.google.com/products?hl=zh-cn"
+           class="devsite-footer-sites-link
+                  gc-analytics-event"
+           data-category="Site-Wide Custom Events"
+         
+           data-label="Footer All products Link"
+         
+         >
+          所有产品
+        </a>
+      </li>
+      
+    </ul>
+  </nav>
+  
+
+  
+  <nav class="devsite-footer-utility-links" aria-label="实用程序链接">
+    
+    <ul class="devsite-footer-utility-list">
+      
+      <li class="devsite-footer-utility-item
+                 ">
+        
+        
+        <a class="devsite-footer-utility-link gc-analytics-event"
+           href="https://developers.google.com/terms/site-terms?hl=zh-cn"
+           data-category="Site-Wide Custom Events"
+           data-label="Footer Terms link"
+         >
+          条款
+        </a>
+        
+      </li>
+      
+      <li class="devsite-footer-utility-item
+                 ">
+        
+        
+        <a class="devsite-footer-utility-link gc-analytics-event"
+           href="//policies.google.com/privacy?hl=zh-cn"
+           data-category="Site-Wide Custom Events"
+           data-label="Footer Privacy link"
+         >
+          隐私权政策
+        </a>
+        
+      </li>
+      
+      <li class="devsite-footer-utility-item
+                 glue-cookie-notification-bar-control">
+        
+        
+        <a class="devsite-footer-utility-link gc-analytics-event"
+           href="#"
+           data-category="Site-Wide Custom Events"
+           data-label="Footer Manage cookies link"
+         
+           aria-hidden="true"
+         >
+          Manage cookies
+        </a>
+        
+      </li>
+      
+    </ul>
+    
+    
+<devsite-language-selector>
+  <ul role="presentation">
+    
+    
+    <li role="presentation">
+      <a role="menuitem" lang="en"
+        >English</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="de"
+        >Deutsch</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="es"
+        >Español</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="es_419"
+        >Español – América Latina</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="fr"
+        >Français</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="id"
+        >Indonesia</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="it"
+        >Italiano</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="pl"
+        >Polski</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="pt_br"
+        >Português – Brasil</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="vi"
+        >Tiếng Việt</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="tr"
+        >Türkçe</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ru"
+        >Русский</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="he"
+        >עברית</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ar"
+        >العربيّة</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="fa"
+        >فارسی</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="hi"
+        >हिंदी</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="bn"
+        >বাংলা</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="th"
+        >ภาษาไทย</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="zh_cn"
+        >中文 – 简体</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="zh_tw"
+        >中文 – 繁體</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ja"
+        >日本語</a>
+    </li>
+    
+    <li role="presentation">
+      <a role="menuitem" lang="ko"
+        >한국어</a>
+    </li>
+    
+  </ul>
+</devsite-language-selector>
+
+  </nav>
+</div>
+          
+        </devsite-footer-utility>
+        <devsite-panel>
+          
+        </devsite-panel>
+        
+          <devsite-concierge
+  
+  
+    data-info-panel
+  
+  
+    data-ai-panel
+  
+  
+  
+  
+    data-api-explorer-panel
+  >
+</devsite-concierge>
+        
+      </section>
+      </section>
+    <devsite-sitemask></devsite-sitemask>
+    <devsite-snackbar></devsite-snackbar>
+    <devsite-tooltip ></devsite-tooltip>
+    <devsite-heading-link></devsite-heading-link>
+    <devsite-analytics>
+      
+        <script type="application/json" analytics>[{&#34;dimensions&#34;: {&#34;dimension1&#34;: &#34;Signed out&#34;, &#34;dimension6&#34;: &#34;zh-cn&#34;, &#34;dimension3&#34;: false, &#34;dimension5&#34;: &#34;zh-cn&#34;, &#34;dimension11&#34;: true, &#34;dimension4&#34;: &#34;Machine Learning&#34;}, &#34;gaid&#34;: &#34;UA-24532603-1&#34;, &#34;metrics&#34;: {&#34;ratings_count&#34;: &#34;metric2&#34;, &#34;ratings_value&#34;: &#34;metric1&#34;}, &#34;purpose&#34;: 1}, {&#34;dimensions&#34;: {&#34;dimension1&#34;: &#34;Signed out&#34;, &#34;dimension6&#34;: &#34;zh-cn&#34;, &#34;dimension3&#34;: false, &#34;dimension5&#34;: &#34;zh-cn&#34;, &#34;dimension11&#34;: true, &#34;dimension4&#34;: &#34;Machine Learning&#34;}, &#34;gaid&#34;: &#34;UA-105980039-1&#34;, &#34;metrics&#34;: {&#34;ratings_count&#34;: &#34;metric2&#34;, &#34;ratings_value&#34;: &#34;metric1&#34;}, &#34;purpose&#34;: 0}]</script>
+<script type="application/json" tag-management>{&#34;at&#34;: &#34;True&#34;, &#34;ga4&#34;: [{&#34;id&#34;: &#34;G-272J68FCRF&#34;, &#34;purpose&#34;: 1}, {&#34;id&#34;: &#34;G-PRD3Z0HRX3&#34;, &#34;purpose&#34;: 0}], &#34;ga4p&#34;: [{&#34;id&#34;: &#34;G-272J68FCRF&#34;, &#34;purpose&#34;: 1}], &#34;gtm&#34;: [{&#34;id&#34;: &#34;GTM-T98GCPGN&#34;, &#34;purpose&#34;: 1}], &#34;parameters&#34;: {&#34;internalUser&#34;: &#34;False&#34;, &#34;language&#34;: {&#34;machineTranslated&#34;: &#34;True&#34;, &#34;requested&#34;: &#34;zh-cn&#34;, &#34;served&#34;: &#34;zh-cn&#34;}, &#34;pageType&#34;: &#34;article&#34;, &#34;projectName&#34;: &#34;Machine Learning&#34;, &#34;signedIn&#34;: &#34;False&#34;, &#34;tenant&#34;: &#34;developers&#34;, &#34;recommendations&#34;: {&#34;sourcePage&#34;: &#34;&#34;, &#34;sourceType&#34;: 0, &#34;sourceRank&#34;: 0, &#34;sourceIdenticalDescriptions&#34;: 0, &#34;sourceTitleWords&#34;: 0, &#34;sourceDescriptionWords&#34;: 0, &#34;experiment&#34;: &#34;&#34;}, &#34;experiment&#34;: {&#34;ids&#34;: &#34;&#34;}}}</script>
+      
+    </devsite-analytics>
+    
+      <devsite-badger></devsite-badger>
+    
+    
+    
+    
+<script nonce="LCWrGaOG6qX90/1ZF4V0T9VNLjS7jn">
+  
+  (function(d,e,v,s,i,t,E){d['GoogleDevelopersObject']=i;
+    t=e.createElement(v);t.async=1;t.src=s;E=e.getElementsByTagName(v)[0];
+    E.parentNode.insertBefore(t,E);})(window, document, 'script',
+    'https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/js/app_loader.js', '[1,"zh_cn",null,"/js/devsite_app_module.js","https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87","https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers","https://developers-dot-devsite-v2-prod.appspot.com",null,null,["/_pwa/developers/manifest.json","https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/images/video-placeholder.svg","https://www.gstatic.com/devrel-devsite/prod/v826fb839c0b38141980abf47020a61dc3ff340cbde624f57178f4c01d184ef87/developers/images/favicon-new.png","https://fonts.googleapis.com/css?family=Google+Sans:400,500|Roboto:400,400italic,500,500italic,700,700italic|Roboto+Mono:400,500,700&display=swap"],1,null,[1,6,8,12,14,17,21,25,50,52,63,70,75,76,80,87,91,92,93,97,98,100,101,102,103,104,105,107,108,109,110,112,113,116,117,118,120,122,124,125,126,127,129,130,131,132,133,134,135,136,138,140,141,147,148,149,151,152,156,157,158,159,161,163,164,168,169,170,179,180,182,183,186,191,193,196],"AIzaSyAP-jjEJBzmIyKR4F-3XITp8yM9T1gEEI8","AIzaSyB6xiKGDR5O3Ak2okS4rLkauxGUG7XP0hg","developers.google.com","AIzaSyAQk0fBONSGUqCNznf6Krs82Ap1-NV6J4o","AIzaSyCCxcqdrZ_7QMeLCRY20bh_SXdAYqy70KY",null,null,null,["DevPro__enable_embed_profile_creation","Profiles__enable_user_type","DevPro__enable_g1_ineligible_redirect","Search__enable_ai_search_summaries_for_all","MiscFeatureFlags__enable_appearance_cookies","Cloud__enable_cloud_shell","Profiles__enable_release_notes_notifications","Search__enable_page_map","Cloud__enable_legacy_calculator_redirect","DevPro__enable_developer_subscriptions","DevPro__enable_vertex_credit_card","Profiles__enable_completecodelab_endpoint","Significatio__enable_by_tenant","Profiles__enable_developer_profile_pages_as_content","EngEduTelemetry__enable_engedu_telemetry","Profiles__enable_purchase_prompts","MiscFeatureFlags__fix_lower_breadcrumbs","Cloud__fast_free_trial","MiscFeatureFlags__gdp_dashboard_reskin_enabled","Cloud__enable_free_trial_server_call","MiscFeatureFlags__remove_cross_domain_tracking_params","DevPro__enable_cloud_innovators_plus","Profiles__enable_completequiz_endpoint","Cloud__cache_serialized_dynamic_content","Profiles__enable_page_saving","MiscFeatureFlags__enable_explicit_template_dependencies","CloudShell__cloud_shell_button","Search__enable_ai_search_summaries_restricted","Cloud__enable_cloud_dlp_service","Profiles__enable_stripe_subscription_management","Profiles__enable_playlist_community_acl","Experiments__reqs_query_experiments","Cloud__enable_cloud_shell_fte_user_flow","MiscFeatureFlags__enable_project_variables","Profiles__enable_complete_playlist_endpoint","TpcFeatures__enable_unmirrored_page_left_nav","Concierge__enable_actions_menu","Concierge__enable_concierge","CloudShell__cloud_code_overflow_menu","DevPro__enable_g1_integration","AIStudioInteractionsToggle__interactions_are_default","Concierge__enable_pushui","Profiles__enable_dashboard_curated_recommendations","DevPro__enable_credits_banner","MiscFeatureFlags__enable_firebase_utm","DevPro__enable_nvidia_credits_card","Profiles__enable_profile_collections","Analytics__enable_clearcut_logging","DevPro__enable_google_payments_buyflow","Profiles__enable_join_program_group_endpoint","Profiles__enable_awarding_url","BookNav__enable_tenant_cache_key","MiscFeatureFlags__enable_variable_operator_index_yaml","Analytics__enable_devpro_interaction_logging","MiscFeatureFlags__developers_footer_image","Profiles__enable_auto_apply_credits","Cloud__enable_cloudx_experiment_ids","Concierge__enable_concierge_restricted","Profiles__enable_targeted_hero","Profiles__enable_developer_profile_benefits_ui_redesign","DevPro__enable_payments_first_batch","DevPro__enable_firebase_workspaces_card","Concierge__enable_devsite_llm_tools","MiscFeatureFlags__enable_variable_operator","MiscFeatureFlags__developers_footer_dark_image","Profiles__enable_public_developer_profiles","Profiles__enable_callout_notifications","Profiles__require_profile_eligibility_for_signin","Search__enable_ai_eligibility_checks","TpcFeatures__proxy_prod_host","DevPro__enable_code_assist","Search__enable_suggestions_from_borg","SignIn__enable_l1_signup_flow","DevPro__enable_enterprise","Concierge__enable_key_takeaways","Profiles__enable_developer_profiles_callout","DevPro__enable_free_benefits","MiscFeatureFlags__enable_explain_this_code","DevPro__remove_eu_tax_intake_form","MiscFeatureFlags__enable_view_transitions","DevPro__enable_google_one_card","Profiles__enable_recognition_badges","Concierge__enable_key_takeaways_new_ui","Concierge__enable_remove_info_panel_tags","Search__enable_dynamic_content_confidential_banner","Search__enable_ai_search_summaries","DevPro__enable_devpro_offers","DevPro__enable_devsite_captcha","MiscFeatureFlags__enable_framebox_badge_methods"],null,null,"AIzaSyBLEMok-5suZ67qRPzx0qUtbnLmyT_kCVE","https://developerscontentserving-pa.clients6.google.com","AIzaSyCM4QpTRSqP5qI4Dvjt4OAScIN8sOUlO-k","https://developerscontentsearch-pa.clients6.google.com",1,4,null,"https://developerprofiles-pa.clients6.google.com",[1,"developers","Google for Developers","developers.google.com",null,"developers-dot-devsite-v2-prod.appspot.com",null,null,[1,1,[1],null,null,null,null,null,null,null,null,[1],null,null,null,null,null,null,[1],[1,null,null,[1,20],"/recommendations/information"],null,null,null,[1,1,1],[1,1,null,1,1,null,null,["/meridian"]],[1,null,null,null,null,null,null,["/admob","/ad-manager/mobile-ads-sdk","/ml-kit"]],null,[null,["/meridian","/youtube/devices/"]],1,null,[1]],null,[null,null,null,null,null,null,"/images/lockup-new.svg","/images/touchicon-180-new.png",null,null,null,null,1,null,null,null,null,null,null,null,null,1,null,null,null,"/images/lockup-dark-theme-new.svg",[]],[],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,[6,1,14,15,20,22,23,29,32,36],null,[[null,null,null,[3,7,10,2,39,17,4,32,24,11,12,13,34,15,25],null,null,[1,[["docType","Choose a content type",[["Tutorial",null,null,null,null,null,null,null,null,"Tutorial"],["Guide",null,null,null,null,null,null,null,null,"Guide"],["Sample",null,null,null,null,null,null,null,null,"Sample"]]],["product","Choose a product",[["Android",null,null,null,null,null,null,null,null,"Android"],["ARCore",null,null,null,null,null,null,null,null,"ARCore"],["ChromeOS",null,null,null,null,null,null,null,null,"ChromeOS"],["Firebase",null,null,null,null,null,null,null,null,"Firebase"],["Flutter",null,null,null,null,null,null,null,null,"Flutter"],["Assistant",null,null,null,null,null,null,null,null,"Google Assistant"],["GoogleCloud",null,null,null,null,null,null,null,null,"Google Cloud"],["GoogleMapsPlatform",null,null,null,null,null,null,null,null,"Google Maps Platform"],["GooglePay",null,null,null,null,null,null,null,null,"Google Pay & Google Wallet"],["GooglePlay",null,null,null,null,null,null,null,null,"Google Play"],["Tensorflow",null,null,null,null,null,null,null,null,"TensorFlow"]]],["category","Choose a topic",[["AiAndMachineLearning",null,null,null,null,null,null,null,null,"AI and Machine Learning"],["Data",null,null,null,null,null,null,null,null,"Data"],["Enterprise",null,null,null,null,null,null,null,null,"Enterprise"],["Gaming",null,null,null,null,null,null,null,null,"Gaming"],["Mobile",null,null,null,null,null,null,null,null,"Mobile"],["Web",null,null,null,null,null,null,null,null,"Web"]]]]]],[1,1],null,1],[[["UA-24532603-1"],["UA-22084204-5"],null,null,["UA-24532603-5"],["GTM-T98GCPGN"],null,[["G-272J68FCRF"],null,null,[["G-272J68FCRF",2]]],[["UA-24532603-1",2]],null,[["UA-24532603-5",2]],[["GTM-T98GCPGN",2]],1],[[12,9],[5,4],[15,12],[13,10],[11,8],[4,3],[1,1],[3,2],[14,11],[16,13],[6,5]],[[1,1],[2,2]]],null,4,null,null,null,null,null,null,null,null,null,null,null,null,null,"developers.devsite.google",null,null,null,null,null,[]],null,"pk_live_5170syrHvgGVmSx9sBrnWtA5luvk9BwnVcvIi7HizpwauFG96WedXsuXh790rtij9AmGllqPtMLfhe2RSwD6Pn38V00uBCydV4m",1,1,"https://developerscontentinsights-pa.clients6.google.com","AIzaSyCg-ZUslalsEbXMfIo9ZP8qufZgo3LSBDU","AIzaSyDxT0vkxnY_KeINtA4LSePJO-4MAZPMRsE","https://developers.clients6.google.com",["https://codeassist.google.com","https://code-assist-free-tier.corp.google.com"],null,"AIzaSyBQom12tzI-rybN7Sf-KfeL4nwm-Rf7PmI\n",null,null,"https://developers.googleapis.com"]')
+  
+</script>
+
+    <devsite-a11y-announce></devsite-a11y-announce>
+  </body>
+</html>
