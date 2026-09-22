@@ -180,6 +180,9 @@ test("task payload captures the glossary and sends an actual review boolean", ()
     prefs.set("semanticReview", true);
     const config = helper.getServerConfig();
     assert.equal(config.semanticReview, true);
+    config.glossaryPacks = [
+        { id: "medicine", version: "1", sha256: "a".repeat(64) },
+    ];
     glossary.clearGlossaryEntries();
     prefs.set("semanticReview", false);
     const captured = helper.buildTaskRequestBody(
@@ -190,12 +193,14 @@ test("task payload captures the glossary and sends an actual review boolean", ()
         { source: "camera", target: "相机", tgt_lng: "zh-CN" },
     ]);
     assert.equal(captured.semanticReview, true);
+    assert.deepEqual(captured.glossaryPacks, config.glossaryPacks);
     const current = helper.buildTaskRequestBody(
         { fileName: "paper.pdf", base64: "AA==" },
         helper.getServerConfig(),
     );
     assert.deepEqual(current.glossaryEntries, []);
     assert.equal(current.semanticReview, false);
+    assert.deepEqual(current.glossaryPacks, []);
 });
 
 test("new and legacy incomplete configurations explicitly disable review by default", () => {

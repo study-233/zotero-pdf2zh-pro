@@ -58,7 +58,21 @@
     margin-bottom: 14px; } .pdf2zh-pref-pane button { min-height: 28px; }
     .pdf2zh-pref-pane input, .pdf2zh-pref-pane select, .pdf2zh-pref-pane button
     { color: FieldText; } #zotero-prefpane-__addonRef__-profileSummary {
-    overflow-wrap: anywhere; }
+    overflow-wrap: anywhere; } .glossary-pack-list { margin-top: 8px; }
+    .glossary-pack-row { display: grid; grid-template-columns: minmax(140px,
+    1fr) minmax(90px, auto) auto; gap: 6px 12px; align-items: center; padding:
+    7px 0; border-bottom: 1px solid color-mix(in srgb, FieldText 10%,
+    transparent); } .glossary-pack-actions { display: flex; gap: 6px;
+    justify-content: end; } .glossary-pack-state { font-size: 12px; color:
+    color-mix(in srgb, FieldText 68%, transparent); } .glossary-pack-row
+    input[type="checkbox"] { margin: 0 4px 0 0; } .glossary-pack-error {
+    grid-column: 1 / -1; overflow-wrap: anywhere; } .glossary-pack-details {
+    margin-top: 10px; font-size: 12px; } .glossary-pack-details summary {
+    margin-bottom: 8px; } .glossary-pack-source { margin-top: 10px;
+    overflow-wrap: anywhere; } .glossary-custom-title { margin: 18px 0 4px;
+    font-size: 13px; } @media (max-width: 620px) { .glossary-pack-row {
+    grid-template-columns: 1fr auto; } .glossary-pack-state { grid-column: 1; }
+    .glossary-pack-actions { grid-column: 2; grid-row: 1 / 3; } }
 </html:style>
 
 <groupbox
@@ -278,8 +292,46 @@
                 class="pref-section-title"
                 data-l10n-id="pref-glossary-title"
             />
+            <html:button
+                id="zotero-prefpane-__addonRef__-glossary-check-updates"
+                data-l10n-id="pref-pack-check-updates"
+                disabled="true"
+            />
         </html:div>
+        <html:p class="pref-description" data-l10n-id="pref-pack-hint" />
+        <html:p
+            id="zotero-prefpane-__addonRef__-glossaryPackLanguage"
+            class="pref-description"
+            data-l10n-id="pref-pack-language-inactive"
+            hidden="true"
+        />
+        <html:div
+            id="zotero-prefpane-__addonRef__-glossaryPacks"
+            class="glossary-pack-list"
+        />
+        <html:p
+            id="zotero-prefpane-__addonRef__-glossaryPacksResult"
+            class="pref-description"
+            role="status"
+            aria-live="polite"
+            hidden="true"
+        />
+        <html:details class="glossary-pack-details">
+            <html:summary data-l10n-id="pref-pack-sources" />
+            <html:div id="zotero-prefpane-__addonRef__-glossaryPackSources" />
+        </html:details>
+        <html:h4
+            class="glossary-custom-title"
+            data-l10n-id="pref-glossary-custom"
+        />
         <html:p class="pref-description" data-l10n-id="pref-glossary-hint" />
+        <html:details class="glossary-pack-details">
+            <html:summary data-l10n-id="pref-glossary-format" />
+            <html:p
+                class="pref-description"
+                data-l10n-id="pref-glossary-format-hint"
+            />
+        </html:details>
         <html:p
             id="zotero-prefpane-__addonRef__-glossarySummary"
             class="pref-description"

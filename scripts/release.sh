@@ -10,7 +10,7 @@ Build, validate, and publish a unified zotero-pdf2zh-pro release.
 The release includes the Zotero XPI and update manifest, PyPI wheel/sdist,
 Windows GUI ZIP, a local corresponding-source archive, and an optional
 update to the public source-only Homebrew tap. Add a matching CHANGELOG.md
-section first. Run this unified release from Windows so the Tauri EXE can be built.
+section first. Publication reuses verified CI artifacts; --no-push builds on Windows.
 EOF
 }
 
@@ -78,9 +78,12 @@ done
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] ||
     die "version must look like semver, got: $VERSION"
 
-for cmd in git gh node npx uv perl curl cargo powershell.exe; do
+for cmd in git gh node uv perl curl; do
     require_command "$cmd"
 done
+if [[ "$PUSH" -eq 0 ]]; then
+    for cmd in npx cargo powershell.exe; do require_command "$cmd"; done
+fi
 
 PRODUCT="zotero-pdf2zh-pro"
 TAG="v$VERSION"
@@ -152,9 +155,16 @@ replaceOnce(
   `$1${version}$2`,
   "server lock version",
 );
+replaceOnce(
+  "windows-app/src-tauri/Cargo.lock",
+  /(\[\[package\]\]\r?\nname = "zotero-pdf2zh-pro-control"\r?\nversion = ")[^"]+(")/g,
+  `$1${version}$2`,
+  "control-center lock version",
+);
 NODE
 
 UV_DEFAULT_INDEX=https://pypi.org/simple uv --directory server lock --locked
+if [[ "$PUSH" -eq 0 ]]; then
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_bootstrap.ps1
 uv run --no-project python scripts/test_windows_pe.py
@@ -167,7 +177,6 @@ rm -rf -- plugin/build
 "${PNPM[@]}" --dir plugin build
 
 CI=true "${PNPM[@]}" --dir windows-app install --frozen-lockfile
-"${PNPM[@]}" --dir windows-app test
 RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-msvc "${PNPM[@]}" --dir windows-app tauri build --no-bundle --target x86_64-pc-windows-msvc
 cargo +stable-x86_64-pc-windows-msvc test --release --locked --target x86_64-pc-windows-msvc --manifest-path windows-app/src-tauri/Cargo.toml
 
@@ -176,6 +185,7 @@ uv run --no-project python scripts/build_windows_update_manifest.py \
     --version "$VERSION" --package "$WINDOWS_PACKAGE" --output "$WINDOWS_UPDATE_MANIFEST"
 uv run --no-project python scripts/test_windows_update_manifest.py
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_package.ps1 -Package "$WINDOWS_PACKAGE"
+fi
 
 git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock \
     scripts/windows/common.ps1 windows-app/package.json windows-app/src-tauri/Cargo.toml \
@@ -186,12 +196,10 @@ fi
 COMMIT="$(git rev-parse HEAD)"
 
 mkdir -p dist
-git archive --format=zip --prefix="$PRODUCT-$VERSION/" \
-    --output="$SOURCE_ARCHIVE" "$COMMIT"
-
-for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_UPDATE_MANIFEST" "$SOURCE_ARCHIVE"; do
-    [[ -f "$artifact" ]] || die "missing release artifact: $artifact"
-done
+if [[ "$PUSH" -eq 0 ]]; then
+    git archive --format=zip --prefix="$PRODUCT-$VERSION/" \
+        --output="$SOURCE_ARCHIVE" "$COMMIT"
+fi
 
 REMOTE_TAG_REFS="$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}")"
 REMOTE_TAG_COMMIT="$(printf '%s\n' "$REMOTE_TAG_REFS" | awk '
@@ -208,10 +216,21 @@ if [[ "$PUSH" -eq 1 ]]; then
 fi
 
 # A publication reuses core CI and packages from the standard Windows check.
-# Extended OCR/rollback/relocation checks remain available by manual dispatch.
+# Runtime/OCR and lifecycle checks run once against those packages in CI.
+# Extended rollback/relocation checks remain available by manual dispatch.
 # The workflow's --no-push build does not enter this block recursively.
 BUILD_RUN=""
-if [[ "$PUSH" -eq 1 && ( "$PUBLISH_PYPI" -eq 1 || "$PUBLISH_RELEASE" -eq 1 ) ]]; then
+if [[ "$PUSH" -eq 1 ]]; then
+    CORE_RUN=""
+    for _ in {1..40}; do
+        CORE_RUN="$(gh run list --repo "$MAIN_REPO" --workflow ci.yml \
+            --commit "$COMMIT" --event push --limit 1 --json databaseId \
+            --jq '.[0].databaseId // empty')"
+        [[ -n "$CORE_RUN" ]] && break
+        sleep 2
+    done
+    [[ -n "$CORE_RUN" ]] || die "Core CI did not start for the release commit"
+    gh run watch "$CORE_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
     BUILD_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     gh workflow run build-windows-release.yml --repo "$MAIN_REPO" --ref main \
         -f version="$VERSION" -f commit="$COMMIT" -f full_validation=false
@@ -223,16 +242,6 @@ if [[ "$PUSH" -eq 1 && ( "$PUBLISH_PYPI" -eq 1 || "$PUBLISH_RELEASE" -eq 1 ) ]];
         sleep 2
     done
     [[ -n "$BUILD_RUN" ]] || die "Windows release validation did not start"
-    CORE_RUN=""
-    for _ in {1..40}; do
-        CORE_RUN="$(gh run list --repo "$MAIN_REPO" --workflow ci.yml \
-            --commit "$COMMIT" --event push --limit 1 --json databaseId \
-            --jq '.[0].databaseId // empty')"
-        [[ -n "$CORE_RUN" ]] && break
-        sleep 2
-    done
-    [[ -n "$CORE_RUN" ]] || die "Core CI did not start for the release commit"
-    gh run watch "$CORE_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
     gh run watch "$BUILD_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
     VERIFIED_DIR="dist/verified-$BUILD_RUN"
     gh run download "$BUILD_RUN" --repo "$MAIN_REPO" \
@@ -262,22 +271,45 @@ for (const name of Object.keys(destinations)) {
   if (data.length !== expected.size || crypto.createHash("sha256").update(data).digest("hex") !== expected.sha256)
     throw new Error(`Verified artifact checksum mismatch: ${name}`);
 }
-for (const [name, destination] of Object.entries(destinations)) fs.copyFileSync(path.join(directory, name), destination);
+for (const [name, destination] of Object.entries(destinations)) {
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.copyFileSync(path.join(directory, name), destination);
+}
 VERIFY_BUILD
     uv run --no-project python scripts/check_release_artifacts.py "$VERSION" "$COMMIT" --collect
 fi
+
+for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_UPDATE_MANIFEST" "$SOURCE_ARCHIVE"; do
+    [[ -f "$artifact" ]] || die "missing release artifact: $artifact"
+done
 
 pypi_release_complete() {
     local response
     response="$(curl -fsS "$PYPI_VERSION_URL")" || return 1
     printf '%s' "$response" | node -e '
+// VERIFY_PYPI
 const fs = require("fs");
+const crypto = require("crypto");
+const path = require("path");
 const version = process.argv[1];
-const data = JSON.parse(fs.readFileSync(0, "utf8"));
-const files = new Set(data.urls.map((item) => item.filename));
-for (const expected of [`zotero_pdf2zh_pro-${version}-py3-none-any.whl`, `zotero_pdf2zh_pro-${version}.tar.gz`]) {
-  if (!files.has(expected)) process.exit(1);
+try {
+  const data = JSON.parse(fs.readFileSync(0, "utf8"));
+  if (!Array.isArray(data.urls)) throw new Error("Invalid PyPI file listing");
+  let missing = false;
+  for (const name of [`zotero_pdf2zh_pro-${version}-py3-none-any.whl`, `zotero_pdf2zh_pro-${version}.tar.gz`]) {
+    const files = data.urls.filter((item) => item.filename === name);
+    if (!files.length) { missing = true; continue; }
+    const payload = fs.readFileSync(path.join("server/dist", name));
+    const sha256 = crypto.createHash("sha256").update(payload).digest("hex");
+    if (files.length !== 1 || files[0].size !== payload.length || files[0].digests?.sha256 !== sha256)
+      throw new Error(`PyPI content mismatch: ${name}`);
+  }
+  process.exitCode = missing ? 1 : 0;
+} catch (error) {
+  console.error(error.message);
+  process.exitCode = 2;
 }
+// END_VERIFY_PYPI
 ' "$VERSION"
 }
 
@@ -298,25 +330,44 @@ WINDOWS_UPDATE_SHA256="$(sha256_file "$WINDOWS_UPDATE_MANIFEST")"
 SOURCE_SHA256="$(sha256_file "$SOURCE_ARCHIVE")"
 
 if [[ "$PUBLISH_PYPI" -eq 1 ]]; then
-    if ! pypi_release_complete; then
+    PYPI_STATUS=0
+    pypi_release_complete || PYPI_STATUS=$?
+    [[ "$PYPI_STATUS" -ne 2 ]] || die "Public PyPI files do not match verified artifacts; publication stopped"
+    if [[ "$PYPI_STATUS" -ne 0 ]]; then
         if [[ -n "$PYPI_TOKEN" ]]; then
-            UV_PUBLISH_TOKEN="$PYPI_TOKEN" uv publish --check-url "$PYPI_CHECK_URL" server/dist/*
+            UV_PUBLISH_TOKEN="$PYPI_TOKEN" uv publish --check-url "$PYPI_CHECK_URL" \
+                "server/dist/zotero_pdf2zh_pro-$VERSION-py3-none-any.whl" \
+                "server/dist/zotero_pdf2zh_pro-$VERSION.tar.gz"
         else
             if [[ -z "$REMOTE_TAG_COMMIT" ]]; then
                 git tag -a "$TAG" -m "$TAG" "$COMMIT"
                 git push origin "$TAG"
                 REMOTE_TAG_COMMIT="$COMMIT"
             fi
+            PUBLISH_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             gh workflow run publish-pypi.yml --repo "$MAIN_REPO" --ref main \
                 -f tag="$TAG" -f build_run_id="$BUILD_RUN"
+            PUBLISH_RUN=""
+            for _ in {1..40}; do
+                PUBLISH_RUN="$(gh run list --repo "$MAIN_REPO" --workflow publish-pypi.yml \
+                    --commit "$COMMIT" --event workflow_dispatch --limit 10 \
+                    --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$PUBLISH_STARTED\")] | first | .databaseId // empty")"
+                [[ -n "$PUBLISH_RUN" ]] && break
+                sleep 2
+            done
+            [[ -n "$PUBLISH_RUN" ]] || die "PyPI publication workflow did not start"
+            gh run watch "$PUBLISH_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
         fi
     fi
     PYPI_VERIFIED=0
     for _ in {1..60}; do
-        if pypi_release_complete; then PYPI_VERIFIED=1; break; fi
+        PYPI_STATUS=0
+        pypi_release_complete || PYPI_STATUS=$?
+        [[ "$PYPI_STATUS" -ne 2 ]] || die "Public PyPI files do not match verified artifacts; publication stopped"
+        if [[ "$PYPI_STATUS" -eq 0 ]]; then PYPI_VERIFIED=1; break; fi
         sleep 5
     done
-    [[ "$PYPI_VERIFIED" -eq 1 ]] || die "PyPI did not expose $PRODUCT==$VERSION"
+    [[ "$PYPI_VERIFIED" -eq 1 ]] || die "PyPI did not expose matching verified files for $PRODUCT==$VERSION"
 fi
 
 if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then

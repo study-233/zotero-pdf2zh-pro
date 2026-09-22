@@ -118,6 +118,15 @@ test("missing or false server capabilities block enabled features before task PO
             { semanticReview: "true" },
             /定向校对.*不可用/,
         ],
+        [
+            {
+                glossaryPacks: [
+                    { id: "medicine", version: "1", sha256: "a".repeat(64) },
+                ],
+            },
+            { glossaryEntries: true },
+            /下载词库.*升级服务端/,
+        ],
     ]) {
         const calls = [];
         globalThis.fetch = async (url) => {

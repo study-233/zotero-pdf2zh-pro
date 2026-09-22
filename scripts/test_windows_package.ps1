@@ -18,7 +18,7 @@ try {
     $env:PDF2ZH_WINDOWS_APP_ROOT = Join-Path $root 'fresh-app'
     $env:PDF2ZH_WINDOWS_REGISTRY_KEY = 'HKCU:\Software\pdf2zh-smoke-' + [guid]::NewGuid().ToString('N')
     $env:PDF2ZH_WINDOWS_LIFECYCLE_TEST = $null
-    $process = Start-Process -FilePath (Join-Path $unpacked 'zotero-pdf2zh-pro.exe') -WorkingDirectory $working -PassThru
+    $process = Start-Process -FilePath (Join-Path $unpacked 'zotero-pdf2zh-pro.exe') -WorkingDirectory $working -PassThru -WindowStyle Hidden
     $shown = $false
     for ($attempt = 0; $attempt -lt 120; $attempt++) {
         $process.Refresh()
@@ -39,5 +39,10 @@ try {
     foreach ($name in $savedEnvironment.Keys) {
         [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], 'Process')
     }
-    Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
+    $resolvedRoot = [IO.Path]::GetFullPath($root)
+    if ((Split-Path $resolvedRoot -Parent).TrimEnd('\') -ne [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') -or
+        (Split-Path $resolvedRoot -Leaf) -notlike 'pdf2zh-package-smoke-*') {
+        throw "Refusing to remove an unexpected test directory: $resolvedRoot"
+    }
+    Remove-Item -LiteralPath $resolvedRoot -Recurse -Force -ErrorAction SilentlyContinue
 }

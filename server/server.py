@@ -33,6 +33,7 @@ from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
 from provider_models import ModelDiscoveryError, list_provider_models
 from babeldoc.glossary_options import normalize_glossary_entries
+from glossary_manager import GlossaryError, GlossaryManager
 
 VERSION = "1.6.9"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
@@ -41,6 +42,7 @@ TRANSLATES_DIR = Path(
     os.getenv("PDF2ZH_DATA_DIR", str(DEFAULT_TRANSLATES_DIR))
 ).expanduser().resolve()
 TASK_MANAGER = TaskManager(TRANSLATES_DIR / "tasks.json")
+GLOSSARY_MANAGER = GlossaryManager(TRANSLATES_DIR / "glossaries")
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
 LOG_MAX_BYTES = 10 * 1024 * 1024
 LOG_BACKUP_COUNT = 3
@@ -64,6 +66,48 @@ def create_app() -> Flask:
     @app.get("/health")
     def health() -> tuple[dict[str, Any], int]:
         return build_health_payload(), 200
+
+    @app.get("/glossaries")
+    def glossaries():
+        try:
+            return jsonify({"status": "ok", "packs": GLOSSARY_MANAGER.list_packs()}), 200
+        except (GlossaryError, OSError) as exc:
+            return error_response(str(exc), getattr(exc, "status", 500))
+
+    @app.post("/glossaries/check-updates")
+    def check_glossary_updates():
+        try:
+            return jsonify({"status": "ok", "packs": GLOSSARY_MANAGER.refresh_catalog()}), 200
+        except GlossaryError as exc:
+            return error_response(str(exc), exc.status)
+
+    @app.post("/glossaries/<pack_id>/download")
+    def download_glossary(pack_id):
+        data = request.get_json(silent=True)
+        if data is None and not request.data:
+            data = {}
+        if (not isinstance(data, dict) or set(data) - {"version"}
+                or ("version" in data and not isinstance(data["version"], str))):
+            return error_response("Expected a JSON body with an optional version", 400)
+        try:
+            pack = GLOSSARY_MANAGER.download(pack_id, data.get("version"))
+            return jsonify({"status": "ok", "pack": pack}), 202
+        except (GlossaryError, OSError) as exc:
+            return error_response(str(exc), getattr(exc, "status", 500))
+
+    @app.post("/glossaries/<pack_id>/cancel")
+    def cancel_glossary_download(pack_id):
+        try:
+            return jsonify({"status": "ok", "pack": GLOSSARY_MANAGER.cancel(pack_id)}), 200
+        except (GlossaryError, OSError) as exc:
+            return error_response(str(exc), getattr(exc, "status", 500))
+
+    @app.delete("/glossaries/<pack_id>")
+    def uninstall_glossary(pack_id):
+        try:
+            return jsonify({"status": "ok", "pack": GLOSSARY_MANAGER.uninstall(pack_id)}), 200
+        except (GlossaryError, OSError) as exc:
+            return error_response(str(exc), getattr(exc, "status", 500))
 
     @app.post("/list-models")
     def list_models():
@@ -397,11 +441,22 @@ def prepare_translation_request(
 def quality_request_options(data: dict[str, Any]) -> dict[str, Any]:
     try:
         entries = normalize_glossary_entries(data.get("glossaryEntries"))
+        metadata = []
+        if "glossaryPacks" in data:
+            if not isinstance(data["glossaryPacks"], list):
+                raise ValueError("glossaryPacks must be an array")
+            if data["glossaryPacks"]:
+                entries, metadata = GLOSSARY_MANAGER.task_snapshot(
+                    data["glossaryPacks"], entries,
+                    normalize_language(data.get("sourceLang"), "en"),
+                    normalize_language(data.get("targetLang"), "zh-CN"),
+                )
     except ValueError as error:
         raise RequestValidationError(str(error)) from None
     return {
         "glossary_entries": entries,
         "semantic_review": parse_bool(data.get("semanticReview"), False),
+        **({"glossary_packs": metadata} if metadata else {}),
     }
 
 
@@ -556,7 +611,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"glossaryEntries": True, "semanticReview": True},
+        "capabilities": {"glossaryEntries": True, "semanticReview": True, "glossaryPacks": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
@@ -621,7 +676,7 @@ app = create_app()
 
 
 def configure_runtime_paths(data_dir: str | Path | None = None) -> None:
-    global TRANSLATES_DIR, TASK_MANAGER
+    global TRANSLATES_DIR, TASK_MANAGER, GLOSSARY_MANAGER
 
     requested_dir = data_dir or os.getenv("PDF2ZH_DATA_DIR")
     TRANSLATES_DIR = (
@@ -630,7 +685,13 @@ def configure_runtime_paths(data_dir: str | Path | None = None) -> None:
         else DEFAULT_TRANSLATES_DIR
     )
     TASK_MANAGER.close()
+    GLOSSARY_MANAGER.close()
     TASK_MANAGER = TaskManager(TRANSLATES_DIR / "tasks.json")
+    GLOSSARY_MANAGER = GlossaryManager(TRANSLATES_DIR / "glossaries")
+    try:
+        GLOSSARY_MANAGER.list_packs()
+    except OSError as error:
+        LOGGER.warning("Could not initialize glossary storage: %s", error)
 
 
 def configure_logging(
@@ -704,6 +765,7 @@ def main() -> None:
         app.run(host=args.host, port=args.port)
     finally:
         TASK_MANAGER.close()
+        GLOSSARY_MANAGER.close()
 
 
 if __name__ == "__main__":

@@ -21,6 +21,17 @@ import {
     importGlossaryCsv,
     loadGlossaryEntries,
 } from "./glossaryStore";
+import {
+    listGlossaryPacks,
+    checkGlossaryUpdates,
+    downloadGlossaryPack,
+    cancelGlossaryDownload,
+    removeGlossaryPack,
+    getSelectedGlossaryPackIds,
+    setSelectedGlossaryPackIds,
+    supportsGlossaryPackLanguage,
+    type GlossaryPackInfo,
+} from "./glossaryPacks";
 
 // Chrome preference windows use XUL popups. HTML select popups can become
 // accessible without being painted by Zotero's native settings window.
@@ -37,6 +48,20 @@ function fillMenu(menu: XULMenuListElement, items: [string, string][]) {
 }
 let managerWindow: Window | undefined;
 let serverCheckSequence = 0;
+let glossaryPackSequence = 0;
+let glossaryPackWindow: Window | undefined;
+let glossaryPackPoll: number | undefined;
+let glossaryPackServerURL = "";
+let glossaryPacksSupported = false;
+let glossaryPackList: GlossaryPackInfo[] = [];
+const glossaryPackBusy = new Set<string>();
+const glossaryPackIds = [
+    "computing",
+    "building",
+    "physics",
+    "environment",
+    "medicine",
+];
 function onDialogClosed(win: Window, url: string, callback: () => void) {
     const onUnload = (event: Event) => {
         // openDialog first unloads about:blank while loading the real dialog.
@@ -64,6 +89,8 @@ function element(id: string) {
 function status(id: string, text: string) {
     const node = element(id);
     if (node) {
+        node.removeAttribute("data-l10n-id");
+        node.removeAttribute("data-l10n-args");
         node.textContent = text;
         node.hidden = !text;
     }
@@ -73,7 +100,21 @@ function report(error: unknown) {
 }
 
 export async function registerPrefsScripts(window: Window) {
+    stopGlossaryPackPolling();
+    glossaryPackWindow = window;
     addon.data.prefs = { window, columns: [], rows: [] };
+    window.addEventListener(
+        "unload",
+        () => {
+            if (glossaryPackWindow !== window) return;
+            stopGlossaryPackPolling();
+            glossaryPackSequence++;
+            serverCheckSequence++;
+            glossaryPacksSupported = false;
+            glossaryPackWindow = undefined;
+        },
+        { once: true },
+    );
     for (const field of ["sourceLang", "targetLang"]) {
         const select = element(
             `${field}Select`,
@@ -85,9 +126,11 @@ export async function registerPrefsScripts(window: Window) {
         select.addEventListener("command", () => {
             setPref(field, select.value);
             (element(field) as HTMLInputElement).value = select.value;
+            renderGlossaryPacks();
         });
         element(field)?.addEventListener("change", () => {
             select.value = (element(field) as HTMLInputElement).value;
+            renderGlossaryPacks();
         });
     }
     for (const [field, fallback] of [
@@ -166,7 +209,10 @@ export async function registerPrefsScripts(window: Window) {
     element("glossary-clear")?.addEventListener("click", () => {
         clearGlossaryEntries();
         refreshGlossarySummary();
-        status("glossaryResult", "术语表已清除。后续任务不再使用此表。");
+        localizedStatus("glossaryResult", "pref-glossary-cleared");
+    });
+    element("glossary-check-updates")?.addEventListener("click", () => {
+        void refreshGlossaryPacks(true);
     });
     refreshGlossarySummary();
     status("pluginVersion", version);
@@ -304,15 +350,327 @@ function openProfileManager() {
     }
 }
 
+function stopGlossaryPackPolling() {
+    if (glossaryPackPoll !== undefined)
+        glossaryPackWindow?.clearTimeout(glossaryPackPoll);
+    glossaryPackPoll = undefined;
+}
+
+function localizePackNode(
+    node: Element,
+    key: string,
+    args?: Record<string, string | number>,
+) {
+    node.setAttribute("data-l10n-id", key);
+    if (args) node.setAttribute("data-l10n-args", JSON.stringify(args));
+    else node.removeAttribute("data-l10n-args");
+}
+
+function localizedStatus(
+    id: string,
+    key: string,
+    args?: Record<string, string | number>,
+) {
+    const node = element(id);
+    if (!node) return;
+    node.hidden = false;
+    node.textContent = "";
+    localizePackNode(node, key, args);
+}
+
+function packStatus(key: string, args?: Record<string, string | number>) {
+    localizedStatus("glossaryPacksResult", key, args);
+}
+
+async function preferenceText(key: string) {
+    return (
+        (await addon.data.prefs?.window.document.l10n?.formatValue(key)) || key
+    );
+}
+
+function renderGlossaryPacks() {
+    const list = element("glossaryPacks");
+    const sources = element("glossaryPackSources");
+    if (!list || !sources) return;
+    const document = list.ownerDocument;
+    const activeId = document.activeElement?.id;
+    let selected: string[] = [];
+    let selectionsReadable = true;
+    try {
+        selected = getSelectedGlossaryPackIds(glossaryPackServerURL);
+    } catch {
+        selectionsReadable = false;
+    }
+    const languageSupported = supportsGlossaryPackLanguage(
+        getPref("sourceLang")?.toString() || "en",
+        getPref("targetLang")?.toString() || "zh-CN",
+    );
+    const languageNotice = element("glossaryPackLanguage");
+    if (languageNotice) languageNotice.hidden = languageSupported;
+    const make = (tag: string, className = "") => {
+        const node = document.createElementNS(
+            "http://www.w3.org/1999/xhtml",
+            tag,
+        ) as HTMLElement;
+        node.className = className;
+        return node;
+    };
+    list.replaceChildren();
+    sources.replaceChildren();
+    for (const id of glossaryPackIds) {
+        const pack = glossaryPackList.find((entry) => entry.id === id);
+        const installed = (pack?.installedVersions.length || 0) > 0;
+        const downloading = pack?.status === "downloading";
+        const busy = glossaryPackBusy.has(id);
+        const row = make("div", "glossary-pack-row");
+        const choice = make("div", "toggle-row");
+        const checkbox = make("input") as HTMLInputElement;
+        checkbox.type = "checkbox";
+        checkbox.id = `zotero-prefpane-${config.addonRef}-pack-${id}`;
+        checkbox.checked = selected.includes(id);
+        checkbox.disabled =
+            !selectionsReadable ||
+            (!checkbox.checked &&
+                (!glossaryPacksSupported ||
+                    !languageSupported ||
+                    busy ||
+                    !installed));
+        checkbox.addEventListener("change", () => {
+            try {
+                const current = getSelectedGlossaryPackIds(
+                    glossaryPackServerURL,
+                );
+                setSelectedGlossaryPackIds(
+                    glossaryPackServerURL,
+                    checkbox.checked
+                        ? [...new Set([...current, id])]
+                        : current.filter((entry) => entry !== id),
+                );
+                renderGlossaryPacks();
+            } catch (error) {
+                status(
+                    "glossaryPacksResult",
+                    error instanceof Error ? error.message : "",
+                );
+                renderGlossaryPacks();
+            }
+        });
+        const label = make("label");
+        label.setAttribute("for", checkbox.id);
+        localizePackNode(label, `pref-pack-${id}`);
+        choice.append(checkbox, label);
+        const state = make("span", "glossary-pack-state");
+        const stateLabel = make("span");
+        const stateKey = downloading
+            ? "downloading"
+            : pack?.status === "failed"
+              ? "failed"
+              : pack?.status === "update_available"
+                ? "update"
+                : installed
+                  ? "installed"
+                  : "not-downloaded";
+        localizePackNode(stateLabel, `pref-pack-state-${stateKey}`);
+        if (downloading && pack?.download?.totalBytes) {
+            localizePackNode(stateLabel, "pref-pack-state-progress", {
+                percent: Math.min(
+                    100,
+                    Math.floor(
+                        ((pack.download.receivedBytes || 0) /
+                            pack.download.totalBytes) *
+                            100,
+                    ),
+                ),
+            });
+        }
+        state.append(stateLabel);
+        if (pack?.entryCount) {
+            const count = make("span");
+            localizePackNode(count, "pref-pack-count", {
+                count: installed
+                    ? pack.installedVersions[0].entryCount || pack.entryCount
+                    : pack.entryCount,
+            });
+            state.append(document.createTextNode(" · "), count);
+        }
+        const actions = make("div", "glossary-pack-actions");
+        const addAction = (
+            action: "download" | "cancel" | "remove",
+            labelKey: string,
+        ) => {
+            const button = make("button") as HTMLButtonElement;
+            button.id = `zotero-prefpane-${config.addonRef}-pack-${id}-${action}`;
+            button.type = "button";
+            button.disabled =
+                !glossaryPacksSupported ||
+                busy ||
+                (action === "download" && !pack?.version);
+            localizePackNode(button, labelKey);
+            button.addEventListener("click", () => {
+                void runGlossaryPackAction(id, action);
+            });
+            actions.append(button);
+        };
+        if (downloading) addAction("cancel", "pref-pack-cancel");
+        else {
+            if (
+                !installed ||
+                pack?.status === "update_available" ||
+                pack?.status === "failed"
+            )
+                addAction(
+                    "download",
+                    installed ? "pref-pack-update" : "pref-pack-download",
+                );
+            if (installed) addAction("remove", "pref-pack-remove");
+        }
+        row.append(choice, state, actions);
+        if (pack?.download?.error) {
+            const error = make("p", "pref-description glossary-pack-error");
+            error.textContent = pack.download.error;
+            row.append(error);
+        }
+        list.append(row);
+        if (pack) {
+            const details = make("div", "glossary-pack-source");
+            const title = make("strong");
+            localizePackNode(title, `pref-pack-${id}`);
+            const metadata = make("p", "pref-description");
+            localizePackNode(metadata, "pref-pack-metadata", {
+                version: pack.version || "—",
+                count: pack.entryCount || 0,
+                size: Math.ceil((pack.sizeBytes || 0) / 1024),
+            });
+            details.append(title, metadata);
+            for (const source of pack.sources || []) {
+                const line = make("p", "pref-description");
+                for (const [label, address] of [
+                    [source.name, source.url],
+                    [source.license, source.licenseUrl],
+                ]) {
+                    if (line.childNodes.length)
+                        line.append(document.createTextNode(" · "));
+                    const link = make("a") as HTMLAnchorElement;
+                    link.textContent = label;
+                    try {
+                        const url = new URL(address);
+                        if (!["https:", "http:"].includes(url.protocol))
+                            throw new Error();
+                        link.href = url.href;
+                        link.addEventListener("click", (event) => {
+                            event.preventDefault();
+                            Zotero.launchURL(link.href);
+                        });
+                        line.append(link);
+                    } catch {
+                        line.append(document.createTextNode(label));
+                    }
+                }
+                details.append(line);
+            }
+            sources.append(details);
+        }
+    }
+    const check = element("glossary-check-updates") as HTMLButtonElement | null;
+    if (check) check.disabled = !glossaryPacksSupported;
+    if (activeId)
+        (document.getElementById(activeId) as HTMLElement | null)?.focus();
+}
+
+async function refreshGlossaryPacks(checkUpdates = false) {
+    if (!glossaryPacksSupported) return;
+    stopGlossaryPackPolling();
+    const sequence = ++glossaryPackSequence;
+    const serverURL = glossaryPackServerURL;
+    if (checkUpdates) packStatus("pref-pack-checking");
+    const button = element(
+        "glossary-check-updates",
+    ) as HTMLButtonElement | null;
+    if (button) button.disabled = true;
+    try {
+        const result = await (
+            checkUpdates ? checkGlossaryUpdates : listGlossaryPacks
+        )(serverURL);
+        if (
+            sequence !== glossaryPackSequence ||
+            serverURL !== glossaryPackServerURL
+        )
+            return;
+        glossaryPackList = result.packs;
+        status("glossaryPacksResult", "");
+        renderGlossaryPacks();
+        if (checkUpdates) packStatus("pref-pack-checked");
+        if (glossaryPackList.some((pack) => pack.status === "downloading"))
+            glossaryPackPoll = glossaryPackWindow?.setTimeout(() => {
+                void refreshGlossaryPacks();
+            }, 1000);
+    } catch (error) {
+        if (
+            sequence !== glossaryPackSequence ||
+            serverURL !== glossaryPackServerURL
+        )
+            return;
+        if (checkUpdates) {
+            if (error instanceof Error)
+                status("glossaryPacksResult", error.message);
+            else packStatus("pref-pack-check-failed");
+        } else {
+            glossaryPacksSupported = false;
+            packStatus("pref-pack-unreachable");
+        }
+        renderGlossaryPacks();
+    } finally {
+        if (button && sequence === glossaryPackSequence)
+            button.disabled = !glossaryPacksSupported;
+    }
+}
+
+async function runGlossaryPackAction(
+    id: string,
+    action: "download" | "cancel" | "remove",
+) {
+    if (!glossaryPacksSupported || glossaryPackBusy.has(id)) return;
+    const serverURL = glossaryPackServerURL;
+    const serverSequence = serverCheckSequence;
+    glossaryPackBusy.add(id);
+    renderGlossaryPacks();
+    try {
+        if (action === "download") await downloadGlossaryPack(serverURL, id);
+        else if (action === "cancel")
+            await cancelGlossaryDownload(serverURL, id);
+        else {
+            await removeGlossaryPack(serverURL, id);
+            setSelectedGlossaryPackIds(
+                serverURL,
+                getSelectedGlossaryPackIds(serverURL).filter(
+                    (selected) => selected !== id,
+                ),
+            );
+        }
+        if (serverSequence !== serverCheckSequence) return;
+        await refreshGlossaryPacks();
+    } catch (error) {
+        if (serverSequence === serverCheckSequence) {
+            if (error instanceof Error)
+                status("glossaryPacksResult", error.message);
+            else packStatus("pref-pack-action-failed");
+        }
+    } finally {
+        if (serverSequence === serverCheckSequence) {
+            glossaryPackBusy.delete(id);
+            renderGlossaryPacks();
+        }
+    }
+}
+
 function refreshGlossarySummary() {
     const clear = element("glossary-clear") as HTMLButtonElement | null;
     try {
         const entries = loadGlossaryEntries();
-        status(
+        localizedStatus(
             "glossarySummary",
-            entries.length
-                ? `已保存 ${entries.length} 条术语；提交任务时按目标语言应用。`
-                : "尚未导入术语表。",
+            entries.length ? "pref-glossary-saved" : "pref-glossary-empty",
+            { count: entries.length },
         );
         if (clear) clear.disabled = entries.length === 0;
     } catch (error) {
@@ -327,9 +685,11 @@ async function importGlossary(): Promise<void> {
     if (button) button.disabled = true;
     if (clear) clear.disabled = true;
     try {
-        const path = await new ztoolkit.FilePicker("导入术语 CSV", "open", [
-            ["CSV 文件", "*.csv"],
-        ]).open();
+        const path = await new ztoolkit.FilePicker(
+            await preferenceText("pref-glossary-import"),
+            "open",
+            [["CSV", "*.csv"]],
+        ).open();
         if (!path) return;
         const bytes = await IOUtils.read(path);
         let text: string;
@@ -337,21 +697,16 @@ async function importGlossary(): Promise<void> {
             text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
         } catch {
             throw new Error(
-                "文件不是有效的 UTF-8 CSV，请使用 UTF-8 编码另存后重试。原术语表已保留。",
+                await preferenceText("pref-glossary-invalid-encoding"),
             );
         }
         const entries = importGlossaryCsv(text);
-        status(
-            "glossaryResult",
-            `已导入 ${entries.length} 条术语，替换当前术语表。`,
-        );
+        localizedStatus("glossaryResult", "pref-glossary-imported", {
+            count: entries.length,
+        });
     } catch (error) {
-        status(
-            "glossaryResult",
-            error instanceof Error
-                ? error.message
-                : "术语表导入失败；原表已保留。",
-        );
+        if (error instanceof Error) status("glossaryResult", error.message);
+        else localizedStatus("glossaryResult", "pref-glossary-import-failed");
     } finally {
         if (button) button.disabled = false;
         refreshGlossarySummary();
@@ -362,10 +717,18 @@ async function refreshServerVersion() {
     const checkSequence = ++serverCheckSequence;
     const url =
         getPref("new_serverip")?.toString().trim().replace(/\/+$/, "") || "";
+    stopGlossaryPackPolling();
+    glossaryPackSequence++;
+    glossaryPackServerURL = url;
+    glossaryPacksSupported = false;
+    glossaryPackList = [];
+    glossaryPackBusy.clear();
+    renderGlossaryPacks();
+    packStatus("pref-pack-connecting");
     const button = element("checkConnection") as HTMLButtonElement | null;
     if (button) button.disabled = true;
-    status("serverStatus", "正在检查本地服务…");
-    status("qualityCapabilities", "正在检查术语表与定向校对支持…");
+    localizedStatus("serverStatus", "pref-server-checking");
+    status("qualityCapabilities", "");
     try {
         if (!url) throw new Error();
         const { data } = await axios.get<ServerHealthResponse>(
@@ -374,44 +737,38 @@ async function refreshServerVersion() {
         );
         if (checkSequence !== serverCheckSequence) return;
         if (!["ok", "degraded"].includes(data.status || "")) throw new Error();
-        status("serverVersion", data.version || "未知");
-        status(
+        if (data.version) status("serverVersion", data.version);
+        else localizedStatus("serverVersion", "pref-server-unknown");
+        localizedStatus(
             "serverStatus",
             data.status === "degraded"
-                ? "本地服务已连接，有警告"
-                : "本地服务已连接",
+                ? "pref-server-degraded"
+                : "pref-server-connected",
         );
-        status(
-            "connectionResult",
-            data.status === "degraded"
-                ? "本地服务已连接，请检查工作目录是否可写及磁盘空间。"
-                : "本地服务已连接。API 可用性请使用顶部的「测试 API」。",
-        );
+        if (data.status === "degraded")
+            localizedStatus("connectionResult", "pref-server-check-storage");
+        else status("connectionResult", "");
         element("serverVersionCard")?.setAttribute("data-state", "ok");
-        const unavailable = [];
-        if (data.capabilities?.glossaryEntries !== true)
-            unavailable.push("术语表");
-        if (data.capabilities?.semanticReview !== true)
-            unavailable.push("定向校对");
-        status(
-            "qualityCapabilities",
-            unavailable.length
-                ? `当前服务端的${unavailable.join("、")}功能不可用，请升级服务端。已导入的术语表会保留；定向校对可在上方关闭。`
-                : "当前服务端支持术语表与定向校对。",
-        );
+        if (
+            data.capabilities?.glossaryEntries !== true ||
+            data.capabilities?.semanticReview !== true
+        )
+            localizedStatus("qualityCapabilities", "pref-quality-unavailable");
+        else status("qualityCapabilities", "");
+        if (data.capabilities?.glossaryPacks === true) {
+            glossaryPacksSupported = true;
+            await refreshGlossaryPacks();
+        } else {
+            packStatus("pref-pack-upgrade-server");
+        }
     } catch {
         if (checkSequence !== serverCheckSequence) return;
         status("serverVersion", "—");
-        status("serverStatus", "本地服务无法连接");
-        status(
-            "connectionResult",
-            "请确认 Python 服务已启动，并检查本地服务地址。",
-        );
+        localizedStatus("serverStatus", "pref-server-unreachable");
+        localizedStatus("connectionResult", "pref-server-start");
         element("serverVersionCard")?.setAttribute("data-state", "error");
-        status(
-            "qualityCapabilities",
-            "暂时无法确认功能支持；术语表会保留，提交前将重新检查服务端。",
-        );
+        status("qualityCapabilities", "");
+        packStatus("pref-pack-unreachable");
     } finally {
         if (button && checkSequence === serverCheckSequence)
             button.disabled = false;

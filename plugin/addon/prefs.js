@@ -27,6 +27,7 @@ pref("__prefsPrefix__.skipTextChecks", false);
 pref("__prefsPrefix__.noWatermark", true);
 pref("__prefsPrefix__.disableTermExtraction", true);
 pref("__prefsPrefix__.glossaryEntries", "[]");
+pref("__prefsPrefix__.glossaryPackSelections", "{}");
 pref("__prefsPrefix__.semanticReview", false);
 pref("__prefsPrefix__.reviewPreferenceMigrationVersion", 0);
 

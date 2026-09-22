@@ -1,6 +1,7 @@
 import { config } from "../../package.json";
 import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
+import { resolveSelectedGlossaryPacks } from "./glossaryPacks";
 import {
     PluginTask,
     ServerConfig,
@@ -156,6 +157,11 @@ export class PDF2zhTaskManager {
             serverConfig = PDF2zhHelperFactory.getServerConfig();
             if (!serverConfig.apiConfig)
                 throw new Error("请先在设置中选择翻译配置。");
+            serverConfig.glossaryPacks = await resolveSelectedGlossaryPacks(
+                serverConfig.serverUrl,
+                serverConfig.sourceLang,
+                serverConfig.targetLang,
+            );
         } catch (error) {
             ztoolkit.getGlobal("alert")(String(error));
             progressWindow.close();

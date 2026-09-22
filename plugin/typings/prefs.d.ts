@@ -31,6 +31,7 @@ declare namespace _ZoteroTypes {
       "noWatermark": boolean;
       "disableTermExtraction": boolean;
       "glossaryEntries": string;
+      "glossaryPackSelections": string;
       "semanticReview": boolean;
       "reviewPreferenceMigrationVersion": number;
       "dialog-service": string;

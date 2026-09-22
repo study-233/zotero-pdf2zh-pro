@@ -18,6 +18,8 @@ from rapidocr_onnxruntime import RapidOCR
 
 import truststore
 import task_manager
+import glossary_manager
+import glossary_catalog
 
 FORBIDDEN_DISTRIBUTIONS = {
     "babeldoc",
@@ -78,8 +80,12 @@ def main() -> None:
         raise RuntimeError("Runtime still exposes removed billing metrics")
     if not callable(task_manager.TaskManager):
         raise RuntimeError("Task manager runtime is incomplete")
+    if not callable(glossary_manager.GlossaryManager) or len(glossary_catalog.GLOSSARY_CATALOG["packs"]) != 5:
+        raise RuntimeError("Downloadable glossary runtime is incomplete")
 
     health = server.build_health_payload()
+    if health.get("capabilities", {}).get("glossaryPacks") is not True:
+        raise RuntimeError("Runtime is missing downloadable glossary capabilities")
     if health.get("supportedApiProtocols") != ["auto", "chat_completions", "responses"]:
         raise RuntimeError("Runtime is missing dual-protocol capabilities")
     if health["pdf2zhVersion"] != "2.8.2":

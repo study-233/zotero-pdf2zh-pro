@@ -13,7 +13,7 @@ on:
         required: true
         type: string
       full_validation:
-        description: Optional extended OCR, backend, rollback and relocation checks; standard publication reuses core CI
+        description: Optional repeated backend, rollback and relocation checks; standard publication reuses core CI
         required: false
         type: boolean
         default: false
@@ -208,7 +208,6 @@ jobs:
         run: uv run --directory server --locked python -m unittest discover -s tests
 
       - name: Fresh installed Python 3.13 runtime and OCR
-        if: inputs.full_validation
         shell: pwsh
         run: |
           $venv = Join-Path $env:RUNNER_TEMP 'release-runtime'

@@ -72,3 +72,20 @@ is stored in `translates` alongside the installed server module. The optional
 log file rotates at 10 MiB with three backups.
 
 For the Windows and macOS installation walkthrough, see the [main tutorial](../README.md).
+
+## On-demand glossary packs
+
+The server manages optional English-to-Simplified-Chinese glossary packs under
+`<effective-data-dir>/glossaries/`. Installation packages contain catalog metadata
+only. Downloads and update checks are explicit actions from Zotero preferences;
+installed packs work offline. Each translation task stores the resolved terms and
+source versions, so retries and repairs survive pack updates or removal.
+
+`/health` advertises `capabilities.glossaryPacks`. `GET /glossaries` is local-only;
+`POST /glossaries/check-updates` refreshes the catalog. Download, cancel and remove
+operations use `/glossaries/<id>/download`, `/glossaries/<id>/cancel`, and
+`DELETE /glossaries/<id>`. Translation requests may include `glossaryPacks` with
+`id`, `version`, and `sha256` alongside custom `glossaryEntries`.
+
+See [glossary downloads](../docs/glossary-downloads.md) for storage, API and merge
+rules, and [glossary sources](../docs/glossary-sources.md) for attribution.

@@ -72,7 +72,7 @@ Repository = "https://github.com/study-233/zotero-pdf2zh-pro"
 Issues = "https://github.com/study-233/zotero-pdf2zh-pro/issues"
 
 [tool.setuptools]
-py-modules = ["server", "task_manager", "pdf2zh_next_service", "observability", "provider_models"]
+py-modules = ["server", "task_manager", "pdf2zh_next_service", "observability", "provider_models", "glossary_manager", "glossary_catalog"]
 
 [tool.setuptools.packages.find]
 where = ["."]

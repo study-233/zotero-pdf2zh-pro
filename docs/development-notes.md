@@ -76,7 +76,7 @@ git diff --check
 后者从最终 ZIP 解压，以独立工作目录、精简 PATH 验证真实窗口。生命周期验证使用
 `-WindowsPackage dist/zotero-pdf2zh-pro-windows-x64.zip`，从同一 ZIP 读取 EXE 和管理脚本。
 候选版本可以在开发分支触发只构建的 Windows 工作流，输入该分支包含的精确提交；
-默认仅验证启动、一次安装和升级；勾选 `full_validation` 才运行完整回滚、迁移、OCR 和全量测试。
+默认验证启动、安装、升级、卸载及全新 Python 3.13/OCR；勾选 `full_validation` 才追加完整回滚、迁移和重复的全量测试。
 Rust 单测复用 release 编译依赖，不再额外编译 debug 依赖。在新电脑上补充启动验收后发布。
 
 ## macOS 本机源码部署
@@ -101,10 +101,12 @@ Rust 单测复用 release 编译依赖，不再额外编译 debug 依赖。在�
 scripts/release.sh <version>
 ```
 
-统一脚本必须在 Windows 上运行；它同步插件、服务端、控制中心、锁文件和 Windows 脚本
-版本，构建 Tauri release EXE，验证 XPI、PyPI 包和 Windows ZIP，生成本地源码归档，
-提交并推送主仓库，然后发布 PyPI 和公开 GitHub Release。日常核心测试由 CI 承担，
-发布脚本不重复运行单测、lint 或全新虚拟环境冒烟。
+统一脚本同步插件、服务端、控制中心、锁文件和 Windows 脚本版本，提交并推送主仓库。
+核心 CI 通过后，Windows CI 只构建一次 XPI、PyPI 包、Windows ZIP 和源码归档，验证
+全新 Python 3.13/OCR 与安装生命周期。脚本取回完整的七项产物，校验提交、版本、大小
+和哈希，再将同一批文件发布到 PyPI 和 GitHub；Homebrew 固定同一源提交。
+本地不重复安装前端依赖或编译 Rust，也不重复执行核心测试。仅构建调试包时可在
+Windows 运行 `scripts/release.sh <version> --no-push`。
 
 已完成 Windows 构建和新电脑验收时，可在 `publish-pypi.yml` 指定 `tag`、成功的
 `build_run_id` 并启用 `publish_github`，直接发布该次构建的同一份产物。流程先核对

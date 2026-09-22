@@ -11,7 +11,7 @@ SCRIPT = SOURCE.split("<<'VERIFY_BUILD'\n", 1)[1].split("\nVERIFY_BUILD", 1)[0]
 
 
 class ReleaseGateTests(unittest.TestCase):
-    def run_gate(self, change=None):
+    def run_gate(self, change=None, fresh=False):
         with tempfile.TemporaryDirectory(prefix="release-gate-") as temporary:
             root = Path(temporary)
             downloaded = root / "download"
@@ -23,10 +23,11 @@ class ReleaseGateTests(unittest.TestCase):
             for name in names:
                 (downloaded / name).write_bytes(name.encode())
                 manifest["artifacts"][name] = {"size": len(name), "sha256": hashlib.sha256(name.encode()).hexdigest()}
-            for directory in ("plugin/build", "server/dist", "dist"):
-                (root / directory).mkdir(parents=True)
             target = root / "plugin/build/zotero-pdf2zh-pro.xpi"
-            target.write_bytes(b"previous")
+            if not fresh:
+                for directory in ("plugin/build", "server/dist", "dist"):
+                    (root / directory).mkdir(parents=True)
+                target.write_bytes(b"previous")
             if change:
                 change(manifest, downloaded)
             (downloaded / "checksums.json").write_text(json.dumps(manifest), encoding="utf-8")
@@ -36,6 +37,9 @@ class ReleaseGateTests(unittest.TestCase):
 
     def test_valid_packages_replace_local_build(self):
         self.assertEqual(self.run_gate(), (0, b"zotero-pdf2zh-pro.xpi"))
+
+    def test_verified_packages_install_without_a_local_build(self):
+        self.assertEqual(self.run_gate(fresh=True), (0, b"zotero-pdf2zh-pro.xpi"))
 
     def test_corrupt_last_package_does_not_replace_first_package(self):
         code, content = self.run_gate(lambda _, d: (d / "zotero_pdf2zh_pro-1.6.9.tar.gz").write_bytes(b"bad"))

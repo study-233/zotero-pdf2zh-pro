@@ -50,6 +50,7 @@ export class PDF2zhHelperFactory {
             disableTermExtraction: config.disableTermExtraction,
             fontFamily: config.fontFamily,
             glossaryEntries: config.glossaryEntries || [],
+            glossaryPacks: config.glossaryPacks || [],
             semanticReview: config.semanticReview ?? false,
         };
         if (llmApiConfig) {

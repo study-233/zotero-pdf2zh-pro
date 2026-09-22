@@ -16,6 +16,27 @@ from observability import empty_metrics
 
 
 class TaskManagerTests(unittest.TestCase):
+    def test_retry_and_repair_preserve_downloaded_glossary_snapshot(self):
+        for repair in (False, True):
+            with self.subTest(repair=repair), tempfile.TemporaryDirectory() as temp:
+                workspace = Path(temp)
+                source = workspace / "input.pdf"
+                source.write_bytes(b"%PDF-1.4\n")
+                rows = [{"source": "model", "target": "模型", "tgt_lng": "zh-cn"}]
+                packs = [{"id": "computing", "version": "1", "sha256": "a" * 64}]
+                manager = TaskManager()
+                manager._tasks["task"] = TaskRecord(
+                    task_id="task", file_name="input.pdf", service="openai",
+                    output_modes=["dual"], workspace_dir=workspace,
+                    request_payload={"input_path": str(source), "output_dir": str(workspace / "output"),
+                                     "glossary_entries": rows, "glossary_packs": packs},
+                    status="incomplete" if repair else "failed",
+                )
+                with patch.object(manager, "_start_worker_locked"):
+                    manager.retry_task("task", repair=repair)
+                self.assertEqual(manager._tasks["task"].request_payload["glossary_entries"], rows)
+                self.assertEqual(manager._tasks["task"].request_payload["glossary_packs"], packs)
+
     def test_retry_and_repair_preserve_original_review_choice(self):
         for repair in (False, True):
             for enabled in (False, True):

@@ -2,7 +2,7 @@
 
 ## Dependency fixes
 
-The application version remains 1.6.9 pending release approval.
+These changes were reviewed against 1.6.9 and ship in the 1.7.0 release.
 
 | Dependency | Fixed version | Findings |
 | --- | --- | --- |

@@ -25,6 +25,8 @@ FORBIDDEN_DISTRIBUTIONS = {
     "uvicorn",
 }
 REQUIRED_RUNTIME_FILES = {
+    "glossary_manager.py",
+    "glossary_catalog.py",
     "observability.py",
     "pdf2zh_next_service.py",
     "provider_models.py",
@@ -53,6 +55,13 @@ FORBIDDEN_RUNTIME_FILES = {
     "pdf2zh_next/i18n.py",
 }
 MAX_ARTIFACT_BYTES = 32 * 1024 * 1024
+GLOSSARY_DATA_DIRECTORIES = {"glossaries", "glossary-data", "glossary_data", "glossary-packs"}
+
+
+def check_no_glossary_corpora(names: set[str]) -> None:
+    corpora = [name for name in names if GLOSSARY_DATA_DIRECTORIES.intersection(name.split("/"))]
+    if corpora:
+        raise RuntimeError(f"Distribution contains downloadable glossary data: {sorted(corpora)}")
 
 
 def canonicalize_name(value: str) -> str:
@@ -117,6 +126,7 @@ def check_wheel(wheel: Path, version: str) -> None:
         raise RuntimeError(f"Wheel declares forbidden dependencies: {sorted(unexpected)}")
 
     missing_runtime = REQUIRED_RUNTIME_FILES - names
+    check_no_glossary_corpora(names)
     if missing_runtime:
         raise RuntimeError(f"Wheel is missing runtime files: {sorted(missing_runtime)}")
     unexpected_runtime = FORBIDDEN_RUNTIME_FILES & names
@@ -139,6 +149,7 @@ def check_sdist(sdist: Path, version: str) -> None:
     prefix = f"zotero_pdf2zh_pro-{version}/"
     with tarfile.open(sdist, "r:gz") as archive:
         names = set(archive.getnames())
+    check_no_glossary_corpora(names)
 
     required = {
         f"{prefix}{name}" for name in REQUIRED_RUNTIME_FILES

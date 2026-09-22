@@ -1,4 +1,5 @@
 import type { LLMApiData } from "./llmApiManager";
+import type { GlossaryPackReference } from "./glossaryPacks";
 export type OutputMode = "mono" | "dual";
 export type ServerTaskStatus =
     | "queued"
@@ -34,6 +35,7 @@ export interface ServerConfig {
     disableTermExtraction: string;
     fontFamily: string;
     glossaryEntries?: GlossaryEntry[];
+    glossaryPacks?: GlossaryPackReference[];
     semanticReview?: boolean;
 }
 
@@ -51,6 +53,7 @@ export interface ServerHealthResponse {
     supportedApiProtocols?: string[];
     capabilities?: {
         glossaryEntries?: boolean;
+        glossaryPacks?: boolean;
         semanticReview?: boolean;
     };
     pdf2zhVersion?: string;

@@ -127,6 +127,7 @@ async function fixture(saved = []) {
         config: { prefsPrefix: "extensions.test", addonRef: "test" },
         getString: (s) => s,
         getPref: (key) => (key === "new_serverip" ? serverUrl : false),
+        resolveSelectedGlossaryPacks: async () => [],
         PDF2zhHelperFactory: {
             prepareFileData: async () => ({}),
             buildTaskRequestBody: () => ({}),
@@ -142,11 +143,59 @@ async function fixture(saved = []) {
     };
     const { PDF2zhTaskManager: manager } = await moduleFrom(
         "const {config,getString,getPref,PDF2zhHelperFactory,ServerTaskClient,TaskEventStream,ZoteroTaskImporter} = globalThis.__taskManagerTests;\n" +
+            "const resolveSelectedGlossaryPacks=(...args)=>globalThis.__taskManagerTests.resolveSelectedGlossaryPacks(...args);\n" +
             compile("pdf2zhTaskManager") +
             `\n// instance ${sequence++}`,
     );
     return { manager, prefs, writes, sources, client, imports };
 }
+
+test("processWorker resolves pack versions once before submitting the whole batch", async () => {
+    const { manager } = await fixture();
+    const deps = globalThis.__taskManagerTests;
+    const selected = [{ id: 1 }, { id: 2 }];
+    const captured = [];
+    let resolves = 0;
+    let currentVersion = "old";
+    deps.resolveSelectedGlossaryPacks = async () => {
+        resolves++;
+        return [
+            { id: "medicine", version: currentVersion, sha256: "a".repeat(64) },
+        ];
+    };
+    deps.PDF2zhHelperFactory.getServerConfig = () => ({
+        serverUrl: `${serverUrl}/`,
+        apiConfig: {},
+        sourceLang: "en",
+        targetLang: "zh-CN",
+        outputModes: ["dual"],
+        glossaryEntries: [{ source: "lung", target: "肺", tgt_lng: "" }],
+    });
+    globalThis.ztoolkit = {
+        log() {},
+        getGlobal: () => ({ getSelectedItems: () => selected }),
+        ProgressWindow: class {
+            createLine() {
+                return this;
+            }
+            show() {}
+            changeLine() {}
+            close() {}
+        },
+    };
+    manager.openWindow = () => {};
+    manager.refreshTasks = async () => {};
+    manager.submitTask = async (_item, config) => {
+        captured.push(globalThis.structuredClone(config));
+        currentVersion = "new";
+    };
+    await manager.processWorker();
+    assert.equal(resolves, 1);
+    assert.equal(captured.length, 2);
+    assert.deepEqual(captured[0], captured[1]);
+    assert.equal(captured[1].glossaryPacks[0].version, "old");
+    assert.equal(captured[1].serverUrl, `${serverUrl}/`);
+});
 
 test("opening the task window restores bindings before stream state callbacks", async () => {
     const saved = local({
