@@ -77,6 +77,12 @@ jobs:
       - name: Configure isolated Windows installation
         shell: pwsh
         run: |
+          # Avoid runner profile 8.3 aliases so temporary-path assertions use canonical paths.
+          $testTemp = Join-Path $env:RUNNER_TEMP 'pdf2zh-tests-temp'
+          New-Item -ItemType Directory -Force -Path $testTemp | Out-Null
+          "TEMP=$testTemp" >> $env:GITHUB_ENV
+          "TMP=$testTemp" >> $env:GITHUB_ENV
+          "TMPDIR=$($testTemp.Replace('\', '/'))" >> $env:GITHUB_ENV
           "UV_TOOL_DIR=$env:RUNNER_TEMP\uv-tools" >> $env:GITHUB_ENV
           "UV_TOOL_BIN_DIR=$env:RUNNER_TEMP\uv-bin" >> $env:GITHUB_ENV
           "PDF2ZH_WINDOWS_APP_ROOT=$env:RUNNER_TEMP\zotero-pdf2zh-pro" >> $env:GITHUB_ENV
