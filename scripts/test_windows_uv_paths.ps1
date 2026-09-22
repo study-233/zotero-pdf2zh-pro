@@ -48,6 +48,11 @@ try {
     Set-Content -LiteralPath $python -Value "fixture" -Encoding ascii
     Assert-Equal (Get-ServerExecutable) $server "Server discovery did not preserve the Unicode tool-bin path."
     Assert-Equal (Get-ToolPythonExecutable) $python "Python discovery did not preserve the Unicode tool directory."
+    # Rust writes UTF-8 state without a BOM; PS5.1 must not decode it using the ANSI code page.
+    [IO.File]::WriteAllText($ExecutableFile, $server, (New-Object Text.UTF8Encoding($false)))
+    $env:UV_NO_CONFIG = "invalid-bool"
+    Assert-Equal (Get-ServerExecutable) $server "Saved UTF-8 launcher path was not restored before uv discovery."
+    $env:UV_NO_CONFIG = "true"
 
     # Execute the real legacy-data function, without invoking the full installer.
     $tokens = $null
@@ -77,16 +82,27 @@ try {
 
     # A separate native empty-output fixture covers the guard that valid uv does not trigger.
     $emptyExe = Join-Path $testRoot "empty-output.exe"
-    Add-Type -TypeDefinition 'public static class EmptyUvPathOutput { public static int Main(string[] args) { return 0; } }' `
+    Add-Type -TypeDefinition 'public static class EmptyUvPathOutput { public static int Main(string[] args) { if (args.Length > 0 && args[0] == "hold") System.Threading.Thread.Sleep(30000); return 0; } }' `
         -OutputAssembly $emptyExe -OutputType ConsoleApplication
     $rejected = $false
     try { Get-UvToolDirectory -UvExecutable $emptyExe | Out-Null } catch {
         $rejected = $_.Exception.Message -match "returned an empty directory"
     }
     if (-not $rejected) { throw "An empty native directory result was accepted." }
+    New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
+    Copy-Item -LiteralPath $emptyExe -Destination $ControlPanelExecutable
+    $control = Start-Process -FilePath $ControlPanelExecutable -ArgumentList "hold" -WindowStyle Hidden -PassThru
+    try {
+        [IO.File]::WriteAllText($ControlPanelExecutableFile, $ControlPanelExecutable, (New-Object Text.UTF8Encoding($false)))
+        Set-Content -LiteralPath $ControlPanelPidFile -Value $control.Id -Encoding ascii
+        Assert-Equal (Get-ManagedControlPanelProcessId) $control.Id "Rust UTF-8 process state did not resolve the real Unicode executable."
+    } finally {
+        if (-not $control.HasExited) { $control.Kill(); $control.WaitForExit() }
+        $control.Dispose()
+    }
     Assert-Equal ([Console]::OutputEncoding.CodePage) 936 "Failure handling changed the console encoding."
     Assert-Equal $OutputEncoding.CodePage 20127 "Failure handling changed PowerShell output encoding."
-    Write-Host "Real uv UTF-8 paths, Unicode server/Python discovery, legacy data, native failure and empty-output guards passed in PowerShell 5.1."
+    Write-Host "Real uv UTF-8 paths, Unicode server/Python discovery and process state, legacy data, native failure and empty-output guards passed in PowerShell 5.1."
 } finally {
     [Console]::OutputEncoding = $savedConsoleEncoding
     $OutputEncoding = $savedOutputEncoding

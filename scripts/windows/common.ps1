@@ -403,7 +403,7 @@ function Get-UvToolDirectory {
 
 function Get-ServerExecutable {
     if (Test-Path -LiteralPath $ExecutableFile) {
-        $savedPath = (Get-Content -Raw -LiteralPath $ExecutableFile).Trim()
+        $savedPath = (Get-Content -Raw -Encoding utf8 -LiteralPath $ExecutableFile).Trim()
         if ($savedPath -and (Test-Path -LiteralPath $savedPath)) {
             return [IO.Path]::GetFullPath($savedPath)
         }
@@ -560,7 +560,7 @@ function Get-ManagedControlPanelProcessId {
         return $null
     }
     $rawProcessId = (Get-Content -Raw -LiteralPath $ControlPanelPidFile).Trim()
-    $savedExecutable = (Get-Content -Raw -LiteralPath $ControlPanelExecutableFile).Trim()
+    $savedExecutable = (Get-Content -Raw -Encoding utf8 -LiteralPath $ControlPanelExecutableFile).Trim()
     if ($rawProcessId -notmatch "^\d+$") {
         return $null
     }
