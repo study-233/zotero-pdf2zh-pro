@@ -46,9 +46,13 @@ function Test-UpdateRoot {
     Copy-Item -LiteralPath (Join-Path $windowsDir "apply-update.ps1"), (Join-Path $windowsDir "common.ps1") -Destination $package
     @'
 
+# Catch lossy default encodings even when the host code page supports Chinese.
+$PSDefaultParameterValues["Set-Content:Encoding"] = "ascii"
+$PSDefaultParameterValues["Add-Content:Encoding"] = "ascii"
+
 function Start-Process {
     param([string]$FilePath, $ArgumentList, [string]$WindowStyle)
-    Add-Content -LiteralPath (Join-Path $AppRoot "launches.txt") -Value $FilePath
+    Add-Content -LiteralPath (Join-Path $AppRoot "launches.txt") -Value $FilePath -Encoding utf8
     if ($FilePath -eq $ControlPanelExecutable) {
         @{ RootOverride = $env:PDF2ZH_WINDOWS_APP_ROOT } | ConvertTo-Json |
             Set-Content -LiteralPath (Join-Path $AppRoot "relaunch-environment.json") -Encoding utf8
@@ -58,7 +62,7 @@ function Start-Process {
     @'
 param([switch]$Quiet)
 . (Join-Path $PSScriptRoot "common.ps1")
-Set-Content -LiteralPath (Join-Path $AppRoot "stop-root.txt") -Value $AppRoot
+Set-Content -LiteralPath (Join-Path $AppRoot "stop-root.txt") -Value $AppRoot -Encoding utf8
 '@ | Set-Content -LiteralPath (Join-Path $package "stop-server.ps1") -Encoding utf8
     @'
 param([string]$GuiSource, [string]$InstallRoot, [switch]$NonInteractive, [switch]$DeferLocationCommit, [string]$PackageSource)
