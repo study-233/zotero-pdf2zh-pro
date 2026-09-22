@@ -11,7 +11,7 @@
       "sha256": "c1750bba8de8c18136331ffbe8f099db834a40e55b6ab995a02abeb381960ad6",
       "entryCount": 552,
       "sizeBytes": 168970,
-      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/aedbc9014bbd015ef2835c7d1e7a1e87c6e0a223/packs/computing.json",
+      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/18d67c02548e55e6e64bb60c18ae169bef6e8d9f/packs/computing.json",
       "sourceLang": "en",
       "targetLang": "zh-CN",
       "sources": [
@@ -55,7 +55,7 @@
       "sha256": "28e9e8a0dbd33d692d7b940557c53da9a8ff7fbbeaa89e853633a3f945b0d01f",
       "entryCount": 182,
       "sizeBytes": 51394,
-      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/aedbc9014bbd015ef2835c7d1e7a1e87c6e0a223/packs/building.json",
+      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/18d67c02548e55e6e64bb60c18ae169bef6e8d9f/packs/building.json",
       "sourceLang": "en",
       "targetLang": "zh-CN",
       "sources": [
@@ -85,7 +85,7 @@
       "sha256": "d714bdfd58969be3078a0cf4bd905b3bff35b0e493e1fdd66df7df3df79ad390",
       "entryCount": 462,
       "sizeBytes": 125308,
-      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/aedbc9014bbd015ef2835c7d1e7a1e87c6e0a223/packs/physics.json",
+      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/18d67c02548e55e6e64bb60c18ae169bef6e8d9f/packs/physics.json",
       "sourceLang": "en",
       "targetLang": "zh-CN",
       "sources": [
@@ -108,7 +108,7 @@
       "sha256": "490c3930f5c7bf22dbf99c550ce12c90954c4af1cc71f91775348e0cd253da03",
       "entryCount": 245,
       "sizeBytes": 68844,
-      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/aedbc9014bbd015ef2835c7d1e7a1e87c6e0a223/packs/environment.json",
+      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/18d67c02548e55e6e64bb60c18ae169bef6e8d9f/packs/environment.json",
       "sourceLang": "en",
       "targetLang": "zh-CN",
       "sources": [
@@ -138,7 +138,7 @@
       "sha256": "dd0fa75be32773cf53de0befff3733cb862ed1b0a6cfb34587dac2f9462e4997",
       "entryCount": 401,
       "sizeBytes": 107983,
-      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/aedbc9014bbd015ef2835c7d1e7a1e87c6e0a223/packs/medicine.json",
+      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/18d67c02548e55e6e64bb60c18ae169bef6e8d9f/packs/medicine.json",
       "sourceLang": "en",
       "targetLang": "zh-CN",
       "sources": [
