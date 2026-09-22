@@ -1,8 +1,17 @@
 ﻿param(
     [Parameter(Mandatory = $true)][int]$ParentProcessId,
-    [string]$PackageSource
+    [string]$PackageSource,
+    [string]$InstallRoot
 )
 
+$inheritedInstallRootOverride = -not [string]::IsNullOrWhiteSpace($env:PDF2ZH_WINDOWS_APP_ROOT)
+if (-not [string]::IsNullOrWhiteSpace($InstallRoot)) {
+    $resolvedInstallRoot = [IO.Path]::GetFullPath($InstallRoot)
+    if ([IO.Path]::GetPathRoot($InstallRoot) -ne [IO.Path]::GetPathRoot($resolvedInstallRoot)) {
+        throw "The installation directory must be an absolute path."
+    }
+    $env:PDF2ZH_WINDOWS_APP_ROOT = $resolvedInstallRoot
+}
 . (Join-Path $PSScriptRoot "common.ps1")
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -56,7 +65,7 @@ try {
         InstallRoot = $AppRoot
         NonInteractive = $true
     }
-    if ($env:PDF2ZH_WINDOWS_APP_ROOT) {
+    if ($inheritedInstallRootOverride) {
         $installArguments.DeferLocationCommit = $true
     }
     if ($PackageSource) {
@@ -65,6 +74,9 @@ try {
     & $installScript @installArguments
     Write-UpdateLog "[4/5] Control center and management files replaced successfully."
     Write-UpdateLog "[5/5] Starting the updated control center..."
+    if (-not $inheritedInstallRootOverride) {
+        $env:PDF2ZH_WINDOWS_APP_ROOT = $null
+    }
     Start-Process -FilePath $ControlPanelExecutable -ArgumentList "--post-install" -WindowStyle Hidden
     Start-Cleanup -Target $stagingRoot
     exit 0
@@ -74,6 +86,9 @@ try {
     Set-Content -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -Value $failureMessage -Encoding utf8
     if (Test-Path -LiteralPath $ControlPanelExecutable -PathType Leaf) {
         try {
+            if (-not $inheritedInstallRootOverride) {
+                $env:PDF2ZH_WINDOWS_APP_ROOT = $null
+            }
             Start-Process -FilePath $ControlPanelExecutable -ArgumentList "--post-install" -WindowStyle Hidden
             Write-UpdateLog "Restarted the previous control center."
         } catch {

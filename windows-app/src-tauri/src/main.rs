@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod install_root;
 mod update;
 mod webview_runtime;
 
@@ -30,7 +31,6 @@ use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 const PRODUCT_NAME: &str = "zotero-pdf2zh-pro";
 const DEFAULT_PORT: u16 = 8890;
 const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
-const INSTALL_REGISTRY_KEY: &str = r"Software\zotero-pdf2zh-pro";
 
 #[derive(Default)]
 struct AppContext {
@@ -53,34 +53,6 @@ fn default_install_root() -> Result<PathBuf, String> {
     )
 }
 
-fn install_registry_subkey() -> String {
-    env::var("PDF2ZH_WINDOWS_REGISTRY_KEY")
-        .ok()
-        .map(|value| value.replace("HKCU:\\", ""))
-        .filter(|value| !value.trim().is_empty())
-        .unwrap_or_else(|| INSTALL_REGISTRY_KEY.to_owned())
-}
-
-fn saved_install_root() -> Option<PathBuf> {
-    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
-    RegKey::predef(HKEY_CURRENT_USER)
-        .open_subkey(install_registry_subkey())
-        .ok()
-        .and_then(|key| key.get_value::<String, _>("InstallRoot").ok())
-        .filter(|value| !value.trim().is_empty())
-        .map(PathBuf::from)
-}
-
-fn resolved_install_root() -> Result<PathBuf, String> {
-    if let Some(root) = env::var_os("PDF2ZH_WINDOWS_APP_ROOT") {
-        return Ok(PathBuf::from(root));
-    }
-    if let Some(root) = saved_install_root() {
-        return Ok(root);
-    }
-    default_install_root()
-}
-
 #[derive(Clone)]
 struct ProductPaths {
     app_root: PathBuf,
@@ -98,7 +70,7 @@ struct ProductPaths {
 
 impl ProductPaths {
     fn discover() -> Result<Self, String> {
-        let app_root = resolved_install_root()?;
+        let app_root = install_root::discover()?.root;
         Ok(Self::from_root(app_root))
     }
 
@@ -366,22 +338,42 @@ fn powershell_path() -> PathBuf {
         .join(r"System32\WindowsPowerShell\v1.0\powershell.exe")
 }
 
+fn powershell_command(script: &Path, app_root: Option<&Path>) -> Command {
+    let mut command = Command::new(powershell_path());
+    command
+        .arg("-NoProfile")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
+        .arg("-File")
+        .arg(script);
+    if let Some(root) = app_root {
+        command.env("PDF2ZH_WINDOWS_APP_ROOT", root);
+    }
+    command
+}
+
+fn apply_update_command(script: &Path, parent_process_id: u32, app_root: &Path) -> Command {
+    let mut command = powershell_command(script, None);
+    command
+        .arg("-ParentProcessId")
+        .arg(parent_process_id.to_string())
+        .arg("-InstallRoot")
+        .arg(app_root);
+    command
+}
+
 fn run_powershell(
     app: &AppHandle,
     script: &Path,
     arguments: &[String],
     log_path: &Path,
+    app_root: Option<&Path>,
 ) -> Result<(), String> {
     if !script.is_file() {
         return Err(format!("找不到管理脚本：{}", script.display()));
     }
     emit_log(app, log_path, format!("> {}", script.display()));
-    let mut child = Command::new(powershell_path())
-        .arg("-NoProfile")
-        .arg("-ExecutionPolicy")
-        .arg("Bypass")
-        .arg("-File")
-        .arg(script)
+    let mut child = powershell_command(script, app_root)
         .args(arguments)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -441,7 +433,13 @@ async fn run_installed_script(
     let log = paths.control_log.clone();
     let worker_app = app.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        run_powershell(&worker_app, &script, &["-Quiet".to_owned()], &log)
+        run_powershell(
+            &worker_app,
+            &script,
+            &["-Quiet".to_owned()],
+            &log,
+            Some(&paths.app_root),
+        )
     })
     .await
     .map_err(|error| format!("后台操作失败：{error}"))??;
@@ -509,7 +507,7 @@ async fn install_or_upgrade(
     let log = paths.control_log.clone();
     let worker_app = app.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        run_powershell(&worker_app, &install_script, &args, &log)
+        run_powershell(&worker_app, &install_script, &args, &log, None)
     })
     .await
     .map_err(|error| format!("后台安装失败：{error}"))??;
@@ -552,14 +550,7 @@ async fn download_and_apply_update(
             staged.directory.display()
         ),
     );
-    let launch = Command::new(powershell_path())
-        .arg("-NoProfile")
-        .arg("-ExecutionPolicy")
-        .arg("Bypass")
-        .arg("-File")
-        .arg(&staged.apply_script)
-        .arg("-ParentProcessId")
-        .arg(std::process::id().to_string())
+    let launch = apply_update_command(&staged.apply_script, std::process::id(), &paths.app_root)
         .creation_flags(CREATE_NEW_CONSOLE)
         .spawn();
     if let Err(error) = launch {
@@ -664,14 +655,8 @@ fn uninstall_product(
         return Err("找不到卸载脚本。".to_owned());
     }
     let _ = app.autolaunch().disable();
-    let mut command = Command::new(powershell_path());
-    command
-        .arg("-NoProfile")
-        .arg("-ExecutionPolicy")
-        .arg("Bypass")
-        .arg("-File")
-        .arg(script)
-        .arg("-NonInteractive");
+    let mut command = powershell_command(&script, Some(&paths.app_root));
+    command.arg("-NonInteractive");
     if purge_data {
         command.arg("-PurgeData");
     }
@@ -695,25 +680,7 @@ fn show_main_window(app: &AppHandle) {
 }
 
 fn make_tray_icon() -> Image<'static> {
-    let size = 32u32;
-    let mut rgba = Vec::with_capacity((size * size * 4) as usize);
-    for y in 0..size {
-        for x in 0..size {
-            let inside = (3..29).contains(&x) && (3..29).contains(&y);
-            let accent = (9..13).contains(&x) || (19..23).contains(&x);
-            if inside {
-                let (r, g, b) = if accent {
-                    (230, 247, 237)
-                } else {
-                    (23, 107, 69)
-                };
-                rgba.extend_from_slice(&[r, g, b, 255]);
-            } else {
-                rgba.extend_from_slice(&[0, 0, 0, 0]);
-            }
-        }
-    }
-    Image::new_owned(rgba, size, size)
+    tauri::include_image!("icons/32x32.png")
 }
 
 fn spawn_tray_action(app: AppHandle, script_name: &'static str) {
@@ -805,7 +772,10 @@ fn redirect_same_version_candidate() -> bool {
     if read_trimmed(&paths.installed_version).as_deref() != Some(env!("CARGO_PKG_VERSION")) {
         return false;
     }
-    Command::new(&paths.installed_gui).args(env::args_os().skip(1)).spawn().is_ok()
+    Command::new(&paths.installed_gui)
+        .args(env::args_os().skip(1))
+        .spawn()
+        .is_ok()
 }
 
 fn main() {
@@ -850,11 +820,20 @@ fn main() {
             uninstall_product
         ])
         .setup(move |app| {
-            let paths = ProductPaths::discover().map_err(std::io::Error::other)?;
+            let location = install_root::discover().map_err(std::io::Error::other)?;
+            let paths = ProductPaths::from_root(location.root);
             let installed = running_from_installed_path(&paths);
             let actual_executable = current_executable()
                 .map(|path| path.to_string_lossy().into_owned())
                 .unwrap_or_else(|error| format!("<error: {error}>"));
+            emit_log(
+                app.handle(),
+                &paths.control_log,
+                format!(
+                    "安装位置识别：source={}; root={}; {}",
+                    location.source, paths.app_root.display(), location.registry_diagnostic
+                ),
+            );
             emit_log(
                 app.handle(),
                 &paths.control_log,
@@ -967,6 +946,110 @@ mod tests {
         let result = HealthResult::default();
         assert!(!result.listening);
         assert!(!result.valid);
+    }
+
+    #[test]
+    fn installed_scripts_receive_the_selected_root_only_in_the_child() {
+        let root = Path::new(r"D:\Apps with spaces\翻译服务");
+        let script = root.join("bin/start-server.ps1");
+        let command = powershell_command(&script, Some(root));
+        assert!(command.get_envs().any(|(key, value)| {
+            key == "PDF2ZH_WINDOWS_APP_ROOT" && value == Some(root.as_os_str())
+        }));
+        assert!(command.get_args().any(|arg| arg == script.as_os_str()));
+        // Install/update entrypoints carry an explicit argument and must retain
+        // the inherited override's existing location-commit semantics.
+        let command = powershell_command(&script, None);
+        assert!(!command
+            .get_envs()
+            .any(|(key, _)| key == "PDF2ZH_WINDOWS_APP_ROOT"));
+    }
+
+    #[test]
+    fn update_handoff_binds_packaged_script() {
+        use std::io::Read;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let directory = env::temp_dir().join(format!(
+            "pdf2zh-update-contract-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&directory).unwrap();
+        let source = if let Some(package) = env::var_os("PDF2ZH_UPDATE_CONTRACT_PACKAGE") {
+            let mut archive = zip::ZipArchive::new(fs::File::open(package).unwrap()).unwrap();
+            let mut source = String::new();
+            archive
+                .by_name("apply-update.ps1")
+                .unwrap()
+                .read_to_string(&mut source)
+                .unwrap();
+            source
+        } else {
+            fs::read_to_string(
+                Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../scripts/windows/apply-update.ps1"),
+            )
+            .unwrap()
+        };
+        let original = directory.join("packaged-script.txt");
+        fs::write(&original, source).unwrap();
+        let probe = directory.join("binding probe 中文.ps1");
+        let extractor = directory.join("extract.ps1");
+        // Execute only the real parameter declaration. The installer body must
+        // never run during this contract test, including for legacy arguments.
+        fs::write(&extractor, r#"param([string]$Source, [string]$Destination)
+$tokens = $null
+$errors = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($Source, [ref]$tokens, [ref]$errors)
+if ($errors -or -not $ast.ParamBlock) { throw 'Invalid packaged update parameter block' }
+$body = '[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false; $PSBoundParameters | ConvertTo-Json -Compress'
+Set-Content -LiteralPath $Destination -Value ($ast.ParamBlock.Extent.Text + "`n" + $body) -Encoding UTF8
+"#).unwrap();
+        let result = powershell_command(&extractor, None)
+            .arg("-Source")
+            .arg(&original)
+            .arg("-Destination")
+            .arg(&probe)
+            .output()
+            .unwrap();
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let root = directory.join("安装 root with spaces");
+        let wheel = directory.join("旧 package with spaces.whl");
+        let mut modern = apply_update_command(&probe, 2147483647, &root);
+        let mut legacy = powershell_command(&probe, None);
+        legacy.arg("-ParentProcessId").arg("2147483647");
+        let mut legacy_wheel = powershell_command(&probe, None);
+        legacy_wheel
+            .arg("-ParentProcessId")
+            .arg("2147483647")
+            .arg("-PackageSource")
+            .arg(&wheel);
+        for (command, expected_root, expected_wheel) in [
+            (&mut modern, Some(root.to_str().unwrap()), None),
+            (&mut legacy, None, None),
+            (&mut legacy_wheel, None, Some(wheel.to_str().unwrap())),
+        ] {
+            let result = command.output().unwrap();
+            assert!(
+                result.status.success(),
+                "{}",
+                String::from_utf8_lossy(&result.stderr)
+            );
+            let bound: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+            assert_eq!(bound["ParentProcessId"], 2147483647);
+            assert_eq!(bound["InstallRoot"].as_str(), expected_root);
+            assert_eq!(bound["PackageSource"].as_str(), expected_wheel);
+        }
+        assert_eq!(directory.parent(), Some(env::temp_dir().as_path()));
+        fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]

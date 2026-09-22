@@ -10,6 +10,7 @@ logs/
 dist/
 .tmp/
 .local-dev/
+.pnpm-store/
 
 plugin/node_modules/
 plugin/build/

@@ -33,8 +33,7 @@ button:disabled { cursor: default; opacity: 0.55; }
 
 .header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
 .brand-mark {
-    width: 44px; height: 44px; display: grid; place-items: center;
-    color: white; background: #176b45; border-radius: 13px; font-size: 22px; font-weight: 700;
+    width: 44px; height: 44px; display: block; object-fit: contain;
 }
 .eyebrow { margin: 0 0 3px; color: #6a7770; font-size: 12px; letter-spacing: 0.06em; }
 h1 { margin: 0; font-size: 19px; letter-spacing: -0.02em; }

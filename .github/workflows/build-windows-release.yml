@@ -17,6 +17,10 @@ on:
         required: false
         type: boolean
         default: false
+      replacement_commit:
+        description: Explicit original release commit for same-version replacement with unchanged PyPI sources
+        required: false
+        type: string
       reuse_build_run_id:
         description: Optional prior run whose artifact build succeeded; reuse its packages for standard validation
         required: false
@@ -37,6 +41,7 @@ jobs:
     env:
       RELEASE_VERSION: ${{ inputs.version }}
       RELEASE_COMMIT: ${{ inputs.commit }}
+      REPLACEMENT_COMMIT: ${{ inputs.replacement_commit }}
       GH_TOKEN: ${{ github.token }}
       UV_DEFAULT_INDEX: https://pypi.org/simple
       PDF2ZH_WINDOWS_PORT: "18890"
@@ -46,6 +51,8 @@ jobs:
         run: |
           if ($env:RELEASE_VERSION -cnotmatch '^[0-9]+\.[0-9]+\.[0-9]+$') { throw 'Expected stable semver' }
           if ($env:RELEASE_COMMIT -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected full lowercase commit SHA' }
+          if ($env:REPLACEMENT_COMMIT -and $env:REPLACEMENT_COMMIT -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected full original replacement commit SHA' }
+          if ($env:REPLACEMENT_COMMIT -and '${{ inputs.full_validation }}' -ne 'true') { throw 'Same-version replacement requires full validation' }
           $reuse = '${{ inputs.reuse_build_run_id }}'
           if ($reuse -and $reuse -cnotmatch '^[0-9]+$') { throw 'Expected numeric prior run ID' }
           if ($reuse -and '${{ inputs.full_validation }}' -eq 'true') { throw 'Reuse supports standard validation only' }
@@ -114,7 +121,6 @@ jobs:
         run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT"
 
       - name: Require successful core CI for the release commit
-        if: ${{ !inputs.full_validation }}
         shell: bash
         run: |
           set -euo pipefail
@@ -145,7 +151,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash scripts/release.sh "$RELEASE_VERSION" --no-push
+          args=("$RELEASE_VERSION" --no-push)
+          if [[ -n "$REPLACEMENT_COMMIT" ]]; then
+            args+=(--replace-existing "$REPLACEMENT_COMMIT")
+          fi
+          bash scripts/release.sh "${args[@]}"
           test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
           git diff --exit-code
           git diff --cached --exit-code
@@ -252,6 +262,7 @@ jobs:
             dist/*.zip
             dist/*.json
             ${{ runner.temp }}/zotero-pdf2zh-pro/logs/**
+            ${{ runner.temp }}/zotero-pdf2zh-pro/last-operation-error.txt
             ${{ runner.temp }}/webview2-setup.log
           if-no-files-found: ignore
           retention-days: 14

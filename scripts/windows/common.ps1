@@ -42,7 +42,20 @@ function Get-InstallRegistrySubKeyPath {
     return $subKeyPath
 }
 
+function Test-AbsoluteInstallPath {
+    param([string]$Path)
+    if ([string]::IsNullOrWhiteSpace($Path)) { return $false }
+    try {
+        $root = [IO.Path]::GetPathRoot($Path)
+        return $root -and $root -eq [IO.Path]::GetPathRoot([IO.Path]::GetFullPath($Path))
+    } catch {
+        return $false
+    }
+}
+
 function Get-SavedInstallRoot {
+    $script:InstallRegistryReadStatus = "missing"
+    $script:InstallRegistryReadErrorCode = $null
     $key = $null
     try {
         $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey((Get-InstallRegistrySubKeyPath), $false)
@@ -54,10 +67,22 @@ function Get-SavedInstallRoot {
             $null,
             [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames
         )
-        if ($saved) {
+        if (Test-AbsoluteInstallPath ([string]$saved)) {
+            $script:InstallRegistryReadStatus = "found"
             return [IO.Path]::GetFullPath([string]$saved)
         }
+        if ($null -ne $saved) {
+            $script:InstallRegistryReadStatus = "invalid"
+        }
     } catch {
+        $script:InstallRegistryReadStatus = "error"
+        $failure = $_.Exception
+        while ($failure.InnerException) { $failure = $failure.InnerException }
+        $script:InstallRegistryReadErrorCode = if ($failure -is [ComponentModel.Win32Exception]) {
+            $failure.NativeErrorCode
+        } else {
+            $failure.HResult
+        }
         return $null
     } finally {
         if ($key) {
@@ -67,14 +92,40 @@ function Get-SavedInstallRoot {
     return $null
 }
 
-$savedInstallRoot = Get-SavedInstallRoot
-$AppRoot = if ($env:PDF2ZH_WINDOWS_APP_ROOT) {
-    [IO.Path]::GetFullPath($env:PDF2ZH_WINDOWS_APP_ROOT)
-} elseif ($savedInstallRoot) {
-    $savedInstallRoot
-} else {
-    $DefaultAppRoot
+function Test-ManagedInstallRoot {
+    param([string]$Path)
+    if (-not (Test-AbsoluteInstallPath $Path)) { return $false }
+    foreach ($relative in @("bin\$ProductName.exe", "bin\common.ps1", "installed-version.txt")) {
+        if (-not (Test-Path -LiteralPath (Join-Path $Path $relative) -PathType Leaf)) { return $false }
+    }
+    return $true
 }
+
+function Resolve-InstallRoot {
+    param([string]$ExplicitRoot, [string]$SavedRoot, [string]$ScriptDirectory, [string]$DefaultRoot)
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitRoot)) {
+        return [pscustomobject]@{ Root = [IO.Path]::GetFullPath($ExplicitRoot); Source = "environment" }
+    }
+    if (Test-ManagedInstallRoot $SavedRoot) {
+        return [pscustomobject]@{ Root = $SavedRoot; Source = "registry" }
+    }
+    if ((Split-Path $ScriptDirectory -Leaf) -ieq "bin") {
+        $localRoot = Split-Path $ScriptDirectory -Parent
+        if (Test-ManagedInstallRoot $localRoot) {
+            return [pscustomobject]@{ Root = $localRoot; Source = "script" }
+        }
+    }
+    if (Test-AbsoluteInstallPath $SavedRoot) {
+        return [pscustomobject]@{ Root = $SavedRoot; Source = "registry-reinstall" }
+    }
+    return [pscustomobject]@{ Root = $DefaultRoot; Source = "default" }
+}
+
+$savedInstallRoot = Get-SavedInstallRoot
+$installRootResolution = Resolve-InstallRoot -ExplicitRoot $env:PDF2ZH_WINDOWS_APP_ROOT `
+    -SavedRoot $savedInstallRoot -ScriptDirectory $PSScriptRoot -DefaultRoot $DefaultAppRoot
+$AppRoot = $installRootResolution.Root
+$InstallRootSource = $installRootResolution.Source
 $BinDir = Join-Path $AppRoot "bin"
 $DataDir = Join-Path $AppRoot "data"
 $LogsDir = Join-Path $AppRoot "logs"

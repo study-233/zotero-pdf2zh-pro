@@ -76,7 +76,7 @@ git diff --check
 后者从最终 ZIP 解压，以独立工作目录、精简 PATH 验证真实窗口。生命周期验证使用
 `-WindowsPackage dist/zotero-pdf2zh-pro-windows-x64.zip`，从同一 ZIP 读取 EXE 和管理脚本。
 候选版本可以在开发分支触发只构建的 Windows 工作流，输入该分支包含的精确提交；
-默认验证启动、安装、升级、卸载及全新 Python 3.13/OCR；勾选 `full_validation` 才追加完整回滚、迁移和重复的全量测试。
+默认验证启动、安装、升级、自更新、卸载及全新 Python 3.13/OCR；勾选 `full_validation` 才追加完整回滚、迁移和重复的全量测试。
 Rust 单测复用 release 编译依赖，不再额外编译 debug 依赖。在新电脑上补充启动验收后发布。
 
 ## macOS 本机源码部署
@@ -124,8 +124,14 @@ Homebrew tap 是公开 source Formula：`study-233/homebrew-formula`。Formula �
 公开 HTTPS 地址，固定 `python@3.13` 和 git revision，不发布 bottles。发布脚本直接更新
 tap `main` 并等待 `formula-checks.yml`。
 
-同版本恢复发布只能复用指向同一 commit 的 tag、PyPI 发行和 GitHub Release。
-旧版本 backfill 必须从对应 tag 构建。
+普通同版本恢复发布只接受原提交。经用户明确要求替换同版本客户端时，使用
+`scripts/release.sh <version> --replace-existing <原提交完整 SHA>`：先确认原标签和后端
+源码及打包输入未变，复用并核验原 PyPI wheel/sdist，不重新上传 Python 包。替换模式
+在同一轮 Windows 构建中执行完整验证，通过后备份原发布，定点更新标签并先替换安装包、
+再更新清单和发布说明。失败时恢复原资产和标签；核验记录分别保留客户端新提交与原
+PyPI 包来源。已安装同版本的客户端需手动重装修订包：Zotero 重新安装 XPI，Windows
+解压新 ZIP 后运行 `install.cmd -InstallRoot "原安装目录"`。同版本 EXE 会打开已安装的
+控制中心，不能将该行为视为修订包已安装。旧版本 backfill 必须从对应 tag 构建。
 
 ## 许可证
 

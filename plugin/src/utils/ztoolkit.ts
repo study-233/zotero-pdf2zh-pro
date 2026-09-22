@@ -35,7 +35,7 @@ function initZToolkit(_ztoolkit: ReturnType<typeof createZToolkit>) {
         env === "development";
     _ztoolkit.ProgressWindow.setIconURI(
         "default",
-        `chrome://${config.addonRef}/content/icons/favicon.png`,
+        `chrome://${config.addonRef}/content/icons/favicon.svg`,
     );
 }
 

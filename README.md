@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/logo.svg" width="128" height="128" alt="牛马读书 logo" />
+
 # zotero-pdf2zh-pro
 
 **让论文翻译更省心：在 Zotero 里发起任务，在本地完成翻译，再把结果自动带回来。**

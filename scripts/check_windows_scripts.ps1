@@ -136,3 +136,5 @@ if (-not $otherFailed -or $otherAttempts.Count -ne 1) {
 if ($failed) {
     exit 1
 }
+
+& (Join-Path $PSScriptRoot "test_windows_install_root.ps1")

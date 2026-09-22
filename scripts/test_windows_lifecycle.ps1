@@ -258,40 +258,35 @@ Assert-Autostart -Enabled $false
 Start-Process -FilePath $ControlPanelExecutable -ArgumentList "--post-install" -WindowStyle Hidden
 $upgradedControlProcessId = Wait-ControlPanel
 Wait-ExpectedHealth
-if ($SmokeOnly) {
-    & (Join-Path $BinDir "uninstall.ps1") -PurgeData -NonInteractive
-    Wait-PathAbsent -Path $AppRoot
-    if ($WindowsPackage) {
-        Remove-Item -LiteralPath $windowsDir -Recurse -Force -ErrorAction SilentlyContinue
+$previousUpdateControlProcessId = $upgradedControlProcessId
+if (-not $SmokeOnly) {
+    $guiHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ControlPanelExecutable).Hash
+    $failedUpgrade = $false
+    try {
+        & (Join-Path $windowsDir "install.ps1") -PackageSource (Join-Path $repoRoot "missing.whl") -GuiSource $gui -SkipUvBootstrap -NonInteractive
+    } catch {
+        $failedUpgrade = $true
     }
-    Write-Host 'Windows package installation, startup, upgrade and data preservation checks passed.'
-    return
+    Assert-True $failedUpgrade "Invalid upgrade input did not fail."
+    Assert-True ((Get-FileHash -Algorithm SHA256 -LiteralPath $ControlPanelExecutable).Hash -eq $guiHash) "Failed upgrade changed the installed GUI."
+    Assert-True ($null -eq (Get-Process -Id $upgradedControlProcessId -ErrorAction SilentlyContinue)) "Failed upgrade did not stop the path-validated old GUI."
+    $previousUpdateControlProcessId = Wait-ControlPanel
+    Assert-True ($previousUpdateControlProcessId -ne $upgradedControlProcessId) "Failed upgrade did not restart the previous GUI."
+    Wait-ExpectedHealth
 }
-$guiHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ControlPanelExecutable).Hash
-$failedUpgrade = $false
-try {
-    & (Join-Path $windowsDir "install.ps1") -PackageSource (Join-Path $repoRoot "missing.whl") -GuiSource $gui -SkipUvBootstrap -NonInteractive
-} catch {
-    $failedUpgrade = $true
-}
-Assert-True $failedUpgrade "Invalid upgrade input did not fail."
-Assert-True ((Get-FileHash -Algorithm SHA256 -LiteralPath $ControlPanelExecutable).Hash -eq $guiHash) "Failed upgrade changed the installed GUI."
-Assert-True ($null -eq (Get-Process -Id $upgradedControlProcessId -ErrorAction SilentlyContinue)) "Failed upgrade did not stop the path-validated old GUI."
-$recoveredControlProcessId = Wait-ControlPanel
-Assert-True ($recoveredControlProcessId -ne $upgradedControlProcessId) "Failed upgrade did not restart the previous GUI."
-Wait-ExpectedHealth
 
-$selfUpdateRoot = Join-Path (Split-Path $AppRoot -Parent) (
-    ".zotero-pdf2zh-pro-self-update-{0}" -f [guid]::NewGuid().ToString("N")
+$selfUpdateRoot = Join-Path (Join-Path $AppRoot "updates") (
+    "self-update-{0}" -f [guid]::NewGuid().ToString("N")
 )
 $selfUpdatePackage = Join-Path $selfUpdateRoot "package"
 New-Item -ItemType Directory -Force -Path $selfUpdatePackage | Out-Null
 Copy-Item -Path (Join-Path $windowsDir "*") -Destination $selfUpdatePackage -Recurse -Force
 Copy-Item -LiteralPath $gui -Destination (Join-Path $selfUpdatePackage "$ProductName.exe") -Force
 $applyUpdate = Join-Path $selfUpdatePackage "apply-update.ps1"
-$applyArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -ParentProcessId 2147483647 -PackageSource "{1}"' -f $applyUpdate, $package
-$applyStdout = Join-Path $selfUpdateRoot "apply-update.stdout.log"
-$applyStderr = Join-Path $selfUpdateRoot "apply-update.stderr.log"
+$applyArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -ParentProcessId {1} -InstallRoot "{2}" -PackageSource "{3}"' -f $applyUpdate, $previousUpdateControlProcessId, $AppRoot, $package
+# Keep diagnostics outside the staging tree deleted by apply-update.ps1.
+$applyStdout = Join-Path $LogsDir "self-update.stdout.log"
+$applyStderr = Join-Path $LogsDir "self-update.stderr.log"
 $applyProcess = Start-Process `
     -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
     -ArgumentList $applyArguments `
@@ -300,6 +295,8 @@ $applyProcess = Start-Process `
     -RedirectStandardError $applyStderr `
     -PassThru
 $null = $applyProcess.Handle
+# Match the GUI handoff: the updater starts before its managed parent exits.
+Stop-ManagedControlPanel
 Assert-True ($applyProcess.WaitForExit(300000)) "Self-update bootstrap did not finish within five minutes."
 $applyProcess.WaitForExit()
 $applyProcess.Refresh()
@@ -319,6 +316,9 @@ if ($applyExitCode -ne 0) {
         ForEach-Object { Write-Host "[self-update-test] stderr: $_" }
 }
 Assert-True ($applyExitCode -eq 0) "Self-update bootstrap failed with exit code $applyExitCode."
+foreach ($phase in 1..5) {
+    Assert-True (@($applyOutput | Where-Object { $_ -match "^\[$phase/5\]" }).Count -gt 0) "Self-update did not reach phase $phase."
+}
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -PathType Leaf)) "Self-update reported an installation error."
 if (-not (Test-Path -LiteralPath (Join-Path $AppRoot "runtime\uv\uv.exe") -PathType Leaf)) {
     foreach ($candidate in @(
@@ -336,12 +336,23 @@ if (-not (Test-Path -LiteralPath (Join-Path $AppRoot "runtime\uv\uv.exe") -PathT
         ForEach-Object { Write-Host "[self-update-test] uv-directory-entry=$($_.FullName)" }
 }
 Assert-True (Test-Path -LiteralPath (Join-Path $AppRoot "runtime\uv\uv.exe") -PathType Leaf) "Self-update did not install the private uv executable."
-Assert-True ($null -eq (Get-Process -Id $recoveredControlProcessId -ErrorAction SilentlyContinue)) "Self-update did not stop the previous GUI."
+Assert-True ($null -eq (Get-Process -Id $previousUpdateControlProcessId -ErrorAction SilentlyContinue)) "Self-update did not stop the previous GUI."
 $selfUpdatedControlProcessId = Wait-ControlPanel
-Assert-True ($selfUpdatedControlProcessId -ne $recoveredControlProcessId) "Self-update did not start a new GUI."
-Wait-ExpectedHealth
+Assert-True ($selfUpdatedControlProcessId -ne $previousUpdateControlProcessId) "Self-update did not start a new GUI."
+Assert-True ((Get-Content -Raw -LiteralPath $InstalledVersionFile).Trim() -eq $PackageVersion) "Self-update wrote the wrong installed version."
+Wait-ExpectedHealth -Stage "self-update version and original data directory"
 Assert-True (Test-Path -LiteralPath (Join-Path $DataDir "preserve-me")) "Self-update removed persistent data."
 Assert-Autostart -Enabled $false
+
+if ($SmokeOnly) {
+    & (Join-Path $BinDir "uninstall.ps1") -PurgeData -NonInteractive
+    Wait-PathAbsent -Path $AppRoot
+    if ($WindowsPackage) {
+        Remove-Item -LiteralPath $windowsDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    Write-Host 'Windows package installation, startup, upgrade, self-update and data preservation checks passed.'
+    return
+}
 
 Set-Content -LiteralPath $InstalledVersionFile -Value "99.0.0" -Encoding ascii
 $downgradeBlocked = $false

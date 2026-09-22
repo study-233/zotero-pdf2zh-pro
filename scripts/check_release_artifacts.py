@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -14,6 +15,7 @@ from pathlib import Path
 
 from build_windows_package import package_entries, validate_versions
 from windows_pe import validate_release_pe
+from release_replacement import replacement_metadata, validate_source as verify_replacement_source
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = "study-233/zotero-pdf2zh-pro"
@@ -25,7 +27,7 @@ def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def verify_source(version: str, commit: str) -> None:
+def verify_source(version: str, commit: str, replace_existing: str = "") -> None:
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
         raise ValueError("Version must be stable semver")
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
@@ -33,6 +35,8 @@ def verify_source(version: str, commit: str) -> None:
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     if head != commit:
         raise ValueError(f"Checkout mismatch: {head} != {commit}")
+    if replace_existing:
+        verify_replacement_source(version, replace_existing, commit, ROOT)
     validate_versions(version)
     for lock, name in [("server/uv.lock", PRODUCT), ("windows-app/src-tauri/Cargo.lock", f"{PRODUCT}-control")]:
         packages = tomllib.loads((ROOT / lock).read_text(encoding="utf-8"))["package"]
@@ -50,7 +54,8 @@ def verify_source(version: str, commit: str) -> None:
         subprocess.run(["git", *args], cwd=ROOT, check=True)
 
 
-def collect(version: str, commit: str) -> None:
+def collect(version: str, commit: str, replace_existing: str = "") -> None:
+    replacement = replacement_metadata(version, replace_existing, commit, ROOT) if replace_existing else None
     xpi = ROOT / f"plugin/build/{PRODUCT}.xpi"
     update_path = ROOT / "plugin/build/update.json"
     with zipfile.ZipFile(xpi) as archive:
@@ -95,6 +100,8 @@ def collect(version: str, commit: str) -> None:
     target = ROOT / "dist/release"
     target.mkdir(parents=True, exist_ok=True)
     checksums = {"version": version, "commit": commit, "artifacts": {}}
+    if replacement:
+        checksums["replacement"] = replacement
     for artifact in artifacts:
         payload = artifact.read_bytes()
         checksums["artifacts"][artifact.name] = {"size": len(payload), "sha256": hashlib.sha256(payload).hexdigest()}
@@ -108,8 +115,9 @@ if __name__ == "__main__":
     parser.add_argument("version")
     parser.add_argument("commit")
     parser.add_argument("--collect", action="store_true")
+    parser.add_argument("--replace-existing", default=os.environ.get("REPLACEMENT_COMMIT", ""))
     args = parser.parse_args()
-    verify_source(args.version, args.commit)
+    verify_source(args.version, args.commit, args.replace_existing)
     if args.collect:
-        collect(args.version, args.commit)
+        collect(args.version, args.commit, args.replace_existing)
     print(f"Verified v{args.version} at {args.commit}")
