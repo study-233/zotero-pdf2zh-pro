@@ -2,6 +2,8 @@
 
 Acquired 2026-09-22 over HTTPS with certificate verification enabled. `sources.json` is the machine-readable acquisition manifest, including exact download URLs and SHA-256 for all input and license snapshots. Source pages are mutable, so the archived bytes are authoritative for reproducing this release.
 
+Google HTML snapshots omit script elements, including unrelated public website client configuration. The transform is `strip-script-elements-v1`: `upstreamSha256` records the original fetched bytes and `sha256` records the sanitized archive. The builder verifies both hashes when fetching a missing snapshot. Terminology headings, license statements and all five pack hashes are unchanged by this sanitization. No project API credentials are included in these archives.
+
 | Source ID | Owner / material | Reuse basis | Modification |
 | --- | --- | --- | --- |
 | `naer-computing` | National Academy for Educational Research, two-shore computing terminology | [NAER open information declaration](https://terms.naer.edu.tw/mysite/about/2/) | Reviewed selection; mainland translation field retained |

@@ -206,12 +206,16 @@
       {
         "file": "raw/google-foundation-en.html",
         "url": "https://developers.google.com/machine-learning/glossary/fundamentals?hl=en",
-        "sha256": "ad32a9f2c55755a609723666b04b63d68959e5f5f7625cb752cf6aa493d6d43e"
+        "sha256": "f8c1d7bcecac1e1d40f6350ce3dc5ada1396e5afa93bde065f47009fd9acca88",
+        "upstreamSha256": "ad32a9f2c55755a609723666b04b63d68959e5f5f7625cb752cf6aa493d6d43e",
+        "transform": "strip-script-elements-v1"
       },
       {
         "file": "raw/google-foundation-zh.html",
         "url": "https://developers.google.com/machine-learning/glossary/fundamentals?hl=zh-cn",
-        "sha256": "45fd584e9ccaf3658f1a09b6e6bce77629e7e0084577903fb56a0b6eebcbba26"
+        "sha256": "2592888612ab08aa7aecf722f98c480aeed5c3ebfc8cb208812cef6489f762ef",
+        "upstreamSha256": "45fd584e9ccaf3658f1a09b6e6bce77629e7e0084577903fb56a0b6eebcbba26",
+        "transform": "strip-script-elements-v1"
       }
     ],
     "notice": "Copyright Google LLC. Google Developers Machine Learning Glossary content is licensed under CC BY 4.0. This project selects bilingual headings, pairs translations by heading identifier, and normalizes whitespace. No endorsement is implied. Supplied as-is without warranties; see the license disclaimer.",
@@ -224,7 +228,9 @@
       {
         "file": "LICENSES/Google-site-policies.html",
         "url": "https://developers.google.com/terms/site-policies",
-        "sha256": "b0da7bbc28e22ddc9d3740fe4704f3cb81163e56b94a4229251683b08c7f95f5"
+        "sha256": "15a7ab2a814794afb1c62c3cbaf13292860e7b89a3b1b4376552a5403cbbd43b",
+        "upstreamSha256": "b0da7bbc28e22ddc9d3740fe4704f3cb81163e56b94a4229251683b08c7f95f5",
+        "transform": "strip-script-elements-v1"
       }
     ]
   },
@@ -240,12 +246,16 @@
       {
         "file": "raw/google-generative-en.html",
         "url": "https://developers.google.com/machine-learning/glossary/generative?hl=en",
-        "sha256": "c83773256b8d09a2ab428da92420fe50a4188d7846fc216bc7a063b82a472232"
+        "sha256": "8aef4d9215061cb1e9f008cdce1ad6982bca3337dfdf3200876771d78c1a8d6d",
+        "upstreamSha256": "c83773256b8d09a2ab428da92420fe50a4188d7846fc216bc7a063b82a472232",
+        "transform": "strip-script-elements-v1"
       },
       {
         "file": "raw/google-generative-zh.html",
         "url": "https://developers.google.com/machine-learning/glossary/generative?hl=zh-cn",
-        "sha256": "a9d4f49b0c5e63c4781b7b344f068a75543f9617ea1b5507cb9b2fedeede9b60"
+        "sha256": "21fc96a7aa96b519955d056e2da9f3c648020223926d2849d15c876619c1c446",
+        "upstreamSha256": "a9d4f49b0c5e63c4781b7b344f068a75543f9617ea1b5507cb9b2fedeede9b60",
+        "transform": "strip-script-elements-v1"
       }
     ],
     "notice": "Copyright Google LLC. Google Developers Machine Learning Glossary content is licensed under CC BY 4.0. This project selects bilingual headings, pairs translations by heading identifier, and normalizes whitespace. No endorsement is implied. Supplied as-is without warranties; see the license disclaimer.",
@@ -258,7 +268,9 @@
       {
         "file": "LICENSES/Google-site-policies.html",
         "url": "https://developers.google.com/terms/site-policies",
-        "sha256": "b0da7bbc28e22ddc9d3740fe4704f3cb81163e56b94a4229251683b08c7f95f5"
+        "sha256": "15a7ab2a814794afb1c62c3cbaf13292860e7b89a3b1b4376552a5403cbbd43b",
+        "upstreamSha256": "b0da7bbc28e22ddc9d3740fe4704f3cb81163e56b94a4229251683b08c7f95f5",
+        "transform": "strip-script-elements-v1"
       }
     ]
   },
