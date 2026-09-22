@@ -67,11 +67,21 @@ function Wait-ControlPanel {
     for ($attempt = 0; $attempt -lt 40; $attempt++) {
         $controlProcessId = Get-ManagedControlPanelProcessId
         if ($controlProcessId) {
+            & (Join-Path $PSScriptRoot 'test_windows_window_icons.ps1') -ProcessId $controlProcessId -Executable $ControlPanelExecutable
+            Assert-ProductShortcutIcon
             return $controlProcessId
         }
         Start-Sleep -Milliseconds 250
     }
     throw "The installed control center did not register its process."
+}
+
+function Assert-ProductShortcutIcon {
+    $shell = New-Object -ComObject WScript.Shell
+    foreach ($name in @("$ProductName.lnk", "Uninstall.lnk")) {
+        $shortcut = $shell.CreateShortcut((Join-Path $StartMenuDir $name))
+        Assert-True ($shortcut.IconLocation -eq "$ControlPanelExecutable,0") "Shortcut $name has a stale or implicit icon source: $($shortcut.IconLocation)"
+    }
 }
 
 function Wait-PathAbsent {

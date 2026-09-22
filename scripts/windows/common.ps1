@@ -14,7 +14,7 @@ function Test-PreparationOnlyRoot {
     return $true
 }
 
-$PackageVersion = "1.7.0" # release-version
+$PackageVersion = "1.7.1" # release-version
 $ProductName = "zotero-pdf2zh-pro"
 $ServerHost = "127.0.0.1"
 $ServerPort = if ($env:PDF2ZH_WINDOWS_PORT) {
@@ -150,6 +150,37 @@ $StartMenuDir = if ($env:PDF2ZH_WINDOWS_START_MENU_DIR) {
     [IO.Path]::GetFullPath($env:PDF2ZH_WINDOWS_START_MENU_DIR)
 } else {
     Join-Path ([Environment]::GetFolderPath("Programs")) $ProductName
+}
+
+function Update-ProductShellIcons {
+    param([string]$Root = $AppRoot, [switch]$NoShortcuts)
+    if (-not ("Pdf2zhPro.ShellIcons" -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+namespace Pdf2zhPro {
+    public static class ShellIcons {
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        private static extern void SHChangeNotify(int eventId, uint flags, string item1, IntPtr item2);
+
+        public static void UpdateItem(string path) {
+            // SHCNE_UPDATEITEM; SHCNF_PATHW | SHCNF_FLUSHNOWAIT.
+            SHChangeNotify(0x00002000, 0x00003005, path, IntPtr.Zero);
+        }
+    }
+}
+'@
+    }
+    $paths = @((Join-Path (Join-Path $Root "bin") "$ProductName.exe"))
+    if (-not $NoShortcuts) {
+        $paths += Join-Path $StartMenuDir "$ProductName.lnk"
+        $paths += Join-Path $StartMenuDir "Uninstall.lnk"
+    }
+    foreach ($path in $paths) {
+        if (Test-Path -LiteralPath $path -PathType Leaf) {
+            [Pdf2zhPro.ShellIcons]::UpdateItem([IO.Path]::GetFullPath($path))
+        }
+    }
 }
 
 function Save-InstallRoot {

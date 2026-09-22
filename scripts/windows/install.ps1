@@ -218,6 +218,7 @@ function Install-StagedFiles {
 
 function Install-Shortcuts {
     if ($NoShortcuts) {
+        Update-ProductShellIcons -Root $AppRoot -NoShortcuts
         return
     }
     New-Item -ItemType Directory -Force -Path $StartMenuDir | Out-Null
@@ -228,12 +229,15 @@ function Install-Shortcuts {
     $controlShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "$ProductName.lnk"))
     $controlShortcut.TargetPath = $ControlPanelExecutable
     $controlShortcut.WorkingDirectory = $AppRoot
+    $controlShortcut.IconLocation = "$ControlPanelExecutable,0"
     $controlShortcut.Save()
 
     $uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "Uninstall.lnk"))
     $uninstallShortcut.TargetPath = Join-Path $BinDir "uninstall.cmd"
     $uninstallShortcut.WorkingDirectory = $AppRoot
+    $uninstallShortcut.IconLocation = "$ControlPanelExecutable,0"
     $uninstallShortcut.Save()
+    Update-ProductShellIcons -Root $AppRoot
 }
 
 Assert-InstallDestination
@@ -346,6 +350,9 @@ try {
                 Set-Content -LiteralPath $InstalledVersionFile -Value $previousVersion -Encoding ascii
             } else {
                 Remove-Item -LiteralPath $InstalledVersionFile -Force -ErrorAction SilentlyContinue
+            }
+            if (Test-Path -LiteralPath $ControlPanelExecutable -PathType Leaf) {
+                Install-Shortcuts
             }
         } catch {
             Write-Warning "Failed to restore the previous control center files: $_"

@@ -4,6 +4,7 @@ import fs from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 import { URL } from "node:url";
+import { createContext, runInContext } from "node:vm";
 
 const prefs = new Map();
 globalThis.__glossaryPacksTest = {
@@ -186,4 +187,71 @@ test("management calls use explicit actions and never alter selections", async (
     );
     assert.deepEqual(JSON.parse(calls[2].body), { version: "1" });
     assert.deepEqual(packs.getSelectedGlossaryPackIds(server), []);
+});
+
+test("plugin startup supplies abort support in a Zotero sandbox without browser globals", async () => {
+    const mainWindow = { AbortController: globalThis.AbortController };
+    const timers = new Map();
+    const signals = [];
+    const sandbox = createContext({
+        URL,
+        Zotero: {},
+        config: { addonInstance: "pdf2zhpro" },
+        Addon: class {},
+        getPref: () => "{}",
+        setPref: () => {},
+        setTimeout: (callback, delay) => {
+            assert.equal(delay, 30000);
+            const id = {};
+            timers.set(id, callback);
+            return id;
+        },
+        clearTimeout: (id) => timers.delete(id),
+        fetch: async (_url, { signal }) => {
+            signals.push(signal);
+            return response([]);
+        },
+    });
+    // Match the toolkit's global-first lookup, including getter evaluation.
+    sandbox.BasicTool = class {
+        getGlobal(name) {
+            if (typeof sandbox[name] !== "undefined") return sandbox[name];
+            return name === "window" ? mainWindow : mainWindow[name];
+        }
+    };
+    runInContext("globalThis._globalThis = globalThis", sandbox);
+    assert.equal(runInContext("typeof AbortController", sandbox), "undefined");
+    const entry = ts
+        .transpileModule(
+            fs.readFileSync(
+                new URL("../src/index.ts", import.meta.url),
+                "utf8",
+            ),
+            {
+                compilerOptions: {
+                    module: ts.ModuleKind.ESNext,
+                    target: ts.ScriptTarget.ES2022,
+                },
+            },
+        )
+        .outputText.replace(/^import[\s\S]*?;\r?\n/gm, "");
+    runInContext(entry + "\n" + compiled.replace(/^export /gm, ""), sandbox);
+
+    await sandbox.listGlossaryPacks(server);
+    await sandbox.downloadGlossaryPack(server, "medicine", "1");
+    assert.equal(signals.length, 2);
+    assert.ok(
+        signals.every((signal) => signal instanceof globalThis.AbortSignal),
+    );
+    assert.equal(timers.size, 0);
+
+    sandbox.fetch = (_url, { signal }) =>
+        new Promise((_resolve, reject) => {
+            signal.addEventListener("abort", () => reject(signal.reason));
+        });
+    const pending = sandbox.listGlossaryPacks(server);
+    assert.equal(timers.size, 1);
+    timers.values().next().value();
+    await assert.rejects(pending, { name: "AbortError" });
+    assert.equal(timers.size, 0);
 });

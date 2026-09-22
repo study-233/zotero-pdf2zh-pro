@@ -26,22 +26,41 @@ const asModule = (text) =>
     );
 const prefs = new Map();
 const nodes = new Map();
+const { config } = JSON.parse(
+    fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+);
 let selection = false;
+let pickerTitle;
 let bytes;
 let health;
 let packData = [];
 const selectedPacks = new Map();
 const packActions = [];
-const messages = new Map(
-    fs
-        .readFileSync(
-            new URL("../addon/locale/zh-CN/preferences.ftl", import.meta.url),
-            "utf8",
-        )
-        .split(/\r?\n/)
-        .filter((line) => line.includes(" = "))
-        .map((line) => line.split(" = ")),
-);
+const loadMessages = (locale) =>
+    new Map(
+        fs
+            .readFileSync(
+                new URL(
+                    `../addon/locale/${locale}/preferences.ftl`,
+                    import.meta.url,
+                ),
+                "utf8",
+            )
+            .split(/\r?\n/)
+            .filter((line) => line.includes(" = "))
+            .map((line) => {
+                const [id, value] = line.split(" = ");
+                // scaffold prefixes FTL IDs when it packages the extension.
+                return [`${config.addonRef}-${id}`, value];
+            }),
+    );
+let messages = loadMessages("zh-CN");
+function formatMessage(id, args = {}) {
+    assert.ok(messages.has(id), `Unknown packaged Fluent ID: ${id}`);
+    return messages
+        .get(id)
+        .replace(/\{\s*\$(\w+)\s*\}/g, (_, key) => args[key] ?? "");
+}
 const client = {
     list: async () => ({ packs: packData }),
     check: async () => ({ packs: packData }),
@@ -55,12 +74,12 @@ const walk = (node, id) =>
         : node.children?.map((child) => walk(child, id)).find(Boolean);
 const document = {
     getElementById: (id) =>
-        nodes.get(id.replace("zotero-prefpane-test-", "")) ||
+        nodes.get(id.replace(`zotero-prefpane-${config.addonRef}-`, "")) ||
         [...nodes.values()].map((node) => walk(node, id)).find(Boolean),
     createElementNS: (_namespace, tag) => makeNode(tag),
     createTextNode: (text) =>
         Object.assign(makeNode("text"), { textContent: text }),
-    l10n: { formatValue: async (key) => messages.get(key) },
+    l10n: { formatValue: async (key, args) => formatMessage(key, args) },
 };
 function makeNode(tag = "div") {
     return {
@@ -82,9 +101,10 @@ function makeNode(tag = "div") {
                 const args = JSON.parse(
                     this.attributes.get("data-l10n-args") || "{}",
                 );
-                this.textContent = (
-                    messages.get(this.attributes.get("data-l10n-id")) || ""
-                ).replace(/\{\s*\$(\w+)\s*\}/g, (_, key) => args[key] ?? "");
+                this.textContent = formatMessage(
+                    this.attributes.get("data-l10n-id"),
+                    args,
+                );
             }
         },
         getAttribute(name) {
@@ -108,7 +128,7 @@ function makeNode(tag = "div") {
     };
 }
 globalThis.__glossaryUiTest = {
-    config: { addonRef: "test" },
+    config,
     version: "test",
     getPref: (key) => prefs.get(key),
     setPref: (key, value) => prefs.set(key, value),
@@ -140,6 +160,11 @@ const store = await asModule(
         compile("glossaryStore"),
 );
 Object.assign(globalThis.__glossaryUiTest, store);
+const locale = await asModule(
+    "const {config}=globalThis.__glossaryUiTest;\n" +
+        compile("../utils/locale"),
+);
+globalThis.__glossaryUiTest.getLocaleID = locale.getLocaleID;
 globalThis.addon = {
     data: {
         prefs: {
@@ -151,6 +176,9 @@ globalThis.addon = {
 };
 globalThis.ztoolkit = {
     FilePicker: class {
+        constructor(title) {
+            pickerTitle = title;
+        }
         async open() {
             return selection;
         }
@@ -158,12 +186,14 @@ globalThis.ztoolkit = {
 };
 globalThis.IOUtils = { read: async () => bytes };
 const ui = await asModule(
-    "const {config,version,getPref,setPref,axios,loadGlossaryEntries,importGlossaryCsv,clearGlossaryEntries,listGlossaryPacks,checkGlossaryUpdates,downloadGlossaryPack,cancelGlossaryDownload,removeGlossaryPack,getSelectedGlossaryPackIds,setSelectedGlossaryPackIds,supportsGlossaryPackLanguage}=globalThis.__glossaryUiTest;\n" +
+    "const {config,version,getLocaleID,getPref,setPref,axios,loadGlossaryEntries,importGlossaryCsv,clearGlossaryEntries,listGlossaryPacks,checkGlossaryUpdates,downloadGlossaryPack,cancelGlossaryDownload,removeGlossaryPack,getSelectedGlossaryPackIds,setSelectedGlossaryPackIds,supportsGlossaryPackLanguage}=globalThis.__glossaryUiTest;\n" +
         compile("preferenceScript") +
-        "\nexport {importGlossary,refreshServerVersion,refreshGlossaryPacks,renderGlossaryPacks,runGlossaryPackAction};",
+        "\nexport {importGlossary,refreshGlossarySummary,refreshServerVersion,refreshGlossaryPacks,renderGlossaryPacks,runGlossaryPackAction};",
 );
 
-function reset() {
+function reset(language = "zh-CN") {
+    messages = loadMessages(language);
+    pickerTitle = undefined;
     nodes.clear();
     selectedPacks.clear();
     packActions.length = 0;
@@ -323,7 +353,8 @@ const installed = (id = "computing", fields = {}) =>
         ],
         ...fields,
     });
-const node = (id) => document.getElementById(`zotero-prefpane-test-${id}`);
+const node = (id) =>
+    document.getElementById(`zotero-prefpane-${config.addonRef}-${id}`);
 const descendants = (root) => [root, ...root.children.flatMap(descendants)];
 const choose = (id, checked) => {
     const checkbox = node(`pack-${id}`);
@@ -339,6 +370,100 @@ function packUI() {
         "glossary-check-updates",
     ])
         nodes.set(id, makeNode());
+}
+
+for (const [language, labels, download, empty, saved, imported] of [
+    [
+        "zh-CN",
+        ["计算机与 AI", "建筑", "物理", "环境", "医学"],
+        "下载",
+        "未导入自定义术语。",
+        "已保存 2 条自定义术语。",
+        "已导入 2 条自定义术语。",
+    ],
+    [
+        "en-US",
+        ["Computing and AI", "Building", "Physics", "Environment", "Medicine"],
+        "Download",
+        "No custom glossary imported.",
+        "2 custom terms saved.",
+        "Imported 2 custom terms.",
+    ],
+]) {
+    test(`${language} renders names, actions, statuses and CSV messages using packaged Fluent IDs`, async () => {
+        reset(language);
+        packUI();
+        packData = ids.map((id) => pack(id));
+        await ui.refreshServerVersion();
+        const rendered = descendants(node("glossaryPacks"));
+        assert.deepEqual(
+            rendered
+                .filter((item) => item.tag === "label")
+                .map((item) => item.textContent),
+            labels,
+        );
+        assert.ok(
+            rendered.some(
+                (item) =>
+                    item.textContent ===
+                    (language === "zh-CN" ? "200 条" : "200 terms"),
+            ),
+        );
+        for (const id of ids) {
+            assert.equal(node(`pack-${id}-download`).textContent, download);
+            assert.equal(
+                node(`pack-${id}-download`).getAttribute("data-l10n-id"),
+                `${config.addonRef}-pref-pack-download`,
+            );
+        }
+        assert.equal(
+            node("serverStatus").textContent,
+            formatMessage(`${config.addonRef}-pref-server-connected`),
+        );
+        packData = [
+            installed("computing", { status: "update_available" }),
+            pack("building", {
+                status: "downloading",
+                download: { receivedBytes: 50, totalBytes: 100 },
+            }),
+        ];
+        await ui.refreshGlossaryPacks();
+        for (const [id, zh, en] of [
+            ["pack-computing-download", "更新", "Update"],
+            ["pack-computing-remove", "移除", "Remove"],
+            ["pack-building-cancel", "取消", "Cancel"],
+        ]) {
+            assert.equal(node(id).textContent, language === "zh-CN" ? zh : en);
+        }
+        assert.ok(
+            descendants(node("glossaryPacks")).some(
+                (item) =>
+                    item.textContent ===
+                    (language === "zh-CN" ? "下载中 50%" : "Downloading 50%"),
+            ),
+        );
+        store.clearGlossaryEntries();
+        ui.refreshGlossarySummary();
+        assert.equal(node("glossarySummary").textContent, empty);
+        selection = "glossary.csv";
+        bytes = new globalThis.TextEncoder().encode(
+            "source,target\nnew,新词\nterm,术语",
+        );
+        await ui.importGlossary();
+        assert.equal(
+            pickerTitle,
+            formatMessage(`${config.addonRef}-pref-glossary-import`),
+        );
+        assert.equal(node("glossarySummary").textContent, saved);
+        assert.equal(node("glossaryResult").textContent, imported);
+        bytes = new Uint8Array([0xff]);
+        await ui.importGlossary();
+        assert.equal(
+            node("glossaryResult").textContent,
+            formatMessage(`${config.addonRef}-pref-glossary-invalid-encoding`),
+        );
+        assert.equal(store.loadGlossaryEntries().length, 2);
+    });
 }
 
 test("five categories start unchecked and downloading never enables a pack", async () => {

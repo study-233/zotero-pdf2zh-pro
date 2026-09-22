@@ -56,6 +56,7 @@ try {
     $processPath = Join-Path $unpacked 'zotero-pdf2zh-pro.exe'
     $process = Start-Process -FilePath $processPath -WorkingDirectory $working -PassThru -WindowStyle Hidden
     Wait-ControlWindow -Process $process
+    & (Join-Path $PSScriptRoot 'test_windows_window_icons.ps1') -ProcessId $process.Id -Executable $processPath
     Write-Host 'Final ZIP opens its real control-center window with an isolated working directory and PATH.'
     Stop-TestControl -Process $process -ExpectedPath $processPath
     $process = $null
@@ -72,6 +73,7 @@ try {
     $processPath = Join-Path $installedBin 'zotero-pdf2zh-pro.exe'
     $process = Start-Process -FilePath $processPath -WorkingDirectory $working -PassThru -WindowStyle Hidden
     Wait-ControlWindow -Process $process
+    & (Join-Path $PSScriptRoot 'test_windows_window_icons.ps1') -ProcessId $process.Id -Executable $processPath
     $controlLog = Get-Content -Raw -LiteralPath (Join-Path $installedRoot 'logs\control-panel.log') -Encoding utf8
     if (-not $controlLog.Contains("source=executable-installation; root=$installedRoot;")) {
         throw 'The installed EXE did not discover its own installation without a registry entry or environment override.'

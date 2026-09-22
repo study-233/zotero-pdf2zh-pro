@@ -122,11 +122,14 @@ function Set-ProductShortcuts {
     $controlShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "$ProductName.lnk"))
     $controlShortcut.TargetPath = $gui
     $controlShortcut.WorkingDirectory = $Root
+    $controlShortcut.IconLocation = "$gui,0"
     $controlShortcut.Save()
     $uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "Uninstall.lnk"))
     $uninstallShortcut.TargetPath = Join-Path (Join-Path $Root "bin") "uninstall.cmd"
     $uninstallShortcut.WorkingDirectory = $Root
+    $uninstallShortcut.IconLocation = "$gui,0"
     $uninstallShortcut.Save()
+    Update-ProductShellIcons -Root $Root
 }
 
 function Set-ProductAutostart {

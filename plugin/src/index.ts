@@ -7,6 +7,9 @@ const basicTool = new BasicTool();
 
 // @ts-ignore - Plugin instance is not typed
 if (!basicTool.getGlobal("Zotero")[config.addonInstance]) {
+    defineGlobal("AbortController", () => {
+        return basicTool.getGlobal("window").AbortController;
+    });
     _globalThis.addon = new Addon();
     defineGlobal("ztoolkit", () => {
         return _globalThis.addon.data.ztoolkit;

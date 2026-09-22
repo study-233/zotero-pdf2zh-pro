@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: scripts/release.sh <version> [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
+Usage: scripts/release.sh <version> [--full-validation] [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
 
 Build, validate, and publish a unified zotero-pdf2zh-pro release.
 
@@ -11,6 +11,7 @@ The release includes the Zotero XPI and update manifest, PyPI wheel/sdist,
 Windows GUI ZIP, a local corresponding-source archive, and an optional
 update to the public source-only Homebrew tap. Add a matching CHANGELOG.md
 section first. Publication reuses verified CI artifacts; --no-push builds on Windows.
+--full-validation also runs rollback and relocation checks against the final packages.
 --replace-existing explicitly replaces clients at an existing tag, preserves the
 original PyPI files, and requires unchanged server and license inputs.
 EOF
@@ -63,6 +64,7 @@ PUSH=1
 PUBLISH_RELEASE=1
 PUBLISH_PYPI=1
 UPDATE_TAP=1
+FULL_VALIDATION=false
 TAP_PATH=""
 REPLACE_EXISTING=""
 PYPI_TOKEN="${UV_PUBLISH_TOKEN:-}"
@@ -70,6 +72,7 @@ unset UV_PUBLISH_TOKEN
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --full-validation) FULL_VALIDATION=true ;;
         --no-push)
             PUSH=0
             PUBLISH_RELEASE=0
@@ -197,6 +200,7 @@ NODE
 UV_DEFAULT_INDEX=https://pypi.org/simple uv --directory server lock --locked
 if [[ "$PUSH" -eq 0 ]]; then
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_shortcuts.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_bootstrap.ps1
 uv run --no-project python scripts/test_windows_pe.py
 uv run --no-project python scripts/test_release_gate.py
@@ -267,7 +271,6 @@ if [[ "$PUSH" -eq 1 ]]; then
     [[ -n "$CORE_RUN" ]] || die "Core CI did not start for the release commit"
     gh run watch "$CORE_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
     BUILD_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    FULL_VALIDATION=false
     [[ -z "$REPLACE_EXISTING" ]] || FULL_VALIDATION=true
     gh workflow run build-windows-release.yml --repo "$MAIN_REPO" --ref main \
         -f version="$VERSION" -f commit="$COMMIT" -f full_validation="$FULL_VALIDATION" \

@@ -1,6 +1,6 @@
 [package]
 name = "zotero-pdf2zh-pro-control"
-version = "1.7.0"
+version = "1.7.1"
 description = "Windows control center for zotero-pdf2zh-pro"
 authors = ["study-233"]
 edition = "2021"
@@ -22,6 +22,6 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 winreg = "0.55"
-windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_UI_HiDpi", "Win32_UI_WindowsAndMessaging"] }
 zip = { version = "7.2", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 tauri-plugin-dialog = "2"

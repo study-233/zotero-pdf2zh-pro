@@ -3,6 +3,7 @@
 mod install_root;
 mod update;
 mod webview_runtime;
+mod window_icons;
 
 use semver::Version;
 use serde::Serialize;
@@ -823,6 +824,11 @@ fn main() {
             let location = install_root::discover().map_err(std::io::Error::other)?;
             let paths = ProductPaths::from_root(location.root);
             let installed = running_from_installed_path(&paths);
+            if let Some(window) = app.get_webview_window("main") {
+                if let Err(error) = window_icons::setup(&window, paths.control_log.clone()) {
+                    emit_log(app.handle(), &paths.control_log, error);
+                }
+            }
             let actual_executable = current_executable()
                 .map(|path| path.to_string_lossy().into_owned())
                 .unwrap_or_else(|error| format!("<error: {error}>"));

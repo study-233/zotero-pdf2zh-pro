@@ -1,5 +1,6 @@
 import { config, version } from "../../package.json";
 import { getPref, setPref } from "../utils/prefs";
+import { getLocaleID } from "../utils/locale";
 import {
     emptyLLMApi,
     profileLabel,
@@ -361,7 +362,7 @@ function localizePackNode(
     key: string,
     args?: Record<string, string | number>,
 ) {
-    node.setAttribute("data-l10n-id", key);
+    node.setAttribute("data-l10n-id", getLocaleID(key));
     if (args) node.setAttribute("data-l10n-args", JSON.stringify(args));
     else node.removeAttribute("data-l10n-args");
 }
@@ -384,7 +385,9 @@ function packStatus(key: string, args?: Record<string, string | number>) {
 
 async function preferenceText(key: string) {
     return (
-        (await addon.data.prefs?.window.document.l10n?.formatValue(key)) || key
+        (await addon.data.prefs?.window.document.l10n?.formatValue(
+            getLocaleID(key),
+        )) || key
     );
 }
 
