@@ -133,10 +133,7 @@ function Copy-LegacyData {
             return
         }
     }
-    $toolRoot = (& $UvExecutable tool dir 2>$null | Select-Object -Last 1).Trim()
-    if (-not $toolRoot) {
-        return
-    }
+    $toolRoot = Get-UvToolDirectory -UvExecutable $UvExecutable
     $legacyData = Join-Path (Join-Path $toolRoot $ProductName) "Lib\site-packages\translates"
     if (-not (Test-Path -LiteralPath $legacyData)) {
         return
@@ -221,23 +218,7 @@ function Install-Shortcuts {
         Update-ProductShellIcons -Root $AppRoot -NoShortcuts
         return
     }
-    New-Item -ItemType Directory -Force -Path $StartMenuDir | Out-Null
-    Get-ChildItem -LiteralPath $StartMenuDir -Filter "*.lnk" -ErrorAction SilentlyContinue |
-        Remove-Item -Force
-    $shell = New-Object -ComObject WScript.Shell
-
-    $controlShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "$ProductName.lnk"))
-    $controlShortcut.TargetPath = $ControlPanelExecutable
-    $controlShortcut.WorkingDirectory = $AppRoot
-    $controlShortcut.IconLocation = "$ControlPanelExecutable,0"
-    $controlShortcut.Save()
-
-    $uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "Uninstall.lnk"))
-    $uninstallShortcut.TargetPath = Join-Path $BinDir "uninstall.cmd"
-    $uninstallShortcut.WorkingDirectory = $AppRoot
-    $uninstallShortcut.IconLocation = "$ControlPanelExecutable,0"
-    $uninstallShortcut.Save()
-    Update-ProductShellIcons -Root $AppRoot
+    Write-ProductShortcuts -Root $AppRoot
 }
 
 Assert-InstallDestination
@@ -312,7 +293,7 @@ try {
     }
     $serverInstalled = $true
 
-    $toolBin = (& $uv tool dir --bin | Select-Object -Last 1).Trim()
+    $toolBin = Get-UvToolDirectory -UvExecutable $uv -Bin
     $serverExecutable = Join-Path $toolBin "$ProductName.exe"
     if (-not (Test-Path -LiteralPath $serverExecutable)) {
         throw "Installed server executable was not found at $serverExecutable"

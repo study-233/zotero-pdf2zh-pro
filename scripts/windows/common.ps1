@@ -152,6 +152,64 @@ $StartMenuDir = if ($env:PDF2ZH_WINDOWS_START_MENU_DIR) {
     Join-Path ([Environment]::GetFolderPath("Programs")) $ProductName
 }
 
+function Write-ProductShortcuts {
+    param([string]$Root)
+    if (-not ("Pdf2zhPro.ShellLinks" -as [type])) {
+        # WScript.Shell rejects paths outside the Windows ANSI code page. Use Unicode COM explicitly.
+        Add-Type -TypeDefinition @'
+using System;
+using System.Text;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+namespace Pdf2zhPro {
+    [ComImport, Guid("00021401-0000-0000-C000-000000000046")]
+    internal class ShellLinkObject { }
+    [ComImport, Guid("000214F9-0000-0000-C000-000000000046"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IShellLinkW {
+        void GetPath([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder path, int size, IntPtr data, uint flags);
+        void GetIDList(out IntPtr idList);
+        void SetIDList(IntPtr idList);
+        void GetDescription([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder description, int size);
+        void SetDescription([MarshalAs(UnmanagedType.LPWStr)] string description);
+        void GetWorkingDirectory([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder directory, int size);
+        void SetWorkingDirectory([MarshalAs(UnmanagedType.LPWStr)] string directory);
+        void GetArguments([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder arguments, int size);
+        void SetArguments([MarshalAs(UnmanagedType.LPWStr)] string arguments);
+        void GetHotkey(out short hotkey);
+        void SetHotkey(short hotkey);
+        void GetShowCmd(out int showCommand);
+        void SetShowCmd(int showCommand);
+        void GetIconLocation([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder iconPath, int size, out int index);
+        void SetIconLocation([MarshalAs(UnmanagedType.LPWStr)] string iconPath, int index);
+        void SetRelativePath([MarshalAs(UnmanagedType.LPWStr)] string path, uint reserved);
+        void Resolve(IntPtr window, uint flags);
+        void SetPath([MarshalAs(UnmanagedType.LPWStr)] string path);
+    }
+    public static class ShellLinks {
+        public static void Save(string file, string target, string directory, string icon) {
+            object instance = new ShellLinkObject();
+            try {
+                IShellLinkW link = (IShellLinkW)instance;
+                link.SetPath(target);
+                link.SetWorkingDirectory(directory);
+                link.SetIconLocation(icon, 0);
+                ((IPersistFile)instance).Save(file, true);
+            } finally {
+                Marshal.FinalReleaseComObject(instance);
+            }
+        }
+    }
+}
+'@
+    }
+    New-Item -ItemType Directory -Force -Path $StartMenuDir | Out-Null
+    Get-ChildItem -LiteralPath $StartMenuDir -Filter "*.lnk" -ErrorAction SilentlyContinue | Remove-Item -Force
+    $gui = Join-Path (Join-Path $Root "bin") "$ProductName.exe"
+    [Pdf2zhPro.ShellLinks]::Save((Join-Path $StartMenuDir "$ProductName.lnk"), $gui, $Root, $gui)
+    [Pdf2zhPro.ShellLinks]::Save((Join-Path $StartMenuDir "Uninstall.lnk"), (Join-Path (Join-Path $Root "bin") "uninstall.cmd"), $Root, $gui)
+    Update-ProductShellIcons -Root $Root
+}
+
 function Update-ProductShellIcons {
     param([string]$Root = $AppRoot, [switch]$NoShortcuts)
     if (-not ("Pdf2zhPro.ShellIcons" -as [type])) {
@@ -308,6 +366,41 @@ function Get-UvExecutable {
     return $null
 }
 
+function Get-UvToolDirectory {
+    param([Parameter(Mandatory = $true)][string]$UvExecutable, [switch]$Bin)
+    $arguments = if ($Bin) { "tool dir --bin" } else { "tool dir" }
+    $startInfo = New-Object Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $UvExecutable
+    $startInfo.Arguments = $arguments
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    # uv emits UTF-8; PowerShell 5.1 otherwise decodes native stdout with the console code page.
+    $startInfo.StandardOutputEncoding = New-Object Text.UTF8Encoding($false, $true)
+    $startInfo.StandardErrorEncoding = New-Object Text.UTF8Encoding($false, $true)
+    $process = New-Object Diagnostics.Process
+    $process.StartInfo = $startInfo
+    try {
+        [void]$process.Start()
+        $outputTask = $process.StandardOutput.ReadToEndAsync()
+        $errorTask = $process.StandardError.ReadToEndAsync()
+        $process.WaitForExit()
+        $output = $outputTask.GetAwaiter().GetResult()
+        $errorOutput = $errorTask.GetAwaiter().GetResult()
+        if ($process.ExitCode -ne 0) {
+            throw "uv $arguments failed with exit code $($process.ExitCode): $($errorOutput.Trim())"
+        }
+        $directory = $output.Trim()
+        if (-not $directory) {
+            throw "uv $arguments returned an empty directory."
+        }
+        return $directory
+    } finally {
+        $process.Dispose()
+    }
+}
+
 function Get-ServerExecutable {
     if (Test-Path -LiteralPath $ExecutableFile) {
         $savedPath = (Get-Content -Raw -LiteralPath $ExecutableFile).Trim()
@@ -319,10 +412,7 @@ function Get-ServerExecutable {
     if (-not $uv) {
         return $null
     }
-    $toolBin = (& $uv tool dir --bin 2>$null | Select-Object -Last 1).Trim()
-    if (-not $toolBin) {
-        return $null
-    }
+    $toolBin = Get-UvToolDirectory -UvExecutable $uv -Bin
     $candidate = Join-Path $toolBin "$ProductName.exe"
     if (Test-Path -LiteralPath $candidate) {
         return [IO.Path]::GetFullPath($candidate)
@@ -374,10 +464,7 @@ function Get-ToolPythonExecutable {
     if (-not $uv) {
         return $null
     }
-    $toolRoot = (& $uv tool dir 2>$null | Select-Object -Last 1).Trim()
-    if (-not $toolRoot) {
-        return $null
-    }
+    $toolRoot = Get-UvToolDirectory -UvExecutable $uv
     $candidate = Join-Path (Join-Path $toolRoot $ProductName) "Scripts\python.exe"
     if (Test-Path -LiteralPath $candidate) {
         return [IO.Path]::GetFullPath($candidate)

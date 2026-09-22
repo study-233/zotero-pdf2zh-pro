@@ -26,15 +26,17 @@ function Import-TestedFunction {
 function Assert-ShortcutRoot {
     param([string]$Root)
     $gui = Join-Path (Join-Path $Root "bin") "$ProductName.exe"
-    $shell = New-Object -ComObject WScript.Shell
+    $shell = New-Object -ComObject Shell.Application
     foreach ($name in @("$ProductName.lnk", "Uninstall.lnk")) {
         $path = Join-Path $StartMenuDir $name
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing shortcut: $name" }
-        $shortcut = $shell.CreateShortcut($path)
+        $shortcut = $shell.Namespace($StartMenuDir).ParseName($name).GetLink
         $target = if ($name -eq "Uninstall.lnk") { Join-Path (Join-Path $Root "bin") "uninstall.cmd" } else { $gui }
-        if ($shortcut.TargetPath -ne $target) { throw "Wrong shortcut target: $name" }
+        if ($shortcut.Path -ne $target) { throw "Wrong shortcut target: $name" }
         if ($shortcut.WorkingDirectory -ne $Root) { throw "Wrong shortcut working directory: $name" }
-        if ($shortcut.IconLocation -ne "$gui,0") { throw "Wrong shortcut icon: $name" }
+        $iconPath = ""
+        $iconIndex = $shortcut.GetIconLocation([ref]$iconPath)
+        if ($iconPath -ne $gui -or $iconIndex -ne 0) { throw "Wrong shortcut icon: $name" }
     }
 }
 
@@ -48,7 +50,8 @@ function Assert-Refresh {
 
 try {
     New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
-    $sourceRoot = Join-Path $testRoot (([char]0x4E2D).ToString() + [char]0x6587 + " source with spaces")
+    # Include characters outside both Western and Chinese ANSI code pages.
+    $sourceRoot = Join-Path $testRoot (([char]0x4E2D).ToString() + [char]0x6587 + [char]0x0627 + [char]0x00E4 + " source with spaces")
     $destinationRoot = Join-Path $testRoot "destination with spaces"
     foreach ($root in @($sourceRoot, $destinationRoot)) {
         $bin = Join-Path $root "bin"
@@ -76,11 +79,21 @@ try {
     Install-Shortcuts
     Assert-ShortcutRoot $sourceRoot
     Assert-Refresh $sourceRoot
+    # ShellExecute must resolve the Unicode target, not just persist matching metadata.
+    $launched = Start-Process -FilePath (Join-Path $StartMenuDir "$ProductName.lnk") `
+        -ArgumentList "/d /c exit 0" -WindowStyle Hidden -PassThru
+    $null = $launched.Handle
+    if (-not $launched.WaitForExit(10000)) {
+        $launched.Kill()
+        throw "The Unicode shortcut fixture did not complete."
+    }
+    $launched.WaitForExit()
+    if ($launched.ExitCode -ne 0) { throw "Launching the Unicode shortcut failed." }
 
     # An upgrade must repair an existing explicit icon from another executable.
-    $shell = New-Object -ComObject WScript.Shell
-    $shortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "$ProductName.lnk"))
-    $shortcut.IconLocation = (Join-Path $destinationRoot "bin\$ProductName.exe") + ",0"
+    $shell = New-Object -ComObject Shell.Application
+    $shortcut = $shell.Namespace($StartMenuDir).ParseName("$ProductName.lnk").GetLink
+    $shortcut.SetIconLocation((Join-Path $destinationRoot "bin\$ProductName.exe"), 0)
     $shortcut.Save()
     Install-Shortcuts
     Assert-ShortcutRoot $sourceRoot

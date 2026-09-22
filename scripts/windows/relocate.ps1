@@ -115,21 +115,7 @@ function Set-RootEnvironment {
 
 function Set-ProductShortcuts {
     param([string]$Root)
-    New-Item -ItemType Directory -Force -Path $StartMenuDir | Out-Null
-    Get-ChildItem -LiteralPath $StartMenuDir -Filter "*.lnk" -ErrorAction SilentlyContinue | Remove-Item -Force
-    $shell = New-Object -ComObject WScript.Shell
-    $gui = Join-Path (Join-Path $Root "bin") "$ProductName.exe"
-    $controlShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "$ProductName.lnk"))
-    $controlShortcut.TargetPath = $gui
-    $controlShortcut.WorkingDirectory = $Root
-    $controlShortcut.IconLocation = "$gui,0"
-    $controlShortcut.Save()
-    $uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "Uninstall.lnk"))
-    $uninstallShortcut.TargetPath = Join-Path (Join-Path $Root "bin") "uninstall.cmd"
-    $uninstallShortcut.WorkingDirectory = $Root
-    $uninstallShortcut.IconLocation = "$gui,0"
-    $uninstallShortcut.Save()
-    Update-ProductShellIcons -Root $Root
+    Write-ProductShortcuts -Root $Root
 }
 
 function Set-ProductAutostart {

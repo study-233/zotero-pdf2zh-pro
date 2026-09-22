@@ -85,7 +85,7 @@ jobs:
           "TMPDIR=$($testTemp.Replace('\', '/'))" >> $env:GITHUB_ENV
           "UV_TOOL_DIR=$env:RUNNER_TEMP\uv-tools" >> $env:GITHUB_ENV
           "UV_TOOL_BIN_DIR=$env:RUNNER_TEMP\uv-bin" >> $env:GITHUB_ENV
-          "PDF2ZH_WINDOWS_APP_ROOT=$env:RUNNER_TEMP\zotero-pdf2zh-pro" >> $env:GITHUB_ENV
+          "PDF2ZH_WINDOWS_APP_ROOT=$env:RUNNER_TEMP\zotero-pdf2zh-pro 中文 with spaces" >> $env:GITHUB_ENV
           "PDF2ZH_WINDOWS_REGISTRY_KEY=HKCU:\Software\zotero-pdf2zh-pro-ci-$env:GITHUB_RUN_ID" >> $env:GITHUB_ENV
           "PDF2ZH_WINDOWS_START_MENU_DIR=$env:RUNNER_TEMP\start-menu\zotero-pdf2zh-pro" >> $env:GITHUB_ENV
           "PDF2ZH_DATA_DIR=$env:RUNNER_TEMP\server-test-data" >> $env:GITHUB_ENV
@@ -267,8 +267,8 @@ jobs:
             server/dist/*
             dist/*.zip
             dist/*.json
-            ${{ runner.temp }}/zotero-pdf2zh-pro/logs/**
-            ${{ runner.temp }}/zotero-pdf2zh-pro/last-operation-error.txt
+            ${{ env.PDF2ZH_WINDOWS_APP_ROOT }}/logs/**
+            ${{ env.PDF2ZH_WINDOWS_APP_ROOT }}/last-operation-error.txt
             ${{ runner.temp }}/webview2-setup.log
           if-no-files-found: ignore
           retention-days: 14

@@ -77,10 +77,12 @@ function Wait-ControlPanel {
 }
 
 function Assert-ProductShortcutIcon {
-    $shell = New-Object -ComObject WScript.Shell
+    $shell = New-Object -ComObject Shell.Application
     foreach ($name in @("$ProductName.lnk", "Uninstall.lnk")) {
-        $shortcut = $shell.CreateShortcut((Join-Path $StartMenuDir $name))
-        Assert-True ($shortcut.IconLocation -eq "$ControlPanelExecutable,0") "Shortcut $name has a stale or implicit icon source: $($shortcut.IconLocation)"
+        $shortcut = $shell.Namespace($StartMenuDir).ParseName($name).GetLink
+        $iconPath = ""
+        $iconIndex = $shortcut.GetIconLocation([ref]$iconPath)
+        Assert-True ($iconPath -eq $ControlPanelExecutable -and $iconIndex -eq 0) "Shortcut $name has a stale or implicit icon source: $iconPath,$iconIndex"
     }
 }
 
@@ -434,11 +436,11 @@ Wait-ExpectedHealth -Stage "successful relocation"
 Assert-True (Test-Path -LiteralPath (Join-Path $DataDir "relocation-task\paragraph-recovery.json")) "Relocation lost the recovery checkpoint."
 Assert-True (Test-Path -LiteralPath (Join-Path $UvCacheDir "relocation-cache-marker.txt")) "Relocation lost the private uv cache marker."
 Assert-True ((Get-SavedInstallRoot) -eq $destinationRoot) "Relocation did not commit the destination root."
-$shell = New-Object -ComObject WScript.Shell
-$controlShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "$ProductName.lnk"))
-$uninstallShortcut = $shell.CreateShortcut((Join-Path $StartMenuDir "Uninstall.lnk"))
-Assert-True ($controlShortcut.TargetPath -eq $ControlPanelExecutable) "Relocation left the control center shortcut pointing to the source."
-Assert-True ($uninstallShortcut.TargetPath -eq (Join-Path $BinDir "uninstall.cmd")) "Relocation left the uninstall shortcut pointing to the source."
+$shell = New-Object -ComObject Shell.Application
+$controlShortcut = $shell.Namespace($StartMenuDir).ParseName("$ProductName.lnk").GetLink
+$uninstallShortcut = $shell.Namespace($StartMenuDir).ParseName("Uninstall.lnk").GetLink
+Assert-True ($controlShortcut.Path -eq $ControlPanelExecutable) "Relocation left the control center shortcut pointing to the source."
+Assert-True ($uninstallShortcut.Path -eq (Join-Path $BinDir "uninstall.cmd")) "Relocation left the uninstall shortcut pointing to the source."
 Assert-Autostart -Enabled $false
 Wait-PathAbsent -Path $sourceRoot
 Assert-True (-not (Test-Path -LiteralPath $sourceRoot)) "Relocation left the old product root behind."
