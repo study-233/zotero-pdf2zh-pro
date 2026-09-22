@@ -55,6 +55,13 @@ def sha256(value: bytes):
     return hashlib.sha256(value).hexdigest()
 
 
+def validate_snapshot(data: bytes, item: dict):
+    if re.search(rb"AIza[0-9A-Za-z_-]{35}", data):
+        raise ValueError(f"Client API configuration remains in snapshot: {item['file']}")
+    if sha256(data) != item["sha256"]:
+        raise ValueError(f"Prepared snapshot checksum mismatch: {item['file']}")
+
+
 def prepare_snapshot(data: bytes, item: dict) -> bytes:
     """Remove unrelated client scripts while retaining traceable source hashes."""
     expected = item.get("upstreamSha256", item["sha256"])
@@ -66,10 +73,7 @@ def prepare_snapshot(data: bytes, item: dict) -> bytes:
                       flags=re.IGNORECASE | re.DOTALL)
     elif transform is not None:
         raise ValueError(f"Unknown snapshot transform: {transform}")
-    if re.search(rb"AIza[0-9A-Za-z_-]{35}", data):
-        raise ValueError(f"Client API configuration remains in snapshot: {item['file']}")
-    if sha256(data) != item["sha256"]:
-        raise ValueError(f"Prepared snapshot checksum mismatch: {item['file']}")
+    validate_snapshot(data, item)
     return data
 
 
@@ -77,8 +81,7 @@ def source_entries(source, root):
     inputs = source["inputs"]
     for item in inputs + source.get("licenseFiles", []):
         data = (root / item["file"]).read_bytes()
-        if sha256(data) != item["sha256"]:
-            raise ValueError(f"Upstream snapshot checksum mismatch: {item['file']}")
+        validate_snapshot(data, item)
     if source["format"] == "naer-csv":
         content = (root / inputs[0]["file"]).read_text(encoding="utf-8-sig")
         return {r["序號"]: (r["英文名稱"].strip(), r[source["targetColumn"]].strip())
