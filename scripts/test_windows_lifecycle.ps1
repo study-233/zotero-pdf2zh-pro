@@ -115,8 +115,7 @@ function Invoke-RelocationProcess {
         "-SourceRoot", ('"{0}"' -f $Source),
         "-DestinationRoot", ('"{0}"' -f $Destination),
         "-CurrentVersion", $PackageVersion,
-        "-PackageSource", ('"{0}"' -f $Wheel),
-        "-SkipUvBootstrap"
+        "-PackageSource", ('"{0}"' -f $Wheel)
     ) -join " "
     $stdoutFile = [IO.Path]::GetTempFileName()
     $stderrFile = [IO.Path]::GetTempFileName()
@@ -381,9 +380,9 @@ Remove-Item -LiteralPath $cacheBackup -Recurse -Force
 & (Join-Path $windowsDir "install.ps1") `
     -PackageSource $package `
     -GuiSource $gui `
-    -SkipUvBootstrap `
     -AllowPreparedDestination `
     -NonInteractive
+Assert-True (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf) "Reinstall did not restore private uv before relocation."
 Assert-True (Test-Path -LiteralPath (Join-Path $DataDir "preserve-me")) "Reinstall did not preserve data."
 & (Join-Path $BinDir "start-server.ps1") -Quiet
 $recoveryDir = Join-Path $DataDir "relocation-task"
@@ -418,6 +417,7 @@ Assert-True ($relocationExit -eq 0) "Installation relocation failed."
 $env:PDF2ZH_WINDOWS_APP_ROOT = $destinationRoot
 . (Join-Path (Join-Path $destinationRoot "bin") "common.ps1")
 Use-PrivateUvEnvironment
+Assert-True (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf) "Relocation did not install private uv at the destination."
 $relocatedControlProcessId = Wait-ControlPanel
 Assert-True ($relocatedControlProcessId -ne $rollbackControlProcessId) "Relocation did not launch the new control center."
 Wait-ExpectedHealth -Stage "successful relocation"
