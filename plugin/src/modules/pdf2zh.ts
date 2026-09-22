@@ -1,4 +1,3 @@
-import { MenuitemOptions } from "zotero-plugin-toolkit";
 import { getString } from "../utils/locale";
 
 export class PDF2zhBasicFactory {
@@ -13,33 +12,54 @@ export class PDF2zhBasicFactory {
 }
 
 export class PDF2zhUIFactory {
+    private static registeredMenuID: string | false = false;
+
     static registerRightClickMenuItem() {
+        if (this.registeredMenuID) return;
         const menuIcon = `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.svg`;
         const menuPrefix = `zotero-itemmenu-${addon.data.config.addonRef}`;
-        const pdf2zhMenu: MenuitemOptions = {
-            tag: "menu",
-            id: menuPrefix,
-            icon: menuIcon,
-            label: "zotero-pdf2zh-pro",
-            children: [
+        this.registeredMenuID = Zotero.MenuManager.registerMenu({
+            menuID: menuPrefix,
+            pluginID: addon.data.config.addonID,
+            target: "main/library/item",
+            menus: [
                 {
-                    tag: "menuitem",
-                    id: `${menuPrefix}-translate-pdf`,
-                    label: `zotero-pdf2zh-pro: ${getString("prefs-menu-translate")}`,
-                    commandListener: () =>
-                        addon.hooks.onDialogEvents("translatePDF"),
+                    menuType: "submenu",
                     icon: menuIcon,
-                },
-                {
-                    tag: "menuitem",
-                    id: `${menuPrefix}-task-manager`,
-                    label: `zotero-pdf2zh-pro: ${getString("prefs-menu-tasks")}`,
-                    commandListener: () =>
-                        addon.hooks.onDialogEvents("openTaskManager"),
-                    icon: menuIcon,
+                    onShowing: (_event, context) => {
+                        context.menuElem.setAttribute(
+                            "label",
+                            "zotero-pdf2zh-pro",
+                        );
+                    },
+                    menus: [
+                        {
+                            menuType: "menuitem",
+                            icon: menuIcon,
+                            onShowing: (_event, context) => {
+                                context.menuElem.setAttribute(
+                                    "label",
+                                    `zotero-pdf2zh-pro: ${getString("prefs-menu-translate")}`,
+                                );
+                            },
+                            onCommand: () =>
+                                addon.hooks.onDialogEvents("translatePDF"),
+                        },
+                        {
+                            menuType: "menuitem",
+                            icon: menuIcon,
+                            onShowing: (_event, context) => {
+                                context.menuElem.setAttribute(
+                                    "label",
+                                    `zotero-pdf2zh-pro: ${getString("prefs-menu-tasks")}`,
+                                );
+                            },
+                            onCommand: () =>
+                                addon.hooks.onDialogEvents("openTaskManager"),
+                        },
+                    ],
                 },
             ],
-        };
-        ztoolkit.Menu.register("item", pdf2zhMenu);
+        });
     }
 }

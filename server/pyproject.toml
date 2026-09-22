@@ -12,6 +12,7 @@ requires-python = ">=3.12,<3.14"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSES/*.txt", "THIRD_PARTY_NOTICES.md"]
 dependencies = [
+    "anyio>=4.14.2",
     "azure-ai-translation-text<=1.0.1",
     "bitstring>=4.3.0",
     "chardet>=5.2.0",

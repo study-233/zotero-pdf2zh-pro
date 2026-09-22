@@ -163,7 +163,8 @@ export class PDF2zhHelperFactory {
         const parentItemID = this.getParentItemID(item);
         let targetItem = item;
         if (item.isAttachment() && parentItemID) {
-            targetItem = Zotero.Items.get(parentItemID);
+            const parentItem = Zotero.Items.get(parentItemID);
+            if (parentItem) targetItem = parentItem;
         }
 
         let newTitle = `${service}-${outputMode}`;

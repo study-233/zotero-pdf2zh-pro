@@ -53,6 +53,9 @@ jobs:
       - name: Test release artifact guards
         run: uv run --no-project python -m unittest discover -s scripts -p 'test_release*.py'
 
+      - name: Test glossary source snapshot guards
+        run: uv run --no-project python -m unittest discover -s scripts -p 'test_glossary_data.py'
+
       - name: Test Windows control center state
         working-directory: windows-app
         run: |
