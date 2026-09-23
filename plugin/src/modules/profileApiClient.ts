@@ -27,7 +27,11 @@ export async function testProfile(api: LLMApiData): Promise<string> {
             `${url}/health`,
             { timeout: 5000 },
         );
-        const prepared = prepareApiForServer(api, health.supportedApiProtocols);
+        const prepared = prepareApiForServer(
+            api,
+            health.supportedApiProtocols,
+            health.capabilities?.reasoningMode,
+        );
         const { data } = await axios.post<ValidateConfigResponse>(
             `${url}/validate-config`,
             {
@@ -50,7 +54,7 @@ export async function testProfile(api: LLMApiData): Promise<string> {
             data.resolvedProtocol === "responses"
                 ? "Responses"
                 : "Chat Completions";
-        return `API 测试成功${data.resolvedProtocol ? ` · ${protocol}` : ""}${prepared.warning ? `（${prepared.warning}）` : ""}`;
+        return `API 测试成功${data.resolvedProtocol ? ` · ${protocol}` : ""}${prepared.warning ? `（${prepared.warning}）` : ""}${data.liveTest?.reasoningMessage ? ` · ${data.liveTest.reasoningMessage}` : ""}`;
     } catch (error) {
         if (axios.isAxiosError(error)) throw safeError(error, api);
         const message = error instanceof Error ? error.message : "API 测试失败";

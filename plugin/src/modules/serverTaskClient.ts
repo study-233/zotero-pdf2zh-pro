@@ -47,7 +47,8 @@ export class ServerTaskClient {
         const api = requestBody.llm_api as LLMApiData | undefined;
         const needsApiCheck = Boolean(
             api &&
-            (api.apiProtocol === "auto" ||
+            (api.reasoningMode === "off" ||
+                api.apiProtocol === "auto" ||
                 api.apiProtocol === "responses" ||
                 Object.keys(api.requestOptions || {}).length),
         );
@@ -93,6 +94,7 @@ export class ServerTaskClient {
                 const prepared = prepareApiForServer(
                     api,
                     health.supportedApiProtocols,
+                    health.capabilities?.reasoningMode,
                 );
                 requestBody = { ...requestBody, llm_api: prepared.api };
                 if (prepared.warning) {

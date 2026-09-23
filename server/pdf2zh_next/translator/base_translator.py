@@ -178,7 +178,10 @@ class BaseTranslator(ABC):
                 translation = method(text, rate_limit_params)
                 validate(translation)
             except InvalidTranslation:
-                if generation:
+                budget = params.get("request_budget")
+                if generation or (budget is not None and (
+                    params.get("batch_size", 1) > 1 or not budget.available()
+                )):
                     raise
                 if self.metrics_collector is not None:
                     self.metrics_collector.retry_scheduled(kind=params.get("metric_kind", "translation"))

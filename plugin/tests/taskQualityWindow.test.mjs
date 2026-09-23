@@ -180,55 +180,33 @@ test("metric details separate initialization and review without adding their tot
     );
     assert.equal(view.summaryMetrics[3].value.textContent, "20 / 1");
     assert.equal(view.detailValues[7].textContent, "1,000 / 400");
-    assert.match(
-        view.metricNote.textContent,
-        /翻译 15、校对 3、初始化探测 2；已包含在总请求中/,
-    );
-    assert.match(
-        view.metricNote.textContent,
-        /初始化探测 Token（输入 \/ 输出）：30 \/ 4，已包含在总 Token 中/,
-    );
-    assert.match(
-        view.metricNote.textContent,
-        /推理 Token：200（输出 Token 的子集，不重复相加/,
+    assert.equal(view.metricNote, undefined);
+    assert.doesNotMatch(
+        source,
+        /metric-note|formatUsageNote|初始化探测 Token|输出 Token 的子集/,
     );
 });
 
-test("optional metric breakdowns support older services and never turn unknown reasoning into zero", () => {
+test("missing metric values remain unknown and activity uses one concise stage label", () => {
     const ui = fixture();
-    const legacy = task({
-        metrics: { tokens: { input: 10, output: 4, total: 14 } },
-    });
-    const view = ui.createTaskCardView(legacy);
-    assert.doesNotMatch(
-        view.metricNote.textContent,
-        /初始化探测|推理 Token|请求分布/,
+    const view = ui.createTaskCardView(
+        task({ metrics: { tokens: { input: null, output: null } } }),
     );
-    const extended = task({
-        metrics: {
-            requests: { byKind: { translation: { attempts: 0 } } },
-            tokens: {
-                input: null,
-                output: null,
-                total: null,
-                reasoning: null,
-                reasoningAvailability: "unavailable",
-                byKind: {
-                    initialization: { input: null, output: null, total: null },
-                },
-            },
-        },
+    assert.equal(view.detailValues[7].textContent, "- / -");
+    assert.equal(view.metricNote, undefined);
+    const running = task({
+        status: "running",
+        stage: "Translate Paragraphs",
+        metrics: { activity: { oldestRequestSeconds: 15 } },
     });
-    ui.updateTaskCardView(view, extended);
-    assert.match(view.metricNote.textContent, /翻译 0、校对 -、初始化探测 -/);
-    assert.match(
-        view.metricNote.textContent,
-        /初始化探测 Token（输入 \/ 输出）：- \/ -/,
-    );
-    assert.match(view.metricNote.textContent, /推理 Token：-（.*服务未提供/);
-    ui.updateTaskCardView(view, legacy);
-    assert.doesNotMatch(
-        view.metricNote.textContent,
-        /初始化探测|推理 Token|请求分布/,
+    assert.equal(ui.formatActivityStage(running), "等待响应");
+    running.metrics.activity.retrying = 1;
+    assert.equal(ui.formatActivityStage(running), "重试等待");
+    running.metrics.activity.fallbackPending = 1;
+    assert.equal(ui.formatActivityStage(running), "拆段处理");
+    delete running.metrics.activity;
+    assert.equal(
+        ui.formatActivityStage(running),
+        ui.formatStage(running.stage),
     );
 });

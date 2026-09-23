@@ -429,12 +429,13 @@ def create_runtime_settings(payload: dict[str, Any]):
         # Apply the explicit endpoint and protocol after that transformation.
         if llm_api.get("apiUrl"):
             engine.openai_base_url = str(llm_api["apiUrl"]).strip()
+        engine.openai_reasoning_mode = llm_api.get("reasoningMode", "default")
         engine.openai_api_protocol = llm_api.get("apiProtocol", engine.openai_api_protocol)
         if "requestOptions" in llm_api:
             engine.openai_request_options = json.dumps(parse_request_options(llm_api["requestOptions"]))
         normalize_endpoint(engine.openai_base_url, engine.openai_api_protocol)
         parse_request_options(engine.openai_request_options)
-    elif llm_api.get("apiProtocol") == "responses" or llm_api.get("requestOptions"):
+    elif llm_api.get("apiProtocol") == "responses" or llm_api.get("requestOptions") or llm_api.get("reasoningMode", "default") != "default":
         raise ValueError("此服务类型不支持双协议参数，请使用 OpenAI 兼容服务")
     return settings
 
@@ -748,6 +749,8 @@ async def translate_pdf_with_callbacks(
             "input_path", "output_dir", "qps", "pool_size", "repair_attempt", "review_attempt",
         }}
         fingerprint_payload["llm_api"] = {k: v for k, v in payload.get("llm_api", {}).items() if k != "apiKey"}
+        if fingerprint_payload["llm_api"].get("reasoningMode") == "default":
+            fingerprint_payload["llm_api"].pop("reasoningMode")
         fingerprint_payload["body_input_version"] = BODY_INPUT_VERSION
         review_policy = {"enabled": translation_config.semantic_review, "version": REVIEW_VERSION}
         fingerprint_payload["review_policy"] = review_policy
@@ -1009,6 +1012,15 @@ def validate_service_config(payload: dict[str, Any], job_id: str) -> ValidationR
                 live_test = {"enabled": True, "ok": True, "message": "短文本连接检查通过"}
             else:
                 live_test = run_live_translator_test(translator)
+            if live_test.get("ok") and getattr(translator, "reasoning_mode", "default") == "off":
+                requests = getattr(translator, "_pending_initialization_metrics", [])
+                reasoning = [event["usage"].get("reasoning_tokens") for event in requests]
+                known = [value for value in reasoning if isinstance(value, (int, float))]
+                live_test["reasoningMessage"] = (
+                    "接口仍返回推理 Token，关闭设置可能未生效" if any(value > 0 for value in known)
+                    else "接口未报告推理 Token，无法确认是否关闭" if not known
+                    else "本次测试报告推理 Token 为 0"
+                )
             if live_test.get("ok"):
                 diagnostics.append(
                     DiagnosticMessage(

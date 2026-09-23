@@ -190,6 +190,9 @@ class TaskMetricsCollector:
         self._paragraph_samples: deque[tuple[float, int]] = deque()
         self._last_translation_current: int | None = None
         self._references_skipped = 0
+        self._activity = Counter(queued=0, retrying=0, fallbackPending=0)
+        self._active_requests = Counter()
+        self._last_paragraph_completed = None
 
     def request_started(self, *, kind="translation") -> float:
         now = self.clock()
@@ -198,6 +201,7 @@ class TaskMetricsCollector:
                 stats.attempts += 1
                 stats.active += 1
             self._attempt_starts.append(now)
+            self._active_requests[now] += 1
             self._trim_locked(now)
         self._emit_if_due()
         return now
@@ -212,6 +216,10 @@ class TaskMetricsCollector:
         visible_chars=None, batch_size=None,
     ) -> None:
         now = self.clock()
+        with self._lock:
+            self._active_requests[started_at] -= 1
+            if self._active_requests[started_at] <= 0:
+                del self._active_requests[started_at]
         latency_ms = max((now - started_at) * 1000, 0.0)
         self._finish_request(kind=kind, latency_ms=latency_ms, succeeded=succeeded,
                              status_code=status_code, error_type=error_type, finish_reason=finish_reason,
@@ -342,11 +350,17 @@ class TaskMetricsCollector:
                 if self._last_translation_current is None:
                     self._last_translation_current = current
                 elif current > self._last_translation_current:
+                    self._last_paragraph_completed = now
                     self._paragraph_samples.append(
                         (now, current - self._last_translation_current)
                     )
                     self._last_translation_current = current
             self._trim_locked(now)
+        self._emit_if_due()
+
+    def activity_changed(self, name, delta):
+        with self._lock:
+            self._activity[name] = max(0, self._activity[name] + delta)
         self._emit_if_due()
 
     def reference_skipped(self, count: int = 1) -> None:
@@ -390,6 +404,12 @@ class TaskMetricsCollector:
                 "etaSeconds": round(eta) if eta is not None else None,
             }
             metrics["referencesSkipped"] = self._references_skipped
+            metrics["activity"] = {
+                **self._activity,
+                "oldestRequestSeconds": max(0, now - min(self._active_requests)) if self._active_requests else None,
+                "lastParagraphCompletedAgoSeconds": max(0, now - self._last_paragraph_completed)
+                    if self._last_paragraph_completed is not None else None,
+            }
             return metrics
 
     def emit_final(self) -> None:
@@ -399,6 +419,8 @@ class TaskMetricsCollector:
         self._emit(force=False)
 
     def _eta_locked(self, now: float) -> float | None:
+        if self._last_paragraph_completed is not None and now - self._last_paragraph_completed >= 30:
+            return None
         elapsed = now - self._started_at
         if elapsed < 15 or len(self._progress_samples) < 2:
             return None

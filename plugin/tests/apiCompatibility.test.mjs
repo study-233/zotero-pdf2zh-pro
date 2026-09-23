@@ -64,3 +64,13 @@ test("legacy configurations retain their original behavior", () => {
     const api = { apiUrl: "https://gateway/v1" };
     assert.deepEqual(prepareApiForServer(api), { api });
 });
+
+test("reasoning off requires an explicit server capability", () => {
+    const api = { apiUrl: "https://gateway/v1", reasoningMode: "off" };
+    assert.throws(() => prepareApiForServer(api, ["responses"]), /关闭推理/);
+    assert.deepEqual(prepareApiForServer(api, ["responses"], true), { api });
+    assert.deepEqual(
+        prepareApiForServer({ ...api, reasoningMode: "default" }),
+        { api: { ...api, reasoningMode: "default" } },
+    );
+});

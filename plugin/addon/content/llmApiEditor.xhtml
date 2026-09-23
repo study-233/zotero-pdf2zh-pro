@@ -68,6 +68,14 @@
                     可以直接输入模型名称，无需先获取列表。
                 </p>
             </div>
+            <div class="field">
+                <label for="reasoningMode">推理模式</label>
+                <select id="reasoningMode">
+                    <option value="default">保持现有设置</option>
+                    <option value="off" id="reasoning-off">关闭推理</option>
+                </select>
+                <p class="hint" id="reasoning-hint"></p>
+            </div>
             <details id="advanced">
                 <summary>高级设置</summary>
                 <div class="field">

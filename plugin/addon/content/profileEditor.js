@@ -174,6 +174,7 @@ const fields = [
     "apiKey",
     "model",
     "apiProtocol",
+    "reasoningMode",
     "requestOptions",
     "extraData",
 ];
@@ -190,12 +191,36 @@ function jsonField(id) {
         throw new Error("高级参数必须是 JSON 对象。");
     return value;
 }
+function supportsReasoningOff(model, service) {
+    return (
+        ["openai", "openaicompatible"].includes(service) &&
+        (/^gpt-5\.(1|2|4|5)(-\d{4}-\d{2}-\d{2})?$/.test(model.toLowerCase()) ||
+            ["deepseek-v4-flash", "deepseek-v4-pro", "deepseek-flash"].includes(
+                model.toLowerCase(),
+            ))
+    );
+}
+function updateReasoningMode() {
+    const supported = supportsReasoningOff(
+        $("model").value.trim(),
+        $("service").value,
+    );
+    $("reasoning-off").disabled = !supported;
+    $("reasoning-hint").textContent = supported
+        ? "关闭推理可减少等待；中转接口以测试结果为准。"
+        : "此模型尚不支持快捷关闭，可使用高级 JSON 参数。";
+}
 function read(requireModel = true) {
     const value = { ...args.data };
     for (const id of fields)
         value[id] = ["requestOptions", "extraData"].includes(id)
             ? jsonField(id)
             : $(id).value.trim();
+    if (
+        value.reasoningMode === "off" &&
+        !supportsReasoningOff(value.model, value.service)
+    )
+        throw new Error("此模型不支持快捷关闭推理，请选择保持现有设置。");
     if (!args.services[value.service])
         throw new Error("请选择支持的接口类型。");
     if (value.service === "openai") {
@@ -257,6 +282,7 @@ function setModels(models) {
 function chooseModel() {
     if ($("models").selectedIndex < 0) return;
     $("model").value = $("models").value;
+    updateReasoningMode();
     tested = "";
     message("");
     $("model").focus();
@@ -371,13 +397,20 @@ for (const id of fields) {
     const value = args.data[id];
     $(id).value = ["extraData", "requestOptions"].includes(id)
         ? JSON.stringify(value || {}, null, 2)
-        : value || (id === "apiProtocol" ? "auto" : "");
+        : value ||
+          (id === "apiProtocol"
+              ? "auto"
+              : id === "reasoningMode"
+                ? "default"
+                : "");
     $(id).addEventListener("input", () => {
         tested = "";
+        updateReasoningMode();
         message("");
     });
     $(id).addEventListener("change", () => {
         tested = "";
+        updateReasoningMode();
         message("");
     });
 }
@@ -412,4 +445,5 @@ window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") window.close();
 });
 updateService();
+updateReasoningMode();
 $("name").focus();

@@ -180,7 +180,7 @@ class ProgressMonitor:
             part_offset = len(self.part_results) * part_weight
         part_offset *= 100
         progress = self._calculate_current_progress(stage) * part_weight + part_offset
-        return progress
+        return min(100.0, max(0.0, progress))
 
     def _calculate_current_progress(self, stage=None):
         """Calculate overall progress including part progress"""
@@ -200,7 +200,7 @@ class ProgressMonitor:
             if s.run_time > 0 and s.current == s.total
         )
         if stage is not None and 0 < stage.total != stage.current:
-            progress += stage.weight * stage.current * 100 / stage.total
+            progress += stage.weight * min(stage.total, max(0, stage.current)) * 100 / stage.total
 
         # If this is a part monitor (has parent_monitor), return the progress as is
         if hasattr(self, "parent_monitor") and self.parent_monitor:
@@ -217,7 +217,7 @@ class ProgressMonitor:
             return
         if self.progress_change_callback:
             if stage.total != 0:
-                stage_progress = stage.current * 100 / stage.total
+                stage_progress = min(100.0, max(0.0, stage.current * 100 / stage.total))
             else:
                 stage_progress = 100
             self.progress_change_callback(
@@ -280,6 +280,9 @@ class TranslationStage:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         with self.lock:
+            if exc_type is not None or (self.pm.cancel_event and self.pm.cancel_event.is_set()):
+                self.pm.stage_update(self, 0)
+                return
             diff = self.total - self.current
             if diff > 0:
                 logger.info(
@@ -291,7 +294,10 @@ class TranslationStage:
 
     def advance(self, n: int = 1):
         with self.lock:
+            previous = self.current
             self.current += n
+            if previous <= self.total < self.current:
+                logger.warning("Stage %s progress overflow: %s/%s", self.name, self.current, self.total)
             self.pm.stage_update(self, n)
 
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from babeldoc.translator.request_budget import ParagraphRequestBudget
+
 from babeldoc.translator.validation import validate_text, InvalidTranslation
 
 import copy
@@ -147,7 +149,8 @@ class PbarContext:
         return self.pbar
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.pbar.advance()
+        if exc_type is None and self.pbar is not None:
+            self.pbar.advance()
 
 
 class DocumentTranslateTracker:
@@ -448,6 +451,7 @@ class ILTranslator:
 
     def begin_translation_completion(self):
         self._completion_lock = threading.Lock()
+        self._request_budget = ParagraphRequestBudget()
         self._accepted_outputs = {}
         self._accepted_inputs = {}
         self._cache_finalizers = []
@@ -467,6 +471,10 @@ class ILTranslator:
         # Document execution initializes before workers; direct paragraph calls also work.
         if not hasattr(self, "_completion_lock"):
             self.begin_translation_completion()
+
+    def request_budget(self, paragraphs):
+        self._ensure_translation_completion()
+        return self._request_budget.request(paragraphs)
 
     def register_cache_finalizer(self, finalizer):
         self._ensure_translation_completion()
@@ -1431,12 +1439,15 @@ class ILTranslator:
                     "paragraph_token_count": paragraph_token_count,
                     "metric_kind": "translation",
                     "batch_size": 1,
+                    "paragraph_ids": [paragraph.debug_id],
                     "check_cancelled": self.translation_config.raise_if_cancelled,
                     "validate_output": lambda value: validate_text(text, value, self.translate_engine.lang_out,
                         not self.translation_config.disable_same_text_fallback),
                     "on_attempt": lambda: recovery.attempt([paragraph], context[0]) if recovery is not None else None,
                 }
                 self._ensure_translation_completion()
+                if getattr(self.translate_engine, "limits_each_attempt", False):
+                    params["request_budget"] = self.request_budget([paragraph])
                 if self.quality_review is not None:
                     params["defer_cache_write"] = True
                 # Perform translation

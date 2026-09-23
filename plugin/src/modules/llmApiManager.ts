@@ -12,6 +12,7 @@ export interface LLMApiData {
     needsTest?: boolean;
     extraData?: Record<string, unknown>;
     apiProtocol?: ApiProtocol;
+    reasoningMode?: "default" | "off";
     requestOptions?: Record<string, unknown>;
 }
 

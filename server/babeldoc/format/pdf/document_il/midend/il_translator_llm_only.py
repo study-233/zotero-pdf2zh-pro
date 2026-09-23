@@ -1,4 +1,6 @@
 from babeldoc.translator.validation import InvalidTranslation, inspect_batch
+from babeldoc.translator.request_budget import submit_translation
+import openai
 
 import copy
 import json
@@ -156,6 +158,12 @@ class ILTranslatorLLMOnly:
         self.fallback_count = 0
         self.total_count = 0
 
+    def submit_translation(self, executor, fn, *args, **kwargs):
+        return submit_translation(
+            executor, fn, *args, collector=getattr(self.translate_engine, "metrics_collector", None),
+            fallback=fn == self.il_translator.translate_paragraph, **kwargs,
+        )
+
     def calc_token_count(self, text: str) -> int:
         try:
             return len(self.tokenizer.encode(text, disallowed_special=()))
@@ -222,7 +230,10 @@ class ILTranslatorLLMOnly:
                 for page in docs.page
             ]
         )
-        translated_ids = set()
+        eligible_ids = {id(p) for page in docs.page for p in page.pdf_paragraph
+                        if p.debug_id is not None and p.unicode is not None}
+        self.reference_skip_ids &= eligible_ids
+        translated_ids = set(self.reference_skip_ids)
         with self.translation_config.progress_monitor.stage_start(
             self.stage_name,
             total,
@@ -460,7 +471,8 @@ class ILTranslatorLLMOnly:
 
             self.mid += 1
             # Submit translation task (force submit regardless of token count)
-            executor.submit(
+            self.submit_translation(
+                executor,
                 self.translate_paragraph,
                 batch_paragraph,
                 pbar,
@@ -533,7 +545,8 @@ class ILTranslatorLLMOnly:
 
             batch = BatchParagraph([p1, p2], [page, page], tracker.new_cross_column())
             self.mid += 1
-            executor.submit(
+            self.submit_translation(
+                executor,
                 self.translate_paragraph,
                 batch,
                 pbar,
@@ -569,6 +582,8 @@ class ILTranslatorLLMOnly:
             for font in xobj.pdf_font:
                 page_xobj_font_map[xobj.xobj_id][font.font_id] = font
 
+        translated_ids = translated_ids if translated_ids is not None else set()
+        translated_ids.update(getattr(self, "reference_skip_ids", set()))
         paragraphs = []
 
         total_token_count = 0
@@ -614,7 +629,8 @@ class ILTranslatorLLMOnly:
 
             if total_token_count > 200 or len(paragraphs) > 5:
                 self.mid += 1
-                executor.submit(
+                self.submit_translation(
+                    executor,
                     self.translate_paragraph,
                     BatchParagraph(paragraphs, [page] * len(paragraphs), tracker),
                     pbar,
@@ -632,7 +648,8 @@ class ILTranslatorLLMOnly:
 
         if paragraphs:
             self.mid += 1
-            executor.submit(
+            self.submit_translation(
+                executor,
                 self.translate_paragraph,
                 BatchParagraph(paragraphs, [page] * len(paragraphs), tracker),
                 pbar,
@@ -751,6 +768,7 @@ class ILTranslatorLLMOnly:
                     "paragraph_token_count": paragraph_token_count,
                     "metric_kind": "translation",
                     "batch_size": len(inputs),
+                    "paragraph_ids": [item[2].debug_id for item in inputs],
                     "check_cancelled": self.translation_config.raise_if_cancelled,
                     "request_json_mode": True,
                     "defer_cache_write": True,
@@ -760,6 +778,8 @@ class ILTranslatorLLMOnly:
                         [item[2] for item in inputs], final_input
                     ) if getattr(self.translation_config, "recovery", None) is not None else None,
                 }
+            if getattr(self.translate_engine, "limits_each_attempt", False):
+                cache_params["request_budget"] = self.il_translator.request_budget([item[2] for item in inputs])
             finalizer = il_translator.BatchFinalizer(
                 self.translate_engine, final_input, [item[2] for item in inputs],
                 [item[0] for item in inputs], cache_params,
@@ -773,7 +793,8 @@ class ILTranslatorLLMOnly:
                 for index, item in enumerate(inputs):
                     if index in restored_indices:
                         continue
-                    future = executor.submit(
+                    future = self.submit_translation(
+                        executor,
                         self.il_translator.translate_paragraph,
                         item[2], batch_paragraph.pages[should_translate_paragraph[index]],
                         pbar, item[3], page_font_map, xobj_font_map,
@@ -850,7 +871,8 @@ class ILTranslatorLLMOnly:
                         )
                         paragraph_unicodes = inputs[id_][5]
                         inputs[id_][2].unicode = paragraph_unicodes[id_]
-                        future = executor.submit(
+                        future = self.submit_translation(
+                            executor,
                             self.il_translator.translate_paragraph,
                             inputs[id_][2],
                             batch_paragraph.pages[should_translate_paragraph[id_]],
@@ -870,6 +892,23 @@ class ILTranslatorLLMOnly:
 
         except Exception as e:
             self.translation_config.raise_if_cancelled()
+            # Provider failures are not repaired by multiplying the request into singles.
+            # Only timeouts and invalid model output benefit from batch splitting.
+            if getattr(self.translate_engine, "limits_each_attempt", False) and (
+                not isinstance(e, (openai.APITimeoutError, InvalidTranslation))
+                or (len(inputs) == 1 and isinstance(e, openai.APITimeoutError))
+            ):
+                recovery = getattr(self.translation_config, "recovery", None)
+                for index, i in enumerate(should_translate_paragraph):
+                    if index in completed_indices or index in fallback_indices:
+                        continue
+                    paragraph = batch_paragraph.paragraphs[i]
+                    if recovery is not None:
+                        recovery.fail(paragraph, e)
+                    if pbar:
+                        pbar.advance(1)
+                logger.warning("translation batch stopped: batch_id=%s error_type=%s", mp_id, type(e).__name__)
+                return
             error_message = (
                 "Error during translation; using fallback. "
                 f"Error type: {type(e).__name__}."
@@ -898,7 +937,8 @@ class ILTranslatorLLMOnly:
                 if paragraph.debug_id is None:
                     continue
                 paragraph_token_count = self.calc_token_count(paragraph.unicode)
-                future = executor.submit(
+                future = self.submit_translation(
+                    executor,
                     self.il_translator.translate_paragraph,
                     paragraph,
                     batch_paragraph.pages[i],

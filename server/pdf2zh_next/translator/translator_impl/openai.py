@@ -25,6 +25,8 @@ from pdf2zh_next.translator.openai_protocol import (
     response_text,
 )
 
+from pdf2zh_next.translator.reasoning_mode import apply_reasoning_mode
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,12 +40,18 @@ def _status_code(error) -> int | None:
         return None
 
 
+def _retry_params(state):
+    return state.kwargs.get("rate_limit_params") or (state.args[2] if len(state.args) > 2 else {}) or {}
+
+
 def _record_retry_before_sleep(retry_state) -> None:
     translator = retry_state.args[0] if retry_state.args else None
     collector = getattr(translator, "metrics_collector", None)
+    params = _retry_params(retry_state)
+    budget = params.get("request_budget")
+    if budget is not None:
+        budget.reserve_wait(retry_state.next_action.sleep)
     if collector is not None:
-        params = retry_state.kwargs.get("rate_limit_params") or (
-            retry_state.args[2] if len(retry_state.args) > 2 else {}) or {}
         collector.retry_scheduled(kind=params.get("metric_kind", "translation"))
     error = retry_state.outcome.exception() if retry_state.outcome else None
     logger.warning(
@@ -53,7 +61,13 @@ def _record_retry_before_sleep(retry_state) -> None:
         retry_state.attempt_number,
     )
     if translator is not None:
-        translator._wait_cancel(retry_state.next_action.sleep)
+        if collector is not None:
+            collector.activity_changed("retrying", 1)
+        try:
+            translator._wait_cancel(retry_state.next_action.sleep)
+        finally:
+            if collector is not None:
+                collector.activity_changed("retrying", -1)
 
 
 def _retry_provider_error(error: Exception) -> bool:
@@ -67,7 +81,14 @@ def _retry_provider_error(error: Exception) -> bool:
 
 
 def _stop_provider_retry(state) -> bool:
-    return state.attempt_number >= 5
+    params = _retry_params(state)
+    budget = params.get("request_budget")
+    if budget is None:
+        return state.attempt_number >= 5
+    error = state.outcome.exception()
+    return (state.attempt_number >= 2
+            or (params.get("batch_size", 1) > 1 and isinstance(error, openai.APITimeoutError))
+            or not budget.available(state.upcoming_sleep))
 
 
 def _retry_wait(state):
@@ -121,6 +142,7 @@ class OpenAITranslator(BaseTranslator):
         self.request_options = parse_request_options(
             getattr(settings.translate_engine_settings, "openai_request_options", None)
         )
+        self.reasoning_mode = getattr(settings.translate_engine_settings, "openai_reasoning_mode", "default")
         self._term_extraction = False
         self.is_deepseek = urlparse(base_url or "").hostname == "api.deepseek.com"
         self.requires_dedicated_term_extraction_translator = self.is_deepseek
@@ -184,6 +206,7 @@ class OpenAITranslator(BaseTranslator):
         if self.enable_json_mode:
             self.add_cache_impact_parameters("enable_json_mode", self.enable_json_mode)
 
+        self._options(self.resolved_protocol or self.protocol_hint)
         if self.resolved_protocol:
             self.add_cache_impact_parameters("api_protocol", self.resolved_protocol)
             self.add_cache_fingerprint(
@@ -251,7 +274,7 @@ class OpenAITranslator(BaseTranslator):
             and protocol == "chat_completions"
         ):
             defaults["thinking"] = {"type": "disabled"}
-        return defaults
+        return apply_reasoning_mode(defaults, self.reasoning_mode, self.model, protocol)
 
     def _capture_http_status(self, response):
         self._request_metrics.status_code = response.status_code
@@ -347,12 +370,24 @@ class OpenAITranslator(BaseTranslator):
             time.sleep(min(0.1, remaining))
 
     def _request(self, messages, protocol, rate_limit_params=None, *, health_check=False):
-        while not self._request_slots.acquire(timeout=0.1):
-            self.check_cancelled()
+        collector = self.metrics_collector
+        if collector is not None:
+            collector.activity_changed("queued", 1)
+        try:
+            while not self._request_slots.acquire(timeout=0.1):
+                self.check_cancelled()
+        finally:
+            if collector is not None:
+                collector.activity_changed("queued", -1)
         try:
             self.check_cancelled()
             self.rate_limiter.wait({**(rate_limit_params or {}), "check_cancelled": self.check_cancelled})
             self.check_cancelled()
+            budget = (rate_limit_params or {}).get("request_budget")
+            if budget is not None:
+                budget.reserve()
+                logger.info("translation request: paragraph_ids=%s attempt=%s",
+                            (rate_limit_params or {}).get("paragraph_ids", []), budget.attempts)
             callback = (rate_limit_params or {}).get("on_attempt")
             if callback:
                 callback()

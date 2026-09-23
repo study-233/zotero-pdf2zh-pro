@@ -3,8 +3,17 @@ import type { LLMApiData } from "./llmApiManager";
 export type ApiProtocol = "auto" | "chat_completions" | "responses";
 
 export function prepareApiForServer<
-    T extends Pick<LLMApiData, "apiUrl" | "apiProtocol" | "requestOptions">,
->(api: T, supportedProtocols?: string[]): { api: T; warning?: string } {
+    T extends Pick<
+        LLMApiData,
+        "apiUrl" | "apiProtocol" | "requestOptions" | "reasoningMode"
+    >,
+>(
+    api: T,
+    supportedProtocols?: string[],
+    supportsReasoningMode?: boolean,
+): { api: T; warning?: string } {
+    if (api.reasoningMode === "off" && supportsReasoningMode !== true)
+        throw new Error("当前 Python 服务不支持关闭推理，请先升级服务端。");
     if (supportedProtocols?.includes("responses")) return { api };
     if (api.apiProtocol === "responses") {
         throw new Error("当前 Python 服务不支持 Responses，请先升级服务端。");

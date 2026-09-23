@@ -611,7 +611,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"glossaryEntries": True, "semanticReview": True, "glossaryPacks": True},
+        "capabilities": {"reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),

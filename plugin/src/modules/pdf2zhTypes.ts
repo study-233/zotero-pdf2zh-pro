@@ -52,6 +52,7 @@ export interface ServerHealthResponse {
     pythonVersion?: string;
     supportedApiProtocols?: string[];
     capabilities?: {
+        reasoningMode?: boolean;
         glossaryEntries?: boolean;
         glossaryPacks?: boolean;
         semanticReview?: boolean;
@@ -79,6 +80,7 @@ export interface ValidateConfigResponse {
     message?: string;
     diagnostics?: DiagnosticMessage[];
     liveTest?: {
+        reasoningMessage?: string;
         enabled: boolean;
         ok?: boolean;
         message?: string;
@@ -185,6 +187,13 @@ export interface TokenMetrics {
 }
 
 export interface TaskMetrics {
+    activity?: {
+        queued: number;
+        retrying: number;
+        fallbackPending: number;
+        oldestRequestSeconds: number | null;
+        lastParagraphCompletedAgoSeconds: number | null;
+    };
     requests: RequestMetrics & {
         qps10s: number;
         byKind?: Partial<Record<RequestKind, RequestMetrics>>;

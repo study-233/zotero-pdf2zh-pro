@@ -279,3 +279,13 @@ test("failed live tests are not called successful and never show a supplied secr
             error.message.includes("已隐藏"),
     );
 });
+
+test("reasoning mode survives profile migration and snapshots", () => {
+    const legacy = [{ ...api("off", "openai", true), reasoningMode: "off" }];
+    const result = model.migrateProfiles(legacy, "openai");
+    assert.equal(result.profiles[0].reasoningMode, "off");
+    assert.equal(
+        JSON.parse(JSON.stringify(result.profiles[0])).reasoningMode,
+        "off",
+    );
+});

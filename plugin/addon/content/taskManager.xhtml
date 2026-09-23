@@ -387,12 +387,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 background: var(--surface);
             }
 
-            .metric-note {
-                margin-top: 6px;
-                color: var(--text-tertiary);
-                font-size: 11px;
-            }
-
             .progress-meta {
                 margin-top: 5px;
                 display: flex;
@@ -1012,12 +1006,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 border-top: 1px solid var(--border);
             }
 
-            .metric-note {
-                margin-top: 0;
-                padding: 6px 8px 2px;
-                line-height: 16px;
-            }
-
             .task-footer {
                 display: flex;
                 align-items: center;
@@ -1589,9 +1577,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     "跳过参考文献段落",
                 ].map((label) => appendMetric(detailGrid, label, "-"));
                 metricsPanel.appendChild(detailGrid);
-                const metricNote = document.createElement("div");
-                metricNote.className = "metric-note";
-                metricsPanel.appendChild(metricNote);
                 card.appendChild(metricsPanel);
 
                 const footer = document.createElement("div");
@@ -1725,7 +1710,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     error,
                     metricsPanel,
                     detailValues,
-                    metricNote,
                     metricEmpty,
                     summaryMetrics,
                     metricsToggle,
@@ -1763,7 +1747,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     ? stageProgress
                     : overallProgress;
                 const gridValues = [
-                    formatStage(task.stage),
+                    formatActivityStage(task),
                     formatStageProgress(task),
                     fontAssetStage
                         ? "字体准备完成后开始翻译"
@@ -1832,7 +1816,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     view.detailValues.forEach((node, index) => {
                         setTextContent(node, detailValues[index]);
                     });
-                    setTextContent(view.metricNote, formatUsageNote(metrics));
 
                     const summaryValues = [
                         `${formatEta(metrics)} / ${formatThroughput(metrics)}`,
@@ -2155,6 +2138,22 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 return stage === "Check Fonts" || stage === "Download Fonts";
             }
 
+            function formatActivityStage(task) {
+                const activity = task.metrics?.activity;
+                if (
+                    task.status === "running" &&
+                    task.stage === "Translate Paragraphs" &&
+                    activity
+                ) {
+                    if (activity.fallbackPending > 0) return "拆段处理";
+                    if (activity.retrying > 0) return "重试等待";
+                    if (activity.oldestRequestSeconds != null)
+                        return "等待响应";
+                    if (activity.queued > 0) return "等待处理";
+                }
+                return formatStage(task.stage);
+            }
+
             function formatStage(stage) {
                 if (stage === "Check Fonts") {
                     return "检查字体缓存";
@@ -2329,35 +2328,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 if (minutes < 60) return `${minutes} 分 ${seconds % 60} 秒`;
                 const hours = Math.floor(minutes / 60);
                 return `${hours} 小时 ${minutes % 60} 分`;
-            }
-
-            function formatUsageNote(metrics) {
-                const labels = {
-                    unavailable: "服务未提供",
-                    partial: "部分请求缺失，统计不完整",
-                    complete: "已完整统计",
-                };
-                const notes = [
-                    `Token：${labels[metrics.tokens?.availability] || "已记录"}；服务端缓存：${labels[metrics.providerCache?.availability] || "以接口返回为准"}。`,
-                ];
-                const byKind = metrics.requests?.byKind;
-                if (byKind) {
-                    notes.push(
-                        `请求分布：翻译 ${formatInteger(byKind.translation?.attempts)}、校对 ${formatInteger(byKind.review?.attempts)}、初始化探测 ${formatInteger(byKind.initialization?.attempts)}；已包含在总请求中。`,
-                    );
-                }
-                const initialization = metrics.tokens?.byKind?.initialization;
-                if (initialization) {
-                    notes.push(
-                        `初始化探测 Token（输入 / 输出）：${formatInteger(initialization.input)} / ${formatInteger(initialization.output)}，已包含在总 Token 中。`,
-                    );
-                }
-                if (metrics.tokens && "reasoning" in metrics.tokens) {
-                    notes.push(
-                        `推理 Token：${formatInteger(metrics.tokens.reasoning)}（输出 Token 的子集，不重复相加；${labels[metrics.tokens.reasoningAvailability] || "以接口返回为准"}）。`,
-                    );
-                }
-                return notes.join(" ");
             }
 
             function formatDiagnostics(diagnostics) {

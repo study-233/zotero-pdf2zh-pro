@@ -79,6 +79,7 @@ class OpenAISettings(BaseModel):
     )
 
     openai_api_protocol: str = Field(default="chat_completions", description="API protocol: auto, chat_completions, responses")
+    openai_reasoning_mode: str = Field(default="default", description="Reasoning mode: default or off")
     openai_request_options: str | None = Field(default=None, description="Additional API request parameters as JSON")
     openai_model: str = Field(default="gpt-4o-mini", description="OpenAI model to use")
     openai_base_url: str | None = Field(
