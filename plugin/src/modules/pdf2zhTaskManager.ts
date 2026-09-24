@@ -14,7 +14,10 @@ import {
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 import { ServerTaskClient } from "./serverTaskClient";
 import { TaskEventStream } from "./taskEventStream";
-import { ZoteroTaskImporter } from "./zoteroTaskImporter";
+import {
+    ZoteroTaskImporter,
+    canDownloadTaskResult,
+} from "./zoteroTaskImporter";
 
 type TaskDialogArgs = {
     _initPromise: any;
@@ -46,6 +49,21 @@ type ServerSyncState = {
 };
 
 export class PDF2zhTaskManager {
+    private static stopped = false;
+
+    static async start(): Promise<void> {
+        this.stopped = false;
+        this.loadLocalTasks();
+        this.ensureEventStreams();
+        await this.refreshTasks();
+    }
+
+    static stop(): void {
+        this.stopped = true;
+        this.closeWindow();
+        this.eventStream.sync(new Set());
+    }
+
     private static tasks = new Map<string, PluginTask>();
     private static localTasksLoaded = false;
     private static savedBindings = "";
@@ -92,6 +110,10 @@ export class PDF2zhTaskManager {
                 task.importState,
                 task.importedOutputs,
                 task.qualitySummary,
+                task.canDownloadResult,
+                task.status,
+                task.resultFiles,
+                task.translationSummary,
             ]),
         );
         if (signature === this.savedBindings) return;
@@ -122,7 +144,10 @@ export class PDF2zhTaskManager {
         },
     });
     private static importer = new ZoteroTaskImporter({
-        getTask: (taskId) => PDF2zhTaskManager.tasks.get(taskId),
+        getTask: (taskId) =>
+            PDF2zhTaskManager.stopped
+                ? undefined
+                : PDF2zhTaskManager.tasks.get(taskId),
         updateTask: (taskId, patch) =>
             PDF2zhTaskManager.updateLocalTask(taskId, patch),
         onTaskImported: (taskId) =>
@@ -267,7 +292,7 @@ export class PDF2zhTaskManager {
         return Array.from(this.tasks.values()).some(
             (task) =>
                 ACTIVE_STATUSES.includes(task.status) ||
-                (task.status === "completed" &&
+                (canDownloadTaskResult(task) &&
                     (task.importState === "pending" ||
                         task.importState === "importing")),
         );
@@ -362,8 +387,7 @@ export class PDF2zhTaskManager {
             throw new Error("任务不存在");
         }
 
-        if (task.status === "incomplete") return this.repairTask(taskId);
-        if (task.status === "completed" && task.importState === "failed") {
+        if (canDownloadTaskResult(task) && task.importState === "failed") {
             this.updateLocalTask(taskId, {
                 importState: "pending",
                 importError: undefined,
@@ -371,6 +395,7 @@ export class PDF2zhTaskManager {
             await this.importer.importTaskOutputs(taskId);
             return;
         }
+        if (task.status === "incomplete") return this.repairTask(taskId);
 
         const generation = this.syncState(task.serverUrl).generation;
         const snapshot = await ServerTaskClient.retryTask(
@@ -391,7 +416,7 @@ export class PDF2zhTaskManager {
             (task) =>
                 task.status === "failed" ||
                 task.status === "incomplete" ||
-                (task.status === "completed" && task.importState === "failed"),
+                (canDownloadTaskResult(task) && task.importState === "failed"),
         );
         for (const task of failedTasks) {
             await this.retryTask(task.taskId);
@@ -508,6 +533,7 @@ export class PDF2zhTaskManager {
             } catch (_error) {
                 continue;
             }
+            if (this.stopped) return;
             if (generation !== state.generation) {
                 this.refreshAgain = true;
                 continue;
@@ -563,10 +589,11 @@ export class PDF2zhTaskManager {
     }
 
     private static async importCompletedLocalTasks(): Promise<void> {
+        if (this.stopped) return;
         for (const task of this.getTasks()) {
             if (
                 task.source === "local" &&
-                task.status === "completed" &&
+                canDownloadTaskResult(task) &&
                 task.importState === "pending"
             ) {
                 await this.importer.importTaskOutputs(task.taskId);
@@ -644,6 +671,7 @@ export class PDF2zhTaskManager {
             cancelRequested: snapshot.cancelRequested,
             metrics: snapshot.metrics,
             canRepair: snapshot.canRepair,
+            canDownloadResult: snapshot.canDownloadResult,
             translationSummary: snapshot.translationSummary,
             qualitySummary: snapshot.qualitySummary,
             failedParagraphs: snapshot.failedParagraphs,
@@ -752,7 +780,7 @@ export class PDF2zhTaskManager {
             const shouldTrackTaskServer =
                 dialogOpen ||
                 ACTIVE_STATUSES.includes(task.status) ||
-                (task.status === "completed" &&
+                (canDownloadTaskResult(task) &&
                     (task.importState === "pending" ||
                         task.importState === "importing"));
             if (task.serverUrl && shouldTrackTaskServer) {
@@ -767,7 +795,7 @@ export class PDF2zhTaskManager {
         serverUrl: string,
         event: ServerTaskEvent,
     ) {
-        if (!this.acceptInstance(serverUrl, event)) return;
+        if (this.stopped || !this.acceptInstance(serverUrl, event)) return;
         if (event.type === "resync") {
             void this.refreshTasks();
             return;
@@ -839,10 +867,14 @@ export class PDF2zhTaskManager {
             ].getService(Ci.nsIAlertsService);
             alertsService.showAlertNotification(
                 `chrome://${config.addonRef}/content/icons/favicon.svg`,
-                getString("translation-complete-title"),
-                getString("translation-complete-body", {
-                    args: { fileName: task.fileName },
-                }),
+                task.status === "incomplete"
+                    ? "未完成 PDF 已导入"
+                    : getString("translation-complete-title"),
+                task.status === "incomplete"
+                    ? `${task.fileName}：剩余 ${(task.translationSummary?.failed || 0) + (task.translationSummary?.pending || 0)} 段，可补译`
+                    : getString("translation-complete-body", {
+                          args: { fileName: task.fileName },
+                      }),
                 false,
                 "",
                 undefined,

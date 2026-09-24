@@ -8,6 +8,7 @@ export type TaskOutputResponse = {
     fileName: string;
     outputMode: OutputMode;
     bytes: Uint8Array;
+    titleSuffix?: string;
 };
 
 export class PDF2zhHelperFactory {
@@ -81,6 +82,7 @@ export class PDF2zhHelperFactory {
                 options,
                 outputMode: response.outputMode,
                 service: config.service,
+                titleSuffix: response.titleSuffix,
                 isCurrent,
             });
         } finally {
@@ -159,6 +161,7 @@ export class PDF2zhHelperFactory {
         outputMode: OutputMode;
         service: string;
         isCurrent?: () => boolean;
+        titleSuffix?: string;
     }) {
         const { item, filePath, options, outputMode, service } = params;
         const parentItemID = this.getParentItemID(item);
@@ -174,6 +177,10 @@ export class PDF2zhHelperFactory {
             newTitle = `${shortTitle}-${service}-${outputMode}`;
         }
 
+        if (!(params.isCurrent?.() ?? true)) return;
+        const baseTitle = options.rename
+            ? newTitle
+            : PathUtils.filename(filePath);
         const attachment = await Zotero.Attachments.importFromFile({
             file: filePath,
             parentItemID: parentItemID == undefined ? undefined : parentItemID,
@@ -182,7 +189,9 @@ export class PDF2zhHelperFactory {
                 parentItemID == undefined
                     ? this.getCollections(item)
                     : undefined,
-            title: options.rename ? newTitle : PathUtils.filename(filePath),
+            title: params.titleSuffix
+                ? `${baseTitle}（${params.titleSuffix}）`
+                : baseTitle,
         });
 
         if (

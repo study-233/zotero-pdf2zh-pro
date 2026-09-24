@@ -79,6 +79,9 @@ class TaskRecord:
             "translationSummary": self.translation_summary,
             "qualitySummary": self.quality_summary,
             "failedParagraphs": self.failed_paragraphs,
+            "canDownloadResult": self.status in {"completed", "incomplete"} and any(
+                file.output_path.is_file() for file in self.result_files.values()
+            ),
             "canRepair": self.status in {"incomplete", "completed", "cancelled"},
             "resultFiles": {
                 output_mode: output_file.filename
@@ -333,7 +336,7 @@ class TaskManager:
             record = self._tasks.get(task_id)
             if record is None:
                 return None
-            if record.status != "completed" or not record.result_files:
+            if record.status not in {"completed", "incomplete"} or not record.result_files:
                 return record, None
 
             selected_output_mode = output_mode

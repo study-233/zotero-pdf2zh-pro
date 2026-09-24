@@ -96,12 +96,13 @@ function deferred() {
     return { promise, resolve };
 }
 
-function importOutput(itemID, content, isCurrent = () => true) {
+function importOutput(itemID, content, isCurrent = () => true, titleSuffix) {
     return PDF2zhHelperFactory.handleOutputResponse(
         {
             fileName: "paper.zh-CN.dual.pdf",
             outputMode: "dual",
             bytes: new Uint8Array([content]),
+            titleSuffix,
         },
         {
             id: itemID,
@@ -211,4 +212,17 @@ test("invalidated task during attachment import does not open the reader", async
     assert.equal(state.imports.length, 1);
     assert.deepEqual(state.opened, []);
     assert.equal(state.directories.size, 0);
+});
+
+test("partial and repaired imports retain distinct titles even with renaming disabled", async () => {
+    reset();
+    await importOutput(1, 11, () => true, "未完成·剩余 6 段·第 1 次");
+    await importOutput(1, 22, () => true, "完整·第 2 次");
+    assert.equal(state.imports.length, 2);
+    assert.match(state.imports[0].title, /未完成·剩余 6 段·第 1 次/);
+    assert.match(state.imports[1].title, /完整·第 2 次/);
+    assert.deepEqual(
+        state.imports.map((i) => i.bytes),
+        [[11], [22]],
+    );
 });

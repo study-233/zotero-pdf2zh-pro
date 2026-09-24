@@ -141,6 +141,7 @@ export interface ServerTaskSnapshot extends ServerSyncMetadata {
     cancelRequested: boolean;
     metrics?: TaskMetrics;
     canRepair?: boolean;
+    canDownloadResult?: boolean;
     qualitySummary?: TaskQualitySummary | null;
     translationSummary?: {
         total: number;

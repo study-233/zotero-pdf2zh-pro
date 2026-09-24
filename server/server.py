@@ -310,13 +310,12 @@ def create_app() -> Flask:
             return error_response("Task not found", 404)
 
         task_record, result_file = result
-        if task_record.status != "completed":
+        if task_record.status not in {"completed", "incomplete"}:
             return error_response("Task result is not ready", 409)
         if result_file is None:
-            return error_response(
-                "Output mode is required when multiple result files exist",
-                400,
-            )
+            if requested_mode is None and len(task_record.result_files) > 1:
+                return error_response("Output mode is required when multiple result files exist", 400)
+            return error_response("Requested PDF is unavailable or no longer exists", 404)
 
         response = send_file(
             result_file.output_path,

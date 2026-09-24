@@ -208,6 +208,24 @@ class TaskManagerTests(unittest.TestCase):
         self.assertEqual(event["revision"], 200)
         self.assertEqual(manager.next_subscription_event(subscription, timeout=0), event)
 
+    def test_result_availability_tracks_terminal_state_and_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "partial.pdf"
+            output.write_bytes(b"%PDF-1.4")
+            manager = TaskManager()
+            record = TaskRecord("task", "paper.pdf", "openai", ["dual"], {}, Path(tmp),
+                                result_files={"dual": TranslationOutputFile("dual", output, output.name)})
+            manager._tasks["task"] = record
+            for status in ["completed", "incomplete", "queued", "running", "cancelling", "cancelled", "failed"]:
+                record.status = status
+                expected = status in {"completed", "incomplete"}
+                self.assertEqual(record.to_dict()["canDownloadResult"], expected)
+                self.assertEqual(manager.get_result_file("task", "dual")[1] is not None, expected)
+            record.status = "incomplete"
+            output.unlink()
+            self.assertFalse(record.to_dict()["canDownloadResult"])
+            self.assertIsNone(manager.get_result_file("task", "dual")[1])
+
     def test_missing_result_file_is_not_returned(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "missing.pdf"

@@ -44,8 +44,11 @@ fields are ignored when reading historical records.
 
 Task details and SSE events expose `translationSummary`, `failedParagraphs`, and
 `canRepair`. The `incomplete` status indicates that paragraphs requiring
-translation are still unresolved; these results are not automatically imported
-into Zotero.
+translation are still unresolved. A terminal task with an existing PDF exposes
+`canDownloadResult: true`; its PDF can be downloaded and is automatically imported
+into Zotero with an incomplete label. Repair creates a new attachment and preserves
+previous versions and annotations. Older servers without this field retain the
+completed-only import behavior. Import retries do not trigger translation requests.
 
 `POST /tasks/{taskId}/repair` accepts incomplete, completed, and cancelled tasks
 and returns the snapshot for the new attempt. Active tasks return HTTP 409.
@@ -53,7 +56,7 @@ Repair preserves validated translations and requests the remaining paragraphs,
 using QPS 2 and concurrency 4 by default. Pure URL footnotes are preserved without
 translation; ordinary body text containing a URL still requires translation.
 
-Paragraph checkpoints are stored in `paragraph-recovery.json` inside the task
+Paragraph checkpoints are stored in `paragraph-recovery.sqlite3` inside the task
 directory, allowing repair after a server restart. Deleting a task also removes
 its checkpoints. JSON structure, paragraph IDs, nonempty translations, and
 placeholders are validated before translations are cached.

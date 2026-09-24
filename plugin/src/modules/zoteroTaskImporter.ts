@@ -8,6 +8,21 @@ type TaskImporterCallbacks = {
     onTaskImported: (taskId: string) => void;
 };
 
+export function canDownloadTaskResult(task: PluginTask): boolean {
+    if (task.status === "incomplete") {
+        return (
+            task.canDownloadResult === true &&
+            task.outputModes.some((mode) => Boolean(task.resultFiles[mode]))
+        );
+    }
+    return (
+        task.status === "completed" &&
+        task.canDownloadResult !== false &&
+        !task.translationSummary?.failed &&
+        !task.translationSummary?.pending
+    );
+}
+
 export class ZoteroTaskImporter {
     constructor(private callbacks: TaskImporterCallbacks) {}
 
@@ -15,9 +30,7 @@ export class ZoteroTaskImporter {
         const task = this.callbacks.getTask(taskId);
         if (
             !task ||
-            task.status !== "completed" ||
-            task.translationSummary?.failed ||
-            task.translationSummary?.pending ||
+            !canDownloadTaskResult(task) ||
             task.importState !== "pending"
         ) {
             return;
@@ -47,9 +60,7 @@ export class ZoteroTaskImporter {
                 current &&
                 (current.attempt || 1) === attempt &&
                 current.itemID === item.id &&
-                current.status === "completed" &&
-                !current.translationSummary?.failed &&
-                !current.translationSummary?.pending &&
+                canDownloadTaskResult(current) &&
                 current.importState === importState,
             );
         };
@@ -63,6 +74,11 @@ export class ZoteroTaskImporter {
             const importedOutputs = [...(task.importedOutputs || [])];
             for (const outputMode of task.outputModes) {
                 if (!isCurrent()) return;
+                if (
+                    task.status === "incomplete" &&
+                    !task.resultFiles[outputMode]
+                )
+                    continue;
                 const outputKey = `${attempt}:${outputMode}`;
                 if (importedOutputs.includes(outputKey)) continue;
                 const bytes = await ServerTaskClient.fetchResult(
@@ -78,6 +94,12 @@ export class ZoteroTaskImporter {
                     fileName,
                     outputMode,
                     bytes,
+                    titleSuffix:
+                        task.status === "incomplete"
+                            ? `未完成·剩余 ${(task.translationSummary?.failed || 0) + (task.translationSummary?.pending || 0)} 段·第 ${attempt} 次`
+                            : attempt > 1
+                              ? `完整·第 ${attempt} 次`
+                              : undefined,
                 };
                 await PDF2zhHelperFactory.handleOutputResponse(
                     output,

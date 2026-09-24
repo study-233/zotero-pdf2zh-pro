@@ -3,6 +3,7 @@ from __future__ import annotations
 from babeldoc.translator.request_budget import ParagraphRequestBudget
 
 from babeldoc.translator.validation import validate_text, InvalidTranslation
+from babeldoc.translator.literal_tags import LiteralTags
 
 import copy
 import json
@@ -43,7 +44,7 @@ from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
 )
 from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
     is_pure_numeric_paragraph,
-    is_url_only_paragraph,
+    preserved_paragraph_reason,
 )
 from babeldoc.format.pdf.document_il.utils.style_helper import GRAY80
 from babeldoc.format.pdf.document_il.midend.reference_filter import (
@@ -529,7 +530,7 @@ class ILTranslator:
             for paragraph in page.pdf_paragraph:
                 self.translation_config.raise_if_cancelled()
                 if (paragraph.layout_label not in BODY_LABELS or paragraph.vertical
-                        or id(paragraph) in excluded or is_url_only_paragraph(paragraph)):
+                        or id(paragraph) in excluded or preserved_paragraph_reason(paragraph)):
                     continue
                 try:
                     prepared = self.get_translate_input(
@@ -629,6 +630,8 @@ class ILTranslator:
             hint = {}
             for placeholder in self.placeholders:
                 if isinstance(placeholder, FormulaPlaceholder):
+                    if placeholder.placeholder not in self.unicode:
+                        continue
                     cid_count = 0
                     for char in placeholder.formula.pdf_character:
                         if re.match(r"^\(cid:\d+\)$", char.char_unicode):
@@ -902,6 +905,9 @@ class ILTranslator:
         tracker: ParagraphTranslateTracker | None = None,
         llm_translate_tracker: LLMTranslateTracker | None = None,
     ) -> [PdfParagraphComposition]:
+        tags = getattr(input_text, "literal_tags", None)
+        if tags is not None:
+            output = tags.restore(output)
         result = []
 
         # 如果没有占位符，直接返回整个文本
@@ -1082,9 +1088,10 @@ class ILTranslator:
         recovery = getattr(self.translation_config, "recovery", None)
         if recovery is not None and recovery.is_skipped(paragraph):
             return None, None
-        if is_url_only_paragraph(paragraph):
+        preserve_reason = preserved_paragraph_reason(paragraph)
+        if preserve_reason:
             if recovery is not None:
-                recovery.record(paragraph, "skipped", reason="url_only")
+                recovery.record(paragraph, "skipped", reason=preserve_reason)
             return None, None
         text, translate_input = self._prepare_paragraph(paragraph, tracker, page_font_map, xobj_font_map)
         plan = getattr(self, "body_input_plan", None)
@@ -1092,12 +1099,24 @@ class ILTranslator:
             plan.apply(paragraph, translate_input)
             text = translate_input.unicode
             tracker.set_input(text)
+        if text is not None:
+            formula_text = {p.placeholder: get_char_unicode_string(p.formula.pdf_character)
+                            for p in getattr(translate_input, "placeholders", []) if isinstance(p, FormulaPlaceholder)}
+            translate_input.literal_tags = LiteralTags(text, formula_text)
+            text = translate_input.unicode = translate_input.literal_tags.text
         recovery = getattr(self.translation_config, "recovery", None)
         if recovery is not None:
             if text is None:
                 recovery.record(paragraph, "skipped", reason="not_translatable")
             else:
                 restored = recovery.restored(paragraph, text)
+                if restored is None and translate_input.literal_tags.mapping:
+                    legacy = recovery.restored(paragraph, translate_input.literal_tags.source)
+                    if legacy is not None:
+                        try:
+                            restored = translate_input.literal_tags.protect_existing(legacy)
+                        except InvalidTranslation:
+                            pass
                 if restored is not None:
                     try:
                         self.post_translate_paragraph(paragraph, tracker, translate_input, restored)
@@ -1147,6 +1166,19 @@ class ILTranslator:
             return None, None
         return text, translate_input
 
+    def validate_paragraph_output(self, translate_input, output):
+        validate_text(translate_input.unicode, output, self.translate_engine.lang_out,
+                      not self.translation_config.disable_same_text_fallback)
+        tags = getattr(translate_input, "literal_tags", None)
+        if tags is not None and tags.mapping:
+            tags.restore(output)
+            # Short labels inside tags are prose too, even without three lowercase words.
+            if (not self.translation_config.disable_same_text_fallback
+                    and self.translate_engine.lang_out.lower().startswith("zh")
+                    and re.search(r"[A-Za-z]{2,}", re.sub(r"\{v\d+\}", "", translate_input.unicode))
+                    and not re.search(r"[\u3400-\u9fff]", output)):
+                raise InvalidTranslation("target_language_missing")
+
     def post_translate_paragraph(
         self,
         paragraph: PdfParagraph,
@@ -1158,8 +1190,7 @@ class ILTranslator:
     ):
         """Post-translation processing: update paragraph with translated text."""
         self.translation_config.raise_if_cancelled()
-        validate_text(translate_input.unicode, translated_text, self.translate_engine.lang_out,
-                      not self.translation_config.disable_same_text_fallback)
+        self.validate_paragraph_output(translate_input, translated_text)
         tracker.set_output(translated_text)
         if translated_text == translate_input:
             if llm_translate_tracker := tracker.last_llm_translate_tracker():
@@ -1441,8 +1472,7 @@ class ILTranslator:
                     "batch_size": 1,
                     "paragraph_ids": [paragraph.debug_id],
                     "check_cancelled": self.translation_config.raise_if_cancelled,
-                    "validate_output": lambda value: validate_text(text, value, self.translate_engine.lang_out,
-                        not self.translation_config.disable_same_text_fallback),
+                    "validate_output": lambda value: self.validate_paragraph_output(translate_input, value),
                     "on_attempt": lambda: recovery.attempt([paragraph], context[0]) if recovery is not None else None,
                 }
                 self._ensure_translation_completion()

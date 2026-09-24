@@ -1850,7 +1850,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 view.cancelButton.disabled = view.pendingAction === "cancel";
                 setTextContent(
                     view.retryButton,
-                    task.status === "completed" ? "重试导入" : "重试任务",
+                    task.importState === "failed" && task.status !== "failed"
+                        ? "重试导入"
+                        : "重试任务",
                 );
                 setNodeHidden(view.retryButton, !canRetry(task));
                 view.retryButton.disabled = view.pendingAction === "retry";
@@ -2113,12 +2115,19 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     incomplete:
                         task.qualitySummary?.failed > 0
                             ? `未完成，校对确认 ${task.qualitySummary.failed} 段有问题`
-                            : `未完成，剩余 ${task.translationSummary?.failed || task.translationSummary?.pending || "待检查"} 段`,
+                            : `未完成，剩余 ${(task.translationSummary?.failed || 0) + (task.translationSummary?.pending || 0) || "待检查"} 段`,
                     failed: "失败",
                     cancelled: "已终止",
                 };
                 if (task.status === "running" && isFontAssetStage(task.stage)) {
                     return "正在准备首次运行所需字体";
+                }
+                if (task.status === "incomplete" && task.canDownloadResult) {
+                    const prefix =
+                        task.importState === "imported"
+                            ? "PDF 已导入"
+                            : "PDF 已生成";
+                    return `${prefix}；${mapping.incomplete}，可补译`;
                 }
                 return mapping[task.status] || task.status;
             }
@@ -2380,7 +2389,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     return true;
                 }
                 return (
-                    task.status === "completed" && task.importState === "failed"
+                    (task.status === "completed" ||
+                        (task.status === "incomplete" &&
+                            task.canDownloadResult)) &&
+                    task.importState === "failed"
                 );
             }
 

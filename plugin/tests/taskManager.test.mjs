@@ -25,6 +25,9 @@ const moduleFrom = (source) =>
         `data:text/javascript;base64,${Buffer.from(source).toString("base64")}`
     );
 const { TaskEventStream } = await moduleFrom(compile("taskEventStream"));
+const { canDownloadTaskResult } = await moduleFrom(
+    compile("zoteroTaskImporter"),
+);
 let sequence = 0;
 const serverUrl = "http://localhost:8890";
 const deferred = () => {
@@ -135,6 +138,7 @@ async function fixture(saved = []) {
         },
         ServerTaskClient: client,
         TaskEventStream,
+        canDownloadTaskResult,
         ZoteroTaskImporter: class {
             async importTaskOutputs(id) {
                 imports.push(id);
@@ -142,7 +146,7 @@ async function fixture(saved = []) {
         },
     };
     const { PDF2zhTaskManager: manager } = await moduleFrom(
-        "const {config,getString,getPref,PDF2zhHelperFactory,ServerTaskClient,TaskEventStream,ZoteroTaskImporter} = globalThis.__taskManagerTests;\n" +
+        "const {config,getString,getPref,PDF2zhHelperFactory,ServerTaskClient,TaskEventStream,ZoteroTaskImporter,canDownloadTaskResult} = globalThis.__taskManagerTests;\n" +
             "const resolveSelectedGlossaryPacks=(...args)=>globalThis.__taskManagerTests.resolveSelectedGlossaryPacks(...args);\n" +
             compile("pdf2zhTaskManager") +
             `\n// instance ${sequence++}`,
@@ -637,4 +641,71 @@ test("extended metrics keep grouped diagnostics and timings through HTTP, SSE an
     const restored = await fixture(writes.at(-1));
     restored.manager.openWindow();
     assert.deepEqual(restored.manager.getTasks()[0].metrics, updated);
+});
+
+test("restart and refresh import available partial results without starting a repair", async () => {
+    const partial = local({
+        status: "incomplete",
+        canDownloadResult: true,
+        resultFiles: { dual: "partial.pdf" },
+        translationSummary: { failed: 6, pending: 0 },
+        importState: "importing",
+    });
+    const { manager, client, imports } = await fixture([partial]);
+    client.listTasks = async () => ({
+        tasks: [{ ...partial, importState: undefined }],
+    });
+    client.repairTask = () => {
+        throw new Error("must not translate");
+    };
+    await manager.start();
+    assert.equal(manager.getTasks()[0].importState, "pending");
+    assert.deepEqual(imports, ["one"]);
+    manager.updateLocalTask("one", { importState: "failed" });
+    await manager.retryTask("one");
+    assert.deepEqual(imports, ["one", "one"]);
+    assert.equal(manager.getTasks()[0].status, "incomplete");
+});
+
+test("partial result events retain capability but old servers never auto-import partials", async () => {
+    const { manager, imports } = await fixture([local()]);
+    manager.openWindow();
+    manager.handleServerTaskEvent(serverUrl, {
+        type: "task",
+        task: snapshot({
+            status: "incomplete",
+            resultFiles: { dual: "partial.pdf" },
+        }),
+    });
+    assert.deepEqual(imports, []);
+    manager.handleServerTaskEvent(serverUrl, {
+        type: "task",
+        task: snapshot({
+            status: "incomplete",
+            resultFiles: { dual: "partial.pdf" },
+            canDownloadResult: true,
+            updatedAt: "2026-01-01T00:02:00Z",
+        }),
+    });
+    assert.deepEqual(imports, ["one"]);
+});
+
+test("stopping the plugin closes streams and prevents late partial imports", async () => {
+    const { manager, client, sources, imports } = await fixture([local()]);
+    const response = deferred();
+    client.listTasks = () => response.promise;
+    const starting = manager.start();
+    manager.stop();
+    response.resolve({
+        tasks: [
+            snapshot({
+                status: "incomplete",
+                canDownloadResult: true,
+                resultFiles: { dual: "partial.pdf" },
+            }),
+        ],
+    });
+    await starting;
+    assert.deepEqual(imports, []);
+    assert.ok(sources.every((source) => source.closed));
 });

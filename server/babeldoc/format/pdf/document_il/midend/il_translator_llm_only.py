@@ -761,8 +761,15 @@ class ILTranslatorLLMOnly:
                 llm_translate_tracker.set_input(final_input)
 
             def inspect_output(value):
-                return inspect_batch(value, [item[0] for item in inputs],
+                result = inspect_batch(value, [item[0] for item in inputs],
                     self.translate_engine.lang_out, not self.translation_config.disable_same_text_fallback)
+                for index, output in list(result.valid_outputs.items()):
+                    try:
+                        self.il_translator.validate_paragraph_output(inputs[index][1], output)
+                    except InvalidTranslation as error:
+                        result.invalid_outputs[index] = str(error)
+                        del result.valid_outputs[index]
+                return result
 
             cache_params = {
                     "paragraph_token_count": paragraph_token_count,

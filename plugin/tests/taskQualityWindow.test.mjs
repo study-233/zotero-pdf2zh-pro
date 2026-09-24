@@ -210,3 +210,20 @@ test("missing metric values remain unknown and activity uses one concise stage l
         ui.formatStage(running.stage),
     );
 });
+
+test("partial PDF availability and import failure are separate from repair", () => {
+    const ui = fixture();
+    const partial = task({
+        status: "incomplete",
+        canDownloadResult: true,
+        canRepair: true,
+        translationSummary: { failed: 4, pending: 2 },
+    });
+    const view = ui.createTaskCardView(partial);
+    assert.match(view.status.textContent, /PDF 已导入.*剩余 6 段.*可补译/);
+    ui.updateTaskCardView(view, { ...partial, importState: "failed" });
+    assert.match(view.status.textContent, /PDF 已生成/);
+    assert.equal(view.retryButton.textContent, "重试导入");
+    assert.equal(view.retryButton.hidden, false);
+    assert.equal(view.repairButton.hidden, false);
+});

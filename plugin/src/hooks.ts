@@ -18,6 +18,7 @@ async function onStartup() {
     await Promise.all(
         Zotero.getMainWindows().map((win) => onMainWindowLoad(win)),
     );
+    void PDF2zhTaskManager.start().catch((error) => ztoolkit.log(error));
 }
 
 async function onMainWindowLoad(_win: Window): Promise<void> {
@@ -39,6 +40,7 @@ async function onMainWindowUnload(_win: Window): Promise<void> {
 }
 
 function onShutdown(): void {
+    PDF2zhTaskManager.stop();
     ztoolkit.unregisterAll();
     addon.data.dialog?.window?.close();
     PDF2zhTaskManager.closeWindow();

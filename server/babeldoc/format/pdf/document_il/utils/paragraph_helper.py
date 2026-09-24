@@ -3,6 +3,7 @@ import re
 
 from babeldoc.format.pdf.document_il import il_version_1
 from babeldoc.translator.url_utils import is_url_only_text
+from babeldoc.translator.preserved_text import preserved_text_reason
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,12 @@ def is_url_only_paragraph(paragraph) -> bool:
             return False
         previous_line = (text, last)
     return is_url_only_text(joined)
+
+
+def preserved_paragraph_reason(paragraph):
+    return preserved_text_reason(paragraph.unicode) or (
+        "url_only" if is_url_only_paragraph(paragraph) else None
+    )
 
 
 def is_cid_paragraph(paragraph: il_version_1.PdfParagraph):

@@ -3,7 +3,10 @@ import json
 import re
 from collections import Counter
 from dataclasses import dataclass
-from babeldoc.translator.url_utils import is_url_only_text
+from babeldoc.translator.preserved_text import preserved_text_reason
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class InvalidTranslation(ValueError):
@@ -25,10 +28,12 @@ def validate_text(source, output, lang_out="", same_text_check=True):
     normalize = lambda s: re.sub(r"\s+", "", s).replace('"', "'").lower()
     tokens = lambda s: Counter(normalize(x) for x in re.findall(pattern, s, re.I))
     if tokens(source) != tokens(output):
+        logger.warning("translation placeholders differ: missing=%s extra=%s",
+                       dict(tokens(source) - tokens(output)), dict(tokens(output) - tokens(source)))
         raise InvalidTranslation("placeholder_mismatch")
     plain = lambda s: re.sub(pattern, "", s, flags=re.I).strip()
     src, dst = plain(source), plain(output)
-    if src == dst and is_url_only_text(src):
+    if src == dst and preserved_text_reason(src):
         return
     words = re.findall(r"[A-Za-z]+", src)
     prose = sum(w.islower() and len(w) > 2 for w in words) >= 3

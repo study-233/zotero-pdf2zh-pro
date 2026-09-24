@@ -234,7 +234,8 @@ class RecoveryTests(unittest.TestCase):
                 manager._run_task("task")
             self.assertEqual(manager.get_task("task")["status"], "incomplete")
             self.assertLess(manager.get_task("task")["overallProgress"], 100)
-            self.assertIsNone(manager.get_result_file("task")[1])
+            self.assertIsNotNone(manager.get_result_file("task")[1])
+            self.assertTrue(manager.get_task("task")["canDownloadResult"])
             restored = TaskManager(root/"tasks.json")
             self.assertEqual(restored.get_task("task")["failedParagraphs"], result.failed_paragraphs)
             with patch("task_manager.threading.Thread"):

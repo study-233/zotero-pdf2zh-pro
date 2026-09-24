@@ -190,6 +190,18 @@ class ServerRouteTests(unittest.TestCase):
         self.assertEqual(rejected.status_code, 400)
         self.assertIn("outputMode", rejected.json["message"])
 
+    def test_incomplete_pdf_is_downloadable_but_active_results_are_not(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "partial.pdf"
+            output.write_bytes(b"%PDF-1.4")
+            for status in ["incomplete", "running", "cancelled"]:
+                record = SimpleNamespace(status=status, task_id="task", server_instance_id="test", revision=1)
+                file = SimpleNamespace(output_path=output, filename=output.name, output_mode="dual")
+                with patch.object(server_module.TASK_MANAGER, "get_result_file", return_value=(record, file)):
+                    response = self.client.get("/tasks/task/result?mode=dual")
+                self.assertEqual(response.status_code, 200 if status == "incomplete" else 409)
+                response.close()
+
     def test_task_list_and_errors_include_sync_metadata(self):
         snapshot = {"serverInstanceId": "instance-test", "revision": 21, "tasks": [task_snapshot()]}
         with patch.object(server_module.TASK_MANAGER, "list_tasks_snapshot", return_value=snapshot):

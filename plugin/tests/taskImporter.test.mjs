@@ -13,6 +13,7 @@ const state = {
     onImport: null,
     notifications: [],
     updates: [],
+    outputs: [],
 };
 globalThis.Zotero = { Items: { get: () => ({ id: 1 }) } };
 globalThis.__importTest = {
@@ -28,6 +29,7 @@ globalThis.__importTest = {
         getServerConfig: () => ({}),
         handleOutputResponse: async (output) => {
             state.imports.push(output.outputMode);
+            state.outputs.push(output);
             await state.onImport?.(output.outputMode);
         },
     },
@@ -50,6 +52,7 @@ const { ZoteroTaskImporter } = await import(
 
 function fixture(status = "completed", failed = 0) {
     state.downloads = [];
+    state.outputs = [];
     state.imports = [];
     state.failMode = null;
     state.onDownload = null;
@@ -180,3 +183,38 @@ for (const phase of ["download", "import"]) {
         }
     }
 }
+
+test("available incomplete PDFs import once with a warning, including only existing modes", async () => {
+    const { task, importer } = fixture("incomplete", 6);
+    task.canDownloadResult = true;
+    task.resultFiles = { dual: "partial.pdf" };
+    await Promise.all([
+        importer.importTaskOutputs("one"),
+        importer.importTaskOutputs("one"),
+    ]);
+    assert.deepEqual(state.downloads, ["dual"]);
+    assert.deepEqual(state.imports, ["dual"]);
+    assert.equal(state.outputs[0].titleSuffix, "未完成·剩余 6 段·第 2 次");
+    assert.equal(task.status, "incomplete");
+    assert.equal(task.importState, "imported");
+    task.status = "completed";
+    task.translationSummary.failed = 0;
+    task.attempt = 3;
+    task.importState = "pending";
+    await importer.importTaskOutputs("one");
+    assert.equal(state.outputs[1].titleSuffix, "完整·第 3 次");
+    assert.deepEqual(state.imports, ["dual", "mono", "dual"]);
+});
+
+test("partial download failure can retry import without translation", async () => {
+    const { task, importer } = fixture("incomplete", 1);
+    task.canDownloadResult = true;
+    task.resultFiles = { mono: "partial.mono.pdf", dual: "partial.dual.pdf" };
+    state.failMode = "dual";
+    await importer.importTaskOutputs("one");
+    assert.equal(task.importState, "failed");
+    state.failMode = null;
+    task.importState = "pending";
+    await importer.importTaskOutputs("one");
+    assert.deepEqual(state.imports, ["mono", "dual"]);
+});
