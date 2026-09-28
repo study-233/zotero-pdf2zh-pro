@@ -6,6 +6,7 @@ import ts from "typescript";
 import { URL } from "node:url";
 
 const compile = (name) =>
+    "const recordDiagnostic = () => {};\n" +
     ts
         .transpileModule(
             fs.readFileSync(

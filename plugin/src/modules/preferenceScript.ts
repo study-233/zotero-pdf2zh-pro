@@ -1,3 +1,4 @@
+import { exportDiagnostics } from "./diagnostics";
 import { config, version } from "../../package.json";
 import { getPref, setPref } from "../utils/prefs";
 import { getLocaleID } from "../utils/locale";
@@ -197,6 +198,11 @@ export async function registerPrefsScripts(window: Window) {
         } finally {
             refreshProfiles();
         }
+    });
+    element("export-diagnostics")?.addEventListener("click", () => {
+        void exportDiagnostics(
+            String(getPref("new_serverip") || "http://127.0.0.1:8890"),
+        ).catch(report);
     });
     element("checkConnection")?.addEventListener("click", () => {
         void refreshServerVersion();

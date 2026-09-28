@@ -53,15 +53,18 @@ def get_glyph_bbox(face, g):
         return 0, 0, 0, 0
 
 
-def get_face_bbox(blob):
+def get_face_bbox(blob, check_cancelled=lambda: None):
     face = freetype.Face(BytesIO(blob))
     scale = 1000 / face.units_per_EM
-    bbox_list = [get_glyph_bbox(face, code) for code in range(face.num_glyphs)]
+    bbox_list = []
+    for code in range(face.num_glyphs):
+        check_cancelled()
+        bbox_list.append(get_glyph_bbox(face, code))
     bbox_list = [[v * scale for v in bbox] for bbox in bbox_list]
     return bbox_list
 
 
-def get_cidfont_bbox(doc, xref):
+def get_cidfont_bbox(doc, xref, check_cancelled=lambda: None):
     if doc.xref_get_key(xref, "Subtype")[1] == "/Type0":
         if blob := get_descendant_fonts(doc, xref):
-            return get_face_bbox(blob)
+            return get_face_bbox(blob, check_cancelled)

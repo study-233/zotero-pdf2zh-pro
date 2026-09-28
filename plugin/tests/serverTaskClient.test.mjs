@@ -21,7 +21,8 @@ const compiled = ts
     .outputText.replace(/^import[\s\S]*?;\r?\n/gm, "");
 const { ServerTaskClient } = await import(
     `data:text/javascript;base64,${Buffer.from(
-        "const PDF2zhHelperFactory={retryOperation:operation=>operation()};\n" +
+        "const diagnosticFetch = (...args) => fetch(...args);\n" +
+            "const PDF2zhHelperFactory={retryOperation:operation=>operation()};\n" +
             "const prepareApiForServer=api=>({api});\n" +
             compiled,
     ).toString("base64")}`

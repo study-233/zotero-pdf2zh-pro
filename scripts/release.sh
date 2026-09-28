@@ -38,7 +38,8 @@ cleanup() {
             echo "Homebrew tap update was attempted; inspect its state before restoring tap history." >&2
         fi
     fi
-    for path in "${TEMP_PATHS[@]}"; do
+    # macOS Bash 3.2 treats an empty array as unset under `set -u`.
+    for path in ${TEMP_PATHS[@]+"${TEMP_PATHS[@]}"}; do
         if [[ -n "$path" && -e "$path" ]]; then
             rm -rf -- "$path"
         fi

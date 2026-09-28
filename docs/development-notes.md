@@ -137,3 +137,9 @@ PyPI 包来源。已安装同版本的客户端需手动重装修订包：Zotero
 
 产品改名不改变 AGPL 或第三方归属。不得删除上游许可证、第三方 notice 或 Git
 历史中的贡献者信息。每个二进制发行物的对应源码必须可从公开版本标签获取。
+
+## 解析性能、任务进程和诊断
+
+实现与验收契约见 [任务诊断与取消规格](task-diagnostics-and-cancellation.md)。TaskManager 生产路径始终使用 spawn 执行器；translator 注入只供离线单测使用。新增模块必须随 Python wheel 一并打包。低优先级诊断不与可靠控制消息共用缓冲，父进程按单调时钟监督回收。
+
+macOS 测试时临时目录可使用 `TMPDIR=/private/tmp`，避免 `/var` 与 `/private/var` 的路径别名影响既有路径断言。缓存隔离验证应使用 `pdf2zh_next.translator.cache.init_test_db()` 和 `clean_test_db()`，避免把测试内容写入用户翻译缓存。进程回收测试有界等待，真实永久阻塞任务仅在受控子进程中构造。

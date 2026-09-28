@@ -13,7 +13,7 @@ def merge_bbox(bbox_list, factor=1):
         return x0, -y1, x1, -y0
 
 
-def get_type3_bbox(doc, obj):
+def get_type3_bbox(doc, obj, check_cancelled=lambda: None):
     bbox_list = [(0, 0, 0, 0)] * 256
     first = int(doc.xref_get_key(obj, "FirstChar")[1])
     last = int(doc.xref_get_key(obj, "LastChar")[1])
@@ -26,16 +26,19 @@ def get_type3_bbox(doc, obj):
     doc.xref_set_key(page.xref, "Resources/Font", f"<</T0 {obj} 0 R>>")
     text = doc.get_new_xref()
     doc.update_object(text, "<<>>")
-    for x in range(first, last + 1):
-        doc.update_stream(text, b"1 0 0 1 0 10 cm BT /T0 1 Tf <%02X> Tj ET" % x)
-        doc.xref_set_key(page.xref, "Contents", f"{text} 0 R")
-        char_data = page.get_svg_image(text_as_path=True)
-        char_doc = pymupdf.Document(stream=io.BytesIO(char_data.encode("U8")))
-        char_bbox = []
-        for element in char_doc:
-            for item in element.get_drawings():
-                char_bbox.append(item["rect"])
-        if char_bbox_merged := merge_bbox(char_bbox, factor):
-            bbox_list[x] = char_bbox_merged
-    doc.delete_page(-1)
+    try:
+        for x in range(first, last + 1):
+            check_cancelled()
+            doc.update_stream(text, b"1 0 0 1 0 10 cm BT /T0 1 Tf <%02X> Tj ET" % x)
+            doc.xref_set_key(page.xref, "Contents", f"{text} 0 R")
+            char_data = page.get_svg_image(text_as_path=True)
+            char_bbox = []
+            with pymupdf.Document(stream=io.BytesIO(char_data.encode("U8"))) as char_doc:
+                for element in char_doc:
+                    for item in element.get_drawings():
+                        char_bbox.append(item["rect"])
+            if char_bbox_merged := merge_bbox(char_bbox, factor):
+                bbox_list[x] = char_bbox_merged
+    finally:
+        doc.delete_page(-1)
     return bbox_list

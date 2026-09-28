@@ -22,7 +22,7 @@ class TaskSyncTests(unittest.TestCase):
         self.addCleanup(self.manager.close, timeout=2)
 
     def translator(self, callback):
-        self.enterContext(patch("task_manager.translate_pdf_with_callbacks", side_effect=callback))
+        self.manager._translator = callback
         # Stop the worker before restoring the real translator, including on failure.
         self.addCleanup(self.manager.close, timeout=2)
 

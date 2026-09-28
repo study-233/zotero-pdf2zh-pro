@@ -92,3 +92,9 @@ operations use `/glossaries/<id>/download`, `/glossaries/<id>/cancel`, and
 
 See [glossary downloads](../docs/glossary-downloads.md) for storage, API and merge
 rules, and [glossary sources](../docs/glossary-sources.md) for attribution.
+
+## Task diagnostics and bounded cancellation
+
+`/health.capabilities` advertises `diagnosticsExport`, `boundedCancellation`, and `detailedTaskProgress`. `GET /diagnostics` and `GET /tasks/{taskId}/diagnostics` return versioned, size-bounded, allowlisted JSON; they never export request payloads, paper content, keys or raw historical logs. Structured rotating logs live under `<data-dir>/diagnostics/`. The plugin combines this snapshot with its own records into a local ZIP.
+
+Each attempt runs in a spawn process, contained by a POSIX process group or Windows Job Object. Cancellation escalates at 10/12 seconds and reports cleanup failure at 15 seconds rather than waiting indefinitely. A failed cleanup pauses the queue. Stalls alone only trigger diagnostics, never automatic cancellation. See [the owning specification](../docs/task-diagnostics-and-cancellation.md) for fields, retention, recovery and acceptance.

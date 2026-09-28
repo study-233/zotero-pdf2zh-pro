@@ -1617,6 +1617,20 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 });
                 footerActions.appendChild(metricsToggle);
 
+                const exportButton = document.createElement("button");
+                exportButton.className = "button";
+                exportButton.textContent = "导出诊断包";
+                exportButton.addEventListener("click", async () => {
+                    exportButton.disabled = true;
+                    try {
+                        await api.exportDiagnostics(view.task.taskId);
+                    } catch (error) {
+                        alert(String(error));
+                    } finally {
+                        exportButton.disabled = false;
+                    }
+                });
+                footerActions.appendChild(exportButton);
                 const cancelButton = document.createElement("button");
                 cancelButton.className = "button danger";
                 cancelButton.textContent = "终止任务";
@@ -1747,8 +1761,24 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     ? stageProgress
                     : overallProgress;
                 const gridValues = [
-                    formatActivityStage(task),
-                    formatStageProgress(task),
+                    task.queueBlocked
+                        ? "进程回收失败，队列已暂停，请恢复服务"
+                        : task.status === "cancelling"
+                          ? {
+                                requested: "正在请求终止（最多等待 10 秒）",
+                                terminating: "正在终止任务进程",
+                                killing: "正在强制回收任务进程",
+                            }[task.cancelPhase] ||
+                            "正在终止；服务未报告限时回收能力，请检查服务版本"
+                          : task.status === "running" &&
+                              task.currentPage &&
+                              task.stage ===
+                                  "Parse PDF and Create Intermediate Representation"
+                            ? `正在解析第 ${task.currentPage} 页 · ${{ page_start: "页面解析", page_end: "页面完成", font: "字体字形", resources: "图形资源", content_stream: "页面内容流" }[task.operation] || "解析中"}`
+                            : formatActivityStage(task),
+                    task.status === "running" && task.lastProgressAt
+                        ? `${task.stage === "Parse PDF and Create Intermediate Representation" && task.completedPages !== undefined ? `已完成 ${task.completedPages}/${task.totalPages} 页` : formatStageProgress(task)} · ${task.stalled ? "较长时间无进展 · " : ""}距上次进展 ${Math.max(0, Math.floor((Date.now() - Date.parse(task.lastProgressAt)) / 1000))} 秒`
+                        : formatStageProgress(task),
                     fontAssetStage
                         ? "字体准备完成后开始翻译"
                         : `${Math.round(overallProgress)}%`,

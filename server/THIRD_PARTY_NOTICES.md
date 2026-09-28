@@ -15,8 +15,30 @@ included. Translation providers, PDF processing, OCR models, table handling,
 and glossary extraction remain included. Exact license texts are under
 `LICENSES/` and are copied into wheel metadata.
 
-Regenerate snapshots from the pinned public URLs and hashes:
+These are **base snapshot versions**, not unmodified upstream distributions.
+Local translation recovery, provider protocols, metrics and compatibility fixes
+must be retained when replacing a snapshot. The extraction script removes the
+existing package directories; run it only in a disposable checkout when preparing
+an upgrade, then review and reapply the downstream changes:
 
 ```bash
 uv run python scripts/vendor_pdf2zh_runtime.py
 ```
+
+## Downstream compatibility backports (2026-09-29)
+
+- PyMuPDF 1.25.1/1.25.2: format warning arguments for unsupported font subtypes
+  and invalid annotation items before passing them to `message()`. This does not
+  add support for unsupported fonts or suppress PDF processing exceptions.
+- BabelDOC 0.6.4 (`17480db9df92`): backport the CMap manifest and verified loader
+  to the bundled legacy `pdfminer` layout (GHSA-m8gf-v64p-gfmg). All 148 CMaps
+  match the upstream manifest. Reads are bounded and external `CMAP_PATH`
+  overrides are intentionally unsupported.
+- Backport LZW invalid-code checks and ImageWriter filename containment from the
+  same upstream comparison; image names also strip Windows separators on POSIX.
+- Restore the missing `ClaudeCodeSettings` public import in `pdf2zh_next`.
+
+The PyMuPDF compatibility hook is loaded by `babeldoc` in both the service and
+fresh PDF worker processes. These backports do **not** include the BabelDOC 0.6
+parser rewrite. See `docs/runtime-compatibility-audit-2026-09-29.md` in the source
+repository for the remaining migration work and verification limits.

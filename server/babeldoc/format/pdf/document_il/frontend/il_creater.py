@@ -3,6 +3,7 @@ import functools
 import logging
 import math
 import re
+from types import MappingProxyType
 import unicodedata
 from io import BytesIO
 from itertools import islice
@@ -143,9 +144,12 @@ def parse_font_encoding(doc, idx):
     return ("Custom", get_type1_encoding("StandardEncoding"))
 
 
-def get_truetype_ansi_bbox_list(face):
+def get_truetype_ansi_bbox_list(face, check_cancelled=lambda: None):
     scale = 1000 / face.units_per_EM
-    bbox_list = [get_char_cbox(face, code) for code in WinAnsiEncoding]
+    bbox_list = []
+    for code in WinAnsiEncoding:
+        check_cancelled()
+        bbox_list.append(get_char_cbox(face, code))
     bbox_list = [[v * scale for v in bbox] for bbox in bbox_list]
     return bbox_list
 
@@ -161,7 +165,7 @@ def collect_face_cmap(face):
     return umap, lmap
 
 
-def get_truetype_custom_bbox_list(face):
+def get_truetype_custom_bbox_list(face, check_cancelled=lambda: None):
     umap, lmap = collect_face_cmap(face)
     if umap:
         face.set_charmap(umap[0])
@@ -170,22 +174,26 @@ def get_truetype_custom_bbox_list(face):
     else:
         return []
     scale = 1000 / face.units_per_EM
-    bbox_list = [get_char_cbox(face, code) for code in range(256)]
+    bbox_list = []
+    for code in range(256):
+        check_cancelled()
+        bbox_list.append(get_char_cbox(face, code))
     bbox_list = [[v * scale for v in bbox] for bbox in bbox_list]
     return bbox_list
 
 
-def parse_font_file(doc, idx, encoding, differences):
+def parse_font_file(doc, idx, encoding, differences, check_cancelled=lambda: None):
     bbox_list = []
     data = doc.xref_stream(idx)
     face = freetype.Face(BytesIO(data))
     if face.get_format() == b"TrueType":
         if encoding[0] == "WinAnsiEncoding":
-            return get_truetype_ansi_bbox_list(face)
+            return get_truetype_ansi_bbox_list(face, check_cancelled)
         elif encoding[0] == "Custom":
-            return get_truetype_custom_bbox_list(face)
+            return get_truetype_custom_bbox_list(face, check_cancelled)
     glyph_name_set = set()
     for x in range(0, face.num_glyphs):
+        check_cancelled()
         glyph_name_set.add(face.get_glyph_name(x).decode("U8"))
     scale = 1000 / face.units_per_EM
     enc_name, enc_vector = encoding
@@ -194,6 +202,7 @@ def parse_font_file(doc, idx, encoding, differences):
     if lmap and abbr in ["Custom", "MacRoman", "Standard", "WinAnsi", "MacExpert"]:
         face.set_charmap(lmap[0])
     for i, x in enumerate(enc_vector):
+        check_cancelled()
         if x in glyph_name_set:
             v = get_name_cbox(face, x.encode("U8"))
         else:
@@ -201,6 +210,7 @@ def parse_font_file(doc, idx, encoding, differences):
         bbox_list.append(v)
     if differences:
         for code, name in differences:
+            check_cancelled()
             bbox_list[code] = get_name_cbox(face, name.encode("U8"))
     norm_bbox_list = [[v * scale for v in box] for box in bbox_list]
     return norm_bbox_list
@@ -332,6 +342,9 @@ class ILCreater:
     stage_name = "Parse PDF and Create Intermediate Representation"
 
     def __init__(self, translation_config: TranslationConfig):
+        self._font_parse_cache = {}
+        self.font_parse_count = 0
+        self.font_cache_hits = 0
         self.progress = None
         self.current_page: il_version_1.Page = None
         self.mupdf: pymupdf.Document = None
@@ -765,7 +778,29 @@ class ILCreater:
             fonts.remove(sr)
         fonts.append(il_font_metadata)
 
+    def report_operation(self, operation, **detail):
+        self.translation_config.raise_if_cancelled()
+        callback = getattr(self.translation_config, "report_parse_progress", None)
+        if callback:
+            callback(operation, fontParseCount=self.font_parse_count,
+                     fontCacheHits=self.font_cache_hits, **detail)
+
     def parse_font_xobj_id(self, xobj_id: int):
+        self.translation_config.raise_if_cancelled()
+        if xobj_id is None:
+            return (), MappingProxyType({})
+        if xobj_id in self._font_parse_cache:
+            self.font_cache_hits += 1
+            return self._font_parse_cache[xobj_id]
+        self.report_operation("font", fontObject=xobj_id)
+        boxes, cmap = self._parse_font_xobj_uncached(xobj_id)
+        # Owned by this document only. Consumers must not mutate shared values.
+        result = (tuple(tuple(box) for box in boxes), MappingProxyType(dict(cmap)))
+        self._font_parse_cache[xobj_id] = result
+        self.font_parse_count += 1
+        return result
+
+    def _parse_font_xobj_uncached(self, xobj_id: int):
         if xobj_id is None:
             return [], {}
 
@@ -783,6 +818,7 @@ class ILCreater:
                     file_idx,
                     encoding,
                     differences,
+                    self.translation_config.raise_if_cancelled,
                 )
         cmap = {}
         to_unicode = self.mupdf.xref_get_key(xobj_id, "ToUnicode")
@@ -791,11 +827,11 @@ class ILCreater:
         if not bbox_list:
             obj_type, obj_val = self.mupdf.xref_get_key(xobj_id, "BaseFont")
             if obj_type == "name":
-                bbox_list = get_base14_bbox(obj_val[1:])
-        if cid_bbox := get_cidfont_bbox(self.mupdf, xobj_id):
+                bbox_list = get_base14_bbox(obj_val[1:], check_cancelled=self.translation_config.raise_if_cancelled)
+        if cid_bbox := get_cidfont_bbox(self.mupdf, xobj_id, self.translation_config.raise_if_cancelled):
             bbox_list = cid_bbox
         if self.mupdf.xref_get_key(xobj_id, "Subtype")[1] == "/Type3":
-            bbox_list = get_type3_bbox(self.mupdf, xobj_id)
+            bbox_list = get_type3_bbox(self.mupdf, xobj_id, self.translation_config.raise_if_cancelled)
         return bbox_list, cmap
 
     def create_graphic_state(

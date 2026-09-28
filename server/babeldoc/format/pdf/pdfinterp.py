@@ -117,6 +117,7 @@ class PDFPageInterpreterEx(PDFPageInterpreter):
     def init_resources(self, resources: dict[object, object]) -> None:
         # 重载设置 fontid 和 descent
         """Prepare the fonts and XObjects listed in the Resource attribute."""
+        self.il_creater.report_operation("resources")
         self.resources = resources
         self.fontmap: dict[object, PDFFont] = {}
         self.fontid: dict[PDFFont, object] = {}
@@ -466,6 +467,7 @@ class PDFPageInterpreterEx(PDFPageInterpreter):
     def execute(self, streams: Sequence[object]) -> None:
         ops = ""
         for stream in streams:
+            self.il_creater.report_operation("content_stream")
             self.il_creater.on_new_stream()
             # 重载返回指令流
             try:
@@ -473,7 +475,11 @@ class PDFPageInterpreterEx(PDFPageInterpreter):
             except PSEOF:
                 # empty page
                 return
+            operation_count = 0
             while True:
+                if operation_count % 256 == 0:
+                    self.il_creater.report_operation("content_stream", operations=operation_count)
+                operation_count += 1
                 try:
                     (_, obj) = parser.nextobject()
                 except PSEOF:

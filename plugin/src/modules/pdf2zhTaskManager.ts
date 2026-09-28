@@ -1,3 +1,4 @@
+import { exportDiagnostics, recordDiagnostic } from "./diagnostics";
 import { config } from "../../package.json";
 import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
@@ -26,6 +27,7 @@ type TaskDialogArgs = {
     onTasksChanged: (listener: () => void) => () => void;
     refreshTasks: () => Promise<void>;
     cancelTask: (taskId: string) => Promise<void>;
+    exportDiagnostics: (taskId: string) => Promise<void>;
     retryTask: (taskId: string) => Promise<void>;
     repairTask: (taskId: string) => Promise<void>;
     retryFailedTasks: () => Promise<void>;
@@ -136,6 +138,7 @@ export class PDF2zhTaskManager {
         onTaskEvent: (serverUrl, event) =>
             PDF2zhTaskManager.handleServerTaskEvent(serverUrl, event),
         onStateChange: (serverUrl, state) => {
+            recordDiagnostic("stream_" + state);
             PDF2zhTaskManager.notifyTaskListeners();
             if (state === "open") {
                 PDF2zhTaskManager.syncState(serverUrl).generation += 1;
@@ -246,6 +249,10 @@ export class PDF2zhTaskManager {
                 this.onTasksChanged(listener),
             refreshTasks: () => this.refreshTasks(),
             cancelTask: (taskId: string) => this.cancelTask(taskId),
+            exportDiagnostics: async (taskId: string) => {
+                const task = this.tasks.get(taskId);
+                if (task) await exportDiagnostics(task.serverUrl, { ...task });
+            },
             retryTask: (taskId: string) => this.retryTask(taskId),
             repairTask: (taskId: string) => this.repairTask(taskId),
             retryFailedTasks: () => this.retryFailedTasks(),
@@ -648,6 +655,13 @@ export class PDF2zhTaskManager {
             }
             return;
         }
+        if (
+            !existing ||
+            existing.status !== snapshot.status ||
+            existing.stageCurrent !== snapshot.stageCurrent
+        ) {
+            recordDiagnostic("task_state", { ...snapshot });
+        }
         const nextTask: PluginTask = {
             serverInstanceId: snapshot.serverInstanceId,
             revision: snapshot.revision,
@@ -657,6 +671,22 @@ export class PDF2zhTaskManager {
             outputModes: snapshot.outputModes,
             status: snapshot.status,
             stage: snapshot.stage,
+            currentPage: snapshot.currentPage,
+            selectedPage: snapshot.selectedPage,
+            completedPages: snapshot.completedPages,
+            totalPages: snapshot.totalPages,
+            operation: snapshot.operation,
+            lastProgressAt: snapshot.lastProgressAt,
+            heartbeatAt: snapshot.heartbeatAt,
+            idleSeconds: snapshot.idleSeconds,
+            stalled: snapshot.stalled,
+            cancelPhase: snapshot.cancelPhase,
+            cancelReason: snapshot.cancelReason,
+            queueBlocked: snapshot.queueBlocked,
+            fontParseCount: snapshot.fontParseCount,
+            fontCacheHits: snapshot.fontCacheHits,
+            stageElapsedSeconds: snapshot.stageElapsedSeconds,
+            lastRequestAt: snapshot.lastRequestAt,
             stageCurrent: snapshot.stageCurrent,
             stageTotal: snapshot.stageTotal,
             stageProgress: snapshot.stageProgress,
@@ -669,6 +699,7 @@ export class PDF2zhTaskManager {
             updatedAt: snapshot.updatedAt,
             canCancel: snapshot.canCancel,
             cancelRequested: snapshot.cancelRequested,
+            boundedCancellation: snapshot.boundedCancellation,
             metrics: snapshot.metrics,
             canRepair: snapshot.canRepair,
             canDownloadResult: snapshot.canDownloadResult,
@@ -697,6 +728,11 @@ export class PDF2zhTaskManager {
         taskId: string,
         patch: Partial<PluginTask>,
     ): void {
+        if (patch.importState)
+            recordDiagnostic("import_state", {
+                taskId,
+                importState: patch.importState,
+            });
         const current = this.tasks.get(taskId);
         if (!current) {
             return;

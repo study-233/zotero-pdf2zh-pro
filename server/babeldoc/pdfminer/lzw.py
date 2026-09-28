@@ -60,10 +60,18 @@ class LZWDecoder:
         elif code == 257:
             pass
         elif not self.prevbuf:
-            x = self.prevbuf = cast(bytes, self.table[code])  # assume not None
+            if code >= len(self.table):
+                raise CorruptDataError
+            value = self.table[code]
+            if value is None:
+                raise CorruptDataError
+            x = self.prevbuf = value
         else:
             if code < len(self.table):
-                x = cast(bytes, self.table[code])  # assume not None
+                value = self.table[code]
+                if value is None:
+                    raise CorruptDataError
+                x = value
                 self.table.append(self.prevbuf + x[:1])
             elif code == len(self.table):
                 self.table.append(self.prevbuf + self.prevbuf[:1])

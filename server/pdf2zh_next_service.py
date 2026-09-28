@@ -737,6 +737,7 @@ async def translate_pdf_with_callbacks(
             if metrics_collector is not None:
                 metrics_collector.record_stage("Initialization", time.monotonic() - initialization_started_at)
         translation_config.cancel_event = cancel_event
+        translation_config.diagnostic_callback = progress_callback
         translation_config.semantic_review = bool(payload.get("semantic_review", False))
         translation_config.review_attempt = int(payload.get("review_attempt", payload.get("repair_attempt", 1)))
         translation_config.glossary_entries = payload.get("glossary_entries") or []

@@ -256,6 +256,9 @@ def start_parse_il(
     parser = PDFParser(inf)
     doc = PDFDocument(parser)
 
+    selected_total = sum(1 for n in range(doc_zh.page_count)
+                         if (not pages or n in pages) and translation_config.should_translate_page(n + 1))
+    selected_index = 0
     for pageno, page in enumerate(PDFPage.create_pages(doc)):
         if cancellation_event and cancellation_event.is_set():
             raise CancelledError("task cancelled")
@@ -316,9 +319,17 @@ def start_parse_il(
         # doc_zh.update_object(page.page_xref, "<<>>")
         # doc_zh.update_stream(page.page_xref, b"")
         # doc_zh[page.pageno].set_contents(page.page_xref)
+        selected_index += 1
+        translation_config.report_parse_progress(
+            "page_start", force=True, currentPage=pageno + 1,
+            selectedPage=selected_index, completedPages=selected_index - 1, totalPages=selected_total)
         ops_base = interpreter.process_page(page)
         il_creater.on_page_base_operation(ops_base)
         il_creater.on_page_end()
+        translation_config.report_parse_progress(
+            "page_end", force=True, currentPage=pageno + 1,
+            selectedPage=selected_index, completedPages=selected_index, totalPages=selected_total,
+            fontParseCount=il_creater.font_parse_count, fontCacheHits=il_creater.font_cache_hits)
     il_creater.on_finish()
     device.close()
 

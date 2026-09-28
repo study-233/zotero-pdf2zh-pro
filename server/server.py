@@ -8,6 +8,7 @@ import importlib
 import importlib.metadata
 import json
 import logging
+import multiprocessing
 import os
 import queue
 import shutil
@@ -35,14 +36,15 @@ from provider_models import ModelDiscoveryError, list_provider_models
 from babeldoc.glossary_options import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
 
-VERSION = "1.7.3"
+VERSION = "1.7.4"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
 DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
 TRANSLATES_DIR = Path(
     os.getenv("PDF2ZH_DATA_DIR", str(DEFAULT_TRANSLATES_DIR))
 ).expanduser().resolve()
-TASK_MANAGER = TaskManager(TRANSLATES_DIR / "tasks.json")
-GLOSSARY_MANAGER = GlossaryManager(TRANSLATES_DIR / "glossaries")
+_IS_TRANSLATION_CHILD = multiprocessing.current_process().name != "MainProcess"
+TASK_MANAGER = None if _IS_TRANSLATION_CHILD else TaskManager(TRANSLATES_DIR / "tasks.json")
+GLOSSARY_MANAGER = None if _IS_TRANSLATION_CHILD else GlossaryManager(TRANSLATES_DIR / "glossaries")
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
 LOG_MAX_BYTES = 10 * 1024 * 1024
 LOG_BACKUP_COUNT = 3
@@ -66,6 +68,20 @@ def create_app() -> Flask:
     @app.get("/health")
     def health() -> tuple[dict[str, Any], int]:
         return build_health_payload(), 200
+
+    @app.get("/diagnostics")
+    def diagnostics():
+        payload = TASK_MANAGER.export_diagnostics()
+        payload["environment"].update(serviceVersion=VERSION, babeldocVersion=package_version("babeldoc"), pdf2zhVersion=package_version("pdf2zh_next"))
+        return jsonify(payload)
+
+    @app.get("/tasks/<task_id>/diagnostics")
+    def task_diagnostics(task_id):
+        payload = TASK_MANAGER.export_diagnostics(task_id)
+        if payload is None:
+            return jsonify({"status": "error", "message": "Task not found"}), 404
+        payload["environment"].update(serviceVersion=VERSION, babeldocVersion=package_version("babeldoc"), pdf2zhVersion=package_version("pdf2zh_next"))
+        return jsonify(payload)
 
     @app.get("/glossaries")
     def glossaries():
@@ -610,12 +626,13 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True},
+        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
         "workspace": workspace,
         "tasks": task_stats,
+        "queueBlocked": TASK_MANAGER._queue_blocked,
     }
 
 
@@ -671,7 +688,7 @@ def package_version(package_name: str) -> str | None:
         return str(version) if version is not None else None
 
 
-app = create_app()
+app = None if _IS_TRANSLATION_CHILD else create_app()
 
 
 def configure_runtime_paths(data_dir: str | Path | None = None) -> None:
@@ -702,7 +719,8 @@ def configure_logging(
     level_name = level_name.upper()
     level = getattr(logging, level_name, logging.INFO)
 
-    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    from diagnostics import SafeLogHandler
+    handlers: list[logging.Handler] = [logging.StreamHandler(), SafeLogHandler(TASK_MANAGER.diagnostics.record)]
     requested_log_file = log_file or os.getenv("PDF2ZH_LOG_FILE")
     if requested_log_file:
         log_path = Path(requested_log_file).expanduser().resolve()

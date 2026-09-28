@@ -3308,17 +3308,18 @@ base14_alias = {
 }
 
 
-def get_cached_bbox(database, family, encoding):
+def get_cached_bbox(database, family, encoding, check_cancelled=lambda: None):
     bbox = [(0, 0, 0, 0)] * 256
     base_font = database[family]
     for index, name in enumerate(encoding):
+        check_cancelled()
         if name:
             if cur_bbox := base_font.get(name, None):
                 bbox[index] = cur_bbox
     return bbox
 
 
-def get_base14_bbox(family, encoding_name="WinAnsiEncoding"):
+def get_base14_bbox(family, encoding_name="WinAnsiEncoding", check_cancelled=lambda: None):
     bbox = [(0, 0, 0, 0)] * 256
     encoding = get_type1_encoding(encoding_name)
     if not encoding:
@@ -3328,9 +3329,9 @@ def get_base14_bbox(family, encoding_name="WinAnsiEncoding"):
         family = base14_alias[family]
 
     if family in base14_bbox:
-        bbox = get_cached_bbox(base14_bbox, family, encoding)
+        bbox = get_cached_bbox(base14_bbox, family, encoding, check_cancelled)
 
     if family in win_core:
-        bbox = get_cached_bbox(win_core, family, encoding)
+        bbox = get_cached_bbox(win_core, family, encoding, check_cancelled)
 
     return bbox

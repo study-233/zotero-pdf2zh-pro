@@ -230,8 +230,8 @@ class RecoveryTests(unittest.TestCase):
             result = TranslationResult({"dual":TranslationOutputFile("dual", old, old.name)},
                 {"total":2,"succeeded":1,"failed":1,"skipped":0,"pending":0}, [{"page":1,"paragraphId":"one"}])
             async def translate(*args, **kwargs): return result
-            with patch("task_manager.translate_pdf_with_callbacks", side_effect=translate):
-                manager._run_task("task")
+            manager._translator = translate
+            manager._run_task("task")
             self.assertEqual(manager.get_task("task")["status"], "incomplete")
             self.assertLess(manager.get_task("task")["overallProgress"], 100)
             self.assertIsNotNone(manager.get_result_file("task")[1])

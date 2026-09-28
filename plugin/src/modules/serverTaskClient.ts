@@ -1,3 +1,4 @@
+import { diagnosticFetch } from "./diagnostics";
 import { prepareApiForServer } from "./apiCompatibility";
 import type { LLMApiData } from "./llmApiManager";
 import type { ServerHealthResponse } from "./pdf2zhTypes";
@@ -24,7 +25,7 @@ type TaskCreateResponse = {
 
 export class ServerTaskClient {
     static async listTasks(serverUrl: string): Promise<ServerTaskList> {
-        const response = await fetch(`${serverUrl}/tasks`);
+        const response = await diagnosticFetch(`${serverUrl}/tasks`);
         if (!response.ok) {
             throw new Error(await this.readErrorMessage(response));
         }
@@ -65,7 +66,7 @@ export class ServerTaskClient {
             needsGlossaryPacks ||
             needsReview
         ) {
-            const healthResponse = await fetch(`${serverUrl}/health`);
+            const healthResponse = await diagnosticFetch(`${serverUrl}/health`);
             if (!healthResponse.ok)
                 throw new Error(await this.readErrorMessage(healthResponse));
             const health =
@@ -105,7 +106,7 @@ export class ServerTaskClient {
             }
         }
         const response = await PDF2zhHelperFactory.retryOperation(() =>
-            fetch(`${serverUrl}/tasks`, {
+            diagnosticFetch(`${serverUrl}/tasks`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(requestBody),
@@ -147,7 +148,7 @@ export class ServerTaskClient {
         serverUrl: string,
         taskId: string,
     ): Promise<ServerTaskEvent> {
-        const response = await fetch(`${serverUrl}/tasks/${taskId}`, {
+        const response = await diagnosticFetch(`${serverUrl}/tasks/${taskId}`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
         });
@@ -164,10 +165,13 @@ export class ServerTaskClient {
     }
 
     static async clearFailedTasks(serverUrl: string): Promise<void> {
-        const response = await fetch(`${serverUrl}/tasks/clear-failed`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-        });
+        const response = await diagnosticFetch(
+            `${serverUrl}/tasks/clear-failed`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            },
+        );
         if (!response.ok) {
             throw new Error(await this.readErrorMessage(response));
         }
@@ -178,7 +182,7 @@ export class ServerTaskClient {
         taskId: string,
         outputMode: OutputMode,
     ): Promise<Uint8Array> {
-        const response = await fetch(
+        const response = await diagnosticFetch(
             `${serverUrl}/tasks/${taskId}/result?mode=${outputMode}`,
         );
         if (!response.ok) {
@@ -193,10 +197,13 @@ export class ServerTaskClient {
         taskId: string,
         action: "cancel" | "retry" | "repair",
     ): Promise<ServerTaskSnapshot | undefined> {
-        const response = await fetch(`${serverUrl}/tasks/${taskId}/${action}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-        });
+        const response = await diagnosticFetch(
+            `${serverUrl}/tasks/${taskId}/${action}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            },
+        );
         if (!response.ok) {
             throw new Error(await this.readErrorMessage(response));
         }

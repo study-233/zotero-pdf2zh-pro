@@ -462,6 +462,16 @@ class TranslationConfig:
         except Exception:
             logger.exception("Error cleaning up temporary files")
 
+    def report_parse_progress(self, operation, *, force=False, **details):
+        import time
+        self.raise_if_cancelled()
+        now = time.monotonic()
+        if force or now - getattr(self, "_last_parse_report", 0) >= 1:
+            self._last_parse_report = now
+            callback = getattr(self, "diagnostic_callback", None)
+            if callback:
+                callback({"type": "parse_detail", "operation": operation, **details})
+
     def raise_if_cancelled(self):
         if self.cancel_event.is_set():
             raise CancelledError

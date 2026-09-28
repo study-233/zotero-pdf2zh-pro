@@ -16,7 +16,7 @@
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 
-当前统一版本：<!-- release-version --> `1.7.3`
+当前统一版本：<!-- release-version --> `1.7.4`
 
 [Windows 安装](#windows) · [macOS 安装](#macos) · [配置翻译 API](#api-configuration) ·
 [开始翻译](#usage) · [常见问题](#troubleshooting)
@@ -563,3 +563,11 @@ Pull Request 也很欢迎。较大的行为调整建议先创建 Issue，说明�
 本项目采用 `AGPL-3.0-or-later`，并保留所有上游项目和第三方组件的许可证与归属，
 见 [LICENSE](LICENSE) 和
 [server/THIRD_PARTY_NOTICES.md](server/THIRD_PARTY_NOTICES.md)。
+
+## 卡顿排查与诊断导出
+
+任务卡片和插件设置中的“导出诊断包”可保存 ZIP 后发给维护者。诊断包不包含论文、正文、密钥或接口地址；服务离线时仍可导出插件记录，缺失内容会在 summary.txt 中说明。
+
+新服务为翻译任务使用独立进程。连续 60 秒无实际进展只提示并留存证据；点击终止后，10 秒尝试结束进程，12 秒升级强制回收，15 秒内完成退出确认或明确报告回收失败。回收失败时队列暂停，需要恢复服务。已提交的段落检查点可用于补译。
+
+详细行为和验收见 [任务诊断与取消机制](docs/task-diagnostics-and-cancellation.md)。

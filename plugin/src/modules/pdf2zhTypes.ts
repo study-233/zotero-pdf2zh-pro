@@ -52,6 +52,9 @@ export interface ServerHealthResponse {
     pythonVersion?: string;
     supportedApiProtocols?: string[];
     capabilities?: {
+        diagnosticsExport?: boolean;
+        boundedCancellation?: boolean;
+        detailedTaskProgress?: boolean;
         reasoningMode?: boolean;
         glossaryEntries?: boolean;
         glossaryPacks?: boolean;
@@ -127,6 +130,22 @@ export interface ServerTaskSnapshot extends ServerSyncMetadata {
     outputModes: OutputMode[];
     status: ServerTaskStatus;
     stage: string | null;
+    currentPage?: number;
+    selectedPage?: number;
+    completedPages?: number;
+    totalPages?: number;
+    operation?: string;
+    lastProgressAt?: string;
+    heartbeatAt?: string;
+    idleSeconds?: number;
+    stalled?: boolean;
+    cancelPhase?: string;
+    cancelReason?: string;
+    queueBlocked?: boolean;
+    fontParseCount?: number;
+    fontCacheHits?: number;
+    stageElapsedSeconds?: number;
+    lastRequestAt?: string;
     stageCurrent: number;
     stageTotal: number;
     stageProgress: number;
@@ -139,6 +158,7 @@ export interface ServerTaskSnapshot extends ServerSyncMetadata {
     updatedAt: string;
     canCancel: boolean;
     cancelRequested: boolean;
+    boundedCancellation?: boolean;
     metrics?: TaskMetrics;
     canRepair?: boolean;
     canDownloadResult?: boolean;

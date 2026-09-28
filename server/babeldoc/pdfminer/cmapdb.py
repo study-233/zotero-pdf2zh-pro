@@ -9,11 +9,7 @@ More information is available on:
 
 """
 
-import gzip
 import logging
-import os
-import os.path
-import pickle as pickle
 import struct
 import sys
 from collections.abc import Iterable
@@ -24,6 +20,8 @@ from typing import BinaryIO
 from typing import TextIO
 from typing import cast
 
+from babeldoc.pdfminer.cmap_secure_loader import CMapIntegrityError
+from babeldoc.pdfminer.cmap_secure_loader import load_verified_cmap_data
 from babeldoc.pdfminer.encodingdb import name2unicode
 from babeldoc.pdfminer.pdfexceptions import PDFException
 from babeldoc.pdfminer.pdfexceptions import PDFTypeError
@@ -230,22 +228,12 @@ class CMapDB:
 
     @classmethod
     def _load_data(cls, name: str) -> Any:
-        name = name.replace("\0", "")
-        filename = "%s.pickle.gz" % name
         log.debug("loading: %r", name)
-        cmap_paths = (
-            os.environ.get("CMAP_PATH", "/usr/share/pdfminer/"),
-            os.path.join(os.path.dirname(__file__), "cmap"),
-        )
-        for directory in cmap_paths:
-            path = os.path.join(directory, filename)
-            if os.path.exists(path):
-                gzfile = gzip.open(path)
-                try:
-                    return type(str(name), (), pickle.loads(gzfile.read()))
-                finally:
-                    gzfile.close()
-        raise CMapDB.CMapNotFound(name)
+        try:
+            data = load_verified_cmap_data(name)
+        except CMapIntegrityError as exc:
+            raise CMapDB.CMapNotFound(name) from exc
+        return type(str(name), (), data)
 
     @classmethod
     def get_cmap(cls, name: str) -> CMapBase:

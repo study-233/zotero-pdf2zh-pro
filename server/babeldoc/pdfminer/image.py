@@ -2,6 +2,7 @@ import os
 import os.path
 import struct
 from io import BytesIO
+from pathlib import PureWindowsPath
 from typing import BinaryIO
 from typing import Literal
 
@@ -278,11 +279,16 @@ class ImageWriter:
         return False
 
     def _create_unique_image_name(self, image: LTImage, ext: str) -> tuple[str, str]:
-        name = image.name + ext
+        # XObject names come from the PDF, not from a trusted output filename.
+        # Strip both platforms' separators even when exporting on POSIX.
+        safe_stem = PureWindowsPath(image.name).name
+        if safe_stem in ("", ".", ".."):
+            safe_stem = "image"
+        name = safe_stem + ext
         path = os.path.join(self.outdir, name)
         img_index = 0
         while os.path.exists(path):
-            name = "%s.%d%s" % (image.name, img_index, ext)
+            name = "%s.%d%s" % (safe_stem, img_index, ext)
             path = os.path.join(self.outdir, name)
             img_index += 1
         return name, path
