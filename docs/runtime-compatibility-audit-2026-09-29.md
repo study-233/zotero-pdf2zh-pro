@@ -96,8 +96,8 @@
 这些发现不能归因于原项目的中间版本，发布前仍需处理：
 
 - 本地虚拟环境 `anyio=4.13.0`，当前声明及锁文件要求 `>=4.14.2`。运行环境和依赖文件有漂移；本次未修改用户环境。
-- 已有未提交改动把 CLI 改为 `service_launcher:main`，但 `scripts/check_installed_runtime.py` 仍期待 `server:main`。
-- 当前 Dockerfile 的单文件 COPY 清单没有新增的 `service_launcher.py`、`diagnostics.py`、`task_runtime.py`。这会影响该工作树的容器交付。上述文件属于排查前正在进行的开发，本次未代为调整它们的发布链路。
+- CLI 已改为 `service_launcher:main`；发布前已同步 PyPI 制品和安装运行时检查脚本中的入口断言。
+- Dockerfile 的单文件 COPY 清单已加入 `service_launcher.py`、`diagnostics.py`、`task_runtime.py`，供容器启动使用。
 - 当前 pnpm 启动器联网获取项目固定版本失败；日志同时提示 pnpm 配置格式变更。失败包含本地代理/网络不可达证据，不据此断定锁文件被篡改。插件测试直接执行其 `node --test` 脚本内容完成。
 
 ## 验证与边界

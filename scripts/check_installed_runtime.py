@@ -64,7 +64,7 @@ def main() -> None:
         for entry_point in distribution.entry_points
         if entry_point.group == "console_scripts"
     }
-    if scripts != {"zotero-pdf2zh-pro": "server:main"}:
+    if scripts != {"zotero-pdf2zh-pro": "service_launcher:main"}:
         raise RuntimeError(f"Installed CLI entry point mismatch: {scripts}")
     if ssl.SSLContext is not truststore.SSLContext:
         raise RuntimeError("Server startup did not enable system certificate verification")

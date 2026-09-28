@@ -25,6 +25,9 @@ FORBIDDEN_DISTRIBUTIONS = {
     "uvicorn",
 }
 REQUIRED_RUNTIME_FILES = {
+    "service_launcher.py",
+    "diagnostics.py",
+    "task_runtime.py",
     "glossary_manager.py",
     "glossary_catalog.py",
     "observability.py",
@@ -35,6 +38,9 @@ REQUIRED_RUNTIME_FILES = {
     "pdf2zh_next/__init__.py",
     "pdf2zh_next/translator/openai_protocol.py",
     "babeldoc/__init__.py",
+    "babeldoc/pymupdf_compat.py",
+    "babeldoc/pdfminer/_cmap_manifest_data.py",
+    "babeldoc/pdfminer/cmap_secure_loader.py",
     "babeldoc/format/pdf/document_il/midend/reference_filter.py",
     "babeldoc/pdfminer/cmap/UniGB-UCS2-H.pickle.gz",
     "rapidocr_onnxruntime/__init__.py",
@@ -111,7 +117,7 @@ def check_wheel(wheel: Path, version: str) -> None:
         raise RuntimeError(f"Unexpected project URLs: {sorted(project_urls)}")
     if entry_points.strip() != (
         "[console_scripts]\n"
-        "zotero-pdf2zh-pro = server:main"
+        "zotero-pdf2zh-pro = service_launcher:main"
     ):
         raise RuntimeError(f"Unexpected CLI entry point: {entry_points!r}")
 
