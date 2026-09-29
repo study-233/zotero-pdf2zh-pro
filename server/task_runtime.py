@@ -119,6 +119,11 @@ def child_entry(payload, identity, cancel, gate, stack_request, telemetry, contr
         else:
             import truststore
             truststore.inject_into_ssl()
+            # A configured benchmark cache root isolates each task; retries of
+            # the same task retain its cache. Normal installations are unchanged.
+            cache_root = os.environ.get("PDF2ZH_TRANSLATION_CACHE_DIR")
+            if cache_root:
+                os.environ["PDF2ZH_TRANSLATION_CACHE_DIR"] = str(Path(cache_root) / identity['taskId'])
             from pdf2zh_next_service import translate_pdf_with_callbacks
             result=asyncio.run(translate_pdf_with_callbacks(payload,identity['taskId'],cancel_event=cancel,
                 progress_callback=lambda e:emit('progress',e),metrics_callback=lambda m:emit('metrics',m)))

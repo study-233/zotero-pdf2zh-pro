@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "seed": 20260929,
+  "providerBase": "https://api.commandcode.ai/provider/v1",
+  "budgetUsd": 10,
+  "reserveUsd": 1,
+  "models": [
+    {
+      "name": "Qwen 3.7 Flash",
+      "id": "Qwen/Qwen3.7-Flash",
+      "input": 0.03,
+      "output": 0.13,
+      "cacheRead": 0.006
+    },
+    {
+      "name": "DeepSeek V4.1 Flash",
+      "id": "deepseek/deepseek-v4.1-flash",
+      "input": 0.15,
+      "output": 0.6,
+      "cacheRead": 0.003
+    },
+    {
+      "name": "GPT-6 Luna",
+      "id": "gpt-6-luna",
+      "input": 0.1,
+      "output": 0.5,
+      "cacheRead": 0.01
+    },
+    {
+      "name": "GLM-5.3 Flash",
+      "id": "z-ai/glm-5.3-flash",
+      "input": 0.15,
+      "output": 0.5,
+      "cacheRead": 0.03
+    },
+    {
+      "name": "MiMo V2.6 Flash",
+      "id": "xiaomi/mimo-v2.6-flash",
+      "input": 0.14,
+      "output": 0.28,
+      "cacheRead": 0.0028
+    }
+  ],
+  "pricingSource": "User-supplied prices; must verify before paid run",
+  "pricingVerified": false,
+  "papers": [
+    {
+      "id": "attention",
+      "title": "Attention Is All You Need",
+      "arxiv": "1706.03762v7",
+      "visualPages": [
+        3,
+        5,
+        8
+      ],
+      "redistributionApproved": false
+    },
+    {
+      "id": "bert",
+      "title": "BERT",
+      "arxiv": "1810.04805v2",
+      "visualPages": [
+        3,
+        5,
+        6
+      ],
+      "redistributionApproved": false
+    },
+    {
+      "id": "resnet",
+      "title": "Deep Residual Learning for Image Recognition",
+      "arxiv": "1512.03385v1",
+      "visualPages": [
+        3,
+        4,
+        6
+      ],
+      "redistributionApproved": false
+    }
+  ],
+  "config": {
+    "sourceLang": "en",
+    "targetLang": "zh-CN",
+    "outputModes": [
+      "dual"
+    ],
+    "service": "openai",
+    "skipLastPages": 0,
+    "qps": 10,
+    "poolSize": 50,
+    "ocr": false,
+    "autoOcr": true,
+    "translateTableText": true,
+    "skipReferences": false,
+    "skipTextChecks": false,
+    "noWatermark": true,
+    "disableTermExtraction": true,
+    "fontFamily": "auto",
+    "glossaryEntries": [],
+    "glossaryPacks": [],
+    "semanticReview": false
+  }
+}

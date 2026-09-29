@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
+from pathlib import Path
 import threading
 import time
 from collections import Counter, deque
@@ -307,6 +309,21 @@ class TaskMetricsCollector:
                 totals.record(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
                               cache_hit_tokens=cache_hit_tokens, cache_miss_tokens=cache_miss_tokens,
                               reasoning_tokens=reasoning_tokens)
+            # Opt-in local benchmark accounting: no prompts, completions or keys.
+            ledger = os.environ.get("PDF2ZH_USAGE_LEDGER_DIR")
+            if ledger:
+                try:
+                    folder = Path(ledger)
+                    folder.mkdir(parents=True, exist_ok=True)
+                    safe_id = "".join(c for c in self.task_id if c.isalnum() or c in "-_")
+                    event = dict(timestamp=time.time(), kind=_kind(kind),
+                                 input=_number(prompt_tokens), output=_number(completion_tokens),
+                                 hit=_number(cache_hit_tokens), miss=_number(cache_miss_tokens),
+                                 reasoning=_number(reasoning_tokens))
+                    with (folder / f"{safe_id}.jsonl").open("a", encoding="utf-8") as stream:
+                        stream.write(json.dumps(event) + "\n")
+                except OSError:
+                    METRIC_LOGGER.warning("usage_ledger_write_failed")
         self._emit_if_due()
 
     def record_stage(self, name: str, seconds: float) -> None:

@@ -74,6 +74,13 @@ The corresponding environment variables are `PDF2ZH_HOST`, `PDF2ZH_PORT`,
 is stored in `translates` alongside the installed server module. The optional
 log file rotates at 10 MiB with three backups.
 
+For isolated benchmarks, `PDF2ZH_TRANSLATION_CACHE_DIR` optionally overrides the
+translation cache root; spawned tasks use separate task-ID subdirectories.
+`PDF2ZH_USAGE_LEDGER_DIR` optionally writes per-task JSONL token usage and UTC
+timestamps for pricing tiers. It contains no prompts, translations, provider
+URLs, model names or keys. Both are disabled by default, work with the same server
+code on uv/Docker/Homebrew, and do not change the HTTP API or normal cache path.
+
 For the Windows and macOS installation walkthrough, see the [main tutorial](../README.md).
 
 ## On-demand glossary packs
