@@ -241,7 +241,7 @@ def recover_submission(c, base, row):
     raise RuntimeError('Ambiguous submission: inspect isolated service before resuming; no duplicate POST sent')
 
 
-def run(work, base, pilot=False, paper_filter=None):
+def run(work, base, pilot=False, paper_filter=None, supplement=False):
     import fitz
     snapshot = read(work / 'snapshot.json')
     if not snapshot['pricingVerified']:
@@ -249,7 +249,12 @@ def run(work, base, pilot=False, paper_filter=None):
     key = os.environ.get('COMMAND_CODE_API_KEY')
     if not key:
         raise ValueError('COMMAND_CODE_API_KEY is required')
-    state_path = work / 'runs.json'
+    originals = read(work / 'runs.json') if supplement else []
+    eligible = {r['id']: r for r in originals if not r.get('pilot') and
+                r.get('status') in TERMINAL and not r.get('outputSha256')}
+    if supplement and (pilot or not snapshot.get('accountBudget', {}).get('approved')):
+        raise ValueError('Supplementary runs require the approved account billing guard')
+    state_path = work / ('supplemental-runs.json' if supplement else 'runs.json')
     state = read(state_path) if state_path.exists() else []
     config_hash = hashlib.sha256(json.dumps(snapshot['config'], sort_keys=True).encode()).hexdigest()
     if any(r.get('configSha256', config_hash) != config_hash for r in state):
@@ -273,10 +278,15 @@ def run(work, base, pilot=False, paper_filter=None):
             random.Random(str(snapshot['seed']) + paper['id']).shuffle(models)
             for model in models:
                 run_id = paper['id'] + ':' + model['id'] + (':pilot' if pilot else '')
+                original = eligible.get(run_id)
+                if supplement:
+                    if original is None:
+                        continue
+                    run_id += ':supplement'
                 row = next((r for r in state if r['id'] == run_id), None)
                 if row and row.get('status') in TERMINAL | {'unavailable'}:
                     continue
-                prior = [r for r in state if r is not row]
+                prior = originals + [r for r in state if r is not row]
                 if row is None and any(r.get('status') not in TERMINAL | {'unavailable'} for r in prior):
                     raise RuntimeError('Resume the existing active task before submitting another model')
                 account_bound = account_budget_bound(work, snapshot, key)
@@ -290,9 +300,11 @@ def run(work, base, pilot=False, paper_filter=None):
                     return
                 if row is None:
                     row = {'id': run_id, 'paper': paper['id'], 'model': model['id'], 'pilot': pilot,
-                           'fileName': f"bench-{paper['id']}-{snapshot['models'].index(model)}{'-pilot' if pilot else ''}.pdf",
+                           'fileName': f"bench-{paper['id']}-{snapshot['models'].index(model)}{'-pilot' if pilot else '-supplement' if supplement else ''}.pdf",
                            'status': 'submitting', 'startedAt': now(), 'costUsd': None,
                            'configSha256': config_hash}
+                    if supplement:
+                        row.update(supplementalTo=original['taskId'], reviewStatus='not_reviewed')
                     state.append(row)
                     if not model['catalogAvailable'] or model.get('accessStatus') in (401, 403, 404):
                         row.update(status='unavailable', reason='catalog_or_endpoint_unavailable')
@@ -349,7 +361,7 @@ def run(work, base, pilot=False, paper_filter=None):
                     budget_used = max(account_bound or 0, spent + (row['costUsd'] or 0))
                     if budget_used >= snapshot['budgetUsd'] - snapshot['reserveUsd'] or (unknown and account_bound is None) or time.monotonic()-started > 3600:
                         checked(c.post(base + '/tasks/' + row['taskId'] + '/cancel'))
-                        row['stopReason'] = 'unknown_usage' if unknown else 'budget_or_timeout'
+                        row['stopReason'] = 'unknown_usage' if unknown and account_bound is None else 'budget_or_timeout'
                     time.sleep(2)
                 if task.get('canDownloadResult'):
                     output = checked(c.get(base + '/tasks/' + row['taskId'] + '/result', params={'mode': 'dual'})).content
@@ -369,11 +381,13 @@ def main():
     parser.add_argument('--work', type=Path, default=DEFAULT_WORK)
     parser.add_argument('--server', default='http://127.0.0.1:8891')
     parser.add_argument('--paper')
+    parser.add_argument('--supplement-missing-pdfs', action='store_true',
+                        help='Explicitly rerun terminal full-paper tasks without a PDF; preserve original scores')
     args = parser.parse_args()
     if args.command == 'prepare':
         prepare(args.work.resolve())
     else:
-        run(args.work.resolve(), args.server, args.command == 'pilot', args.paper)
+        run(args.work.resolve(), args.server, args.command == 'pilot', args.paper, args.supplement_missing_pdfs)
 
 
 if __name__ == '__main__':

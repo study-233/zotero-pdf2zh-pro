@@ -95,6 +95,37 @@ class BenchmarkTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):account_budget_bound(work,config,'test-key')
                 self.assertNotIn('test-key',(work/'billing-bound.json').read_text())
 
+    def test_supplement_preserves_originals_and_resumes_without_duplicate_spending(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work=Path(directory);(work/'papers').mkdir();(work/'selection').mkdir()
+            (work/'papers'/'p.pdf').write_bytes(b'frozen');write(work/'selection'/'p.json',[])
+            write(work/'snapshot.json',{'pricingVerified':True,'config':{},'seed':1,'budgetUsd':10,
+                'reserveUsd':1,'setupKnownUsd':0,'accountBudget':{'approved':True},
+                'models':[{'id':'m','name':'model','catalogAvailable':True}],
+                'papers':[{'id':'p','sha256':digest(work/'papers'/'p.pdf'),
+                          'selectionSha256':digest(work/'selection'/'p.json')}]})
+            write(work/'runs.json',[{'id':'p:m','status':'cancelled','taskId':'original','costUsd':None}])
+            original=(work/'runs.json').read_bytes()
+            response=lambda data:SimpleNamespace(is_success=True,json=lambda:data)
+            states=iter(['running','completed'])
+            def get(url):
+                if url.endswith('/health'):return response({'workspace':{'path':str(work/'tasks')}})
+                return response({'task':{'taskId':'new','status':next(states),'updatedAt':now(),
+                    'metrics':{'tokens':{'availability':'partial'},'requests':{'succeeded':1,'failed':1}}}})
+            with patch.dict(os.environ,{'COMMAND_CODE_API_KEY':'test-only'}), patch.dict(sys.modules,{'fitz':SimpleNamespace()}), \
+                 patch('bench.client') as factory, patch('bench.account_budget_bound',return_value=3), \
+                 patch('bench.task_body',return_value={}), patch('bench.ledger_cost',return_value=None), patch('bench.time.sleep'):
+                service=factory.return_value.__enter__.return_value
+                service.get.side_effect=get;service.post.return_value=response({'task':{'taskId':'new'}})
+                run(work,'http://isolated',supplement=True)
+                run(work,'http://isolated',supplement=True)
+                service.post.assert_called_once_with('http://isolated/tasks',json={})
+            self.assertEqual((work/'runs.json').read_bytes(),original)
+            row=json.loads((work/'supplemental-runs.json').read_text())[0]
+            self.assertEqual(row['supplementalTo'],'original')
+            self.assertEqual(row['status'],'completed')
+            self.assertIsNone(row['costUsd'])
+
     def test_runner_budget_resume_and_unknown_usage_guards(self):
         # Exercise the real runner using a fake isolated service; no network or PDF dependency.
         for scenario in ('budget', 'completed', 'unknown'):

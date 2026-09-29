@@ -46,6 +46,17 @@ server/.venv/Scripts/python.exe benchmarks/translation/bench.py run
 不盲目重发。终态任务不自动重跑，不修复后覆盖首轮成绩。只连接 workspace 路径匹配的独立服务。
 `--paper attention` 可限制到单篇。新一轮实验应使用全新工作目录与缓存，不复用旧任务。
 
+用户明确要求补齐未生成的 PDF 时，可在原工作目录执行：
+
+```powershell
+server/.venv/Scripts/python.exe benchmarks/translation/bench.py run --supplement-missing-pdfs
+```
+
+该命令仅补跑已结束且没有输出 PDF 的整篇任务，使用相同配置和独立任务缓存，
+要求已批准账号账单增量预算机制。沿用本轮账单基线和预算，不重置额度。
+补跑保存在 `supplemental-runs.json`；恢复执行跳过已结束的补跑，不改写首轮成绩。
+PDF 目录优先展示已产出的补跑文件，并标注补跑来源；独立 GPT-6 Sol 评审及主代理复核后方可更新评分。
+
 每请求账本仅保存时间和 token，没有原文、译文、模型名或 Key。费用按上下文档位与 UTC
 高峰时段估算；推理 token 已包含于输出，不重复计费。缓存信息未知时按未命中保守估算。
 缺失 token 或与账本无法对账时费用保持未知并停止扩展。价格以模型响应计费时刻近似，
@@ -83,6 +94,12 @@ server/.venv/Scripts/python.exe -m http.server 8893 --bind 127.0.0.1 --directory
 ```
 
 公开导出使用字段白名单，不包含 Key、原始服务日志或全文。来源材料及完整译文默认仅本地保存。
+
+“翻译 PDF”使用本地打包的 PDF.js 展示真实双语文件，支持连续滚动、缩略图、页码跳转、缩放、全屏和下载。
+`pdfs.json` 记录任务 ID、文件校验值和补跑出处；本地完整对照版包含原始 PDF。
+默认公开版只提供文件目录，可选择校验值匹配的本地 PDF 在浏览器阅读，文件不会上传。
+本次用户明确要求将全部 15 份翻译 PDF 一起上线，本地快照 `publishFullPdfs` 记录此发布范围；
+它不是第三方版权授权声明，原论文来源和许可链接保留。初评与复核证据保留在“方法与来源”的折叠区。
 页面内容通过 `textContent` 渲染。Zotero 界面提交与自动导入必须实际验证才能标记完成；
 服务端测试不能替代这项验证。未完成状态会明确出现在方法说明中。
 
@@ -107,3 +124,14 @@ server/.venv/Scripts/python.exe -m unittest discover -s benchmarks/translation -
 
 所有 PDF、任务目录、Key 和未脱敏评审材料都应留在已忽略的 `.local-dev/translation-bench/`。
 不要把该目录上传到 GitHub。插件与服务端版本不因测评而升级。
+# 网页展示口径
+
+首页使用紧凑表格，逐段评审与方法说明放在独立标签页。默认质量分为所有参测模型均有可评分译文的共同论文均分（本轮为 Attention、BERT，各 12 个片段，包含部分完成任务）；费用、耗时与完整任务统计仍覆盖全部三篇。选择单篇可查看 ResNet 成绩与接口失败。原始逐篇评分不变，整项失败不作为语言能力零分参与页面排名。
+
+输入与输出单价来自测试时冻结的价格快照；分档、高峰价和缓存价格在模型详情中。`recordedCostUsd` 是有用量记录的请求费用估算小计，`usageKnownRequests` / `usageMissingRequests` 显示记录覆盖情况。总费用未知时保留 `costUsd: null`，页面在“已记录费用”列显示小计，用量缺失在悬停和详情中说明。该列按显示金额排序，未知值始终置后，不代表完整任务性价比；未核清费用不进入性价比图。不能将小计当成供应商实际扣费或总费用下界（缓存未知时存在保守估算）。未发起新收费测试。
+
+网页默认深色，可切换浅色并在本地记住选择。Star 只读获取公开仓库计数，缓存 30 分钟；获取失败时保留旧缓存，无缓存只显示 Star。图标使用插件原图标与本地 Bootstrap Icons 1.13.1（MIT，许可证位于 `site/icons/`）。界面逻辑测试：`node --test benchmarks/translation/test_ui.cjs`。本地私有导出同步 UI 与图标，不公开原文材料。
+
+已复核补跑通过 `supplement-review-index.json` 关联匿名评审工作目录。导出保留 `originalResults`、
+`supplementalResults` 和各次 `attempts`；主表使用已复核译文的质量与状态，费用、用量覆盖和耗时累计
+全部尝试。不能将补跑成功当作首轮成功，或用较低单次补跑费用掩盖累计消耗。

@@ -11,7 +11,33 @@ import random
 import re
 import sqlite3
 import shutil
-from bench import DEFAULT_WORK, HERE, RUBRIC, read, write, now, digest, setup_cost
+from bench import DEFAULT_WORK, HERE, RUBRIC, read, write, now, digest, setup_cost, cost, request_rates
+
+
+def recorded_cost(work, task_id, model):
+    """Expose the priced subset without presenting missing requests as free."""
+    path = work/'usage'/f'{task_id}.jsonl'
+    if not path.exists():
+        return {'recordedCostUsd': None, 'usageKnownRequests': None, 'usageMissingRequests': None}
+    total = 0
+    known = missing = 0
+    for line in path.read_text(encoding='utf-8').splitlines():
+        event = json.loads(line)
+        if event.get('input') is None or event.get('output') is None:
+            missing += 1
+            continue
+        hit = event.get('hit')
+        if hit is None and event.get('miss') is not None:
+            hit = max(0, event['input'] - event['miss'])
+        amount = cost({'tokens': {'input': event['input'], 'output': event['output'], 'availability': 'complete'},
+                       'providerCache': {'hitTokens': hit, 'availability': 'complete' if hit is not None else 'unavailable'}},
+                      request_rates(model, event['input'], event['timestamp']))
+        if amount is None:
+            missing += 1
+            continue
+        known += 1
+        total += amount
+    return {'recordedCostUsd': total if known else None, 'usageKnownRequests': known, 'usageMissingRequests': missing}
 
 
 def normalize(text):
@@ -198,6 +224,8 @@ def export(work, destination, private=False):
                 'summary':r.get('translationSummary'),'outputSha256':r.get('outputSha256'),
                 'quality':None,'reviewStatus':'pending','samples':[],'layout':[]}
         public['failedParagraphs']=failures
+        model=next(m for m in snapshot['models'] if m['id']==r['model'])
+        public.update(recorded_cost(work,r.get('taskId'),model))
         if candidate:
             scores=[sum(s['scores'].values()) for s in candidate['samples'] if not s.get('unassessable')]
             public['quality']=round(sum(scores)/len(scores),2) if len(scores)==12 else None
@@ -251,21 +279,114 @@ def export(work, destination, private=False):
           'pricingSource':snapshot['pricingSource'],'pricingCheckedAt':snapshot.get('pricingCheckedAt'),
           'models':[{k:m[k] for k in ('id','name','input','output','cacheRead','priceDetails','accessStatus','accessCheckedAt') if k in m} for m in snapshot['models']],
           'papers':[{k:p.get(k) for k in ('id','title','arxiv','sha256','pages','selectionSha256','redistributionApproved','sourceLicense','downloadSeconds')} for p in snapshot['papers']],
+          'publishFullPdfs':snapshot.get('publishFullPdfs',False),
           'budgetUsd':snapshot['budgetUsd'],'measuredSpendUsd':setup_cost(work,snapshot)+sum(r.get('costUsd') or 0 for r in runs),
           'budgetAccountDeltaUsd':bound['deltaUsd'] if bound else None,'budgetObservedAt':bound['observedAt'] if bound else None,
           'unknownCostTasks':sum(bool(r.get('taskId')) and r.get('costUsd') is None for r in runs),
-          'results':results,'limitations':['经典机器学习论文；每项单次运行，不代表所有学科或稳定速度。',
+          'results':results,'limitations':['经典机器学习论文；首轮每项一次，缺失PDF的三项各补跑一次，不代表所有学科或稳定速度。',
              '经典论文可能是模型熟悉的内容；12 个片段的细小分差不应视为稳定优势。',
              'GPT-6 Sol 与 GPT-6 Luna 同系列，可能存在评审偏差。',
              '费用按请求 token、时间和上下文分档估算；未知缓存按未命中保守估算，不是供应商账单。',
              *(['本轮资源准备总耗时未单独计时，记为未知；表中耗时从任务提交开始计算。'] if snapshot.get('preparationSeconds') is None else []),
-             '尚未确认完整论文译文的再分发许可，原文与完整 PDF 保存在本地。']}
+             *(['完整 PDF 按用户明确要求公开，用于本次翻译测评；原论文作者和来源见测试文件，译文不代表作者认可。'] if snapshot.get('publishFullPdfs') else ['尚未确认完整论文译文的再分发许可，原文与完整 PDF 保存在本地。'])]}
+    integrate_supplements(work,destination,data,private)
     write(destination/'results.json',data)
+    export_pdf_manifest(work,destination,snapshot,runs,private)
     destination.mkdir(parents=True,exist_ok=True)
-    fields=['phase','paper','model','status','quality','reviewStatus','seconds','costUsd','taskId','outputSha256']
+    fields=['phase','paper','model','status','quality','reviewStatus','seconds','costUsd','recordedCostUsd','usageKnownRequests','usageMissingRequests','taskId','outputSha256']
     with (destination/'results.csv').open('w',encoding='utf-8-sig',newline='') as stream:
-        writer=csv.DictWriter(stream,fieldnames=fields,extrasaction='ignore');writer.writeheader();writer.writerows(results)
+        writer=csv.DictWriter(stream,fieldnames=fields,extrasaction='ignore');writer.writeheader();writer.writerows(data['results'])
     print('Exported',len(results),'real task results')
+
+
+def integrate_supplements(work, destination, data, private=False):
+    """Select audited supplementary PDFs, preserving first runs and total effort."""
+    index_path=work/'supplement-review-index.json'
+    if not index_path.exists():
+        return
+    data['originalResults']=list(data['results'])
+    data['supplementalResults']=[]
+    for item in read(index_path):
+        job=Path(item['path']).resolve()
+        if not job.is_relative_to((work/'supplement-reviews').resolve()):
+            raise ValueError('Supplement review must remain in the local review workspace')
+        temporary=job/('export-private' if private else 'export-public')
+        export(job,temporary,private)
+        candidate=read(temporary/'results.json')['results'][0]
+        if candidate['taskId']!=item['taskId']:
+            raise ValueError('Supplement task provenance mismatch')
+        if candidate['reviewStatus']!='verified':
+            raise ValueError('Supplement must be audited before publication')
+        original=next(r for r in data['originalResults'] if r['paper']==candidate['paper'] and r['model']==candidate['model'])
+        source=next(r for r in read(work/'supplemental-runs.json') if r['taskId']==item['taskId'])
+        if source['supplementalTo']!=original['taskId'] or source['outputSha256']!=candidate['outputSha256']:
+            raise ValueError('Supplement output provenance mismatch')
+        if private:
+            for visual in candidate.get('visuals',[]):
+                target=destination/'supplements'/str(item['job'])/visual
+                target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(temporary/visual,target)
+            candidate['visuals']=['supplements/'+str(item['job'])+'/'+v for v in candidate.get('visuals',[])]
+        data['supplementalResults'].append(candidate)
+        attempts=[original,candidate]
+        effective={**candidate,'alias':original['alias'],'reviewAlias':candidate['alias'],
+                   'selectionBasis':'reviewed_supplement','attempts':attempts,'attemptCount':2}
+        for field in ('costUsd','seconds','usageKnownRequests','usageMissingRequests'):
+            effective[field]=sum(r[field] for r in attempts) if all(r.get(field) is not None for r in attempts) else None
+        known=[r['recordedCostUsd'] for r in attempts if r.get('recordedCostUsd') is not None]
+        effective['recordedCostUsd']=sum(known) if known else None
+        effective['costBasis']='All first-run and supplementary attempts; unknown usage remains unknown.'
+        data['results']=[effective if r is original else r for r in data['results']]
+    all_attempts=data['originalResults']+data['supplementalResults']
+    data['measuredSpendUsd']=setup_cost(work,read(work/'snapshot.json'))+sum(r.get('costUsd') or 0 for r in all_attempts)
+    data['unknownCostTasks']=sum(r.get('costUsd') is None for r in all_attempts)
+    data['resultSelection']='Audited supplements replace missing PDFs; costs and time include every attempt; first-run records retained.'
+    data['limitations'].append('三项未生成 PDF 的任务补跑一次；对应质量和完成状态采用已复核补跑，费用与耗时累计首轮及补跑。不同模型尝试次数不同。')
+
+
+def export_pdf_manifest(work, destination, snapshot, runs, private=False):
+    """Publish exact task artifacts only within the selected disclosure boundary."""
+    if private and not destination.resolve().is_relative_to(DEFAULT_WORK.parent.resolve()):
+        raise ValueError('Private PDFs must stay inside the ignored .local-dev directory')
+    documents=[]
+    supplement_path=work/'supplemental-runs.json'
+    supplements=read(supplement_path) if supplement_path.exists() else []
+    for run in runs:
+        if run.get('pilot') or not run.get('taskId'):
+            continue
+        original=run
+        supplement=next((r for r in supplements if r.get('supplementalTo')==run['taskId']),None)
+        if supplement and supplement.get('outputSha256'):
+            run=supplement
+        task=run['taskId']
+        if not re.fullmatch(r'[a-zA-Z0-9_-]+',task):
+            raise ValueError('Invalid PDF task identifier')
+        paper=next(p for p in snapshot['papers'] if p['id']==run['paper'])
+        source=work/'outputs'/f'{task}.pdf'
+        item={'paper':run['paper'],'model':run['model'],'taskId':task,
+              'sha256':run.get('outputSha256'),'pages':None,'bytes':None,'url':None,
+              'availability':'not_generated','status':run['status'],
+              'supplemental':run is not original}
+        if supplement:
+            item['supplementaryRun']={k:supplement[k] for k in
+                ('taskId','supplementalTo','status','reviewStatus','reviewSha256','elapsedSeconds','costUsd','outputSha256','stopReason')
+                if k in supplement}
+        if item['sha256']:
+            if not source.exists():
+                item['availability']='missing'
+            else:
+                if digest(source)!=item['sha256']:
+                    raise ValueError(f'PDF checksum changed for task {task}')
+                item.update(pages=paper['pages'],bytes=source.stat().st_size,availability='local_only')
+                if private or paper.get('redistributionApproved') is True or snapshot.get('publishFullPdfs') is True:
+                    relative=f'pdfs/{task}.pdf'
+                    (destination/'pdfs').mkdir(parents=True,exist_ok=True)
+                    shutil.copy2(source,destination/relative)
+                    item.update(url=relative,availability='ready')
+        documents.append(item)
+    bound=read(work/'billing-bound.json') if (work/'billing-bound.json').exists() else None
+    write(destination/'pdfs.json',{'schemaVersion':1,'visibility':'private' if private else 'public',
+          'budgetAccountDeltaUsd':bound['deltaUsd'] if bound else None,
+          'budgetObservedAt':bound['observedAt'] if bound else None,'documents':documents})
 
 
 def folder_for(work, paper):
@@ -286,6 +407,8 @@ if __name__=='__main__':
             if not args.destination.resolve().is_relative_to(DEFAULT_WORK.parent.resolve()):
                 raise ValueError('Private exports must stay inside the ignored .local-dev directory')
             args.destination.mkdir(parents=True,exist_ok=True)
-            for filename in ('index.html','app.js','style.css'):
+            for filename in ('index.html','app.js','ui.js','pdf-viewer.js','style.css','pdf-viewer.css','favicon.svg'):
                 shutil.copy2(HERE/'site'/filename,args.destination/filename)
+            shutil.copytree(HERE/'site'/'icons',args.destination/'icons',dirs_exist_ok=True)
+            shutil.copytree(HERE/'site'/'vendor',args.destination/'vendor',dirs_exist_ok=True)
         export(args.work.resolve(),args.destination.resolve(),args.private)
