@@ -1,11 +1,16 @@
 """Small paid access probe; never silently converts an access failure to a score."""
 import os
+import argparse
+from pathlib import Path
 from bench import DEFAULT_WORK, client, read, write, now
 
 if __name__ == '__main__':
-    snapshot = read(DEFAULT_WORK / 'snapshot.json')
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--work',type=Path,default=DEFAULT_WORK)
+    work=parser.parse_args().work.resolve()
+    snapshot = read(work / 'snapshot.json')
     key = os.environ['COMMAND_CODE_API_KEY']
-    path = DEFAULT_WORK / 'access.json'
+    path = work / 'access.json'
     results = read(path) if path.exists() else []
     with client() as c:
         for model in snapshot['models']:
@@ -20,5 +25,7 @@ if __name__ == '__main__':
             result = {'model': model['id'], 'timestamp': now(), 'status': response.status_code,
                       'code': error.get('code'), 'message': message, 'usage': data.get('usage')}
             results.append(result)
+            model.update(accessStatus=result['status'],accessCheckedAt=result['timestamp'])
             write(path, results)
+            write(work / 'snapshot.json', snapshot)
             print(model['name'], response.status_code, message, flush=True)

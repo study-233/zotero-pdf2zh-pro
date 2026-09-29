@@ -169,6 +169,7 @@ def account_budget_bound(work, snapshot, key):
 
 def prepare(work):
     import fitz
+    preparation_started=time.monotonic()
     manifest = read(HERE / 'manifest.json')
     work.mkdir(parents=True, exist_ok=True)
     if (work / 'snapshot.json').exists():
@@ -189,7 +190,9 @@ def prepare(work):
             path = work / 'papers' / (paper['id'] + '.pdf')
             path.parent.mkdir(parents=True, exist_ok=True)
             url = 'https://arxiv.org/pdf/' + paper['arxiv']
+            download_started=time.monotonic()
             response = checked(c.get(url, follow_redirects=True))
+            paper['downloadSeconds']=time.monotonic()-download_started
             if not response.content.startswith(b'%PDF'):
                 raise ValueError('Paper response is not a PDF')
             path.write_bytes(response.content)
@@ -209,7 +212,8 @@ def prepare(work):
             paper['selectionSha256'] = digest(work / 'selection' / (paper['id'] + '.json'))
             print(f"Prepared {paper['id']}: {len(document)} pages, {paper['sha256'][:12]}", flush=True)
             document.close()
-    manifest.update(preparedAt=now(), commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+    manifest.update(preparedAt=now(), preparationSeconds=time.monotonic()-preparation_started,
+                    commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                     python=sys.version, platform=platform.platform(), rubric=RUBRIC,
                     judge='gpt-6-sol', reviewStatus='pending', zoteroValidation='pending')
     write(work / 'snapshot.json', manifest)
@@ -321,7 +325,8 @@ def run(work, base, pilot=False, paper_filter=None):
                     row['elapsedSeconds'] = (datetime.fromisoformat(end) - datetime.fromisoformat(row['startedAt'])).total_seconds()
                     write(state_path, state)
                     if task.get('stage') != last_stage:
-                        print(f"{paper['id']} | {model['name']} | {task['status']} | {task.get('stage')} | ${row['costUsd'] or 0:.5f}", flush=True)
+                        cost_label = 'unknown' if row['costUsd'] is None else f"${row['costUsd']:.5f}"
+                        print(f"{paper['id']} | {model['name']} | {task['status']} | {task.get('stage')} | {cost_label}", flush=True)
                         last_stage = task.get('stage')
                     if task['status'] in TERMINAL:
                         break

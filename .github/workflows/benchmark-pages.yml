@@ -34,4 +34,7 @@ jobs:
       - name: Publish existing static data only
         run: |
           git subtree split --prefix=benchmarks/translation/site -b benchmark-pages-build
-          git push origin benchmark-pages-build:codex/translation-benchmark-pages
+          # The dedicated branch contains generated public files only. Squash
+          # merges can rewrite subtree ancestry; lease protects concurrent deploys.
+          remote_sha=$(git ls-remote origin refs/heads/codex/translation-benchmark-pages | cut -f1)
+          git push --force-with-lease=refs/heads/codex/translation-benchmark-pages:"$remote_sha" origin benchmark-pages-build:codex/translation-benchmark-pages

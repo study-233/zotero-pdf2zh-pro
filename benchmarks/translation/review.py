@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse
 import csv
+import hashlib
 from difflib import SequenceMatcher
 import json
 import math
@@ -67,7 +68,7 @@ def packets(work, only=None):
                 samples.append({'id':anchor['id'],'page':anchor['page'],'matchConfidence':round(score,3),
                                 'suggestedSource':match.get('source'),'suggestedTranslation':match.get('translation'),
                                 'pageParagraphs':[{'source':e.get('source'),'translation':e.get('translation'),
-                                                   'status':e.get('status')} for e in same_page]})
+                                                   'protectedInput':e.get('input'),'status':e.get('status')} for e in same_page]})
             candidate={'alias':alias,'samples':samples,'pdfAvailable':False,'visuals':[]}
             pdf=work/'outputs'/(row.get('taskId','missing')+'.pdf')
             if pdf.exists():
@@ -125,6 +126,8 @@ def validate_review(packet, review):
             for issue in rating.get('issues',[]):
                 if not all(issue.get(k) for k in ('severity','category','sourceEvidence','translationEvidence','explanation')):
                     raise ValueError('Incomplete issue evidence')
+                if issue['severity'] not in {'minor','major','critical'} or issue['category'] not in {'translation','parsing','layout'}:
+                    raise ValueError('Unknown severity or issue category')
 
 
 def audit_selection(packet, review, seed=20260929):
@@ -134,9 +137,23 @@ def audit_selection(packet, review, seed=20260929):
         for s in c['samples']:
             if any(i.get('severity') in ('major','critical') for i in s.get('issues',[])):
                 selected.add((c['alias'],s['id']))
+        for layout in c.get('layout',[]):
+            if layout.get('status')=='issue':
+                selected.add((c['alias'],'layout-'+str(layout['page'])))
     remaining=[item for item in all_items if item not in selected]
     selected.update(random.Random(str(seed)+packet['paper']).sample(remaining,math.ceil(len(remaining)*.2)))
     return [{'alias':a,'sample':s,'status':'pending'} for a,s in sorted(selected)]
+
+
+def revision_summary(value):
+    """Publish concise changes without embedding full raw evidence objects."""
+    if value is None:
+        return '未记录此项。'
+    if isinstance(value,str):
+        return value
+    if 'scores' in value:
+        return f"总分 {sum(value['scores'].values())}/100。" + ' '.join(i['explanation'] for i in value.get('issues',[]))
+    return str(value.get('status',''))+'：'+str(value.get('evidence',''))
 
 
 def export(work, destination, private=False):
@@ -162,13 +179,25 @@ def export(work, destination, private=False):
         bundle=reviews.get(r['paper']) if not r.get('pilot') else None
         candidate=next((c for c in bundle['review']['candidates'] if c['alias']==alias),None) if bundle else None
         metrics=r.get('metrics') or {}
+        failures=[]
+        if r.get('taskId'):
+            for entry in paragraphs(work,r['taskId']):
+                if entry.get('status')!='failed':continue
+                source=entry.get('source','')
+                failures.append({'page':entry.get('page'),'paragraphId':entry.get('paragraphId'),
+                    'errorType':entry.get('errorType'),'statusCode':entry.get('statusCode'),
+                    'sourceSha256':hashlib.sha256(source.encode()).hexdigest(),
+                    'sourceKind':'url-footnote' if re.match(r'^\d*https?://',source) else 'text',
+                    'unchangedTranslation':str(entry.get('reason','')).startswith('unchanged_translation')})
         public={'paper':r['paper'],'model':r['model'],'alias':alias,'phase':'pilot' if r.get('pilot') else 'full','taskId':r.get('taskId'),
                 'status':r['status'],'seconds':r.get('elapsedSeconds'),'costUsd':r.get('costUsd'),
+                'stopReason':r.get('stopReason'),
                 'costBasis':r.get('costBasis'),'rejectedAuthRequests':r.get('rejectedAuthRequests',0),
                 'tokens':metrics.get('tokens'),'requests':metrics.get('requests'),
                 'stageDurations':metrics.get('stageDurations'), 'configSha256':r.get('configSha256'),
                 'summary':r.get('translationSummary'),'outputSha256':r.get('outputSha256'),
                 'quality':None,'reviewStatus':'pending','samples':[],'layout':[]}
+        public['failedParagraphs']=failures
         if candidate:
             scores=[sum(s['scores'].values()) for s in candidate['samples'] if not s.get('unassessable')]
             public['quality']=round(sum(scores)/len(scores),2) if len(scores)==12 else None
@@ -189,6 +218,17 @@ def export(work, destination, private=False):
             public['audit']=[a for a in bundle['audit'] if a['alias']==alias]
             public['reviewSummary']=candidate.get('summary')
             public['reviewSha256']=digest(folder_for(work,r['paper'])/'review.json')
+            initial_path=folder_for(work,r['paper'])/'review.initial.json'
+            if initial_path.exists():
+                initial=read(initial_path)
+                initial_candidate=next(c for c in initial['candidates'] if c['alias']==alias)
+                public['initialReviewSha256']=digest(initial_path)
+                public['initialScores']=[{'id':s['id'],'scores':s.get('scores'),'unassessable':s.get('unassessable',False)} for s in initial_candidate['samples']]
+            revisions_path=folder_for(work,r['paper'])/'revisions.json'
+            if revisions_path.exists():
+                revisions=read(revisions_path)
+                public['reviewRevisions']=[{'target':c['target'],'initial':revision_summary(c.get('initial')),
+                    'revised':revision_summary(c.get('revised'))} for c in revisions.get('changes',[]) if alias in c.get('target','').split('.')[0].split('/')]
             if private:
                 public['visuals']=[]
                 folder=folder_for(work,r['paper'])
@@ -199,20 +239,26 @@ def export(work, destination, private=False):
         results.append(public)
     bound=read(work/'billing-bound.json') if (work/'billing-bound.json').exists() else None
     data={'schemaVersion':1,'visibility':'private' if private else 'public','generatedAt':now(),'commit':snapshot['commit'],
+          'benchmarkCodeCommit':snapshot.get('benchmarkCodeCommit'),
+          'runtime':snapshot.get('runtime'),'python':snapshot.get('python'),'platform':snapshot.get('platform'),
           'preparedAt':snapshot['preparedAt'],'config':snapshot['config'],'rubric':RUBRIC,
+          'preparationSeconds':snapshot.get('preparationSeconds'),
           'budgetResetAt':snapshot.get('budgetResetAt'),'sourceFingerprints':snapshot.get('sourceFingerprints'),
           'selectionAmendment':snapshot.get('selectionAmendment'),
           'judge':'gpt-6-sol','reviewMethod':'GPT-6 Sol 子代理评审，主代理复核',
+          'findings':snapshot.get('findings',[]),
           'zoteroValidation':snapshot.get('zoteroValidation','pending'),
           'pricingSource':snapshot['pricingSource'],'pricingCheckedAt':snapshot.get('pricingCheckedAt'),
-          'models':[{k:m[k] for k in ('id','name','input','output','cacheRead','priceDetails') if k in m} for m in snapshot['models']],
-          'papers':[{k:p[k] for k in ('id','title','arxiv','sha256','pages','selectionSha256','redistributionApproved')} for p in snapshot['papers']],
+          'models':[{k:m[k] for k in ('id','name','input','output','cacheRead','priceDetails','accessStatus','accessCheckedAt') if k in m} for m in snapshot['models']],
+          'papers':[{k:p.get(k) for k in ('id','title','arxiv','sha256','pages','selectionSha256','redistributionApproved','sourceLicense','downloadSeconds')} for p in snapshot['papers']],
           'budgetUsd':snapshot['budgetUsd'],'measuredSpendUsd':setup_cost(work,snapshot)+sum(r.get('costUsd') or 0 for r in runs),
           'budgetAccountDeltaUsd':bound['deltaUsd'] if bound else None,'budgetObservedAt':bound['observedAt'] if bound else None,
           'unknownCostTasks':sum(bool(r.get('taskId')) and r.get('costUsd') is None for r in runs),
           'results':results,'limitations':['经典机器学习论文；每项单次运行，不代表所有学科或稳定速度。',
+             '经典论文可能是模型熟悉的内容；12 个片段的细小分差不应视为稳定优势。',
              'GPT-6 Sol 与 GPT-6 Luna 同系列，可能存在评审偏差。',
              '费用按请求 token、时间和上下文分档估算；未知缓存按未命中保守估算，不是供应商账单。',
+             *(['本轮资源准备总耗时未单独计时，记为未知；表中耗时从任务提交开始计算。'] if snapshot.get('preparationSeconds') is None else []),
              '尚未确认完整论文译文的再分发许可，原文与完整 PDF 保存在本地。']}
     write(destination/'results.json',data)
     destination.mkdir(parents=True,exist_ok=True)

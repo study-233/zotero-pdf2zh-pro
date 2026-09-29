@@ -2,12 +2,14 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import os
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from datetime import datetime, timezone
 
 sys.path.insert(0, str(Path(__file__).parent))
-from bench import cost, request_rates, ledger_cost, recover_submission, safe_task, write, account_budget_bound
+from bench import cost, request_rates, ledger_cost, recover_submission, safe_task, write, account_budget_bound, run, digest, now
 
 
 class BenchmarkTests(unittest.TestCase):
@@ -92,6 +94,47 @@ class BenchmarkTests(unittest.TestCase):
                 response.json=lambda:{'totalCost':2.4}
                 with self.assertRaises(RuntimeError):account_budget_bound(work,config,'test-key')
                 self.assertNotIn('test-key',(work/'billing-bound.json').read_text())
+
+    def test_runner_budget_resume_and_unknown_usage_guards(self):
+        # Exercise the real runner using a fake isolated service; no network or PDF dependency.
+        for scenario in ('budget', 'completed', 'unknown'):
+            with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as directory:
+                work=Path(directory)
+                (work/'papers').mkdir();(work/'selection').mkdir()
+                (work/'papers'/'p.pdf').write_bytes(b'frozen-pdf')
+                write(work/'selection'/'p.json',[])
+                snapshot={'pricingVerified':True,'config':{},'seed':1,'budgetUsd':10,'reserveUsd':1,
+                    'setupKnownUsd':0,'models':[{'id':'m','name':'model','catalogAvailable':True}],
+                    'papers':[{'id':'p','sha256':digest(work/'papers'/'p.pdf'),
+                               'selectionSha256':digest(work/'selection'/'p.json')}]}
+                write(work/'snapshot.json',snapshot)
+                if scenario=='completed':
+                    write(work/'runs.json',[{'id':'p:m','status':'completed','taskId':'existing'}])
+                response=lambda data:SimpleNamespace(is_success=True,json=lambda:data)
+                task={'taskId':'new','status':'running','stage':'Translate', 'updatedAt':now(),
+                      'metrics':{'tokens':{'availability':'partial'},'requests':{'succeeded':1,'failed':1,'statusCodes':{'200':1,'unknown':1}}}}
+                posts=[]
+                def post(url, **kwargs):
+                    posts.append(url)
+                    if url.endswith('/cancel'):task['status']='cancelled'
+                    return response({'task':dict(task)})
+                def get(url):
+                    if url.endswith('/health'):return response({'workspace':{'path':str(work/'tasks')}})
+                    return response({'task':dict(task)})
+                with patch.dict(os.environ,{'COMMAND_CODE_API_KEY':'test-only'}), patch.dict(sys.modules,{'fitz':SimpleNamespace()}), \
+                     patch('bench.client') as factory, patch('bench.account_budget_bound',return_value=8.5 if scenario=='budget' else None), \
+                     patch('bench.task_body',return_value={}), patch('bench.ledger_cost',return_value=None), patch('bench.time.sleep'):
+                    service=factory.return_value.__enter__.return_value
+                    service.get.side_effect=get;service.post.side_effect=post
+                    if scenario=='unknown':
+                        with self.assertRaises(RuntimeError):run(work,'http://isolated')
+                        self.assertEqual(posts,['http://isolated/tasks','http://isolated/tasks/new/cancel'])
+                        state=json.loads((work/'runs.json').read_text())
+                        self.assertEqual(state[0]['stopReason'],'unknown_usage')
+                        self.assertIsNone(state[0]['costUsd'])
+                    else:
+                        run(work,'http://isolated')
+                        self.assertEqual(posts,[])
 
 
 if __name__ == '__main__':

@@ -1,6 +1,8 @@
 """Freeze the public Command Code pricing page, including tiers and peak rates."""
 import json
 import re
+import argparse
+from pathlib import Path
 from bench import client, checked, read, write, now, digest, DEFAULT_WORK
 
 
@@ -24,11 +26,14 @@ def extract(html):
 
 
 if __name__ == '__main__':
-    snapshot = read(DEFAULT_WORK / 'snapshot.json')
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--work',type=Path,default=DEFAULT_WORK)
+    work=parser.parse_args().work.resolve()
+    snapshot = read(work / 'snapshot.json')
     with client() as c:
         response = checked(c.get('https://commandcode.ai/models'))
     html = response.content.decode('utf-8')
-    (DEFAULT_WORK / 'pricing.html').write_text(html, encoding='utf-8')
+    (work / 'pricing.html').write_text(html, encoding='utf-8')
     models = extract(html)
     selected = []
     for model in snapshot['models']:
@@ -41,7 +46,7 @@ if __name__ == '__main__':
             model[local] = entry[remote]
         model['priceDetails'] = entry
     snapshot.update(pricingVerified=True, pricingSource='https://commandcode.ai/models',
-                    pricingCheckedAt=now(), pricingSha256=digest(DEFAULT_WORK / 'pricing.html'))
-    write(DEFAULT_WORK / 'verified-prices.json', selected)
-    write(DEFAULT_WORK / 'snapshot.json', snapshot)
+                    pricingCheckedAt=now(), pricingSha256=digest(work / 'pricing.html'))
+    write(work / 'verified-prices.json', selected)
+    write(work / 'snapshot.json', snapshot)
     print(json.dumps(selected, ensure_ascii=True, indent=2))

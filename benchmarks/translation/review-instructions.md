@@ -14,6 +14,10 @@
 每个样本按 fidelity 40、completeness 20、terminology 20、fluency 10、preservation 10 打分。
 每项扣分都要可复核证据，标注 minor / major / critical，区分 translation / parsing / layout。
 查看全部提供的视觉页面，记录重叠、溢出、乱码和公式损坏；未查看不能声称通过。
+图片请用 view_image 的 original 精度查看。相似图片的预览可能显示差异区域，不能据此
+认定表格缺行；出现可疑空白时请求主代理提供原 PDF 的高分辨率局部裁剪再确认。
+protectedInput 中的 {v...} / 样式标记代表被保护的公式或数字，不是最终 PDF 的缺失文字。
+先结合标记和视觉页判断是否保留；不能把恢复文本中的标记直接认定为乱码。
 
 在当前目录写 review.json，格式如下：
 

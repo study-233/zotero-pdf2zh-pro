@@ -3,7 +3,7 @@ import sys
 import unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).parent))
-from review import validate_review, audit_selection
+from review import validate_review, audit_selection, revision_summary
 from bench import RUBRIC
 
 
@@ -36,6 +36,14 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(audit,audit_selection(self.packet,self.review))
         self.assertGreaterEqual(len(audit),12)
         self.assertTrue(any(x['alias']=='A' and x['sample']=='S00' for x in audit))
+
+    def test_public_revisions_do_not_embed_raw_evidence(self):
+        value={'scores':dict(RUBRIC),'issues':[{'explanation':'summary','sourceEvidence':'PRIVATE SOURCE','translationEvidence':'PRIVATE TRANSLATION'}]}
+        summary=revision_summary(value)
+        self.assertIn('100/100',summary)
+        self.assertIn('summary',summary)
+        self.assertNotIn('PRIVATE',summary)
+        self.assertIsInstance(revision_summary(None),str)
 
 
 if __name__=='__main__':unittest.main()
