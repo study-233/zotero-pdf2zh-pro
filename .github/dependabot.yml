@@ -2,6 +2,7 @@ version: 2
 updates:
     - package-ecosystem: "npm"
       directory: "/plugin"
+      open-pull-requests-limit: 0
       schedule:
           interval: "weekly"
       groups:
@@ -11,6 +12,7 @@ updates:
                   - "patch"
     - package-ecosystem: "pip"
       directory: "/server"
+      open-pull-requests-limit: 0
       schedule:
           interval: "weekly"
       groups:
