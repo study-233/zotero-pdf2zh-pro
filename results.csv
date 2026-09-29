@@ -1,0 +1,6 @@
+﻿phase,paper,model,status,quality,reviewStatus,seconds,costUsd,taskId,outputSha256
+full,attention,xiaomi/mimo-v2.6-flash,incomplete,,pending,119.323526,0.0086489592,af6d67068c57,be51e3921ea8459ec75f2618b479a7c0a2f8394fd8081dfd189fbb05f015ac7f
+full,attention,z-ai/glm-5.3-flash,cancelled,,pending,184.692195,,dfd194ec20d1,
+full,attention,deepseek/deepseek-v4.1-flash,completed,,pending,156.623598,0.196387272,f5f397e2ffd5,a343b0c886f42aaf44a12f63c9ffb878b35248e6b5b4a15febfcb9ad92f8ca60
+full,attention,gpt-6-luna,completed,,pending,79.002944,0.0177663,d86f4df08ad2,7fe556aea8505d2fbe2d082f8ca60f1b119bcdc7f4dcd3ce2d7efaf0da94021a
+full,attention,Qwen/Qwen3.7-Flash,running,,pending,135.343209,0.025212359999999996,a4d971efa0a2,
