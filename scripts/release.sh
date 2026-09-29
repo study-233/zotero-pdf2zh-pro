@@ -436,13 +436,8 @@ if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
     NOTES_FILE="$(mktemp)"
     TEMP_PATHS+=("$NOTES_FILE")
     printf '%s\n\n' "$CHANGELOG_SECTION" >"$NOTES_FILE"
-    printf '\nSHA-256:\n\n' >>"$NOTES_FILE"
-    printf -- '- `%s`  `%s`\n' "$XPI_SHA256" "$(basename "$XPI")" >>"$NOTES_FILE"
-    printf -- '- `%s`  `%s`\n' "$UPDATE_SHA256" "$(basename "$UPDATE_MANIFEST")" >>"$NOTES_FILE"
-    printf -- '- `%s`  `%s`\n' "$WINDOWS_SHA256" "$(basename "$WINDOWS_PACKAGE")" >>"$NOTES_FILE"
-    printf -- '- `%s`  `%s`\n' "$WINDOWS_UPDATE_SHA256" "$(basename "$WINDOWS_UPDATE_MANIFEST")" >>"$NOTES_FILE"
     if [[ -n "$REPLACE_EXISTING" ]]; then
-        printf '\nClient source: `%s`. Unchanged PyPI source: `%s`.\n' "$COMMIT" "$REPLACE_EXISTING" >>"$NOTES_FILE"
+        printf '\n本次为同版本客户端修订，PyPI 服务端包保持不变。已安装同版本的用户请按上方更新说明手动更新。\n' >>"$NOTES_FILE"
         REPLACEMENT_BACKUP_FILE="$(mktemp)"
         TEMP_PATHS+=("$REPLACEMENT_BACKUP_FILE")
         uv run --no-project python scripts/release_replacement.py publish \

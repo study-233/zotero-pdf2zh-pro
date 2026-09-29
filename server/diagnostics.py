@@ -17,10 +17,12 @@ SCHEMA_VERSION = 1
 MAX_EXPORT = 10 * 1024 * 1024
 NUMBERS = set('attempt attempts averageLatencyMs p95LatencyMs qps10s revision stageCurrent stageTotal stageProgress overallProgress currentPage selectedPage completedPages totalPages fontObject fontParseCount fontCacheHits operations idleSeconds stageElapsedSeconds latencyMs statusCode batchSize visibleOutputChars input output total active retries count pid cpuPercent rssBytes parentCpuPercent parentRssBytes exitCode elapsedSeconds droppedLogRecords promptTokens completionTokens totalTokens requestsUsed requestLimit succeeded failed pending translated cacheHits inFlight qps'.split())
 FLAGS = {'cancelRequested', 'stalled', 'success', 'truncated', 'queueBlocked'}
+NUMBERS.update('poolSize page skipped selected checked passed corrected unchecked notSelected requestsUsed requestLimit paragraphLimit hits misses hitRate hitTokens missTokens reasoning visibleOutputChars'.split())
+FLAGS.update({'canRepair', 'canDownloadResult', 'failedParagraphsTruncated'})
 STRINGS = {
     'stage': {'Queue Wait','Initialization','Check Fonts','Download Fonts','Font Preparation','Parse PDF and Create Intermediate Representation','Detect Scanned Pages','Parse Page Layout','Parse Table','Parse Paragraphs','Parse Formulas and Styles','Extract Terms','Translate Paragraphs','Typesetting','Add Fonts','Generate drawing instructions','Subset font','Save PDF','Finalize'},
     'retryReason': {'timeout','rate_limit','connection','server_error','invalid_output','other'},
-    'errorType': {'ReadTimeout','ConnectTimeout','TimeoutError','RateLimitError','APIConnectionError','APIStatusError','RuntimeError','ValueError','CancelledError','ConnectionError'},
+    'errorType': {'ReadTimeout','ConnectTimeout','TimeoutError','APITimeoutError','RateLimitError','APIConnectionError','APIStatusError','AuthenticationError','PermissionDeniedError','NotFoundError','BadRequestError','InternalServerError','InvalidTranslation','UnprocessedParagraph','RuntimeError','ValueError','CancelledError','ConnectionError'},
     'finishReason': {'stop','length','content_filter','tool_calls','function_call','completed','incomplete','failed','cancelled','max_output_tokens','other'},
     'status': {'queued','running','cancelling','completed','incomplete','failed','cancelled'},
     'operation': {'page_start','page_end','font','resources','content_stream','initialization'},
@@ -28,10 +30,44 @@ STRINGS = {
     'cancelReason': {'user','forced','shutdown'},
     'kind': {'initialization','translation','term_extraction','review','repair'},
     'protocol': {'chat_completions','responses','auto'},
+    'providerCode': {'model_not_found','invalid_api_key','insufficient_quota','rate_limit_exceeded','permission_denied'},
+    'availability': {'complete','partial','unavailable'},
 }
 IDENTIFIERS = {'taskId', 'serverInstanceId'}
+LABELS = {'provider', 'service', 'model', 'sourceLang', 'targetLang'}
+CONTAINERS = set('requestedConfiguration effectiveConfiguration translationSummary qualitySummary metrics requests tokens byKind translation review initialization localCache providerCache'.split())
+COUNT_MAPS = {'statusCodes', 'errorTypes', 'finishReasons', 'protocols'}
+
+
+def safe_label(value):
+    """Allow model IDs (including org/model:tag), not URLs, paths or credentials."""
+    return (isinstance(value, str) and len(value) <= 200
+            and re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_.-]*(?:[/:][a-zA-Z0-9][a-zA-Z0-9_.-]*)*', value)
+            and not re.search(r'(?:sk-|Bearer|api[_-]?key|token=)', value, re.I))
+
+
+def safe_counts(key, values):
+    if not isinstance(values, dict): return {}
+    allowed = {'errorTypes': STRINGS['errorType'], 'finishReasons': STRINGS['finishReason'],
+               'protocols': STRINGS['protocol']}.get(key, set())
+    return {name: count for name, count in values.items()
+            if isinstance(name, str) and (name in allowed or (key == 'statusCodes' and
+                (name == 'unknown' or re.fullmatch(r'[1-5][0-9]{2}', name))))
+            and type(count) is int and count >= 0}
+
+
+def requested_configuration(payload):
+    llm = payload.get('llm_api') or {}
+    if not isinstance(llm, dict): llm = {}
+    return safe_fields({'provider': payload.get('service'), 'model': llm.get('model'),
+                        'protocol': llm.get('apiProtocol'), 'qps': payload.get('qps'),
+                        'poolSize': payload.get('pool_size'), 'sourceLang': payload.get('source_lang'),
+                        'targetLang': payload.get('target_lang')})
+
+
 # Only fields listed here ever enter persistent diagnostics.
-def safe_fields(data):
+def safe_fields(data, _depth=0):
+    if not isinstance(data, dict) or _depth > 8: return {}
     result = {}
     for key, value in data.items():
         if key in NUMBERS and isinstance(value, (int, float)) and not isinstance(value, bool):
@@ -39,6 +75,14 @@ def safe_fields(data):
             if math.isfinite(value): result[key] = value
         elif key in FLAGS and isinstance(value, bool): result[key] = value
         elif key in STRINGS and isinstance(value,str) and value in STRINGS[key]: result[key] = value
+        elif key in LABELS and safe_label(value): result[key] = value
+        elif key in COUNT_MAPS: result[key] = safe_counts(key, value)
+        elif key in CONTAINERS and isinstance(value, dict): result[key] = safe_fields(value, _depth + 1)
+        elif key == 'failedParagraphs' and isinstance(value, list):
+            # No paragraph text, opaque document hashes, or free-form reason chains.
+            result[key] = [safe_fields({k: row[k] for k in ('page', 'attempts', 'errorType', 'statusCode', 'providerCode') if k in row}, _depth + 1)
+                           for row in value[:2000] if isinstance(row, dict)]
+            if len(value) > 2000: result['failedParagraphsTruncated'] = True
         elif key in IDENTIFIERS and isinstance(value, str) and re.fullmatch(r'[a-zA-Z0-9-]{1,64}', value): result[key] = value
         elif key in {'createdAt','updatedAt','lastProgressAt','heartbeatAt','lastRequestAt'} and isinstance(value,str) and re.fullmatch(r'[0-9TZ:.+\-]{10,40}',value): result[key] = value
     return result
@@ -178,7 +222,7 @@ class SafeLogHandler(logging.Handler):
     def emit(self, record):
         try:
             if record.name == 'zotero_pdf2zh_server.metrics' and record.args:
-                # Metrics logger passes pre-serialized JSON, never export its model/provider strings.
+                # Metrics logger passes JSON; filter labels as well as numeric fields.
                 raw = record.args[0] if isinstance(record.args, tuple) else None
                 if isinstance(raw,str):
                     data = json.loads(raw)

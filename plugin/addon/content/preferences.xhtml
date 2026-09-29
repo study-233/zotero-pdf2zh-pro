@@ -59,6 +59,8 @@
     .pdf2zh-pref-pane input, .pdf2zh-pref-pane select, .pdf2zh-pref-pane button
     { color: FieldText; } #zotero-prefpane-__addonRef__-profileSummary {
     overflow-wrap: anywhere; } .glossary-pack-list { margin-top: 8px; }
+    .attachment-naming { margin-top: 14px; overflow-wrap: anywhere; }
+    .attachment-naming input { width: 100%; min-height: 28px; }
     .glossary-pack-row { display: grid; grid-template-columns: minmax(140px,
     1fr) minmax(90px, auto) auto; gap: 6px 12px; align-items: center; padding:
     7px 0; border-bottom: 1px solid color-mix(in srgb, FieldText 10%,
@@ -282,6 +284,43 @@
                     for="zotero-prefpane-__addonRef__-notifyOnTranslationComplete"
                     data-l10n-id="pref-notifyOnTranslationComplete"
                 />
+            </html:div>
+        </html:div>
+        <html:div class="attachment-naming">
+            <html:div class="form-field">
+                <html:label
+                    for="zotero-prefpane-__addonRef__-attachmentTitleTemplate"
+                    data-l10n-id="pref-title-template"
+                />
+                <html:input
+                    id="zotero-prefpane-__addonRef__-attachmentTitleTemplate"
+                    type="text"
+                    aria-describedby="zotero-prefpane-__addonRef__-attachmentTitleHelp zotero-prefpane-__addonRef__-attachmentTitleError"
+                />
+                <html:div
+                    id="zotero-prefpane-__addonRef__-attachmentTitleHelp"
+                    data-l10n-id="pref-title-template-help"
+                />
+                <html:div data-l10n-id="pref-title-template-variables" />
+                <html:div
+                    id="zotero-prefpane-__addonRef__-attachmentTitleError"
+                    role="alert"
+                    hidden="true"
+                />
+                <html:div data-l10n-id="pref-title-template-preview" />
+                <html:div
+                    id="zotero-prefpane-__addonRef__-attachmentTitlePreview-mono"
+                    aria-live="polite"
+                />
+                <html:div
+                    id="zotero-prefpane-__addonRef__-attachmentTitlePreview-dual"
+                    aria-live="polite"
+                />
+                <html:div
+                    ><html:button
+                        id="zotero-prefpane-__addonRef__-attachmentTitleReset"
+                        data-l10n-id="pref-title-template-reset"
+                /></html:div>
             </html:div>
         </html:div>
     </html:section>

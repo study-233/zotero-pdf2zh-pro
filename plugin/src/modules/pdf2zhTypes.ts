@@ -98,6 +98,7 @@ export interface ServerErrorResponse {
 
 export interface PDFOperationOptions {
     rename: boolean;
+    titleTemplate: string;
     openAfterProcess: boolean;
 }
 
@@ -123,7 +124,19 @@ export interface TaskQualitySummary {
     paragraphLimit: number;
 }
 
+export interface DiagnosticConfiguration {
+    provider?: string;
+    model?: string;
+    protocol?: "auto" | "chat_completions" | "responses";
+    qps?: number;
+    poolSize?: number;
+    sourceLang?: string;
+    targetLang?: string;
+}
+
 export interface ServerTaskSnapshot extends ServerSyncMetadata {
+    requestedConfiguration?: DiagnosticConfiguration;
+    effectiveConfiguration?: DiagnosticConfiguration;
     taskId: string;
     fileName: string;
     service: string;
@@ -238,6 +251,9 @@ export interface TaskMetrics {
 }
 
 export interface PluginTask extends ServerTaskSnapshot {
+    model?: string;
+    sourceLang?: string;
+    targetLang?: string;
     itemID?: number;
     serverUrl: string;
     source: "local" | "remote";

@@ -1,4 +1,4 @@
 interface:
   display_name: "Zotero PDF2ZH Pro Release"
-  short_description: "Release plugin, PyPI, Windows, source, and Homebrew packages"
-  default_prompt: "Use $zotero-pdf2zh-pro-release to prepare and validate a unified zotero-pdf2zh-pro release."
+  short_description: "Prepare, publish or resume releases with concise release notes"
+  default_prompt: "Use $zotero-pdf2zh-pro-release to complete the requested version push or unified release, reuse verified artifacts, and write concise Chinese release notes without long SHA strings."

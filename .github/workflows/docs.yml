@@ -1,0 +1,44 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'assets/**'
+      - 'LICENSE'
+      - 'scripts/**'
+      - 'server/**'
+      - 'plugin/package.json'
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'assets/**'
+      - 'LICENSE'
+      - 'scripts/**'
+      - 'server/**'
+      - 'plugin/package.json'
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Test documentation guards
+        run: python3 -m unittest discover -s scripts -p 'test_check_docs.py'
+      - name: Check documentation
+        run: python3 scripts/check_docs.py

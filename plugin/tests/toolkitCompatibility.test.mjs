@@ -108,17 +108,25 @@ test("failed native registration can retry on a later main-window load", () => {
 
 test("attachment import handles an unavailable parent returned as false", async () => {
     const imports = [];
-    const { PDF2zhHelperFactory } = loadModule("pdf2zhHelper", {
-        Zotero: {
-            Items: { get: () => false },
-            Attachments: {
-                async importFromFile(options) {
-                    imports.push(options);
-                    return { id: 99 };
+    const { PDF2zhHelperFactory } = loadModule(
+        "pdf2zhHelper",
+        {
+            PathUtils: { filename: (path) => path.split("/").pop() },
+            Zotero: {
+                Items: { get: () => false },
+                Attachments: {
+                    async importFromFile(options) {
+                        imports.push(options);
+                        return { id: 99 };
+                    },
                 },
             },
         },
-    });
+        {
+            "./attachmentNaming": loadModule("attachmentNaming", {}),
+            "../utils/locale": { getString: () => "双语对照" },
+        },
+    );
     await PDF2zhHelperFactory.addAttachment({
         item: {
             isAttachment: () => true,
@@ -133,5 +141,5 @@ test("attachment import handles an unavailable parent returned as false", async 
     });
     assert.equal(imports.length, 1);
     assert.equal(imports[0].parentItemID, 42);
-    assert.equal(imports[0].title, "openai-dual");
+    assert.equal(imports[0].title, "paper-dual · 双语对照");
 });

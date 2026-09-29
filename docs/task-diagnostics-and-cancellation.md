@@ -40,6 +40,19 @@
 - 插件在 Zotero 数据目录保存诊断 JSONL，2 MiB/份、1 份备份；写入排队有界；服务日志由后台线程落盘，磁盘延迟不阻塞任务取消。
 - 白名单记录状态、页码、操作、请求类别、状态码、耗时、Token、错误类别和源码调用栈。排除异常消息、源代码行、局部变量、PDF 名称/内容、提示词、响应正文、密钥、接口地址和个人目录。
 
+### 配置与结果证据
+
+- `requestedConfiguration` 来自该任务保存的提交参数，包含服务类型、显式模型、协议、QPS、并发及语言；不读取导出时的当前偏好设置。模型未显式填写时不猜测默认值。
+- `effectiveConfiguration` 来自翻译子进程完成初始化后的实际 translator 和 BabelDOC 配置，包含解析后的模型、已确定的协议和实际 QPS/并发。服务商预设可能调整参数，因此两组配置单独保留；初始化失败或旧任务未记录时明确显示缺失。
+- `provider` 是服务类型/预设（如 `deepseek`、`openaicompatible`），不是从接口地址推断的实际运营商；自定义中转站仍不导出其地址。模型标识支持 `org/model:tag`，限制长度并过滤 URL、绝对路径和常见凭据形式。
+- 每轮尝试以 `task_configuration` 记录配置，实际配置随任务快照持久化。补译清除上轮实际配置，记录新一轮的 QPS/并发，保留历史轮次的日志。
+- 任务快照保留 `translationSummary`、`qualitySummary`、请求分类统计、HTTP 状态码/错误类型计数及 Token 统计。`request_summary.requests.attempts` 是请求次数，`request_summary.tokens.total` 是 Token 总数，两者不再通过同名字段合并。
+- `failedParagraphs` 仅保留页码、尝试次数、错误类型、HTTP 状态码和白名单 `providerCode`（如 `insufficient_quota`、`rate_limit_exceeded`）；不导出段落正文、哈希标识和自由文本原因。明细最多 2000 项，超限设置 `failedParagraphsTruncated`，完整数量仍见段落统计。
+- 摘要展示任务配置、翻译完成情况和 429/超时数量；明确 12/12 页处理完成或 PDF 已导入不等于所有段落翻译成功。429 本身不用于断言具体是频率限制还是额度问题。
+- 插件保存两组任务配置供离线导出使用；在线导出优先采用服务端最新任务快照。插件磁盘与内存中的相同记录去重后按时间排序、限量保留。高频状态日志不重复写入完整请求统计和失败段落明细。
+
+以上均为 `schemaVersion=1` 的可选字段扩展。旧服务和离线任务仍可导出，缺失信息不会用当前配置或零值补造。旧 ZIP 中已丢弃的配置无法追溯恢复。
+
 | 接口 | 返回 |
 |---|---|
 | `GET /diagnostics` | 全局诊断快照 |

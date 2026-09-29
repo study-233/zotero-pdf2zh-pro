@@ -738,6 +738,17 @@ async def translate_pdf_with_callbacks(
                 metrics_collector.record_stage("Initialization", time.monotonic() - initialization_started_at)
         translation_config.cancel_event = cancel_event
         translation_config.diagnostic_callback = progress_callback
+        if progress_callback is not None:
+            from diagnostics import safe_fields
+            progress_callback({"type": "diagnostic_configuration", "effectiveConfiguration": safe_fields({
+                "provider": payload["service"],
+                "model": getattr(translation_config.translator, "model", None),
+                "protocol": getattr(translation_config.translator, "resolved_protocol", None),
+                "qps": getattr(translation_config, "qps", None),
+                "poolSize": translation_config.pool_max_workers,
+                "sourceLang": getattr(translation_config, "lang_in", payload.get("source_lang")),
+                "targetLang": getattr(translation_config, "lang_out", payload.get("target_lang")),
+            })})
         translation_config.semantic_review = bool(payload.get("semantic_review", False))
         translation_config.review_attempt = int(payload.get("review_attempt", payload.get("repair_attempt", 1)))
         translation_config.glossary_entries = payload.get("glossary_entries") or []

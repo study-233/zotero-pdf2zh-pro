@@ -396,16 +396,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 color: #555;
             }
 
-            .error {
-                margin-top: 8px;
-                color: #a40e26;
-                font-size: 12px;
-                white-space: pre-wrap;
-                word-break: break-word;
-                border-left: 3px solid #e2aaa6;
-                padding-left: 8px;
-            }
-
             .actions {
                 margin-top: 9px;
                 display: flex;
@@ -1105,11 +1095,13 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             .error {
                 margin: 0 16px 12px;
-                padding: 10px 12px;
-                border: 1px solid var(--error-tint);
+                padding: 8px 12px;
+                border: 1px solid var(--border);
                 border-radius: 8px;
-                background: var(--error-tint);
-                color: var(--error);
+                background: var(--surface-subtle);
+                color: var(--text-primary);
+                font-size: 12px;
+                font-weight: 600;
                 line-height: 18px;
             }
 
@@ -1774,11 +1766,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                               task.currentPage &&
                               task.stage ===
                                   "Parse PDF and Create Intermediate Representation"
-                            ? `正在解析第 ${task.currentPage} 页 · ${{ page_start: "页面解析", page_end: "页面完成", font: "字体字形", resources: "图形资源", content_stream: "页面内容流" }[task.operation] || "解析中"}`
+                            ? `解析第 ${task.currentPage} 页`
                             : formatActivityStage(task),
-                    task.status === "running" && task.lastProgressAt
-                        ? `${task.stage === "Parse PDF and Create Intermediate Representation" && task.completedPages !== undefined ? `已完成 ${task.completedPages}/${task.totalPages} 页` : formatStageProgress(task)} · ${task.stalled ? "较长时间无进展 · " : ""}距上次进展 ${Math.max(0, Math.floor((Date.now() - Date.parse(task.lastProgressAt)) / 1000))} 秒`
-                        : formatStageProgress(task),
+                    formatStageProgress(task),
                     fontAssetStage
                         ? "字体准备完成后开始翻译"
                         : `${Math.round(overallProgress)}%`,
@@ -1815,20 +1805,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 setTextContent(view.qualitySummary, qualityText);
                 setNodeHidden(view.qualitySummary, !qualityText);
 
-                const errorText = [
-                    task.importError || task.error,
-                    formatDiagnostics(task.errorDiagnostics),
-                    (task.failedParagraphs || [])
-                        .map(
-                            (p) =>
-                                `第 ${p.page} 页 · ${p.paragraphId} · ${p.attempts} 次请求 · ${p.reason || p.errorType}`,
-                        )
-                        .join("\n"),
-                ]
-                    .filter(Boolean)
-                    .join("\n\n");
-                setTextContent(view.error, errorText);
-                setNodeHidden(view.error, !errorText);
+                const errorSummary = getErrorSummary(task);
+                setTextContent(view.error, errorSummary);
+                setNodeHidden(view.error, !errorSummary);
 
                 const metrics = task.metrics;
                 if (metrics) {
@@ -2184,29 +2163,68 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     task.stage === "Translate Paragraphs" &&
                     activity
                 ) {
-                    if (activity.fallbackPending > 0) return "拆段处理";
-                    if (activity.retrying > 0) return "重试等待";
+                    if (activity.fallbackPending > 0) return "翻译中·拆段处理";
+                    if (activity.retrying > 0) return "翻译中·等待重试";
                     if (activity.oldestRequestSeconds != null)
-                        return "等待响应";
-                    if (activity.queued > 0) return "等待处理";
+                        return "翻译中·等待响应";
+                    if (activity.queued > 0) return "翻译中·等待处理";
                 }
                 return formatStage(task.stage);
             }
 
             function formatStage(stage) {
-                if (stage === "Check Fonts") {
-                    return "检查字体缓存";
-                }
-                if (stage === "Download Fonts") {
-                    return "下载字体资源（首次初始化，仅需一次）";
-                }
-                return stage || "等待中";
+                const mapping = {
+                    "Queue Wait": "排队中",
+                    Initialization: "初始化中",
+                    "Font Preparation": "准备字体",
+                    "Check Fonts": "检查字体",
+                    "Download Fonts": "下载字体",
+                    "Parse PDF and Create Intermediate Representation":
+                        "解析文档",
+                    DetectScannedFile: "检测扫描页",
+                    "Detect Scanned Pages": "检测扫描页",
+                    "Parse Page Layout": "识别版面",
+                    "Parse Table": "识别表格",
+                    "Parse Paragraphs": "识别段落",
+                    "Parse Formulas and Styles": "识别公式",
+                    "Automatic Term Extraction": "提取术语",
+                    "Extract Terms": "提取术语",
+                    "Translate Paragraphs": "翻译正文",
+                    "Semantic Review": "校对译文",
+                    Typesetting: "调整排版",
+                    "Document Layout": "调整排版",
+                    "Add Fonts": "嵌入字体",
+                    "Generate drawing instructions": "生成文档",
+                    "Subset font": "精简字体",
+                    "Save PDF": "保存文档",
+                    "Write PDF": "保存文档",
+                    Finalize: "收尾中",
+                    queued: "排队中",
+                    running: "处理中",
+                    cancelling: "正在终止",
+                    completed: "已完成",
+                    incomplete: "未完成",
+                    failed: "失败",
+                    cancelled: "已终止",
+                };
+                if (!stage) return "等待中";
+                return Object.prototype.hasOwnProperty.call(mapping, stage)
+                    ? mapping[stage]
+                    : "处理中";
             }
 
             function formatStageProgress(task) {
                 const progress = Math.round(task.stageProgress || 0);
                 const current = task.stageCurrent || 0;
                 const total = task.stageTotal || 0;
+                if (
+                    task.status === "running" &&
+                    task.stage ===
+                        "Parse PDF and Create Intermediate Representation" &&
+                    task.completedPages !== undefined
+                ) {
+                    return `${progress}% · 已完成 ${task.completedPages}/${task.totalPages} 页`;
+                }
                 if (task.stage === "Check Fonts") {
                     return `${progress}% (${current}/${total} 个)`;
                 }
@@ -2369,25 +2387,105 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 return `${hours} 小时 ${minutes % 60} 分`;
             }
 
-            function formatDiagnostics(diagnostics) {
-                if (!Array.isArray(diagnostics) || diagnostics.length === 0) {
-                    return "";
+            function getErrorSummary(task) {
+                if (task.importState === "failed" || task.importError) {
+                    return "结果导入失败，暂未能确定原因。";
                 }
-                return diagnostics
-                    .map((diagnostic) => {
-                        const line = [
-                            `[${diagnostic.severity || "info"}]`,
-                            diagnostic.code || "diagnostic",
-                            diagnostic.message || "",
-                        ]
-                            .filter(Boolean)
-                            .join(" ");
-                        if (diagnostic.suggestion) {
-                            return `${line}\n建议: ${diagnostic.suggestion}`;
-                        }
-                        return line;
-                    })
-                    .join("\n");
+                const paragraphs = task.failedParagraphs || [];
+                const hasFailure =
+                    paragraphs.length > 0 ||
+                    task.translationSummary?.failed > 0 ||
+                    task.error ||
+                    task.status === "failed";
+                if (!hasFailure) return "";
+
+                const reasons = new Map();
+                const addReason = (reason) => {
+                    if (reason)
+                        reasons.set(reason, (reasons.get(reason) || 0) + 1);
+                };
+                for (const paragraph of paragraphs) {
+                    addReason(
+                        translationFailureReason(
+                            `${paragraph.providerCode || ""} ${paragraph.errorType || ""} ${paragraph.reason || ""}`,
+                        ),
+                    );
+                }
+                addReason(translationFailureReason(task.error || ""));
+                const diagnosticReasons = {
+                    network_tls: "翻译服务的安全证书验证失败",
+                    llm_client_restricted: "服务商不允许当前客户端调用",
+                    llm_protocol: "翻译服务不支持当前接口协议",
+                    font_asset_download: "所需字体下载失败",
+                    pdf_text_layer_cid: "PDF 文字编码无法正常识别",
+                    llm_response_shape: "翻译服务未返回完整译文",
+                    llm_model: "所选模型不可用",
+                    llm_parameters: "翻译请求参数不受支持",
+                    llm_auth: "翻译服务的密钥验证失败",
+                    llm_rate_limit: "翻译服务限制了请求，可能是频率或额度受限",
+                    output_missing: "未能生成翻译后的 PDF",
+                    invalid_page_range: "页码设置排除了全部页面",
+                };
+                for (const diagnostic of task.errorDiagnostics || []) {
+                    if (diagnostic.code === "network_connectivity") {
+                        addReason(
+                            /超时|timeout|timed out/i.test(
+                                diagnostic.message || "",
+                            )
+                                ? "翻译服务响应超时"
+                                : "无法连接翻译服务",
+                        );
+                    } else if (
+                        Object.prototype.hasOwnProperty.call(
+                            diagnosticReasons,
+                            diagnostic.code,
+                        )
+                    ) {
+                        addReason(diagnosticReasons[diagnostic.code]);
+                    }
+                }
+                const labels = Array.from(reasons)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([reason]) => reason);
+                if (!labels.length) return "未能翻译：暂未能确定原因。";
+                return `未能翻译：${labels.slice(0, 2).join("；")}${labels.length > 2 ? "等问题" : ""}。`;
+            }
+
+            function translationFailureReason(value) {
+                const rules = [
+                    [/insufficient_quota/i, "翻译服务额度不足"],
+                    [
+                        /AuthenticationError|invalid_api_key/i,
+                        "翻译服务的密钥验证失败",
+                    ],
+                    [
+                        /PermissionDeniedError|permission_denied/i,
+                        "没有调用翻译服务的权限",
+                    ],
+                    [/model_not_found/i, "所选模型不可用"],
+                    [
+                        /APITimeoutError|ConnectTimeout|ReadTimeout|TimeoutError|timed out/i,
+                        "翻译服务响应超时",
+                    ],
+                    [
+                        /APIConnectionError|ConnectError|ConnectionError/i,
+                        "无法连接翻译服务",
+                    ],
+                    [/InternalServerError/i, "翻译服务异常"],
+                    [
+                        /RateLimitError|rate_limit_exceeded/i,
+                        "翻译服务限制了请求，可能是频率或额度受限",
+                    ],
+                    [/semantic_error_unresolved/i, "部分译文校对未通过"],
+                    [/InvalidTranslation/i, "翻译服务返回的译文不符合要求"],
+                    [
+                        /UnprocessedParagraph|paragraph_not_completed/i,
+                        "部分段落尚未处理完成",
+                    ],
+                ];
+                return (
+                    rules.find(([pattern]) => pattern.test(value))?.[1] || ""
+                );
             }
 
             function canDelete(task) {

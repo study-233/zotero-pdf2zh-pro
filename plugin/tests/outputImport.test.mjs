@@ -6,6 +6,9 @@ import test from "node:test";
 import { URL } from "node:url";
 import ts from "typescript";
 
+const naming = await import(
+    `data:text/javascript;base64,${Buffer.from(ts.transpileModule(fs.readFileSync(new URL("../src/modules/attachmentNaming.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText).toString("base64")}`
+);
 const state = {};
 globalThis.PathUtils = {
     tempDir: "/virtual/temp",
@@ -55,8 +58,12 @@ globalThis.Zotero = {
     Reader: { open: (id) => state.opened.push(id) },
 };
 globalThis.__outputImportTest = {
+    ...naming,
+    getString: (key) => (key.endsWith("mono") ? "译文" : "双语对照"),
     getPref: (key) =>
-        key === "openAfterTranslate" ? state.openAfterProcess : false,
+        key === "openAfterTranslate"
+            ? state.openAfterProcess
+            : state.prefs[key],
 };
 
 const source = fs
@@ -64,18 +71,20 @@ const source = fs
         new URL("../src/modules/pdf2zhHelper.ts", import.meta.url),
         "utf8",
     )
-    .replace(/^import .*;$/gm, "");
+    .replace(/^import[\s\S]*?;\r?\n/gm, "");
 const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.ESNext },
 }).outputText;
 const { PDF2zhHelperFactory } = await import(
     `data:text/javascript;base64,${Buffer.from(
-        "const {getPref} = globalThis.__outputImportTest;\n" + compiled,
+        "const {getPref,getString,DEFAULT_TITLE_TEMPLATE,buildTitleMetadata,renderAttachmentTitle} = globalThis.__outputImportTest;\n" +
+            compiled,
     ).toString("base64")}`
 );
 
 function reset() {
     Object.assign(state, {
+        prefs: {},
         nextId: 0,
         directories: new Set(),
         files: new Map(),
@@ -224,5 +233,132 @@ test("partial and repaired imports retain distinct titles even with renaming dis
     assert.deepEqual(
         state.imports.map((i) => i.bytes),
         [[11], [22]],
+    );
+});
+
+test("title metadata uses the parent, while standalone attachments use the source filename", () => {
+    reset();
+    const fields = {
+        shortTitle: "Short",
+        title: "Complete title",
+        firstCreator: "Author et al.",
+        date: "2024-02-01",
+    };
+    const parent = {
+        getField: (key) => fields[key],
+        isAttachment: () => false,
+    };
+    globalThis.Zotero.Items = { get: () => parent };
+    const child = { isAttachment: () => true, parentItemID: 10 };
+    assert.deepEqual(
+        PDF2zhHelperFactory.getTitleMetadata(child, "original.pdf"),
+        {
+            title: "Short",
+            fullTitle: "Complete title",
+            author: "Author et al.",
+            year: "2024",
+        },
+    );
+    fields.shortTitle = "";
+    assert.equal(
+        PDF2zhHelperFactory.getTitleMetadata(parent, "original.pdf").title,
+        "Complete title",
+    );
+    assert.equal(
+        PDF2zhHelperFactory.getTitleMetadata(
+            { isAttachment: () => true },
+            "original.pdf",
+        ).title,
+        "original",
+    );
+});
+
+test("custom naming changes only imported titles and preserves both output status suffixes", async () => {
+    reset();
+    const item = { id: 1, libraryID: 1, isAttachment: () => false };
+    const settings = {
+        options: {
+            rename: true,
+            titleTemplate: "{author} {year} · {title} · {targetLang} · {type}",
+            openAfterProcess: false,
+        },
+        metadata: {
+            title: "Paper",
+            fullTitle: "Paper full",
+            author: "Writer",
+            year: "2024",
+        },
+    };
+    for (const outputMode of ["mono", "dual"]) {
+        await PDF2zhHelperFactory.handleOutputResponse(
+            {
+                fileName: `unchanged.${outputMode}.pdf`,
+                outputMode,
+                bytes: new Uint8Array([1]),
+                titleSuffix: "未完成·剩余 6 段·第 1 次",
+            },
+            item,
+            { service: "openai", sourceLang: "en", targetLang: "zh-CN" },
+            () => true,
+            settings,
+        );
+    }
+    assert.equal(
+        state.imports[0].title,
+        "Writer 2024 · Paper · zh-CN · 译文（未完成·剩余 6 段·第 1 次）",
+    );
+    assert.equal(
+        state.imports[1].title,
+        "Writer 2024 · Paper · zh-CN · 双语对照（未完成·剩余 6 段·第 1 次）",
+    );
+    assert.equal(
+        path.posix.basename(state.imports[0].file),
+        "unchanged.mono.pdf",
+    );
+    assert.equal(
+        path.posix.basename(state.imports[1].file),
+        "unchanged.dual.pdf",
+    );
+});
+
+test("imported attachment titles use output model, never the current profile model", async () => {
+    reset();
+    const settings = {
+        options: {
+            rename: true,
+            titleTemplate: "{title} {model} {type}",
+            openAfterProcess: false,
+        },
+        metadata: { title: "Paper", fullTitle: "Paper", author: "", year: "" },
+    };
+    for (const model of ["original-model", undefined]) {
+        await PDF2zhHelperFactory.handleOutputResponse(
+            {
+                fileName: "paper.dual.pdf",
+                outputMode: "dual",
+                model,
+                bytes: new Uint8Array([1]),
+                titleSuffix: "完整·第 2 次",
+            },
+            { id: 1, libraryID: 1, isAttachment: () => false },
+            {
+                service: "openai",
+                apiConfig: { model: "current-model" },
+            },
+            () => true,
+            settings,
+        );
+    }
+    assert.deepEqual(
+        state.imports.map(({ title }) => title),
+        [
+            "Paper original-model 双语对照（完整·第 2 次）",
+            "Paper 双语对照（完整·第 2 次）",
+        ],
+    );
+    assert.ok(
+        state.imports.every(
+            ({ file }) => path.posix.basename(file) === "paper.dual.pdf",
+        ),
     );
 });

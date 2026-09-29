@@ -5,7 +5,11 @@ export type TaskEventStreamState = "connecting" | "open" | "error" | "closed";
 type TaskEventStreamEntry = {
     source: EventSource;
     state: TaskEventStreamState;
+    lastActivityAt: number;
+    activityExpectedSince?: number;
 };
+
+const STREAM_STALE_MS = 30_000;
 
 type TaskEventStreamCallbacks = {
     onTaskEvent: (serverUrl: string, event: ServerTaskEvent) => void;
@@ -18,7 +22,7 @@ export class TaskEventStream {
 
     constructor(private callbacks: TaskEventStreamCallbacks) {}
 
-    sync(serverUrls: Set<string>): void {
+    sync(serverUrls: Set<string>, activeServerUrls = new Set<string>()): void {
         for (const [serverUrl, entry] of this.streams) {
             if (!serverUrls.has(serverUrl)) {
                 entry.source.close();
@@ -28,6 +32,28 @@ export class TaskEventStream {
         }
 
         for (const serverUrl of serverUrls) {
+            const entry = this.streams.get(serverUrl);
+            const now = Date.now();
+            if (entry) {
+                entry.activityExpectedSince = activeServerUrls.has(serverUrl)
+                    ? (entry.activityExpectedSince ?? now)
+                    : undefined;
+                // SSE comments are invisible to EventSource. Only expect task
+                // messages while work is active; idle subscriptions may be quiet.
+                const expectedSince =
+                    entry.state === "open"
+                        ? entry.activityExpectedSince
+                        : entry.lastActivityAt;
+                if (
+                    expectedSince !== undefined &&
+                    now - Math.max(expectedSince, entry.lastActivityAt) >=
+                        STREAM_STALE_MS
+                ) {
+                    entry.source.close();
+                    this.streams.delete(serverUrl);
+                    this.setState(serverUrl, "error");
+                }
+            }
             if (!this.streams.has(serverUrl)) {
                 this.open(serverUrl);
             }
@@ -67,14 +93,23 @@ export class TaskEventStream {
             return;
         }
 
-        const source = new EventSourceConstructor(`${serverUrl}/tasks/events`);
+        let source: EventSource;
+        try {
+            source = new EventSourceConstructor(`${serverUrl}/tasks/events`);
+        } catch (error) {
+            this.setState(serverUrl, "error");
+            ztoolkit.log("创建任务进度事件连接失败", error);
+            return;
+        }
         this.streams.set(serverUrl, {
             source,
             state: "connecting",
+            lastActivityAt: Date.now(),
         });
 
         source.onopen = () => {
             if (this.streams.get(serverUrl)?.source !== source) return;
+            this.streams.get(serverUrl)!.lastActivityAt = Date.now();
             this.setState(serverUrl, "open");
         };
         source.onmessage = (message) => {
@@ -85,6 +120,7 @@ export class TaskEventStream {
             } catch (_error) {
                 return;
             }
+            this.streams.get(serverUrl)!.lastActivityAt = Date.now();
             this.callbacks.onTaskEvent(serverUrl, event);
         };
         source.onerror = () => {

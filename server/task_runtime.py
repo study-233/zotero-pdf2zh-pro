@@ -89,7 +89,7 @@ def child_entry(payload, identity, cancel, gate, stack_request, telemetry, contr
             with progress_lock:
                 progress_sequence += 1
                 value = {**value, "progressSequence": progress_sequence}
-        if kind == 'progress' and (value.get('type') in {'progress_start','progress_end','translation_summary'} or value.get('operation') in {'page_start','page_end'}):
+        if kind == 'progress' and (value.get('type') in {'progress_start','progress_end','translation_summary','diagnostic_configuration'} or value.get('operation') in {'page_start','page_end'}):
             send_control('progress',value)
             return
         try: outgoing.put_nowait((kind,identity,value))
@@ -279,7 +279,7 @@ def run_translation(payload, task_id, *, cancel_event, progress_callback, metric
                 except psutil.Error: pass
                 runtime_callback(detail); store.record('resource_sample',{**identity,**detail})
                 request=latest_metrics.get('requests',{}); tokens=latest_metrics.get('tokens',{})
-                store.record('request_summary',{**identity, **request, **tokens})
+                store.record('request_summary',{**identity, **request, 'requests': request, 'tokens': tokens})
             if idle>=60 and snapshots<3 and (not last_snapshot or now-last_snapshot>=300):
                 stack.set(); last_snapshot=now; snapshots+=1; store.record('stall_snapshot',{**identity,'idleSeconds':idle})
             if cancellation_started is not None:
@@ -319,6 +319,9 @@ def run_translation(payload, task_id, *, cancel_event, progress_callback, metric
         process.join(timeout=.1)
         if terminal_metrics is not None:
             metrics_callback(terminal_metrics)
+            request = terminal_metrics.get('requests', {})
+            store.record('request_summary', {**identity, **request, 'requests': request,
+                                            'tokens': terminal_metrics.get('tokens', {})})
         store.record('worker_exited',{**identity,'exitCode':process.exitcode or 0,'elapsedSeconds':time.monotonic()-started})
         if cancel_event.is_set():
             runtime_callback({'cancelPhase':'cancelled','cancelReason':'forced' if phase in {'terminating','killing'} else 'user'})

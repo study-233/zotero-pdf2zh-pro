@@ -186,7 +186,8 @@ globalThis.ztoolkit = {
 };
 globalThis.IOUtils = { read: async () => bytes };
 const ui = await asModule(
-    "const {config,version,getLocaleID,getPref,setPref,axios,loadGlossaryEntries,importGlossaryCsv,clearGlossaryEntries,listGlossaryPacks,checkGlossaryUpdates,downloadGlossaryPack,cancelGlossaryDownload,removeGlossaryPack,getSelectedGlossaryPackIds,setSelectedGlossaryPackIds,supportsGlossaryPackLanguage}=globalThis.__glossaryUiTest;\n" +
+    "const registerAttachmentNamingPreferences = () => {};\n" +
+        "const {config,version,getLocaleID,getPref,setPref,axios,loadGlossaryEntries,importGlossaryCsv,clearGlossaryEntries,listGlossaryPacks,checkGlossaryUpdates,downloadGlossaryPack,cancelGlossaryDownload,removeGlossaryPack,getSelectedGlossaryPackIds,setSelectedGlossaryPackIds,supportsGlossaryPackLanguage}=globalThis.__glossaryUiTest;\n" +
         compile("preferenceScript") +
         "\nexport {importGlossary,refreshGlossarySummary,refreshServerVersion,refreshGlossaryPacks,renderGlossaryPacks,runGlossaryPackAction};",
 );

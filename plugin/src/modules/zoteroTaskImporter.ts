@@ -71,6 +71,13 @@ export class ZoteroTaskImporter {
         });
 
         try {
+            const settings = {
+                options: PDF2zhHelperFactory.getPDFOptions(),
+                metadata: PDF2zhHelperFactory.getTitleMetadata(
+                    item,
+                    task.fileName,
+                ),
+            };
             const importedOutputs = [...(task.importedOutputs || [])];
             for (const outputMode of task.outputModes) {
                 if (!isCurrent()) return;
@@ -94,6 +101,7 @@ export class ZoteroTaskImporter {
                     fileName,
                     outputMode,
                     bytes,
+                    model: task.model || "",
                     titleSuffix:
                         task.status === "incomplete"
                             ? `未完成·剩余 ${(task.translationSummary?.failed || 0) + (task.translationSummary?.pending || 0)} 段·第 ${attempt} 次`
@@ -107,9 +115,12 @@ export class ZoteroTaskImporter {
                     {
                         ...PDF2zhHelperFactory.getServerConfig(false),
                         service: task.service,
+                        sourceLang: task.sourceLang || "",
+                        targetLang: task.targetLang || "",
                         outputModes: task.outputModes,
                     },
                     isCurrent,
+                    settings,
                 );
                 if (!isCurrent()) return;
                 importedOutputs.push(outputKey);

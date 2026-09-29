@@ -3,17 +3,42 @@ import { config, version } from "../../package.json";
 const MAX_PACKAGE = 20 * 1024 * 1024;
 const MAX_LOG = 2 * 1024 * 1024;
 const numeric = new Set(
-    "schemaVersion averageLatencyMs p95LatencyMs qps10s stageElapsedSeconds promptTokens completionTokens totalTokens succeeded failed pending translated attempt revision stageCurrent stageTotal stageProgress overallProgress currentPage selectedPage completedPages totalPages fontParseCount fontCacheHits fontObject operations idleSeconds latencyMs statusCode input output total active retries count pid cpuPercent rssBytes parentCpuPercent parentRssBytes exitCode elapsedSeconds droppedLogRecords line".split(
+    "schemaVersion averageLatencyMs p95LatencyMs qps10s stageElapsedSeconds promptTokens completionTokens totalTokens succeeded failed pending translated attempt attempts revision stageCurrent stageTotal stageProgress overallProgress currentPage selectedPage completedPages totalPages fontParseCount fontCacheHits fontObject operations idleSeconds latencyMs statusCode input output total active retries count pid cpuPercent rssBytes parentCpuPercent parentRssBytes exitCode elapsedSeconds droppedLogRecords line qps poolSize page skipped selected checked passed corrected unchecked notSelected requestsUsed requestLimit paragraphLimit hits misses hitRate hitTokens missTokens reasoning visibleOutputChars".split(
         " ",
     ),
 );
 const strings = new Set(
-    "event status operation cancelPhase cancelReason kind protocol taskId serverInstanceId time createdAt updatedAt lastProgressAt heartbeatAt lastRequestAt importState file function stage errorType retryReason finishReason python os architecture serviceVersion babeldocVersion pdf2zhVersion".split(
+    "event status operation cancelPhase cancelReason kind taskId serverInstanceId time createdAt updatedAt lastProgressAt heartbeatAt lastRequestAt importState file function stage retryReason finishReason python os architecture serviceVersion babeldocVersion pdf2zhVersion".split(
         " ",
     ),
 );
 const containers = new Set(
-    "tasks records frames environment progress".split(" "),
+    "tasks records frames environment progress requestedConfiguration effectiveConfiguration translationSummary qualitySummary metrics requests tokens byKind translation review initialization localCache providerCache".split(
+        " ",
+    ),
+);
+const labels = new Set(
+    "provider service model sourceLang targetLang".split(" "),
+);
+const errorTypes = new Set(
+    "ReadTimeout ConnectTimeout TimeoutError APITimeoutError RateLimitError APIConnectionError APIStatusError AuthenticationError PermissionDeniedError NotFoundError BadRequestError InternalServerError InvalidTranslation UnprocessedParagraph RuntimeError ValueError CancelledError ConnectionError".split(
+        " ",
+    ),
+);
+const countMaps: Record<string, Set<string>> = {
+    statusCodes: new Set(["unknown"]),
+    errorTypes,
+    finishReasons: new Set(
+        "stop length content_filter tool_calls function_call completed incomplete failed cancelled max_output_tokens other".split(
+            " ",
+        ),
+    ),
+    protocols: new Set(["auto", "chat_completions", "responses"]),
+};
+const providerCodes = new Set(
+    "model_not_found invalid_api_key insufficient_quota rate_limit_exceeded permission_denied".split(
+        " ",
+    ),
 );
 const flags = new Set([
     "stalled",
@@ -21,11 +46,18 @@ const flags = new Set([
     "truncated",
     "queueBlocked",
     "success",
+    "canRepair",
+    "canDownloadResult",
+    "failedParagraphsTruncated",
 ]);
 
 /** Independent export boundary: exclude arbitrary server fields, bodies and messages. */
-export function safeDiagnostic(value: unknown): unknown {
-    if (Array.isArray(value)) return value.slice(-20000).map(safeDiagnostic);
+export function safeDiagnostic(value: unknown, depth = 0): unknown {
+    if (depth > 10) return undefined;
+    if (Array.isArray(value))
+        return value
+            .slice(-20000)
+            .map((item) => safeDiagnostic(item, depth + 1));
     if (!value || typeof value !== "object") return undefined;
     const out: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value)) {
@@ -37,15 +69,136 @@ export function safeDiagnostic(value: unknown): unknown {
             out[key] = item;
         else if (flags.has(key) && typeof item === "boolean") out[key] = item;
         else if (
+            labels.has(key) &&
+            typeof item === "string" &&
+            item.length <= 200 &&
+            /^[a-zA-Z0-9][a-zA-Z0-9_.-]*(?:[/:][a-zA-Z0-9][a-zA-Z0-9_.-]*)*$/.test(
+                item,
+            ) &&
+            !/(?:sk-|Bearer|api[_-]?key|token=)/i.test(item)
+        )
+            out[key] = item;
+        else if (
+            key === "providerCode" &&
+            typeof item === "string" &&
+            providerCodes.has(item)
+        )
+            out[key] = item;
+        else if (
+            key === "errorType" &&
+            typeof item === "string" &&
+            errorTypes.has(item)
+        )
+            out[key] = item;
+        else if (
+            key === "protocol" &&
+            typeof item === "string" &&
+            countMaps.protocols.has(item)
+        )
+            out[key] = item;
+        else if (
+            key === "availability" &&
+            typeof item === "string" &&
+            ["complete", "partial", "unavailable"].includes(item)
+        )
+            out[key] = item;
+        else if (
+            Object.hasOwn(countMaps, key) &&
+            item &&
+            typeof item === "object" &&
+            !Array.isArray(item)
+        ) {
+            out[key] = Object.fromEntries(
+                Object.entries(item).filter(
+                    ([name, count]) =>
+                        (countMaps[key].has(name) ||
+                            (key === "statusCodes" &&
+                                /^[1-5][0-9]{2}$/.test(name))) &&
+                        typeof count === "number" &&
+                        Number.isSafeInteger(count) &&
+                        count >= 0,
+                ),
+            );
+        } else if (key === "failedParagraphs" && Array.isArray(item)) {
+            out[key] = item
+                .slice(0, 2000)
+                .filter((row) => row && typeof row === "object")
+                .map((row) =>
+                    safeDiagnostic(
+                        Object.fromEntries(
+                            Object.entries(row).filter(([name]) =>
+                                [
+                                    "page",
+                                    "attempts",
+                                    "errorType",
+                                    "statusCode",
+                                    "providerCode",
+                                ].includes(name),
+                            ),
+                        ),
+                        depth + 1,
+                    ),
+                );
+            if (item.length > 2000) out.failedParagraphsTruncated = true;
+        } else if (
             strings.has(key) &&
             typeof item === "string" &&
             /^[a-zA-Z0-9_. :+-]{1,120}$/.test(item) &&
             !/\b(?:sk-|Bearer|api[_-]?key|token=)/i.test(item)
         )
             out[key] = item;
-        else if (containers.has(key)) out[key] = safeDiagnostic(item);
+        else if (containers.has(key))
+            out[key] = safeDiagnostic(item, depth + 1);
     }
     return out;
+}
+
+/** Summary uses only task snapshots, never the user's currently selected preferences. */
+export function diagnosticSummary(task: Record<string, any>): string {
+    const safe = safeDiagnostic(task) as Record<string, any>;
+    const requested = safe.requestedConfiguration;
+    const effective = safe.effectiveConfiguration;
+    const lines = [
+        `任务：${safe.taskId || "未知"}；状态：${safe.status || "未知"}；尝试：${safe.attempt ?? "未知"}`,
+    ];
+    for (const [label, values] of [
+        ["提交配置", requested],
+        ["实际生效配置", effective],
+    ] as const) {
+        lines.push(
+            `${label}：${values ? `服务类型=${values.provider ?? "未记录"}，模型=${values.model ?? "未记录"}，协议=${values.protocol ?? "未记录"}，QPS=${values.qps ?? "未记录"}，并发=${values.poolSize ?? "未记录"}` : "未记录（旧版本或尚未完成初始化）"}`,
+        );
+    }
+    const translation = safe.translationSummary;
+    if (translation)
+        lines.push(
+            `段落：成功=${translation.succeeded ?? "未知"}，失败=${translation.failed ?? "未知"}，待译=${translation.pending ?? "未知"}，跳过=${translation.skipped ?? "未知"}`,
+        );
+    const requests = safe.metrics?.requests;
+    if (requests) {
+        const codes = requests.statusCodes || {};
+        const errors = requests.errorTypes || {};
+        const timeouts = [
+            "APITimeoutError",
+            "TimeoutError",
+            "ReadTimeout",
+            "ConnectTimeout",
+        ].reduce((sum, key) => sum + (errors[key] || 0), 0);
+        lines.push(
+            `模型请求（含初始化和重试）：尝试=${requests.attempts ?? "未知"}，成功=${requests.succeeded ?? "未知"}，失败=${requests.failed ?? "未知"}，重试=${requests.retries ?? "未知"}，429=${requests.statusCodes ? (codes["429"] ?? 0) : "未记录"}，超时=${requests.errorTypes ? timeouts : "未记录"}`,
+        );
+        if (codes["429"])
+            lines.push(
+                "检测到 429；具体是请求频率、Token 限制还是额度不足，需结合 providerCode 或服务商后台确认。",
+            );
+    }
+    if (safe.status === "incomplete")
+        lines.push(
+            "任务已结束但仍未完成翻译；页面处理完成、PDF 已保存或已导入均不代表所有段落翻译成功。",
+        );
+    if (safe.failedParagraphsTruncated)
+        lines.push("失败段落明细超过上限，仅保留前 2000 项；总数见段落统计。");
+    return lines.join("\n") + "\n";
 }
 
 type DiagnosticRow = Record<string, unknown>;
@@ -65,6 +218,13 @@ export function recordDiagnostic(
     event: string,
     fields: Record<string, unknown> = {},
 ): void {
+    // Detailed outcomes belong to task.json; repeating them per progress event fills the log.
+    if (event === "task_state")
+        fields = Object.fromEntries(
+            Object.entries(fields).filter(
+                ([key]) => key !== "metrics" && key !== "failedParagraphs",
+            ),
+        );
     const row = safeDiagnostic({
         time: new Date().toISOString(),
         event,
@@ -263,16 +423,42 @@ async function collectAvailable(
     } catch {
         persistenceFailed = true;
     }
-    records = records.slice(-5000);
     if (task)
         records = records.filter(
             (row: any) => !row?.taskId || row.taskId === task.taskId,
         );
+    // The in-memory tail also exists on disk. Count each identical event once.
+    records = [
+        ...new Map(
+            records.filter(Boolean).map((row) => [JSON.stringify(row), row]),
+        ).values(),
+    ].sort((a: any, b: any) =>
+        String(a.time || "").localeCompare(String(b.time || "")),
+    );
+    const truncated = records.length > 5000;
+    records = records.slice(-5000);
+    const serverTask = (
+        server as { tasks?: Record<string, unknown>[] }
+    ).tasks?.find((row) => row.taskId === task?.taskId);
+    // Missing fields in a new attempt must not inherit a previous attempt's evidence.
+    const snapshot = serverTask
+        ? {
+              ...serverTask,
+              importState:
+                  serverTask.attempt === task?.attempt
+                      ? task?.importState
+                      : undefined,
+          }
+        : task || {};
     return {
-        "summary.txt": `PDF2ZH 诊断包\n生成时间：${new Date().toISOString()}\n插件：${config.addonName} ${version}\nZotero：${Zotero.version}\n${availability}\n${persistenceFailed ? "部分插件持久化日志不可用。\n" : ""}日志受容量限制，仅保留最近记录。\n不包含原论文、正文、密钥、接口地址或请求响应内容。\n`,
-        "task.json": JSON.stringify(safeDiagnostic(task || {}), null, 2),
+        "summary.txt": `PDF2ZH 诊断包\n生成时间：${new Date().toISOString()}\n插件：${config.addonName} ${version}\nZotero：${Zotero.version}\n${availability}\n${task ? diagnosticSummary(snapshot) : "任务配置和统计见 server.json 的 tasks。\n"}${persistenceFailed ? "部分插件持久化日志不可用。\n" : ""}${truncated ? "插件记录已截断。\n" : ""}日志受容量限制，仅保留最近记录。\n包含服务商、模型标识、任务参数及结构化错误代码；不包含原论文、正文、密钥、接口地址或请求响应内容。\n`,
+        "task.json": JSON.stringify(safeDiagnostic(snapshot), null, 2),
         "server.json": JSON.stringify(server, null, 2),
-        "plugin.json": JSON.stringify({ schemaVersion: 1, records }, null, 2),
+        "plugin.json": JSON.stringify(
+            { schemaVersion: 1, truncated, records },
+            null,
+            2,
+        ),
     };
 }
 
@@ -288,7 +474,7 @@ async function collect(
                 timer = setTimeout(
                     () =>
                         resolve({
-                            "summary.txt": `PDF2ZH 诊断包\n插件版本：${version}\n采集超过 10 秒，服务端或磁盘记录未完整取得；仅包含当前插件内存快照。\n`,
+                            "summary.txt": `PDF2ZH 诊断包\n插件版本：${version}\n采集超过 10 秒，服务端或磁盘记录未完整取得；仅包含当前插件内存快照。\n${task ? diagnosticSummary(task) : ""}包含服务商、模型标识和任务参数；不包含正文、密钥、接口地址或请求响应内容。\n`,
                             "task.json": JSON.stringify(
                                 safeDiagnostic(task || {}),
                             ),

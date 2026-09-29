@@ -26,8 +26,21 @@ globalThis.__importTest = {
         },
     },
     PDF2zhHelperFactory: {
-        getServerConfig: () => ({}),
-        handleOutputResponse: async (output) => {
+        getServerConfig: () => ({
+            sourceLang: "fr",
+            targetLang: "de",
+            apiConfig: { model: "different-current-model" },
+        }),
+        getPDFOptions: () => ({ rename: true, titleTemplate: state.template }),
+        getTitleMetadata: (_item, fileName) => ({ title: fileName }),
+        handleOutputResponse: async (
+            output,
+            _item,
+            config,
+            _isCurrent,
+            settings,
+        ) => {
+            state.configs.push({ config, settings });
             state.imports.push(output.outputMode);
             state.outputs.push(output);
             await state.onImport?.(output.outputMode);
@@ -52,6 +65,8 @@ const { ZoteroTaskImporter } = await import(
 
 function fixture(status = "completed", failed = 0) {
     state.downloads = [];
+    state.configs = [];
+    state.template = "{title} · {type}";
     state.outputs = [];
     state.imports = [];
     state.failMode = null;
@@ -61,6 +76,7 @@ function fixture(status = "completed", failed = 0) {
     state.updates = [];
     const task = {
         taskId: "one",
+        fileName: "original.pdf",
         itemID: 1,
         status,
         importState: "pending",
@@ -217,4 +233,40 @@ test("partial download failure can retry import without translation", async () =
     task.importState = "pending";
     await importer.importTaskOutputs("one");
     assert.deepEqual(state.imports, ["mono", "dual"]);
+});
+
+test("an import snapshots naming settings once and uses task languages instead of current preferences", async () => {
+    const { task, importer } = fixture();
+    task.sourceLang = "en";
+    task.targetLang = "ja";
+    task.model = "original-model";
+    state.onDownload = () => {
+        state.template = "Changed";
+    };
+    await importer.importTaskOutputs("one");
+    assert.equal(state.configs.length, 2);
+    assert.deepEqual(
+        state.outputs.map((output) => output.model),
+        ["original-model", "original-model"],
+    );
+    assert.equal(state.configs[0].settings, state.configs[1].settings);
+    for (const { config, settings } of state.configs) {
+        assert.equal(config.sourceLang, "en");
+        assert.equal(config.targetLang, "ja");
+        assert.equal(settings.options.titleTemplate, "{title} · {type}");
+        assert.equal(settings.metadata.title, "original.pdf");
+    }
+});
+
+test("old task language and model variables remain empty", async () => {
+    const { importer } = fixture();
+    await importer.importTaskOutputs("one");
+    assert.deepEqual(
+        state.outputs.map((output) => output.model),
+        ["", ""],
+    );
+    for (const { config } of state.configs) {
+        assert.equal(config.sourceLang, "");
+        assert.equal(config.targetLang, "");
+    }
 });

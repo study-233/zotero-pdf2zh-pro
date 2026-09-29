@@ -199,11 +199,11 @@ test("missing metric values remain unknown and activity uses one concise stage l
         stage: "Translate Paragraphs",
         metrics: { activity: { oldestRequestSeconds: 15 } },
     });
-    assert.equal(ui.formatActivityStage(running), "等待响应");
+    assert.equal(ui.formatActivityStage(running), "翻译中·等待响应");
     running.metrics.activity.retrying = 1;
-    assert.equal(ui.formatActivityStage(running), "重试等待");
+    assert.equal(ui.formatActivityStage(running), "翻译中·等待重试");
     running.metrics.activity.fallbackPending = 1;
-    assert.equal(ui.formatActivityStage(running), "拆段处理");
+    assert.equal(ui.formatActivityStage(running), "翻译中·拆段处理");
     delete running.metrics.activity;
     assert.equal(
         ui.formatActivityStage(running),

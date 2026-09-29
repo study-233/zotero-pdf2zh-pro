@@ -95,3 +95,93 @@ class DiagnosticTests(unittest.TestCase):
         manager._handle_progress_event('test',update)
         self.assertEqual(record.progress_detail['lastProgressAt'],before)
         self.assertTrue(record.progress_detail['stalled'])
+
+    def test_configuration_and_outcomes_survive_export_and_restart(self):
+        with tempfile.TemporaryDirectory() as temp:
+            manager = TaskManager(Path(temp) / 'tasks.json')
+            record = TaskRecord('test', 'secret.pdf', 'openai', ['dual'], {
+                'service': 'openai', 'qps': 10, 'pool_size': 50,
+                'llm_api': {'model': 'org/model:latest', 'apiKey': 'sk-secret',
+                            'apiUrl': 'https://private.invalid', 'extraData': {'prompt': 'private text'}},
+            }, Path(temp), status='running')
+            manager._tasks['test'] = record
+            manager._handle_progress_event('test', {'type': 'diagnostic_configuration',
+                'effectiveConfiguration': {'provider': 'openai', 'model': 'org/resolved-model',
+                    'qps': 2, 'poolSize': 4, 'protocol': 'chat_completions', 'apiKey': 'sk-secret'}}, attempt=1)
+            record.translation_summary = {'succeeded': 1, 'failed': 93, 'pending': 5, 'skipped': 10}
+            record.failed_paragraphs = [{'page': 4, 'attempts': 2, 'errorType': 'RateLimitError',
+                'statusCode': 429, 'providerCode': 'insufficient_quota', 'reason': 'private text',
+                'paragraphId': 'private-hash', 'input': 'private text'}]
+            record.metrics = {'requests': {'attempts': 100, 'succeeded': 2, 'failed': 98,
+                'statusCodes': {'429': 93, '200': 2, 'unknown': 5, 'sk-secret': 99},
+                'errorTypes': {'APITimeoutError': 5, 'RateLimitError': 93},
+                'byKind': {'initialization': {'succeeded': 1}, 'translation': {'succeeded': 1}}},
+                'tokens': {'total': 509, 'input': 376, 'output': 133}}
+            manager._save_persistent_tasks()
+            restored = TaskManager(Path(temp) / 'tasks.json')
+            data = restored.export_diagnostics('test')
+            task = data['tasks'][0]
+            self.assertEqual(task['requestedConfiguration']['model'], 'org/model:latest')
+            self.assertEqual(task['requestedConfiguration']['qps'], 10)
+            self.assertEqual(task['effectiveConfiguration']['qps'], 2)
+            self.assertEqual(task['effectiveConfiguration']['poolSize'], 4)
+            self.assertEqual(task['translationSummary'], record.translation_summary)
+            self.assertEqual(task['metrics']['requests']['attempts'], 100)
+            self.assertEqual(task['metrics']['tokens']['total'], 509)
+            self.assertEqual(task['metrics']['requests']['errorTypes']['APITimeoutError'], 5)
+            self.assertEqual(task['failedParagraphs'][0]['providerCode'], 'insufficient_quota')
+            self.assertTrue(any(row['event'] == 'task_configuration' for row in data['records']))
+            for secret in ('sk-secret', 'private.invalid', 'private text', 'private-hash', 'secret.pdf'):
+                self.assertNotIn(secret, json.dumps(data))
+            self.assertTrue(manager.diagnostics.flush(timeout=2))
+            self.assertTrue(restored.diagnostics.flush(timeout=2))
+
+    def test_model_labels_and_nested_fields_are_filtered(self):
+        for label in ('org/model-v3.2:latest', 'deepseek-chat', 'gemini-2.5-pro'):
+            self.assertEqual(safe_fields({'model': label}), {'model': label})
+        for label in ('https://private.invalid/model', '/Users/private/model', 'sk-secret',
+                      'Bearer-secret', 'org/sk-secret', 'key?token=secret', 'a' * 201):
+            self.assertEqual(safe_fields({'model': label}), {})
+        self.assertEqual(safe_fields({'metrics': {'requests': {'errorTypes': {'private text': 1},
+            'statusCodes': {'429': -1, '200': True, '500': 2}}}}),
+            {'metrics': {'requests': {'errorTypes': {}, 'statusCodes': {'500': 2}}}})
+        data = safe_fields({'failedParagraphs': [{'page': 2}] * 2001})
+        self.assertEqual(len(data['failedParagraphs']), 2000)
+        self.assertTrue(data['failedParagraphsTruncated'])
+
+    def test_metric_logger_preserves_safe_model_and_timeout_class(self):
+        store = DiagnosticStore()
+        handler = SafeLogHandler(store.record)
+        data = {'provider': 'openaicompatible', 'model': 'org/model:tag',
+                'errorType': 'APITimeoutError', 'success': False, 'apiKey': 'sk-secret'}
+        handler.emit(logging.LogRecord('zotero_pdf2zh_server.metrics', logging.INFO,
+                     __file__, 1, 'metric=%s', (json.dumps(data),), None))
+        row = store.export()['records'][0]
+        self.assertEqual(row['model'], 'org/model:tag')
+        self.assertEqual(row['errorType'], 'APITimeoutError')
+        self.assertEqual(row['retryReason'], 'timeout')
+        self.assertNotIn('apiKey', row)
+
+    def test_repair_replaces_effective_configuration_without_changing_history(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / 'input.pdf'
+            source.write_bytes(b'pdf')
+            record = TaskRecord('test', 'input.pdf', 'openai', ['dual'], {
+                'service': 'openai', 'qps': 10, 'pool_size': 50,
+                'input_path': str(source), 'output_dir': str(Path(temp) / 'output'),
+            }, Path(temp), status='running')
+            manager = TaskManager()
+            manager._tasks['test'] = record
+            manager._handle_progress_event('test', {'type': 'diagnostic_configuration',
+                'effectiveConfiguration': {'qps': 10, 'poolSize': 50}}, attempt=1)
+            record.status = 'incomplete'
+            with patch.object(manager, '_start_worker_locked'):
+                repaired = manager.repair_task('test')
+            self.assertEqual(repaired['requestedConfiguration']['qps'], 2)
+            self.assertNotIn('effectiveConfiguration', repaired)
+            manager._handle_progress_event('test', {'type': 'diagnostic_configuration',
+                'effectiveConfiguration': {'qps': 10}}, attempt=1)
+            self.assertNotIn('effectiveConfiguration', record.to_dict())
+            history = [r for r in manager.diagnostics.export('test')['records'] if r['event'] == 'task_configuration']
+            self.assertEqual(history[0]['effectiveConfiguration']['qps'], 10)

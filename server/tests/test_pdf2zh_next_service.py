@@ -178,7 +178,8 @@ class PDF2zhNextServiceTests(unittest.TestCase):
             sequence.append("translation")
             yield {"type": "finish", "translate_result": SimpleNamespace()}
 
-        config = SimpleNamespace(save_detailed_tracking=True, pool_max_workers=1, translator=SimpleNamespace())
+        config = SimpleNamespace(save_detailed_tracking=True, qps=2, pool_max_workers=1,
+                                 translator=SimpleNamespace(model="org/runtime-model", resolved_protocol="responses"))
         expected_files = {"dual": SimpleNamespace(filename="paper.dual.pdf")}
         payload = {
             "input_path": "/tmp/paper.pdf",
@@ -213,6 +214,9 @@ class PDF2zhNextServiceTests(unittest.TestCase):
 
         self.assertEqual(sequence, ["fonts", "translation"])
         self.assertEqual(result.files, expected_files)
+        configuration = next(e["effectiveConfiguration"] for e in events if e["type"] == "diagnostic_configuration")
+        self.assertEqual(configuration, {"provider": "openai", "model": "org/runtime-model",
+                                         "protocol": "responses", "qps": 2, "poolSize": 1})
         self.assertEqual(
             [event["stage"] for event in events if "stage" in event],
             ["Check Fonts", "Check Fonts", "Download Fonts", "Download Fonts"],

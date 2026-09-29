@@ -57,11 +57,14 @@ export class PDF2zhTaskManager {
         this.stopped = false;
         this.loadLocalTasks();
         this.ensureEventStreams();
+        this.scheduleFallbackRefresh();
         await this.refreshTasks();
     }
 
     static stop(): void {
         this.stopped = true;
+        clearTimeout(this.refreshTimer);
+        this.refreshTimer = undefined;
         this.closeWindow();
         this.eventStream.sync(new Set());
     }
@@ -107,6 +110,11 @@ export class PDF2zhTaskManager {
             tasks.map((task) => [
                 task.taskId,
                 task.itemID,
+                task.sourceLang,
+                task.targetLang,
+                task.model,
+                task.requestedConfiguration,
+                task.effectiveConfiguration,
                 task.serverUrl,
                 task.attempt,
                 task.importState,
@@ -131,6 +139,27 @@ export class PDF2zhTaskManager {
         }
     }
     private static pollPromise: Promise<void> | null = null;
+    private static refreshTimer: ReturnType<typeof setTimeout> | undefined;
+
+    private static scheduleFallbackRefresh(): void {
+        if (this.stopped || this.refreshTimer !== undefined) return;
+        this.refreshTimer = setTimeout(() => {
+            this.refreshTimer = undefined;
+            if (this.stopped) return;
+            try {
+                this.ensureEventStreams();
+                // Do not queue another refresh behind a slow in-flight request.
+                if (!this.pollPromise) {
+                    void this.refreshTasks().catch((error) =>
+                        ztoolkit.log(error),
+                    );
+                }
+            } finally {
+                this.scheduleFallbackRefresh();
+            }
+        }, 5000);
+    }
+
     private static refreshAgain = false;
     private static taskListeners = new Set<() => void>();
     private static dialogWindow: Window | undefined;
@@ -313,6 +342,7 @@ export class PDF2zhTaskManager {
     }
 
     static async refreshTasks(): Promise<void> {
+        if (this.stopped) return;
         this.loadLocalTasks();
         if (this.pollPromise) {
             this.refreshAgain = true;
@@ -487,6 +517,7 @@ export class PDF2zhTaskManager {
             fileData,
             config,
         );
+        const model = config.apiConfig?.model || "";
 
         const generation = this.syncState(config.serverUrl).generation;
         const task = await ServerTaskClient.createTask(
@@ -496,6 +527,9 @@ export class PDF2zhTaskManager {
         if (this.canApplyResponse(config.serverUrl, generation, task)) {
             this.upsertTask(task, config.serverUrl, {
                 itemID: item.id,
+                sourceLang: config.sourceLang,
+                targetLang: config.targetLang,
+                model,
                 source: "local",
                 importState: "pending",
             });
@@ -506,6 +540,9 @@ export class PDF2zhTaskManager {
             if (current?.serverUrl === config.serverUrl && !current.itemID) {
                 this.updateLocalTask(task.taskId, {
                     itemID: item.id,
+                    sourceLang: config.sourceLang,
+                    targetLang: config.targetLang,
+                    model,
                     source: "local",
                     importState:
                         current.importState === "none"
@@ -646,6 +683,9 @@ export class PDF2zhTaskManager {
             if (overrides.itemID && existing && !existing.itemID) {
                 this.updateLocalTask(snapshot.taskId, {
                     itemID: overrides.itemID,
+                    sourceLang: overrides.sourceLang,
+                    targetLang: overrides.targetLang,
+                    model: overrides.model,
                     source: "local",
                     importState:
                         existing.importState === "none"
@@ -668,6 +708,8 @@ export class PDF2zhTaskManager {
             taskId: snapshot.taskId,
             fileName: snapshot.fileName,
             service: snapshot.service,
+            requestedConfiguration: snapshot.requestedConfiguration,
+            effectiveConfiguration: snapshot.effectiveConfiguration,
             outputModes: snapshot.outputModes,
             status: snapshot.status,
             stage: snapshot.stage,
@@ -711,6 +753,9 @@ export class PDF2zhTaskManager {
             source: existing?.source || "remote",
             importState: existing?.importState || "none",
             itemID: existing?.itemID,
+            sourceLang: existing?.sourceLang,
+            targetLang: existing?.targetLang,
+            model: existing?.model,
             importError: existing?.importError,
             ...overrides,
         };
@@ -799,8 +844,10 @@ export class PDF2zhTaskManager {
     }
 
     private static ensureEventStreams() {
+        if (this.stopped) return;
         this.loadLocalTasks();
         const serverUrls = new Set<string>();
+        const activeServerUrls = new Set<string>();
         const currentServerUrl = getPref("new_serverip")?.toString() || "";
         const dialogOpen = Boolean(
             this.dialogWindow && !this.dialogWindow.closed,
@@ -813,6 +860,9 @@ export class PDF2zhTaskManager {
             serverUrls.add(currentServerUrl);
         }
         for (const task of this.tasks.values()) {
+            if (ACTIVE_STATUSES.includes(task.status) && task.serverUrl) {
+                activeServerUrls.add(task.serverUrl);
+            }
             const shouldTrackTaskServer =
                 dialogOpen ||
                 ACTIVE_STATUSES.includes(task.status) ||
@@ -824,7 +874,7 @@ export class PDF2zhTaskManager {
             }
         }
 
-        this.eventStream.sync(serverUrls);
+        this.eventStream.sync(serverUrls, activeServerUrls);
     }
 
     private static handleServerTaskEvent(

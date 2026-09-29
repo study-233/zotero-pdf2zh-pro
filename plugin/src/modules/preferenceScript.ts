@@ -1,4 +1,5 @@
 import { exportDiagnostics } from "./diagnostics";
+import { registerAttachmentNamingPreferences } from "./attachmentNamingPreferences";
 import { config, version } from "../../package.json";
 import { getPref, setPref } from "../utils/prefs";
 import { getLocaleID } from "../utils/locale";
@@ -105,6 +106,7 @@ export async function registerPrefsScripts(window: Window) {
     stopGlossaryPackPolling();
     glossaryPackWindow = window;
     addon.data.prefs = { window, columns: [], rows: [] };
+    registerAttachmentNamingPreferences(window);
     window.addEventListener(
         "unload",
         () => {

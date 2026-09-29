@@ -80,3 +80,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - The tap is source-only and intentionally does not publish bottles. Update its `version` and git `revision`, push `main`, and wait for `formula-checks.yml`.
 - The plugin repository is public. Keep the stable `update_url` in the XPI and publish `update.json` with every GitHub Release. Do not build or publish a friends bundle; release source is available from the matching public tag.
 - Do not update only one distribution target if the change affects all startup/install paths.
+
+## Documentation
+
+- Before changing the README or adding documentation, follow [README maintenance rules](docs/readme-maintenance.md). Keep the homepage concise and put detailed instructions in the user guide.
+- Preserve the release version marker, existing public anchors, upstream attribution, and any in-progress documentation edits.
+- Run `python3 scripts/check_docs.py` and `python3 -m unittest discover -s scripts -p 'test_check_docs.py'` for documentation changes. Preview the affected Markdown and check new external links manually.

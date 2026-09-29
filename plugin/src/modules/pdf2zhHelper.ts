@@ -3,8 +3,21 @@ import { ServerConfig, PDFOperationOptions, OutputMode } from "./pdf2zhTypes";
 import { getSelectedProfile } from "./profileStore";
 import { SERVICE_NAMES } from "./llmApiManager";
 import { loadGlossaryEntries } from "./glossaryStore";
+import { getString } from "../utils/locale";
+import {
+    DEFAULT_TITLE_TEMPLATE,
+    buildTitleMetadata,
+    renderAttachmentTitle,
+    type TitleMetadata,
+} from "./attachmentNaming";
+
+export type AttachmentImportSettings = {
+    options: PDFOperationOptions;
+    metadata: TitleMetadata;
+};
 
 export type TaskOutputResponse = {
+    model?: string;
     fileName: string;
     outputMode: OutputMode;
     bytes: Uint8Array;
@@ -65,8 +78,9 @@ export class PDF2zhHelperFactory {
         item: Zotero.Item,
         config: ServerConfig,
         isCurrent: () => boolean = () => true,
+        settings?: AttachmentImportSettings,
     ) {
-        const options = this.getPDFOptions();
+        const options = settings?.options || this.getPDFOptions();
         const tempDir = await IOUtils.createUniqueDirectory(
             PathUtils.tempDir,
             "pdf2zh-output-",
@@ -82,6 +96,10 @@ export class PDF2zhHelperFactory {
                 options,
                 outputMode: response.outputMode,
                 service: config.service,
+                model: response.model,
+                sourceLang: config.sourceLang,
+                targetLang: config.targetLang,
+                metadata: settings?.metadata,
                 titleSuffix: response.titleSuffix,
                 isCurrent,
             });
@@ -150,8 +168,29 @@ export class PDF2zhHelperFactory {
     static getPDFOptions(): PDFOperationOptions {
         return {
             rename: this.isTrue(getPref("rename")),
+            titleTemplate:
+                getPref("attachmentTitleTemplate")?.toString() ||
+                DEFAULT_TITLE_TEMPLATE,
             openAfterProcess: this.isTrue(getPref("openAfterTranslate")),
         };
+    }
+
+    static getTitleMetadata(
+        item: Zotero.Item,
+        fileName: string,
+    ): TitleMetadata {
+        const parent = item.isAttachment()
+            ? item.parentItemID
+                ? Zotero.Items.get(item.parentItemID) || undefined
+                : undefined
+            : item;
+        return buildTitleMetadata({
+            fileName,
+            shortTitle: parent?.getField("shortTitle")?.toString(),
+            fullTitle: parent?.getField("title")?.toString(),
+            author: parent?.getField("firstCreator")?.toString(),
+            date: parent?.getField("date")?.toString(),
+        });
     }
 
     static async addAttachment(params: {
@@ -160,26 +199,32 @@ export class PDF2zhHelperFactory {
         options: PDFOperationOptions;
         outputMode: OutputMode;
         service: string;
+        model?: string;
+        sourceLang?: string;
+        targetLang?: string;
+        metadata?: TitleMetadata;
         isCurrent?: () => boolean;
         titleSuffix?: string;
     }) {
         const { item, filePath, options, outputMode, service } = params;
         const parentItemID = this.getParentItemID(item);
-        let targetItem = item;
-        if (item.isAttachment() && parentItemID) {
-            const parentItem = Zotero.Items.get(parentItemID);
-            if (parentItem) targetItem = parentItem;
-        }
-
-        let newTitle = `${service}-${outputMode}`;
-        const shortTitle = targetItem.getField("shortTitle");
-        if (shortTitle && shortTitle.length > 0) {
-            newTitle = `${shortTitle}-${service}-${outputMode}`;
-        }
-
         if (!(params.isCurrent?.() ?? true)) return;
         const baseTitle = options.rename
-            ? newTitle
+            ? renderAttachmentTitle(
+                  options.titleTemplate || DEFAULT_TITLE_TEMPLATE,
+                  {
+                      ...(params.metadata ||
+                          this.getTitleMetadata(
+                              item,
+                              PathUtils.filename(filePath),
+                          )),
+                      service,
+                      model: params.model || "",
+                      sourceLang: params.sourceLang || "",
+                      targetLang: params.targetLang || "",
+                      type: getString(`attachment-type-${outputMode}`),
+                  },
+              )
             : PathUtils.filename(filePath);
         const attachment = await Zotero.Attachments.importFromFile({
             file: filePath,

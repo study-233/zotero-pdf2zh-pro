@@ -21,7 +21,7 @@ from pdf2zh_next_service import diagnose_service_error
 from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
 from observability import empty_metrics, supports_request_metrics
-from diagnostics import DiagnosticStore, safe_fields
+from diagnostics import DiagnosticStore, safe_fields, requested_configuration
 from task_runtime import run_translation, CleanupFailed, recover_leases
 
 TaskStatus = str
@@ -70,6 +70,7 @@ class TaskRecord:
             "taskId": self.task_id,
             "fileName": self.file_name,
             "service": self.service,
+            "requestedConfiguration": requested_configuration({"service": self.service, **self.request_payload}),
             "outputModes": self.output_modes,
             "status": self.status,
             "stage": self.stage,
@@ -439,6 +440,10 @@ class TaskManager:
             record.status = "cancelling" if record.cancel_requested else "running"
             request_payload = copy.deepcopy(record.request_payload)
             request_payload["review_attempt"] = attempt
+            self.diagnostics.record("task_configuration", {
+                "taskId": task_id, "attempt": attempt, "serverInstanceId": self._server_instance_id,
+                "requestedConfiguration": requested_configuration(request_payload),
+            })
             cancel_event = record.cancel_event
             self._task_changed_locked(record)
 
@@ -570,6 +575,13 @@ class TaskManager:
                 record.progress_detail.update(lastProgressAt=utc_now_iso(), idleSeconds=0, stalled=False)
             if event_type == "parse_detail":
                 record.progress_detail.update(safe_fields(event))
+            if event_type == "diagnostic_configuration":
+                configuration = safe_fields(event.get("effectiveConfiguration", {}))
+                record.progress_detail["effectiveConfiguration"] = configuration
+                self.diagnostics.record("task_configuration", {
+                    "taskId": task_id, "attempt": record.attempt, "serverInstanceId": self._server_instance_id,
+                    "effectiveConfiguration": configuration,
+                })
             if event_type in {"progress_start", "progress_update", "progress_end"}:
                 record.stage = str(event.get("stage") or record.stage or "unknown")
                 record.stage_current = self._coerce_int(
@@ -667,7 +679,10 @@ class TaskManager:
         signature = (record.status, record.stage, record.stage_current, record.progress_detail.get("currentPage"), record.progress_detail.get("cancelPhase"), record.progress_detail.get("operation"))
         if getattr(record, "_diagnostic_signature", None) != signature:
             record._diagnostic_signature = signature
-            self.diagnostics.record("task_state", record.to_dict())
+            self.diagnostics.record("task_state", {
+                key: value for key, value in record.to_dict().items()
+                if key not in {"metrics", "failedParagraphs"}
+            })
         self._revision += 1
         record.server_instance_id = self._server_instance_id
         record.revision = self._revision

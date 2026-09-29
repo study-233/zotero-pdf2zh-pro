@@ -20,6 +20,7 @@ declare namespace _ZoteroTypes {
       "qps": number;
       "poolSize": number;
       "rename": boolean;
+      "attachmentTitleTemplate": string;
       "openAfterTranslate": boolean;
       "notifyOnTranslationComplete": boolean;
       "fontFamily": string;

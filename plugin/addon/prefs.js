@@ -15,6 +15,7 @@ pref("__prefsPrefix__.skipLastPages", 0);
 pref("__prefsPrefix__.qps", 10);
 pref("__prefsPrefix__.poolSize", 50);
 pref("__prefsPrefix__.rename", true);
+pref("__prefsPrefix__.attachmentTitleTemplate", "{title} · {type}");
 pref("__prefsPrefix__.openAfterTranslate", false);
 pref("__prefsPrefix__.notifyOnTranslationComplete", true);
 

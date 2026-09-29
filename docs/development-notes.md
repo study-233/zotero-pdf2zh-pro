@@ -1,5 +1,16 @@
 # 开发维护笔记
 
+## 文档维护
+
+首页与详细指南按 [README 维护规范](readme-maintenance.md) 分工。修改后运行独立检查：
+
+```bash
+python3 scripts/check_docs.py
+python3 -m unittest discover -s scripts -p 'test_check_docs.py'
+```
+
+文档 CI 不安装应用依赖；业务 CI 的触发规则保持不变。
+
 ## 产品边界
 
 `zotero-pdf2zh-pro` 包含 Zotero 插件和本地 Python 服务。插件 ID 为
@@ -111,6 +122,17 @@ Windows 运行 `scripts/release.sh <version> --no-push`。
 已完成 Windows 构建和新电脑验收时，可在 `publish-pypi.yml` 指定 `tag`、成功的
 `build_run_id` 并启用 `publish_github`，直接发布该次构建的同一份产物。流程先核对
 构建状态、标签提交、版本和所有哈希，再发布 PyPI 与 GitHub，避免重新构建。
+
+### 手动构建 Windows 候选版本
+
+在 GitHub Actions 手动运行 `Build Windows release`，输入已提交的版本号和完整
+40 位提交 SHA。工作流执行 `scripts/release.sh <版本> --no-push`，完成后上传
+XPI、Windows ZIP、Python 包、对应源码和 `checksums.json`。
+默认验证启动、运行环境、最终 ZIP 窗口及安装升级；需要完整的插件/服务测试、OCR、
+回滚与迁移检查时勾选 `full_validation`。此步骤只构建和验证，不推送标签或发布渠道。
+验证通过后按上面的发布流程使用同一提交和同一批产物，日常 CI 不执行完整 Windows 发布构建。
+
+### 发布凭据与渠道
 
 PyPI Trusted Publisher 必须绑定：
 

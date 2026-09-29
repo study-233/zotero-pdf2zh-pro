@@ -30,6 +30,10 @@ const { canDownloadTaskResult } = await moduleFrom(
     compile("zoteroTaskImporter"),
 );
 let sequence = 0;
+const managers = [];
+test.afterEach(() => {
+    for (const manager of managers.splice(0)) manager.stop();
+});
 const serverUrl = "http://localhost:8890";
 const deferred = () => {
     let resolve;
@@ -110,7 +114,14 @@ async function fixture(saved = []) {
             this.closed = true;
         }
     };
-    const dialog = { addEventListener() {}, focus() {}, closed: false };
+    const dialog = {
+        addEventListener() {},
+        focus() {},
+        closed: false,
+        close() {
+            this.closed = true;
+        },
+    };
     globalThis.Zotero = {
         Prefs: {
             get: (key) => prefs.get(key),
@@ -152,8 +163,150 @@ async function fixture(saved = []) {
             compile("pdf2zhTaskManager") +
             `\n// instance ${sequence++}`,
     );
+    managers.push(manager);
     return { manager, prefs, writes, sources, client, imports };
 }
+
+test("silent active streams reconnect and ignore late events from the old source", async (t) => {
+    t.mock.timers.enable({ apis: ["Date"], now: 0 });
+    const { manager, sources } = await fixture([local()]);
+    manager.openWindow();
+    // Avoid HTTP reconciliation here to isolate the event watchdog.
+    const stream = manager.eventStream;
+    stream.setState(serverUrl, "open");
+    stream.sync(new Set([serverUrl]), new Set([serverUrl]));
+    t.mock.timers.tick(30_000);
+    manager.ensureEventStreams();
+    assert.equal(sources.length, 2);
+    assert.equal(sources[0].closed, true);
+    sources[0].onmessage({ data: JSON.stringify(taskEvent(versioned(99))) });
+    sources[1].onmessage({ data: JSON.stringify(taskEvent(versioned(2))) });
+    assert.equal(manager.getTasks()[0].revision, 2);
+});
+
+test("live messages renew the watchdog and idle open streams are not recycled", async (t) => {
+    t.mock.timers.enable({ apis: ["Date"], now: 0 });
+    const { manager, sources } = await fixture([local()]);
+    manager.openWindow();
+    manager.eventStream.setState(serverUrl, "open");
+    manager.ensureEventStreams();
+    t.mock.timers.tick(25_000);
+    sources[0].onmessage({ data: JSON.stringify(taskEvent(versioned(1))) });
+    t.mock.timers.tick(25_000);
+    manager.ensureEventStreams();
+    assert.equal(sources.length, 1);
+    sources[0].onmessage({
+        data: JSON.stringify(taskEvent(versioned(2, { status: "completed" }))),
+    });
+    manager.ensureEventStreams();
+    t.mock.timers.tick(300_000);
+    manager.ensureEventStreams();
+    assert.equal(sources.length, 1);
+});
+
+test("stuck connecting and repeated error streams are replaced without a reconnect storm", async (t) => {
+    t.mock.timers.enable({ apis: ["Date"], now: 0 });
+    const { manager, sources } = await fixture();
+    manager.openWindow();
+    t.mock.timers.tick(30_000);
+    manager.ensureEventStreams();
+    assert.equal(sources.length, 2);
+    for (let i = 0; i < 5; i++) {
+        sources[1].onerror();
+        t.mock.timers.tick(5000);
+        manager.ensureEventStreams();
+    }
+    assert.equal(sources.length, 2);
+    t.mock.timers.tick(5000);
+    manager.ensureEventStreams();
+    assert.equal(sources.length, 3);
+    assert.equal(sources[1].closed, true);
+});
+
+test("fallback polling advances a frozen task and imports completion without any SSE", async (t) => {
+    t.mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+    const { manager, client, sources, imports } = await fixture([local()]);
+    let latest = versioned(1);
+    let calls = 0;
+    client.listTasks = async () => {
+        calls++;
+        return taskList(latest.revision, [latest]);
+    };
+    await manager.start();
+    await manager.start();
+    const before = calls;
+    latest = versioned(2, { overallProgress: 82.5 });
+    t.mock.timers.tick(5000);
+    await manager.pollPromise;
+    assert.equal(calls, before + 1, "repeated start must not duplicate timers");
+    assert.equal(manager.getTasks()[0].overallProgress, 82.5);
+    latest = versioned(3, { status: "completed", overallProgress: 100 });
+    t.mock.timers.tick(5000);
+    await manager.pollPromise;
+    assert.deepEqual(imports, ["one"]);
+    manager.stop();
+    const stoppedCalls = calls;
+    t.mock.timers.tick(60_000);
+    manager.closeWindow();
+    await manager.refreshTasks();
+    assert.equal(calls, stoppedCalls);
+    assert.ok(sources.every((source) => source.closed));
+});
+
+test("fallback skips overlapping requests and resumes after a failed request", async (t) => {
+    t.mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+    const { manager, client } = await fixture([local()]);
+    let calls = 0;
+    client.listTasks = async () => {
+        calls++;
+        throw new Error("offline");
+    };
+    await manager.start();
+    t.mock.timers.tick(5000);
+    await manager.pollPromise;
+    assert.equal(calls, 2);
+    const response = deferred();
+    client.listTasks = () => {
+        calls++;
+        return response.promise;
+    };
+    t.mock.timers.tick(5000);
+    t.mock.timers.tick(5000);
+    assert.equal(calls, 3);
+    response.resolve(taskList(1, [versioned(1)]));
+    await manager.pollPromise;
+    assert.equal(
+        calls,
+        3,
+        "timer must not queue a redundant follow-up request",
+    );
+    t.mock.timers.tick(5000);
+    await manager.pollPromise;
+    assert.equal(calls, 4);
+});
+
+test("fallback works when EventSource is unavailable or its constructor throws", async (t) => {
+    t.mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+    for (const constructor of [
+        undefined,
+        class {
+            constructor() {
+                throw new Error("unavailable");
+            }
+        },
+    ]) {
+        const { manager, client } = await fixture([local()]);
+        globalThis.EventSource = constructor;
+        let revision = 0;
+        client.listTasks = async () =>
+            taskList(++revision, [versioned(revision)]);
+        await manager.start();
+        t.mock.timers.tick(5000);
+        await manager.pollPromise;
+        assert.equal(manager.getTasks()[0].revision, 2);
+        manager.stop();
+    }
+});
 
 test("processWorker resolves pack versions once before submitting the whole batch", async () => {
     const { manager } = await fixture();
@@ -285,7 +438,15 @@ test("a delayed creation response still attaches a local binding to a newer comp
     const { manager, client } = await fixture();
     const response = deferred();
     client.createTask = () => response.promise;
-    const submission = manager.submitTask({ id: 7 }, { serverUrl });
+    const submission = manager.submitTask(
+        { id: 7 },
+        {
+            serverUrl,
+            sourceLang: "en",
+            targetLang: "ja",
+            apiConfig: { model: "task-model" },
+        },
+    );
     await Promise.resolve();
     manager.handleServerTaskEvent(serverUrl, {
         type: "task",
@@ -299,6 +460,9 @@ test("a delayed creation response still attaches a local binding to a newer comp
     const task = manager.getTasks()[0];
     assert.equal(task.status, "completed");
     assert.equal(task.itemID, 7);
+    assert.equal(task.sourceLang, "en");
+    assert.equal(task.targetLang, "ja");
+    assert.equal(task.model, "task-model");
     assert.equal(task.importState, "pending");
 });
 
@@ -495,7 +659,15 @@ test("a retired creation response binds the restored task without replacing its 
         started.resolve();
         return response.promise;
     };
-    const submission = manager.submitTask({ id: 7 }, { serverUrl });
+    const submission = manager.submitTask(
+        { id: 7 },
+        {
+            serverUrl,
+            sourceLang: "en",
+            targetLang: "ja",
+            apiConfig: { model: "task-model" },
+        },
+    );
     await started.promise;
     manager.handleServerTaskEvent(serverUrl, taskEvent(versioned(1)));
     manager.handleServerTaskEvent(
@@ -512,6 +684,9 @@ test("a retired creation response binds the restored task without replacing its 
     assert.equal(manager.tasks.get("one").serverInstanceId, "server-b");
     assert.equal(manager.tasks.get("one").status, "incomplete");
     assert.equal(manager.tasks.get("one").itemID, 7);
+    assert.equal(manager.tasks.get("one").sourceLang, "en");
+    assert.equal(manager.tasks.get("one").targetLang, "ja");
+    assert.equal(manager.tasks.get("one").model, "task-model");
     assert.equal(manager.tasks.get("one").importState, "pending");
 });
 
@@ -709,4 +884,124 @@ test("stopping the plugin closes streams and prevents late partial imports", asy
     await starting;
     assert.deepEqual(imports, []);
     assert.ok(sources.every((source) => source.closed));
+});
+
+test("submission languages and model persist across updates, restart and repair", async () => {
+    const { manager, writes, client } = await fixture();
+    await manager.submitTask(
+        { id: 7 },
+        {
+            serverUrl,
+            sourceLang: "en",
+            targetLang: "ja",
+            apiConfig: { model: "task-model" },
+        },
+    );
+    manager.handleServerTaskEvent(serverUrl, {
+        type: "task",
+        task: snapshot({
+            updatedAt: "2026-01-01T00:01:00Z",
+            status: "incomplete",
+        }),
+    });
+    client.repairTask = async () =>
+        snapshot({ attempt: 2, updatedAt: "2026-01-01T00:02:00Z" });
+    await manager.repairTask("one");
+    const saved = writes.at(-1);
+    assert.equal(saved[0].sourceLang, "en");
+    assert.equal(saved[0].targetLang, "ja");
+    assert.equal(saved[0].model, "task-model");
+    const restarted = await fixture(saved);
+    restarted.manager.openWindow();
+    assert.equal(restarted.manager.getTasks()[0].targetLang, "ja");
+    assert.equal(restarted.manager.getTasks()[0].sourceLang, "en");
+    assert.equal(restarted.manager.getTasks()[0].model, "task-model");
+});
+
+test("model is captured before the submission response and changes trigger persistence", async () => {
+    const { manager, client, writes } = await fixture();
+    const started = deferred();
+    const response = deferred();
+    client.createTask = () => {
+        started.resolve();
+        return response.promise;
+    };
+    const config = { serverUrl, apiConfig: { model: "submitted-model" } };
+    const submission = manager.submitTask({ id: 7 }, config);
+    await started.promise;
+    config.apiConfig.model = "different-model";
+    response.resolve(snapshot());
+    await submission;
+    assert.equal(manager.getTasks()[0].model, "submitted-model");
+    assert.equal(writes.at(-1)[0].model, "submitted-model");
+    const count = writes.length;
+    manager.updateLocalTask("one", { model: "corrected-model" });
+    assert.equal(writes.length, count + 1);
+    assert.equal(writes.at(-1)[0].model, "corrected-model");
+});
+
+test("diagnostic configurations persist independently and reset for a new attempt", async () => {
+    const { manager, client, sources, writes } = await fixture([local()]);
+    manager.openWindow();
+    const requestedConfiguration = {
+        provider: "openai",
+        model: "org/requested",
+        qps: 10,
+        poolSize: 50,
+    };
+    client.listTasks = async () =>
+        taskList(1, [versioned(1, { requestedConfiguration })]);
+    await manager.refreshTasks();
+    const before = writes.length;
+    const effectiveConfiguration = {
+        provider: "openai",
+        model: "org/resolved",
+        protocol: "responses",
+        qps: 2,
+        poolSize: 4,
+    };
+    sources[0].onmessage({
+        data: JSON.stringify(
+            taskEvent(
+                versioned(2, {
+                    requestedConfiguration,
+                    effectiveConfiguration,
+                }),
+            ),
+        ),
+    });
+    assert.equal(writes.length, before + 1);
+    assert.deepEqual(
+        writes.at(-1)[0].effectiveConfiguration,
+        effectiveConfiguration,
+    );
+    const restored = await fixture(writes.at(-1));
+    restored.manager.openWindow();
+    assert.deepEqual(
+        restored.manager.getTasks()[0].requestedConfiguration,
+        requestedConfiguration,
+    );
+    assert.deepEqual(
+        restored.manager.getTasks()[0].effectiveConfiguration,
+        effectiveConfiguration,
+    );
+    restored.sources[0].onmessage({
+        data: JSON.stringify(
+            taskEvent(
+                versioned(3, {
+                    attempt: 2,
+                    requestedConfiguration: {
+                        ...requestedConfiguration,
+                        qps: 2,
+                        poolSize: 4,
+                    },
+                }),
+            ),
+        ),
+    });
+    assert.equal(
+        restored.manager.getTasks()[0].effectiveConfiguration,
+        undefined,
+    );
+    assert.equal(restored.writes.at(-1)[0].requestedConfiguration.qps, 2);
 });

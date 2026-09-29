@@ -20,6 +20,14 @@ def success(payload,cancel,emit):
     return SimpleNamespace(files={},translation_summary=None,failed_paragraphs=[])
 
 
+def diagnostic_worker(payload, cancel, emit):
+    emit('progress', {'type': 'diagnostic_configuration',
+                     'effectiveConfiguration': {'provider': 'openai', 'model': 'org/model', 'qps': 2, 'poolSize': 4}})
+    emit('metrics', {'requests': {'attempts': 100, 'succeeded': 2, 'failed': 98},
+                     'tokens': {'input': 376, 'output': 133, 'total': 509}})
+    return SimpleNamespace(files={}, translation_summary=None, failed_paragraphs=[])
+
+
 def blocked(payload,cancel,emit):
     if os.name!='nt': signal.signal(signal.SIGTERM,signal.SIG_IGN)
     emit('progress',{'type':'parse_detail','operation':'page_start','currentPage':1})
@@ -76,6 +84,14 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(progress)
         pid=next(row['pid'] for row in store.memory if row['event']=='worker_started')
         self.assertFalse(psutil.pid_exists(pid))
+
+    def test_configuration_and_final_request_counts_arrive_before_worker_exit(self):
+        _, _, progress, store = self.execute(diagnostic_worker)
+        self.assertEqual(progress[0]['effectiveConfiguration']['model'], 'org/model')
+        summary = [row for row in store.export()['records'] if row['event'] == 'request_summary'][-1]
+        self.assertEqual(summary['requests']['attempts'], 100)
+        self.assertEqual(summary['tokens']['total'], 509)
+        self.assertNotIn('total', summary)
 
     def test_cooperative_cancellation(self):
         with self.assertRaises(asyncio.CancelledError): self.execute(cooperative,True)
