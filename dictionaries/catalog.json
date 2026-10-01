@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "packs": [
+    {
+      "id": "collins-en-zh",
+      "version": "2026.10.01",
+      "url": "https://raw.githubusercontent.com/study-233/zotero-pdf2zh-pro/glossary-data/dictionaries/collins-en-zh-2026.10.01.json.gz",
+      "sha256": "1b5ca6de36eb93d71f5622f9840069d81705c4946be16c725b7d53252cb0583f",
+      "sizeBytes": 11462293,
+      "entryCount": 37375,
+      "aiEntries": 945
+    }
+  ]
+}
