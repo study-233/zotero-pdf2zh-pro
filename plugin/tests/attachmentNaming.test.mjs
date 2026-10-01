@@ -126,124 +126,96 @@ test("invalid templates and empty values fall back safely", () => {
     );
 });
 
-for (const language of ["zh-CN", "en-US"]) {
-    test(`${language} preferences save only valid changes, preview, reset, reopen, and disable`, () => {
-        const prefs = new Map();
-        const labels = new Map(
-            fs
-                .readFileSync(
-                    new URL(
-                        `../addon/locale/${language}/addon.ftl`,
-                        import.meta.url,
-                    ),
-                    "utf8",
-                )
-                .split(/\r?\n/)
-                .filter((line) => line.startsWith("attachment-"))
-                .map((line) => line.split(" = ")),
+const layout = load("attachmentTitleLayout", { "./attachmentNaming": naming });
+test("visual layouts preserve every field and literal text, skip missing fields, and fall back from empty results", () => {
+    const value = {
+        version: 1,
+        blocks: [
+            { kind: "text", text: "精读版" },
+            { kind: "field", field: "author" },
+            { kind: "field", field: "year" },
+            { kind: "field", field: "model" },
+            { kind: "field", field: "type" },
+        ],
+        separator: " · ",
+    };
+    assert.equal(
+        layout.renderTitleLayout(value, { ...context, author: "", year: "" }),
+        "精读版 · gpt-4.1-mini · 双语对照",
+    );
+    assert.equal(
+        layout.renderTitleLayout(
+            { ...value, blocks: [{ kind: "field", field: "model" }] },
+            { ...context, model: "" },
+        ),
+        renderAttachmentTitle(DEFAULT_TITLE_TEMPLATE, context),
+    );
+    assert.equal(
+        layout.hasTitleContent({
+            ...value,
+            blocks: [{ kind: "text", text: "  " }],
+        }),
+        false,
+    );
+    assert.equal(
+        layout.parseTitleLayout(JSON.stringify(value)).blocks.length,
+        5,
+    );
+});
+test("legacy templates migrate without losing literal punctuation or repeated fields", () => {
+    for (const template of [
+        "",
+        "plain text",
+        "【{title}】 ({year}) · {model} / {type}",
+        "{title} · {type}",
+        "{title}_{year}_{type}",
+        "{title}{title}",
+        "prefix  {author}  suffix",
+    ]) {
+        const migrated = layout.migrateTitleTemplate(template);
+        assert.ok(migrated, template);
+        assert.equal(
+            layout.renderTitleLayout(migrated, context),
+            renderAttachmentTitle(template, context),
+            template,
         );
-        const nodes = new Map();
-        const node = (id) => {
-            if (!nodes.has(id))
-                nodes.set(id, {
-                    value: "",
-                    checked: true,
-                    events: {},
-                    attrs: {},
-                    addEventListener(event, listener) {
-                        this.events[event] = listener;
-                    },
-                    setAttribute(name, value) {
-                        this.attrs[name] = value;
-                    },
-                });
-            return nodes.get(id);
-        };
-        const window = {
-            document: {
-                getElementById: (id) =>
-                    node(id.replace("zotero-prefpane-test-", "")),
-            },
-        };
-        const { registerAttachmentNamingPreferences: register } = load(
-            "attachmentNamingPreferences",
-            {
-                "../../package.json": { config: { addonRef: "test" } },
-                "../utils/prefs": {
-                    getPref: (key) => prefs.get(key),
-                    setPref: (key, value) => prefs.set(key, value),
-                },
-                "../utils/locale": {
-                    getString: (key) => {
-                        assert.ok(labels.has(key));
-                        return labels.get(key);
-                    },
-                },
-                "./attachmentNaming": naming,
-            },
-        );
-        register(window);
-        const input = node("attachmentTitleTemplate");
-        const edit = (value) => {
-            input.value = value;
-            input.events.input();
-        };
-        const preview = (mode) =>
-            node(`attachmentTitlePreview-${mode}`).textContent;
-        for (const mode of ["mono", "dual"])
+        if (migrated.separator === "")
             assert.equal(
-                preview(mode),
-                renderAttachmentTitle(DEFAULT_TITLE_TEMPLATE, {
+                layout.renderTitleLayout(migrated, {
                     ...context,
-                    type: labels.get(`attachment-type-${mode}`),
+                    author: "",
+                    year: "",
+                    model: "",
+                }),
+                renderAttachmentTitle(template, {
+                    ...context,
+                    author: "",
+                    year: "",
+                    model: "",
                 }),
             );
-        edit("{title} · {model} · {type}");
-        assert.equal(
-            preview("dual"),
-            `Attention Is All You Need · gpt-4.1-mini · ${labels.get("attachment-type-dual")}`,
-        );
-        assert.equal(
-            prefs.get("attachmentTitleTemplate"),
-            "{title} · {model} · {type}",
-        );
-        edit("{author} {year} {type}");
-        const saved = prefs.get("attachmentTitleTemplate");
-        edit("{notSupported}");
-        assert.equal(prefs.get("attachmentTitleTemplate"), saved);
-        assert.equal(node("attachmentTitleError").hidden, false);
-        assert.equal(input.attrs["aria-invalid"], "true");
-        assert.equal(
-            preview("dual"),
-            `Vaswani et al. 2017 ${labels.get("attachment-type-dual")}`,
-        );
-        nodes.clear();
-        register(window);
-        assert.equal(node("attachmentTitleTemplate").value, saved);
-        const reopened = node("attachmentTitleTemplate");
-        reopened.value = " ";
-        reopened.events.input();
-        reopened.events.blur();
-        assert.equal(
-            prefs.get("attachmentTitleTemplate"),
-            DEFAULT_TITLE_TEMPLATE,
-        );
-        assert.equal(reopened.value, DEFAULT_TITLE_TEMPLATE);
-        reopened.value = "Literal";
-        reopened.events.input();
-        assert.equal(preview("dual"), "Literal");
-        node("attachmentTitleReset").events.click();
-        assert.equal(reopened.value, DEFAULT_TITLE_TEMPLATE);
-        node("rename").checked = false;
-        node("rename").events.command();
-        assert.equal(reopened.disabled, true);
-        assert.equal(node("attachmentTitleReset").disabled, true);
-        assert.equal(preview("dual"), "paper.zh-CN.dual.pdf");
-        node("rename").checked = true;
-        node("rename").events.command();
-        assert.equal(reopened.disabled, false);
-    });
-}
+    }
+    assert.equal(layout.migrateTitleTemplate("{unknown}"), undefined);
+    assert.equal(layout.migrateTitleTemplate("{{title}}"), undefined);
+});
+test("malformed visual layouts fail closed instead of replacing existing preferences", () => {
+    for (const raw of [
+        "bad",
+        "null",
+        "{}",
+        JSON.stringify({ version: 1, separator: 1, blocks: [] }),
+        JSON.stringify({
+            version: 1,
+            separator: "",
+            blocks: [{ kind: "field", field: "unknown" }],
+        }),
+    ])
+        assert.equal(layout.parseTitleLayout(raw), undefined);
+    assert.notEqual(
+        layout.defaultTitleLayout().blocks,
+        layout.defaultTitleLayout().blocks,
+    );
+});
 
 test("model templates accept model IDs verbatim and leave missing model records empty", () => {
     assert.equal(validateTitleTemplate("{title} · {model} · {type}"), true);
@@ -265,5 +237,18 @@ test("model templates accept model IDs verbatim and leave missing model records 
     assert.equal(
         renderAttachmentTitle("{model}", { ...context, model: "" }),
         "Attention Is All You Need · 双语对照",
+    );
+});
+
+test("blank literal blocks do not add separators and oversized legacy layouts stay unchanged", () => {
+    const value = layout.defaultTitleLayout();
+    value.blocks.splice(1, 0, { kind: "text", text: "   " });
+    assert.equal(
+        layout.renderTitleLayout(value, context),
+        renderAttachmentTitle(DEFAULT_TITLE_TEMPLATE, context),
+    );
+    assert.equal(
+        layout.migrateTitleTemplate(Array(101).fill("{title}").join(" · ")),
+        undefined,
     );
 });

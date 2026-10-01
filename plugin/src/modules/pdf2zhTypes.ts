@@ -59,6 +59,8 @@ export interface ServerHealthResponse {
         glossaryEntries?: boolean;
         glossaryPacks?: boolean;
         semanticReview?: boolean;
+        translationMemory?: boolean;
+        textTranslation?: boolean;
     };
     pdf2zhVersion?: string;
     babeldocVersion?: string;
@@ -99,6 +101,7 @@ export interface ServerErrorResponse {
 export interface PDFOperationOptions {
     rename: boolean;
     titleTemplate: string;
+    titleLayout?: import("./attachmentTitleLayout").TitleLayout;
     openAfterProcess: boolean;
 }
 

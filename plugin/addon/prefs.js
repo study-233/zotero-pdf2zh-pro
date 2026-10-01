@@ -37,3 +37,12 @@ pref("__prefsPrefix__.dialog-serviceSelect", "openai");
 
 pref("__prefsPrefix__.selectedApiKey", "");
 pref("__prefsPrefix__.profileSchemaVersion", 0);
+pref("__prefsPrefix__.selectionTranslationProvider", "bing");
+pref("__prefsPrefix__.selectionDictionary", "ecdict");
+pref("__prefsPrefix__.selectionAutoDictionary", true);
+
+pref("__prefsPrefix__.attachmentTitleLayout", "");
+
+pref("__prefsPrefix__.selectionDisplayMode", "floating");
+pref("__prefsPrefix__.selectionPopupWidth", 0);
+pref("__prefsPrefix__.selectionPopupHeight", 0);

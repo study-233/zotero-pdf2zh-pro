@@ -1,3 +1,5 @@
+import { cancelDictionaryDownload } from "./modules/selectionDictionaryDownload";
+import { stopDevelopmentLibrary } from "./modules/developmentLibrary";
 // lifecycle hooks
 import { PDF2zhBasicFactory, PDF2zhUIFactory } from "./modules/pdf2zh";
 import { PDF2zhTaskManager } from "./modules/pdf2zhTaskManager";
@@ -5,6 +7,10 @@ import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
 import { registerPrefsScripts } from "./modules/preferenceScript";
 import { migrateReviewPreference } from "./modules/reviewPreferences";
+import {
+    registerSelectionTranslation,
+    unregisterSelectionTranslation,
+} from "./modules/selectionTranslate";
 
 async function onStartup() {
     await Promise.all([
@@ -18,11 +24,20 @@ async function onStartup() {
     await Promise.all(
         Zotero.getMainWindows().map((win) => onMainWindowLoad(win)),
     );
+    registerSelectionTranslation();
     void PDF2zhTaskManager.start().catch((error) => ztoolkit.log(error));
+    if (typeof __devRuntime__ !== "undefined" && __devRuntime__) {
+        const { prepareDevelopmentLibrary } =
+            await import("./modules/developmentLibrary");
+        await prepareDevelopmentLibrary(__devRuntime__);
+    }
 }
 
 async function onMainWindowLoad(_win: Window): Promise<void> {
     addon.data.ztoolkit = createZToolkit();
+    _win.MozXULElement.insertFTLIfNeeded(
+        `${addon.data.config.addonRef}-addon.ftl`,
+    );
     PDF2zhUIFactory.registerRightClickMenuItem();
     await new Promise((resolve) => setTimeout(resolve, 200));
 }
@@ -40,6 +55,9 @@ async function onMainWindowUnload(_win: Window): Promise<void> {
 }
 
 function onShutdown(): void {
+    stopDevelopmentLibrary();
+    cancelDictionaryDownload();
+    unregisterSelectionTranslation();
     PDF2zhTaskManager.stop();
     ztoolkit.unregisterAll();
     addon.data.dialog?.window?.close();

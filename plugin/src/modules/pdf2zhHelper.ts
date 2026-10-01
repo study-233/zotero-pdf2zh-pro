@@ -1,3 +1,4 @@
+import { parseTitleLayout, renderTitleLayout } from "./attachmentTitleLayout";
 import { getPref } from "../utils/prefs";
 import { ServerConfig, PDFOperationOptions, OutputMode } from "./pdf2zhTypes";
 import { getSelectedProfile } from "./profileStore";
@@ -168,6 +169,7 @@ export class PDF2zhHelperFactory {
     static getPDFOptions(): PDFOperationOptions {
         return {
             rename: this.isTrue(getPref("rename")),
+            titleLayout: parseTitleLayout(getPref("attachmentTitleLayout")),
             titleTemplate:
                 getPref("attachmentTitleTemplate")?.toString() ||
                 DEFAULT_TITLE_TEMPLATE,
@@ -209,22 +211,22 @@ export class PDF2zhHelperFactory {
         const { item, filePath, options, outputMode, service } = params;
         const parentItemID = this.getParentItemID(item);
         if (!(params.isCurrent?.() ?? true)) return;
+        const titleContext = {
+            ...(params.metadata ||
+                this.getTitleMetadata(item, PathUtils.filename(filePath))),
+            service,
+            model: params.model || "",
+            sourceLang: params.sourceLang || "",
+            targetLang: params.targetLang || "",
+            type: getString(`attachment-type-${outputMode}`),
+        };
         const baseTitle = options.rename
-            ? renderAttachmentTitle(
-                  options.titleTemplate || DEFAULT_TITLE_TEMPLATE,
-                  {
-                      ...(params.metadata ||
-                          this.getTitleMetadata(
-                              item,
-                              PathUtils.filename(filePath),
-                          )),
-                      service,
-                      model: params.model || "",
-                      sourceLang: params.sourceLang || "",
-                      targetLang: params.targetLang || "",
-                      type: getString(`attachment-type-${outputMode}`),
-                  },
-              )
+            ? options.titleLayout
+                ? renderTitleLayout(options.titleLayout, titleContext)
+                : renderAttachmentTitle(
+                      options.titleTemplate || DEFAULT_TITLE_TEMPLATE,
+                      titleContext,
+                  )
             : PathUtils.filename(filePath);
         const attachment = await Zotero.Attachments.importFromFile({
             file: filePath,

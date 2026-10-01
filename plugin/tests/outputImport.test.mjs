@@ -9,6 +9,18 @@ import ts from "typescript";
 const naming = await import(
     `data:text/javascript;base64,${Buffer.from(ts.transpileModule(fs.readFileSync(new URL("../src/modules/attachmentNaming.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText).toString("base64")}`
 );
+const layoutExports = {};
+new Function(
+    "require",
+    "exports",
+    ts.transpileModule(
+        fs.readFileSync(
+            new URL("../src/modules/attachmentTitleLayout.ts", import.meta.url),
+            "utf8",
+        ),
+        { compilerOptions: { module: ts.ModuleKind.CommonJS } },
+    ).outputText,
+)(() => naming, layoutExports);
 const state = {};
 globalThis.PathUtils = {
     tempDir: "/virtual/temp",
@@ -59,6 +71,7 @@ globalThis.Zotero = {
 };
 globalThis.__outputImportTest = {
     ...naming,
+    ...layoutExports,
     getString: (key) => (key.endsWith("mono") ? "译文" : "双语对照"),
     getPref: (key) =>
         key === "openAfterTranslate"
@@ -77,7 +90,7 @@ const compiled = ts.transpileModule(source, {
 }).outputText;
 const { PDF2zhHelperFactory } = await import(
     `data:text/javascript;base64,${Buffer.from(
-        "const {getPref,getString,DEFAULT_TITLE_TEMPLATE,buildTitleMetadata,renderAttachmentTitle} = globalThis.__outputImportTest;\n" +
+        "const {getPref,getString,DEFAULT_TITLE_TEMPLATE,buildTitleMetadata,renderAttachmentTitle,parseTitleLayout,renderTitleLayout} = globalThis.__outputImportTest;\n" +
             compiled,
     ).toString("base64")}`
 );
@@ -361,4 +374,34 @@ test("imported attachment titles use output model, never the current profile mod
             ({ file }) => path.posix.basename(file) === "paper.dual.pdf",
         ),
     );
+});
+
+test("visual attachment title uses task model, ignores missing fields, and remains isolated from later layout edits", async () => {
+    reset();
+    state.prefs.rename = true;
+    const layout = {
+        version: 1,
+        separator: " · ",
+        blocks: [
+            { kind: "text", text: "精读" },
+            { kind: "field", field: "model" },
+            { kind: "field", field: "year" },
+            { kind: "field", field: "type" },
+        ],
+    };
+    state.prefs.attachmentTitleLayout = JSON.stringify(layout);
+    const options = PDF2zhHelperFactory.getPDFOptions();
+    layout.blocks[0].text = "changed";
+    state.prefs.attachmentTitleLayout = JSON.stringify(layout);
+    state.files.set("/virtual/test.pdf", [1]);
+    await PDF2zhHelperFactory.addAttachment({
+        item: { id: 1, libraryID: 1, isAttachment: () => false },
+        filePath: "/virtual/test.pdf",
+        options,
+        model: "task-model",
+        service: "openai",
+        outputMode: "dual",
+        metadata: { title: "Paper", fullTitle: "Paper", author: "", year: "" },
+    });
+    assert.equal(state.imports[0].title, "精读 · task-model · 双语对照");
 });

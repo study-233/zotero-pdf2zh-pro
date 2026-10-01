@@ -758,7 +758,7 @@ async def translate_pdf_with_callbacks(
         from babeldoc.format.pdf.document_il.midend.body_input import BODY_INPUT_VERSION
         from babeldoc.format.pdf.quality_review import REVIEW_VERSION
         fingerprint_payload = {k: v for k, v in payload.items() if k not in {
-            "input_path", "output_dir", "qps", "pool_size", "repair_attempt", "review_attempt",
+            "input_path", "output_dir", "qps", "pool_size", "repair_attempt", "review_attempt", "translation_memory_path",
         }}
         fingerprint_payload["llm_api"] = {k: v for k, v in payload.get("llm_api", {}).items() if k != "apiKey"}
         if fingerprint_payload["llm_api"].get("reasoningMode") == "default":
@@ -899,6 +899,9 @@ async def translate_pdf_with_callbacks(
                 files = repaired_files
             summary, failed = translation_config.recovery.snapshot()
             check_cancelled()
+            if payload.get("translation_memory_path"):
+                from translation_memory import sync_recovery
+                sync_recovery(payload["translation_memory_path"], payload)
             return TranslationResult(files=files, translation_summary=summary, failed_paragraphs=failed,
                                      quality_summary=recovery.quality_snapshot())
     except asyncio.CancelledError:

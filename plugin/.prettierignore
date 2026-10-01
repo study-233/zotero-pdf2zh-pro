@@ -7,3 +7,5 @@ yarn.lock
 pnpm-lock.yaml
 # *.xhtml
 # *.py
+# Generated compact offline dictionary (rebuild with scripts/build_selection_dictionary.py)
+addon/content/dictionaries/ecdict.json

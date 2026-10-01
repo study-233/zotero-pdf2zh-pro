@@ -39,6 +39,13 @@ declare namespace _ZoteroTypes {
       "dialog-serviceSelect": string;
       "selectedApiKey": string;
       "profileSchemaVersion": number;
+      "selectionTranslationProvider": string;
+      "selectionDictionary": string;
+      "selectionAutoDictionary": boolean;
+      "attachmentTitleLayout": string;
+      "selectionDisplayMode": string;
+      "selectionPopupWidth": number;
+      "selectionPopupHeight": number;
     };
   }
 }

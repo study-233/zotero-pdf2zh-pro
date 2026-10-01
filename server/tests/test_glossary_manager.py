@@ -341,7 +341,7 @@ class GlossaryRouteTests(unittest.TestCase):
             with patch.object(self.server, "TRANSLATES_DIR"), patch.object(self.server, "TASK_MANAGER", Mock()):
                 try:
                     self.server.configure_runtime_paths(root)
-                    self.assertEqual(self.server.GLOSSARY_MANAGER.root, root / "glossaries")
+                    self.assertEqual(self.server.GLOSSARY_MANAGER.root, root.resolve() / "glossaries")
                     self.assertFalse(partial.exists())
                 finally:
                     self.server.GLOSSARY_MANAGER.close()

@@ -32,6 +32,8 @@ from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
+from translation_memory import TranslationMemory
+from text_translation import TextTranslationService, TextTranslationError
 from provider_models import ModelDiscoveryError, list_provider_models
 from babeldoc.glossary_options import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
@@ -45,6 +47,7 @@ TRANSLATES_DIR = Path(
 _IS_TRANSLATION_CHILD = multiprocessing.current_process().name != "MainProcess"
 TASK_MANAGER = None if _IS_TRANSLATION_CHILD else TaskManager(TRANSLATES_DIR / "tasks.json")
 GLOSSARY_MANAGER = None if _IS_TRANSLATION_CHILD else GlossaryManager(TRANSLATES_DIR / "glossaries")
+TEXT_TRANSLATOR = None if _IS_TRANSLATION_CHILD else TextTranslationService()
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
 LOG_MAX_BYTES = 10 * 1024 * 1024
 LOG_BACKUP_COUNT = 3
@@ -68,6 +71,51 @@ def create_app() -> Flask:
     @app.get("/health")
     def health() -> tuple[dict[str, Any], int]:
         return build_health_payload(), 200
+
+    @app.post("/translate-text")
+    def translate_text():
+        try:
+            result = TEXT_TRANSLATOR.translate(request.get_json(silent=True),
+                TranslationMemory(TRANSLATES_DIR / "translation-memory.sqlite3"))
+            return jsonify(result)
+        except TextTranslationError as error:
+            return jsonify({"status": "error", "code": error.code}), error.status
+        except Exception:
+            return jsonify({"status": "error", "code": "selection_unavailable"}), 503
+
+    @app.post("/selection-capabilities")
+    def selection_capabilities():
+        return jsonify({'selectionLearning': True})
+
+    @app.post("/selection-cache/clear")
+    def clear_selection_cache():
+        try:
+            TEXT_TRANSLATOR.clear_cache(TranslationMemory(TRANSLATES_DIR / "translation-memory.sqlite3"))
+            return jsonify({'status': 'ok'})
+        except Exception:
+            return jsonify({'status': 'error', 'code': 'cache_unavailable'}), 503
+
+    @app.post("/translation-lookup")
+    def translation_lookup():
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return error_response("Expected a JSON object", 400)
+        fingerprint, text = data.get("documentFingerprint"), data.get("text")
+        page, side = data.get("page"), data.get("side", "source")
+        target = data.get("targetLang")
+        if (not isinstance(fingerprint, str) or not fingerprint.strip() or len(fingerprint) > 128
+                or not isinstance(text, str) or not text.strip() or len(text) > 20000
+                or (page is not None and (type(page) is not int or page < 1))
+                or side not in ("source", "translation")
+                or (target is not None and (not isinstance(target, str) or not target.strip() or len(target) > 32))):
+            return error_response("Invalid fingerprint, text, page, side or targetLang", 400)
+        try:
+            result = TranslationMemory(TRANSLATES_DIR / "translation-memory.sqlite3").lookup(
+                fingerprint, text, page=page, side=side, target_lang=target)
+            return jsonify(result)
+        except Exception:
+            LOGGER.warning("Translation memory lookup unavailable")
+            return error_response("Translation memory unavailable", 503)
 
     @app.get("/diagnostics")
     def diagnostics():
@@ -444,6 +492,7 @@ def prepare_translation_request(
         **quality_request_options(data),
         "input_path": str(input_path),
         "output_dir": str(output_dir),
+        "translation_memory_path": str(TRANSLATES_DIR / "translation-memory.sqlite3"),
     }
     return PreparedTranslationRequest(
         file_name=file_name,
@@ -626,7 +675,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True},
+        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),

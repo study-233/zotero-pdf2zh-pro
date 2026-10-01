@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import random
 import threading
 from pathlib import Path
@@ -146,9 +147,11 @@ class TranslationCache:
 
 
 def init_db(remove_exists=False):
-    CACHE_FOLDER.mkdir(parents=True, exist_ok=True)
+    cache_root = os.getenv("PDF2ZH_TRANSLATION_CACHE_DIR")
+    cache_folder = Path(cache_root).expanduser() / "babeldoc" if cache_root else CACHE_FOLDER
+    cache_folder.mkdir(parents=True, exist_ok=True)
     # The current version does not support database migration, so add the version number to the file name.
-    cache_db_path = CACHE_FOLDER / "cache.v1.db"
+    cache_db_path = cache_folder / "cache.v1.db"
     logger.info(f"Initializing cache database at {cache_db_path}")
     if remove_exists and cache_db_path.exists():
         cache_db_path.unlink()

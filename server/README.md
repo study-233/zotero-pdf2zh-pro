@@ -14,6 +14,81 @@ including trusted proxy CAs on macOS and Windows. Certificate and hostname
 verification remain enabled. For Docker, install any required private CA in
 the container's trust store; the host's trust store is not inherited.
 
+## Reading memory and short text (unreleased)
+
+`POST /translation-lookup` accepts `documentFingerprint` (the original PDF SHA-256),
+`text`, optional one-based `page`, `side` (`source` by default, or `translation`),
+and optional `targetLang`. It returns `matched: false`, or `matched: true` with
+`matchType` (`exact` / `contained`), `source`, `translation`, `page`, `paragraphId`,
+`targetLang`, and `fromTranslationMemory: true`. A contained match returns the whole
+paragraph, not word alignment. The route never constructs or calls a provider.
+
+`translation-memory.sqlite3` lives directly in the configured data directory.
+Completed PDF outputs sync succeeded, nonempty, quality-approved-or-unrejected
+paragraphs from their task checkpoint. Corrected text replaces earlier text.
+Existing completed/incomplete task checkpoints are also read at startup; deleting
+a task does not remove memory. Legacy placeholders that cannot be restored are replaced with `⟦原排版内容⟧`
+and flagged with `formattingIncomplete: true`; their prose still matches without a provider call.
+The recovery database remains exclusively the task retry checkpoint.
+
+`POST /translate-text` accepts `text`, optional `context` (up to 12,000 characters),
+`documentFingerprint`, one-based `page`, `source`, `target`, `mode`
+(`lookup`, `translate`, `explain`), `service`, `llm_api`, and `glossaryEntries`.
+The first two modes check memory and glossary before cached results or a provider.
+Explicit `explain` requests may use a provider even on a memory hit; the real stored
+paragraph pair supplies the context. No PDF task, font preparation or subprocess is created.
+
+Optional `selectionProvider` is `profile` (legacy default) or `bing`; optional
+`memoryPolicy` is `paragraph` (legacy default) or `exact`. With `exact`, contained
+memory does not stop translation; clients can retain it separately as folded reference.
+The Reader explicitly sends both fields.
+
+Bing requires no model configuration or key, and sends only selected text and
+language pair to `https://www.bing.com/ttranslatev3` after obtaining session parameters
+from `https://www.bing.com/translator`. It splits losslessly at
+UTF-8 boundaries up to 1,000 bytes (within the web translator’s 1,000-character limit), prefers sentence/whitespace boundaries, and starts
+at most one request per second across workers. The whole translation has a 45-second
+deadline. Quota errors (`provider_quota`, 429), invalid/empty responses and timeouts
+are not cached; partial translations never count as success. There is no automatic
+fallback to the model. Free-service cache keys contain only selected text, language
+and provider; no paper context or credentials are sent.
+
+The profile text provider supports existing presets resolving to OpenAISettings,
+including Chat Completions and Responses. A fixed protocol needs no health-check
+request; `auto` negotiates only when a model request is actually needed.
+Responses contain `translation` or `explanation`, `provider`, `model` when available,
+and `cached`. Errors have a fixed `code`: `empty_text`, `invalid_request`,
+`invalid_config`, `unsupported_selection_provider`, `provider_timeout` (504),
+`provider_error` / `empty_output` (502), or `selection_busy` (429).
+Requests wait at most 45 seconds; an already-running HTTP operation may finish later,
+with at most two worker requests active. Duplicate in-flight requests share work.
+A 128-entry, one-hour memory cache fronts `selection-cache.sqlite3` in the server data directory.
+Persistent translation/context results are capped at 20,000 least-recently-used entries; personal
+word entries never expire. Only result data, digests and timestamps are stored, not credentials or
+raw provider configuration. Model translation keys include context and output-affecting options;
+context/explanation keys additionally include the document fingerprint.
+
+`mode: dictionary` returns `entry` (headword, senses, optional usage, aiGenerated), a plain-text
+`translation`, model provenance, `createdAt`, `formatVersion` and `saved`. It requires a short
+selection (at most 3 words / 100 characters). Its key preserves case and includes only the normalized
+selection, language pair and schema/prompt version, allowing reuse across papers and models.
+`mode: context` requires nonempty document fingerprint and surrounding context different from the
+selection; it bypasses document memory and uses the current model. Both modes require `selectionProvider: profile`.
+
+`allowGenerate: false` performs a read-only cache lookup, returning `status: miss` without invoking
+any provider. `cachePolicy: refresh` bypasses saved results, memory and glossary; successful results
+replace the corresponding cache entry, failures preserve the prior entry. Repeated concurrent
+refreshes share work, and older results cannot overwrite newer refreshes or repopulate cleared caches.
+`saved: false` indicates the result is usable but could not be persisted.
+
+`POST /selection-capabilities` returns `selectionLearning: true`; the same capability is advertised
+by `/health`. New clients verify it before using these fields. `POST /selection-cache/clear` clears
+translation/context caches but preserves personal dictionary entries and document memory. Existing
+request modes remain supported. Empty/invalid AI dictionary output is rejected as `invalid_output`;
+missing usable context is `context_unavailable`.
+
+Reader usage and manual verification: [user guide](../docs/user-guide.md#selection-translation).
+
 ## Model discovery
 
 `POST /list-models` accepts `apiUrl`, optional `apiKey`, and optional

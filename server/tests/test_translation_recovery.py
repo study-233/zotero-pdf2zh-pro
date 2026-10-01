@@ -170,6 +170,7 @@ class RecoveryTests(unittest.TestCase):
             recovered.finish()
             t2.translate_engine.llm_translate.assert_not_called()
             self.assertEqual(p2.unicode, TARGET)
+            self.assertEqual(next(iter(recovered.entries.values()))["readingTranslation"], TARGET)
             self.assertEqual(recovered.snapshot()[0]["failed"], 0)
             other = TranslationRecovery(recovered.path, "different-config")
             self.recovery_stack.callback(other.close)

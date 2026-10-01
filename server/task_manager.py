@@ -133,6 +133,15 @@ class TaskManager:
         self.diagnostics = DiagnosticStore(diagnostic_root)
         self._queue_blocked = recover_leases(diagnostic_root) if diagnostic_root and diagnostic_root.exists() else False
         self._load_persistent_tasks()
+        if self._persistence_path:
+            from translation_memory import sync_recovery
+            memory_path = self._persistence_path.parent / "translation-memory.sqlite3"
+            for record in sorted(self._tasks.values(), key=lambda task: task.updated_at):
+                if record.status == "completed" or (record.status == "incomplete" and record.result_files):
+                    try:
+                        sync_recovery(memory_path, record.request_payload)
+                    except Exception:
+                        LOGGER.warning("Could not migrate task translation memory")
 
     def list_tasks(self) -> list[dict[str, Any]]:
         with self._lock:
@@ -440,6 +449,8 @@ class TaskManager:
             record.status = "cancelling" if record.cancel_requested else "running"
             request_payload = copy.deepcopy(record.request_payload)
             request_payload["review_attempt"] = attempt
+            if self._persistence_path:
+                request_payload["translation_memory_path"] = str(self._persistence_path.parent / "translation-memory.sqlite3")
             self.diagnostics.record("task_configuration", {
                 "taskId": task_id, "attempt": attempt, "serverInstanceId": self._server_instance_id,
                 "requestedConfiguration": requested_configuration(request_payload),

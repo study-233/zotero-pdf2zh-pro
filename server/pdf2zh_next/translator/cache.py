@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from pathlib import Path
 
 from peewee import SQL
@@ -107,7 +108,11 @@ class TranslationCache:
 
 
 def init_db(remove_exists=False):
-    cache_folder = Path.home() / ".cache" / "pdf2zh_next"
+    cache_root = os.getenv("PDF2ZH_TRANSLATION_CACHE_DIR")
+    cache_folder = (
+        Path(cache_root).expanduser() / "pdf2zh_next"
+        if cache_root else Path.home() / ".cache" / "pdf2zh_next"
+    )
     cache_folder.mkdir(parents=True, exist_ok=True)
     # The current version does not support database migration, so add the version number to the file name.
     cache_db_path = cache_folder / "cache.v1.db"

@@ -1,0 +1,8 @@
+{
+    "source": "https://github.com/skywind3000/ECDICT",
+    "input": "ecdict.csv",
+    "inputSHA256": "1a6947e04785db63613a92e14903cdae7954f7e84860b10e68e5c7cbb3f9c3cf",
+    "entries": 50000,
+    "selection": "Minimum positive BNC/FRQ rank, then normalized word; first 50000 entries with a Chinese translation. See scripts/build_selection_dictionary.py.",
+    "license": "MIT; see LICENSE-ECDICT.txt"
+}

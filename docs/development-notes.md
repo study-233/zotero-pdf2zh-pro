@@ -90,7 +90,88 @@ git diff --check
 默认验证启动、安装、升级、自更新、卸载及全新 Python 3.13/OCR；勾选 `full_validation` 才追加完整回滚、迁移和重复的全量测试。
 Rust 单测复用 release 编译依赖，不再额外编译 debug 依赖。在新电脑上补充启动验收后发布。
 
+## macOS 独立开发环境
+
+日常开发使用独立 Profile 和文献库，正式 Zotero 与开发 Zotero 轮流打开。
+复用 `/Applications/Zotero.app`；正式后端继续运行在 8890，开发后端固定监听
+`127.0.0.1:8891`。Windows 原生开发管理尚未适配，不要将 Mac 的 Profile、虚拟环境
+或含密钥的配置直接复制到 Windows。
+
+先安装 Python 3.12/3.13、Node.js、pnpm 和 uv，并正常退出 Zotero。在仓库根目录运行：
+
+```bash
+./scripts/dev.sh init
+./scripts/dev.sh prepare-samples
+./scripts/dev.sh start
+./scripts/dev.sh status
+```
+
+`init` 使用锁文件准备依赖，首次从正式 Profile 复制完整模型列表及当前选择，包括
+密钥、接口、协议和额外请求参数。正式配置保持不变；开发配置可以独立修改，重复
+`init` 不会覆盖模型选择、文献或任务。多 Profile 无法唯一选择时使用
+`init --source-profile '/path/to/profile'`；Zotero 自定义安装位置使用
+`init --zotero-bin '/path/to/Zotero.app/Contents/MacOS/zotero'`。
+环境路径记录在已忽略的 `.local-dev/runtime/environment.json`，不可指向正式数据目录。
+
+模型配置需要更新时，退出两个 Zotero 实例，再执行：
+
+```bash
+./scripts/dev.sh sync-models
+```
+
+此命令先备份开发配置，再用正式模型配置覆盖；不会将正式后端地址复制过来。
+密钥仅保存在本地私有文件，不输出到终端，不提交 Git。开发 Profile 不登录同步账号。
+
+插件修改由脚手架监听并重新加载；窗口资源修改后可能需要重新打开对应窗口。
+开发构建位于 `.local-dev/runtime/plugin-build/`，名称带“开发版”，不覆盖正式构建。
+Python 修改后，以及开发结束时分别执行：
+
+```bash
+./scripts/dev.sh restart-server
+./scripts/dev.sh stop
+```
+
+存在排队、运行或正在取消的任务时，停止和重启会拒绝操作：先在开发版任务管理器中
+完成或取消任务。`stop` 只退出经过身份检查的开发进程，保留数据；随后正常打开
+Zotero 即回到正式环境。若手动关闭开发 Zotero，后端可能仍在运行，用 `stop` 收尾。
+
+所有开发数据在 `.local-dev/runtime/`：`profile/`、`library/`、`tasks/`、`config/`、
+`cache/`、`logs/`、`samples/` 和 `backups/`。后端通过 `PDF2ZH_CONFIG_DIR` 隔离配置，
+通过 `PDF2ZH_TRANSLATION_CACHE_DIR` 分别隔离 pdf2zh-next 与 BabelDOC 翻译数据库。
+未设置这两个变量时保持正式版默认路径；字体和模型下载缓存继续共享。
+开发管理不删除任何共享缓存，也不安装登录自启。
+
+### 固定样本与验收
+
+`prepare-samples` 使用测评分支提交 `ec8001d346856baad9dcb263e3aa2c3d9af69c09`
+中的三篇固定论文版本：Attention `1706.03762v7`、BERT `1810.04805v2`、
+ResNet `1512.03385v1`。记录下载来源和 SHA-256；校验不一致时停止。
+下次启动开发 Zotero 时校验 Profile、文献库和 PDF 后，导入“开发测试”分类，按标签去重。
+初始化、启动和样本准备不调用模型。少量页面翻译由用户从开发 Zotero 发起，
+推荐先测试 Attention 第 3 页、BERT 第 3 页、ResNet 第 4 页；不自动运行完整多模型测评。
+
+验收需覆盖插件重新加载、后端重启、任务进度、取消、PDF 生成和附件自动导入；
+单元测试不能代替真实 Zotero 操作。针对开发环境的离线检查：
+
+```bash
+python3 -m unittest discover -s scripts -p 'test_dev.py'
+uv run --directory server --locked python -m unittest discover -s tests -p 'test_development_paths.py'
+```
+
+### 故障恢复
+
+- 正式 Zotero 仍在运行：正常退出后重试，脚本不会替你强行关闭。
+- 8891 被占用：用 `status` 检查自己的开发进程；未知占用者由用户核实，不自动结束。
+- 后端或插件未就绪：查看 `logs/server-console.log`、`logs/server.log`、`logs/plugin.log`。
+- PID 失效或目录不匹配：停止操作并核对进程和 `environment.json`，不要删除文献库。
+- 启动中断：先 `status` 再 `stop`；修复问题后重新启动，已下载 PDF 和任务保留。
+
+共享逻辑位于 `scripts/dev.py`，macOS 入口为 `scripts/dev.sh`。Windows 后续增加原生
+入口和进程适配后需独立验收；不复用管理正式安装的 Windows 启停脚本。
+
 ## macOS 本机源码部署
+
+以下流程会替换本机正式安装，独立开发请使用上面的 `dev.sh`。
 
 `scripts/local-deploy.sh` 用于把当前工作树部署到本机 Zotero Profile 和 Homebrew
 管理的 `zotero-pdf2zh-pro` 服务。脚本在修改安装前完成构建，并在存在

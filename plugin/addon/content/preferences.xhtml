@@ -60,7 +60,7 @@
     { color: FieldText; } #zotero-prefpane-__addonRef__-profileSummary {
     overflow-wrap: anywhere; } .glossary-pack-list { margin-top: 8px; }
     .attachment-naming { margin-top: 14px; overflow-wrap: anywhere; }
-    .attachment-naming input { width: 100%; min-height: 28px; }
+    .attachment-naming input[type="text"] { min-height: 28px; }
     .glossary-pack-row { display: grid; grid-template-columns: minmax(140px,
     1fr) minmax(90px, auto) auto; gap: 6px 12px; align-items: center; padding:
     7px 0; border-bottom: 1px solid color-mix(in srgb, FieldText 10%,
@@ -75,6 +75,34 @@
     font-size: 13px; } @media (max-width: 620px) { .glossary-pack-row {
     grid-template-columns: 1fr auto; } .glossary-pack-state { grid-column: 1; }
     .glossary-pack-actions { grid-column: 2; grid-row: 1 / 3; } }
+    .pdf2zh-pref-pane [hidden] { display: none !important; } .title-builder {
+    display: grid; gap: 10px; margin-top: 12px; } .title-field-buttons,
+    .title-block-list, .title-separator-row { display: flex; flex-wrap: wrap;
+    gap: 6px; align-items: center; } .title-add-text { justify-self: start; }
+    .title-block-list { padding: 12px; min-height: 52px; border: 1px dashed
+    color-mix(in srgb, FieldText 28%, transparent); border-radius: 7px; }
+    .title-block { display: inline-flex; gap: 4px; align-items: center; padding:
+    5px 7px; border: 1px solid color-mix(in srgb, FieldText 20%, transparent);
+    border-radius: 6px; background: color-mix(in srgb, Field 94%, FieldText 6%);
+    max-width: 100%; box-sizing: border-box; } .title-block button { min-width:
+    23px; padding: 2px; } .title-block .title-block-handle { cursor: grab; }
+    .title-block input { width: 125px; min-width: 40px; }
+    .title-block.drop-before { box-shadow: -4px 0 Highlight; }
+    .title-block.drop-after { box-shadow: 4px 0 Highlight; }
+    .title-field-buttons button[aria-pressed="true"] { outline: 2px solid
+    Highlight; outline-offset: -2px; } .title-separator-row input { width: 85px;
+    } .title-preview-box { padding: 12px; border-radius: 6px; background:
+    color-mix(in srgb, Field 93%, FieldText 7%); } .title-preview-row { display:
+    grid; grid-template-columns: 65px minmax(0, 1fr); gap: 10px; margin-top:
+    7px; overflow-wrap: anywhere; } .title-builder-footer, .dictionary-footer,
+    .dictionary-download-row { display: flex; justify-content: space-between;
+    gap: 12px; align-items: center; flex-wrap: wrap; } .dictionary-download-row
+    { margin-top: 16px; padding: 12px; border: 1px solid color-mix(in srgb,
+    FieldText 16%, transparent); border-radius: 6px; } .dictionary-footer {
+    margin-top: 8px; } .dictionary-details { font-size: 12px; margin-top: 8px;
+    overflow-wrap: anywhere; } .dictionary-details summary { margin-bottom: 6px;
+    } .dictionary-details div { white-space: pre-line; } .pdf2zh-pref-pane
+    progress { width: 100%; margin-top: 8px; }
 </html:style>
 
 <groupbox
@@ -257,16 +285,6 @@
             </html:div>
             <html:div class="toggle-row">
                 <checkbox
-                    id="zotero-prefpane-__addonRef__-rename"
-                    preference="extensions.zotero.__addonRef__.rename"
-                />
-                <html:label
-                    for="zotero-prefpane-__addonRef__-rename"
-                    data-l10n-id="pref-rename"
-                />
-            </html:div>
-            <html:div class="toggle-row">
-                <checkbox
                     id="zotero-prefpane-__addonRef__-openAfterTranslate"
                     preference="extensions.zotero.__addonRef__.openAfterTranslate"
                 />
@@ -287,42 +305,204 @@
             </html:div>
         </html:div>
         <html:div class="attachment-naming">
-            <html:div class="form-field">
-                <html:label
-                    for="zotero-prefpane-__addonRef__-attachmentTitleTemplate"
-                    data-l10n-id="pref-title-template"
+            <html:div class="toggle-row">
+                <checkbox
+                    id="zotero-prefpane-__addonRef__-rename"
+                    preference="extensions.zotero.__addonRef__.rename"
                 />
-                <html:input
-                    id="zotero-prefpane-__addonRef__-attachmentTitleTemplate"
-                    type="text"
-                    aria-describedby="zotero-prefpane-__addonRef__-attachmentTitleHelp zotero-prefpane-__addonRef__-attachmentTitleError"
+                <html:label
+                    for="zotero-prefpane-__addonRef__-rename"
+                    data-l10n-id="pref-rename"
+                />
+            </html:div>
+            <html:p
+                id="zotero-prefpane-__addonRef__-attachmentTitleDisabled"
+                class="pref-description"
+                data-l10n-id="pref-title-disabled"
+                hidden="true"
+            />
+            <html:div
+                id="zotero-prefpane-__addonRef__-attachmentTitleEditor"
+                class="title-builder"
+            >
+                <html:div class="field-label" data-l10n-id="pref-title-add" />
+                <html:div
+                    id="zotero-prefpane-__addonRef__-attachmentTitleFields"
+                    class="title-field-buttons"
+                />
+                <html:button
+                    id="zotero-prefpane-__addonRef__-attachmentTitleAddText"
+                    data-l10n-id="pref-title-add-text"
+                    class="title-add-text"
                 />
                 <html:div
-                    id="zotero-prefpane-__addonRef__-attachmentTitleHelp"
-                    data-l10n-id="pref-title-template-help"
+                    class="field-label"
+                    data-l10n-id="pref-title-arrange"
                 />
-                <html:div data-l10n-id="pref-title-template-variables" />
+                <html:div
+                    id="zotero-prefpane-__addonRef__-attachmentTitleBlocks"
+                    class="title-block-list"
+                />
+                <html:div class="title-separator-row">
+                    <html:span
+                        class="field-label"
+                        data-l10n-id="pref-title-separator"
+                    />
+                    <html:div
+                        id="zotero-prefpane-__addonRef__-attachmentTitleSeparators"
+                        class="title-field-buttons"
+                    />
+                    <html:input
+                        id="zotero-prefpane-__addonRef__-attachmentTitleSeparatorCustom"
+                        type="text"
+                        data-l10n-id="pref-title-separator-custom"
+                    />
+                </html:div>
                 <html:div
                     id="zotero-prefpane-__addonRef__-attachmentTitleError"
                     role="alert"
                     hidden="true"
                 />
-                <html:div data-l10n-id="pref-title-template-preview" />
-                <html:div
-                    id="zotero-prefpane-__addonRef__-attachmentTitlePreview-mono"
-                    aria-live="polite"
-                />
-                <html:div
-                    id="zotero-prefpane-__addonRef__-attachmentTitlePreview-dual"
-                    aria-live="polite"
-                />
-                <html:div
-                    ><html:button
+                <html:div class="title-preview-box" aria-live="polite">
+                    <html:div
+                        class="field-label"
+                        data-l10n-id="pref-title-template-preview"
+                    />
+                    <html:div class="title-preview-row"
+                        ><html:span
+                            data-l10n-id="pref-title-preview-mono" /><html:span
+                            id="zotero-prefpane-__addonRef__-attachmentTitlePreview-mono"
+                    /></html:div>
+                    <html:div class="title-preview-row"
+                        ><html:span
+                            data-l10n-id="pref-title-preview-dual" /><html:span
+                            id="zotero-prefpane-__addonRef__-attachmentTitlePreview-dual"
+                    /></html:div>
+                </html:div>
+                <html:div class="title-builder-footer"
+                    ><html:span
+                        class="pref-description"
+                        data-l10n-id="pref-title-template-help" /><html:button
                         id="zotero-prefpane-__addonRef__-attachmentTitleReset"
                         data-l10n-id="pref-title-template-reset"
                 /></html:div>
             </html:div>
         </html:div>
+    </html:section>
+
+    <html:section class="pref-section">
+        <html:div class="section-heading">
+            <html:h3
+                class="pref-section-title"
+                data-l10n-id="pref-selection-title"
+            />
+        </html:div>
+        <html:p class="pref-description" data-l10n-id="pref-selection-hint" />
+        <html:div class="form-grid">
+            <html:div class="form-field">
+                <html:label
+                    class="field-label"
+                    data-l10n-id="pref-selection-provider"
+                />
+                <menulist
+                    id="zotero-prefpane-__addonRef__-selection-provider"
+                    class="select-input"
+                >
+                    <menupopup>
+                        <menuitem
+                            value="bing"
+                            data-l10n-id="pref-selection-bing"
+                        />
+                        <menuitem
+                            value="profile"
+                            data-l10n-id="pref-selection-profile"
+                        />
+                    </menupopup>
+                </menulist>
+            </html:div>
+            <html:div class="form-field">
+                <html:label
+                    class="field-label"
+                    data-l10n-id="pref-selection-dictionary"
+                />
+                <menulist
+                    id="zotero-prefpane-__addonRef__-selection-dictionary"
+                    class="select-input"
+                >
+                    <menupopup>
+                        <menuitem
+                            value="ecdict"
+                            data-l10n-id="pref-selection-ecdict"
+                        />
+                        <menuitem
+                            value="collins"
+                            data-l10n-id="pref-selection-collins"
+                        />
+                    </menupopup>
+                </menulist>
+            </html:div>
+        </html:div>
+        <html:p
+            id="zotero-prefpane-__addonRef__-selection-service-hint"
+            class="pref-description"
+            data-l10n-id="pref-selection-service-hint"
+        />
+        <html:label class="pref-description">
+            <html:input
+                type="checkbox"
+                id="zotero-prefpane-__addonRef__-selection-auto-dictionary"
+            />
+            <html:span data-l10n-id="pref-selection-auto-dictionary" />
+        </html:label>
+        <html:p
+            class="pref-description"
+            data-l10n-id="pref-selection-learning-hint"
+        />
+        <html:button
+            id="zotero-prefpane-__addonRef__-selection-clear-cache"
+            data-l10n-id="pref-selection-clear-cache"
+        />
+        <html:span
+            id="zotero-prefpane-__addonRef__-selection-cache-status"
+            class="pref-description"
+            aria-live="polite"
+        />
+        <html:div class="dictionary-download-row">
+            <html:div
+                ><html:strong data-l10n-id="pref-selection-pack" /><html:div
+                    id="zotero-prefpane-__addonRef__-selection-dictionary-status"
+                    class="pref-description"
+                    aria-live="polite"
+            /></html:div>
+            <html:button id="zotero-prefpane-__addonRef__-selection-download" />
+        </html:div>
+        <html:progress
+            id="zotero-prefpane-__addonRef__-selection-download-progress"
+            max="100"
+            value="0"
+            hidden="true"
+        />
+        <html:div
+            id="zotero-prefpane-__addonRef__-selection-download-error"
+            role="alert"
+            hidden="true"
+        />
+        <html:div class="dictionary-footer">
+            <html:span
+                class="pref-description"
+                data-l10n-id="pref-selection-import-hint"
+            />
+            <html:button
+                id="zotero-prefpane-__addonRef__-selection-import"
+                data-l10n-id="pref-selection-import"
+            />
+        </html:div>
+        <html:details class="dictionary-details">
+            <html:summary data-l10n-id="pref-selection-details" />
+            <html:div
+                id="zotero-prefpane-__addonRef__-selection-dictionary-details"
+            />
+        </html:details>
     </html:section>
 
     <html:section class="pref-section">

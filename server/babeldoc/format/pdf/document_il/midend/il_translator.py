@@ -1214,7 +1214,8 @@ class ILTranslator:
                 )
         recovery = getattr(self.translation_config, "recovery", None)
         if recovery is not None:
-            recovery.record(paragraph, "succeeded", input=translate_input.unicode, translation=translated_text, reason=None)
+            recovery.record(paragraph, "succeeded", input=translate_input.unicode, translation=translated_text,
+                            readingTranslation=get_paragraph_unicode(paragraph), reason=None)
         self._ensure_translation_completion()
         result = ParagraphOutput(translate_input.unicode, translated_text)
         with self._completion_lock:

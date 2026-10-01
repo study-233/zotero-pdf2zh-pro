@@ -1,13 +1,20 @@
 import { defineConfig } from "zotero-plugin-scaffold";
 import pkg from "./package.json";
 
+const devRuntime = process.env.PDF2ZH_DEV_RUNTIME || "";
+const dist = devRuntime ? `${devRuntime}/plugin-build` : "build";
+
 export default defineConfig({
     source: ["src", "addon"],
-    dist: "build",
+    dist,
     name: pkg.config.addonName,
     xpiName: "zotero-pdf2zh-pro",
     id: pkg.config.addonID,
     namespace: pkg.config.addonRef,
+    server: {
+        startArgs: devRuntime ? ["-no-remote"] : [],
+        devtools: !devRuntime,
+    },
     build: {
         assets: ["addon/**/*.*"],
         // Zotero 9 requires update_url even for directly distributed XPI files.
@@ -17,6 +24,7 @@ export default defineConfig({
         },
         define: {
             ...pkg.config,
+            addonName: pkg.config.addonName + (devRuntime ? "（开发版）" : ""),
             author: pkg.author,
             description: pkg.description,
             homepage: pkg.homepage,
@@ -28,10 +36,11 @@ export default defineConfig({
                 entryPoints: ["src/index.ts"],
                 define: {
                     __env__: `"${process.env.NODE_ENV}"`,
+                    __devRuntime__: JSON.stringify(devRuntime),
                 },
                 bundle: true,
                 target: "firefox115",
-                outfile: `build/addon/content/scripts/${pkg.config.addonRef}.js`,
+                outfile: `${dist}/addon/content/scripts/${pkg.config.addonRef}.js`,
             },
         ],
     },
