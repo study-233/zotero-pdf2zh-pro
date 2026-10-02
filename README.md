@@ -16,7 +16,7 @@
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 
-当前统一版本：<!-- release-version --> `1.7.5`
+当前统一版本：<!-- release-version --> `1.8.0`
 
 [快速开始](#quick-start) · [使用指南](docs/user-guide.md) ·
 [常见问题](#troubleshooting) · [更新记录](CHANGELOG.md)
