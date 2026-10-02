@@ -1,0 +1,7 @@
+{
+  "package": "pdfjs-dist",
+  "version": "6.3.289",
+  "source": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-6.3.289.tgz",
+  "integrity": "sha512-ZHjSVpDa3D6izMq8/04lvkhkATUmL9px6ChPaXc1k6nU2Mrhlg1/7F0bdUqCwUjw3NsPTfPZsMDUU6ZIcRaeQw==",
+  "license": "Apache-2.0"
+}

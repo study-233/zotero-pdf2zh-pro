@@ -1,0 +1,96 @@
+name: Plugin website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'docs/**'
+      - 'assets/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'plugin/package.json'
+      - 'server/pyproject.toml'
+      - 'server/server.py'
+      - 'benchmarks/translation/**'
+      - 'scripts/*site*'
+      - 'scripts/*docs*'
+      - '.github/workflows/website.yml'
+  pull_request:
+    paths:
+      - 'website/**'
+      - 'docs/**'
+      - 'assets/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'plugin/package.json'
+      - 'server/pyproject.toml'
+      - 'server/server.py'
+      - 'benchmarks/translation/**'
+      - 'scripts/*site*'
+      - 'scripts/*docs*'
+      - '.github/workflows/website.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-website-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - run: python -m pip install -r website/requirements.txt
+      - run: python scripts/check_docs.py
+      - run: python -m unittest discover -s scripts -p 'test_check_docs.py'
+      - run: python -m unittest discover -s website -p 'test_*.py'
+      - run: python benchmarks/translation/validate_site.py
+      - run: node --test website/test_site.cjs benchmarks/translation/test_ui.cjs
+      - run: python scripts/build_site.py
+      - run: python scripts/check_site.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-website
+          path: dist/site/
+          include-hidden-files: true
+          retention-days: 7
+
+  publish:
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugin-website
+          path: .tmp/website-output
+      - name: Publish the complete site to the existing Pages branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch origin codex/translation-benchmark-pages
+          git worktree add --detach .tmp/pages-checkout origin/codex/translation-benchmark-pages
+          rsync -a --delete --exclude=.git .tmp/website-output/ .tmp/pages-checkout/
+          git -C .tmp/pages-checkout add --all
+          if ! git -C .tmp/pages-checkout diff --cached --quiet; then
+            git -C .tmp/pages-checkout -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "Publish plugin website from $GITHUB_SHA"
+            git -C .tmp/pages-checkout push origin HEAD:codex/translation-benchmark-pages
+          fi
+          # GITHUB_TOKEN pushes do not automatically start a branch-based Pages build.
+          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"

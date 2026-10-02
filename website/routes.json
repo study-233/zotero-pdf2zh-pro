@@ -1,0 +1,17 @@
+[
+  {"anchor":"quick-start","slug":"","title":"安装前准备","group":"开始使用"},
+  {"anchor":"windows","slug":"windows","title":"Windows 安装","group":"开始使用"},
+  {"anchor":"macos","slug":"macos","title":"macOS 安装","group":"开始使用"},
+  {"anchor":"installation","slug":"installation","title":"安装 Zotero 插件","group":"开始使用"},
+  {"anchor":"api-configuration","slug":"api-configuration","title":"配置翻译 API","group":"开始使用"},
+  {"anchor":"usage","slug":"usage","title":"首次翻译与批量任务","group":"开始使用"},
+  {"anchor":"translation-options","slug":"translation-options","title":"常用翻译参数","group":"日常使用"},
+  {"anchor":"task-management","slug":"task-management","title":"任务管理与失败补译","group":"日常使用"},
+  {"anchor":"selection-translation","slug":"selection-translation","title":"划词精读与翻译记忆","group":"日常使用"},
+  {"source":"docs/glossary-downloads.md","slug":"glossary","title":"下载与使用术语库","group":"日常使用"},
+  {"anchor":"maintenance","slug":"maintenance","title":"更新、迁移与卸载","group":"维护与排错"},
+  {"anchor":"troubleshooting","slug":"troubleshooting","title":"常见问题","group":"维护与排错"},
+  {"anchor":"diagnostics","slug":"diagnostics","title":"诊断与问题反馈","group":"维护与排错"},
+  {"anchor":"uv","slug":"uv","title":"使用 uv 手动运行","group":"进阶部署"},
+  {"anchor":"advanced","slug":"advanced","title":"Linux 与 Docker","group":"进阶部署"}
+]

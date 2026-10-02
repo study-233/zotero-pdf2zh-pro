@@ -5,3 +5,4 @@
 /server/babeldoc/**            linguist-vendored whitespace=-trailing-space
 /server/pdf2zh_next/**         linguist-vendored whitespace=-trailing-space
 /server/rapidocr_onnxruntime/** linguist-vendored whitespace=-trailing-space
+/benchmarks/translation/site/vendor/** linguist-vendored whitespace=-trailing-space

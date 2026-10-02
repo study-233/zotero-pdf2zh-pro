@@ -11,6 +11,34 @@ python3 -m unittest discover -s scripts -p 'test_check_docs.py'
 
 文档 CI 不安装应用依赖；业务 CI 的触发规则保持不变。
 
+### 官网开发与发布
+
+官网使用独立的轻量构建依赖，无需安装翻译服务。Python 3.12+、Node.js 22+：
+
+```bash
+python -m pip install -r website/requirements.txt
+python scripts/build_site.py
+python scripts/check_site.py
+python -m unittest discover -s website -p 'test_*.py'
+node --test website/test_site.cjs benchmarks/translation/test_ui.cjs
+python benchmarks/translation/validate_site.py
+python scripts/serve_site.py
+```
+
+打开 `http://127.0.0.1:8895/zotero-pdf2zh-pro/` 预览；构建输出位于忽略的 `dist/site/`。
+教程正文来自使用指南与术语库文档，分页面由 `website/routes.json` 中的显式锚点映射生成。
+源码链接、标题锚点、图片和搜索索引在构建时统一处理。官网沿用评测页的主题存储键。
+
+公开评测基线来自 `codex/translation-benchmark` 的 `ec8001d`，与迁移前线上 Pages 分支的
+`0c371cf` 对应。只纳入网页、已公开数据/PDF、依赖许可证及静态验证，不纳入服务端实验改动。
+`benchmarks/translation/site/` 继续维护评测资源；原 JSON、CSV 与 PDF 根路径保持不变，
+官网将评测界面包装到 `/benchmark/`。测试快照与当前插件版本分别标示，不改写历史测试口径。
+
+唯一官网发布入口为 `.github/workflows/website.yml`：PR 验证并保存预览产物，main 验证通过后
+将完整站点以普通快进提交推送到既有 `codex/translation-benchmark-pages` 分支，并显式请求 Pages 构建。
+仓库 Pages 设置保持该分支根目录；不要恢复旧 `benchmark-pages.yml` 的单独发布逻辑，否则会覆盖官网。
+工作流仅构建公开静态内容，不调用翻译接口。恢复旧站点时，在发布分支还原目标发布提交的文件后创建新提交并请求 Pages 构建。
+
 ## 产品边界
 
 `zotero-pdf2zh-pro` 包含 Zotero 插件和本地 Python 服务。插件 ID 为

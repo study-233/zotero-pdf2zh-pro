@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block scripts %}<script src="{{ base }}pdf-viewer.js" defer></script><script src="{{ base }}app.js" defer></script>{% endblock %}
+{% block main %}
+<main id="main-content" class="benchmark-main"><nav class="benchmark-nav" aria-label="评测内容"><a href="#results" data-page="results" aria-current="page">数据探索</a><a href="#method" data-page="method">方法与来源</a></nav>{{ content | safe }}</main>
+{{ dialogs | safe }}
+<noscript><p class="usage-note">交互评测需要 JavaScript。也可直接下载 <a href="{{ base }}results.json">JSON</a> 或 <a href="{{ base }}results.csv">CSV</a> 查看公开数据。</p></noscript>
+{% endblock %}
