@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block main %}
+<main id="main-content" class="changelog-layout"><div class="doc-heading"><p class="eyebrow">持续改进，保持可追溯</p><h1>更新记录</h1><p>当前版本 v{{ version }} · 插件与本地服务请分别更新。</p><a class="text-link" href="{{ base }}guide/maintenance/">查看更新方法 →</a></div><article class="prose">{{ content | safe }}</article></main>
+{% endblock %}

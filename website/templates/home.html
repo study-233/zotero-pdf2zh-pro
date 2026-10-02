@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block main %}
+<main id="main-content" class="home-main">
+  <section class="home-hero">
+    <div class="hero-copy"><a class="version-link" href="{{ base }}changelog/"><span class="status-dot"></span>v{{ version }} · 开源 Zotero 插件 <span aria-hidden="true">↗</span></a>
+      <p class="eyebrow">从文库出发，让阅读继续</p><h1>在 Zotero 中，<br>读懂<span>整篇论文。</span></h1>
+      <p class="hero-description">翻译整篇 PDF，保留论文排版。译文与双语对照自动回到文库，从全文阅读到划词精读，连贯完成。</p>
+      <div class="hero-buttons"><a class="button primary" href="{{ base }}guide/">开始使用 <span aria-hidden="true">→</span></a><a class="button" href="{{ release }}/download/zotero-pdf2zh-pro.xpi">下载插件 <span aria-hidden="true">↓</span></a></div>
+      <p class="hero-requirements">支持 Zotero 8 / 9 / 10 <span>·</span> Windows / macOS / Linux</p>
+    </div>
+    <div class="hero-preview"><div class="preview-top"><span class="status-dot"></span><span>融入你的论文阅读工作流</span><span class="preview-tag">PDF → 双语 PDF</span></div>
+      <a href="{{ base }}assets/task-manager.png" class="zoom-image" aria-label="放大翻译任务列表截图"><img src="{{ base }}assets/task-manager.png" alt="Zotero 翻译任务列表：进度、请求详情与补译入口" width="1928" height="1246" fetchpriority="high"></a>
+      <div class="preview-bottom"><span>提交 · 翻译 · 导入 · 阅读</span><a href="{{ base }}guide/task-management/">了解任务管理 ↗</a></div>
+      <p class="screenshot-note">历史远端任务截图；“导入状态：无”表示未关联当前文库条目。</p>
+    </div>
+  </section>
+  <section id="features" class="home-section">
+    <div class="section-heading"><div><p class="eyebrow">从翻译到理解</p><h2>熟悉的文库，更完整的阅读体验。</h2></div><a class="text-link" href="{{ base }}guide/usage/">查看使用教程 ↗</a></div>
+    <div class="feature-grid">
+      {% for num, heading, text, path in [
+        ('01','整篇翻译，双语对照','生成译文 PDF、双语对照 PDF，或同时保留两种版本；完成后自动导入原条目。','usage'),
+        ('02','批量提交，进度可见','从文库右键提交单篇或批量任务，查看翻译阶段、请求耗时与 token 指标。','task-management'),
+        ('03','失败段落，接着补译','保留已验证译文，只补充剩余段落；修复后新增附件，保留旧版批注。','task-management'),
+        ('04','划词精读，随读随查','离线词典、选句翻译与按需语境解释，结合个人词典和已有译文继续理解。','selection-translation'),
+        ('05','模型与接口，自由配置','支持 OpenAI 兼容 API、多配置切换、模型列表查询与两种请求协议。','api-configuration'),
+        ('06','按需调整，术语一致','调整 OCR、表格翻译和参考文献保护；按需下载术语包或使用自定义词条。','translation-options')
+      ] %}<a class="feature-card" href="{{ base }}guide/{{ path }}/"><span class="feature-number">{{ num }}</span><h3>{{ heading }}</h3><p>{{ text }}</p><span class="card-arrow" aria-hidden="true">↗</span></a>{% endfor %}
+    </div>
+  </section>
+  <section class="home-section start-section" id="quick-start">
+    <div class="section-heading"><div><p class="eyebrow">开始第一篇翻译</p><h2>四步，把论文带回阅读。</h2></div><span class="muted">本地服务与 Zotero 插件都需要安装</span></div>
+    <ol class="steps">
+      {% for heading, text, path in [('安装本地服务','按操作系统安装并启动翻译服务。',''),('安装 Zotero 插件','下载 XPI，装入 Zotero 并检查连接。','installation/'),('配置翻译 API','填写地址、Key 和模型，测试后保存。','api-configuration/'),('翻译第一篇 PDF','右键提交任务，完成后阅读新附件。','usage/')] %}<li><span>{{ '%02d' % loop.index }}</span><h3>{{ heading }}</h3><p>{{ text }}</p><a href="{{ base }}guide/{{ path }}">查看步骤 →</a></li>{% endfor %}
+    </ol>
+    <div class="install-grid">
+      <article class="install-card" id="windows"><div><p class="eyebrow">WINDOWS 10 / 11 · x64</p><h3>从控制中心开始</h3><p>完整解压安装包，打开控制中心，点击“安装并启动”。</p></div><div><a class="button primary" href="{{ release }}/download/zotero-pdf2zh-pro-windows-x64.zip">下载 Windows 安装包 ↓</a><a class="text-link" href="{{ base }}guide/windows/">Windows 图文教程 →</a></div></article>
+      <article class="install-card" id="macos"><div><p class="eyebrow">macOS · HOMEBREW</p><h3>让服务在后台运行</h3><p>使用 Homebrew 安装与管理本地服务，终端关闭后仍可运行。</p></div><div><a class="button" href="{{ base }}guide/macos/">macOS 安装教程 →</a><a class="text-link" href="{{ base }}guide/uv/">uv 手动运行 / Linux / Docker →</a></div></article>
+    </div>
+    <p class="usage-note">PDF 在本地处理；使用云端 API 时，待翻译文本会发送给你选择的服务商，并消耗其 API 额度。</p>
+  </section>
+  <section class="benchmark-teaser home-section"><div><p class="eyebrow">真实任务，公开记录</p><h2>选模型，也看看实际译文。</h2><p>把翻译质量、已记录费用和耗时放在一起看。阅读测试生成的双语 PDF，了解评分背后的方法与限制。</p><a class="button" href="{{ base }}benchmark/">探索模型评测 <span aria-hidden="true">↗</span></a></div><div class="benchmark-numbers"><div><b>{{ models }}</b><span>参测模型</span></div><span aria-hidden="true">×</span><div><b>{{ papers }}</b><span>测试论文</span></div><p>固定样本 · AI 匿名评审 · 可下载数据</p></div></section>
+</main>
+{% endblock %}
