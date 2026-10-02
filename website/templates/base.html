@@ -7,10 +7,10 @@
   <title>{{ title }} · zotero-pdf2zh-pro</title>
   <link rel="canonical" href="{{ origin }}{{ base }}{{ route }}">
   <link rel="icon" href="{{ base }}assets/logo.svg" type="image/svg+xml">
-  <script src="{{ base }}ui.js"></script>
-  {% if kind == 'benchmark' %}<link rel="stylesheet" href="{{ base }}style.css"><link rel="stylesheet" href="{{ base }}pdf-viewer.css">{% endif %}
-  <link rel="stylesheet" href="{{ base }}site/site.css">
-  <script src="{{ base }}site/site.js" defer></script>
+  <script src="{{ asset('ui.js') }}"></script>
+  {% if kind == 'benchmark' %}<link rel="stylesheet" href="{{ asset('style.css') }}"><link rel="stylesheet" href="{{ asset('pdf-viewer.css') }}">{% endif %}
+  <link rel="stylesheet" href="{{ asset('site/site.css') }}">
+  <script src="{{ asset('site/site.js') }}" defer></script>
   {% block scripts %}{% endblock %}
 </head>
 <body class="{{ kind }}-page" data-base="{{ base }}">
