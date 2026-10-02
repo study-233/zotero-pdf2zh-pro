@@ -6,8 +6,7 @@
 
 **在 Zotero 中翻译整篇论文，自动导入译文与双语 PDF。**
 
-面向 Zotero 8、9 和 10，配套本地 Python 服务调用 `pdf2zh_next`，
-从提交 PDF、查看进度到阅读译文，都在熟悉的文库中完成。
+支持 Zotero 8、9 和 10，需配合本地服务使用。
 
 [![Release](https://img.shields.io/github/v/release/study-233/zotero-pdf2zh-pro?display_name=tag&sort=semver)](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)
 [![CI](https://github.com/study-233/zotero-pdf2zh-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/study-233/zotero-pdf2zh-pro/actions/workflows/ci.yml)
@@ -182,7 +181,6 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 ## TODO
 
-- [ ] 译文附件反查与独立精读配置
 - [ ] 接入 Codex
 - [ ] 接入墨墨背单词
 
@@ -202,8 +200,7 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 ## 项目来源
 
-本项目基于 [NightWatcher314/zotero-pdf2zh-next](https://github.com/NightWatcher314/zotero-pdf2zh-next)
-的 `v5.3.0` 继续开发，该项目源自 [guaguastandup/zotero-pdf2zh](https://github.com/guaguastandup/zotero-pdf2zh)。
+本项目基于 [NightWatcher314/zotero-pdf2zh-next](https://github.com/NightWatcher314/zotero-pdf2zh-next) 的 `v5.3.0` 继续开发，该项目源自 [guaguastandup/zotero-pdf2zh](https://github.com/guaguastandup/zotero-pdf2zh)。<br>
 感谢上游维护者及所有贡献者。
 
 ## License
