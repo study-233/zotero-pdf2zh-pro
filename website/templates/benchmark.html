@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block scripts %}<script src="{{ base }}pdf-viewer.js" defer></script><script src="{{ base }}app.js" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ asset('pdf-viewer.js') }}" defer></script><script src="{{ asset('app.js') }}" defer></script>{% endblock %}
 {% block main %}
 <main id="main-content" class="benchmark-main"><nav class="benchmark-nav" aria-label="评测内容"><a href="#results" data-page="results" aria-current="page">数据探索</a><a href="#method" data-page="method">方法与来源</a></nav>{{ content | safe }}</main>
 {{ dialogs | safe }}

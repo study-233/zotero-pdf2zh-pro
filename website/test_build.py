@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from pathlib import Path
 import sys
 import tempfile
@@ -55,7 +56,7 @@ class WebsiteTests(unittest.TestCase):
     def test_theme_and_benchmark_scripts_are_shared_from_project_root(self):
         html = (self.output / 'benchmark/index.html').read_text(encoding='utf-8')
         for script in ('ui.js', 'app.js', 'pdf-viewer.js', 'site/site.js'):
-            self.assertIn(f'src="{DEFAULT_BASE}{script}"', html)
+            self.assertRegex(html, f'src="{re.escape(DEFAULT_BASE + script)}\\?v=[0-9a-f]{{12}}"')
         self.assertIn(f'href="{DEFAULT_BASE}results.csv"', html)
         self.assertIn('id="pdf-reader"', html)
 

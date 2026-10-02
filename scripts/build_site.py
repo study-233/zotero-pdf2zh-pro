@@ -6,6 +6,7 @@ import argparse
 from collections import Counter
 from html import escape, unescape
 from html.parser import HTMLParser
+import hashlib
 import json
 from pathlib import Path
 import posixpath
@@ -146,8 +147,13 @@ class Website:
 
     def context(self, **values):
         return dict(base=self.base, origin=ORIGIN, repo=REPO, release=REPO + '/releases/latest',
-                    version=self.version, pages=self.pages,
+                    version=self.version, pages=self.pages, asset=self.asset_url,
                     groups=list(dict.fromkeys(p['group'] for p in self.pages)), **values)
+
+    def asset_url(self, path):
+        source = SITE / 'static' / path.removeprefix('site/') if path.startswith('site/') else BENCHMARK / path
+        digest = hashlib.sha256(source.read_bytes()).hexdigest()[:12]
+        return self.base + path + '?v=' + digest
 
     def index_page(self, page, content):
         chunks = re.split(r'(<h[2-6]\b[^>]*>.*?</h[2-6]>)', content, flags=re.S)
