@@ -1,4 +1,5 @@
 'use strict';
+const benchmarkBase = new URL('.', document.currentScript.src);
 let data, sortKey='name', descending=false, revealed=false, selectedPaper='all';
 const $=id=>document.getElementById(id);
 const el=(tag,text,className)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(className)n.className=className;return n;};
@@ -94,7 +95,8 @@ function switchView(view,pdfOptions){
   $('result-filters').hidden=view==='review';document.querySelector('.panel-tabs>.download').hidden=view==='review';if(view==='review')PdfShowcase.show(pdfOptions);
 }
 function navigate(){
-  const method=location.hash==='#method';$('method').hidden=!method;$('results').hidden=method;
+  const method=['#method','#compare'].includes(location.hash);$('method').hidden=!method;$('results').hidden=method;
+  if(location.hash==='#compare') { $('review-evidence').open=true; requestAnimationFrame(()=> $('review-evidence').scrollIntoView()); }
   document.querySelectorAll('[data-page]').forEach(a=>{if(a.dataset.page===(method?'method':'results'))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
 }
 
@@ -107,7 +109,7 @@ function initChrome(){
 
 async function init(){
   try{
-    const response=await fetch('results.json');if(!response.ok)throw Error('结果文件不可用');data=await response.json();
+    const response=await fetch(new URL('results.json', benchmarkBase));if(!response.ok)throw Error('结果文件不可用');data=await response.json();
     if(data.schemaVersion!==1)throw Error('不支持的数据版本');PdfShowcase.configure(data);
     $('stats').textContent=data.models.length+' 个模型 · '+data.papers.length+' 篇论文 · '+data.preparedAt.slice(0,10)+' 测试';
     data.papers.forEach(p=>{option($('review-paper'),p.id,shortPaper(p.id));const a=el('a',p.title+' · '+p.arxiv);a.href='https://arxiv.org/abs/'+encodeURIComponent(p.arxiv);$('paper-links').append(a);});
@@ -124,7 +126,7 @@ async function init(){
     document.querySelectorAll('[data-sort]').forEach(b=>{const icon=el('span',null,'icon sort-icon');icon.setAttribute('aria-hidden','true');b.append(icon);b.onclick=()=>{const key=b.dataset.sort;descending=sortKey===key?!descending:key==='quality';sortKey=key;renderResults();};});
     const tabs=[...document.querySelectorAll('[data-view]')];
     tabs.forEach((b,i)=>{b.onclick=()=>switchView(b.dataset.view);b.onkeydown=e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;switchView(tabs[next].dataset.view);tabs[next].focus();};});
-    window.addEventListener('hashchange',navigate);document.querySelector('.brand').onclick=()=>switchView('table');navigate();renderResults();updateCandidates();
+    window.addEventListener('hashchange',navigate);navigate();renderResults();updateCandidates();
   }catch(error){$('rows').replaceChildren();const tr=el('tr'),td=el('td','数据暂时无法加载，请刷新重试或下载 JSON。','empty');td.colSpan=8;tr.append(td);$('rows').append(tr);console.error(error);}
 }
 
@@ -170,5 +172,5 @@ function appendReviewEvidence(card, result) {
   }
 }
 
-initChrome();
+if(document.getElementById('theme-toggle')) initChrome();
 init();

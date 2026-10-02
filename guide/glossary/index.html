@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="下载与使用术语库：zotero-pdf2zh-pro 图文使用教程。">
+  <title>下载与使用术语库 · zotero-pdf2zh-pro</title>
+  <link rel="canonical" href="https://study-233.github.io/zotero-pdf2zh-pro/guide/glossary/">
+  <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
+  <script src="/zotero-pdf2zh-pro/ui.js"></script>
+  
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css">
+  <script src="/zotero-pdf2zh-pro/site/site.js" defer></script>
+  
+</head>
+<body class="guide-page" data-base="/zotero-pdf2zh-pro/">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="/zotero-pdf2zh-pro/"><img src="/zotero-pdf2zh-pro/assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
+      <nav class="site-nav" aria-label="主导航">
+        
+        <a href="/zotero-pdf2zh-pro/">首页</a>
+        
+        <a href="/zotero-pdf2zh-pro/guide/" aria-current="page">使用教程</a>
+        
+        <a href="/zotero-pdf2zh-pro/benchmark/">模型评测</a>
+        
+        <a href="/zotero-pdf2zh-pro/changelog/">更新记录</a>
+        
+      </nav>
+      <div class="site-actions">
+        <button class="site-icon-button" id="site-search-open" aria-label="搜索教程" title="搜索教程（Ctrl / ⌘ K）" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+        <button class="site-icon-button" id="site-theme" aria-label="切换到浅色主题" title="切换主题" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button>
+        <a class="site-github" href="https://github.com/study-233/zotero-pdf2zh-pro" aria-label="GitHub 仓库">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  
+<main id="main-content" class="docs-layout">
+  <aside class="docs-sidebar"><details id="guide-directory" open><summary>教程目录 <span aria-hidden="true">⌄</span></summary><nav aria-label="教程章节">
+    <div class="nav-group"><p>开始使用</p><a href="/zotero-pdf2zh-pro/guide/">安装前准备</a><a href="/zotero-pdf2zh-pro/guide/windows/">Windows 安装</a><a href="/zotero-pdf2zh-pro/guide/macos/">macOS 安装</a><a href="/zotero-pdf2zh-pro/guide/installation/">安装 Zotero 插件</a><a href="/zotero-pdf2zh-pro/guide/api-configuration/">配置翻译 API</a><a href="/zotero-pdf2zh-pro/guide/usage/">首次翻译与批量任务</a></div><div class="nav-group"><p>日常使用</p><a href="/zotero-pdf2zh-pro/guide/translation-options/">常用翻译参数</a><a href="/zotero-pdf2zh-pro/guide/task-management/">任务管理与失败补译</a><a href="/zotero-pdf2zh-pro/guide/selection-translation/">划词精读与翻译记忆</a><a href="/zotero-pdf2zh-pro/guide/glossary/" aria-current="page">下载与使用术语库</a></div><div class="nav-group"><p>维护与排错</p><a href="/zotero-pdf2zh-pro/guide/maintenance/">更新、迁移与卸载</a><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="/zotero-pdf2zh-pro/guide/diagnostics/">诊断与问题反馈</a></div><div class="nav-group"><p>进阶部署</p><a href="/zotero-pdf2zh-pro/guide/uv/">使用 uv 手动运行</a><a href="/zotero-pdf2zh-pro/guide/advanced/">Linux 与 Docker</a></div>
+  </nav></details></aside>
+  <article class="doc-article"><div class="doc-heading"><p class="eyebrow">使用教程 / 日常使用</p><h1>下载与使用术语库</h1></div>
+    <div class="prose"><span id="按需下载术语库"></span>
+
+<p>在 Zotero 设置中连接支持词库管理的服务端，然后下载需要的类别并勾选。下载成功不会自动启用，可同时选择计算机与 AI、建筑、物理、环境和医学。下载词库目前用于英语到简体中文；切换到其他语言时保留勾选，但不应用这些词条。自定义 CSV 沿用原有语言规则。</p>
+<p>词库正文不随 XPI、Python 包或 Docker 镜像安装。服务启动、打开设置和提交翻译都不会自动下载或更新词库。点击“检查更新”只刷新目录；点击“更新”才下载正文。已有词库可离线使用。</p>
+<h2 id="数据位置">数据位置</h2>
+<p>词库由当前连接的服务端下载到有效数据目录的 <code>glossaries/</code> 子目录。以 <code>/health</code> 返回的 <code>workspace.path</code> 为准；<code>--data-dir</code> 优先于 <code>PDF2ZH_DATA_DIR</code>。多个 Zotero 连接同一服务端时共用已下载文件，每个 Zotero 按规范化后的服务地址保存自己的勾选项。</p>
+<pre><code class="language-text">&lt;data-dir&gt;/
+  tasks.json
+  &lt;task-id&gt;/
+  glossaries/
+    catalog.json
+    &lt;pack-id&gt;/&lt;version&gt;/
+      &lt;sha256&gt;.json
+      &lt;sha256&gt;.meta.json
+</code></pre>
+<ul>
+<li>Windows 安装器沿用安装根目录下的 <code>data/</code>，迁移数据目录时词库一起迁移。</li>
+<li>Docker Compose 沿用 <code>/app/server/translates</code> 的数据卷，无需额外挂载。</li>
+<li>Python / Homebrew 沿用服务端 CLI 的数据目录选项。需要自行指定持久化位置时设置 <code>PDF2ZH_DATA_DIR</code>，或启动时传入 <code>--data-dir</code>。默认位置仍为已安装服务模块旁的 <code>translates/</code>；备份应以实际 <code>workspace.path</code> 为准。</li>
+</ul>
+<p>更新会保留旧版供已经开始提交的批次使用；移除会删除此词库的所有安装版本。已经创建的翻译任务保存了独立词条快照，重试、补译不依赖公共词库。清理任务不会删除公共词库。</p>
+<h2 id="合并规则">合并规则</h2>
+<p>开始批量提交时固定所选词库版本和自定义 CSV。服务端创建每个任务时核对版本和 SHA-256，将实际词条及来源版本存入任务快照。</p>
+<ol>
+<li>当前目标语言适用的自定义译法优先。</li>
+<li>同词同译合并；多个词库对同词提供不同译法且没有自定义覆盖时，不强制该词译法，交由上下文翻译。</li>
+<li>合并结果不受勾选顺序影响。</li>
+<li>指定版本缺失或损坏时拒绝新任务，重新下载或取消勾选后再提交。</li>
+</ol>
+<p>旧服务端可以继续普通翻译及其已支持的自定义 CSV；下载词库需要 <code>/health</code> 的 <code>capabilities.glossaryPacks</code> 为 <code>true</code>。</p>
+<h2 id="http-接口">HTTP 接口</h2>
+<table>
+<thead>
+<tr>
+<th>接口</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /glossaries</code></td>
+<td>本地目录、安装版本、条数、字节数和下载状态，不联网</td>
+</tr>
+<tr>
+<td><code>POST /glossaries/check-updates</code></td>
+<td>手动刷新远端目录，失败时保留原目录</td>
+</tr>
+<tr>
+<td><code>POST /glossaries/&lt;id&gt;/download</code></td>
+<td>异步下载当前目录版本；可传 <code>{&quot;version&quot;:&quot;…&quot;}</code></td>
+</tr>
+<tr>
+<td><code>POST /glossaries/&lt;id&gt;/cancel</code></td>
+<td>取消进行中的下载，保留已安装版本</td>
+</tr>
+<tr>
+<td><code>DELETE /glossaries/&lt;id&gt;</code></td>
+<td>移除全部安装版本；进行中的下载须先取消</td>
+</tr>
+</tbody>
+</table>
+<p>下载接口不接受调用者指定 URL 或路径。正文地址限定项目公开仓库的固定提交，并校验 SHA-256、文件大小、格式和词条数量。临时文件通过全部校验后才安装。</p>
+<p><code>POST /tasks</code> 增加可选 <code>glossaryPacks</code> 数组：</p>
+<pre><code class="language-json">{
+  &quot;glossaryPacks&quot;: [
+    {&quot;id&quot;: &quot;medicine&quot;, &quot;version&quot;: &quot;目录返回的版本&quot;, &quot;sha256&quot;: &quot;目录返回的完整 SHA-256&quot;}
+  ],
+  &quot;glossaryEntries&quot;: [
+    {&quot;source&quot;: &quot;自定义原词&quot;, &quot;target&quot;: &quot;自定义译法&quot;, &quot;tgt_lng&quot;: &quot;zh-CN&quot;}
+  ]
+}
+</code></pre>
+<p>完整来源、许可和整理方法见 <a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/glossary-sources.md">词库来源说明</a>。词条正文与其来源说明单独维护在公开仓库的 <code>glossary-data</code> 分支。</p>
+</div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/glossary-downloads.md">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.0</span></div>
+    <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/selection-translation/"><small>← 上一篇</small><span>划词精读与翻译记忆</span></a><a href="/zotero-pdf2zh-pro/guide/maintenance/"><small>下一篇 →</small><span>更新、迁移与卸载</span></a></nav>
+  </article>
+  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">下载与使用术语库</a><a href="#数据位置">数据位置</a><a href="#合并规则">合并规则</a><a href="#http-接口">HTTP 接口</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
+</main>
+
+  <footer class="site-footer" id="community">
+    <div><a class="footer-brand" href="/zotero-pdf2zh-pro/">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
+    <div class="footer-links"><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md">参与贡献</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
+    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。</p>
+  </footer>
+  <dialog id="site-search" class="search-dialog" aria-labelledby="search-title">
+    <div class="dialog-heading"><h2 id="search-title">搜索教程</h2><button class="site-icon-button" data-close-dialog aria-label="关闭搜索">×</button></div>
+    <label class="sr-only" for="search-input">输入教程关键词</label><input id="search-input" type="search" placeholder="安装、API、补译、划词…" autocomplete="off">
+    <p id="search-status" role="status">输入关键词，查找安装与使用方法。</p><ul id="search-results"></ul>
+  </dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-label="截图预览"><button class="site-icon-button" data-close-dialog aria-label="关闭截图">×</button><img alt=""><p></p></dialog>
+</body>
+</html>

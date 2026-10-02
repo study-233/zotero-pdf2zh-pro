@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Windows 安装：zotero-pdf2zh-pro 图文使用教程。">
+  <title>Windows 安装 · zotero-pdf2zh-pro</title>
+  <link rel="canonical" href="https://study-233.github.io/zotero-pdf2zh-pro/guide/windows/">
+  <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
+  <script src="/zotero-pdf2zh-pro/ui.js"></script>
+  
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css">
+  <script src="/zotero-pdf2zh-pro/site/site.js" defer></script>
+  
+</head>
+<body class="guide-page" data-base="/zotero-pdf2zh-pro/">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="/zotero-pdf2zh-pro/"><img src="/zotero-pdf2zh-pro/assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
+      <nav class="site-nav" aria-label="主导航">
+        
+        <a href="/zotero-pdf2zh-pro/">首页</a>
+        
+        <a href="/zotero-pdf2zh-pro/guide/" aria-current="page">使用教程</a>
+        
+        <a href="/zotero-pdf2zh-pro/benchmark/">模型评测</a>
+        
+        <a href="/zotero-pdf2zh-pro/changelog/">更新记录</a>
+        
+      </nav>
+      <div class="site-actions">
+        <button class="site-icon-button" id="site-search-open" aria-label="搜索教程" title="搜索教程（Ctrl / ⌘ K）" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+        <button class="site-icon-button" id="site-theme" aria-label="切换到浅色主题" title="切换主题" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button>
+        <a class="site-github" href="https://github.com/study-233/zotero-pdf2zh-pro" aria-label="GitHub 仓库">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  
+<main id="main-content" class="docs-layout">
+  <aside class="docs-sidebar"><details id="guide-directory" open><summary>教程目录 <span aria-hidden="true">⌄</span></summary><nav aria-label="教程章节">
+    <div class="nav-group"><p>开始使用</p><a href="/zotero-pdf2zh-pro/guide/">安装前准备</a><a href="/zotero-pdf2zh-pro/guide/windows/" aria-current="page">Windows 安装</a><a href="/zotero-pdf2zh-pro/guide/macos/">macOS 安装</a><a href="/zotero-pdf2zh-pro/guide/installation/">安装 Zotero 插件</a><a href="/zotero-pdf2zh-pro/guide/api-configuration/">配置翻译 API</a><a href="/zotero-pdf2zh-pro/guide/usage/">首次翻译与批量任务</a></div><div class="nav-group"><p>日常使用</p><a href="/zotero-pdf2zh-pro/guide/translation-options/">常用翻译参数</a><a href="/zotero-pdf2zh-pro/guide/task-management/">任务管理与失败补译</a><a href="/zotero-pdf2zh-pro/guide/selection-translation/">划词精读与翻译记忆</a><a href="/zotero-pdf2zh-pro/guide/glossary/">下载与使用术语库</a></div><div class="nav-group"><p>维护与排错</p><a href="/zotero-pdf2zh-pro/guide/maintenance/">更新、迁移与卸载</a><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="/zotero-pdf2zh-pro/guide/diagnostics/">诊断与问题反馈</a></div><div class="nav-group"><p>进阶部署</p><a href="/zotero-pdf2zh-pro/guide/uv/">使用 uv 手动运行</a><a href="/zotero-pdf2zh-pro/guide/advanced/">Linux 与 Docker</a></div>
+  </nav></details></aside>
+  <article class="doc-article"><div class="doc-heading"><p class="eyebrow">使用教程 / 开始使用</p><h1>Windows 安装</h1></div>
+    <div class="prose"><p><a id="windows"></a></p>
+<span id="2-windows-安装教程"></span>
+
+<p>适用于 <strong>Windows 10/11 x64</strong>。首次安装需要联网下载运行环境和服务端。</p>
+<h2 id="第一步下载并完整解压">第一步：下载并完整解压</h2>
+<ol>
+<li>打开 <a href="https://github.com/study-233/zotero-pdf2zh-pro/releases/latest">最新 Release</a>，展开发布页底部的 <strong>Assets</strong>。</li>
+<li>下载 <code>zotero-pdf2zh-pro-windows-x64.zip</code>，同时下载 <code>zotero-pdf2zh-pro.xpi</code>，稍后装入 Zotero。</li>
+<li>右键 ZIP，选择“全部解压”，进入解压后的文件夹。</li>
+<li>双击 <code>zotero-pdf2zh-pro.exe</code>。请保留 ZIP 内的配套文件，不要只复制 EXE，也不要直接在压缩包里运行。</li>
+</ol>
+<h2 id="第二步选择安装位置并启动">第二步：选择安装位置并启动</h2>
+<ol>
+<li>首次打开时，在“安装位置”处点击“选择”，按需指定目录；使用默认位置也可以。</li>
+<li>点击主按钮 <strong>“安装并启动”</strong>，等待窗口中的操作记录完成。</li>
+<li>控制中心会在所选产品目录安装私有 uv、uv 托管的 Python 3.13，以及与控制中心同版本的服务端。</li>
+<li>当状态变为 <strong>“运行中”</strong>、显示 <strong>“翻译服务已就绪”</strong>，且主按钮变为 <strong>“停止服务”</strong> 时，本地服务已启动。</li>
+</ol>
+<p>默认产品目录为 <code>%LOCALAPPDATA%\zotero-pdf2zh-pro</code>。也可以像下图一样安装到其他磁盘；图中的目录只是示例。</p>
+<p><img src="/zotero-pdf2zh-pro/assets/windows-control-center.png" alt="Windows 控制中心：服务已就绪、安装位置、自启开关和日志入口" /></p>
+<p><em>Windows 实机截图。版本号随安装版本变化；图中登录自启已关闭，首次安装默认会开启，可自行调整。</em></p>
+<h2 id="第三步保持服务运行并安装插件">第三步：保持服务运行并安装插件</h2>
+<p>服务地址保持 <code>http://127.0.0.1:8890</code>，接着完成<a href="/zotero-pdf2zh-pro/guide/installation/#installation">安装 Zotero 插件</a>。</p>
+<ul>
+<li><strong>关闭主窗口</strong>只会隐藏到托盘；重新打开控制中心可继续查看状态。</li>
+<li><strong>退出控制中心</strong>也不会停止已经运行的翻译服务。需要停止时，点击“停止服务”。</li>
+<li><strong>登录自启</strong>开启后，登录 Windows 时控制中心静默进入托盘，并确保服务运行；升级不会重置你的选择。</li>
+<li>安装不需要管理员权限，不创建 Windows Service、计划任务或防火墙规则，也不会停止占用 8890 端口的未知进程。</li>
+</ul>
+<h2 id="如果控制中心打不开">如果控制中心打不开</h2>
+<ul>
+<li>控制中心会自动检测 Microsoft Edge WebView2 Runtime。缺失时显示准备窗口，联网从微软下载、验证签名并安装，完成后自动继续启动；失败可重试、查看日志或打开<a href="https://developer.microsoft.com/microsoft-edge/webview2/">微软官方下载页面</a>。首次准备需要联网，通常无需管理员权限。</li>
+<li>如果旧版提示缺少 <code>WebView2Loader.dll</code>，请下载新版 Windows ZIP，完整解压后运行其中的 EXE，按界面安装或升级；无需先卸载原版，已有配置和翻译记录会保留。</li>
+<li>当前 EXE 未签名，Windows SmartScreen 可能提示风险。请只从本项目 Release 下载，并核对发布页提供的 SHA-256。</li>
+<li>图形界面仍无法使用时，可查看解压目录内的 <a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/scripts/windows/README.txt">Windows 说明</a>，使用 <code>install.cmd</code>、<code>start-server.cmd</code> 或 <code>view-log.cmd</code> 等故障恢复入口。</li>
+</ul>
+</div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#windows">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.0</span></div>
+    <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/"><small>← 上一篇</small><span>安装前准备</span></a><a href="/zotero-pdf2zh-pro/guide/installation/"><small>下一篇 →</small><span>安装 Zotero 插件</span></a></nav>
+  </article>
+  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">Windows 安装</a><a href="#第一步下载并完整解压">第一步：下载并完整解压</a><a href="#第二步选择安装位置并启动">第二步：选择安装位置并启动</a><a href="#第三步保持服务运行并安装插件">第三步：保持服务运行并安装插件</a><a href="#如果控制中心打不开">如果控制中心打不开</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
+</main>
+
+  <footer class="site-footer" id="community">
+    <div><a class="footer-brand" href="/zotero-pdf2zh-pro/">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
+    <div class="footer-links"><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md">参与贡献</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
+    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。</p>
+  </footer>
+  <dialog id="site-search" class="search-dialog" aria-labelledby="search-title">
+    <div class="dialog-heading"><h2 id="search-title">搜索教程</h2><button class="site-icon-button" data-close-dialog aria-label="关闭搜索">×</button></div>
+    <label class="sr-only" for="search-input">输入教程关键词</label><input id="search-input" type="search" placeholder="安装、API、补译、划词…" autocomplete="off">
+    <p id="search-status" role="status">输入关键词，查找安装与使用方法。</p><ul id="search-results"></ul>
+  </dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-label="截图预览"><button class="site-icon-button" data-close-dialog aria-label="关闭截图">×</button><img alt=""><p></p></dialog>
+</body>
+</html>

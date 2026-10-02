@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="macOS 安装：zotero-pdf2zh-pro 图文使用教程。">
+  <title>macOS 安装 · zotero-pdf2zh-pro</title>
+  <link rel="canonical" href="https://study-233.github.io/zotero-pdf2zh-pro/guide/macos/">
+  <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
+  <script src="/zotero-pdf2zh-pro/ui.js"></script>
+  
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css">
+  <script src="/zotero-pdf2zh-pro/site/site.js" defer></script>
+  
+</head>
+<body class="guide-page" data-base="/zotero-pdf2zh-pro/">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="/zotero-pdf2zh-pro/"><img src="/zotero-pdf2zh-pro/assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
+      <nav class="site-nav" aria-label="主导航">
+        
+        <a href="/zotero-pdf2zh-pro/">首页</a>
+        
+        <a href="/zotero-pdf2zh-pro/guide/" aria-current="page">使用教程</a>
+        
+        <a href="/zotero-pdf2zh-pro/benchmark/">模型评测</a>
+        
+        <a href="/zotero-pdf2zh-pro/changelog/">更新记录</a>
+        
+      </nav>
+      <div class="site-actions">
+        <button class="site-icon-button" id="site-search-open" aria-label="搜索教程" title="搜索教程（Ctrl / ⌘ K）" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+        <button class="site-icon-button" id="site-theme" aria-label="切换到浅色主题" title="切换主题" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button>
+        <a class="site-github" href="https://github.com/study-233/zotero-pdf2zh-pro" aria-label="GitHub 仓库">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  
+<main id="main-content" class="docs-layout">
+  <aside class="docs-sidebar"><details id="guide-directory" open><summary>教程目录 <span aria-hidden="true">⌄</span></summary><nav aria-label="教程章节">
+    <div class="nav-group"><p>开始使用</p><a href="/zotero-pdf2zh-pro/guide/">安装前准备</a><a href="/zotero-pdf2zh-pro/guide/windows/">Windows 安装</a><a href="/zotero-pdf2zh-pro/guide/macos/" aria-current="page">macOS 安装</a><a href="/zotero-pdf2zh-pro/guide/installation/">安装 Zotero 插件</a><a href="/zotero-pdf2zh-pro/guide/api-configuration/">配置翻译 API</a><a href="/zotero-pdf2zh-pro/guide/usage/">首次翻译与批量任务</a></div><div class="nav-group"><p>日常使用</p><a href="/zotero-pdf2zh-pro/guide/translation-options/">常用翻译参数</a><a href="/zotero-pdf2zh-pro/guide/task-management/">任务管理与失败补译</a><a href="/zotero-pdf2zh-pro/guide/selection-translation/">划词精读与翻译记忆</a><a href="/zotero-pdf2zh-pro/guide/glossary/">下载与使用术语库</a></div><div class="nav-group"><p>维护与排错</p><a href="/zotero-pdf2zh-pro/guide/maintenance/">更新、迁移与卸载</a><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="/zotero-pdf2zh-pro/guide/diagnostics/">诊断与问题反馈</a></div><div class="nav-group"><p>进阶部署</p><a href="/zotero-pdf2zh-pro/guide/uv/">使用 uv 手动运行</a><a href="/zotero-pdf2zh-pro/guide/advanced/">Linux 与 Docker</a></div>
+  </nav></details></aside>
+  <article class="doc-article"><div class="doc-heading"><p class="eyebrow">使用教程 / 开始使用</p><h1>macOS 安装</h1></div>
+    <div class="prose"><p><a id="macos"></a></p>
+<span id="3-macos-安装教程"></span>
+
+<p>推荐使用 <strong>Homebrew 后台服务</strong>，关闭终端后仍能运行。下面的命令在“应用程序 → 实用工具 → 终端”中执行，每段执行完成后再继续。</p>
+<h2 id="第一步确认-homebrew-可用">第一步：确认 Homebrew 可用</h2>
+<pre><code class="language-bash">brew --version
+</code></pre>
+<p>能看到 Homebrew 版本号即可继续。如果提示 <code>command not found: brew</code>，请先按 <a href="https://brew.sh/">Homebrew 官方安装说明</a>安装，并完成安装结束时提示的 <strong>Next steps</strong>，然后重新打开终端再检查。
+Homebrew 会根据机器环境提示所需前置依赖；系统兼容性以官方说明为准。</p>
+<h2 id="第二步安装本地服务">第二步：安装本地服务</h2>
+<pre><code class="language-bash">brew tap study-233/formula
+brew install --build-from-source study-233/formula/zotero-pdf2zh-pro
+</code></pre>
+<p>首次安装会下载源码和依赖，耗时取决于网络和机器。等待命令结束、终端重新出现输入提示符，再继续启动服务。</p>
+<h2 id="第三步启动并验证">第三步：启动并验证</h2>
+<pre><code class="language-bash">brew services start zotero-pdf2zh-pro
+brew services list
+</code></pre>
+<p>在列表中找到 <code>zotero-pdf2zh-pro</code>，检查状态是否为 <code>started</code>。再执行：</p>
+<pre><code class="language-bash">curl -fsS http://127.0.0.1:8890/health
+</code></pre>
+<p>正常情况下会返回 JSON，其中包含 <code>&quot;status&quot;:&quot;ok&quot;</code> 和服务端 <code>version</code>。这表示本地服务可访问，<strong>还不代表翻译 API 已配置成功</strong>。
+也可以在浏览器中打开 <a href="http://127.0.0.1:8890/health">本地健康检查</a>。</p>
+<p>上述 <code>brew services start</code> 在不使用 <code>sudo</code> 时会注册当前用户登录启动，终端可以关闭。具体行为见 <a href="https://docs.brew.sh/Manpage#services-subcommand">Homebrew services 文档</a>。
+现在继续<a href="/zotero-pdf2zh-pro/guide/installation/#installation">安装 Zotero 插件</a>。</p>
+<h2 id="日常启动停止和查看日志">日常启动、停止和查看日志</h2>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>命令</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>查看状态</td>
+<td><code>brew services list</code></td>
+</tr>
+<tr>
+<td>启动并启用登录启动</td>
+<td><code>brew services start zotero-pdf2zh-pro</code></td>
+</tr>
+<tr>
+<td>停止并取消登录启动</td>
+<td><code>brew services stop zotero-pdf2zh-pro</code></td>
+</tr>
+<tr>
+<td>重启服务</td>
+<td><code>brew services restart zotero-pdf2zh-pro</code></td>
+</tr>
+<tr>
+<td>查看最近日志</td>
+<td><code>tail -n 100 &quot;$(brew --prefix)/var/log/zotero-pdf2zh-pro.log&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<p>翻译进行中请保持服务运行；重启或停止前先处理当前任务。</p>
+</div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#macos">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.0</span></div>
+    <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/windows/"><small>← 上一篇</small><span>Windows 安装</span></a><a href="/zotero-pdf2zh-pro/guide/installation/"><small>下一篇 →</small><span>安装 Zotero 插件</span></a></nav>
+  </article>
+  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">macOS 安装</a><a href="#第一步确认-homebrew-可用">第一步：确认 Homebrew 可用</a><a href="#第二步安装本地服务">第二步：安装本地服务</a><a href="#第三步启动并验证">第三步：启动并验证</a><a href="#日常启动停止和查看日志">日常启动、停止和查看日志</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
+</main>
+
+  <footer class="site-footer" id="community">
+    <div><a class="footer-brand" href="/zotero-pdf2zh-pro/">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
+    <div class="footer-links"><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md">参与贡献</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
+    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。</p>
+  </footer>
+  <dialog id="site-search" class="search-dialog" aria-labelledby="search-title">
+    <div class="dialog-heading"><h2 id="search-title">搜索教程</h2><button class="site-icon-button" data-close-dialog aria-label="关闭搜索">×</button></div>
+    <label class="sr-only" for="search-input">输入教程关键词</label><input id="search-input" type="search" placeholder="安装、API、补译、划词…" autocomplete="off">
+    <p id="search-status" role="status">输入关键词，查找安装与使用方法。</p><ul id="search-results"></ul>
+  </dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-label="截图预览"><button class="site-icon-button" data-close-dialog aria-label="关闭截图">×</button><img alt=""><p></p></dialog>
+</body>
+</html>

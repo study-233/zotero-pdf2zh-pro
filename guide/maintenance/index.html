@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="更新、迁移与卸载：zotero-pdf2zh-pro 图文使用教程。">
+  <title>更新、迁移与卸载 · zotero-pdf2zh-pro</title>
+  <link rel="canonical" href="https://study-233.github.io/zotero-pdf2zh-pro/guide/maintenance/">
+  <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
+  <script src="/zotero-pdf2zh-pro/ui.js"></script>
+  
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css">
+  <script src="/zotero-pdf2zh-pro/site/site.js" defer></script>
+  
+</head>
+<body class="guide-page" data-base="/zotero-pdf2zh-pro/">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="/zotero-pdf2zh-pro/"><img src="/zotero-pdf2zh-pro/assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
+      <nav class="site-nav" aria-label="主导航">
+        
+        <a href="/zotero-pdf2zh-pro/">首页</a>
+        
+        <a href="/zotero-pdf2zh-pro/guide/" aria-current="page">使用教程</a>
+        
+        <a href="/zotero-pdf2zh-pro/benchmark/">模型评测</a>
+        
+        <a href="/zotero-pdf2zh-pro/changelog/">更新记录</a>
+        
+      </nav>
+      <div class="site-actions">
+        <button class="site-icon-button" id="site-search-open" aria-label="搜索教程" title="搜索教程（Ctrl / ⌘ K）" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+        <button class="site-icon-button" id="site-theme" aria-label="切换到浅色主题" title="切换主题" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button>
+        <a class="site-github" href="https://github.com/study-233/zotero-pdf2zh-pro" aria-label="GitHub 仓库">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  
+<main id="main-content" class="docs-layout">
+  <aside class="docs-sidebar"><details id="guide-directory" open><summary>教程目录 <span aria-hidden="true">⌄</span></summary><nav aria-label="教程章节">
+    <div class="nav-group"><p>开始使用</p><a href="/zotero-pdf2zh-pro/guide/">安装前准备</a><a href="/zotero-pdf2zh-pro/guide/windows/">Windows 安装</a><a href="/zotero-pdf2zh-pro/guide/macos/">macOS 安装</a><a href="/zotero-pdf2zh-pro/guide/installation/">安装 Zotero 插件</a><a href="/zotero-pdf2zh-pro/guide/api-configuration/">配置翻译 API</a><a href="/zotero-pdf2zh-pro/guide/usage/">首次翻译与批量任务</a></div><div class="nav-group"><p>日常使用</p><a href="/zotero-pdf2zh-pro/guide/translation-options/">常用翻译参数</a><a href="/zotero-pdf2zh-pro/guide/task-management/">任务管理与失败补译</a><a href="/zotero-pdf2zh-pro/guide/selection-translation/">划词精读与翻译记忆</a><a href="/zotero-pdf2zh-pro/guide/glossary/">下载与使用术语库</a></div><div class="nav-group"><p>维护与排错</p><a href="/zotero-pdf2zh-pro/guide/maintenance/" aria-current="page">更新、迁移与卸载</a><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="/zotero-pdf2zh-pro/guide/diagnostics/">诊断与问题反馈</a></div><div class="nav-group"><p>进阶部署</p><a href="/zotero-pdf2zh-pro/guide/uv/">使用 uv 手动运行</a><a href="/zotero-pdf2zh-pro/guide/advanced/">Linux 与 Docker</a></div>
+  </nav></details></aside>
+  <article class="doc-article"><div class="doc-heading"><p class="eyebrow">使用教程 / 维护与排错</p><h1>更新、迁移与卸载</h1></div>
+    <div class="prose"><p><a id="maintenance"></a></p>
+<span id="9-更新与日常维护"></span>
+
+<h2 id="更新插件和服务端">更新插件和服务端</h2>
+<p>插件与服务端分别更新，遇到协议或能力不兼容时检查两端版本。</p>
+<table>
+<thead>
+<tr>
+<th>安装方式</th>
+<th>更新步骤</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zotero 插件</td>
+<td>在插件管理器中检查更新，或下载新 XPI 后从文件安装；按提示重启 Zotero</td>
+</tr>
+<tr>
+<td>Windows 控制中心</td>
+<td>启动时静默检查稳定版本；也可打开右下角“更多 → 检查更新”，发现新版后点击“更新到 vX.X.X”</td>
+</tr>
+<tr>
+<td>macOS Homebrew</td>
+<td>按下方命令更新并重启服务</td>
+</tr>
+<tr>
+<td>uv</td>
+<td>停止前台服务，执行 <code>uv tool upgrade zotero-pdf2zh-pro</code>，再运行 <code>zotero-pdf2zh-pro</code></td>
+</tr>
+</tbody>
+</table>
+<p>Homebrew 更新：</p>
+<pre><code class="language-bash">brew update
+brew upgrade zotero-pdf2zh-pro
+brew services restart zotero-pdf2zh-pro
+curl -fsS http://127.0.0.1:8890/health
+</code></pre>
+<p>更新前先等待翻译完成。Windows 更新会下载、校验并升级控制中心和服务端，替换程序时会显示命令行进度，结束后自动关闭。
+任务、结果、日志和自启选择会保留，更新失败会尝试恢复旧版。尚不具备自动更新能力的旧控制中心，需要先手动安装一次新版 Windows ZIP。
+插件通过公开的 <code>update.json</code> 接收稳定版更新，源码可从对应版本标签获取。</p>
+<h2 id="数据位置与迁移">数据位置与迁移</h2>
+<ul>
+<li><strong>Windows</strong>：控制中心点击“打开数据目录”或“打开日志”；所选产品目录中的 <code>data</code> 存任务数据，<code>logs</code> 存日志。私有运行时和缓存也在该产品目录，开始菜单、自启项和安装位置记录在 Windows 用户配置中。</li>
+<li><strong>更改 Windows 安装位置</strong>：使用“安装位置 → 更改”。迁移会先停止服务、复制并验证任务数据与检查点，失败时恢复原安装；不要直接拖动正在使用的产品目录。</li>
+<li><strong>macOS / uv</strong>：打开 <code>/health</code>，查看 <code>workspace.path</code> 获取当前实际数据目录；不要根据别人的用户名或版本号猜路径。Homebrew 日志使用上文的 <code>tail</code> 命令查看。</li>
+<li>如需保留翻译结果和恢复能力，在卸载或手动迁移前备份实际数据目录；任务中包含原 PDF、译文及恢复信息。</li>
+</ul>
+<h2 id="卸载">卸载</h2>
+<ul>
+<li><strong>Windows</strong>：在“更多 → 卸载”或开始菜单进入卸载，默认保留任务数据和日志；只有确定不再需要时才选择彻底删除。</li>
+<li><strong>Homebrew</strong>：先停止服务并备份所需数据，再执行 <code>brew uninstall zotero-pdf2zh-pro</code>。</li>
+<li><strong>uv</strong>：停止前台服务并备份所需数据，再执行 <code>uv tool uninstall zotero-pdf2zh-pro</code>。</li>
+<li><strong>Zotero 插件</strong>：在“工具 → 插件”中禁用或移除。移除插件与卸载本地服务是两件事，需要分别处理。</li>
+</ul>
+</div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#maintenance">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.0</span></div>
+    <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/glossary/"><small>← 上一篇</small><span>下载与使用术语库</span></a><a href="/zotero-pdf2zh-pro/guide/troubleshooting/"><small>下一篇 →</small><span>常见问题</span></a></nav>
+  </article>
+  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">更新、迁移与卸载</a><a href="#更新插件和服务端">更新插件和服务端</a><a href="#数据位置与迁移">数据位置与迁移</a><a href="#卸载">卸载</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
+</main>
+
+  <footer class="site-footer" id="community">
+    <div><a class="footer-brand" href="/zotero-pdf2zh-pro/">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
+    <div class="footer-links"><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md">参与贡献</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
+    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。</p>
+  </footer>
+  <dialog id="site-search" class="search-dialog" aria-labelledby="search-title">
+    <div class="dialog-heading"><h2 id="search-title">搜索教程</h2><button class="site-icon-button" data-close-dialog aria-label="关闭搜索">×</button></div>
+    <label class="sr-only" for="search-input">输入教程关键词</label><input id="search-input" type="search" placeholder="安装、API、补译、划词…" autocomplete="off">
+    <p id="search-status" role="status">输入关键词，查找安装与使用方法。</p><ul id="search-results"></ul>
+  </dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-label="截图预览"><button class="site-icon-button" data-close-dialog aria-label="关闭截图">×</button><img alt=""><p></p></dialog>
+</body>
+</html>

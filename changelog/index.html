@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="zotero-pdf2zh-pro 的版本变化、下载入口与更新方法。">
+  <title>更新记录 · zotero-pdf2zh-pro</title>
+  <link rel="canonical" href="https://study-233.github.io/zotero-pdf2zh-pro/changelog/">
+  <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
+  <script src="/zotero-pdf2zh-pro/ui.js"></script>
+  
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css">
+  <script src="/zotero-pdf2zh-pro/site/site.js" defer></script>
+  
+</head>
+<body class="changelog-page" data-base="/zotero-pdf2zh-pro/">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="/zotero-pdf2zh-pro/"><img src="/zotero-pdf2zh-pro/assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
+      <nav class="site-nav" aria-label="主导航">
+        
+        <a href="/zotero-pdf2zh-pro/">首页</a>
+        
+        <a href="/zotero-pdf2zh-pro/guide/">使用教程</a>
+        
+        <a href="/zotero-pdf2zh-pro/benchmark/">模型评测</a>
+        
+        <a href="/zotero-pdf2zh-pro/changelog/" aria-current="page">更新记录</a>
+        
+      </nav>
+      <div class="site-actions">
+        <button class="site-icon-button" id="site-search-open" aria-label="搜索教程" title="搜索教程（Ctrl / ⌘ K）" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+        <button class="site-icon-button" id="site-theme" aria-label="切换到浅色主题" title="切换主题" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button>
+        <a class="site-github" href="https://github.com/study-233/zotero-pdf2zh-pro" aria-label="GitHub 仓库">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  
+<main id="main-content" class="changelog-layout"><div class="doc-heading"><p class="eyebrow">持续改进，保持可追溯</p><h1>更新记录</h1><p>当前版本 v1.8.0 · 插件与本地服务请分别更新。</p><a class="text-link" href="/zotero-pdf2zh-pro/guide/maintenance/">查看更新方法 →</a></div><article class="prose"><span id="更新记录"></span>
+
+<p>这里记录 <code>zotero-pdf2zh-pro</code> 的用户可见变化。旧项目的历史仍保留在 Git 历史中，
+不作为本产品的版本序列。</p>
+<h2 id="v180---2026-10-02">v1.8.0 - 2026-10-02</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.8.0">下载此版本 ↗</a>
+<ul>
+<li>新增 Reader 划词与选句翻译，选区稳定后自动显示结果；支持悬浮窗与右侧窗格切换，记住浮窗尺寸、固定状态和位置，关闭或清空后不会被旧请求重新弹出。</li>
+<li>内置 5 万条 ECDICT 离线英汉词典，支持常见复数还原和自定义术语；柯林斯扩展词库可在设置中下载、更新或从文件导入，下载后离线使用。</li>
+<li>划词默认使用免密钥的必应，也可独立选择模型或跟随全文配置。缺词时可生成并保存个人词条，按需结合当前页及少量相邻页解释语境；各层结果支持重新生成，失败保留旧结果，必应失败不会自动改用模型。</li>
+<li>新增持久化翻译记忆和划词缓存：精确匹配时复用已有译文，整段译文仅作折叠参考；删除任务保留全文记忆，清空划词缓存保留个人词典与全文记忆。</li>
+<li>附件标题支持拖拽内容块、添加自定义文字、选择分隔符和实时预览；兼容旧模板及任务模型信息，修复默认分隔符乱码，并优化设置页的窄窗口布局。</li>
+<li>新增 Windows 与 macOS 隔离开发入口，使用独立 Profile、文献库和后端数据，支持复制模型配置、源码加载及固定测试论文准备。</li>
+</ul>
+<p>Zotero 插件与本地服务需分别升级至本版，才能使用完整划词功能。Windows 用户请完整解压 ZIP 后运行 EXE；缺少 WebView2 时首次准备需要联网。</p>
+<p><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.8.0/docs/user-guide.md">安装与使用指南</a></p>
+<h2 id="v175---2026-09-29">v1.7.5 - 2026-09-29</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.7.5">下载此版本 ↗</a>
+<ul>
+<li>新增译文附件标题模板，可在设置中预览并使用论文标题、作者、年份、语言、服务商、模型和输出类型；历史任务沿用提交时保存的信息，避免切换配置后误用当前模型名。</li>
+<li>任务卡片显示更清楚的处理阶段、翻译失败原因及校对覆盖情况；区分未检查、检查未通过和结果导入失败，方便判断是否需要补译或重试导入。</li>
+<li>改善任务事件连接中断后的恢复：活动任务长时间没有事件时重连，并定期同步任务状态，减少进度卡住或完成结果未自动导入的情况。</li>
+<li>诊断包加入任务提交时与实际生效的配置、请求和 Token 统计及失败类别；继续过滤密钥、文档正文与其他敏感内容。</li>
+<li>重新整理首页和使用指南，保留原有文档入口，集中说明安装、配置、任务处理与故障排查。</li>
+</ul>
+<p>Zotero 用户可安装本版 XPI 或检查插件更新；本地服务需单独升级。Windows 用户请完整解压 ZIP 后运行 EXE。</p>
+<p><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.7.5/docs/user-guide.md">安装与使用指南</a></p>
+<h2 id="v174---2026-09-29">v1.7.4 - 2026-09-29</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.7.4">下载此版本 ↗</a>
+<ul>
+<li>缓存同一文档的字体解析结果，修复含大量重复散点图形的论文在 PDF 解析阶段异常缓慢的问题。</li>
+<li>独立进程执行任务，加入协作取消、限时进程树回收与检查点保护；回收失败明确暂停队列。</li>
+<li>显示正在处理的页码、内部操作和无进展时长，心跳不再被当作实际进展。</li>
+<li>任务卡片与设置页支持导出脱敏诊断 ZIP；自动保留有限日志和卡顿快照，服务离线可导出部分记录。</li>
+</ul>
+<h2 id="v173---2026-09-24">v1.7.3 - 2026-09-24</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.7.3">下载此版本 ↗</a>
+<ul>
+<li>修复 CSS 属性名列表、纯图片标签、邮箱列表及网址等非正文被误判为漏译的问题；这类段落保留原文并跳过模型请求，含正常语句的段落继续翻译。</li>
+<li>保护论文中的字面标签及 PDF 拆分后的标签片段，翻译标签内文字时保持原有结构；占位符缺失或重复仍判失败并记录结构诊断。</li>
+<li>未完成任务已有 PDF 时自动导入 Zotero，附件标注剩余段落数和轮次；补译后的完整 PDF 作为新附件导入，保留旧版与批注。导入失败可单独重试，不重新翻译。</li>
+<li>保持旧任务检查点和旧服务端兼容；以实际失败任务完成补译验证，并补充服务端及插件回归测试。</li>
+</ul>
+<h2 id="v172---2026-09-23">v1.7.2 - 2026-09-23</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.7.2">下载此版本 ↗</a>
+<ul>
+<li>修复参考文献跳过段落重复计入进度导致百分比超过 100% 的问题；阶段进度限制在有效范围内，并避免取消或异常退出时误报阶段完成。</li>
+<li>优化翻译超时和无效批次的回退策略，为每段共享请求预算，减少长时间重复等待；任务界面显示简短等待状态。</li>
+<li>增加 DeepSeek 与明确支持模型的可选关闭推理模式，并纳入配置、任务快照及缓存隔离。</li>
+<li>精简任务卡片统计说明，保留主要 Token 和请求统计数值。</li>
+<li>增加进度、重试、推理模式及界面回归验证。</li>
+</ul>
+<h2 id="v171---2026-09-23">v1.7.1 - 2026-09-23</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.7.1">下载此版本 ↗</a>
+<ul>
+<li>修复术语库设置页类别、条数、状态及按钮文字空白，同时恢复自定义术语、连接状态和 CSV 对话框的动态中英文提示。五类词库继续按需下载，默认不启用。</li>
+<li>修复 Zotero 插件环境缺少请求取消构造器导致词库管理无法连接的问题，恢复目录加载与下载操作。</li>
+<li>修复 Windows 控制中心未设置窗口大图标的问题，按显示缩放加载新 Logo；安装、升级和迁移同步更新快捷方式图标来源。</li>
+<li>修复 PowerShell 5.1 错误解码中文安装路径的问题，安装及服务管理统一按 UTF-8 读取工具路径；正式安装验证覆盖中文和空格目录。</li>
+<li>修复不同 Windows 系统语言下中文等 Unicode 路径无法创建快捷方式的问题，安装与迁移统一使用原生 Unicode 接口。</li>
+<li>增加最终 XPI 语言资源与真实 Windows 窗口图标检查，覆盖安装、更新及回滚后的图标和数据保留。</li>
+<li>插件、后端及 Windows 统一升级至 1.7.1，1.7.0 用户可正常检查更新。</li>
+</ul>
+<h2 id="v170---2026-09-22">v1.7.0 - 2026-09-22</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.7.0">下载此版本 ↗</a>
+<ul>
+<li>
+<p>新增计算机与 AI、建筑、物理、环境、医学五类英中词库，共 1,842 条精选术语，全部按需下载到当前服务端的数据目录；安装包仅携带目录元数据。</p>
+</li>
+<li>
+<p>支持多选、取消下载、手动检查更新和移除；按服务端分别保存选择，批量任务固定词库版本，自定义 CSV 译法优先，冲突术语交由上下文翻译。已创建任务的重试和补译继续使用原快照。</p>
+</li>
+<li>
+<p>精简术语表、定向校对及连接提示，中英文同步更新；CSV 格式与来源许可移入折叠说明，离线时仍可管理自定义 CSV。</p>
+</li>
+<li>
+<p>修复 AnyIO、adm-zip、js-yaml、brace-expansion 和 Vitest 相关依赖漏洞；适配 Zotero 官方菜单接口和新版类型定义。清理词库来源网页中的无关公开站点配置，保留可复现的来源及许可记录。</p>
+</li>
+<li>
+<p>修复 Windows 自更新的安装目录参数兼容，支持旧版和本机修订版控制中心；注册表缺失时可从已安装程序位置识别目录，更新继续使用原数据目录。</p>
+</li>
+<li>
+<p>统一 README、Zotero 插件和 Windows 控制中心的新 Logo。</p>
+</li>
+<li>
+<p>精简发布流程：核心 CI 通过后仅在 Windows CI 打包一次，保留全新 Python 3.13/OCR、安装与自更新及文件校验；本次同版本修订完整验证回滚与迁移，并复用未修改的 PyPI 1.7.0 原包。</p>
+</li>
+<li>
+<p>本次替换 v1.7.0 的插件和 Windows 安装包。1.6.9 用户可重新检查更新；已安装旧版 1.7.0 的用户需重新安装 XPI，Windows 修订包解压后运行 <code>install.cmd -InstallRoot &quot;原安装目录&quot;</code> 完成同版本覆盖。</p>
+</li>
+</ul>
+<h2 id="v169---2026-09-12">v1.6.9 - 2026-09-12</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.9">下载此版本 ↗</a>
+<ul>
+<li>正文定向复核改为默认关闭，保留手动开启入口；升级时一次性关闭旧开关，之后保留用户主动选择。历史任务的重试和补译仍沿用原任务设置。</li>
+<li>修复任务关联恢复、迟到响应覆盖、SSE 断线同步、同名输出导入隔离及重复导入竞态；任务显式 FIFO 排队，排队和运行取消更可靠。</li>
+<li>段落恢复记录改为 SQLite 增量保存，兼容旧 JSON；批次部分失败只补失败段，补齐最终批次缓存，减少重复翻译请求。</li>
+<li>改善有几何和词语证据的正文空格、断词及部分跨栏衔接；新增 CSV 术语表导入、替换、清除，并随任务保存词表快照。自动术语抽取仍默认关闭。</li>
+<li>关闭自动术语抽取时复用主翻译器；分别统计初始化、翻译和复核请求、推理 tokens 与阶段耗时。修复 Docker 镜像遗漏服务模块。</li>
+<li>已知限制：手动复核可能显著增加耗时，且不保证语义正确；部分术语、跨栏句法、行内公式及旋转图中文字仍需改进。本版不承诺整体加速比例。</li>
+</ul>
+<h2 id="v168---2026-09-09">v1.6.8 - 2026-09-09</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.8">下载此版本 ↗</a>
+<ul>
+<li>修复 Windows 控制台卸载时 <code>purgeData</code> 参数类型错误；等待确认框返回后再执行，明确提供保留或删除数据选项，并修正升级、更新和迁移的异步确认。</li>
+</ul>
+<h2 id="v167---2026-09-09">v1.6.7 - 2026-09-09</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.7">下载此版本 ↗</a>
+<ul>
+<li>修正 Windows PowerShell 5.1 下脚本中文编码，确保中文提示正确显示；卸载快捷方式统一使用 <code>Uninstall</code>，避免英文系统保存中文快捷方式失败；发布验证默认只保留启动、安装和升级检查，完整 OCR、回滚及迁移测试改为手动选项。</li>
+<li>修复 Windows 新电脑双击控制中心时提示缺少 <code>WebView2Loader.dll</code> 的问题：正式版本固定使用 MSVC x64 构建并静态链接加载器及 C/C++ 运行库。</li>
+<li>首次打开时自动检测并联网安装缺失的 Microsoft Edge WebView2 Runtime，验证微软数字签名，显示原生准备窗口，并支持失败重试和查看日志；登录自启时不自动弹出安装窗口。</li>
+<li>修正 WebView2 Runtime 注册表标识，覆盖当前用户和整机安装；发布验证增加普通/延迟 DLL 导入检查及最终 ZIP 的真实窗口启动测试。</li>
+<li>已遇到启动报错的用户请下载新版 Windows ZIP，完整解压后运行其中的 EXE，按界面完成安装或升级，无需先卸载原版。</li>
+</ul>
+<h2 id="v166---2026-09-08">v1.6.6 - 2026-09-08</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.6">下载此版本 ↗</a>
+<ul>
+<li>修复 Windows 安装目录迁移在提交注册表、快捷方式或自启状态时偶发错误 122 的问题；仅对此错误自动重试，并在失败回滚时保留具体系统错误与调用位置。</li>
+<li>迁移验证现在覆盖私有 uv 缓存和快捷方式目标，并为错误 122 的重试与非重试错误增加快速测试。</li>
+</ul>
+<h2 id="v165---2026-09-08">v1.6.5 - 2026-09-08</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.5">下载此版本 ↗</a>
+<ul>
+<li>修复 Windows PowerShell 5.1 下自更新和安装目录迁移实际成功后仍可能被发布验证误报失败的问题，并在异常时保留完整诊断输出。</li>
+<li>修复更改 Windows 安装位置后，迁移进程退出可能导致原本运行中的翻译服务停止的问题。</li>
+</ul>
+<h2 id="v164---2026-09-08">v1.6.4 - 2026-09-08</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.4">下载此版本 ↗</a>
+<ul>
+<li>Windows 安装日志不再把 uv 的普通 stderr 进度逐行标记为错误，自动更新窗口会显示真实安装阶段和命令输出。</li>
+<li>Windows 首次安装支持选择完整产品目录，控制中心、私有 uv、Python、缓存、数据及日志可放到其他磁盘；已有安装支持带健康验证和失败回滚的整体迁移。</li>
+</ul>
+<h2 id="v163---2026-09-08">v1.6.3 - 2026-09-08</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.3">下载此版本 ↗</a>
+<ul>
+<li>
+<p>翻译配置统一为按名称和模型选择，取消服务类型与激活状态的双重选择；自动备份并迁移旧配置，同一批任务固定使用提交时的配置。</p>
+</li>
+<li>
+<p>简化 OpenAI 兼容中转站编辑，新增获取模型、搜索与键盘选择、测试未保存配置和“保存并使用”；密钥默认隐藏，配置管理支持复制，运行参数默认折叠。</p>
+</li>
+<li>
+<p>本地服务新增 <code>/list-models</code>，保留自定义路径，查询失败可手填模型；区分本地服务连接状态和真实 API 测试结果。</p>
+</li>
+<li>
+<p>服务启动时统一启用系统信任证书，修复 Reqable 等已受系统信任的 HTTPS 代理触发 TLS 错误，以及重装服务覆盖启动脚本后修复失效的问题；保留证书与域名验证。</p>
+</li>
+<li>
+<p>修复纯网址脚注被误判为漏译、反复补译仍失败的问题；支持脚注编号、多个网址和依据 PDF 行结构识别的折行路径，保留网址原样并跳过翻译请求。</p>
+</li>
+</ul>
+<h2 id="v162---2026-09-07">v1.6.2 - 2026-09-07</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.2">下载此版本 ↗</a>
+<ul>
+<li>修复段落翻译失败后仍误报完成的问题：新增“未完成”状态、失败段落详情，并阻止未完成译文自动导入 Zotero。</li>
+<li>连接错误、超时及临时服务错误统一最多尝试 5 次，重试遵守限流、并发上限与 Retry-After，等待期间支持取消。</li>
+<li>校验批量 JSON、段落 ID、空译文、原文回显及占位符；无效结果不再写入缓存，读取旧缓存时定点清理坏结果。</li>
+<li>新增“补译”及历史任务检查补译，持久化已验证译文和失败记录；服务重启后继续恢复，默认以 QPS 2、并发 4 补译未完成段落。</li>
+<li>修复批量失败转单段翻译时的正文赋值问题；完整补译后生成新附件并防止重复导入，保留已有附件。</li>
+</ul>
+<h2 id="v161---2026-09-07">v1.6.1 - 2026-09-07</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.1">下载此版本 ↗</a>
+<ul>
+<li>修复 Zotero 深色主题下 LLM API 编辑器的高级设置标题不可见，并统一接口协议与请求参数控件的显示样式。</li>
+<li>增强 OpenAI 兼容中转站的协议自动识别，支持本地化错误和协议错误码，同时避免因鉴权、模型或参数错误误切换协议。</li>
+<li>连接检查直接返回已解析协议，不再重复探测；为 TLS 证书失败和客户端受限的 403 响应提供不泄露密钥的明确诊断。</li>
+</ul>
+<h2 id="v160---2026-09-06">v1.6.0 - 2026-09-06</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.6.0">下载此版本 ↗</a>
+<ul>
+<li>OpenAI 兼容入口新增 Chat Completions 与 Responses 双协议，支持自动识别和手动指定，正文翻译、连接检查与术语提取使用同一适配层。</li>
+<li>支持完整接口地址和中转站路径前缀，新增 requestOptions JSON 高级参数；识别成功后在任务内固定协议，按实际协议、地址和参数隔离缓存。</li>
+<li>通用请求指标覆盖耗时、QPS、重试、本地及服务端缓存、token 和吞吐量，缺失统计显示不可用；移除 DeepSeek 计费、价格清单与后台更新，保留 DeepSeek 翻译。</li>
+<li>插件检查服务端协议能力，旧服务端继续兼容 Chat 配置，Responses 配置会明确提示升级；Python 服务要求 OpenAI SDK 2.32.0 或更新版本。</li>
+<li>新增按版本与完整提交 SHA 手动触发的 Windows 发布构建，验证控制中心、安装升级回滚及 Python 3.13 OCR，并保留源码和产物校验清单。</li>
+</ul>
+<h2 id="v150---2026-09-02">v1.5.0 - 2026-09-02</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.5.0">下载此版本 ↗</a>
+<ul>
+<li>默认关闭自动术语提取并将翻译线程池提高到 50，避免长文档在术语阶段额外消耗大量 token，同时提升 DeepSeek 翻译吞吐。</li>
+<li>DeepSeek 术语提取在手动开启时使用独立的非思考请求，不影响正文翻译的思考模式，并隔离对应缓存命名空间。</li>
+<li>修正 DeepSeek 高峰价仅适用于北京时间工作日，补充 Flash Vision 费率，并显示费率版本、来源与更新时间。</li>
+<li>新增经严格校验的 DeepSeek 定价清单、24 小时后台刷新和每日官网检查；检测到官方调价时自动创建审核 PR，网络失败时继续使用最后有效或内置规则。</li>
+</ul>
+<h2 id="v140---2026-09-01">v1.4.0 - 2026-09-01</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.4.0">下载此版本 ↗</a>
+<ul>
+<li>Windows 控制中心新增稳定版静默检查和一键自动更新，下载后校验官方 Release 地址、大小、SHA-256、ZIP 路径与包内版本，再安全替换控制中心和 PyPI 服务端；失败时继续回滚旧版。</li>
+</ul>
+<h2 id="v130---2026-09-01">v1.3.0 - 2026-09-01</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.3.0">下载此版本 ↗</a>
+<ul>
+<li>日常 GitHub CI 精简为单一 Ubuntu 核心任务，文档修改不再触发测试，Windows 完整打包仅在发布时执行。</li>
+<li>服务端测试合并为 25 个核心行为契约，移除重复的字段映射、包装路由和打包策略测试。</li>
+<li>发布与本地部署不再重复运行单测、lint 和全新环境冒烟，保留实际构建、产物校验、健康检查与回滚。</li>
+</ul>
+<h2 id="v120---2026-08-31">v1.2.0 - 2026-08-31</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.2.0">下载此版本 ↗</a>
+<ul>
+<li>Windows ZIP 新增 Tauri 2 单卡片控制中心，用户双击 EXE 即可完成安装、启动、停止、状态查看、日志和数据目录访问。</li>
+<li>新增当前用户登录自启、系统托盘和单实例支持；自启时静默确保服务运行，退出控制中心不会停止服务。</li>
+<li>新增安全升级、降级阻止、失败回滚和可选保留数据卸载，并继续校验服务 PID、命令行、可执行文件路径和健康接口归属，不结束未知端口进程。</li>
+<li>安装过程实时显示并保存日志，缺少 WebView2 时给出原生提示和官方安装入口；PowerShell/CMD 工具继续随包提供故障恢复能力。</li>
+<li>CI 新增前端与 Rust 测试、Tauri release 构建、Windows ZIP 内容校验和完整 Windows 安装升级生命周期测试。</li>
+</ul>
+<h2 id="v110---2026-08-31">v1.1.0 - 2026-08-31</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.1.0">下载此版本 ↗</a>
+<ul>
+<li>新增 macOS 本机源码一键部署工作流，支持插件与后端构建、制品校验、任务保护、Homebrew 常驻更新、备份和失败回滚。</li>
+<li>DeepSeek 任务新增请求耗时、活跃请求、实际 QPS、缓存命中、自动重试、token、估算费用、段落吞吐量和预计剩余时间，并在任务面板提供可展开详情。</li>
+<li>翻译缓存新增 provider、端点、模型、语言和提示词指纹命名空间，避免配置变化后错误复用；指标日志与服务跟踪不记录正文、译文、完整提示词或 API Key。</li>
+<li>偏好页新增默认关闭的“不翻译参考文献”，支持版面标签和保守的参考文献标题识别，输出 PDF 保留参考文献原文。</li>
+<li>翻译完成并成功导入 Zotero 后，可按偏好设置发送系统通知。</li>
+</ul>
+<h2 id="v101---2026-08-31">v1.0.1 - 2026-08-31</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.0.1">下载此版本 ↗</a>
+<ul>
+<li>将插件兼容范围更新为 Zotero 8.0 至 10.0.x，并新增源码、构建目录与 XPI 清单的一致性测试。</li>
+<li>Windows 安装包改用 ASCII 文件名，避免不同系统区域设置下的解压和启动问题。</li>
+<li>修复 uv 启动器使用 Python 子进程监听端口时的 Windows 服务归属判断。</li>
+<li>仓库改为公开，并通过 Release 中的 <code>update.json</code> 为 Zotero 插件提供自动更新。</li>
+<li>GitHub Release 发布 XPI、自动更新清单与 Windows ZIP，不再构建或上传朋友版制品。</li>
+</ul>
+<h2 id="v100---2026-08-31">v1.0.0 - 2026-08-31</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.0.0">下载此版本 ↗</a>
+<ul>
+<li>以独立产品 <code>zotero-pdf2zh-pro</code> 发布，使用新的插件 ID、设置空间、CLI、数据目录和发行物名称。</li>
+<li>服务端发布到由 <code>study-233</code> 控制的新 PyPI 项目，不再安装旧开发者拥有的发行包。</li>
+<li>新增 Windows 10/11 x64 一键安装、手动启停、日志查看和一键卸载，并明确不注册自启动。</li>
+<li>GitHub Release 提供 XPI 和 Windows 安装包；向无仓库权限的接收者分发时单独提供对应源码。</li>
+<li>保留固定的 pdf2zh-next、BabelDOC 和 RapidOCR 核心快照及全部第三方许可证声明。</li>
+</ul>
+</article></main>
+
+  <footer class="site-footer" id="community">
+    <div><a class="footer-brand" href="/zotero-pdf2zh-pro/">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
+    <div class="footer-links"><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md">参与贡献</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
+    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。</p>
+  </footer>
+  <dialog id="site-search" class="search-dialog" aria-labelledby="search-title">
+    <div class="dialog-heading"><h2 id="search-title">搜索教程</h2><button class="site-icon-button" data-close-dialog aria-label="关闭搜索">×</button></div>
+    <label class="sr-only" for="search-input">输入教程关键词</label><input id="search-input" type="search" placeholder="安装、API、补译、划词…" autocomplete="off">
+    <p id="search-status" role="status">输入关键词，查找安装与使用方法。</p><ul id="search-results"></ul>
+  </dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-label="截图预览"><button class="site-icon-button" data-close-dialog aria-label="关闭截图">×</button><img alt=""><p></p></dialog>
+</body>
+</html>

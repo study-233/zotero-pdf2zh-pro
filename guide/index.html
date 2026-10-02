@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="安装前准备：zotero-pdf2zh-pro 图文使用教程。">
+  <title>安装前准备 · zotero-pdf2zh-pro</title>
+  <link rel="canonical" href="https://study-233.github.io/zotero-pdf2zh-pro/guide/">
+  <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
+  <script src="/zotero-pdf2zh-pro/ui.js"></script>
+  
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css">
+  <script src="/zotero-pdf2zh-pro/site/site.js" defer></script>
+  
+</head>
+<body class="guide-page" data-base="/zotero-pdf2zh-pro/">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="/zotero-pdf2zh-pro/"><img src="/zotero-pdf2zh-pro/assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
+      <nav class="site-nav" aria-label="主导航">
+        
+        <a href="/zotero-pdf2zh-pro/">首页</a>
+        
+        <a href="/zotero-pdf2zh-pro/guide/" aria-current="page">使用教程</a>
+        
+        <a href="/zotero-pdf2zh-pro/benchmark/">模型评测</a>
+        
+        <a href="/zotero-pdf2zh-pro/changelog/">更新记录</a>
+        
+      </nav>
+      <div class="site-actions">
+        <button class="site-icon-button" id="site-search-open" aria-label="搜索教程" title="搜索教程（Ctrl / ⌘ K）" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+        <button class="site-icon-button" id="site-theme" aria-label="切换到浅色主题" title="切换主题" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button>
+        <a class="site-github" href="https://github.com/study-233/zotero-pdf2zh-pro" aria-label="GitHub 仓库">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  
+<main id="main-content" class="docs-layout">
+  <aside class="docs-sidebar"><details id="guide-directory" open><summary>教程目录 <span aria-hidden="true">⌄</span></summary><nav aria-label="教程章节">
+    <div class="nav-group"><p>开始使用</p><a href="/zotero-pdf2zh-pro/guide/" aria-current="page">安装前准备</a><a href="/zotero-pdf2zh-pro/guide/windows/">Windows 安装</a><a href="/zotero-pdf2zh-pro/guide/macos/">macOS 安装</a><a href="/zotero-pdf2zh-pro/guide/installation/">安装 Zotero 插件</a><a href="/zotero-pdf2zh-pro/guide/api-configuration/">配置翻译 API</a><a href="/zotero-pdf2zh-pro/guide/usage/">首次翻译与批量任务</a></div><div class="nav-group"><p>日常使用</p><a href="/zotero-pdf2zh-pro/guide/translation-options/">常用翻译参数</a><a href="/zotero-pdf2zh-pro/guide/task-management/">任务管理与失败补译</a><a href="/zotero-pdf2zh-pro/guide/selection-translation/">划词精读与翻译记忆</a><a href="/zotero-pdf2zh-pro/guide/glossary/">下载与使用术语库</a></div><div class="nav-group"><p>维护与排错</p><a href="/zotero-pdf2zh-pro/guide/maintenance/">更新、迁移与卸载</a><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="/zotero-pdf2zh-pro/guide/diagnostics/">诊断与问题反馈</a></div><div class="nav-group"><p>进阶部署</p><a href="/zotero-pdf2zh-pro/guide/uv/">使用 uv 手动运行</a><a href="/zotero-pdf2zh-pro/guide/advanced/">Linux 与 Docker</a></div>
+  </nav></details></aside>
+  <article class="doc-article"><div class="doc-heading"><p class="eyebrow">使用教程 / 开始使用</p><h1>安装前准备</h1><p>按安装、配置、翻译的顺序，完成你的第一次使用。</p></div>
+    <div class="prose"><p><a id="quick-start"></a></p>
+<span id="1-安装前准备"></span>
+
+<h2 id="需要安装哪些东西">需要安装哪些东西？</h2>
+<table>
+<thead>
+<tr>
+<th>组成部分</th>
+<th>用途</th>
+<th>获取方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zotero 8、9 或 10</td>
+<td>管理论文和 PDF 附件</td>
+<td><a href="https://www.zotero.org/download/">Zotero 官方下载</a></td>
+</tr>
+<tr>
+<td>Zotero 插件（<code>.xpi</code>）</td>
+<td>在 Zotero 中提供翻译设置和任务入口</td>
+<td><a href="https://github.com/study-233/zotero-pdf2zh-pro/releases/latest">本项目最新 Release</a></td>
+</tr>
+<tr>
+<td>本地 Python 服务</td>
+<td>接收 PDF，运行翻译流程并保存结果</td>
+<td>Windows 用控制中心；macOS 推荐 Homebrew</td>
+</tr>
+<tr>
+<td>翻译 API 配置</td>
+<td>指定提供翻译能力的接口和模型</td>
+<td>从你使用的 API 服务商获取地址、API Key 和模型名</td>
+</tr>
+</tbody>
+</table>
+<p><strong>插件和本地服务都需要安装。</strong> 只安装 XPI 不会自动安装服务端；启动服务后，也仍需配置翻译 API。
+Windows 控制中心会安装自己的 Python 环境，macOS Homebrew 会处理依赖，无需先手动配置系统 Python。</p>
+<h2 id="两种地址不要填反">两种地址不要填反</h2>
+<table>
+<thead>
+<tr>
+<th>地址</th>
+<th>示例</th>
+<th>填在哪里</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>本地服务地址</td>
+<td><code>http://127.0.0.1:8890</code></td>
+<td>插件设置底部的“Python服务器地址”</td>
+</tr>
+<tr>
+<td>翻译 API 地址</td>
+<td><code>https://api.example.com/v1</code>（占位示例）</td>
+<td>“新增翻译配置”窗口中的“API 地址”</td>
+</tr>
+</tbody>
+</table>
+<p>工作流：<code>Zotero → 本地服务 → 翻译 API → 本地生成 PDF → 导入 Zotero</code>。</p>
+<p>本地服务负责处理 PDF；使用云端 API 时，待翻译文本会发送给所选服务商，并按其规则消耗额度或计费。
+API Key 与模型权限由服务商提供，安装本插件不会自动获得 API 额度。</p>
+<blockquote>
+<p><strong>提示</strong></p>
+<p>第一次先用一篇篇幅较短、能够选中文字的 PDF 验证流程。默认已勾选“禁用术语提取”，建议保持：术语提取会额外消耗较多 token。</p>
+</blockquote>
+</div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#quick-start">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.0</span></div>
+    <nav class="doc-pagination" aria-label="上下篇教程"><span></span><a href="/zotero-pdf2zh-pro/guide/windows/"><small>下一篇 →</small><span>Windows 安装</span></a></nav>
+  </article>
+  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">安装前准备</a><a href="#需要安装哪些东西">需要安装哪些东西？</a><a href="#两种地址不要填反">两种地址不要填反</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
+</main>
+
+  <footer class="site-footer" id="community">
+    <div><a class="footer-brand" href="/zotero-pdf2zh-pro/">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
+    <div class="footer-links"><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md">参与贡献</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
+    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。</p>
+  </footer>
+  <dialog id="site-search" class="search-dialog" aria-labelledby="search-title">
+    <div class="dialog-heading"><h2 id="search-title">搜索教程</h2><button class="site-icon-button" data-close-dialog aria-label="关闭搜索">×</button></div>
+    <label class="sr-only" for="search-input">输入教程关键词</label><input id="search-input" type="search" placeholder="安装、API、补译、划词…" autocomplete="off">
+    <p id="search-status" role="status">输入关键词，查找安装与使用方法。</p><ul id="search-results"></ul>
+  </dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-label="截图预览"><button class="site-icon-button" data-close-dialog aria-label="关闭截图">×</button><img alt=""><p></p></dialog>
+</body>
+</html>

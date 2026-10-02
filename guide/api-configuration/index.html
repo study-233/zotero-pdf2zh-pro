@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="配置翻译 API：zotero-pdf2zh-pro 图文使用教程。">
+  <title>配置翻译 API · zotero-pdf2zh-pro</title>
+  <link rel="canonical" href="https://study-233.github.io/zotero-pdf2zh-pro/guide/api-configuration/">
+  <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
+  <script src="/zotero-pdf2zh-pro/ui.js"></script>
+  
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css">
+  <script src="/zotero-pdf2zh-pro/site/site.js" defer></script>
+  
+</head>
+<body class="guide-page" data-base="/zotero-pdf2zh-pro/">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="/zotero-pdf2zh-pro/"><img src="/zotero-pdf2zh-pro/assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
+      <nav class="site-nav" aria-label="主导航">
+        
+        <a href="/zotero-pdf2zh-pro/">首页</a>
+        
+        <a href="/zotero-pdf2zh-pro/guide/" aria-current="page">使用教程</a>
+        
+        <a href="/zotero-pdf2zh-pro/benchmark/">模型评测</a>
+        
+        <a href="/zotero-pdf2zh-pro/changelog/">更新记录</a>
+        
+      </nav>
+      <div class="site-actions">
+        <button class="site-icon-button" id="site-search-open" aria-label="搜索教程" title="搜索教程（Ctrl / ⌘ K）" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+        <button class="site-icon-button" id="site-theme" aria-label="切换到浅色主题" title="切换主题" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button>
+        <a class="site-github" href="https://github.com/study-233/zotero-pdf2zh-pro" aria-label="GitHub 仓库">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  
+<main id="main-content" class="docs-layout">
+  <aside class="docs-sidebar"><details id="guide-directory" open><summary>教程目录 <span aria-hidden="true">⌄</span></summary><nav aria-label="教程章节">
+    <div class="nav-group"><p>开始使用</p><a href="/zotero-pdf2zh-pro/guide/">安装前准备</a><a href="/zotero-pdf2zh-pro/guide/windows/">Windows 安装</a><a href="/zotero-pdf2zh-pro/guide/macos/">macOS 安装</a><a href="/zotero-pdf2zh-pro/guide/installation/">安装 Zotero 插件</a><a href="/zotero-pdf2zh-pro/guide/api-configuration/" aria-current="page">配置翻译 API</a><a href="/zotero-pdf2zh-pro/guide/usage/">首次翻译与批量任务</a></div><div class="nav-group"><p>日常使用</p><a href="/zotero-pdf2zh-pro/guide/translation-options/">常用翻译参数</a><a href="/zotero-pdf2zh-pro/guide/task-management/">任务管理与失败补译</a><a href="/zotero-pdf2zh-pro/guide/selection-translation/">划词精读与翻译记忆</a><a href="/zotero-pdf2zh-pro/guide/glossary/">下载与使用术语库</a></div><div class="nav-group"><p>维护与排错</p><a href="/zotero-pdf2zh-pro/guide/maintenance/">更新、迁移与卸载</a><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="/zotero-pdf2zh-pro/guide/diagnostics/">诊断与问题反馈</a></div><div class="nav-group"><p>进阶部署</p><a href="/zotero-pdf2zh-pro/guide/uv/">使用 uv 手动运行</a><a href="/zotero-pdf2zh-pro/guide/advanced/">Linux 与 Docker</a></div>
+  </nav></details></aside>
+  <article class="doc-article"><div class="doc-heading"><p class="eyebrow">使用教程 / 开始使用</p><h1>配置翻译 API</h1></div>
+    <div class="prose"><p><a id="api-configuration"></a></p>
+<span id="5-配置翻译-api"></span>
+
+<h2 id="新增第一个配置">新增第一个配置</h2>
+<p>在插件设置顶部点击 <strong>“新增”</strong>。使用支持 OpenAI 格式的官方接口或中转站时，接口类型选择 <strong>“OpenAI 兼容（中转站 / 官方）”</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>应该填写什么</th>
+<th>占位示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>配置名称</td>
+<td>自己容易辨认的名称，留空会取 API 地址的主机名</td>
+<td><code>论文翻译</code></td>
+</tr>
+<tr>
+<td>接口类型</td>
+<td>按服务商实际接口选择</td>
+<td><code>OpenAI 兼容（中转站 / 官方）</code></td>
+</tr>
+<tr>
+<td>API 地址</td>
+<td>服务商提供的 API Base URL 或完整端点</td>
+<td><code>https://api.example.com/v1</code></td>
+</tr>
+<tr>
+<td>API Key</td>
+<td>该服务商签发的密钥；不要填网页登录密码</td>
+<td>使用你自己的密钥</td>
+</tr>
+<tr>
+<td>模型</td>
+<td>服务商支持、且当前 Key 有权限调用的模型 ID</td>
+<td><code>your-model-id</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>上表中的域名和模型是占位符，不能直接用于翻译。</strong> 聊天网站的网址、账号套餐名称通常不是 API 地址或模型 ID，请以服务商 API 文档为准。</p>
+<p><img src="/zotero-pdf2zh-pro/assets/zotero-api-config-macos.png" alt="新增翻译配置：名称、接口类型、API 地址、API Key 和模型" /></p>
+<p><em>新增翻译配置窗口实机截图。灰色文字是输入提示，并非已保存的配置；使用时需填入自己的 API 地址、API Key 和模型。</em></p>
+<ol>
+<li>填写 API 地址和 API Key。</li>
+<li>点击 <strong>“获取模型”</strong>，输入关键词筛选，使用方向键和回车选择；也可以直接手填模型 ID。</li>
+<li>点击 <strong>“测试 API”</strong>。它会用窗口中当前填写的内容发送一条短翻译请求，可能消耗少量 API 额度。</li>
+<li>测试成功后点击 <strong>“保存并使用”</strong>，返回设置页，确认“当前翻译配置”显示所选名称和模型。</li>
+</ol>
+<p>获取模型失败不一定代表不能翻译：有些服务商不提供模型列表接口。此时手填模型后测试即可。
+“仅保存”不会切换当前配置；测试未保存的配置也不会改变正在使用的配置。</p>
+<h2 id="api-地址怎么填">API 地址怎么填？</h2>
+<p>以下均为地址结构示例，需替换成服务商提供的真实地址：</p>
+<table>
+<thead>
+<tr>
+<th>服务商给出的地址形式</th>
+<th>填写方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base URL：<code>https://api.example.com/v1</code></td>
+<td>原样填写，包括 <code>/v1</code></td>
+</tr>
+<tr>
+<td>带自定义前缀：<code>https://api.example.com/gateway/v1</code></td>
+<td>保留整个前缀</td>
+</tr>
+<tr>
+<td>完整 Chat Completions 地址：<code>https://api.example.com/v1/chat/completions</code></td>
+<td>可原样填写</td>
+</tr>
+<tr>
+<td>完整 Responses 地址：<code>https://api.example.com/v1/responses</code></td>
+<td>可原样填写</td>
+</tr>
+</tbody>
+</table>
+<p>插件<strong>不会自动补 <code>/v1</code></strong>。不要根据示例擅自给服务商地址增加或删除路径，也不要把本地服务地址填到这里。</p>
+<h2 id="高级设置协议和额外请求参数">高级设置：协议和额外请求参数</h2>
+<p>首次配置建议保持 <strong>“接口协议 → 自动识别”</strong>。如果服务商明确要求某种协议，可展开“高级设置”，选择 Chat Completions 或 Responses。</p>
+<ul>
+<li>如果填写的是完整端点，手动选择的协议须与 <code>/chat/completions</code> 或 <code>/responses</code> 后缀一致。</li>
+<li>自动识别仅在明确不支持接口时尝试另一协议；鉴权、模型、参数、限流和超时错误会直接提示。任务开始后固定使用已确定的协议。</li>
+<li>新配置默认自动识别；旧配置继续使用 Chat Completions。旧服务端无法使用 Responses 或额外请求参数时，请先升级服务端。</li>
+<li>Responses 目前支持同步、非流式文本翻译，各段独立请求且默认 <code>store=false</code>；仅提供流式响应或要求工具调用的接口不适用。</li>
+</ul>
+<p>“额外请求参数（JSON）”留为 <code>{}</code> 即可。只有服务商要求时再填写，例如：</p>
+<pre><code class="language-json">{
+  &quot;max_output_tokens&quot;: 4096,
+  &quot;reasoning&quot;: { &quot;effort&quot;: &quot;low&quot; }
+}
+</code></pre>
+<p>此处只是参数格式示例，并非所有模型都支持这些字段。常用字段会随协议转换，中转站扩展字段直接透传；冲突参数会报错。
+不能覆盖模型、翻译输入、执行方式、会话、工具或连接设置。“内部配置参数”用于兼容旧配置，新手保持不变即可。</p>
+<h2 id="管理多个配置">管理多个配置</h2>
+<ul>
+<li>“当前翻译配置”按 <strong>“配置名称 · 模型”</strong> 展示，选中后立即用于后续新任务，无需额外激活。</li>
+<li>点击“管理”可新增、编辑、复制、删除或置顶；编辑其他配置不会切换当前选择。</li>
+<li>删除当前配置后，需要重新选择一个配置，不会自动改用其他中转站。</li>
+<li>同一批翻译固定使用提交时的配置，后续切换或编辑只影响新批次。</li>
+<li>翻译缓存按 provider、模型、语言和提示词等配置隔离；修改协议或请求参数也会隔离缓存。</li>
+</ul>
+<details>
+<summary>从旧版升级后，为什么显示“请选择配置”？</summary>
+<p>首次迁移会备份旧配置，并迁移原服务下唯一激活项。如果无法确定应使用哪项，会显示“请选择配置”，需要手动选择并测试。
+有地址和模型的未知服务类型会转为 OpenAI 兼容并标记待测试。
+旧配置备份保存在 Zotero 高级配置的 <code>extensions.zotero.pdf2zhpro.llmApisLegacyBackup</code>，其中包含原凭据，不要公开分享。</p>
+</details>
+</div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#api-configuration">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.0</span></div>
+    <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/installation/"><small>← 上一篇</small><span>安装 Zotero 插件</span></a><a href="/zotero-pdf2zh-pro/guide/usage/"><small>下一篇 →</small><span>首次翻译与批量任务</span></a></nav>
+  </article>
+  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">配置翻译 API</a><a href="#新增第一个配置">新增第一个配置</a><a href="#api-地址怎么填">API 地址怎么填？</a><a href="#高级设置协议和额外请求参数">高级设置：协议和额外请求参数</a><a href="#管理多个配置">管理多个配置</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
+</main>
+
+  <footer class="site-footer" id="community">
+    <div><a class="footer-brand" href="/zotero-pdf2zh-pro/">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
+    <div class="footer-links"><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md">参与贡献</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
+    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。</p>
+  </footer>
+  <dialog id="site-search" class="search-dialog" aria-labelledby="search-title">
+    <div class="dialog-heading"><h2 id="search-title">搜索教程</h2><button class="site-icon-button" data-close-dialog aria-label="关闭搜索">×</button></div>
+    <label class="sr-only" for="search-input">输入教程关键词</label><input id="search-input" type="search" placeholder="安装、API、补译、划词…" autocomplete="off">
+    <p id="search-status" role="status">输入关键词，查找安装与使用方法。</p><ul id="search-results"></ul>
+  </dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-label="截图预览"><button class="site-icon-button" data-close-dialog aria-label="关闭截图">×</button><img alt=""><p></p></dialog>
+</body>
+</html>

@@ -1,6 +1,7 @@
 /* PDF files and rendering assets stay on the same host. Nothing is uploaded. */
 window.PdfShowcase=(()=>{
   'use strict';
+  const assetBase = new URL('.', document.currentScript.src);
   const $=id=>document.getElementById(id);
   const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!=null)e.textContent=text;if(cls)e.className=cls;return e;};
   let data,catalog,enginePromise,manifestPromise,documentTask,pdf,observer,pageObserver;
@@ -11,7 +12,7 @@ window.PdfShowcase=(()=>{
   const modelName=id=>data.models.find(m=>m.id===id)?.name||id;
   const current=()=>catalog?.documents.find(d=>d.paper===paper&&d.model===model);
   const result=()=>data.results.find(r=>r.paper===paper&&r.model===model);
-  const fileUrl=d=>localFiles.get(d?.taskId)||d?.url;
+  const fileUrl=d=>localFiles.get(d?.taskId)||(d?.url ? new URL(d.url,assetBase).href : null);
   function setControls(enabled){
     for(const id of ['pdf-prev','pdf-next','pdf-page','pdf-zoom-in','pdf-zoom-out','pdf-fit'])$(id).disabled=!enabled;
     if(enabled){$('pdf-prev').disabled=page<=1;$('pdf-next').disabled=page>=pdf.numPages;$('pdf-zoom-out').disabled=zoom<=.5;$('pdf-zoom-in').disabled=zoom>=3;}
@@ -52,7 +53,7 @@ window.PdfShowcase=(()=>{
     $('pdf-reader-note').textContent=entry?.supplemental?(entry.supplementaryRun?.reviewStatus==='verified'?'补跑 PDF 已完成评审与复核；表格费用与耗时包含首轮及补跑。左侧原文，右侧译文。':'这是补跑生成的 PDF，尚未重新评审；表格评分仍对应首轮任务。左侧原文，右侧译文。'):status==='incomplete'?'这是首轮任务生成的原始 PDF，仍有未完成段落；左侧原文，右侧译文。':'直接展示任务生成的双语 PDF；左侧原文，右侧译文。';
   }
   async function engine(){
-    if(!enginePromise)enginePromise=import('./vendor/pdfjs/pdf.min.js').then(lib=>{lib.GlobalWorkerOptions.workerSrc=new URL('vendor/pdfjs/pdf.worker.min.js',document.baseURI).href;return lib;}).catch(error=>{enginePromise=null;throw error;});
+    if(!enginePromise)enginePromise=import('./vendor/pdfjs/pdf.min.js').then(lib=>{lib.GlobalWorkerOptions.workerSrc=new URL('vendor/pdfjs/pdf.worker.min.js',assetBase).href;return lib;}).catch(error=>{enginePromise=null;throw error;});
     return enginePromise;
   }
   async function loadDocument(){
@@ -71,7 +72,7 @@ window.PdfShowcase=(()=>{
     message('正在展开 PDF','正在加载原始页面…');$('pdf-reader').setAttribute('aria-busy','true');
     try{
       const lib=await engine();if(ticket!==loadId)return;
-      const resource=new URL('vendor/pdfjs/',document.baseURI).href;
+      const resource=new URL('vendor/pdfjs/',assetBase).href;
       documentTask=lib.getDocument({url,cMapUrl:resource+'cmaps/',cMapPacked:true,standardFontDataUrl:resource+'standard_fonts/',wasmUrl:resource+'wasm/',isEvalSupported:false});
       const doc=await documentTask.promise;if(ticket!==loadId)return;pdf=doc;
       page=Math.min(Math.max(page,1),doc.numPages);$('pdf-page').max=doc.numPages;
@@ -191,7 +192,7 @@ window.PdfShowcase=(()=>{
     if(options.paper&&data.papers.some(p=>p.id===options.paper)&&options.paper!==paper){paper=options.paper;page=1;zoom=1;}
     if(options.model&&data.models.some(m=>m.id===options.model))model=options.model;
     try{
-      if(!manifestPromise)manifestPromise=fetch('pdfs.json').then(r=>{if(!r.ok)throw Error();return r.json();}).then(value=>{if(value.schemaVersion!==1||!Array.isArray(value.documents))throw Error();return value;}).catch(error=>{manifestPromise=null;throw error;});
+      if(!manifestPromise)manifestPromise=fetch(new URL('pdfs.json',assetBase)).then(r=>{if(!r.ok)throw Error();return r.json();}).then(value=>{if(value.schemaVersion!==1||!Array.isArray(value.documents))throw Error();return value;}).catch(error=>{manifestPromise=null;throw error;});
       catalog=await manifestPromise;renderChoices();
       const count=catalog.documents.filter(d=>d.sha256).length;$('pdf-library-count').textContent=count+' 份双语 PDF';
       if(current()?.taskId===activeKey&&pdf){renderPage();return;}loadDocument();

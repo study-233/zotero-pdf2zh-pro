@@ -1,68 +1,86 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="五个模型、三篇论文，在 zotero-pdf2zh-pro 中对比翻译质量、价格和速度。">
-<title>翻译模型实测 · zotero-pdf2zh-pro</title>
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script src="ui.js"></script>
-<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="pdf-viewer.css">
-<script src="pdf-viewer.js" defer></script><script src="app.js" defer></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="zotero-pdf2zh-pro 官方网站：整篇论文翻译、双语 PDF、划词精读，安装与使用图文教程。">
+  <title>在 Zotero 中读懂整篇论文 · zotero-pdf2zh-pro</title>
+  <link rel="canonical" href="https://study-233.github.io/zotero-pdf2zh-pro/">
+  <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
+  <script src="/zotero-pdf2zh-pro/ui.js"></script>
+  
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css">
+  <script src="/zotero-pdf2zh-pro/site/site.js" defer></script>
+  
 </head>
-<body>
-<header class="topbar"><div class="header-inner">
-<a class="brand" href="#results"><img src="favicon.svg" alt="" width="32" height="32">翻译模型实测</a>
-<nav aria-label="主导航"><a href="#results" data-page="results" aria-current="page">数据探索</a><a href="#method" data-page="method">方法与来源</a></nav>
-<div class="header-actions">
-<a class="star-link" href="https://github.com/study-233/zotero-pdf2zh-pro" target="_blank" rel="noopener noreferrer" aria-label="在 GitHub 查看并支持插件"><span class="icon icon-star" aria-hidden="true"></span><span>Star</span><span id="star-count" hidden></span></a>
-<button id="theme-toggle" class="icon-button" aria-label="切换到浅色主题" title="切换到浅色主题"><span class="icon icon-sun theme-sun" aria-hidden="true"></span><span class="icon icon-moon theme-moon" aria-hidden="true"></span></button>
-<a class="icon-button github-link" href="https://github.com/study-233/zotero-pdf2zh-pro" target="_blank" rel="noopener noreferrer" aria-label="打开插件 GitHub 仓库" title="GitHub 仓库"><span class="icon icon-github" aria-hidden="true"></span></a>
-</div>
-</div></header>
-<main>
-<section class="hero"><h1>翻译模型对比</h1><p id="stats" class="stats"></p></section>
-<section id="results" class="panel">
-<div class="panel-tabs" role="tablist" aria-label="查看数据">
-<button id="tab-table" role="tab" aria-selected="true" aria-controls="view-table" data-view="table"><span class="icon icon-table" aria-hidden="true"></span>模型对比</button>
-<button id="tab-chart" role="tab" aria-selected="false" aria-controls="view-chart" data-view="chart" tabindex="-1"><span class="icon icon-chart" aria-hidden="true"></span>质量与费用</button>
-<button id="tab-review" role="tab" aria-selected="false" aria-controls="view-review" data-view="review" tabindex="-1"><span class="icon icon-pdf" aria-hidden="true"></span>翻译 PDF</button>
-<a class="download" href="results.csv" download><span class="icon icon-download" aria-hidden="true"></span><span class="download-label">下载 CSV</span></a></div>
-<div id="result-filters" class="toolbar"><div class="paper-tabs" role="group" aria-label="测试论文">
-<button type="button" data-paper="all" aria-pressed="true">全部</button>
-<button type="button" data-paper="attention" aria-pressed="false">Attention</button>
-<button type="button" data-paper="bert" aria-pressed="false">BERT</button>
-<button type="button" data-paper="resnet" aria-pressed="false">ResNet</button>
-</div></div>
-<div id="view-table" role="tabpanel" aria-labelledby="tab-table" class="view">
-<p id="comparison-note" class="note"></p>
-<div class="table-wrap" role="region" aria-label="模型对比表，可横向滚动" tabindex="0"><table class="main-table"><thead><tr>
-<th><button data-sort="name">模型</button></th><th><button data-sort="quality">翻译质量 <small>/ 100</small></button></th>
-<th><button data-sort="input">输入单价 <small>/ MTok</small></button></th><th><button data-sort="output">输出单价 <small>/ MTok</small></button></th>
-<th><button data-sort="displayedCost" title="按已记录金额排序，不代表完整任务性价比">已记录费用 <small>/ USD</small></button></th><th><button data-sort="seconds">总耗时</button></th><th><button data-sort="completedTasks">完整任务</button></th><th><span class="sr-only">详情</span></th>
-</tr></thead><tbody id="rows"></tbody></table></div>
-<p class="table-footnote">费用按已返回用量估算，完整记录见详情。</p>
-</div>
-<div id="view-chart" role="tabpanel" aria-labelledby="tab-chart" class="view" hidden><p class="note">仅展示完整翻译、已复核且费用已知的结果；未完成任务的低费用不作为优势。</p><div class="chart-panel"><div id="chart" role="img" aria-label="质量与费用散点图"></div><div id="chart-key" class="legend"></div></div></div>
-<div id="view-review" role="tabpanel" aria-labelledby="tab-review" class="view" hidden>
-<div class="pdf-library-head"><div class="pdf-paper-tabs" id="pdf-papers" role="group" aria-label="选择 PDF 论文"></div><span id="pdf-library-count" class="muted"></span></div>
-<div class="pdf-model-tabs" id="pdf-models" role="group" aria-label="选择翻译模型"></div>
-<section class="pdf-reader" id="pdf-reader" aria-label="翻译 PDF 阅读器">
-<header class="pdf-document-bar"><div class="pdf-document-name"><span class="icon icon-pdf" aria-hidden="true"></span><h2 id="pdf-title">翻译 PDF</h2></div><span id="pdf-task-state" class="pdf-status"></span><div class="pdf-document-actions"><a id="pdf-download" class="pdf-action" download hidden><span class="icon icon-download" aria-hidden="true"></span>下载</a><a id="pdf-open" class="pdf-action" target="_blank" rel="noopener noreferrer" hidden aria-label="在新标签打开 PDF"><span class="icon icon-open" aria-hidden="true"></span></a><button id="pdf-fullscreen" class="pdf-action" aria-label="全屏阅读" title="全屏阅读"><span class="icon icon-fullscreen" aria-hidden="true"></span></button></div></header>
-<div class="pdf-reader-body"><aside class="pdf-thumbnails" id="pdf-thumbnails" aria-label="页面缩略图"></aside><div class="pdf-stage" id="pdf-stage" tabindex="0" aria-label="PDF 页面，可连续滚动和缩放"><div class="pdf-empty" id="pdf-empty" role="status" aria-live="polite"><span class="icon icon-pdf" aria-hidden="true"></span><h3 id="pdf-empty-title">选择论文，查看真实译文</h3><p id="pdf-empty-message"></p><label class="secondary pdf-local-file" id="pdf-file-label" hidden>选择本地 PDF<input type="file" id="pdf-file" accept="application/pdf,.pdf"></label></div><div class="pdf-sheet" id="pdf-sheet" hidden></div></div></div>
-<footer class="pdf-reader-toolbar"><span id="pdf-document-meta" class="pdf-document-meta">原始双语 PDF</span><div class="pdf-pagination"><button id="pdf-prev" class="pdf-action" aria-label="上一页" disabled><span class="icon icon-prev" aria-hidden="true"></span></button><label class="pdf-page-input"><span class="sr-only">页码</span><input id="pdf-page" type="number" min="1" value="1" disabled><span id="pdf-page-total">/ —</span></label><button id="pdf-next" class="pdf-action" aria-label="下一页" disabled><span class="icon icon-next" aria-hidden="true"></span></button></div><div class="pdf-zoom-controls"><button id="pdf-zoom-out" class="pdf-action" aria-label="缩小" disabled><span class="icon icon-zoom-out" aria-hidden="true"></span></button><button id="pdf-fit" class="pdf-action pdf-fit" disabled title="重置为适合宽度">适合宽度</button><button id="pdf-zoom-in" class="pdf-action" aria-label="放大" disabled><span class="icon icon-zoom-in" aria-hidden="true"></span></button></div></footer>
-</section><p class="pdf-reader-note" id="pdf-reader-note">直接展示任务生成的双语 PDF；左侧原文，右侧译文。</p></div>
-</section>
-<section id="method" class="panel method" hidden>
-<h2>方法与来源</h2><p>GPT-6 Sol 子代理匿名评审，主代理复核。每篇 12 个固定片段；PDF 排版另行检查。</p>
-<div class="method-grid"><article><h3>统一配置</h3><p>英译简中、双语 PDF；QPS 10、并发 50。自动 OCR 和表格翻译开启，定向校对与术语提取关闭。</p></article><article><h3>质量口径</h3><p>忠实度 40、完整性 20、术语 20、中文表达 10、数字与符号 10。采用已复核译文，补跑注明来源；质量不含接口失败，首轮记录保留。</p></article><article><h3>价格口径</h3><p>单价来自冻结的 Command Code 报价。任务费用按请求时间、上下文分档与缓存计算；费用和耗时累计首轮及补跑；缺失用量不当作免费，不以账号总账分摊。</p></article></div>
-<details><summary>本次发现与限制</summary><div id="findings"></div><ul id="limitations"></ul><p id="budget-status"></p></details>
-<details><summary>版本、完整价格与测试文件</summary><pre id="provenance"></pre><div id="paper-links"></div></details>
-<details id="review-evidence"><summary>评分与复核依据</summary><div class="controls"><label>论文<select id="review-paper"></select></label><label>候选一<select id="left"></select></label><label>候选二<select id="right"></select></label><button class="secondary" id="reveal">揭示模型名称</button></div><p class="note" id="review-note"></p><div class="comparison" id="comparison"></div></details>
-<div class="downloads"><a href="results.json" download>下载 JSON</a><a href="results.csv" download>下载 CSV</a><a href="pdfs.json" download>PDF 文件记录</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/tree/codex/translation-benchmark/benchmarks/translation">复现说明</a></div>
-</section>
-<p class="disclosure">GPT-6 Sol 匿名评审 · 主代理复核 · 小样本实测</p>
+<body class="home-page" data-base="/zotero-pdf2zh-pro/">
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="site-brand" href="/zotero-pdf2zh-pro/"><img src="/zotero-pdf2zh-pro/assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
+      <nav class="site-nav" aria-label="主导航">
+        
+        <a href="/zotero-pdf2zh-pro/" aria-current="page">首页</a>
+        
+        <a href="/zotero-pdf2zh-pro/guide/">使用教程</a>
+        
+        <a href="/zotero-pdf2zh-pro/benchmark/">模型评测</a>
+        
+        <a href="/zotero-pdf2zh-pro/changelog/">更新记录</a>
+        
+      </nav>
+      <div class="site-actions">
+        <button class="site-icon-button" id="site-search-open" aria-label="搜索教程" title="搜索教程（Ctrl / ⌘ K）" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+        <button class="site-icon-button" id="site-theme" aria-label="切换到浅色主题" title="切换主题" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></svg></button>
+        <a class="site-github" href="https://github.com/study-233/zotero-pdf2zh-pro" aria-label="GitHub 仓库">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  
+<main id="main-content" class="home-main">
+  <section class="home-hero">
+    <div class="hero-copy"><a class="version-link" href="/zotero-pdf2zh-pro/changelog/"><span class="status-dot"></span>v1.8.0 · 开源 Zotero 插件 <span aria-hidden="true">↗</span></a>
+      <p class="eyebrow">从文库出发，让阅读继续</p><h1>在 Zotero 中，<br>读懂<span>整篇论文。</span></h1>
+      <p class="hero-description">翻译整篇 PDF，保留论文排版。译文与双语对照自动回到文库，从全文阅读到划词精读，连贯完成。</p>
+      <div class="hero-buttons"><a class="button primary" href="/zotero-pdf2zh-pro/guide/">开始使用 <span aria-hidden="true">→</span></a><a class="button" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi">下载插件 <span aria-hidden="true">↓</span></a></div>
+      <p class="hero-requirements">支持 Zotero 8 / 9 / 10 <span>·</span> Windows / macOS / Linux</p>
+    </div>
+    <div class="hero-preview"><div class="preview-top"><span class="status-dot"></span><span>融入你的论文阅读工作流</span><span class="preview-tag">PDF → 双语 PDF</span></div>
+      <a href="/zotero-pdf2zh-pro/assets/task-manager.png" class="zoom-image" aria-label="放大翻译任务列表截图"><img src="/zotero-pdf2zh-pro/assets/task-manager.png" alt="Zotero 翻译任务列表：进度、请求详情与补译入口" width="1928" height="1246" fetchpriority="high"></a>
+      <div class="preview-bottom"><span>提交 · 翻译 · 导入 · 阅读</span><a href="/zotero-pdf2zh-pro/guide/task-management/">了解任务管理 ↗</a></div>
+      <p class="screenshot-note">历史远端任务截图；“导入状态：无”表示未关联当前文库条目。</p>
+    </div>
+  </section>
+  <section id="features" class="home-section">
+    <div class="section-heading"><div><p class="eyebrow">从翻译到理解</p><h2>熟悉的文库，更完整的阅读体验。</h2></div><a class="text-link" href="/zotero-pdf2zh-pro/guide/usage/">查看使用教程 ↗</a></div>
+    <div class="feature-grid">
+      <a class="feature-card" href="/zotero-pdf2zh-pro/guide/usage/"><span class="feature-number">01</span><h3>整篇翻译，双语对照</h3><p>生成译文 PDF、双语对照 PDF，或同时保留两种版本；完成后自动导入原条目。</p><span class="card-arrow" aria-hidden="true">↗</span></a><a class="feature-card" href="/zotero-pdf2zh-pro/guide/task-management/"><span class="feature-number">02</span><h3>批量提交，进度可见</h3><p>从文库右键提交单篇或批量任务，查看翻译阶段、请求耗时与 token 指标。</p><span class="card-arrow" aria-hidden="true">↗</span></a><a class="feature-card" href="/zotero-pdf2zh-pro/guide/task-management/"><span class="feature-number">03</span><h3>失败段落，接着补译</h3><p>保留已验证译文，只补充剩余段落；修复后新增附件，保留旧版批注。</p><span class="card-arrow" aria-hidden="true">↗</span></a><a class="feature-card" href="/zotero-pdf2zh-pro/guide/selection-translation/"><span class="feature-number">04</span><h3>划词精读，随读随查</h3><p>离线词典、选句翻译与按需语境解释，结合个人词典和已有译文继续理解。</p><span class="card-arrow" aria-hidden="true">↗</span></a><a class="feature-card" href="/zotero-pdf2zh-pro/guide/api-configuration/"><span class="feature-number">05</span><h3>模型与接口，自由配置</h3><p>支持 OpenAI 兼容 API、多配置切换、模型列表查询与两种请求协议。</p><span class="card-arrow" aria-hidden="true">↗</span></a><a class="feature-card" href="/zotero-pdf2zh-pro/guide/translation-options/"><span class="feature-number">06</span><h3>按需调整，术语一致</h3><p>调整 OCR、表格翻译和参考文献保护；按需下载术语包或使用自定义词条。</p><span class="card-arrow" aria-hidden="true">↗</span></a>
+    </div>
+  </section>
+  <section class="home-section start-section" id="quick-start">
+    <div class="section-heading"><div><p class="eyebrow">开始第一篇翻译</p><h2>四步，把论文带回阅读。</h2></div><span class="muted">本地服务与 Zotero 插件都需要安装</span></div>
+    <ol class="steps">
+      <li><span>01</span><h3>安装本地服务</h3><p>按操作系统安装并启动翻译服务。</p><a href="/zotero-pdf2zh-pro/guide/">查看步骤 →</a></li><li><span>02</span><h3>安装 Zotero 插件</h3><p>下载 XPI，装入 Zotero 并检查连接。</p><a href="/zotero-pdf2zh-pro/guide/installation/">查看步骤 →</a></li><li><span>03</span><h3>配置翻译 API</h3><p>填写地址、Key 和模型，测试后保存。</p><a href="/zotero-pdf2zh-pro/guide/api-configuration/">查看步骤 →</a></li><li><span>04</span><h3>翻译第一篇 PDF</h3><p>右键提交任务，完成后阅读新附件。</p><a href="/zotero-pdf2zh-pro/guide/usage/">查看步骤 →</a></li>
+    </ol>
+    <div class="install-grid">
+      <article class="install-card" id="windows"><div><p class="eyebrow">WINDOWS 10 / 11 · x64</p><h3>从控制中心开始</h3><p>完整解压安装包，打开控制中心，点击“安装并启动”。</p></div><div><a class="button primary" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64.zip">下载 Windows 安装包 ↓</a><a class="text-link" href="/zotero-pdf2zh-pro/guide/windows/">Windows 图文教程 →</a></div></article>
+      <article class="install-card" id="macos"><div><p class="eyebrow">macOS · HOMEBREW</p><h3>让服务在后台运行</h3><p>使用 Homebrew 安装与管理本地服务，终端关闭后仍可运行。</p></div><div><a class="button" href="/zotero-pdf2zh-pro/guide/macos/">macOS 安装教程 →</a><a class="text-link" href="/zotero-pdf2zh-pro/guide/uv/">uv 手动运行 / Linux / Docker →</a></div></article>
+    </div>
+    <p class="usage-note">PDF 在本地处理；使用云端 API 时，待翻译文本会发送给你选择的服务商，并消耗其 API 额度。</p>
+  </section>
+  <section class="benchmark-teaser home-section"><div><p class="eyebrow">真实任务，公开记录</p><h2>选模型，也看看实际译文。</h2><p>把翻译质量、已记录费用和耗时放在一起看。阅读测试生成的双语 PDF，了解评分背后的方法与限制。</p><a class="button" href="/zotero-pdf2zh-pro/benchmark/">探索模型评测 <span aria-hidden="true">↗</span></a></div><div class="benchmark-numbers"><div><b>5</b><span>参测模型</span></div><span aria-hidden="true">×</span><div><b>3</b><span>测试论文</span></div><p>固定样本 · AI 匿名评审 · 可下载数据</p></div></section>
 </main>
-<dialog id="model-dialog" aria-labelledby="detail-title"><div class="dialog-top"><h2 id="detail-title"></h2><button id="close-detail" class="secondary">关闭</button></div><div id="detail-content"></div></dialog>
-<footer><span>zotero-pdf2zh-pro</span><span id="updated">数据加载中</span></footer>
-<noscript>此网页需要 JavaScript，也可下载 results.json 或 results.csv 查看结果。</noscript>
-</body></html>
+
+  <footer class="site-footer" id="community">
+    <div><a class="footer-brand" href="/zotero-pdf2zh-pro/">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
+    <div class="footer-links"><a href="/zotero-pdf2zh-pro/guide/troubleshooting/">常见问题</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md">参与贡献</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
+    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。</p>
+  </footer>
+  <dialog id="site-search" class="search-dialog" aria-labelledby="search-title">
+    <div class="dialog-heading"><h2 id="search-title">搜索教程</h2><button class="site-icon-button" data-close-dialog aria-label="关闭搜索">×</button></div>
+    <label class="sr-only" for="search-input">输入教程关键词</label><input id="search-input" type="search" placeholder="安装、API、补译、划词…" autocomplete="off">
+    <p id="search-status" role="status">输入关键词，查找安装与使用方法。</p><ul id="search-results"></ul>
+  </dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-label="截图预览"><button class="site-icon-button" data-close-dialog aria-label="关闭截图">×</button><img alt=""><p></p></dialog>
+</body>
+</html>
