@@ -24,7 +24,7 @@ from unittest.mock import patch
 root = Path(os.environ["PDF2ZH_TEST_HOME"])
 original_expanduser = Path.expanduser
 def expanduser(path):
-    return root / str(path)[2:] if str(path).startswith("~/") else original_expanduser(path)
+    return root.joinpath(*path.parts[1:]) if path.parts and path.parts[0] == "~" else original_expanduser(path)
 patch("pathlib.Path.home", return_value=root).start()
 patch("pathlib.Path.expanduser", expanduser).start()
 from pdf2zh_next.const import DEFAULT_CONFIG_DIR

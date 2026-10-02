@@ -32,6 +32,7 @@ function fixture() {
         autoDictionary: false,
         auxiliaryRespond: undefined,
         provider: "bing",
+        selectionApiKey: "",
         model: true,
         profileReads: 0,
         contextReads: 0,
@@ -50,21 +51,25 @@ function fixture() {
         "../../package.json": { config: { addonID: "test-addon" } },
         "../utils/prefs": {
             getPref: (name) =>
-                name === "selectionAutoDictionary"
-                    ? state.autoDictionary
-                    : state.provider,
+                name === "selectionApiKey"
+                    ? state.selectionApiKey
+                    : name === "selectionAutoDictionary"
+                      ? state.autoDictionary
+                      : state.provider,
         },
         "./pdf2zhHelper": {
             PDF2zhHelperFactory: {
-                getServerConfig: (includeProfile = true) => {
+                getServerConfig: (includeProfile = true, profileKey) => {
                     if (includeProfile) state.profileReads++;
+                    if (includeProfile && profileKey === "deleted")
+                        throw new Error("所选划词模型已删除，请重新选择。");
                     return {
                         serverUrl: "http://localhost:8890",
                         sourceLang: "en",
                         targetLang: "zh-CN",
                         apiConfig:
                             includeProfile && state.model
-                                ? { model: "test-model" }
+                                ? { model: profileKey || "test-model" }
                                 : null,
                     };
                 },
@@ -627,6 +632,58 @@ test("old server contained response is an upgrade error instead of falsely align
     await f.advance();
     assert.equal(last(f).kind, "error");
     assert.match(last(f).text, /更新服务端/);
+});
+
+test("selection, dictionary, context and refresh use the independent model", async () => {
+    const f = fixture();
+    f.state.selectionApiKey = "selection-model";
+    f.state.provider = "profile";
+    const bodies = [];
+    const request = {
+        post: async (url, body) => {
+            if (url.endsWith("selection-capabilities"))
+                return { ok: true, data: { selectionLearning: true } };
+            bodies.push(body);
+            return {
+                ok: true,
+                data: {
+                    translation: "result",
+                    model: "selection-model",
+                    ...(body.mode === "dictionary"
+                        ? { entry: personalEntry }
+                        : {}),
+                },
+            };
+        },
+    };
+    for (const options of [
+        {},
+        { mode: "dictionary" },
+        { mode: "context" },
+        { refresh: true },
+        { mode: "context", refresh: true },
+    ])
+        await f.translateSelection(
+            request,
+            "paper",
+            "bank",
+            1,
+            "context",
+            options,
+        );
+    assert.equal(bodies.length, 5);
+    assert.ok(bodies.every((body) => body.llm_api.model === "selection-model"));
+    f.state.provider = "bing";
+    await f.translateSelection(request, "paper", "sentence", 1, "context");
+    assert.equal(bodies.at(-1).llm_api, undefined);
+    assert.equal(bodies.at(-1).context, "");
+    f.state.provider = "profile";
+    f.state.selectionApiKey = "deleted";
+    await assert.rejects(
+        f.translateSelection(request, "paper", "sentence", 1, "context"),
+        /已删除/,
+    );
+    assert.equal(bodies.length, 6);
 });
 
 const personalEntry = {

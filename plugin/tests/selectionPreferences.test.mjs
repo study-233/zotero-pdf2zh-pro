@@ -4,6 +4,118 @@ import { URL } from "node:url";
 import test from "node:test";
 import ts from "typescript";
 
+test("model menu follows saved profiles, keeps document choice, and invalidates only effective changes", () => {
+    const nodes = new Map();
+    const makeNode = () => ({
+        children: [],
+        listeners: {},
+        attributes: {},
+        isConnected: true,
+        addEventListener(type, fn) {
+            this.listeners[type] = fn;
+        },
+        setAttribute(key, value) {
+            this.attributes[key] = value;
+        },
+        replaceChildren() {
+            this.children = [];
+        },
+        append(child) {
+            this.children.push(child);
+        },
+        querySelector() {
+            return this;
+        },
+    });
+    const node = (id) => {
+        if (!nodes.has(id)) nodes.set(id, makeNode());
+        return nodes.get(id);
+    };
+    const prefs = new Map([["selectedApiKey", "a"]]);
+    const state = {
+        profiles: [
+            { key: "a", model: "document-model" },
+            { key: "b", model: "selection-model" },
+        ],
+        changes: 0,
+    };
+    const events = {};
+    const window = {
+        document: { getElementById: node, createElementNS: makeNode },
+        addEventListener: (type, fn) => {
+            events[type] = fn;
+        },
+        removeEventListener() {},
+        setTimeout: (fn) => fn(),
+    };
+    const imports = {
+        "../../package.json": { config: { addonRef: "test" } },
+        "../utils/prefs": {
+            getPref: (key) => prefs.get(key),
+            setPref: (key, value) => prefs.set(key, value),
+        },
+        "../utils/locale": { getString: (key) => key },
+        "./profileStore": { loadProfiles: () => state.profiles },
+        "./llmApiManager": {
+            profileLabel: (api) => `${api.key} · ${api.model}`,
+        },
+        "./selectionDictionaryDownload": {
+            dictionaryDownloadState: () => ({ phase: "idle" }),
+            subscribeDictionaryDownload: () => () => {},
+            refreshDictionaryDownload: async () => {},
+        },
+    };
+    const exports = {};
+    const code = ts.transpileModule(
+        fs.readFileSync(
+            new URL("../src/modules/selectionPreferences.ts", import.meta.url),
+            "utf8",
+        ),
+        { compilerOptions: { module: ts.ModuleKind.CommonJS } },
+    ).outputText;
+    new Function("require", "exports", code)((name) => imports[name], exports);
+    exports.registerSelectionPreferences(window, () => state.changes++);
+    const menu = node("zotero-prefpane-test-selection-model");
+    assert.equal(menu.children.length, 3);
+    assert.equal(menu.value, "");
+    assert.equal(state.changes, 0);
+    prefs.set("selectedApiKey", "b");
+    events["profiles-changed"]();
+    assert.equal(state.changes, 1);
+    menu.value = "b";
+    menu.listeners.command();
+    assert.equal(prefs.get("selectionApiKey"), "b");
+    assert.equal(prefs.get("selectedApiKey"), "b");
+    assert.equal(state.changes, 2);
+    prefs.set("selectedApiKey", "a");
+    events["profiles-changed"]();
+    assert.equal(state.changes, 2);
+    state.profiles[1].model = "edited-model";
+    events["profiles-changed"]();
+    assert.equal(state.changes, 3);
+    assert.match(menu.children[2].attributes.label, /edited-model/);
+    state.profiles[1].name = "renamed";
+    state.profiles[1].needsTest = false;
+    events["profiles-changed"]();
+    assert.equal(state.changes, 3);
+    state.profiles.pop();
+    events["profiles-changed"]();
+    assert.equal(state.changes, 4);
+    assert.equal(prefs.get("selectionApiKey"), "b");
+    assert.equal(menu.value, "b");
+    assert.equal(
+        node("zotero-prefpane-test-selection-model-status").hidden,
+        false,
+    );
+    menu.value = "";
+    menu.listeners.command();
+    assert.equal(
+        node("zotero-prefpane-test-selection-model-status").hidden,
+        true,
+    );
+    assert.equal(prefs.get("selectedApiKey"), "a");
+});
+
 test("settings import cancel is nonmutating; success enables Collins and invalidates old work", async () => {
     const nodes = new Map();
     for (const id of [

@@ -14,6 +14,12 @@ const pluginRoot = path.resolve(
 );
 const readJson = (relativePath) =>
     JSON.parse(fs.readFileSync(path.join(pluginRoot, relativePath), "utf8"));
+const buildDir = process.env.PDF2ZH_DEV_RUNTIME
+    ? path.relative(
+          pluginRoot,
+          path.join(process.env.PDF2ZH_DEV_RUNTIME, "plugin-build"),
+      )
+    : "build";
 
 const pkg = readJson("package.json");
 const expected = {
@@ -62,13 +68,20 @@ function assertManifestIdentity(manifest, label, templates = false) {
             strictMinVersion: zotero.strict_min_version,
             strictMaxVersion: zotero.strict_max_version,
         },
-        expected,
+        {
+            ...expected,
+            name:
+                expected.name +
+                (!templates && process.env.PDF2ZH_DEV_RUNTIME
+                    ? "（开发版）"
+                    : ""),
+        },
         label + " identity or compatibility range does not match package.json",
     );
 }
 
 function readXpiEntry(entry) {
-    const xpi = path.join("build", expected.name + ".xpi");
+    const xpi = path.join(buildDir, expected.name + ".xpi");
     const extractor =
         process.platform === "win32"
             ? {
@@ -108,21 +121,21 @@ test("plugin release artifacts remain consistent", () => {
 
     const manifest = readJson("addon/manifest.json");
     assertManifestIdentity(manifest, "source manifest", true);
-    const builtManifest = readJson("build/addon/manifest.json");
+    const builtManifest = readJson(path.join(buildDir, "addon/manifest.json"));
     const xpiManifest = JSON.parse(readXpiEntry("manifest.json"));
 
     assertManifestIdentity(builtManifest, "built manifest");
     assertManifestIdentity(xpiManifest, "XPI manifest");
     assert.deepEqual(xpiManifest, builtManifest);
     const xpi = fs.readFileSync(
-        path.join(pluginRoot, "build", expected.name + ".xpi"),
+        path.join(pluginRoot, buildDir, expected.name + ".xpi"),
     );
     const expectedHash =
         "sha512:" + crypto.createHash("sha512").update(xpi).digest("hex");
 
     for (const relativePath of [
-        "build/update.json",
-        "build/update-beta.json",
+        path.join(buildDir, "update.json"),
+        path.join(buildDir, "update-beta.json"),
     ]) {
         const updateManifest = readJson(relativePath);
         assertNoUpdateUrl(updateManifest, relativePath);

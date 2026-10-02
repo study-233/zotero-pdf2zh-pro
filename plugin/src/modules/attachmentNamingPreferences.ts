@@ -1,6 +1,7 @@
 import { config } from "../../package.json";
 import { getPref, setPref } from "../utils/prefs";
 import { getString } from "../utils/locale";
+import { repairAttachmentNamingPreferences } from "./attachmentNamingSettings";
 import {
     DEFAULT_TITLE_TEMPLATE,
     TITLE_VARIABLES,
@@ -18,6 +19,7 @@ import {
 } from "./attachmentTitleLayout";
 
 export function registerAttachmentNamingPreferences(window: Window) {
+    repairAttachmentNamingPreferences();
     const doc = window.document;
     const el = (id: string) =>
         doc.getElementById(`zotero-prefpane-${config.addonRef}-${id}`)!;
@@ -27,7 +29,7 @@ export function registerAttachmentNamingPreferences(window: Window) {
     toggle.checked = getPref("rename") === true;
     const editor = el("attachmentTitleEditor");
     const list = el("attachmentTitleBlocks");
-    const fields = el("attachmentTitleFields");
+    const fields = el("attachmentTitleFields") as unknown as XULMenuListElement;
     const separators = el("attachmentTitleSeparators");
     const custom = el("attachmentTitleSeparatorCustom") as HTMLInputElement;
     const error = el("attachmentTitleError");
@@ -85,17 +87,19 @@ export function registerAttachmentNamingPreferences(window: Window) {
                       ? renderAttachmentTitle(oldTemplate, context)
                       : label("empty");
         }
-        fields
-            .querySelectorAll<HTMLButtonElement>("button[data-field]")
-            .forEach((b) => {
-                b.disabled =
-                    !layout ||
-                    layout.blocks.length >= 100 ||
-                    layout.blocks.some(
-                        (v) =>
-                            v.kind === "field" && v.field === b.dataset.field,
-                    );
-            });
+        fields.querySelectorAll("[data-field]").forEach((item) => {
+            const disabled =
+                !layout ||
+                layout.blocks.length >= 100 ||
+                layout.blocks.some(
+                    (v) =>
+                        v.kind === "field" &&
+                        v.field === item.getAttribute("data-field"),
+                );
+            if (disabled) item.setAttribute("disabled", "true");
+            else item.removeAttribute("disabled");
+        });
+        fields.disabled = !layout;
         separators
             .querySelectorAll<HTMLButtonElement>("button")
             .forEach((b) =>
@@ -224,10 +228,29 @@ export function registerAttachmentNamingPreferences(window: Window) {
         custom.value = layout?.separator || "";
         update();
     };
-    fields.replaceChildren();
-    for (const field of TITLE_VARIABLES) {
-        const b = button(label(field), () => {
+    const popup = fields.querySelector("menupopup")!;
+    popup.replaceChildren();
+    for (const field of ["", ...TITLE_VARIABLES]) {
+        const item = doc.createElementNS(
+            "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
+            "menuitem",
+        );
+        item.setAttribute("label", label(field || "add-field"));
+        item.setAttribute("value", field);
+        if (field) item.setAttribute("data-field", field);
+        else item.setAttribute("disabled", "true");
+        popup.append(item);
+    }
+    fields.value = "";
+    fields.setAttribute("aria-label", label("add-field"));
+    fields.addEventListener("command", () => {
+        const field = TITLE_VARIABLES.find((value) => value === fields.value);
+        // Let the native menu close before resetting it or disabling an item.
+        window.setTimeout(() => {
+            if (!fields.isConnected) return;
+            fields.value = "";
             if (
+                !field ||
                 !layout ||
                 layout.blocks.length >= 100 ||
                 layout.blocks.some(
@@ -237,10 +260,8 @@ export function registerAttachmentNamingPreferences(window: Window) {
                 return;
             layout.blocks.push({ kind: "field", field });
             render();
-        });
-        b.dataset.field = field;
-        fields.append(b);
-    }
+        }, 0);
+    });
     separators.replaceChildren();
     for (const [name, value] of [
         ["dot", " · "],

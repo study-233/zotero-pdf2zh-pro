@@ -3,6 +3,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 import path from "node:path";
 import test from "node:test";
+import { URL } from "node:url";
 import ts from "typescript";
 
 const source = fs.readFileSync(
@@ -13,10 +14,14 @@ const code = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS },
 }).outputText;
 
-function harness({ formal = false, hash = "digest" } = {}) {
+function harness({ formal = false, hash = "digest", windows = false } = {}) {
     const items = [];
     const writes = [];
-    const runtime = "/development";
+    const runtime = windows ? "D:/开发 Test" : "/development";
+    const actualPath = (name) =>
+        windows
+            ? path.win32.join(runtime, name).toLowerCase()
+            : runtime + "/" + name;
     let imports = 0;
     const collection = { id: 1, name: "开发测试", getChildItems: () => items };
     const context = {
@@ -24,12 +29,12 @@ function harness({ formal = false, hash = "digest" } = {}) {
         Services: {
             dirsvc: {
                 get: () => ({
-                    path: formal ? "/formal" : runtime + "/profile",
+                    path: formal ? "/formal" : actualPath("profile"),
                 }),
             },
         },
         Ci: { nsIFile: {} },
-        PathUtils: { join: path.posix.join },
+        PathUtils: { join: windows ? path.win32.join : path.posix.join },
         IOUtils: {
             exists: async () => true,
             computeHexDigest: async () => hash,
@@ -47,8 +52,9 @@ function harness({ formal = false, hash = "digest" } = {}) {
             writeUTF8: async (_path, value) => writes.push(JSON.parse(value)),
         },
         Zotero: {
+            isWin: windows,
             getMainWindow: () => ({ setInterval: () => 1, clearInterval() {} }),
-            DataDirectory: { dir: runtime + "/library" },
+            DataDirectory: { dir: actualPath("library") },
             Libraries: { userLibraryID: 1 },
             Collections: { getByLibrary: () => [collection] },
             Attachments: {
@@ -95,4 +101,13 @@ test("tampered samples are rejected before attachment import", async () => {
     const h = harness({ hash: "changed" });
     await assert.rejects(h.run(), /校验失败/);
     assert.equal(h.imports(), 0);
+});
+
+test("Windows paths allow drive case and separators but reject the formal profile", async () => {
+    const h = harness({ windows: true });
+    await h.run();
+    assert.equal(h.imports(), 1);
+    const formal = harness({ windows: true, formal: true });
+    await assert.rejects(formal.run(), /目录不匹配/);
+    assert.equal(formal.imports(), 0);
 });

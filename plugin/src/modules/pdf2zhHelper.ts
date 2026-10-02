@@ -1,4 +1,5 @@
 import { parseTitleLayout, renderTitleLayout } from "./attachmentTitleLayout";
+import { repairAttachmentNamingPreferences } from "./attachmentNamingSettings";
 import { getPref } from "../utils/prefs";
 import { ServerConfig, PDFOperationOptions, OutputMode } from "./pdf2zhTypes";
 import { getSelectedProfile } from "./profileStore";
@@ -167,6 +168,7 @@ export class PDF2zhHelperFactory {
     }
 
     static getPDFOptions(): PDFOperationOptions {
+        repairAttachmentNamingPreferences();
         return {
             rename: this.isTrue(getPref("rename")),
             titleLayout: parseTitleLayout(getPref("attachmentTitleLayout")),
@@ -250,8 +252,15 @@ export class PDF2zhHelperFactory {
         }
     }
 
-    static getServerConfig(includeProfile = true): ServerConfig {
-        const apiConfig = includeProfile ? getSelectedProfile() : null;
+    static getServerConfig(
+        includeProfile = true,
+        profileKey?: string,
+    ): ServerConfig {
+        const apiConfig = includeProfile
+            ? getSelectedProfile(profileKey || undefined)
+            : null;
+        if (includeProfile && profileKey && !apiConfig)
+            throw new Error(getString("selection-model-missing"));
         return {
             apiConfig,
             serverUrl: getPref("new_serverip")?.toString() || "",

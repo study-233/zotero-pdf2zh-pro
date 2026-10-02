@@ -13,6 +13,7 @@ attachment-type-mono = 译文
 attachment-type-dual = 双语对照
 attachment-template-error = 模板包含未知变量或不匹配的花括号，尚未保存；预览显示上一次有效设置。
 
+attachment-builder-add-field = 添加字段
 attachment-builder-title = 论文标题
 attachment-builder-fullTitle = 完整标题
 attachment-builder-author = 作者
@@ -70,3 +71,7 @@ selection-pane-header =
 selection-pane-nav =
     .tooltiptext = 翻译
 selection-pane-empty = 划选 PDF 中的文字以查看翻译。
+selection-model-follow = 跟随全文配置
+selection-model-deleted = 配置不可用
+selection-model-missing = 所选划词模型已删除，请重新选择。
+selection-model-unreadable = 无法读取模型配置，请检查配置。

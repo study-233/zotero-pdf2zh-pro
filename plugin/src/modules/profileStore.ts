@@ -47,11 +47,11 @@ export function loadProfiles(): LLMApiData[] {
 export function saveProfiles(profiles: LLMApiData[]) {
     setPref("llmApis", JSON.stringify(profiles));
 }
-export function getSelectedProfile(): LLMApiData | null {
+export function getSelectedProfile(key?: string): LLMApiData | null {
     const profiles = loadProfiles();
     return selectedProfile(
         profiles,
-        getPref("selectedApiKey")?.toString() || "",
+        key ?? (getPref("selectedApiKey")?.toString() || ""),
     );
 }
 export function removeProfile(key: string) {

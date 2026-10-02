@@ -126,9 +126,20 @@ class CMapCompatibilityTests(unittest.TestCase):
                     with self.assertRaises(CMapDB.CMapNotFound):
                         CMapDB._load_data("UniGB-UCS2-H")
                 target.unlink()
-                target.symlink_to(Path(__file__).resolve())
-                with self.assertRaises(CMapDB.CMapNotFound):
-                    CMapDB._load_data("UniGB-UCS2-H")
+                try:
+                    target.symlink_to(Path(__file__).resolve())
+                except OSError as error:
+                    if getattr(error, "winerror", None) != 1314:
+                        raise
+                    # Ordinary Windows users need not enable Developer Mode to
+                    # verify refusal before deserialization. Real junctions are
+                    # separately exercised by the development-manager tests.
+                    with patch.object(Path, "resolve", return_value=Path(__file__).resolve()):
+                        with self.assertRaises(CMapDB.CMapNotFound):
+                            CMapDB._load_data("UniGB-UCS2-H")
+                else:
+                    with self.assertRaises(CMapDB.CMapNotFound):
+                        CMapDB._load_data("UniGB-UCS2-H")
                 loads.assert_not_called()
 
 

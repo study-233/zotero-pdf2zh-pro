@@ -127,6 +127,96 @@ test("invalid templates and empty values fall back safely", () => {
 });
 
 const layout = load("attachmentTitleLayout", { "./attachmentNaming": naming });
+function repairFixture(initial = {}) {
+    const prefs = new Map(Object.entries(initial));
+    const writes = [];
+    const { repairAttachmentNamingPreferences: repair } = load(
+        "attachmentNamingSettings",
+        {
+            "./attachmentNaming": naming,
+            "./attachmentTitleLayout": layout,
+            "../utils/prefs": {
+                getPref: (key) => prefs.get(key),
+                setPref: (key, value) => {
+                    prefs.set(key, value);
+                    writes.push(key);
+                },
+            },
+        },
+    );
+    return { prefs, writes, repair };
+}
+
+test("shipped preference defaults are encoding-independent and render the middle dot", () => {
+    const source = fs.readFileSync(
+        new URL("../addon/prefs.js", import.meta.url),
+        "utf8",
+    );
+    assert.ok([...source].every((character) => character.codePointAt(0) < 128));
+    const defaults = new Map();
+    new Function("pref", source)((key, value) =>
+        defaults.set(key.split(".").at(-1), value),
+    );
+    assert.equal(
+        defaults.get("attachmentTitleTemplate"),
+        DEFAULT_TITLE_TEMPLATE,
+    );
+    const f = repairFixture(Object.fromEntries(defaults));
+    f.repair();
+    assert.deepEqual(f.writes, []);
+});
+
+test("known corrupted defaults and saved separators are repaired once without changing blocks", () => {
+    for (const separator of [" \uFFFD ", " \u00C2\u00B7 "]) {
+        const saved = { ...layout.defaultTitleLayout(), separator };
+        saved.blocks.reverse();
+        saved.blocks.push({ kind: "text", text: "精读版 \uFFFD" });
+        const f = repairFixture({
+            attachmentTitleTemplate: `{title}${separator}{type}`,
+            attachmentTitleLayout: JSON.stringify(saved),
+        });
+        f.repair();
+        assert.equal(
+            f.prefs.get("attachmentTitleTemplate"),
+            DEFAULT_TITLE_TEMPLATE,
+        );
+        assert.deepEqual(JSON.parse(f.prefs.get("attachmentTitleLayout")), {
+            ...saved,
+            separator: " · ",
+        });
+        f.repair();
+        assert.equal(f.writes.length, 2);
+        const legacy = repairFixture({
+            attachmentTitleLayout: JSON.stringify(
+                layout.migrateTitleTemplate(`{title}${separator}{type}`),
+            ),
+        });
+        legacy.repair();
+        assert.deepEqual(
+            JSON.parse(legacy.prefs.get("attachmentTitleLayout")),
+            layout.defaultTitleLayout(),
+        );
+    }
+});
+
+test("repair preserves custom text, ordinary separators and unreadable layouts", () => {
+    for (const raw of [
+        "not-json",
+        JSON.stringify({ ...layout.defaultTitleLayout(), separator: " / " }),
+        JSON.stringify({
+            version: 1,
+            separator: "",
+            blocks: [{ kind: "text", text: "custom �" }],
+        }),
+    ]) {
+        const f = repairFixture({
+            attachmentTitleLayout: raw,
+            attachmentTitleTemplate: "自定义 � {title}",
+        });
+        f.repair();
+        assert.deepEqual(f.writes, []);
+    }
+});
 test("visual layouts preserve every field and literal text, skip missing fields, and fall back from empty results", () => {
     const value = {
         version: 1,

@@ -94,7 +94,7 @@ Rust 单测复用 release 编译依赖，不再额外编译 debug 依赖。在�
 
 日常开发使用独立 Profile 和文献库，正式 Zotero 与开发 Zotero 轮流打开。
 复用 `/Applications/Zotero.app`；正式后端继续运行在 8890，开发后端固定监听
-`127.0.0.1:8891`。Windows 原生开发管理尚未适配，不要将 Mac 的 Profile、虚拟环境
+`127.0.0.1:8891`。Windows 使用下方原生入口；不要将 Mac 的 Profile、虚拟环境
 或含密钥的配置直接复制到 Windows。
 
 先安装 Python 3.12/3.13、Node.js、pnpm 和 uv，并正常退出 Zotero。在仓库根目录运行：
@@ -134,6 +134,7 @@ Python 修改后，以及开发结束时分别执行：
 存在排队、运行或正在取消的任务时，停止和重启会拒绝操作：先在开发版任务管理器中
 完成或取消任务。`stop` 只退出经过身份检查的开发进程，保留数据；随后正常打开
 Zotero 即回到正式环境。若手动关闭开发 Zotero，后端可能仍在运行，用 `stop` 收尾。
+需要重新打开开发环境时，可用 `restart` 一次执行停止和启动；保留数据，有活动任务或停止失败时不会继续启动。
 
 所有开发数据在 `.local-dev/runtime/`：`profile/`、`library/`、`tasks/`、`config/`、
 `cache/`、`logs/`、`samples/` 和 `backups/`。后端通过 `PDF2ZH_CONFIG_DIR` 隔离配置，
@@ -166,8 +167,50 @@ uv run --directory server --locked python -m unittest discover -s tests -p 'test
 - PID 失效或目录不匹配：停止操作并核对进程和 `environment.json`，不要删除文献库。
 - 启动中断：先 `status` 再 `stop`；修复问题后重新启动，已下载 PDF 和任务保留。
 
-共享逻辑位于 `scripts/dev.py`，macOS 入口为 `scripts/dev.sh`。Windows 后续增加原生
-入口和进程适配后需独立验收；不复用管理正式安装的 Windows 启停脚本。
+### Windows 独立开发环境
+
+共享逻辑位于 `scripts/dev.py`，Windows 入口为 `scripts/dev.ps1`，macOS 入口不变。
+使用普通桌面用户运行，不需要管理员权限，不复用管理正式安装的 Windows 启停脚本。
+
+先准备 Python 3.12/3.13、Node.js 和 pnpm；将独立的 `uv.exe` 放到
+`.local-dev/runtime/tools/uv.exe`（可复制现有 uv 可执行文件，不执行正式安装目录中的工具）。
+然后正常退出 Zotero，在仓库根目录运行：
+
+```powershell
+.\scripts\dev.ps1 init
+.\scripts\dev.ps1 prepare-samples
+.\scripts\dev.ps1 start
+.\scripts\dev.ps1 status
+# 手动关闭开发 Zotero 后重新打开，或重启整个开发环境
+.\scripts\dev.ps1 restart
+# Python 源码修改后重启测试后端；结束后停止开发进程
+.\scripts\dev.ps1 restart-server
+.\scripts\dev.ps1 stop
+```
+
+自定义安装位置用 `init --zotero-bin 'D:\Apps\Zotero\zotero.exe'`；多 Profile 时用
+`--source-profile` 指定只读模型来源。入口不注册 Profile、不改默认选择，不安装自启动。
+后续 `sync-models` 只在显式调用时更新测试模型配置；开发 Profile 不登录同步账号。
+
+`init` 使用锁文件和独立 Python 3.13，解释器、虚拟环境及 uv 缓存均在
+`.local-dev/runtime/` 内，不使用全局工具环境或正式后端的 Python。
+目录与凭据文件使用 Windows ACL 限制访问；环境变量只传给子进程。
+中文和空格路径按参数传递；指向外部的符号链接或目录联接会拒绝执行。
+
+8891 已占用、监听 PID 不匹配、进程创建时间或命令改变时不会结束未知进程。
+Windows 虚拟环境启动器与实际服务进程分别记录；停止只回收已核对身份的开发进程。
+正式后端可以持续运行在 8890。原生 Reader 与真实 PDF 翻译仍需在开发窗口验收。
+
+Windows 自动检查使用独立解释器，避免 `uv run` 默认选择其他虚拟环境：
+
+```powershell
+.\.local-dev\runtime\venv\Scripts\python.exe -X utf8 -m unittest discover -s scripts -p 'test_dev.py'
+```
+
+后端测试运行前设置与开发入口相同的独立配置、任务和缓存目录，测试输出与实际数据分开。
+正式安装、升级、卸载及缺失运行库验收应在干净虚拟机执行，不在日常机器运行。
+
+本次结果与待人工检查项目见 [Windows 隔离开发验证记录](windows-development-validation.md)。
 
 ## macOS 本机源码部署
 

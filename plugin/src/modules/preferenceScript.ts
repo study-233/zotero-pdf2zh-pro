@@ -238,6 +238,12 @@ export async function registerPrefsScripts(window: Window) {
 
 function refreshProfiles(rebuildMenu = true) {
     refreshProfileManager();
+    const win = addon.data.prefs?.window;
+    if (win) {
+        const event = win.document.createEvent("Event");
+        event.initEvent("profiles-changed", false, false);
+        win.dispatchEvent(event);
+    }
     const profiles = loadProfiles();
     const select = element(
         "selectedApiKey",

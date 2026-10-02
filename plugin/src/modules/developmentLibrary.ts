@@ -9,9 +9,12 @@ export function stopDevelopmentLibrary() {
 export async function prepareDevelopmentLibrary(runtime: string) {
     const profile = Services.dirsvc.get("ProfD", Ci.nsIFile).path;
     const data = Zotero.DataDirectory.dir;
+    const comparable = (path: string) =>
+        Zotero.isWin ? path.replace(/\//g, "\\").toLowerCase() : path;
     if (
-        profile !== PathUtils.join(runtime, "profile") ||
-        data !== PathUtils.join(runtime, "library")
+        comparable(profile) !==
+            comparable(PathUtils.join(runtime, "profile")) ||
+        comparable(data) !== comparable(PathUtils.join(runtime, "library"))
     ) {
         throw new Error("开发环境目录不匹配，已拒绝导入测试文献。");
     }

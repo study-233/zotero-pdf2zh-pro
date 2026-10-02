@@ -77,7 +77,10 @@ export type SelectionPopupOptions = {
     host?: HTMLElement;
     pinned?: boolean;
     size?: { width: number; height: number };
+    position?: { left: number; top: number };
     onResize?: (size: { width: number; height: number }) => void;
+    onMove?: (position: { left: number; top: number }) => void;
+    onPinChange?: (pinned: boolean) => void;
     onSwitch?: () => void;
     onClear?: () => void;
 };
@@ -254,6 +257,11 @@ export function createSelectionPopup(
             position(rect.left, rect.top);
         });
     }
+    function savePosition() {
+        if (docked || closed || !card.isConnected) return;
+        const { left, top } = card.getBoundingClientRect();
+        options.onMove?.({ left, top });
+    }
     function applySize(width: number, height: number) {
         const size = clampPopupSize(
             width,
@@ -409,6 +417,8 @@ export function createSelectionPopup(
             pinned = !pinned;
             pin.setAttribute("aria-pressed", String(pinned));
             pin.textContent = pinned ? "已固定" : "固定";
+            savePosition();
+            options.onPinChange?.(pinned);
         });
         copy.addEventListener("click", () => {
             try {
@@ -428,7 +438,11 @@ export function createSelectionPopup(
                 applySize(requestedSize.width, requestedSize.height);
         }
         (options.host || doc.documentElement).append(card);
-        nearSelection();
+        if (options.position)
+            optional("position", () =>
+                position(options.position!.left, options.position!.top),
+            );
+        else nearSelection();
         optional("theme", () => {
             const darkQuery = win.matchMedia?.("(prefers-color-scheme: dark)");
             const syncTheme = () =>
@@ -491,6 +505,7 @@ export function createSelectionPopup(
                 const rect = card.getBoundingClientRect();
                 requestedSize = { width: rect.width, height: rect.height };
                 options.onResize?.(requestedSize);
+                savePosition();
             };
             listen(handle, "pointerdown", (raw) => {
                 const event = raw as PointerEvent;
@@ -556,6 +571,7 @@ export function createSelectionPopup(
                 );
                 fit();
                 options.onResize?.(requestedSize);
+                savePosition();
                 event.preventDefault();
             });
             cleanups.push(() => {
@@ -574,13 +590,15 @@ export function createSelectionPopup(
                 | undefined;
             const stop = () => {
                 if (!drag) return;
+                const pointer = drag.pointer;
+                drag = undefined;
                 try {
-                    if (header.hasPointerCapture?.(drag.pointer))
-                        header.releasePointerCapture(drag.pointer);
+                    if (header.hasPointerCapture?.(pointer))
+                        header.releasePointerCapture(pointer);
                 } catch {
                     /* Capture may already be lost. */
                 }
-                drag = undefined;
+                savePosition();
             };
             cleanups.push(stop);
             listen(header, "pointerdown", (raw) => {

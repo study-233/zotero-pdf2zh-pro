@@ -28,6 +28,7 @@ globalThis.__profileTests = {
     ...model,
     getPref: (key) => prefs.get(key),
     setPref: (key, value) => prefs.set(key, value),
+    getString: (key) => key,
 };
 const store = await asModule(
     "const {getPref, setPref, migrateProfiles, selectedProfile} = globalThis.__profileTests;\n" +
@@ -139,7 +140,7 @@ const glossary = await asModule(
 );
 globalThis.__profileTests.loadGlossaryEntries = glossary.loadGlossaryEntries;
 const { PDF2zhHelperFactory: helper } = await asModule(
-    "const {getPref, getSelectedProfile, SERVICE_NAMES,loadGlossaryEntries} = globalThis.__profileTests;\n" +
+    "const {getPref, getString, getSelectedProfile, SERVICE_NAMES,loadGlossaryEntries} = globalThis.__profileTests;\n" +
         compile("pdf2zhHelper").replace(/^import .*;$/gm, ""),
 );
 test("batch request construction keeps the captured profile after selection and edits", () => {
@@ -169,6 +170,25 @@ test("batch request construction keeps the captured profile after selection and 
             ),
         /选择翻译配置/,
     );
+});
+
+test("explicit selection profile resolves independently and deletion never changes providers", () => {
+    prefs.clear();
+    prefs.set("profileSchemaVersion", 1);
+    store.saveProfiles([api("a"), api("b")]);
+    prefs.set("selectedApiKey", "a");
+    assert.equal(helper.getServerConfig(true, "b").apiConfig.key, "b");
+    assert.equal(helper.getServerConfig(true, "").apiConfig.key, "a");
+    assert.equal(prefs.get("selectedApiKey"), "a");
+    store.saveProfiles([api("a"), { ...api("b"), model: "edited" }]);
+    assert.equal(helper.getServerConfig(true, "b").apiConfig.model, "edited");
+    store.removeProfile("b");
+    assert.throws(
+        () => helper.getServerConfig(true, "b"),
+        /selection-model-missing/,
+    );
+    assert.equal(helper.getServerConfig(false, "b").apiConfig, null);
+    assert.equal(helper.getServerConfig().apiConfig.key, "a");
 });
 
 test("task payload captures the glossary and sends an actual review boolean", () => {

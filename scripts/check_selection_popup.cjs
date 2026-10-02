@@ -131,9 +131,16 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         await card.locator(".st-header").evaluate(el=>{el.setPointerCapture=()=>{throw new Error("inactive pointer")}});
         const before=await card.boundingBox();await page.mouse.move(before.x+30,before.y+20);await page.mouse.down();await page.mouse.move(90,100);await page.mouse.up();
         assert.ok((await card.boundingBox()).x<before.x);
+        const savedPosition=await card.evaluate(el=>({left:Math.round(el.getBoundingClientRect().left),top:Math.round(el.getBoundingClientRect().top)}));
+        assert.deepEqual(await page.evaluate(()=>({left:preferences.selectionPopupLeft,top:preferences.selectionPopupTop})),savedPosition);
+        assert.equal(await page.evaluate(()=>preferences.selectionPopupPinned),true);
         await page.keyboard.press("Escape");await card.waitFor({state:"detached"});
         await page.evaluate(()=>trigger("Architecture"));await page.waitForTimeout(500);assert.equal(await card.count(),0);
         await reader.frameLocator("#pdf").locator("p").click();await select("Architecture");await expectText("建筑");
+        assert.equal(await reader.getByRole("button",{name:"固定",exact:true}).getAttribute("aria-pressed"),"true");
+        assert.deepEqual(await card.evaluate(el=>({left:Math.round(el.getBoundingClientRect().left),top:Math.round(el.getBoundingClientRect().top)})),savedPosition);
+        await reader.getByRole("button",{name:"固定",exact:true}).click();
+        assert.equal(await page.evaluate(()=>preferences.selectionPopupPinned),false);
         await reader.getByRole("button",{name:"关闭",exact:true}).click();await card.waitFor({state:"detached"});
         // A throwing optional constructor cannot leave the core blank/uncloseable.
         await page.evaluate(()=>{
@@ -201,6 +208,8 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         await page.screenshot({path:path.join(output,"sidebar.png")});
         await docked.getByRole("button",{name:"切回悬浮窗"}).click();await card.waitFor();
         const restored = await card.boundingBox();assert.equal(Math.round(restored.width),Math.round(resized.width));
+        assert.equal(Math.round(restored.x),Math.round(resized.x));
+        assert.equal(Math.round(restored.y),Math.round(resized.y));
         await page.screenshot({path:path.join(output,"resized-floating.png")});
         await page.evaluate(()=>{window.pending=false;window.memory=true;window.matchType="exact";trigger("Window edge sentence");});await expectText("布局生成");
         await page.setViewportSize({width:340,height:330});await page.locator("#reader").evaluate(el=>{el.style.height="290px"});

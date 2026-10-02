@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import process from "node:process";
 import { spawnSync } from "node:child_process";
 import { Buffer } from "node:buffer";
 import test from "node:test";
@@ -30,6 +31,22 @@ const module = await import(
         ).toString("base64")
 );
 const { safeDiagnostic, diagnosticZip, exportDiagnostics } = module;
+
+function readZip(zip, entry) {
+    const result = spawnSync(
+        process.env.PYTHON ||
+            (process.platform === "win32" ? "python" : "python3"),
+        [
+            "-c",
+            "import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert z.testzip() is None; sys.stdout.buffer.write(z.read(sys.argv[2]))",
+            zip,
+            entry,
+        ],
+        { encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr || result.error?.message);
+    return result.stdout;
+}
 
 test("diagnostic whitelist excludes document data and credentials", () => {
     const text = JSON.stringify(
@@ -79,16 +96,7 @@ test("diagnostic ZIP is readable with intact Chinese text and CRC", () => {
                 "server.json": '{"schemaVersion":1}',
             }),
         );
-        const result = spawnSync("/usr/bin/unzip", ["-t", zip], {
-            encoding: "utf8",
-        });
-        assert.equal(result.status, 0, result.stdout + result.stderr);
-        const content = spawnSync(
-            "/usr/bin/unzip",
-            ["-p", zip, "summary.txt"],
-            { encoding: "utf8" },
-        );
-        assert.equal(content.stdout, "解析第 4 页\n");
+        assert.equal(readZip(zip, "summary.txt"), "解析第 4 页\n");
     } finally {
         fs.rmSync(temp, { recursive: true, force: true });
     }
@@ -332,9 +340,7 @@ test("online ZIP prefers server task metadata and removes duplicate client recor
         });
         const zip = path.join(temp, "export.zip");
         fs.writeFileSync(zip, writes.find(([p]) => p === "/tmp/online.zip")[1]);
-        const read = (name) =>
-            spawnSync("/usr/bin/unzip", ["-p", zip, name], { encoding: "utf8" })
-                .stdout;
+        const read = (name) => readZip(zip, name);
         const task = JSON.parse(read("task.json"));
         assert.equal(task.effectiveConfiguration.model, "org/runtime");
         assert.match(read("summary.txt"), /429=93，超时=5/);

@@ -107,10 +107,11 @@ class RuntimeTests(unittest.TestCase):
 
     def test_force_kill_preserves_only_committed_checkpoint(self):
         import sqlite3
+        from contextlib import closing
         with tempfile.TemporaryDirectory() as temp:
             path=str(Path(temp)/'checkpoint.sqlite')
             with self.assertRaises(asyncio.CancelledError): self.execute(checkpoint_worker,True,{'checkpoint':path})
-            with sqlite3.connect(path) as db: self.assertEqual(db.execute('select value from progress').fetchall(),[('committed',)])
+            with closing(sqlite3.connect(path)) as db: self.assertEqual(db.execute('select value from progress').fetchall(),[('committed',)])
 
     def test_unconfirmed_cleanup_fails_explicitly(self):
         with patch('task_runtime._tree_alive',return_value=True):

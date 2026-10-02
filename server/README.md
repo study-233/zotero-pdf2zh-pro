@@ -14,7 +14,7 @@ including trusted proxy CAs on macOS and Windows. Certificate and hostname
 verification remain enabled. For Docker, install any required private CA in
 the container's trust store; the host's trust store is not inherited.
 
-## Reading memory and short text (unreleased)
+## Reading memory and short text (since v1.8.0)
 
 `POST /translation-lookup` accepts `documentFingerprint` (the original PDF SHA-256),
 `text`, optional one-based `page`, `side` (`source` by default, or `translation`),

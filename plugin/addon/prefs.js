@@ -15,7 +15,7 @@ pref("__prefsPrefix__.skipLastPages", 0);
 pref("__prefsPrefix__.qps", 10);
 pref("__prefsPrefix__.poolSize", 50);
 pref("__prefsPrefix__.rename", true);
-pref("__prefsPrefix__.attachmentTitleTemplate", "{title} · {type}");
+pref("__prefsPrefix__.attachmentTitleTemplate", "{title} \u00B7 {type}");
 pref("__prefsPrefix__.openAfterTranslate", false);
 pref("__prefsPrefix__.notifyOnTranslationComplete", true);
 
@@ -38,6 +38,7 @@ pref("__prefsPrefix__.dialog-serviceSelect", "openai");
 pref("__prefsPrefix__.selectedApiKey", "");
 pref("__prefsPrefix__.profileSchemaVersion", 0);
 pref("__prefsPrefix__.selectionTranslationProvider", "bing");
+pref("__prefsPrefix__.selectionApiKey", "");
 pref("__prefsPrefix__.selectionDictionary", "ecdict");
 pref("__prefsPrefix__.selectionAutoDictionary", true);
 
@@ -46,3 +47,6 @@ pref("__prefsPrefix__.attachmentTitleLayout", "");
 pref("__prefsPrefix__.selectionDisplayMode", "floating");
 pref("__prefsPrefix__.selectionPopupWidth", 0);
 pref("__prefsPrefix__.selectionPopupHeight", 0);
+pref("__prefsPrefix__.selectionPopupPinned", false);
+pref("__prefsPrefix__.selectionPopupLeft", -1);
+pref("__prefsPrefix__.selectionPopupTop", -1);

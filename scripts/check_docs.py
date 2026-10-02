@@ -164,7 +164,7 @@ def check_links(root, paths):
         if path not in cache:
             doc = parse_document(path.read_text(encoding='utf-8'))
             cache[path] = doc
-            errors.extend(f'{path.relative_to(root)}:{line}: {message}'
+            errors.extend(f'{path.relative_to(root).as_posix()}:{line}: {message}'
                           for line, message in doc.errors)
         return cache[path]
 

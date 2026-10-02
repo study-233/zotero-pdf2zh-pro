@@ -147,7 +147,12 @@ test("imported AI entries keep provenance and invalid stored files may retry aft
     assert.equal(info.aiEntries, 1);
     assert.equal((await f.lookupImportedDictionary("word")).aiGenerated, true);
     const g = fixture();
-    const file = "/data/pdf2zhpro/dictionaries/odh-collins.json";
+    const file = path.join(
+        "/data",
+        "pdf2zhpro",
+        "dictionaries",
+        "odh-collins.json",
+    );
     g.files.set(file, "{}");
     await assert.rejects(g.lookupImportedDictionary("word"), /重新导入/);
     g.files.set(file, f.files.get(file));

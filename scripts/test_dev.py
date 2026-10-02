@@ -1,12 +1,16 @@
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
+import socket
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from dev import Development, DevError, MacOS, MODEL_KEYS, PREFIX, read_prefs, update_prefs, write_json
+from dev import Development, DevError, MacOS, Windows, MODEL_KEYS, PREFIX, read_prefs, update_prefs, write_json, windows_sid
 
 
 class DevelopmentTests(unittest.TestCase):
@@ -45,7 +49,11 @@ class DevelopmentTests(unittest.TestCase):
         self.assertNotIn(PREFIX + "service", copied)
         self.assertEqual(copied[PREFIX + "taskBindings"], "keep")
         self.assertNotIn("SECRET", output.getvalue())
-        self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+        if sys.platform != "win32":
+            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+        else:
+            acl = subprocess.run(["icacls", str(target)], capture_output=True, text=True, check=True).stdout
+            self.assertNotIn("(I)", acl)  # No inherited broad access to credentials.
         self.assertTrue(list(self.dev.paths()["backups"].glob("*.js")))
         user = read_prefs(target.with_name("user.js"))
         self.assertEqual(user[PREFIX + "new_serverip"], self.dev.url)
@@ -75,10 +83,19 @@ class DevelopmentTests(unittest.TestCase):
 
     def test_symlink_and_formal_library_alias_are_rejected(self):
         self.dev.paths()["library"].rmdir()
-        self.dev.paths()["library"].symlink_to(self.source, target_is_directory=True)
+        if sys.platform == "win32":
+            subprocess.run(["powershell.exe", "-NoProfile", "-Command",
+                            "$null=New-Item -ItemType Junction -Path $env:DEV_TEST_LINK -Target $env:DEV_TEST_TARGET"],
+                           env={**os.environ, "DEV_TEST_LINK": str(self.dev.paths()["library"]),
+                                "DEV_TEST_TARGET": str(self.source)}, check=True, capture_output=True)
+        else:
+            self.dev.paths()["library"].symlink_to(self.source, target_is_directory=True)
         with self.assertRaises(DevError):
             self.dev.validate_paths(self.dev.config())
-        self.dev.paths()["library"].unlink()
+        if sys.platform == "win32":
+            self.dev.paths()["library"].rmdir()  # Remove the link itself, never recurse.
+        else:
+            self.dev.paths()["library"].unlink()
         update_prefs(self.source / "prefs.js", {"extensions.zotero.dataDir": str(self.dev.runtime)})
         with self.assertRaises(DevError):
             self.dev.validate_paths(self.dev.config())
@@ -161,6 +178,143 @@ class DevelopmentTests(unittest.TestCase):
         path.write_text('user_pref("x", process.exit());\n')
         with self.assertRaises(DevError):
             read_prefs(path)
+
+    def test_windows_pid_reuse_and_changed_arguments_are_not_stopped(self):
+        adapter = Windows()
+        record = {"pid": 42, "started": 1, "exe": "python.exe", "argv": ["python.exe", "dev.py"]}
+        for changed in ({**record, "started": 2}, {**record, "exe": "other.exe"},
+                        {**record, "argv": ["python.exe", "formal.py"]}):
+            psutil = Mock()
+            with patch.object(adapter, "processes", return_value={42: changed}), patch.dict(sys.modules, {"psutil": psutil}):
+                adapter.stop(record)
+                psutil.Process.assert_not_called()
+
+    def test_windows_tasklist_localized_bytes_do_not_depend_on_python_utf8_mode(self):
+        adapter = Windows()
+        with patch("dev.subprocess.run", return_value=Mock(stdout="信息: 没有运行的任务匹配指定标准。\r\n".encode("gbk"))) as run:
+            adapter.require_closed()
+            self.assertNotIn("text", run.call_args.kwargs)
+        with patch("dev.subprocess.run", return_value=Mock(stdout=b'"Zotero.exe","123","Console","1","123 K"\r\n')):
+            with self.assertRaises(DevError):
+                adapter.require_closed()
+
+    def test_windows_sid_ignores_username_encoding_and_rejects_invalid_output(self):
+        windows_sid.cache_clear()
+        self.addCleanup(windows_sid.cache_clear)
+        output = '"电脑\\用户","S-1-5-21-123-456-789-1001"\r\n'.encode("gbk")
+        with patch("dev.subprocess.run", return_value=Mock(stdout=output)) as run:
+            self.assertEqual(windows_sid(), "S-1-5-21-123-456-789-1001")
+            self.assertNotIn("text", run.call_args.kwargs)
+        windows_sid.cache_clear()
+        with patch("dev.subprocess.run", return_value=Mock(stdout=b"unavailable")):
+            with self.assertRaises(DevError):
+                windows_sid()
+
+    def test_stale_server_with_live_listener_blocks_cleanup(self):
+        self.platform.owned.return_value = False
+        self.platform.listeners.return_value = {"999"}
+        with self.assertRaises(DevError):
+            self.dev.stop_state({"server": {"pid": 42}, "watcher": {"pid": 43}})
+        self.platform.stop.assert_not_called()
+
+    def test_windows_launcher_adopts_only_matching_child(self):
+        self.dev.platform = Windows()
+        parent = {"pid": 42, "argv": ["venv/python.exe", "launcher.py", "--port", "8891"]}
+        child = {"pid": 43, "parent": 42, "exe": str(self.dev.runtime / "python/python.exe"),
+                 "argv": ["base/python.exe", *parent["argv"][1:]]}
+        with patch.object(self.dev.platform, "owned", return_value=True), \
+                patch.object(self.dev.platform, "listeners", return_value={"43"}), \
+                patch.object(self.dev.platform, "processes", return_value={43: child}):
+            state = {"server": parent}
+            self.dev.adopt_server_listener(state)
+            self.assertEqual(state, {"server": child, "launcher": parent})
+            for bad in ({**child, "parent": 99}, {**child, "exe": str(self.source / "python.exe")},
+                        {**child, "argv": ["python.exe", "formal.py"]}):
+                with patch.object(self.dev.platform, "processes", return_value={43: bad}):
+                    with self.assertRaises(DevError):
+                        self.dev.adopt_server_listener({"server": parent})
+
+    def test_windows_zotero_matching_uses_arguments_not_substrings(self):
+        self.dev.platform = Windows()
+        exe = str(self.base / "Program Files/Zotero/zotero.exe")
+        write_json(self.dev.config_path, {"sourceProfile": str(self.source), "zoteroBin": exe})
+        args = [exe, "-profile", str(self.dev.paths()["profile"]), "--dataDir", str(self.dev.paths()["library"])]
+        good = {"exe": exe, "argv": args}
+        bad = {"exe": exe, "argv": [*args[:2], str(self.source), *args[3:]]}
+        with patch.object(self.dev.platform, "zotero", return_value=[good, bad]):
+            self.assertEqual(self.dev.development_zotero(), [good])
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows native lock")
+    def test_windows_lock_rejects_concurrent_commands_then_releases(self):
+        path = self.dev.runtime / "command.lock"
+        with Windows.lock(path):
+            with self.assertRaises(DevError):
+                with Windows.lock(path):
+                    self.fail("second lock acquired")
+        with Windows.lock(path):
+            pass
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows exclusive bind")
+    def test_real_busy_port_is_not_reused(self):
+        with socket.socket() as listener:
+            try:
+                listener.bind(("127.0.0.1", 8891))
+            except OSError:
+                self.skipTest("8891 already occupied; never interrupt its owner")
+            listener.listen()
+            with self.assertRaises(DevError):
+                self.dev.port_free()
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows environment")
+    def test_windows_environment_is_local_and_does_not_mutate_parent(self):
+        before = dict(os.environ)
+        env = self.dev.env()
+        self.assertEqual(dict(os.environ), before)
+        for key in ("UV_PROJECT_ENVIRONMENT", "UV_CACHE_DIR", "UV_PYTHON_INSTALL_DIR",
+                    "UV_TOOL_DIR", "UV_TOOL_BIN_DIR"):
+            self.assertTrue(Path(env[key]).is_relative_to(self.dev.runtime))
+        self.assertEqual(env["ZOTERO_PLUGIN_KILL_COMMAND"], "exit /b 0")
+
+    def test_windows_profile_discovery_handles_relative_and_ambiguous_profiles(self):
+        base = self.base / "App Data/Zotero/Zotero"
+        base.mkdir(parents=True)
+        config = base / "profiles.ini"
+        config.write_text("[Profile0]\nPath=Profiles/测试 default\nIsRelative=1\nDefault=1\n", encoding="utf-8")
+        with patch.dict(os.environ, {"APPDATA": str(self.base / "App Data")}):
+            self.assertEqual(Windows.source_profile(), (base / "Profiles/测试 default").resolve())
+            config.write_text("[Profile0]\nPath=one\n[Profile1]\nPath=two\n", encoding="utf-8")
+            with self.assertRaises(DevError):
+                Windows.source_profile()
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows uv version alias")
+    def test_uv_alias_is_allowed_only_inside_private_python_directory(self):
+        folder = self.dev.runtime / "python"
+        target = folder / "cpython-3.13.15-windows-x86_64-none"
+        target.mkdir(parents=True)
+        alias = folder / "cpython-3.13-windows-x86_64-none"
+        for destination, accepted in ((target, True), (self.source, False)):
+            subprocess.run(["powershell.exe", "-NoProfile", "-Command",
+                            "$null=New-Item -ItemType Junction -Path $env:DEV_TEST_LINK -Target $env:DEV_TEST_TARGET"],
+                           env={**os.environ, "DEV_TEST_LINK": str(alias), "DEV_TEST_TARGET": str(destination)},
+                           check=True, capture_output=True)
+            try:
+                if accepted:
+                    self.dev.validate_paths(self.dev.config())
+                else:
+                    with self.assertRaises(DevError):
+                        self.dev.validate_paths(self.dev.config())
+            finally:
+                alias.rmdir()
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows credential ACL")
+    def test_acl_failure_does_not_replace_or_write_credentials(self):
+        target = self.dev.paths()["profile"] / "prefs.js"
+        target.write_text("original", encoding="utf-8")
+        with patch("dev.windows_private", side_effect=OSError("ACL failed")):
+            with self.assertRaises(OSError):
+                update_prefs(target, {PREFIX + "llmApis": "SECRET"})
+        self.assertEqual(target.read_text(encoding="utf-8"), "original")
+        self.assertNotIn("SECRET", target.with_name("prefs.js.tmp").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

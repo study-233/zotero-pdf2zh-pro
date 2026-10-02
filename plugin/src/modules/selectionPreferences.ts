@@ -14,6 +14,8 @@ import {
 import { createSelectionRequest } from "./selectionRequest";
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 import { recordDiagnostic } from "./diagnostics";
+import { loadProfiles } from "./profileStore";
+import { profileLabel } from "./llmApiManager";
 
 export function registerSelectionPreferences(
     window: Window,
@@ -33,6 +35,83 @@ export function registerSelectionPreferences(
     const error = node("selection-download-error");
     const progress = node("selection-download-progress") as HTMLProgressElement;
     if (!service || !dictionary || !button || !status || !download) return;
+    const model = node(
+        "selection-model",
+    ) as unknown as XULMenuListElement | null;
+    let previousModel: string | undefined;
+    const renderModels = () => {
+        if (!model) return;
+        const selected = String(getPref("selectionApiKey") || "");
+        const popup = model.querySelector("menupopup")!;
+        const hint = node("selection-model-status");
+        const choices: [string, string][] = [
+            [getString("selection-model-follow"), ""],
+        ];
+        let identity: string;
+        let message = "";
+        try {
+            const profiles = loadProfiles();
+            choices.push(
+                ...profiles.map((api): [string, string] => [
+                    profileLabel(api),
+                    api.key,
+                ]),
+            );
+            const effectiveKey =
+                selected || String(getPref("selectedApiKey") || "");
+            const effective = profiles.find((api) => api.key === effectiveKey);
+            if (selected && !effective) {
+                choices.push([getString("selection-model-deleted"), selected]);
+                message = getString("selection-model-missing");
+            }
+            // Labels and test badges do not affect in-flight translations.
+            const {
+                name: _name,
+                needsTest: _needsTest,
+                ...settings
+            } = effective || {};
+            identity = JSON.stringify([selected, effectiveKey, settings]);
+        } catch {
+            if (selected)
+                choices.push([getString("selection-model-deleted"), selected]);
+            message = getString("selection-model-unreadable");
+            identity = `unreadable:${selected}`;
+        }
+        popup.replaceChildren();
+        for (const [label, value] of choices) {
+            const item = window.document.createElementNS(
+                "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
+                "menuitem",
+            );
+            item.setAttribute("label", label);
+            item.setAttribute("value", value);
+            popup.append(item);
+        }
+        model.value = selected;
+        hint.textContent = message;
+        hint.hidden = !message;
+        if (previousModel !== undefined && previousModel !== identity)
+            changed();
+        previousModel = identity;
+    };
+    model?.addEventListener("command", () => {
+        const selected = model.value;
+        setPref("selectionApiKey", selected);
+        changed();
+        previousModel = undefined;
+        // Let native menus finish closing before rebuilding their items.
+        window.setTimeout(() => {
+            if (model.isConnected && getPref("selectionApiKey") === selected)
+                renderModels();
+        }, 0);
+    });
+    window.addEventListener("profiles-changed", renderModels);
+    window.addEventListener(
+        "unload",
+        () => window.removeEventListener("profiles-changed", renderModels),
+        { once: true },
+    );
+    renderModels();
     const auto = node("selection-auto-dictionary") as HTMLInputElement | null;
     if (auto) {
         auto.checked = getPref("selectionAutoDictionary") !== false;

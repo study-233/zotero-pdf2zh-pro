@@ -40,12 +40,16 @@ declare namespace _ZoteroTypes {
       "selectedApiKey": string;
       "profileSchemaVersion": number;
       "selectionTranslationProvider": string;
+      "selectionApiKey": string;
       "selectionDictionary": string;
       "selectionAutoDictionary": boolean;
       "attachmentTitleLayout": string;
       "selectionDisplayMode": string;
       "selectionPopupWidth": number;
       "selectionPopupHeight": number;
+      "selectionPopupPinned": boolean;
+      "selectionPopupLeft": number;
+      "selectionPopupTop": number;
     };
   }
 }

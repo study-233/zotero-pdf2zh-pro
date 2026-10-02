@@ -124,6 +124,7 @@ export async function translateSelection(
     const settings = PDF2zhHelperFactory.getServerConfig(
         selectionProvider === "profile" &&
             !(options.mode === "dictionary" && options.allowGenerate === false),
+        getPref("selectionApiKey")?.toString() || "",
     );
     if (
         selectionProvider === "profile" &&
@@ -377,7 +378,10 @@ function createLearning(
     let modelError: string | undefined;
     try {
         modelAvailable = Boolean(
-            PDF2zhHelperFactory.getServerConfig(true).apiConfig,
+            PDF2zhHelperFactory.getServerConfig(
+                true,
+                getPref("selectionApiKey")?.toString() || "",
+            ).apiConfig,
         );
     } catch (error) {
         modelError =

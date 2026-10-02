@@ -13,6 +13,7 @@ attachment-type-mono = Translation
 attachment-type-dual = Bilingual
 attachment-template-error = Unknown variable or unmatched braces. Changes have not been saved; previews show the last valid setting.
 
+attachment-builder-add-field = Add field
 attachment-builder-title = Paper title
 attachment-builder-fullTitle = Full title
 attachment-builder-author = Author
@@ -70,3 +71,7 @@ selection-pane-header =
 selection-pane-nav =
     .tooltiptext = Translation
 selection-pane-empty = Select text in a PDF to view its translation.
+selection-model-follow = Follow document profile
+selection-model-deleted = Profile unavailable
+selection-model-missing = The selected model profile was deleted. Choose another profile.
+selection-model-unreadable = Cannot read model profiles. Check your configuration.

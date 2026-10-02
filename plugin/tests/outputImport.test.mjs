@@ -78,6 +78,35 @@ globalThis.__outputImportTest = {
             ? state.openAfterProcess
             : state.prefs[key],
 };
+const namingSettings = {};
+new Function(
+    "require",
+    "exports",
+    ts.transpileModule(
+        fs.readFileSync(
+            new URL(
+                "../src/modules/attachmentNamingSettings.ts",
+                import.meta.url,
+            ),
+            "utf8",
+        ),
+        { compilerOptions: { module: ts.ModuleKind.CommonJS } },
+    ).outputText,
+)(
+    (name) =>
+        ({
+            "./attachmentNaming": naming,
+            "./attachmentTitleLayout": layoutExports,
+            "../utils/prefs": {
+                getPref: (key) => state.prefs[key],
+                setPref: (key, value) => {
+                    state.prefs[key] = value;
+                },
+            },
+        })[name],
+    namingSettings,
+);
+Object.assign(globalThis.__outputImportTest, namingSettings);
 
 const source = fs
     .readFileSync(
@@ -90,7 +119,7 @@ const compiled = ts.transpileModule(source, {
 }).outputText;
 const { PDF2zhHelperFactory } = await import(
     `data:text/javascript;base64,${Buffer.from(
-        "const {getPref,getString,DEFAULT_TITLE_TEMPLATE,buildTitleMetadata,renderAttachmentTitle,parseTitleLayout,renderTitleLayout} = globalThis.__outputImportTest;\n" +
+        "const {getPref,getString,DEFAULT_TITLE_TEMPLATE,buildTitleMetadata,renderAttachmentTitle,parseTitleLayout,renderTitleLayout,repairAttachmentNamingPreferences} = globalThis.__outputImportTest;\n" +
             compiled,
     ).toString("base64")}`
 );
@@ -109,6 +138,18 @@ function reset() {
         onImport: null,
     });
 }
+
+test("import options repair corrupted naming before preferences have been opened", () => {
+    reset();
+    state.prefs.attachmentTitleTemplate = "{title} � {type}";
+    state.prefs.attachmentTitleLayout = JSON.stringify({
+        ...layoutExports.defaultTitleLayout(),
+        separator: " � ",
+    });
+    const options = PDF2zhHelperFactory.getPDFOptions();
+    assert.equal(options.titleTemplate, naming.DEFAULT_TITLE_TEMPLATE);
+    assert.equal(options.titleLayout.separator, " · ");
+});
 
 function deferred() {
     let resolve;

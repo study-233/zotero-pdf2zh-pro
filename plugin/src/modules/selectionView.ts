@@ -22,11 +22,11 @@ export function createSelectionView(
     id: string,
     onDegraded: (stage: string) => void,
 ) {
-    let popup: SelectionPopup;
+    let popup!: SelectionPopup;
     let host: HTMLElement | undefined;
     let closed = false;
     let switchVersion = 0;
-    let pinned = false;
+    let pinned = getPref("selectionPopupPinned") === true;
     let result: SelectionResult | undefined;
     let loading = "正在查询…";
     let learning: SelectionLearning | undefined;
@@ -34,13 +34,28 @@ export function createSelectionView(
     const width = Number(getPref("selectionPopupWidth"));
     const height = Number(getPref("selectionPopupHeight"));
     let size = width > 0 && height > 0 ? { width, height } : undefined;
+    const left = Number(getPref("selectionPopupLeft") ?? -1);
+    const top = Number(getPref("selectionPopupTop") ?? -1);
+    let position =
+        Number.isFinite(left) && Number.isFinite(top) && left >= 0 && top >= 0
+            ? { left, top }
+            : undefined;
     let cleanup = () => {};
+
+    function savePosition(value: { left: number; top: number }) {
+        position = { left: Math.round(value.left), top: Math.round(value.top) };
+        setPref("selectionPopupLeft", position.left);
+        setPref("selectionPopupTop", position.top);
+    }
 
     function mount(nextHost?: HTMLElement) {
         if (closed) return;
         const oldPopup = popup;
         const oldHost = host;
-        if (oldPopup && !host) pinned = oldPopup.pinned;
+        if (oldPopup && !host) {
+            pinned = oldPopup.pinned;
+            savePosition(oldPopup.card.getBoundingClientRect());
+        }
         const expanded = Array.from(
             oldPopup?.card.querySelectorAll("details") || [],
         ).map((node) => (node as HTMLDetailsElement).open);
@@ -62,6 +77,13 @@ export function createSelectionView(
                     host: nextHost,
                     pinned,
                     size,
+                    position:
+                        pinned || wantsPane || oldPopup ? position : undefined,
+                    onMove: savePosition,
+                    onPinChange(value) {
+                        pinned = value;
+                        setPref("selectionPopupPinned", value);
+                    },
                     onResize(value) {
                         size = value;
                         setPref("selectionPopupWidth", Math.round(value.width));
@@ -109,16 +131,16 @@ export function createSelectionView(
             if (persist) popup.showNotice("当前窗口无法使用右侧窗格。");
             return; // Keep the usable floating view and the saved preference.
         }
-        wantsPane = true;
         if (host !== target) mount(target);
+        wantsPane = true;
         if (persist) setPref("selectionDisplayMode", "sidebar");
     }
 
     async function switchDisplay() {
         if (host) {
             ++switchVersion;
-            wantsPane = false;
             mount();
+            wantsPane = false;
             setPref("selectionDisplayMode", "floating");
         } else await dock(true);
     }
@@ -144,8 +166,15 @@ export function createSelectionView(
             }
         }
     });
-    if (wantsPane)
-        void dock(false).catch(() => onDegraded("sidebar_unavailable"));
+    if (wantsPane) {
+        // Resolve the saved sidebar before showing the initial floating fallback.
+        popup.card.style.visibility = "hidden";
+        void dock(false)
+            .catch(() => onDegraded("sidebar_unavailable"))
+            .finally(() => {
+                if (!closed) popup.card.style.removeProperty("visibility");
+            });
+    }
     return {
         get card() {
             return popup.card;

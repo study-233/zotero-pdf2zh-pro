@@ -7,6 +7,7 @@ import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
 import { registerPrefsScripts } from "./modules/preferenceScript";
 import { migrateReviewPreference } from "./modules/reviewPreferences";
+import { repairAttachmentNamingPreferences } from "./modules/attachmentNamingSettings";
 import {
     registerSelectionTranslation,
     unregisterSelectionTranslation,
@@ -19,6 +20,7 @@ async function onStartup() {
         Zotero.uiReadyPromise,
     ]);
     migrateReviewPreference();
+    repairAttachmentNamingPreferences();
     initLocale();
     PDF2zhBasicFactory.registerPrefs();
     await Promise.all(

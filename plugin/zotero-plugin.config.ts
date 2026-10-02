@@ -2,7 +2,10 @@ import { defineConfig } from "zotero-plugin-scaffold";
 import pkg from "./package.json";
 
 const devRuntime = process.env.PDF2ZH_DEV_RUNTIME || "";
-const dist = devRuntime ? `${devRuntime}/plugin-build` : "build";
+// Scaffold uses dist in glob patterns; backslashes escape characters on Windows.
+const dist = devRuntime
+    ? `${devRuntime.replace(/\\/g, "/")}/plugin-build`
+    : "build";
 
 export default defineConfig({
     source: ["src", "addon"],
