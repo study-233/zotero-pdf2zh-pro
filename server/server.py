@@ -12,7 +12,9 @@ import multiprocessing
 import os
 import queue
 import shutil
+import signal
 import sys
+import threading
 import uuid
 from dataclasses import dataclass
 from io import BytesIO
@@ -34,7 +36,8 @@ from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
 from translation_memory import TranslationMemory
 from text_translation import TextTranslationService, TextTranslationError
-from provider_models import ModelDiscoveryError, list_provider_models
+from codex_client import close_codex_clients
+from provider_models import ModelDiscoveryError, list_provider_models, list_codex_models
 from babeldoc.glossary_options import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
 
@@ -79,13 +82,26 @@ def create_app() -> Flask:
                 TranslationMemory(TRANSLATES_DIR / "translation-memory.sqlite3"))
             return jsonify(result)
         except TextTranslationError as error:
-            return jsonify({"status": "error", "code": error.code}), error.status
+            payload = {"status": "error", "code": error.code}
+            if error.message:
+                payload["message"] = error.message
+            return jsonify(payload), error.status
         except Exception:
             return jsonify({"status": "error", "code": "selection_unavailable"}), 503
 
     @app.post("/selection-capabilities")
     def selection_capabilities():
         return jsonify({'selectionLearning': True})
+
+    @app.post("/cancel-text")
+    def cancel_text():
+        data = request.get_json(silent=True)
+        try:
+            if not isinstance(data, dict):
+                raise TextTranslationError("invalid_request_id")
+            return jsonify(TEXT_TRANSLATOR.cancel(data.get("requestId")))
+        except TextTranslationError as error:
+            return jsonify({"status": "error", "code": error.code}), error.status
 
     @app.post("/selection-cache/clear")
     def clear_selection_cache():
@@ -179,6 +195,10 @@ def create_app() -> Flask:
         if not isinstance(data, dict):
             return error_response("Expected a JSON body", 400)
         try:
+            if data.get("service") == "codex":
+                details = list_codex_models(data)
+                return jsonify({"status": "ok", "models": [model["id"] for model in details],
+                                "modelDetails": details}), 200
             models = list_provider_models(data)
         except ModelDiscoveryError as exc:
             return error_response(str(exc), exc.status)
@@ -675,7 +695,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True},
+        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "codexCli": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
@@ -827,11 +847,31 @@ def main() -> None:
     configure_runtime_paths(args.data_dir)
     configure_logging(args.log_level, args.log_file)
     LOGGER.info("server starting on http://%s:%s", args.host, args.port)
+    previous_sigterm = None
+    if threading.current_thread() is threading.main_thread():
+        previous_sigterm = signal.getsignal(signal.SIGTERM)
+
+        def stop_server(signum, _frame):
+            raise SystemExit(128 + signum)
+
+        signal.signal(signal.SIGTERM, stop_server)
     try:
         app.run(host=args.host, port=args.port)
     finally:
-        TASK_MANAGER.close()
-        GLOSSARY_MANAGER.close()
+        try:
+            TEXT_TRANSLATOR.close()
+        finally:
+            try:
+                close_codex_clients()
+            finally:
+                try:
+                    TASK_MANAGER.close()
+                finally:
+                    try:
+                        GLOSSARY_MANAGER.close()
+                    finally:
+                        if previous_sigterm is not None:
+                            signal.signal(signal.SIGTERM, previous_sigterm)
 
 
 if __name__ == "__main__":

@@ -175,6 +175,13 @@ export async function translateSelection(
             glossaryEntries: loadGlossaryEntries(),
         },
         50000,
+        selectionProvider === "profile" &&
+            settings.service === "codex" &&
+            options.allowGenerate !== false
+            ? {
+                  cancelUrl: `${settings.serverUrl.replace(/\/$/, "")}/cancel-text`,
+              }
+            : undefined,
     );
     if (!response.ok) {
         const errors: Record<string, string> = {
@@ -182,20 +189,40 @@ export async function translateSelection(
             invalid_output: "模型返回格式不正确，请重试。",
             invalid_config: "划词翻译配置无效，请检查设置。",
             unsupported_selection_provider:
-                "划词暂支持 OpenAI 兼容配置，请在设置中切换。",
+                "当前服务不支持此划词配置，请升级服务端并使用 OpenAI 兼容或 Codex 配置。",
             provider_timeout: "翻译请求超时，请重新划选重试。",
             provider_error: "模型请求失败，请检查翻译配置与网络。",
             empty_output: "翻译服务返回空内容，请重新划选重试。",
             selection_busy: "已有翻译请求正在处理，请稍后重新划选。",
+            selection_cancelled: "翻译请求已取消。",
             provider_quota:
-                "免费翻译额度已用尽或服务限流，请稍后重试。未调用模型。",
+                selectionProvider === "bing"
+                    ? "免费翻译额度已用尽或服务限流，请稍后重试。未调用模型。"
+                    : "模型额度不足或服务限流，请检查账号用量后重试。",
+            codex_not_installed: "未找到 Codex CLI，请检查配置中的 CLI 路径。",
+            codex_not_logged_in: "Codex 尚未登录，请在终端运行 codex login。",
+            codex_model_unavailable:
+                "当前 Codex 账号无法使用所选模型，请检查配置。",
+            codex_quota_exhausted:
+                "Codex 额度不足，请检查账号用量或手动选择其他配置。",
+            codex_incompatible: "Codex CLI 版本不兼容，请按安装说明升级。",
         };
         const code = (response.data as { code?: string } | null)?.code;
         const message =
             selectionProvider === "bing" && code === "provider_error"
                 ? "必应暂时不可用，请稍后重试。未调用模型。"
                 : errors[code || ""];
-        throw new Error(message || "划词服务不可用，请检查本地服务。");
+        const serverMessage = (response.data as { message?: unknown } | null)
+            ?.message;
+        const codexMessage =
+            settings.service === "codex" &&
+            code?.startsWith("codex_") &&
+            typeof serverMessage === "string"
+                ? serverMessage
+                : undefined;
+        throw new Error(
+            codexMessage || message || "划词服务不可用，请检查本地服务。",
+        );
     }
     if (
         options.allowGenerate === false &&

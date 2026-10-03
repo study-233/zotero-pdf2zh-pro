@@ -36,7 +36,7 @@ The recovery database remains exclusively the task retry checkpoint.
 (`lookup`, `translate`, `explain`), `service`, `llm_api`, and `glossaryEntries`.
 The first two modes check memory and glossary before cached results or a provider.
 Explicit `explain` requests may use a provider even on a memory hit; the real stored
-paragraph pair supplies the context. No PDF task, font preparation or subprocess is created.
+paragraph pair supplies the context. No PDF task or font preparation is created.
 
 Optional `selectionProvider` is `profile` (legacy default) or `bing`; optional
 `memoryPolicy` is `paragraph` (legacy default) or `exact`. With `exact`, contained
@@ -53,20 +53,33 @@ are not cached; partial translations never count as success. There is no automat
 fallback to the model. Free-service cache keys contain only selected text, language
 and provider; no paper context or credentials are sent.
 
-The profile text provider supports existing presets resolving to OpenAISettings,
-including Chat Completions and Responses. A fixed protocol needs no health-check
+The profile text provider supports Codex and existing presets resolving to OpenAISettings,
+including Chat Completions and Responses. A fixed API protocol needs no health-check
 request; `auto` negotiates only when a model request is actually needed.
 Responses contain `translation` or `explanation`, `provider`, `model` when available,
 and `cached`. Errors have a fixed `code`: `empty_text`, `invalid_request`,
 `invalid_config`, `unsupported_selection_provider`, `provider_timeout` (504),
 `provider_error` / `empty_output` (502), or `selection_busy` (429).
 Requests wait at most 45 seconds; an already-running HTTP operation may finish later,
-with at most two worker requests active. Duplicate in-flight requests share work.
+with at most two worker requests active. Duplicate in-flight requests share work,
+except individually cancellable Codex requests described below.
 A 128-entry, one-hour memory cache fronts `selection-cache.sqlite3` in the server data directory.
 Persistent translation/context results are capped at 20,000 least-recently-used entries; personal
 word entries never expire. Only result data, digests and timestamps are stored, not credentials or
 raw provider configuration. Model translation keys include context and output-affecting options;
 context/explanation keys additionally include the document fingerprint.
+
+Generating Codex profile requests may include a unique `requestId` containing
+16–128 URL-safe letters, digits, underscores or hyphens. The plugin generates a
+cryptographically random ID and sends `POST /cancel-text` with `{"requestId": "..."}`
+when the selection closes, is replaced, or reaches its HTTP deadline. Cancellation
+returns `{"status": "ok", "cancelled": true}` when marked; already finished requests
+return `cancelled: false`. A cancellation that arrives before generation is retained
+for up to 60 seconds (at most 128 recent IDs). Active and recently completed duplicate
+IDs return `duplicate_request_id` (409); invalid or non-Codex IDs on generation return
+`invalid_request_id` (400). Cancelled generation returns `selection_cancelled` (409).
+These requests use separate turns, interrupt the matching Codex generation, and check
+cancellation before saving results. Existing clients without request IDs remain compatible.
 
 `mode: dictionary` returns `entry` (headword, senses, optional usage, aiGenerated), a plain-text
 `translation`, model provenance, `createdAt`, `formatVersion` and `saved`. It requires a short
@@ -102,6 +115,51 @@ or echo upstream response bodies in errors. Errors return `status` and `message`
 with HTTP 400 for invalid input, 502 for provider failures, or 504 for timeout.
 Clients should allow manual model entry on failure. `/health` advertises
 `supportsModelDiscovery: true`; existing translation endpoints are unchanged.
+
+## Codex CLI provider
+
+`/health.capabilities.codexCli: true` means this server includes the adapter; it does
+not mean the CLI is installed, signed in, or permitted to use a particular model.
+The first supported CLI version is `0.153.4`. Install and sign in separately as
+the same operating-system user that runs the Python service. macOS and Windows
+are the initial manual acceptance targets; Docker does not include Codex or a login.
+
+Use `service: "codex"` with `llm_api.model` (default `gpt-6-luna`), optional
+`llm_api.cliPath`, and optional `llm_api.reasoningEffort`. An omitted effort uses
+the model default, while `"none"` is an explicit effort. The provider uses Standard
+speed; API keys, API URLs, Responses options and OpenAI reasoning switches do not
+configure this provider. Profiles keep an explicit model; unavailable models fail
+with an actionable error instead of silently selecting a different one.
+
+`POST /list-models` also accepts `{"service":"codex","cliPath":"codex"}`. It returns
+`models` plus `modelDetails`, whose entries contain `id`, `displayName`,
+`defaultReasoningEffort`, and `supportedReasoningEfforts` (an array of strings).
+Catalog visibility is not proof of account entitlement. Discovery performs no
+generation. `/validate-config` checks readiness without a model call when
+`liveTest: false`; `liveTest: true` performs one short translation and reports its
+result through the existing `liveTest` and `diagnostics` fields. `resolvedProtocol`
+is null for Codex.
+
+Each Python process lazily shares an owned stdio app-server, bounded to two active
+generations. Requests use isolated temporary conversations. Only completed final
+answers enter output validation and caching. Cancellation interrupts the turn;
+an unresponsive owned process is recycled. The adapter never copies login tokens
+or closes the shared client after a selection request. Context/dictionary output
+uses the same structured validators as other profile providers, and selection
+cache identity includes the model and reasoning effort.
+
+Normal server shutdown and SIGTERM cancel selection work and close owned Codex
+clients before exiting. On Windows each app-server belongs to a kill-on-close
+Job Object, so forced termination of the Python service also stops its owned
+Codex process tree.
+
+Codex selection failures return a safe `code` and fixed local `message`, including `codex_not_installed`,
+`codex_incompatible`, `codex_not_logged_in`, `codex_model_unavailable`,
+`codex_invalid_reasoning`, `codex_isolation_failed`, `codex_timeout`,
+`codex_process_exited`, `codex_protocol_error`, `codex_quota_exhausted`, and
+`codex_request_failed`. Full-document/configuration errors contain a safe
+explanation. Ambiguous failures are not automatically replayed. Token usage is
+reported when supplied by the CLI and otherwise remains unknown.
 
 ## Translation protocols and request options
 

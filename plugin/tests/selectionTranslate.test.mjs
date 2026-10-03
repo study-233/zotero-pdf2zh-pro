@@ -32,6 +32,9 @@ function fixture() {
         autoDictionary: false,
         auxiliaryRespond: undefined,
         provider: "bing",
+        service: "openai",
+        cliPath: undefined,
+        reasoningEffort: undefined,
         selectionApiKey: "",
         model: true,
         profileReads: 0,
@@ -67,9 +70,20 @@ function fixture() {
                         serverUrl: "http://localhost:8890",
                         sourceLang: "en",
                         targetLang: "zh-CN",
+                        service: state.service,
                         apiConfig:
                             includeProfile && state.model
-                                ? { model: profileKey || "test-model" }
+                                ? {
+                                      model: profileKey || "test-model",
+                                      ...(state.service === "codex"
+                                          ? {
+                                                service: state.service,
+                                                cliPath: state.cliPath,
+                                                reasoningEffort:
+                                                    state.reasoningEffort,
+                                            }
+                                          : {}),
+                                  }
                                 : null,
                     };
                 },
@@ -1031,4 +1045,75 @@ test("personal dictionary usage is separate from failure notices", async () => {
     await f.advance();
     assert.equal(last(f).usage, personalEntry.usage);
     assert.equal(last(f).notice, "本次释义未能保存到本地。");
+});
+
+test("Codex selection forwards its independent profile and exposes actionable server errors", async () => {
+    const f = fixture();
+    f.state.provider = "profile";
+    f.state.service = "codex";
+    f.state.selectionApiKey = "gpt-6-luna";
+    f.state.cliPath = "/opt/codex";
+    f.state.reasoningEffort = "low";
+    const bodies = [];
+    const request = {
+        post: async (_url, body) => {
+            bodies.push(body);
+            return {
+                ok: false,
+                data: {
+                    code: "codex_auth_expired",
+                    message: "Codex 登录已过期，请运行 codex login。",
+                },
+            };
+        },
+    };
+    await assert.rejects(
+        f.translateSelection(request, "paper", "sentence", 1, "context"),
+        /Codex 登录已过期/,
+    );
+    assert.equal(bodies.length, 1);
+    assert.equal(bodies[0].service, "codex");
+    assert.deepEqual(bodies[0].llm_api, {
+        service: "codex",
+        model: "gpt-6-luna",
+        cliPath: "/opt/codex",
+        reasoningEffort: "low",
+    });
+});
+
+test("only generating Codex selection opts into server cancellation", async () => {
+    const f = fixture();
+    f.state.provider = "profile";
+    f.state.service = "codex";
+    const calls = [];
+    const request = {
+        post: async (url, body, _timeout, cancellation) => {
+            calls.push({ url, body, cancellation });
+            return {
+                ok: true,
+                data: url.endsWith("/selection-capabilities")
+                    ? { selectionLearning: true }
+                    : body.allowGenerate === false
+                      ? { status: "miss" }
+                      : { translation: "result" },
+            };
+        },
+    };
+    await f.translateSelection(request, "paper", "sentence", 1, "context");
+    assert.deepEqual(calls.at(-1).cancellation, {
+        cancelUrl: "http://localhost:8890/cancel-text",
+    });
+    await f.translateSelection(request, "paper", "word", 1, "context", {
+        mode: "dictionary",
+        allowGenerate: false,
+    });
+    assert.equal(calls.at(-1).cancellation, undefined);
+    assert.equal(calls.at(-2).cancellation, undefined);
+    f.state.service = "openai";
+    await f.translateSelection(request, "paper", "sentence", 1, "context");
+    assert.equal(calls.at(-1).cancellation, undefined);
+    f.state.service = "codex";
+    f.state.provider = "bing";
+    await f.translateSelection(request, "paper", "sentence", 1, "context");
+    assert.equal(calls.at(-1).cancellation, undefined);
 });

@@ -13,7 +13,9 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import requests
 
 from babeldoc.glossary_options import normalize_glossary_entries, glossary_entries_for_language
-from pdf2zh_next.config.translate_engine_model import OpenAISettings
+from codex_client import CodexError
+from pdf2zh_next.config.translate_engine_model import CodexSettings, OpenAISettings
+from pdf2zh_next.translator.translator_impl.codex import CodexTranslator
 from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
 from pdf2zh_next.translator.rate_limiter.qps_rate_limiter import QPSRateLimiter
 from pdf2zh_next_service import create_runtime_settings, SERVICE_FIELD_MAP
@@ -22,9 +24,16 @@ from selection_cache import SelectionCache, dictionary_entry, context_meaning
 
 
 class TextTranslationError(Exception):
-    def __init__(self, code, status=400):
+    def __init__(self, code, status=400, message=None):
         self.code, self.status = code, status
+        self.message = message
         super().__init__(code)
+
+
+def validate_request_id(value):
+    if not isinstance(value, str) or re.fullmatch(r'[A-Za-z0-9_-]{16,128}', value) is None:
+        raise TextTranslationError('invalid_request_id')
+    return value
 
 
 def validate_text_request(data):
@@ -44,6 +53,11 @@ def validate_text_request(data):
         raise TextTranslationError('invalid_page')
     if not isinstance(data.get('llm_api', {}), dict):
         raise TextTranslationError('invalid_config')
+    if 'requestId' in data:
+        validate_request_id(data['requestId'])
+        if (data.get('service') != 'codex' or data.get('selectionProvider', 'profile') != 'profile'
+                or data.get('allowGenerate', True) is False):
+            raise TextTranslationError('invalid_request_id')
     if data.get('selectionProvider', 'profile') not in ('profile', 'bing'):
         raise TextTranslationError('invalid_config')
     if data.get('memoryPolicy', 'paragraph') not in ('paragraph', 'exact'):
@@ -94,6 +108,9 @@ class TextTranslationService:
         self.timeout = timeout
         self.executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix='selection')
         self.lock = threading.Lock()
+        self.closed = threading.Event()
+        self._request_events = {}
+        self._request_history = OrderedDict()
         self.cache = OrderedDict()
         self.pending = {}
         self.generations = {}
@@ -101,6 +118,48 @@ class TextTranslationService:
         self.cache_epoch = 0
         self.free_rate_lock = threading.Lock()
         self.free_last_request = 0.0
+
+    def close(self):
+        with self.lock:
+            self.closed.set()
+        self.executor.shutdown(wait=False, cancel_futures=True)
+
+    def _check_open(self):
+        if self.closed.is_set():
+            raise TextTranslationError('selection_unavailable', 503)
+
+    def _check_request(self, event):
+        self._check_open()
+        if event is not None and event.is_set():
+            raise TextTranslationError('selection_cancelled', 409)
+
+    def _prune_request_history(self):
+        now = time.monotonic()
+        while self._request_history:
+            created, _ = next(iter(self._request_history.values()))
+            if len(self._request_history) <= 128 and now - created < 60:
+                break
+            self._request_history.popitem(last=False)
+
+    def _remember_request(self, request_id, state):
+        self._request_history[request_id] = (time.monotonic(), state)
+        self._request_history.move_to_end(request_id)
+        self._prune_request_history()
+
+    def cancel(self, request_id):
+        request_id = validate_request_id(request_id)
+        with self.lock:
+            self._prune_request_history()
+            event = self._request_events.get(request_id)
+            if event is not None:
+                event.set()
+                return {'status': 'ok', 'cancelled': True}
+            previous = self._request_history.get(request_id)
+            if previous:
+                return {'status': 'ok', 'cancelled': previous[1] == 'early_cancelled'}
+            # The cancellation POST may overtake the generation POST on the wire.
+            self._remember_request(request_id, 'early_cancelled')
+            return {'status': 'ok', 'cancelled': True}
 
     @staticmethod
     def _key(data, context):
@@ -116,6 +175,8 @@ class TextTranslationService:
                 identity.update(service=data.get('service') or 'openaicompatible',
                     options={k: api.get(k) for k in ('model', 'apiUrl', 'apiProtocol', 'reasoningMode', 'requestOptions', 'extraData')},
                     context=normalize_text(context))
+                if identity['service'] == 'codex':
+                    identity['options'].update({k: api.get(k) for k in ('reasoningEffort', 'cliPath')})
                 if mode in ('context', 'explain'):
                     identity['document'] = data.get('documentFingerprint', '')
         # Persist only the digest, never credentials, endpoint URLs or paper context.
@@ -129,7 +190,31 @@ class TextTranslationService:
             self.cache_epoch += 1
 
     def translate(self, data, memory):
+        self._check_open()
         entries = validate_text_request(data)
+        request_id = data.get('requestId')
+        event = None
+        if request_id:
+            with self.lock:
+                self._prune_request_history()
+                previous = self._request_history.get(request_id)
+                if previous and previous[1] == 'early_cancelled':
+                    raise TextTranslationError('selection_cancelled', 409)
+                if request_id in self._request_events or previous:
+                    raise TextTranslationError('duplicate_request_id', 409)
+                event = threading.Event()
+                self._request_events[request_id] = event
+        try:
+            return self._translate(data, memory, entries, event)
+        finally:
+            if event is not None:
+                with self.lock:
+                    if self._request_events.get(request_id) is event:
+                        self._request_events.pop(request_id)
+                        self._remember_request(request_id, 'finished')
+
+    def _translate(self, data, memory, entries, cancel_event):
+        self._check_request(cancel_event)
         mode, text = data.get('mode', 'translate'), data['text'].strip()
         target = data.get('target') or 'zh-CN'
         fingerprint = data.get('documentFingerprint')
@@ -151,6 +236,7 @@ class TextTranslationService:
         # Include storage identity in process-local keys (tests/isolated workspaces).
         local_key = (str(path), key)
         with self.lock:
+            self._check_request(cancel_event)
             store = None
             try:
                 store = SelectionCache(path)
@@ -188,6 +274,9 @@ class TextTranslationService:
             generation = self.generations.get(local_key, 0)
             pending_key = (local_key, generation)
             future = self.pending.get(pending_key)
+            # Individually cancellable requests must never share a running turn.
+            if cancel_event is not None:
+                future = None
             # A refresh does not join an older ordinary request. Repeated refreshes coalesce.
             if refresh and (future is None or pending_key not in self.refreshing):
                 future = None
@@ -200,12 +289,14 @@ class TextTranslationService:
                 if refresh:
                     self.refreshing.add(pending_key)
                 future = self.executor.submit(self._generate_saved, data, text, context[:12000], target,
-                    store, key, local_key, generation, self.cache_epoch)
+                    store, key, local_key, generation, self.cache_epoch, cancel_event)
                 self.pending[pending_key] = future
         future.add_done_callback(lambda done: self._finish(pending_key, done))
         try:
             return future.result(timeout=self.timeout)
         except TimeoutError:
+            if cancel_event is not None:
+                cancel_event.set()
             raise TextTranslationError('provider_timeout', 504) from None
 
     def _remember(self, key, result):
@@ -214,14 +305,20 @@ class TextTranslationService:
         while len(self.cache) > 128:
             self.cache.popitem(last=False)
 
-    def _generate_saved(self, data, text, context, target, store, key, local_key, generation, epoch):
+    def _generate_saved(self, data, text, context, target, store, key, local_key, generation, epoch, cancel_event=None):
         started = time.monotonic()
-        result = self._generate(data, text, context, target)
+        self._check_request(cancel_event)
+        if cancel_event is None:
+            result = self._generate(data, text, context, target)
+        else:
+            result = self._generate(data, text, context, target, cancel_event=cancel_event)
+        self._check_request(cancel_event)
         if time.monotonic() - started >= self.timeout:
             raise TextTranslationError('provider_timeout', 504)
         mode = data.get('mode', 'translate')
         result = {**result, 'saved': False, 'createdAt': time.time(), 'formatVersion': 1}
         with self.lock:
+            self._check_request(cancel_event)
             if self.generations.get(local_key) != generation or (mode != 'dictionary' and epoch != self.cache_epoch):
                 return result
             try:
@@ -239,11 +336,11 @@ class TextTranslationService:
                 self.pending.pop(key)
                 self.refreshing.discard(key)
 
-    def _generate(self, data, text, context, target):
+    def _generate(self, data, text, context, target, cancel_event=None):
+        self._check_request(cancel_event)
         if data.get('selectionProvider') == 'bing':
             return self._generate_bing(data, text, target)
-        # Phase 2 supports existing OpenAI-compatible presets and both protocols.
-        # No PDF parsing, font download, subprocess or task creation takes place.
+        # Short-text requests use the same profiles without PDF/task setup.
         try:
             service = data.get('service') or 'openaicompatible'
             if not isinstance(service, str) or service not in SERVICE_FIELD_MAP:
@@ -253,9 +350,13 @@ class TextTranslationService:
                 'source_lang': data.get('source') or 'en', 'target_lang': target,
                 'service': service, 'llm_api': data.get('llm_api') or {},
             })
-            if not isinstance(settings.translate_engine_settings, OpenAISettings):
+            engine = settings.translate_engine_settings
+            if not isinstance(engine, (OpenAISettings, CodexSettings)):
                 raise TextTranslationError('unsupported_selection_provider')
-            settings.translate_engine_settings.openai_timeout = str(min(self.timeout, 30))
+            if isinstance(engine, CodexSettings):
+                engine.codex_timeout = min(self.timeout, 30)
+            else:
+                engine.openai_timeout = str(min(self.timeout, 30))
         except TextTranslationError:
             raise
         except Exception:
@@ -263,14 +364,17 @@ class TextTranslationService:
         translator = None
         deadline = time.monotonic() + self.timeout
         def check_deadline():
+            self._check_request(cancel_event)
             if time.monotonic() >= deadline:
                 raise TextTranslationError('provider_timeout', 504)
         try:
-            translator = OpenAITranslator(settings, QPSRateLimiter(1))
+            is_codex = isinstance(engine, CodexSettings)
+            translator_type = CodexTranslator if is_codex else OpenAITranslator
+            translator = translator_type(settings, QPSRateLimiter(1))
             translator.check_cancelled = check_deadline
             # Resolve auto protocol only on an actual cache miss. Fixed protocols
             # do not spend a second request on a health-check translation.
-            if translator.resolved_protocol is None:
+            if is_codex or translator.resolved_protocol is None:
                 translator.health_check()
             check_deadline()
             mode = data.get('mode', 'translate')
@@ -331,6 +435,9 @@ class TextTranslationService:
                     'provider': data.get('service') or 'openaicompatible', 'model': translator.model, 'cached': False}
         except TextTranslationError:
             raise
+        except CodexError as error:
+            # CodexError contains a fixed local message, never an upstream body.
+            raise TextTranslationError(error.code, error.status_code, str(error)) from None
         except Exception as error:
             # Never return provider messages (may contain keys, URLs or paper text).
             name = type(error).__name__
@@ -338,7 +445,7 @@ class TextTranslationService:
                 raise TextTranslationError('provider_timeout', 504) from None
             raise TextTranslationError('provider_error', 502) from None
         finally:
-            if translator is not None:
+            if translator is not None and not isinstance(engine, CodexSettings):
                 with contextlib.suppress(Exception):
                     translator.client.close()
 
@@ -346,6 +453,7 @@ class TextTranslationService:
         deadline = time.monotonic() + self.timeout
 
         def remaining():
+            self._check_open()
             seconds = deadline - time.monotonic()
             if seconds <= 0:
                 raise TextTranslationError('provider_timeout', 504)

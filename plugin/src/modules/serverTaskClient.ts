@@ -48,7 +48,8 @@ export class ServerTaskClient {
         const api = requestBody.llm_api as LLMApiData | undefined;
         const needsApiCheck = Boolean(
             api &&
-            (api.reasoningMode === "off" ||
+            (api.service === "codex" ||
+                api.reasoningMode === "off" ||
                 api.apiProtocol === "auto" ||
                 api.apiProtocol === "responses" ||
                 Object.keys(api.requestOptions || {}).length),
@@ -96,6 +97,7 @@ export class ServerTaskClient {
                     api,
                     health.supportedApiProtocols,
                     health.capabilities?.reasoningMode,
+                    health.capabilities?.codexCli,
                 );
                 requestBody = { ...requestBody, llm_api: prepared.api };
                 if (prepared.warning) {

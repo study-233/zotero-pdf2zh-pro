@@ -192,3 +192,35 @@ test("delete returns the deletion version for the same merge path as SSE", async
         },
     );
 });
+
+test("Codex task submission checks health even without HTTP options", async () => {
+    const calls = [];
+    const request = {
+        service: "codex",
+        llm_api: {
+            service: "codex",
+            model: "gpt-6-luna",
+            cliPath: "/opt/codex",
+            reasoningEffort: "low",
+        },
+    };
+    globalThis.fetch = async (url, options) => {
+        calls.push({ url, options });
+        return {
+            ok: true,
+            json: async () =>
+                url.endsWith("/health")
+                    ? { capabilities: { codexCli: true } }
+                    : { task: { taskId: "codex-task" } },
+        };
+    };
+    assert.equal(
+        (await ServerTaskClient.createTask("http://localhost", request)).taskId,
+        "codex-task",
+    );
+    assert.deepEqual(
+        calls.map((call) => call.url),
+        ["http://localhost/health", "http://localhost/tasks"],
+    );
+    assert.deepEqual(JSON.parse(calls[1].options.body), request);
+});

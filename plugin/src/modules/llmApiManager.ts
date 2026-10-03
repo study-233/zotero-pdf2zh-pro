@@ -14,6 +14,8 @@ export interface LLMApiData {
     apiProtocol?: ApiProtocol;
     reasoningMode?: "default" | "off";
     requestOptions?: Record<string, unknown>;
+    cliPath?: string;
+    reasoningEffort?: string;
 }
 
 export const SERVICE_NAMES: Record<string, string> = {
@@ -38,6 +40,7 @@ export const SERVICE_NAMES: Record<string, string> = {
     groq: "Groq",
     tencentmechinetranslation: "Tencent",
     claudecode: "Claude Code",
+    codex: "Codex（当前登录账号）",
 };
 export const emptyLLMApi: LLMApiData = {
     key: "",

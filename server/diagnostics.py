@@ -22,15 +22,18 @@ FLAGS.update({'canRepair', 'canDownloadResult', 'failedParagraphsTruncated'})
 STRINGS = {
     'stage': {'Queue Wait','Initialization','Check Fonts','Download Fonts','Font Preparation','Parse PDF and Create Intermediate Representation','Detect Scanned Pages','Parse Page Layout','Parse Table','Parse Paragraphs','Parse Formulas and Styles','Extract Terms','Translate Paragraphs','Typesetting','Add Fonts','Generate drawing instructions','Subset font','Save PDF','Finalize'},
     'retryReason': {'timeout','rate_limit','connection','server_error','invalid_output','other'},
-    'errorType': {'ReadTimeout','ConnectTimeout','TimeoutError','APITimeoutError','RateLimitError','APIConnectionError','APIStatusError','AuthenticationError','PermissionDeniedError','NotFoundError','BadRequestError','InternalServerError','InvalidTranslation','UnprocessedParagraph','RuntimeError','ValueError','CancelledError','ConnectionError'},
+    'errorType': {'ReadTimeout','ConnectTimeout','TimeoutError','APITimeoutError','RateLimitError','APIConnectionError','APIStatusError','AuthenticationError','PermissionDeniedError','NotFoundError','BadRequestError','InternalServerError','InvalidTranslation','UnprocessedParagraph','RuntimeError','ValueError','CancelledError','ConnectionError','CodexError'},
     'finishReason': {'stop','length','content_filter','tool_calls','function_call','completed','incomplete','failed','cancelled','max_output_tokens','other'},
     'status': {'queued','running','cancelling','completed','incomplete','failed','cancelled'},
     'operation': {'page_start','page_end','font','resources','content_stream','initialization'},
     'cancelPhase': {'requested','terminating','killing','cancelled','cleanup_failed'},
     'cancelReason': {'user','forced','shutdown'},
     'kind': {'initialization','translation','term_extraction','review','repair'},
-    'protocol': {'chat_completions','responses','auto'},
-    'providerCode': {'model_not_found','invalid_api_key','insufficient_quota','rate_limit_exceeded','permission_denied'},
+    'protocol': {'chat_completions','responses','auto','codex_app_server'},
+    'providerCode': {'model_not_found','invalid_api_key','insufficient_quota','rate_limit_exceeded','permission_denied',
+                     'codex_not_installed','codex_incompatible','codex_not_logged_in','codex_model_unavailable',
+                     'codex_invalid_reasoning','codex_isolation_failed','codex_timeout','codex_process_exited',
+                     'codex_protocol_error','codex_quota_exhausted','codex_request_failed'},
     'availability': {'complete','partial','unavailable'},
 }
 IDENTIFIERS = {'taskId', 'serverInstanceId'}

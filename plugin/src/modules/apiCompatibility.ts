@@ -6,12 +6,19 @@ export function prepareApiForServer<
     T extends Pick<
         LLMApiData,
         "apiUrl" | "apiProtocol" | "requestOptions" | "reasoningMode"
-    >,
+    > &
+        Partial<Pick<LLMApiData, "service">>,
 >(
     api: T,
     supportedProtocols?: string[],
     supportsReasoningMode?: boolean,
+    supportsCodexCli?: boolean,
 ): { api: T; warning?: string } {
+    if (api.service === "codex") {
+        if (supportsCodexCli !== true)
+            throw new Error("当前 Python 服务不支持 Codex，请先升级服务端。");
+        return { api };
+    }
     if (api.reasoningMode === "off" && supportsReasoningMode !== true)
         throw new Error("当前 Python 服务不支持关闭推理，请先升级服务端。");
     if (supportedProtocols?.includes("responses")) return { api };

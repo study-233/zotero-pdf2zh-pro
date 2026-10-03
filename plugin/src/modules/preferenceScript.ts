@@ -18,7 +18,7 @@ import {
     getSelectedProfile,
     removeProfile,
 } from "./profileStore";
-import { testProfile, fetchProfileModels } from "./profileApiClient";
+import { testProfile, fetchProfileModelCatalog } from "./profileApiClient";
 import type { ServerHealthResponse } from "./pdf2zhTypes";
 import axios from "axios";
 import {
@@ -288,7 +288,7 @@ async function openProfileEditor(key?: string, copy = false): Promise<void> {
             isEdit: !!original && !copy,
             services: SERVICE_NAMES,
             test: testProfile,
-            listModels: fetchProfileModels,
+            listModels: fetchProfileModelCatalog,
             save: (value: LLMApiData, use: boolean) => {
                 const profiles = loadProfiles();
                 const api = {

@@ -309,3 +309,68 @@ test("reasoning mode survives profile migration and snapshots", () => {
         "off",
     );
 });
+
+test("Codex draft discovery forwards only its local path and retains model capabilities", async () => {
+    prefs.set("new_serverip", "http://localhost:8890");
+    const catalog = {
+        models: ["gpt-6-luna"],
+        modelDetails: [
+            {
+                id: "gpt-6-luna",
+                defaultReasoningEffort: "medium",
+                supportedReasoningEfforts: ["low", "medium"],
+            },
+        ],
+    };
+    http.post = async (url, body, options) => {
+        requests.push({ url, body, options });
+        return { data: catalog };
+    };
+    const draft = {
+        ...api("codex", "codex"),
+        cliPath: "C:\\Program Files\\Codex\\codex.exe",
+        reasoningEffort: "low",
+    };
+    assert.deepEqual(await client.fetchProfileModelCatalog(draft), catalog);
+    assert.equal(requests.at(-1).options.timeout, 35000);
+    assert.deepEqual(requests.at(-1).body, {
+        service: "codex",
+        cliPath: draft.cliPath,
+    });
+    const saved = model.selectedProfile([draft], draft.key);
+    assert.equal(saved.cliPath, draft.cliPath);
+    assert.equal(saved.reasoningEffort, "low");
+});
+
+test("Codex connection test checks server support and sends one explicit live test", async () => {
+    const draft = { ...api("codex", "codex"), model: "gpt-6-luna" };
+    http.get = async () => ({ data: {} });
+    const before = requests.length;
+    await assert.rejects(client.testProfile(draft), /Codex.*升级/);
+    assert.equal(requests.length, before);
+    http.get = async () => ({ data: { capabilities: { codexCli: true } } });
+    http.post = async (url, body, options) => {
+        requests.push({ url, body, options });
+        return { data: { liveTest: { ok: true } } };
+    };
+    assert.match(await client.testProfile(draft), /Codex 连接测试成功/);
+    assert.equal(requests.length, before + 1);
+    assert.equal(requests.at(-1).options.timeout, 65000);
+    assert.equal(requests.at(-1).body.liveTest, true);
+    assert.deepEqual(requests.at(-1).body.llm_api, draft);
+});
+
+test("invalid Codex model capabilities are rejected before the editor uses them", async () => {
+    http.post = async () => ({
+        data: {
+            models: ["gpt-6-luna"],
+            modelDetails: [
+                { id: "gpt-6-luna", supportedReasoningEfforts: "low" },
+            ],
+        },
+    });
+    await assert.rejects(
+        client.fetchProfileModelCatalog(api("codex", "codex")),
+        /模型能力格式/,
+    );
+});

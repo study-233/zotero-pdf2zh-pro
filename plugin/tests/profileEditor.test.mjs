@@ -13,15 +13,23 @@ const markup = fs.readFileSync(
     "utf8",
 );
 
-function fixture() {
+function fixture(overrides = {}) {
     const node = () => ({
         value: "",
         textContent: "",
         dataset: {},
         disabled: false,
-        addEventListener() {},
-        append() {},
-        replaceChildren() {},
+        listeners: {},
+        children: [],
+        addEventListener(name, callback) {
+            (this.listeners[name] ||= []).push(callback);
+        },
+        append(child) {
+            this.children.push(child);
+        },
+        replaceChildren() {
+            this.children = [];
+        },
         setAttribute() {},
         focus() {},
     });
@@ -44,6 +52,7 @@ function fixture() {
                     services: {
                         openai: "OpenAI",
                         openaicompatible: "Compatible",
+                        codex: "Codex",
                     },
                     data: {
                         name: "Test",
@@ -51,6 +60,7 @@ function fixture() {
                         model: "deepseek-v4-flash",
                         apiUrl: "https://relay.invalid/v1",
                         apiKey: "test",
+                        ...overrides,
                     },
                 },
             ],
@@ -95,4 +105,94 @@ test("unknown and unsupported variants cannot silently save reasoning off", () =
         context.updateReasoningMode();
         assert.equal(nodes["reasoning-off"].disabled, false);
     }
+});
+
+test("Codex editor hides HTTP fields and removes inherited HTTP settings", () => {
+    const { nodes, context } = fixture({
+        service: "codex",
+        model: "",
+        reasoningMode: "off",
+        apiProtocol: "responses",
+    });
+    assert.equal(nodes.model.value, "gpt-6-luna");
+    for (const id of [
+        "api-url-field",
+        "api-key-field",
+        "reasoning-mode-field",
+        "advanced",
+    ])
+        assert.equal(nodes[id].hidden, true);
+    for (const id of ["codex-path-field", "codex-reasoning-field"])
+        assert.equal(nodes[id].hidden, false);
+    assert.equal(nodes["get-models"].disabled, false);
+    nodes.requestOptions.value = "invalid hidden JSON";
+    nodes.extraData.value = "invalid hidden JSON";
+    nodes.cliPath.value = "C:\\Program Files\\Codex\\codex.exe";
+    const saved = context.read();
+    assert.equal(saved.apiKey, "");
+    assert.equal(saved.apiUrl, "");
+    assert.equal(saved.cliPath, nodes.cliPath.value);
+    for (const id of [
+        "apiProtocol",
+        "reasoningMode",
+        "requestOptions",
+        "extraData",
+        "reasoningEffort",
+    ])
+        assert.equal(id in saved, false);
+    nodes.model.value = "";
+    assert.throws(() => context.read(), /模型名称/);
+    assert.doesNotThrow(() => context.read(false));
+});
+
+test("Codex reasoning options follow the discovered model and retain an explicit saved setting", () => {
+    const { nodes, context } = fixture({
+        service: "codex",
+        model: "gpt-6-luna",
+        reasoningEffort: "low",
+    });
+    assert.equal(nodes.reasoningEffort.value, "low");
+    vm.runInContext(
+        'modelDetails = [{id:"gpt-6-luna",defaultReasoningEffort:"medium",supportedReasoningEfforts:["none","low","medium"]}]',
+        context,
+    );
+    context.updateReasoningMode();
+    assert.deepEqual(
+        nodes.reasoningEffort.children.map((option) => option.value),
+        ["", "none", "low", "medium"],
+    );
+    assert.match(nodes.reasoningEffort.children[0].textContent, /medium/);
+    assert.equal(context.read().reasoningEffort, "low");
+    nodes.reasoningEffort.value = "ultra";
+    assert.throws(() => context.read(), /推理档位/);
+    nodes.reasoningEffort.value = "";
+    assert.equal("reasoningEffort" in context.read(), false);
+});
+
+test("a changed Codex CLI path discards discovered capabilities", () => {
+    const { nodes, context } = fixture({
+        service: "codex",
+        model: "gpt-6-luna",
+    });
+    vm.runInContext(
+        'modelDetails = [{id:"gpt-6-luna",supportedReasoningEfforts:["low","medium"]}]',
+        context,
+    );
+    context.updateReasoningMode();
+    assert.equal(nodes.reasoningEffort.children.length, 3);
+    for (const callback of nodes.cliPath.listeners.input) callback();
+    assert.equal(nodes.reasoningEffort.children.length, 1);
+});
+
+test("HTTP service omits Codex settings and retains HTTP fields", () => {
+    const { nodes, context } = fixture({
+        cliPath: "/opt/codex",
+        reasoningEffort: "low",
+    });
+    assert.equal(nodes["api-url-field"].hidden, false);
+    assert.equal(nodes["codex-path-field"].hidden, true);
+    const saved = context.read();
+    assert.equal(saved.apiKey, "test");
+    assert.equal("cliPath" in saved, false);
+    assert.equal("reasoningEffort" in saved, false);
 });

@@ -245,7 +245,7 @@ class TaskMetricsCollector:
             "stop", "length", "content_filter", "tool_calls", "function_call", "completed",
             "incomplete", "failed", "cancelled", "queued", "in_progress", "max_output_tokens",
         } else "other" if finish_reason is not None else None)
-        protocol = protocol if protocol in {"chat_completions", "responses"} else None
+        protocol = protocol if protocol in {"chat_completions", "responses", "codex_app_server"} else None
         visible_chars, batch_size = _number(visible_chars), _number(batch_size)
         latency_ms = max(float(latency_ms), 0.0) if math.isfinite(float(latency_ms)) else 0.0
         with self._lock:

@@ -18,7 +18,7 @@
                 <label for="service">接口类型</label
                 ><select id="service" />
             </div>
-            <div class="field">
+            <div class="field" id="api-url-field">
                 <label for="apiUrl">API 地址</label
                 ><input
                     id="apiUrl"
@@ -31,7 +31,7 @@
                     地址；请保留站点提供的路径。
                 </p>
             </div>
-            <div class="field">
+            <div class="field" id="api-key-field">
                 <label for="apiKey">API Key</label>
                 <div class="inline">
                     <input
@@ -68,13 +68,35 @@
                     可以直接输入模型名称，无需先获取列表。
                 </p>
             </div>
-            <div class="field">
+            <div class="field" id="reasoning-mode-field">
                 <label for="reasoningMode">推理模式</label>
                 <select id="reasoningMode">
                     <option value="default">保持现有设置</option>
                     <option value="off" id="reasoning-off">关闭推理</option>
                 </select>
                 <p class="hint" id="reasoning-hint"></p>
+            </div>
+            <div class="field" id="codex-path-field" hidden="hidden">
+                <label for="cliPath">Codex CLI 路径（可选）</label>
+                <input
+                    id="cliPath"
+                    placeholder="留空自动查找 codex"
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+                <p class="hint">
+                    在本地服务所在电脑安装 Codex CLI，并运行 codex login
+                    登录。复用该系统用户的登录，使用 Standard 速度。
+                </p>
+            </div>
+            <div class="field" id="codex-reasoning-field" hidden="hidden">
+                <label for="reasoningEffort">推理档位</label>
+                <select id="reasoningEffort">
+                    <option value="">模型默认</option>
+                </select>
+                <p class="hint" id="codex-reasoning-hint">
+                    获取模型列表后可选择该模型支持的推理档位。
+                </p>
             </div>
             <details id="advanced">
                 <summary>高级设置</summary>

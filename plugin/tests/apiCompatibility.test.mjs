@@ -74,3 +74,20 @@ test("reasoning off requires an explicit server capability", () => {
         { api: { ...api, reasoningMode: "default" } },
     );
 });
+
+test("Codex requires its own capability and does not use HTTP protocol fallback", () => {
+    const api = {
+        service: "codex",
+        apiUrl: "",
+        apiProtocol: "auto",
+        model: "gpt-6-luna",
+        reasoningEffort: "low",
+    };
+    assert.throws(
+        () => prepareApiForServer(api, ["responses"], true),
+        /Codex.*升级/,
+    );
+    assert.deepEqual(prepareApiForServer(api, undefined, undefined, true), {
+        api,
+    });
+});

@@ -159,6 +159,10 @@ const DEFAULT_SERVICES = {
     siliconflowfree: {
         name: "SiliconFlow Free",
     },
+    codex: {
+        name: "Codex",
+        models: ["gpt-6-luna"],
+    },
     claudecode: {
         name: "Claude Code",
         models: ["sonnet"],
@@ -177,6 +181,8 @@ const fields = [
     "reasoningMode",
     "requestOptions",
     "extraData",
+    "cliPath",
+    "reasoningEffort",
 ];
 let tested = "";
 let busy = false;
@@ -200,7 +206,33 @@ function supportsReasoningOff(model, service) {
             ))
     );
 }
+let modelDetails = [];
+function updateCodexReasoning() {
+    const selected = $("reasoningEffort").value;
+    const detail = modelDetails.find(
+        (model) => model.id === $("model").value.trim(),
+    );
+    const efforts =
+        detail?.supportedReasoningEfforts || (selected ? [selected] : []);
+    $("reasoningEffort").replaceChildren();
+    for (const effort of ["", ...efforts]) {
+        const option = document.createElementNS(
+            "http://www.w3.org/1999/xhtml",
+            "option",
+        );
+        option.value = effort;
+        option.textContent =
+            effort ||
+            `模型默认${detail?.defaultReasoningEffort ? `（${detail.defaultReasoningEffort}）` : ""}`;
+        $("reasoningEffort").append(option);
+    }
+    $("reasoningEffort").value = efforts.includes(selected) ? selected : "";
+    $("codex-reasoning-hint").textContent = detail
+        ? "仅列出该模型支持的档位；模型是否可用以连接测试为准。"
+        : "获取模型列表后可选择该模型支持的推理档位。";
+}
 function updateReasoningMode() {
+    if ($("service").value === "codex") updateCodexReasoning();
     const supported = supportsReasoningOff(
         $("model").value.trim(),
         $("service").value,
@@ -212,10 +244,48 @@ function updateReasoningMode() {
 }
 function read(requireModel = true) {
     const value = { ...args.data };
-    for (const id of fields)
+    const codex = $("service").value === "codex";
+    for (const id of fields) {
+        if (
+            codex &&
+            [
+                "apiUrl",
+                "apiKey",
+                "apiProtocol",
+                "reasoningMode",
+                "requestOptions",
+                "extraData",
+            ].includes(id)
+        )
+            continue;
         value[id] = ["requestOptions", "extraData"].includes(id)
             ? jsonField(id)
             : $(id).value.trim();
+    }
+    if (codex) {
+        value.apiUrl = "";
+        value.apiKey = "";
+        for (const id of [
+            "apiProtocol",
+            "reasoningMode",
+            "requestOptions",
+            "extraData",
+        ])
+            delete value[id];
+        if (requireModel && !value.model) throw new Error("请填写模型名称。");
+        const detail = modelDetails.find((model) => model.id === value.model);
+        if (
+            value.reasoningEffort &&
+            detail &&
+            !detail.supportedReasoningEfforts.includes(value.reasoningEffort)
+        )
+            throw new Error("该模型不支持所选推理档位，请重新选择。");
+        if (!value.cliPath) delete value.cliPath;
+        if (!value.reasoningEffort) delete value.reasoningEffort;
+    } else {
+        delete value.cliPath;
+        delete value.reasoningEffort;
+    }
     if (
         value.reasoningMode === "off" &&
         !supportsReasoningOff(value.model, value.service)
@@ -281,6 +351,11 @@ function setModels(models) {
 }
 function chooseModel() {
     if ($("models").selectedIndex < 0) return;
+    if (
+        $("service").value === "codex" &&
+        $("model").value !== $("models").value
+    )
+        $("reasoningEffort").value = "";
     $("model").value = $("models").value;
     updateReasoningMode();
     tested = "";
@@ -321,10 +396,30 @@ document.addEventListener("focusin", (event) => {
     if (!["model", "models"].includes(event.target.id)) hideModels();
 });
 function updateService() {
+    const codex = $("service").value === "codex";
+    for (const id of [
+        "api-url-field",
+        "api-key-field",
+        "reasoning-mode-field",
+        "advanced",
+    ])
+        $(id).hidden = codex;
+    for (const id of ["codex-path-field", "codex-reasoning-field"])
+        $(id).hidden = !codex;
+    $("test").textContent = codex ? "测试连接" : "测试 API";
+    $("name").placeholder = codex
+        ? "例如：Codex 全文翻译"
+        : "留空时使用 API 地址的主机名";
+    $("models-hint").textContent = codex
+        ? "使用当前登录账号的模型目录；连接测试会确认模型是否可用。"
+        : "可以直接输入模型名称，无需先获取列表。";
+    modelDetails = [];
+    if (codex && !$("model").value.trim()) $("model").value = "gpt-6-luna";
     const preset = DEFAULT_SERVICES[$("service").value];
     setModels(preset?.models || []);
     $("get-models").disabled =
-        busy || !["openai", "openaicompatible"].includes($("service").value);
+        busy ||
+        !["openai", "openaicompatible", "codex"].includes($("service").value);
 }
 async function perform(kind) {
     if (busy) return;
@@ -341,13 +436,18 @@ async function perform(kind) {
             tested = before;
             message(result);
         } else {
-            const models = await args.listModels(value);
+            const catalog = await args.listModels(value);
             if (window.closed || fingerprint() !== before) return;
+            const models = Array.isArray(catalog) ? catalog : catalog.models;
+            modelDetails = Array.isArray(catalog)
+                ? []
+                : catalog.modelDetails || [];
             setModels(models);
+            updateReasoningMode();
             message(
                 models.length
                     ? `已获取 ${models.length} 个模型，请在模型框输入关键词搜索。`
-                    : "站点返回了空列表，请手动填写模型名称。",
+                    : "服务返回了空列表，请手动填写模型名称。",
             );
             $("model").focus();
             showModels();
@@ -365,7 +465,8 @@ async function perform(kind) {
 }
 function updateModelButton() {
     $("get-models").disabled =
-        busy || !["openai", "openaicompatible"].includes($("service").value);
+        busy ||
+        !["openai", "openaicompatible", "codex"].includes($("service").value);
 }
 function save(use) {
     try {
@@ -395,6 +496,15 @@ if (args.data.service && !args.services[args.data.service]) {
 }
 for (const id of fields) {
     const value = args.data[id];
+    if (id === "reasoningEffort" && value) {
+        const option = document.createElementNS(
+            "http://www.w3.org/1999/xhtml",
+            "option",
+        );
+        option.value = value;
+        option.textContent = value;
+        $(id).append(option);
+    }
     $(id).value = ["extraData", "requestOptions"].includes(id)
         ? JSON.stringify(value || {}, null, 2)
         : value ||
@@ -405,11 +515,15 @@ for (const id of fields) {
                 : "");
     $(id).addEventListener("input", () => {
         tested = "";
+        if (id === "model" && $("service").value === "codex")
+            $("reasoningEffort").value = "";
         updateReasoningMode();
         message("");
     });
     $(id).addEventListener("change", () => {
         tested = "";
+        if (id === "model" && $("service").value === "codex")
+            $("reasoningEffort").value = "";
         updateReasoningMode();
         message("");
     });
@@ -420,10 +534,16 @@ if (args.isEdit) {
     $("save-only").hidden = true;
 }
 $("service").addEventListener("change", () => {
-    if (!$("apiUrl").value && $("service").value !== "openai")
+    if (!$("apiUrl").value && !["openai", "codex"].includes($("service").value))
         $("apiUrl").value =
             DEFAULT_SERVICES[$("service").value]?.urls?.[0] || "";
     updateService();
+    updateReasoningMode();
+});
+$("cliPath").addEventListener("input", () => {
+    modelDetails = [];
+    setModels([]);
+    updateCodexReasoning();
 });
 for (const id of ["apiUrl", "apiKey"])
     $(id).addEventListener("input", () => setModels([]));

@@ -56,6 +56,7 @@ export interface ServerHealthResponse {
         boundedCancellation?: boolean;
         detailedTaskProgress?: boolean;
         reasoningMode?: boolean;
+        codexCli?: boolean;
         glossaryEntries?: boolean;
         glossaryPacks?: boolean;
         semanticReview?: boolean;

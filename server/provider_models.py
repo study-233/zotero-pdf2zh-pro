@@ -6,6 +6,7 @@ may contain credentials. Discovery does not perform a translation or persist key
 from __future__ import annotations
 
 import httpx
+from codex_client import CodexError, get_codex_client
 
 from pdf2zh_next.translator.openai_protocol import normalize_endpoint
 
@@ -14,6 +15,16 @@ class ModelDiscoveryError(ValueError):
     def __init__(self, message: str, status: int = 400):
         super().__init__(message)
         self.status = status
+
+
+def list_codex_models(data: dict) -> list[dict]:
+    path = data.get("cliPath")
+    if path is not None and not isinstance(path, str):
+        raise ModelDiscoveryError("Codex CLI 路径必须为文本。")
+    try:
+        return get_codex_client(path).list_models()
+    except CodexError as error:
+        raise ModelDiscoveryError(str(error), error.status_code) from None
 
 
 def list_provider_models(data: dict) -> list[str]:

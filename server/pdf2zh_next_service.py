@@ -24,7 +24,7 @@ from pdf2zh_next.high_level import BabelDOCConfig
 from pdf2zh_next.high_level import babeldoc_translate, create_babeldoc_config
 from pdf2zh_next.translator import get_translator
 from observability import TaskMetricsCollector
-from pdf2zh_next.config.translate_engine_model import OpenAISettings
+from pdf2zh_next.config.translate_engine_model import CodexSettings, OpenAISettings
 from pdf2zh_next.translator.openai_protocol import (
     normalize_endpoint, parse_request_options, protocol_rejection_message,
 )
@@ -40,6 +40,11 @@ _TEXT_CHECK_PATCH_INSTALLED = False
 DEFAULT_TRANSLATION_PROVIDER_TIMEOUT_SECONDS = 120
 
 SERVICE_FIELD_MAP = {
+    "codex": {
+        "model": "codex_model",
+        "cliPath": "codex_cli_path",
+        "reasoningEffort": "codex_reasoning_effort",
+    },
     "openai": {
         "model": "openai_model",
         "apiKey": "openai_api_key",
@@ -346,7 +351,14 @@ def build_service_detail(service: str, llm_api: dict[str, Any]) -> dict[str, Any
     field_map = SERVICE_FIELD_MAP.get(service, {})
 
     for key, field_name in field_map.items():
-        value = coerce_value(llm_api.get(key))
+        value = llm_api.get(key)
+        # "none" is a real Codex reasoning effort, not an empty setting.
+        if service == "codex":
+            if value is not None and not isinstance(value, str):
+                raise ValueError("Codex 配置字段必须为文本")
+            value = value.strip() if isinstance(value, str) else value
+        else:
+            value = coerce_value(value)
         if value not in (None, ""):
             detail[field_name] = value
 
@@ -722,10 +734,12 @@ async def translate_pdf_with_callbacks(
         settings = create_runtime_settings(payload)
         ensure_translation_provider_timeout(settings)
         check_cancelled()
-        if isinstance(getattr(settings, "translate_engine_settings", None), OpenAISettings):
+        engine_settings = getattr(settings, "translate_engine_settings", None)
+        if isinstance(engine_settings, (OpenAISettings, CodexSettings)):
             metrics_collector = TaskMetricsCollector(
                 task_id=job_id, provider=str(payload["service"]),
-                model=settings.translate_engine_settings.openai_model, callback=metrics_callback,
+                model=(engine_settings.codex_model if isinstance(engine_settings, CodexSettings)
+                       else engine_settings.openai_model), callback=metrics_callback,
             )
             metrics_collector.record_stage("Queue Wait", initialization_started_at - started_at)
         try:
@@ -936,6 +950,29 @@ async def translate_pdf_with_callbacks(
 
 
 def run_live_translator_test(translator: Any, timeout_seconds: int = 20) -> dict[str, Any]:
+    if getattr(translator, "name", None) == "codex":
+        # The app-server client interrupts the turn before returning on timeout.
+        # Do not leave a background connection test consuming the account quota.
+        original_timeout = translator.timeout
+        original_check = translator.check_cancelled
+        deadline = time.monotonic() + timeout_seconds
+
+        def check_deadline():
+            original_check()
+            if time.monotonic() >= deadline:
+                raise TimeoutError(f"Codex 连接测试超过 {timeout_seconds} 秒，请重试。")
+
+        translator.timeout = min(float(original_timeout), timeout_seconds)
+        translator.check_cancelled = check_deadline
+        try:
+            translated = translator.translate("Hello", ignore_cache=True,
+                                              rate_limit_params={"metric_kind": "initialization"})
+            return {"enabled": True, "ok": True, "message": str(translated)[:200]}
+        except Exception as exc:
+            return {"enabled": True, "ok": False, "message": explain_service_error(exc)}
+        finally:
+            translator.timeout = original_timeout
+            translator.check_cancelled = original_check
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     future = executor.submit(
         translator.translate,

@@ -140,6 +140,7 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 - [常用参数：QPS、并发、OCR 与参考文献](docs/user-guide.md#translation-options)
 - [术语包下载与使用](docs/glossary-downloads.md)
+- [Codex 接入验收版：安装与验收](docs/codex-acceptance.md) · [模型与套餐比较](docs/codex-model-value-2026-10-03.md)
 
 <a id="task-management"></a>
 
@@ -181,7 +182,6 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 ## TODO
 
-- [ ] 接入 Codex
 - [ ] 接入墨墨背单词
 
 <a id="community"></a>

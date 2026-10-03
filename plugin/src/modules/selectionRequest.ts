@@ -3,6 +3,7 @@ import { recordDiagnostic } from "./diagnostics";
 type RequestScope = {
     fetch: typeof fetch;
     AbortController: typeof AbortController;
+    crypto?: Crypto;
 };
 
 /** Resolve fetch and AbortSignal from the same Zotero realm. */
@@ -30,18 +31,76 @@ export function createSelectionRequest() {
         );
     const runtime = scope;
     const controller = new runtime.AbortController();
+    let cancelActive: (() => void) | undefined;
+    const abort = () => {
+        cancelActive?.();
+        controller.abort();
+    };
     return {
-        abort: () => controller.abort(),
+        abort,
         async post(
             url: string,
             body: unknown,
             timeoutMs: number,
+            cancellation?: { cancelUrl: string },
         ): Promise<{ ok: boolean; data: unknown }> {
             if (controller.signal.aborted) throw new Error("请求已取消。");
+            let cancel: (() => void) | undefined;
+            if (cancellation) {
+                const crypto = runtime.crypto || globalThis.crypto;
+                if (!crypto?.getRandomValues)
+                    throw new Error(
+                        "无法生成安全的翻译请求标识，请升级 Zotero 后重试。",
+                    );
+                let requestId: string;
+                if (typeof crypto.randomUUID === "function")
+                    requestId = crypto.randomUUID();
+                else {
+                    const bytes = new Uint8Array(16);
+                    crypto.getRandomValues(bytes);
+                    requestId = Array.from(bytes, (byte) =>
+                        byte.toString(16).padStart(2, "0"),
+                    ).join("");
+                }
+                body = { ...(body as Record<string, unknown>), requestId };
+                let sent = false;
+                cancel = () => {
+                    if (sent) return;
+                    sent = true;
+                    // Cancellation must survive aborting the original fetch.
+                    const cancellationController =
+                        new runtime.AbortController();
+                    const cancellationTimer = setTimeout(
+                        () => cancellationController.abort(),
+                        2000,
+                    );
+                    void (async () => {
+                        try {
+                            await runtime.fetch.call(
+                                runtime,
+                                cancellation.cancelUrl,
+                                {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ requestId }),
+                                    signal: cancellationController.signal,
+                                },
+                            );
+                        } catch {
+                            // The server's own deadline remains the fallback.
+                        } finally {
+                            clearTimeout(cancellationTimer);
+                        }
+                    })();
+                };
+                cancelActive = cancel;
+            }
             let timedOut = false;
             const timer = setTimeout(() => {
                 timedOut = true;
-                controller.abort();
+                abort();
             }, timeoutMs);
             try {
                 const response = await runtime.fetch.call(runtime, url, {
@@ -54,6 +113,7 @@ export function createSelectionRequest() {
                     statusCode: response.status,
                 });
                 const data: unknown = await response.json();
+                if (controller.signal.aborted) throw new Error("请求已取消。");
                 return { ok: response.ok, data };
             } catch {
                 recordDiagnostic(
@@ -70,6 +130,7 @@ export function createSelectionRequest() {
                 );
             } finally {
                 clearTimeout(timer);
+                if (cancelActive === cancel) cancelActive = undefined;
             }
         },
     };

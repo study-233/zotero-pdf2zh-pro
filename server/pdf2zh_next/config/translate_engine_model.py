@@ -820,6 +820,25 @@ class AliyunDashScopeSettings(BaseModel):
 GUI_PASSWORD_FIELDS.append("aliyun_dashscope_api_key")
 
 
+class CodexSettings(BaseModel):
+    """Translation through an installed, signed-in Codex CLI."""
+
+    translate_engine_type: Literal["Codex"] = Field(default="Codex")
+    support_llm: Literal["yes", "no"] = Field(default="yes")
+    codex_model: str = Field(default="gpt-6-luna", description="Codex model")
+    codex_cli_path: str | None = Field(default=None, description="Optional Codex CLI path")
+    codex_reasoning_effort: str | None = Field(default=None, description="Model reasoning effort; omitted uses its default")
+    codex_timeout: float = Field(default=120, gt=0, description="Codex request timeout in seconds")
+
+    def validate_settings(self):
+        if not self.codex_model.strip():
+            raise ValueError("请选择 Codex 模型")
+        if self.codex_reasoning_effort is not None and self.codex_reasoning_effort not in {
+            "none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra",
+        }:
+            raise ValueError("Codex 推理档位无效，请重新获取模型列表")
+
+
 class ClaudeCodeSettings(BaseModel):
     """Claude Code settings"""
 
@@ -926,6 +945,7 @@ TRANSLATION_ENGINE_SETTING_TYPE: TypeAlias = (
     | QwenMtSettings
     | OpenAICompatibleSettings
     | ClaudeCodeSettings
+    | CodexSettings
     | CLISettings
 )
 
