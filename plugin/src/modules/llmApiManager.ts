@@ -16,6 +16,8 @@ export interface LLMApiData {
     requestOptions?: Record<string, unknown>;
     cliPath?: string;
     reasoningEffort?: string;
+    proxyMode?: "inherit" | "manual" | "direct";
+    proxyUrl?: string;
 }
 
 export const SERVICE_NAMES: Record<string, string> = {

@@ -183,6 +183,8 @@ const fields = [
     "extraData",
     "cliPath",
     "reasoningEffort",
+    "proxyMode",
+    "proxyUrl",
 ];
 let tested = "";
 let busy = false;
@@ -207,6 +209,49 @@ function supportsReasoningOff(model, service) {
     );
 }
 let modelDetails = [];
+function updateCodexProxy() {
+    const codex = $("service").value === "codex";
+    $("codex-proxy-url-field").hidden =
+        !codex || $("proxyMode").value !== "manual";
+    $("codex-proxy-hint").textContent =
+        {
+            inherit:
+                "使用 Python 服务启动时的代理环境，可能与当前终端不同。",
+            manual: "仅此 Codex 配置使用指定代理；代理软件需保持运行，无需开启 TUN。",
+            direct: "直接访问 Codex；系统 TUN 路由仍可能生效。",
+        }[$("proxyMode").value] || "";
+}
+
+function readCodexProxy(value) {
+    if (!["inherit", "manual", "direct"].includes(value.proxyMode))
+        throw new Error("请选择有效的 Codex 代理模式。");
+    if (value.proxyMode !== "manual") {
+        delete value.proxyUrl;
+        return;
+    }
+    const message =
+        "请填写 HTTP(S) 代理地址（如 http://127.0.0.1:7897），不要包含路径、参数或账号密码。";
+    try {
+        const url = new URL(value.proxyUrl);
+        if (
+            !/^https?:\/\//i.test(value.proxyUrl) ||
+            /[\s\\\x00-\x1f\x7f]/.test(value.proxyUrl) ||
+            !["http:", "https:"].includes(url.protocol) ||
+            !url.hostname ||
+            /^https?:\/\/[^/]*@/i.test(value.proxyUrl) ||
+            url.username ||
+            url.password ||
+            (url.pathname && url.pathname !== "/") ||
+            /[?#]/.test(value.proxyUrl) ||
+            url.port === "0" ||
+            /:\/?$/.test(value.proxyUrl.replace(/^https?:\/\//i, ""))
+        )
+            throw new Error(message);
+        value.proxyUrl = url.origin;
+    } catch {
+        throw new Error(message);
+    }
+}
 function updateCodexReasoning() {
     const selected = $("reasoningEffort").value;
     const detail = modelDetails.find(
@@ -263,6 +308,7 @@ function read(requireModel = true) {
             : $(id).value.trim();
     }
     if (codex) {
+        readCodexProxy(value);
         value.apiUrl = "";
         value.apiKey = "";
         for (const id of [
@@ -285,6 +331,8 @@ function read(requireModel = true) {
     } else {
         delete value.cliPath;
         delete value.reasoningEffort;
+        delete value.proxyMode;
+        delete value.proxyUrl;
     }
     if (
         value.reasoningMode === "off" &&
@@ -404,8 +452,13 @@ function updateService() {
         "advanced",
     ])
         $(id).hidden = codex;
-    for (const id of ["codex-path-field", "codex-reasoning-field"])
+    for (const id of [
+        "codex-path-field",
+        "codex-reasoning-field",
+        "codex-proxy-field",
+    ])
         $(id).hidden = !codex;
+    updateCodexProxy();
     $("test").textContent = codex ? "测试连接" : "测试 API";
     $("name").placeholder = codex
         ? "例如：Codex 全文翻译"
@@ -512,12 +565,15 @@ for (const id of fields) {
               ? "auto"
               : id === "reasoningMode"
                 ? "default"
-                : "");
+                : id === "proxyMode"
+                  ? "inherit"
+                  : "");
     $(id).addEventListener("input", () => {
         tested = "";
         if (id === "model" && $("service").value === "codex")
             $("reasoningEffort").value = "";
         updateReasoningMode();
+        updateCodexProxy();
         message("");
     });
     $(id).addEventListener("change", () => {
@@ -525,6 +581,7 @@ for (const id of fields) {
         if (id === "model" && $("service").value === "codex")
             $("reasoningEffort").value = "";
         updateReasoningMode();
+        updateCodexProxy();
         message("");
     });
 }
@@ -540,11 +597,13 @@ $("service").addEventListener("change", () => {
     updateService();
     updateReasoningMode();
 });
-$("cliPath").addEventListener("input", () => {
-    modelDetails = [];
-    setModels([]);
-    updateCodexReasoning();
-});
+for (const id of ["cliPath", "proxyMode", "proxyUrl"])
+    for (const event of ["input", "change"])
+        $(id).addEventListener(event, () => {
+            modelDetails = [];
+            setModels([]);
+            updateCodexReasoning();
+        });
 for (const id of ["apiUrl", "apiKey"])
     $(id).addEventListener("input", () => setModels([]));
 $("reveal").addEventListener("click", () => {

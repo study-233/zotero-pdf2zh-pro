@@ -91,3 +91,26 @@ test("Codex requires its own capability and does not use HTTP protocol fallback"
         api,
     });
 });
+
+test("explicit Codex proxy settings require proxy capability without altering the profile", () => {
+    for (const proxyMode of ["manual", "direct"]) {
+        const api = {
+            service: "codex",
+            apiUrl: "",
+            proxyMode,
+            proxyUrl: "http://localhost:7897",
+        };
+        assert.throws(
+            () => prepareApiForServer(api, undefined, undefined, true),
+            /代理.*升级/,
+        );
+        assert.deepEqual(
+            prepareApiForServer(api, undefined, undefined, true, true),
+            { api },
+        );
+    }
+    const legacy = { service: "codex", apiUrl: "", proxyMode: "inherit" };
+    assert.deepEqual(prepareApiForServer(legacy, undefined, undefined, true), {
+        api: legacy,
+    });
+});

@@ -43,6 +43,8 @@ SERVICE_FIELD_MAP = {
     "codex": {
         "model": "codex_model",
         "cliPath": "codex_cli_path",
+        "proxyMode": "codex_proxy_mode",
+        "proxyUrl": "codex_proxy_url",
         "reasoningEffort": "codex_reasoning_effort",
     },
     "openai": {

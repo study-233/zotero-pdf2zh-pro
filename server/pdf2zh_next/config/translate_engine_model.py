@@ -827,10 +827,15 @@ class CodexSettings(BaseModel):
     support_llm: Literal["yes", "no"] = Field(default="yes")
     codex_model: str = Field(default="gpt-6-luna", description="Codex model")
     codex_cli_path: str | None = Field(default=None, description="Optional Codex CLI path")
+    codex_proxy_mode: str = Field(default="inherit", description="inherit, manual or direct")
+    codex_proxy_url: str | None = Field(default=None, description="HTTP(S) proxy address for Codex only")
     codex_reasoning_effort: str | None = Field(default=None, description="Model reasoning effort; omitted uses its default")
     codex_timeout: float = Field(default=120, gt=0, description="Codex request timeout in seconds")
 
     def validate_settings(self):
+        from codex_client import normalize_codex_proxy
+        self.codex_proxy_mode, self.codex_proxy_url = normalize_codex_proxy(
+            self.codex_proxy_mode, self.codex_proxy_url)
         if not self.codex_model.strip():
             raise ValueError("请选择 Codex 模型")
         if self.codex_reasoning_effort is not None and self.codex_reasoning_effort not in {

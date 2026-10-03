@@ -188,6 +188,8 @@ test("HTTP service omits Codex settings and retains HTTP fields", () => {
     const { nodes, context } = fixture({
         cliPath: "/opt/codex",
         reasoningEffort: "low",
+        proxyMode: "manual",
+        proxyUrl: "http://localhost:7897",
     });
     assert.equal(nodes["api-url-field"].hidden, false);
     assert.equal(nodes["codex-path-field"].hidden, true);
@@ -195,4 +197,60 @@ test("HTTP service omits Codex settings and retains HTTP fields", () => {
     assert.equal(saved.apiKey, "test");
     assert.equal("cliPath" in saved, false);
     assert.equal("reasoningEffort" in saved, false);
+    assert.equal("proxyMode" in saved, false);
+    assert.equal("proxyUrl" in saved, false);
+});
+
+test("Codex proxy defaults, validation and mode changes preserve only applicable settings", () => {
+    const { nodes, context } = fixture({ service: "codex" });
+    assert.equal(nodes.proxyMode.value, "inherit");
+    assert.equal(nodes["codex-proxy-field"].hidden, false);
+    assert.equal(nodes["codex-proxy-url-field"].hidden, true);
+    nodes.proxyMode.value = "manual";
+    for (const callback of nodes.proxyMode.listeners.change) callback();
+    assert.equal(nodes["codex-proxy-url-field"].hidden, false);
+    for (const url of [
+        "",
+        "localhost:7897",
+        "socks5://localhost:7897",
+        "http://localhost:0",
+        "http://localhost:65536",
+        "http://localhost:",
+        "http://user:secret@localhost:7897",
+        "http://localhost/path",
+        "http://localhost?",
+        "http://localhost#",
+        "http://local host:7897",
+    ]) {
+        nodes.proxyUrl.value = url;
+        assert.throws(() => context.read(), /代理地址/);
+    }
+    nodes.proxyUrl.value = "http://127.0.0.1:7897/";
+    const saved = context.read();
+    assert.equal(saved.proxyMode, "manual");
+    assert.equal(saved.proxyUrl, "http://127.0.0.1:7897");
+    const reopened = fixture(saved);
+    assert.equal(reopened.nodes.proxyUrl.value, saved.proxyUrl);
+    for (const mode of ["direct", "inherit"]) {
+        nodes.proxyMode.value = mode;
+        for (const callback of nodes.proxyMode.listeners.change) callback();
+        assert.equal(nodes["codex-proxy-url-field"].hidden, true);
+        assert.equal("proxyUrl" in context.read(), false);
+    }
+});
+
+test("changing proxy during discovery rejects the stale model catalog", async () => {
+    const { nodes, context } = fixture({ service: "codex" });
+    let resolve;
+    context.window.arguments[0].listModels = () =>
+        new Promise((done) => {
+            resolve = done;
+        });
+    const request = context.perform("models");
+    nodes.proxyMode.value = "direct";
+    for (const callback of nodes.proxyMode.listeners.change) callback();
+    resolve({ models: ["stale-model"], modelDetails: [] });
+    await request;
+    assert.equal(vm.runInContext("modelIds.length", context), 0);
+    assert.equal(nodes.status.textContent, "");
 });

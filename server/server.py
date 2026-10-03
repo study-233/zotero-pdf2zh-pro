@@ -91,7 +91,7 @@ def create_app() -> Flask:
 
     @app.post("/selection-capabilities")
     def selection_capabilities():
-        return jsonify({'selectionLearning': True})
+        return jsonify({'selectionLearning': True, 'codexProxy': True})
 
     @app.post("/cancel-text")
     def cancel_text():
@@ -695,7 +695,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "codexCli": True},
+        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "codexCli": True, "codexProxy": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),

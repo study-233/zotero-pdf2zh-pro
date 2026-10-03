@@ -35,6 +35,7 @@ export async function testProfile(api: LLMApiData): Promise<string> {
             health.supportedApiProtocols,
             health.capabilities?.reasoningMode,
             health.capabilities?.codexCli,
+            health.capabilities?.codexProxy,
         );
         const { data } = await axios.post<ValidateConfigResponse>(
             `${url}/validate-config`,
@@ -81,10 +82,32 @@ export async function fetchProfileModelCatalog(
     api: LLMApiData,
 ): Promise<ProfileModelCatalog> {
     try {
+        if (
+            api.service === "codex" &&
+            api.proxyMode &&
+            api.proxyMode !== "inherit"
+        ) {
+            const { data: health } = await axios.get<ServerHealthResponse>(
+                `${serverUrl()}/health`,
+                { timeout: 5000 },
+            );
+            prepareApiForServer(
+                api,
+                health.supportedApiProtocols,
+                health.capabilities?.reasoningMode,
+                health.capabilities?.codexCli,
+                health.capabilities?.codexProxy,
+            );
+        }
         const { data } = await axios.post<ProfileModelCatalog>(
             `${serverUrl()}/list-models`,
             api.service === "codex"
-                ? { service: "codex", cliPath: api.cliPath || "" }
+                ? {
+                      service: "codex",
+                      cliPath: api.cliPath || "",
+                      proxyMode: api.proxyMode || "inherit",
+                      proxyUrl: api.proxyUrl || "",
+                  }
                 : {
                       apiUrl: api.apiUrl,
                       apiKey: api.apiKey,

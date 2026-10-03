@@ -98,6 +98,7 @@ export class ServerTaskClient {
                     health.supportedApiProtocols,
                     health.capabilities?.reasoningMode,
                     health.capabilities?.codexCli,
+                    health.capabilities?.codexProxy,
                 );
                 requestBody = { ...requestBody, llm_api: prepared.api };
                 if (prepared.warning) {

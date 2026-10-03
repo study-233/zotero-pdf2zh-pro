@@ -5,6 +5,7 @@
 
 ## 未发布（develop）
 
+- Codex 配置新增跟随服务环境、指定 HTTP(S) 代理和直接连接；代理设置覆盖模型发现、连接测试、全文与划词，并按配置隔离子进程。旧服务会提示升级后再使用指定代理。
 - 新增 Codex CLI 翻译配置，通过持久化 app-server 复用当前用户的 ChatGPT 登录，可供 PDF 全文和划词模型选择；支持模型发现、推理档位及主动连接测试。
 - Codex 默认使用 GPT-6 Luna、Standard 速度与模型默认推理档位；已有 API 配置保留，由用户主动切换。
 - 补充 [模型与套餐比较](docs/codex-model-value-2026-10-03.md) 和 [macOS／Windows 安装、验收、排错与回退指南](docs/codex-acceptance.md)。真实翻译质量和双平台使用待用户验收，本条不代表正式发布。

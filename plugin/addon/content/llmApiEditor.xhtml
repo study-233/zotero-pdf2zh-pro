@@ -98,6 +98,28 @@
                     获取模型列表后可选择该模型支持的推理档位。
                 </p>
             </div>
+            <div class="field" id="codex-proxy-field" hidden="hidden">
+                <label for="proxyMode">Codex 代理</label>
+                <select id="proxyMode">
+                    <option value="inherit">跟随服务环境</option>
+                    <option value="manual">指定代理</option>
+                    <option value="direct">直接连接</option>
+                </select>
+                <p class="hint" id="codex-proxy-hint"></p>
+            </div>
+            <div class="field" id="codex-proxy-url-field" hidden="hidden">
+                <label for="proxyUrl">代理地址</label>
+                <input
+                    id="proxyUrl"
+                    placeholder="http://127.0.0.1:7897"
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+                <p class="hint">
+                    填写本地服务所在电脑的 HTTP(S) 或 Mixed 代理地址与端口，不填
+                    API 地址或账号密码。
+                </p>
+            </div>
             <details id="advanced">
                 <summary>高级设置</summary>
                 <div class="field">

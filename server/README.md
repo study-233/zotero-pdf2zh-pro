@@ -140,7 +140,25 @@ generation. `/validate-config` checks readiness without a model call when
 result through the existing `liveTest` and `diagnostics` fields. `resolvedProtocol`
 is null for Codex.
 
-Each Python process lazily shares an owned stdio app-server, bounded to two active
+Codex profiles also accept `llm_api.proxyMode`: `inherit` (default), `manual`, or
+`direct`. In manual mode `llm_api.proxyUrl` is an HTTP(S) proxy URL with no
+credentials, path, query or fragment; for example `http://127.0.0.1:7897`.
+Use the HTTP/Mixed listener of a local proxy application, not a SOCKS-only port.
+`/list-models` accepts the same `proxyMode` and `proxyUrl` fields at the top level.
+`/health.capabilities.codexProxy` and `/selection-capabilities.codexProxy` advertise
+support, so clients can refuse unsupported explicit proxy choices on older servers.
+
+Only the app-server child environment changes: manual mode sets both cases of
+HTTP_PROXY, HTTPS_PROXY and ALL_PROXY, and replaces NO_PROXY with loopback hosts;
+direct mode removes inherited proxy addresses and sets NO_PROXY to `*` in both
+cases. Inherit mode preserves the service environment as it was at startup.
+The parent service and system settings are untouched. Clients are shared only
+within the same process, CLI path and proxy configuration; changing proxy starts
+an independent connection without interrupting other configurations' requests.
+Proxy changes do not invalidate translation caches. Invalid settings produce
+`codex_invalid_proxy` with a fixed message that does not echo the supplied URL.
+
+Each client lazily shares an owned stdio app-server, bounded to two active
 generations. Requests use isolated temporary conversations. Only completed final
 answers enter output validation and caching. Cancellation interrupts the turn;
 an unresponsive owned process is recycled. The adapter never copies login tokens

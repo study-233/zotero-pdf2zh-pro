@@ -135,12 +135,32 @@ export async function translateSelection(
         else selectionProvider = "bing";
     if (!options.mode && selectionProvider === "profile" && !settings.apiConfig)
         selectionProvider = "bing";
-    if (options.mode || options.refresh || options.allowGenerate === false) {
+    const needsCodexProxy =
+        selectionProvider === "profile" &&
+        settings.service === "codex" &&
+        options.allowGenerate !== false &&
+        !!settings.apiConfig?.proxyMode &&
+        settings.apiConfig.proxyMode !== "inherit";
+    if (
+        options.mode ||
+        options.refresh ||
+        options.allowGenerate === false ||
+        needsCodexProxy
+    ) {
         const capability = await request.post(
             `${settings.serverUrl.replace(/\/$/, "")}/selection-capabilities`,
             {},
             10000,
         );
+        if (
+            needsCodexProxy &&
+            (!capability.ok ||
+                (capability.data as { codexProxy?: boolean })?.codexProxy !==
+                    true)
+        )
+            throw new Error(
+                "当前 Python 服务不支持 Codex 代理设置，请先升级服务端。",
+            );
         if (
             !capability.ok ||
             !(capability.data as { selectionLearning?: boolean })

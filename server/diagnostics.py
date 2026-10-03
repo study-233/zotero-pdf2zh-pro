@@ -31,7 +31,7 @@ STRINGS = {
     'kind': {'initialization','translation','term_extraction','review','repair'},
     'protocol': {'chat_completions','responses','auto','codex_app_server'},
     'providerCode': {'model_not_found','invalid_api_key','insufficient_quota','rate_limit_exceeded','permission_denied',
-                     'codex_not_installed','codex_incompatible','codex_not_logged_in','codex_model_unavailable',
+                     'codex_invalid_proxy','codex_not_installed','codex_incompatible','codex_not_logged_in','codex_model_unavailable',
                      'codex_invalid_reasoning','codex_isolation_failed','codex_timeout','codex_process_exited',
                      'codex_protocol_error','codex_quota_exhausted','codex_request_failed'},
     'availability': {'complete','partial','unavailable'},

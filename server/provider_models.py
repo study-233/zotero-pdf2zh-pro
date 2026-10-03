@@ -22,7 +22,8 @@ def list_codex_models(data: dict) -> list[dict]:
     if path is not None and not isinstance(path, str):
         raise ModelDiscoveryError("Codex CLI 路径必须为文本。")
     try:
-        return get_codex_client(path).list_models()
+        return get_codex_client(path, proxy_mode=data.get("proxyMode"),
+                                proxy_url=data.get("proxyUrl")).list_models()
     except CodexError as error:
         raise ModelDiscoveryError(str(error), error.status_code) from None
 

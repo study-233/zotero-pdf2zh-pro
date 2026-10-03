@@ -310,7 +310,7 @@ test("reasoning mode survives profile migration and snapshots", () => {
     );
 });
 
-test("Codex draft discovery forwards only its local path and retains model capabilities", async () => {
+test("Codex draft discovery forwards its path and proxy and retains model capabilities", async () => {
     prefs.set("new_serverip", "http://localhost:8890");
     const catalog = {
         models: ["gpt-6-luna"],
@@ -330,16 +330,43 @@ test("Codex draft discovery forwards only its local path and retains model capab
         ...api("codex", "codex"),
         cliPath: "C:\\Program Files\\Codex\\codex.exe",
         reasoningEffort: "low",
+        proxyMode: "manual",
+        proxyUrl: "http://127.0.0.1:7897",
     };
+    http.get = async () => ({
+        data: { capabilities: { codexCli: true, codexProxy: true } },
+    });
     assert.deepEqual(await client.fetchProfileModelCatalog(draft), catalog);
     assert.equal(requests.at(-1).options.timeout, 35000);
     assert.deepEqual(requests.at(-1).body, {
         service: "codex",
         cliPath: draft.cliPath,
+        proxyMode: "manual",
+        proxyUrl: draft.proxyUrl,
     });
     const saved = model.selectedProfile([draft], draft.key);
     assert.equal(saved.cliPath, draft.cliPath);
     assert.equal(saved.reasoningEffort, "low");
+    assert.equal(saved.proxyMode, "manual");
+    assert.equal(saved.proxyUrl, draft.proxyUrl);
+});
+
+test("Codex proxy discovery and live tests reject old servers before submitting", async () => {
+    const draft = { ...api("codex", "codex"), proxyMode: "direct" };
+    http.get = async () => ({ data: { capabilities: { codexCli: true } } });
+    const before = requests.length;
+    await assert.rejects(client.fetchProfileModelCatalog(draft), /代理.*升级/);
+    await assert.rejects(client.testProfile(draft), /代理.*升级/);
+    assert.equal(requests.length, before);
+    http.get = async () => ({
+        data: { capabilities: { codexCli: true, codexProxy: true } },
+    });
+    http.post = async (url, body, options) => {
+        requests.push({ url, body, options });
+        return { data: { liveTest: { ok: true } } };
+    };
+    await client.testProfile(draft);
+    assert.equal(requests.at(-1).body.llm_api.proxyMode, "direct");
 });
 
 test("Codex connection test checks server support and sends one explicit live test", async () => {

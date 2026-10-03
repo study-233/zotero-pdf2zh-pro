@@ -81,6 +81,14 @@ function fixture() {
                                                 cliPath: state.cliPath,
                                                 reasoningEffort:
                                                     state.reasoningEffort,
+                                                ...(state.proxyMode
+                                                    ? {
+                                                          proxyMode:
+                                                              state.proxyMode,
+                                                          proxyUrl:
+                                                              state.proxyUrl,
+                                                      }
+                                                    : {}),
                                             }
                                           : {}),
                                   }
@@ -1116,4 +1124,34 @@ test("only generating Codex selection opts into server cancellation", async () =
     f.state.provider = "bing";
     await f.translateSelection(request, "paper", "sentence", 1, "context");
     assert.equal(calls.at(-1).cancellation, undefined);
+});
+
+test("Codex selection checks proxy capability and forwards the saved proxy", async () => {
+    const f = fixture();
+    f.state.provider = "profile";
+    f.state.service = "codex";
+    f.state.proxyMode = "manual";
+    f.state.proxyUrl = "http://127.0.0.1:7897";
+    let supported = false;
+    const calls = [];
+    const request = {
+        post: async (url, body) => {
+            calls.push({ url, body });
+            return {
+                ok: true,
+                data: url.endsWith("/selection-capabilities")
+                    ? { selectionLearning: true, codexProxy: supported }
+                    : { translation: "译文" },
+            };
+        },
+    };
+    await assert.rejects(
+        f.translateSelection(request, "paper", "sentence", 1, "context"),
+        /代理.*升级/,
+    );
+    assert.equal(calls.length, 1);
+    supported = true;
+    await f.translateSelection(request, "paper", "sentence", 1, "context");
+    assert.equal(calls.at(-1).body.llm_api.proxyMode, "manual");
+    assert.equal(calls.at(-1).body.llm_api.proxyUrl, f.state.proxyUrl);
 });

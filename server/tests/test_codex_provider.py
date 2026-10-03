@@ -75,6 +75,28 @@ class CodexProviderTests(unittest.TestCase):
         self.client.translate.assert_not_called()
         self.assertEqual(translator.cache.params["reasoning_effort"], "medium")
 
+    def test_proxy_settings_reach_all_provider_entry_points_without_affecting_cache_identity(self):
+        api = {"model": "gpt-6-luna", "proxyMode": "manual", "proxyUrl": "http://127.0.0.1:7897/"}
+        proxied = self.translator(api)
+        self.factory.assert_called_with(None, proxy_mode="manual", proxy_url="http://127.0.0.1:7897")
+        inherited = self.translator()
+        self.assertEqual(proxied.cache.params, inherited.cache.params)
+        validate_service_config({**self.payload, "llm_api": api, "live_test": False}, "proxy-test")
+        self.factory.assert_called_with(None, proxy_mode="manual", proxy_url="http://127.0.0.1:7897")
+        with tempfile.TemporaryDirectory() as directory:
+            service = TextTranslationService(timeout=1)
+            self.addCleanup(service.close)
+            data = {"text": "sample", "service": "codex", "llm_api": api}
+            service.translate(data, TranslationMemory(Path(directory) / "memory.sqlite3"))
+            self.factory.assert_called_with(None, proxy_mode="manual", proxy_url="http://127.0.0.1:7897")
+            self.assertEqual(service._key(data, ""), service._key({**data, "llm_api": {"model": "gpt-6-luna"}}, ""))
+        with patch("provider_models.get_codex_client", return_value=self.client) as factory:
+            self.client.list_models.return_value = []
+            list_codex_models({"proxyMode": "direct", "proxyUrl": "ignored"})
+            factory.assert_called_with(None, proxy_mode="direct", proxy_url="ignored")
+        with self.assertRaises(CodexError):
+            self.translator({**api, "proxyUrl": "http://user:password@localhost:7897"})
+
     def test_validation_makes_only_one_explicit_live_request(self):
         for enabled in (False, True):
             self.client.reset_mock()

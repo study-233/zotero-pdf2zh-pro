@@ -14,6 +14,78 @@ import codex_client
 from codex_client import CodexClient, CodexError, _Transport, resolve_codex_path
 
 
+class CodexProxyTests(unittest.TestCase):
+    def test_manual_proxy_validation_and_safe_errors(self):
+        self.assertEqual(codex_client.normalize_codex_proxy("manual", " http://127.0.0.1:7897/ "),
+                         ("manual", "http://127.0.0.1:7897"))
+        self.assertEqual(codex_client.normalize_codex_proxy("manual", "https://[::1]:8080"),
+                         ("manual", "https://[::1]:8080"))
+        for value in (None, {}, "", "127.0.0.1:7897", "socks5://localhost:1080", "http://localhost:0",
+                      "http://localhost:65536", "http://localhost:", "http://localhost/path",
+                      "http://user:PRIVATE_PASSWORD@localhost:7897", "http://localhost?secret=PRIVATE_PASSWORD",
+                      "http://localhost#", "http://local host:7897", "http://localhost\n:7897"):
+            with self.subTest(value=value), self.assertRaises(CodexError) as caught:
+                codex_client.normalize_codex_proxy("manual", value)
+            self.assertEqual(caught.exception.code, "codex_invalid_proxy")
+            self.assertNotIn("PRIVATE_PASSWORD", str(caught.exception))
+        for mode in ("unknown", [], False):
+            with self.assertRaises(CodexError):
+                codex_client.normalize_codex_proxy(mode, None)
+
+    def test_modes_override_only_child_proxy_environment(self):
+        parent = {"HTTP_PROXY": "http://old:1234", "https_proxy": "http://different:1234",
+                  "All_Proxy": "socks5://old:1080", "NO_PROXY": "*", "no_proxy": "chatgpt.com",
+                  "PATH": "/path with spaces", "CODEX_HOME": "/existing/login"}
+        before = dict(parent)
+        inherited = codex_client.codex_proxy_environment(parent, "inherit", "ignored")
+        self.assertEqual(inherited, parent)
+        self.assertIsNot(inherited, parent)
+        manual = codex_client.codex_proxy_environment(parent, "manual", "http://127.0.0.1:7897")
+        for key in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"):
+            self.assertEqual(manual[key], "http://127.0.0.1:7897")
+        self.assertNotIn("All_Proxy", manual)
+        self.assertEqual(manual["NO_PROXY"], "localhost,127.0.0.1,::1")
+        self.assertEqual(manual["no_proxy"], manual["NO_PROXY"])
+        direct = codex_client.codex_proxy_environment(parent, "direct", "ignored")
+        self.assertEqual({k.lower() for k in direct if k.lower().endswith("_proxy")}, {"no_proxy"})
+        self.assertEqual(direct["NO_PROXY"], "*")
+        for env in (manual, direct):
+            self.assertEqual(env["CODEX_HOME"], parent["CODEX_HOME"])
+            self.assertEqual(env["PATH"], parent["PATH"])
+        self.assertEqual(parent, before)
+
+    def test_launch_passes_proxy_without_global_mutation_or_api_credentials(self):
+        parent = {"HTTP_PROXY": "http://old:1234", "OPENAI_API_KEY": "PRIVATE_KEY", "CODEX_HOME": "/login"}
+        with patch("codex_client.resolve_codex_path", return_value="/fake/codex"), \
+                patch.dict(os.environ, parent, clear=True), patch("codex_client._Transport") as factory:
+            client = CodexClient(proxy_mode="manual", proxy_url="http://127.0.0.1:7897")
+            self.addCleanup(client.close)
+            client._directory = tempfile.TemporaryDirectory()
+            client._launch({})
+            child = factory.call_args.args[2]
+            self.assertEqual(child["HTTPS_PROXY"], "http://127.0.0.1:7897")
+            self.assertNotIn("OPENAI_API_KEY", child)
+            self.assertEqual(child["CODEX_HOME"], "/login")
+            self.assertEqual(dict(os.environ), parent)
+
+    def test_client_reuse_is_scoped_to_proxy_and_does_not_cancel_other_configs(self):
+        with patch.dict(codex_client._clients, {}, clear=True), \
+                patch("codex_client.resolve_codex_path", return_value="/fake/codex"), \
+                patch("codex_client.CodexClient", side_effect=lambda *a, **kw: Mock()) as factory:
+            first = codex_client.get_codex_client(proxy_mode="manual", proxy_url="http://localhost:7897")
+            self.assertIs(first, codex_client.get_codex_client(proxy_mode="manual", proxy_url="http://localhost:7897/"))
+            other = codex_client.get_codex_client(proxy_mode="manual", proxy_url="http://localhost:7898")
+            inherited = codex_client.get_codex_client()
+            direct = codex_client.get_codex_client(proxy_mode="direct", proxy_url="discarded")
+            self.assertEqual(len({id(c) for c in (first, other, inherited, direct)}), 4)
+            self.assertEqual(factory.call_count, 4)
+            first.close.assert_not_called()
+            factory.assert_called_with("/fake/codex", proxy_mode="direct", proxy_url=None)
+            codex_client.close_codex_clients()
+            for client in (first, other, inherited, direct):
+                client.close.assert_called_once()
+
+
 def event(method, thread_id, turn_id, **params):
     return {"method": method, "params": {"threadId": thread_id, "turnId": turn_id, **params}}
 
