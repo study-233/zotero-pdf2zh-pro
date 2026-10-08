@@ -13,7 +13,7 @@ const markup = fs.readFileSync(
     "utf8",
 );
 
-function fixture(overrides = {}) {
+function fixture(overrides = {}, isEdit = false) {
     const node = () => ({
         value: "",
         textContent: "",
@@ -49,9 +49,19 @@ function fixture(overrides = {}) {
         window: {
             arguments: [
                 {
+                    isEdit,
                     services: {
                         openai: "OpenAI",
-                        openaicompatible: "Compatible",
+                        deepseek: "DeepSeek",
+                        gemini: "Gemini",
+                        grok: "Grok",
+                        groq: "Groq",
+                        azureopenai: "Azure OpenAI",
+                        azure: "Azure",
+                        zhipu: "Zhipu",
+                        modelscope: "ModelScope",
+                        qwenmt: "Qwen-MT",
+                        aliyundashscope: "Aliyun",
                         codex: "Codex",
                     },
                     data: {
@@ -253,4 +263,59 @@ test("changing proxy during discovery rejects the stale model catalog", async ()
     await request;
     assert.equal(vm.runInContext("modelIds.length", context), 0);
     assert.equal(nodes.status.textContent, "");
+});
+
+test("verified providers offer discovery and preserve saved model and endpoint", () => {
+    for (const service of ["openai", "deepseek", "gemini", "grok", "groq"]) {
+        const { nodes, context } = fixture(
+            { service, model: "saved-model" },
+            true,
+        );
+        assert.equal(nodes["get-models"].disabled, false);
+        assert.equal(nodes.apiUrl.value, "https://relay.invalid/v1");
+        assert.equal(context.read().model, "saved-model");
+        assert.deepEqual(Array.from(vm.runInContext("modelIds", context)), []);
+    }
+});
+
+test("new presets use official addresses and Qwen-MT only suggests translation models", () => {
+    const { nodes, context } = fixture({ apiUrl: "" });
+    for (const [service, endpoint] of [
+        ["zhipu", "https://open.bigmodel.cn/api/paas/v4"],
+        ["modelscope", "https://api-inference.modelscope.cn/v1"],
+        ["gemini", "https://generativelanguage.googleapis.com/v1beta/openai"],
+        ["groq", "https://api.groq.com/openai/v1"],
+    ]) {
+        nodes.service.value = service;
+        for (const callback of nodes.service.listeners.change) callback();
+        assert.equal(nodes.apiUrl.value, endpoint);
+    }
+    nodes.service.value = "qwenmt";
+    context.updateService();
+    assert.ok(
+        vm.runInContext(
+            "modelIds.every(id => id.startsWith('qwen-mt-'))",
+            context,
+        ),
+    );
+    nodes.model.value = "qwen-plus";
+    assert.throws(() => context.read(), /qwen-mt/);
+});
+
+test("Azure fields distinguish region from deployment name and retain legacy region", () => {
+    const { nodes, context } = fixture(
+        { service: "azure", azureRegion: undefined },
+        true,
+    );
+    assert.equal(nodes.azureRegion.value, "chinaeast2");
+    assert.equal(nodes["model-field"].hidden, true);
+    assert.equal(context.read().azureRegion, "chinaeast2");
+    nodes.azureRegion.value = "";
+    assert.equal(context.read().azureRegion, "");
+    nodes.service.value = "azureopenai";
+    context.updateService();
+    assert.equal(nodes["model-label"].textContent, "部署名称");
+    assert.equal(nodes["get-models"].disabled, true);
+    nodes.model.value = "";
+    assert.throws(() => context.read(), /部署名称/);
 });

@@ -18,31 +18,30 @@ export interface LLMApiData {
     reasoningEffort?: string;
     proxyMode?: "inherit" | "manual" | "direct";
     proxyUrl?: string;
+    azureRegion?: string;
 }
 
+// Display order: common entry points, translation services, then specialist deployments.
 export const SERVICE_NAMES: Record<string, string> = {
     openai: "OpenAI 兼容（中转站 / 官方）",
-    openaicompatible: "OpenAICompatible（旧预设）",
-    siliconflowfree: "SiliconFlow Free",
-    aliyundashscope: "AliyunDashScope",
     deepseek: "DeepSeek",
     gemini: "Gemini",
+    codex: "Codex（当前登录账号）",
+    claudecode: "Claude Code",
+    aliyundashscope: "AliyunDashScope",
     siliconflow: "SiliconFlow",
-    zhipu: "Zhipu",
-    modelscope: "ModelScope",
-    qwenmt: "QwenMt",
-    azureopenai: "AzureOpenAI",
-    azure: "Azure",
     deepl: "DeepL",
-    ollama: "Ollama",
-    xinference: "XInference",
-    anythingllm: "AnythingLLM",
-    dify: "Dify",
+    qwenmt: "QwenMt",
+    siliconflowfree: "SiliconFlow 免费翻译（上游代理）",
+    zhipu: "Zhipu",
     grok: "Grok",
     groq: "Groq",
-    tencentmechinetranslation: "Tencent",
-    claudecode: "Claude Code",
-    codex: "Codex（当前登录账号）",
+    modelscope: "ModelScope",
+    ollama: "Ollama",
+    azureopenai: "Azure OpenAI（模型部署）",
+    azure: "Azure 文本翻译",
+    xinference: "XInference",
+    anythingllm: "AnythingLLM",
 };
 export const emptyLLMApi: LLMApiData = {
     key: "",
@@ -58,6 +57,11 @@ export const emptyLLMApi: LLMApiData = {
 export function normalizeService(value: string): string {
     return value.trim().toLowerCase().replace(/[-_]/g, "");
 }
+export function isRemovedService(value: string): boolean {
+    return ["openaicompatible", "tencentmechinetranslation", "dify"].includes(
+        normalizeService(value),
+    );
+}
 export function profileName(api: LLMApiData): string {
     if (api.name?.trim()) return api.name.trim();
     try {
@@ -70,6 +74,8 @@ export function profileLabel(api: LLMApiData): string {
     return `${profileName(api)}${api.model ? ` · ${api.model}` : ""}`;
 }
 export function migrateProfiles(legacy: LLMApiData[], service: string) {
+    const hadLegacyRows = legacy.length > 0;
+    legacy = legacy.filter((api) => !isRemovedService(api.service));
     const normalized = normalizeService(service);
     const matches = legacy.filter(
         (api) => api.activate && normalizeService(api.service) === normalized,
@@ -91,7 +97,7 @@ export function migrateProfiles(legacy: LLMApiData[], service: string) {
         return api;
     });
     // The old UI also supported using an engine's defaults without an API row.
-    if (!profiles.length && SERVICE_NAMES[normalized]) {
+    if (!hadLegacyRows && !profiles.length && SERVICE_NAMES[normalized]) {
         profiles.push({
             ...emptyLLMApi,
             key: "legacy-default",

@@ -5,6 +5,10 @@
 
 ## 未发布（develop）
 
+- 翻译接口从 22 项精简至 19 项，移除重复 OpenAICompatible 旧预设、腾讯机器翻译和 Dify；配置升级到 v2 并清理这些类型的现存配置与可解析备份，其余已存地址、模型保持原值。
+- 按官方文档修正智谱、ModelScope 预置地址；清理过时模型候选，扩展在线模型发现，区分 Qwen-MT 模型、Azure OpenAI 部署名及 Azure 文本翻译区域。
+- 更新 Azure SDK 与 v1 OpenAI 调用，保留中国区文本翻译 v3；修正 AnythingLLM 字符串消息和 Claude Code 非交互结果处理。补充 [接口审计及验收记录](docs/provider-audit-2026-10-03.md)。
+
 - Codex 配置新增跟随服务环境、指定 HTTP(S) 代理和直接连接；代理设置覆盖模型发现、连接测试、全文与划词，并按配置隔离子进程。旧服务会提示升级后再使用指定代理。
 - 新增 Codex CLI 翻译配置，通过持久化 app-server 复用当前用户的 ChatGPT 登录，可供 PDF 全文和划词模型选择；支持模型发现、推理档位及主动连接测试。
 - Codex 默认使用 GPT-6 Luna、Standard 速度与模型默认推理档位；已有 API 配置保留，由用户主动切换。

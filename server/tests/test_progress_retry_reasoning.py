@@ -211,7 +211,7 @@ class ReasoningTests(unittest.TestCase):
         self.assertIsNone(engines[2]._get_review_cache(key))
 
     def test_runtime_passes_mode_and_live_probe_reports_observed_reasoning(self):
-        payload = make_settings_payload(service="openaicompatible", llm_api={
+        payload = make_settings_payload(service="openai", llm_api={
             "apiKey": "test", "apiUrl": "https://relay.invalid/v1", "model": "deepseek-v4-flash", "reasoningMode": "off"})
         self.assertEqual(create_runtime_settings(payload).translate_engine_settings.openai_reasoning_mode, "off")
         for tokens, expected in ((2, "可能未生效"), (None, "无法确认"), (0, "为 0")):

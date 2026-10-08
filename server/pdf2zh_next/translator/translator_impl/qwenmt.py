@@ -37,9 +37,9 @@ class QwenMtTranslator(BaseTranslator):
         self.prompt_token_count = AtomicInteger()
         self.completion_token_count = AtomicInteger()
 
-        if "qwen-mt" not in self.model:
+        if not self.model.startswith("qwen-mt-"):
             raise ValueError(
-                f"Model {self.model} is not a Qwen-MT model, Other Qwen models should use AliyunDashScope or OpenAICompatible."
+                f"Model {self.model} is not a Qwen-MT model, Other Qwen models should use AliyunDashScope or OpenAI."
             )
 
     def lang_mapping(self, input_lang: str) -> str:
@@ -49,6 +49,7 @@ class QwenMtTranslator(BaseTranslator):
         languague code will not be checked.
         """
         langdict = {
+            "auto": "auto",
             "zh-CN": "Chinese",
             "zh-TW": "Chinese",
             "en": "English",

@@ -23,14 +23,23 @@ class AzureOpenAITranslator(BaseTranslator):
         rate_limiter: BaseRateLimiter,
     ):
         super().__init__(settings, rate_limiter)
-        self.options = {"temperature": 0}  # 随机采样可能会打断公式标记
-        self.client = openai.AzureOpenAI(
-            azure_endpoint=settings.translate_engine_settings.azure_openai_base_url,
-            azure_deployment=settings.translate_engine_settings.azure_openai_model,
-            api_version=settings.translate_engine_settings.azure_openai_api_version,
-            api_key=settings.translate_engine_settings.azure_openai_api_key,
-        )
-        self.add_cache_impact_parameters("temperature", self.options["temperature"])
+        # Deployment names are arbitrary, so model-name heuristics cannot tell
+        # whether sampling parameters are supported. Use the service defaults.
+        self.options = {}
+        config = settings.translate_engine_settings
+        if config.azure_openai_api_version == "v1":
+            base_url = config.azure_openai_base_url.rstrip("/")
+            if not base_url.endswith("/openai/v1"):
+                base_url += "/openai/v1"
+            self.client = openai.OpenAI(base_url=base_url, api_key=config.azure_openai_api_key)
+        else:
+            # Preserve explicit legacy API versions supplied through extraData.
+            self.client = openai.AzureOpenAI(
+                azure_endpoint=config.azure_openai_base_url,
+                azure_deployment=config.azure_openai_model,
+                api_version=config.azure_openai_api_version,
+                api_key=config.azure_openai_api_key,
+            )
         self.model = settings.translate_engine_settings.azure_openai_model
         self.add_cache_impact_parameters("model", self.model)
         self.add_cache_impact_parameters("prompt", self.prompt(""))

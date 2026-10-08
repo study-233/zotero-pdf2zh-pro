@@ -71,7 +71,7 @@ class TextTests(unittest.TestCase):
             self.assertIn('使用物理设备。', generate.call_args.args[2])
 
     def test_provider_success_prompt_empty_output_and_sanitized_failure(self):
-        data = {**self.data, 'service': 'openaicompatible', 'llm_api': {'apiKey': 'test', 'apiUrl': 'https://example.invalid/v1', 'model': 'test-model'}}
+        data = {**self.data, 'service': 'openai', 'llm_api': {'apiKey': 'test', 'apiUrl': 'https://example.invalid/v1', 'model': 'test-model'}}
         translator = SimpleNamespace(resolved_protocol='chat_completions', model='test-model', llm_translate=Mock(return_value='物理设备'), client=Mock())
         with patch('text_translation.OpenAITranslator', return_value=translator):
             result = self.service.translate({**data, 'context': 'paper context'}, self.memory)

@@ -28,8 +28,23 @@ def list_codex_models(data: dict) -> list[dict]:
         raise ModelDiscoveryError(str(error), error.status_code) from None
 
 
+MODEL_ENDPOINTS = {
+    "openai": "https://api.openai.com/v1",
+    "deepseek": "https://api.deepseek.com/v1",
+    "gemini": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "grok": "https://api.x.ai/v1",
+    "groq": "https://api.groq.com/openai/v1",
+    "siliconflow": "https://api.siliconflow.cn/v1",
+}
+
+
 def list_provider_models(data: dict) -> list[str]:
+    service = data.get("service", "openai")
+    if not isinstance(service, str) or service not in MODEL_ENDPOINTS:
+        raise ModelDiscoveryError("此接口类型不支持获取模型列表，请手动填写模型。")
     url = data.get("apiUrl")
+    if not url and service != "openai":
+        url = MODEL_ENDPOINTS[service]
     key = data.get("apiKey", "")
     protocol = data.get("apiProtocol", "auto")
     if not isinstance(url, str) or not url.strip():
@@ -42,7 +57,9 @@ def list_provider_models(data: dict) -> list[str]:
         raise ModelDiscoveryError("API 地址或协议无效，请检查地址及接口协议。") from None
     headers = {"Authorization": f"Bearer {key.strip()}"} if key.strip() else {}
     try:
-        response = httpx.get(f"{base}/models", headers=headers, timeout=15, follow_redirects=False)
+        response = httpx.get(f"{base}/models", headers=headers,
+                             params={"sub_type": "chat"} if service == "siliconflow" else None,
+                             timeout=15, follow_redirects=False)
     except httpx.TimeoutException:
         raise ModelDiscoveryError("获取模型超时，仍可手动填写模型。", 504) from None
     except (httpx.HTTPError, httpx.InvalidURL, UnicodeError, ValueError):

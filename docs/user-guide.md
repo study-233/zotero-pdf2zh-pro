@@ -229,6 +229,18 @@ Windows 和 macOS 使用同一个 XPI 文件。
 获取模型失败不一定代表不能翻译：有些服务商不提供模型列表接口。此时手填模型后测试即可。
 “仅保存”不会切换当前配置；测试未保存的配置也不会改变正在使用的配置。
 
+### 接口类型与模型来源
+
+当前提供 19 种接口类型。OpenAI 兼容、DeepSeek、Gemini、Grok、Groq、SiliconFlow 支持“获取模型”，也可手填；列表表示服务返回的目录，调用权限以“测试 API”为准。SiliconFlow 免费翻译使用上游代理，与自备 Key 的 SiliconFlow 是不同入口。
+
+阿里云通用模型与 Qwen-MT 请从百炼控制台复制业务空间、地域对应的 API 地址；旧共享域名仍有效。Qwen-MT 只使用 `qwen-mt-*` 翻译模型。智谱新配置地址为 `https://open.bigmodel.cn/api/paas/v4`，ModelScope 为 `https://api-inference.modelscope.cn/v1`；模型按控制台填写。
+
+Azure OpenAI 的“部署名称”填写你创建的部署名，地址使用资源根地址或 `/openai/v1` 地址。Azure 文本翻译则填写资源端点、Key 和区域，全球资源可以留空区域；缺少区域字段的旧配置继续使用 `chinaeast2`。中国区文本翻译端点为 `https://api.translator.azure.cn`。
+
+Ollama 填写已安装模型，Xinference 填部署 UID。AnythingLLM 填完整的工作区聊天地址，例如 `http://localhost:3001/api/v1/workspace/工作区标识/chat`；模型由工作区设置。Claude Code 填服务所在电脑的 `claude` 命令路径并提前登录。
+
+升级后会删除 `OpenAICompatible` 旧预设、腾讯机器翻译和 Dify 配置，并清理可解析的旧配置备份；当前选择被删除时需重新选择。其余已保存配置的地址、模型与参数保持原值，旧地址或停用模型需手动编辑后测试。完整依据见 [接口审计与验收记录](provider-audit-2026-10-03.md)。
+
 ### 使用 Codex 登录配置（develop 验收版）
 
 在运行本地服务的同一系统用户下安装 Codex CLI，并完成 ChatGPT 登录。新增配置时选择 **Codex**，

@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 
 import requests
 from pdf2zh_next.config.model import SettingsModel
@@ -40,9 +41,9 @@ class AnythingLLMTranslator(BaseTranslator):
     def do_translate(self, text, rate_limit_params: dict = None):
         messages = self.prompt(text)
         payload = {
-            "message": messages,
+            "message": "\n\n".join(message["content"] for message in messages),
             "mode": "chat",
-            "sessionId": "translation_expert",
+            "sessionId": str(uuid.uuid4()),
         }
 
         response = requests.post(
@@ -51,5 +52,7 @@ class AnythingLLMTranslator(BaseTranslator):
         response.raise_for_status()
         data = response.json()
 
-        if "textResponse" in data:
-            return data["textResponse"].strip()
+        translated = data.get("textResponse")
+        if data.get("error") or not isinstance(translated, str) or not translated.strip():
+            raise ValueError("AnythingLLM did not return a translation; check the workspace configuration")
+        return translated.strip()

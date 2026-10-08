@@ -172,7 +172,7 @@ class TextTranslationService:
             identity['provider'] = data.get('selectionProvider', 'profile')
             if identity['provider'] != 'bing':
                 api = data.get('llm_api') or {}
-                identity.update(service=data.get('service') or 'openaicompatible',
+                identity.update(service=data.get('service') or 'openai',
                     options={k: api.get(k) for k in ('model', 'apiUrl', 'apiProtocol', 'reasoningMode', 'requestOptions', 'extraData')},
                     context=normalize_text(context))
                 if identity['service'] == 'codex':
@@ -342,7 +342,7 @@ class TextTranslationService:
             return self._generate_bing(data, text, target)
         # Short-text requests use the same profiles without PDF/task setup.
         try:
-            service = data.get('service') or 'openaicompatible'
+            service = data.get('service') or 'openai'
             if not isinstance(service, str) or service not in SERVICE_FIELD_MAP:
                 raise TextTranslationError('invalid_config')
             settings = create_runtime_settings({
@@ -429,10 +429,10 @@ class TextTranslationService:
                     raise TextTranslationError('invalid_output', 502) from None
                 translation = ' '.join(filter(None, (meaning.get('pos'), meaning['meaning']))) + '\n' + meaning['explanation']
                 return {'status': 'ok', 'translation': translation, 'contextMeaning': meaning,
-                        'provider': data.get('service') or 'openaicompatible', 'model': translator.model, 'cached': False}
+                        'provider': data.get('service') or 'openai', 'model': translator.model, 'cached': False}
             return {'status': 'ok', 'translation': answer.strip() if mode != 'explain' else '',
                     'explanation': answer.strip() if mode == 'explain' else '',
-                    'provider': data.get('service') or 'openaicompatible', 'model': translator.model, 'cached': False}
+                    'provider': data.get('service') or 'openai', 'model': translator.model, 'cached': False}
         except TextTranslationError:
             raise
         except CodexError as error:

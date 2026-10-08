@@ -40,6 +40,7 @@ _TEXT_CHECK_PATCH_INSTALLED = False
 DEFAULT_TRANSLATION_PROVIDER_TIMEOUT_SECONDS = 120
 
 SERVICE_FIELD_MAP = {
+    "siliconflowfree": {},
     "codex": {
         "model": "codex_model",
         "cliPath": "codex_cli_path",
@@ -92,16 +93,13 @@ SERVICE_FIELD_MAP = {
         "apiKey": "gemini_api_key",
     },
     "azure": {
+        "azureRegion": "azure_region",
         "apiKey": "azure_api_key",
         "apiUrl": "azure_endpoint",
     },
     "anythingllm": {
         "apiKey": "anythingllm_apikey",
         "apiUrl": "anythingllm_url",
-    },
-    "dify": {
-        "apiKey": "dify_apikey",
-        "apiUrl": "dify_url",
     },
     "grok": {
         "model": "grok_model",
@@ -115,11 +113,6 @@ SERVICE_FIELD_MAP = {
         "model": "qwenmt_model",
         "apiKey": "qwenmt_api_key",
         "apiUrl": "qwenmt_base_url",
-    },
-    "openaicompatible": {
-        "model": "openai_compatible_model",
-        "apiKey": "openai_compatible_api_key",
-        "apiUrl": "openai_compatible_base_url",
     },
     "claudecode": {
         "model": "claude_code_model",
@@ -348,7 +341,19 @@ def coerce_value(value: Any) -> Any:
     return stripped
 
 
+def require_supported_service(service: Any) -> str:
+    if not isinstance(service, str):
+        raise ValueError("请选择支持的接口类型。")
+    normalized = service.strip().lower().replace("-", "").replace("_", "")
+    if normalized in {"openaicompatible", "tencentmechinetranslation", "dify"}:
+        raise ValueError("此接口类型已移除，请重新选择并配置受支持的接口。")
+    if normalized not in SERVICE_FIELD_MAP:
+        raise ValueError("未知的接口类型，请重新选择受支持的接口。")
+    return normalized
+
+
 def build_service_detail(service: str, llm_api: dict[str, Any]) -> dict[str, Any]:
+    service = require_supported_service(service)
     detail: dict[str, Any] = {}
     field_map = SERVICE_FIELD_MAP.get(service, {})
 
@@ -372,6 +377,12 @@ def build_service_detail(service: str, llm_api: dict[str, Any]) -> dict[str, Any
             if normalized_key and normalized_value not in (None, ""):
                 detail[normalized_key] = normalized_value
 
+    # Explicitly empty means a global resource; an absent field keeps the legacy region.
+    if service == "azure" and "azureRegion" in llm_api:
+        region = llm_api["azureRegion"]
+        if not isinstance(region, str):
+            raise ValueError("Azure 区域必须为文本")
+        detail["azure_region"] = region.strip()
     return detail
 
 
@@ -379,7 +390,7 @@ def build_settings_input(payload: dict[str, Any]) -> dict[str, Any]:
     input_path = Path(payload["input_path"])
     output_dir = Path(payload["output_dir"])
     output_modes = payload["output_modes"]
-    service = payload["service"]
+    service = require_supported_service(payload["service"])
 
     translation_input: dict[str, Any] = {
         "lang_in": payload["source_lang"],

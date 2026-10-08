@@ -5,7 +5,6 @@ from pdf2zh_next.config import BingSettings
 from pdf2zh_next.config import ClaudeCodeSettings
 from pdf2zh_next.config import DeepLSettings
 from pdf2zh_next.config import DeepSeekSettings
-from pdf2zh_next.config import DifySettings
 from pdf2zh_next.config import GeminiSettings
 from pdf2zh_next.config import GoogleSettings
 from pdf2zh_next.config import GrokSettings
@@ -15,7 +14,6 @@ from pdf2zh_next.config import OllamaSettings
 from pdf2zh_next.config import OpenAISettings
 from pdf2zh_next.config import QwenMtSettings
 from pdf2zh_next.config import SiliconFlowSettings
-from pdf2zh_next.config import TencentSettings
 from pdf2zh_next.config import XinferenceSettings
 from pdf2zh_next.config import ZhipuSettings
 from pdf2zh_next.config.main import ConfigManager
@@ -51,11 +49,9 @@ __all__ = [
     "ModelScopeSettings",
     "ZhipuSettings",
     "SiliconFlowSettings",
-    "TencentSettings",
     "GeminiSettings",
     "AzureSettings",
     "AnythingLLMSettings",
-    "DifySettings",
     "GrokSettings",
     "GroqSettings",
     "QwenMtSettings",

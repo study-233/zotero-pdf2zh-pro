@@ -109,6 +109,7 @@ export async function fetchProfileModelCatalog(
                       proxyUrl: api.proxyUrl || "",
                   }
                 : {
+                      service: api.service,
                       apiUrl: api.apiUrl,
                       apiKey: api.apiKey,
                       apiProtocol: api.apiProtocol || "auto",

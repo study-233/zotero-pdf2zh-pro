@@ -31,7 +31,7 @@ globalThis.__profileTests = {
     getString: (key) => key,
 };
 const store = await asModule(
-    "const {getPref, setPref, migrateProfiles, selectedProfile} = globalThis.__profileTests;\n" +
+    "const {getPref, setPref, migrateProfiles, selectedProfile, isRemovedService} = globalThis.__profileTests;\n" +
         compile("profileStore").replace(/^import .*;$/gm, ""),
 );
 const api = (key, service = "openai", activate = false) => ({
@@ -400,4 +400,91 @@ test("invalid Codex model capabilities are rejected before the editor uses them"
         client.fetchProfileModelCatalog(api("codex", "codex")),
         /模型能力格式/,
     );
+});
+
+test("catalog has 19 providers and excludes the three retired services", () => {
+    assert.equal(Object.keys(model.SERVICE_NAMES).length, 19);
+    for (const service of [
+        "openaicompatible",
+        "tencentmechinetranslation",
+        "dify",
+    ])
+        assert.equal(model.SERVICE_NAMES[service], undefined);
+});
+
+test("v1 migration removes retired rows and backup credentials without changing retained profiles", () => {
+    for (const selected of ["retired", "keep"]) {
+        prefs.clear();
+        const keep = {
+            ...api("keep", "zhipu"),
+            name: "Existing",
+            apiUrl: "https://old.invalid/v1",
+            model: "old-model",
+            extraData: { custom: [1, 2] },
+        };
+        const rows = [
+            api("retired", "OpenAI_Compatible"),
+            keep,
+            api("t", "TencentMechineTranslation"),
+            api("d", "Dify"),
+            api("last", "gemini"),
+        ];
+        prefs.set("profileSchemaVersion", 1);
+        prefs.set("llmApis", JSON.stringify(rows));
+        prefs.set("selectedApiKey", selected);
+        prefs.set("service", "Dify");
+        prefs.set(
+            "llmApisLegacyBackup",
+            JSON.stringify({
+                llmApis: JSON.stringify(rows),
+                selectedApiKey: "d",
+                service: "Dify",
+                other: "keep-me",
+            }),
+        );
+        assert.deepEqual(store.loadProfiles(), [keep, rows[4]]);
+        assert.equal(prefs.get("profileSchemaVersion"), 2);
+        assert.equal(
+            prefs.get("selectedApiKey"),
+            selected === "keep" ? "keep" : "",
+        );
+        assert.equal(prefs.get("service"), "");
+        const backup = JSON.parse(prefs.get("llmApisLegacyBackup"));
+        assert.deepEqual(JSON.parse(backup.llmApis), [keep, rows[4]]);
+        assert.equal(backup.selectedApiKey, "");
+        assert.equal(backup.service, "");
+        assert.equal(backup.other, "keep-me");
+        const migrated = new Map(prefs);
+        store.loadProfiles();
+        assert.deepEqual(prefs, migrated);
+    }
+});
+
+test("pre-v1 retired rows never fall back to OpenAI or resurrect in the initial backup", () => {
+    prefs.clear();
+    prefs.set(
+        "llmApis",
+        JSON.stringify([api("old", "OpenAICompatible", true)]),
+    );
+    prefs.set("service", "OpenAICompatible");
+    prefs.set("selectedApiKey", "old");
+    assert.deepEqual(store.loadProfiles(), []);
+    assert.equal(prefs.get("selectedApiKey"), "");
+    assert.deepEqual(
+        JSON.parse(JSON.parse(prefs.get("llmApisLegacyBackup")).llmApis),
+        [],
+    );
+    assert.deepEqual(
+        model.migrateProfiles([api("old", "Dify")], "siliconflowfree").profiles,
+        [],
+    );
+});
+
+test("unparseable backup remains intact while valid active profiles migrate", () => {
+    prefs.clear();
+    prefs.set("profileSchemaVersion", 1);
+    prefs.set("llmApis", JSON.stringify([api("keep"), api("old", "dify")]));
+    prefs.set("llmApisLegacyBackup", "corrupt backup");
+    assert.deepEqual(store.loadProfiles(), [api("keep")]);
+    assert.equal(prefs.get("llmApisLegacyBackup"), "corrupt backup");
 });

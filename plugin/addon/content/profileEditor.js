@@ -2,173 +2,55 @@
 /* global window, document, URL */
 "use strict";
 const DEFAULT_SERVICES = {
-    openaicompatible: {
-        name: "OpenAICompatible",
-        models: [
-            // deepseek
-            "deepseek-v3-2-251201",
-            "deepseek-v3-1-terminus",
-            "deepseek-v3-1-250821", // 即将下线
-            "deepseek-v3-250324",
-            "deepseek-r1-250528",
-            // kimi
-            "kimi-k2-250905",
-            // glm
-            "glm-4-7-251222",
-            // doubao 1.6
-            "doubao-seed-1-6-251015",
-            "doubao-seed-1-6-250615",
-            "doubao-seed-1-6-flash-250615",
-            "doubao-seed-1-6-thinking-250715", // 即将下线
-            "doubao-seed-1-6-thinking-250615", // 即将下线
-            "doubao-seed-translation-250915",
-            // doubao 1.8
-            "doubao-seed-1-8-251228",
-            // doubao 2.0
-            "doubao-seed-2-0-pro-260215",
-            "doubao-seed-2-0-lite-260215",
-            "doubao-seed-2-0-mini-260215",
-            "doubao-seed-2-0-code-preview-260215",
-            // doubao 1.5
-            "doubao-1-5-lite-32k-250115",
-            "doubao-1-5-thinking-pro-250415", // 即将下线
-        ],
-        urls: ["https://ark.cn-beijing.volces.com/api/v3"],
-        modelListUrl:
-            "https://console.volcengine.com/ark/region:ark+cn-beijing/openManagement?LLM=%7B%7D&advancedActiveKey=model",
-        extraData: [],
+    openai: { urls: ["https://api.openai.com/v1"] },
+    deepseek: { urls: ["https://api.deepseek.com/v1"] },
+    gemini: {
+        urls: ["https://generativelanguage.googleapis.com/v1beta/openai"],
     },
-    openai: {
-        name: "OpenAI",
+    grok: { urls: ["https://api.x.ai/v1"] },
+    groq: { urls: ["https://api.groq.com/openai/v1"] },
+    aliyundashscope: {},
+    qwenmt: {
         models: [
-            "gpt-5",
-            "gpt-5-mini",
-            "gpt-4",
-            "gpt-4",
-            "gpt-4o",
-            "gpt-4o-mini",
-        ],
-        urls: ["https://api.openai.com/v1"],
-        modelListUrl: "https://platform.openai.com/docs/models",
-    },
-    aliyundashscope: {
-        name: "AliyunDashScope",
-        models: [
-            "qwen3.5-plus",
-            "qwen3.5-flash",
-            "qwen3.5-35b-a3b",
-            "qwen3-max",
-            "qwen-plus",
-            "qwen-flash",
             "qwen-mt-plus",
             "qwen-mt-flash",
-        ],
-        urls: ["https://dashscope.aliyuncs.com/compatible-mode/v1"],
-    },
-    siliconflow: {
-        name: "SiliconFlow",
-        models: [
-            "deepseek-ai/DeepSeek-V3.2",
-            "deepseek-ai/DeepSeek-V3.1-Terminus",
-            "deepseek-ai/DeepSeek-R1",
-            "Pro/deepseek-ai/DeepSeek-V3.2",
-            "Pro/deepseek-ai/DeepSeek-V3.1-Terminus",
-            "Pro/deepseek-ai/DeepSeek-R1",
-            "Qwen/Qwen3-8B",
-            "Qwen/Qwen2.5-72B-Instruct",
-            "moonshotai/Kimi-K2-Thinking",
-            "Pro/zai-org/GLM-4.7",
-        ],
-        urls: ["https://api.siliconflow.cn/v1"],
-        modelListUrl: "https://cloud.siliconflow.cn/me/models",
-    },
-    gemini: {
-        name: "Gemini",
-        models: [
-            "gemini-3.0-flash-preview",
-            "gemini-3.0-pro-preview",
-            "gemini-2.5-flash",
-            "gemini-2.5-pro",
+            "qwen-mt-lite",
+            "qwen-mt-turbo",
         ],
     },
-    azureopenai: {
-        name: "AzureOpenAI",
-        models: [
-            "gpt-5",
-            "gpt-5-mini",
-            "gpt-4",
-            "gpt-4",
-            "gpt-4o",
-            "gpt-4o-mini",
-        ],
-    },
-    zhipu: {
-        name: "Zhipu",
-        models: [
-            "glm-4-flash",
-            "glm-4.5",
-            "glm-4.5-x",
-            "glm-4.5-air",
-            "glm-4.5-airx",
-        ],
-        urls: ["https://api.zhipu.com/v1"],
-    },
-    deepseek: {
-        name: "DeepSeek",
-        models: ["deepseek-chat", "deepseek-coder"],
-        urls: ["https://api.deepseek.com/v1"],
-        modelListUrl: "https://platform.deepseek.com/",
-    },
-    qwenmt: {
-        name: "QwenMt",
-        models: [
-            "qwen-plus-latest",
-            "qwen-max",
-            "qwen-max-latest",
-            "qwen-plus",
-            "qwen3-235b-a22b",
-        ],
-    },
-    ollama: {
-        name: "Ollama",
-        models: ["gemma3:12B", "gemma"],
-        urls: ["http://localhost:11434"],
-        modelListUrl: "https://ollama.com/library",
-    },
-    modelscope: {
-        name: "ModelScope",
-        models: ["openai-mirror/gpt-oss-120b", "openai-mirror/gpt-oss-20b"],
-        urls: ["https://api.modelscope.com/v1"],
-    },
-    tencentmechinetranslation: {
-        name: "TencentMechineTranslation",
-        urls: ["https://tencent.com"],
-    },
-    grok: {
-        name: "Grok",
-        models: ["grok-4-0709", "grok-3", "grok-3-mini"],
-    },
-    xinference: {
-        name: "XInference",
-        models: ["gemma-2-it"],
-        urls: ["http://127.0.0.1:9997"],
-    },
-    deepl: {
-        name: "DeepL",
-    },
-    siliconflowfree: {
-        name: "SiliconFlow Free",
-    },
-    codex: {
-        name: "Codex",
-        models: ["gpt-6-luna"],
-    },
-    claudecode: {
-        name: "Claude Code",
-        models: ["sonnet"],
-        urls: ["claude"],
-    },
+    siliconflow: { urls: ["https://api.siliconflow.cn/v1"] },
+    zhipu: { urls: ["https://open.bigmodel.cn/api/paas/v4"] },
+    modelscope: { urls: ["https://api-inference.modelscope.cn/v1"] },
+    azure: { urls: ["https://api.cognitive.microsofttranslator.com"] },
+    azureopenai: {},
+    ollama: { urls: ["http://localhost:11434"] },
+    xinference: { urls: ["http://127.0.0.1:9997"] },
+    anythingllm: {},
+    deepl: {},
+    siliconflowfree: {},
+    codex: {},
+    claudecode: { models: ["sonnet", "opus", "haiku"], urls: ["claude"] },
 };
+const MODEL_DISCOVERY_SERVICES = [
+    "openai",
+    "deepseek",
+    "gemini",
+    "grok",
+    "groq",
+    "siliconflow",
+    "codex",
+];
+const OPENAI_SERVICES = [
+    "openai",
+    "deepseek",
+    "gemini",
+    "grok",
+    "groq",
+    "aliyundashscope",
+    "zhipu",
+    "modelscope",
+];
+const NO_MODEL_SERVICES = ["azure", "deepl", "siliconflowfree", "anythingllm"];
 const args = window.arguments[0];
 const $ = (id) => document.getElementById(id);
 const fields = [
@@ -185,6 +67,7 @@ const fields = [
     "reasoningEffort",
     "proxyMode",
     "proxyUrl",
+    "azureRegion",
 ];
 let tested = "";
 let busy = false;
@@ -201,7 +84,7 @@ function jsonField(id) {
 }
 function supportsReasoningOff(model, service) {
     return (
-        ["openai", "openaicompatible"].includes(service) &&
+        ["openai", "deepseek"].includes(service) &&
         (/^gpt-5\.(1|2|4|5)(-\d{4}-\d{2}-\d{2})?$/.test(model.toLowerCase()) ||
             ["deepseek-v4-flash", "deepseek-v4-pro", "deepseek-flash"].includes(
                 model.toLowerCase(),
@@ -215,8 +98,7 @@ function updateCodexProxy() {
         !codex || $("proxyMode").value !== "manual";
     $("codex-proxy-hint").textContent =
         {
-            inherit:
-                "使用 Python 服务启动时的代理环境，可能与当前终端不同。",
+            inherit: "使用 Python 服务启动时的代理环境，可能与当前终端不同。",
             manual: "仅此 Codex 配置使用指定代理；代理软件需保持运行，无需开启 TUN。",
             direct: "直接访问 Codex；系统 TUN 路由仍可能生效。",
         }[$("proxyMode").value] || "";
@@ -291,6 +173,7 @@ function read(requireModel = true) {
     const value = { ...args.data };
     const codex = $("service").value === "codex";
     for (const id of fields) {
+        if (id === "azureRegion" && $("service").value !== "azure") continue;
         if (
             codex &&
             [
@@ -341,7 +224,33 @@ function read(requireModel = true) {
         throw new Error("此模型不支持快捷关闭推理，请选择保持现有设置。");
     if (!args.services[value.service])
         throw new Error("请选择支持的接口类型。");
-    if (value.service === "openai") {
+    if (
+        requireModel &&
+        !NO_MODEL_SERVICES.includes(value.service) &&
+        !value.model
+    )
+        throw new Error(
+            value.service === "azureopenai"
+                ? "请填写 Azure 部署名称。"
+                : "请填写模型名称。",
+        );
+    if (
+        value.service === "qwenmt" &&
+        value.model &&
+        !value.model.startsWith("qwen-mt-")
+    )
+        throw new Error(
+            "Qwen-MT 仅支持 qwen-mt-* 模型；通用通义模型请选择阿里云接口。",
+        );
+    if (
+        [
+            "openai",
+            "aliyundashscope",
+            "qwenmt",
+            "azureopenai",
+            "anythingllm",
+        ].includes(value.service)
+    ) {
         let url;
         try {
             url = new URL(value.apiUrl);
@@ -358,7 +267,6 @@ function read(requireModel = true) {
             throw new Error(
                 "请填写有效的 HTTP(S) API 地址，不要包含查询参数或账号密码。",
             );
-        if (requireModel && !value.model) throw new Error("请填写模型名称。");
     }
     if (!value.name) {
         try {
@@ -444,7 +352,8 @@ document.addEventListener("focusin", (event) => {
     if (!["model", "models"].includes(event.target.id)) hideModels();
 });
 function updateService() {
-    const codex = $("service").value === "codex";
+    const service = $("service").value;
+    const codex = service === "codex";
     for (const id of [
         "api-url-field",
         "api-key-field",
@@ -458,6 +367,50 @@ function updateService() {
         "codex-proxy-field",
     ])
         $(id).hidden = !codex;
+    $("azure-region-field").hidden = service !== "azure";
+    $("model-field").hidden = NO_MODEL_SERVICES.includes(service);
+    $("model-label").textContent =
+        service === "azureopenai" ? "部署名称" : "模型";
+    $("model").placeholder =
+        service === "azureopenai"
+            ? "填写 Azure 中创建的部署名称"
+            : "输入或搜索模型名称";
+    // Keep incompatible saved options visible so the user can correct them.
+    const commonProtocol = OPENAI_SERVICES.includes(service);
+    $("reasoning-mode-field").hidden =
+        codex || (!commonProtocol && $("reasoningMode").value === "default");
+    $("protocol-field").hidden =
+        !commonProtocol && $("apiProtocol").value !== "responses";
+    $("request-options-field").hidden =
+        !commonProtocol &&
+        ["", "{}"].includes($("requestOptions").value.replace(/\s/g, ""));
+    $("api-key-field").hidden =
+        codex ||
+        ["siliconflowfree", "claudecode", "ollama", "xinference"].includes(
+            service,
+        );
+    $("api-url-field").hidden =
+        codex || ["siliconflowfree", "deepl"].includes(service);
+    $("api-url-label").textContent =
+        service === "claudecode" ? "Claude CLI 路径" : "API 地址";
+    const hints = {
+        azureopenai:
+            "填写资源地址或以 /openai/v1 结尾的 v1 地址；下方填写部署名称。",
+        azure: "填写 Azure 资源对应的端点和区域。中国区端点：https://api.translator.azure.cn。",
+        anythingllm:
+            "填写完整工作区聊天地址：http://localhost:3001/api/v1/workspace/工作区标识/chat。",
+        claudecode:
+            "填写本地服务所在电脑的 claude 命令或完整路径，并提前登录。",
+        aliyundashscope:
+            "从百炼控制台复制业务空间与地域对应的兼容地址，例如 https://业务空间ID.cn-beijing.maas.aliyuncs.com/compatible-mode/v1。旧共享地址仍可用。",
+        qwenmt: "从百炼控制台复制业务空间与地域对应的 OpenAI 兼容地址；只使用 Qwen-MT 翻译模型。",
+        ollama: "填写 Ollama 主机地址，例如 http://localhost:11434；模型须已在该主机安装。",
+        xinference:
+            "填写 Xinference 主机地址，例如 http://localhost:9997；模型填写已部署的 model UID。",
+    };
+    $("api-url-hint").textContent =
+        hints[service] ||
+        "支持 Base URL 或完整的 /chat/completions、/responses 地址；请保留站点提供的路径。";
     updateCodexProxy();
     $("test").textContent = codex ? "测试连接" : "测试 API";
     $("name").placeholder = codex
@@ -465,14 +418,17 @@ function updateService() {
         : "留空时使用 API 地址的主机名";
     $("models-hint").textContent = codex
         ? "使用当前登录账号的模型目录；连接测试会确认模型是否可用。"
-        : "可以直接输入模型名称，无需先获取列表。";
+        : service === "azureopenai"
+          ? "部署名称由你在 Azure 中设置，可能与模型名称不同。"
+          : MODEL_DISCOVERY_SERVICES.includes(service)
+            ? "获取账号可见的模型后选择，或直接手动填写；模型是否可用以连接测试为准。"
+            : "请按服务控制台或本地部署填写模型名称。";
     modelDetails = [];
     if (codex && !$("model").value.trim()) $("model").value = "gpt-6-luna";
     const preset = DEFAULT_SERVICES[$("service").value];
     setModels(preset?.models || []);
     $("get-models").disabled =
-        busy ||
-        !["openai", "openaicompatible", "codex"].includes($("service").value);
+        busy || !MODEL_DISCOVERY_SERVICES.includes($("service").value);
 }
 async function perform(kind) {
     if (busy) return;
@@ -518,8 +474,7 @@ async function perform(kind) {
 }
 function updateModelButton() {
     $("get-models").disabled =
-        busy ||
-        !["openai", "openaicompatible", "codex"].includes($("service").value);
+        busy || !MODEL_DISCOVERY_SERVICES.includes($("service").value);
 }
 function save(use) {
     try {
@@ -548,7 +503,12 @@ if (args.data.service && !args.services[args.data.service]) {
     $("service").append(option);
 }
 for (const id of fields) {
-    const value = args.data[id];
+    const value =
+        id === "azureRegion" && args.isEdit && args.data.service === "azure"
+            ? (args.data.azureRegion ??
+              args.data.extraData?.azure_region ??
+              "chinaeast2")
+            : args.data[id];
     if (id === "reasoningEffort" && value) {
         const option = document.createElementNS(
             "http://www.w3.org/1999/xhtml",
@@ -590,10 +550,16 @@ if (args.isEdit) {
     $("save").textContent = "保存";
     $("save-only").hidden = true;
 }
+let previousService = $("service").value;
 $("service").addEventListener("change", () => {
-    if (!$("apiUrl").value && !["openai", "codex"].includes($("service").value))
+    if (
+        !$("apiUrl").value ||
+        (!args.isEdit &&
+            $("apiUrl").value === DEFAULT_SERVICES[previousService]?.urls?.[0])
+    )
         $("apiUrl").value =
             DEFAULT_SERVICES[$("service").value]?.urls?.[0] || "";
+    previousService = $("service").value;
     updateService();
     updateReasoningMode();
 });

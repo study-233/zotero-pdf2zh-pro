@@ -249,3 +249,26 @@ rules, and [glossary sources](../docs/glossary-sources.md) for attribution.
 `/health.capabilities` advertises `diagnosticsExport`, `boundedCancellation`, and `detailedTaskProgress`. `GET /diagnostics` and `GET /tasks/{taskId}/diagnostics` return versioned, size-bounded, allowlisted JSON; they never export request payloads, paper content, keys or raw historical logs. Structured rotating logs live under `<data-dir>/diagnostics/`. The plugin combines this snapshot with its own records into a local ZIP.
 
 Each attempt runs in a spawn process, contained by a POSIX process group or Windows Job Object. Cancellation escalates at 10/12 seconds and reports cleanup failure at 15 seconds rather than waiting indefinitely. A failed cleanup pauses the queue. Stalls alone only trigger diagnostics, never automatic cancellation. See [the owning specification](../docs/task-diagnostics-and-cancellation.md) for fields, retention, recovery and acceptance.
+
+
+## Provider audit and configuration schema v2
+
+The plugin exposes 19 providers. `openaicompatible`, `tencentmechinetranslation`,
+and `dify` are removed. Explicit unknown or removed service IDs return a
+validation error; they cannot select the free default engine. Omitting `service`
+on legacy PDF/validation requests still selects `siliconflowfree`.
+
+`POST /list-models` accepts `service` (`openai` by default), `apiUrl`, `apiKey`,
+and `apiProtocol`. Supported HTTP catalogs: OpenAI, DeepSeek, Gemini, Grok, Groq,
+and SiliconFlow. SiliconFlow requests include `sub_type=chat`. Provider URLs
+are used only when a named preset omits the URL; explicit custom URLs are kept.
+Codex discovery remains an app-server operation.
+
+Azure Translator accepts `llm_api.azureRegion`: absent retains `chinaeast2`,
+empty omits the region header. SDK 2.0 handles global endpoints; the documented
+sovereign endpoints retain the v3 wire format. Azure OpenAI uses `/openai/v1`
+and a deployment name, with no forced sampling parameters. An explicit
+`extraData.azure_openai_api_version` retains the legacy Azure client.
+
+See the [dated audit](../docs/provider-audit-2026-10-03.md) for official sources,
+profile and backup removal rules, offline contracts, and live acceptance steps.

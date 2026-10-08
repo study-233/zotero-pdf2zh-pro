@@ -187,7 +187,7 @@ class DeepSeekSettings(BaseModel):
         default="yes", description="Whether the translator supports LLM"
     )
     deepseek_model: str = Field(
-        default="deepseek-chat", description="DeepSeek model to use"
+        default="deepseek-flash", description="DeepSeek model to use"
     )
     deepseek_api_key: str | None = Field(
         default=None, description="API key for DeepSeek service"
@@ -272,7 +272,7 @@ class AzureOpenAISettings(BaseModel):
     )
 
     azure_openai_model: str = Field(
-        default="gpt-4o-mini", description="AzureOpenAI model to use"
+        default="", description="Azure OpenAI deployment name"
     )
     azure_openai_base_url: str | None = Field(
         default=None, description="Base URL for AzureOpenAI API"
@@ -281,10 +281,12 @@ class AzureOpenAISettings(BaseModel):
         default=None, description="API key for AzureOpenAI service"
     )
     azure_openai_api_version: str = Field(
-        default="2024-06-01", description="API version for AzureOpenAI service"
+        default="v1", description="v1 (recommended), or an explicit legacy Azure API version"
     )
 
     def validate_settings(self) -> None:
+        if not self.azure_openai_model or not self.azure_openai_base_url:
+            raise ValueError("Azure OpenAI endpoint and deployment name are required")
         if not self.azure_openai_api_key:
             raise ValueError("AzureOpenAI API key is required")
         self.azure_openai_api_key = _clean_string(self.azure_openai_api_key)
@@ -424,32 +426,6 @@ class SiliconFlowFreeSettings(BaseModel):
         pass
 
 
-class TencentSettings(BaseModel):
-    """Tencent Mechine Translation settings"""
-
-    translate_engine_type: Literal["TencentMechineTranslation"] = Field(
-        default="TencentMechineTranslation"
-    )
-    tencentcloud_secret_id: str | None = Field(
-        default=None, description="Tencent Mechine Translation secret ID"
-    )
-    tencentcloud_secret_key: str | None = Field(
-        default=None, description="Tencent Mechine Translation secret Key"
-    )
-
-    def validate_settings(self) -> None:
-        if not self.tencentcloud_secret_id:
-            raise ValueError("Tencent Mechine Translation ID is required")
-        if not self.tencentcloud_secret_key:
-            raise ValueError("Tencent Mechine Translation Key is required")
-        self.tencentcloud_secret_id = _clean_string(self.tencentcloud_secret_id)
-        self.tencentcloud_secret_key = _clean_string(self.tencentcloud_secret_key)
-
-
-GUI_PASSWORD_FIELDS.append("tencentcloud_secret_id")
-GUI_PASSWORD_FIELDS.append("tencentcloud_secret_key")
-
-
 class GeminiSettings(BaseModel):
     """Gemini API settings"""
 
@@ -459,7 +435,7 @@ class GeminiSettings(BaseModel):
     )
 
     gemini_model: str = Field(
-        default="gemini-1.5-flash", description="Gemini model to use"
+        default="gemini-3.8-flash", description="Gemini model to use"
     )
     gemini_api_key: str | None = Field(
         default=None, description="API key for Gemini service"
@@ -494,12 +470,14 @@ class AzureSettings(BaseModel):
         default="https://api.translator.azure.cn", description="Azure endpoint"
     )
     azure_api_key: str | None = Field(default=None, description="Azure API Key")
+    azure_region: str = Field(default="chinaeast2", description="Azure resource region; empty for global resources")
 
     def validate_settings(self) -> None:
         if not self.azure_api_key:
             raise ValueError("Azure API key is required")
         self.azure_api_key = _clean_string(self.azure_api_key)
         self.azure_endpoint = _clean_string(self.azure_endpoint)
+        self.azure_region = self.azure_region.strip()
 
 
 GUI_PASSWORD_FIELDS.append("azure_api_key")
@@ -526,24 +504,6 @@ GUI_PASSWORD_FIELDS.append("anythingllm_apikey")
 GUI_SENSITIVE_FIELDS.append("anythingllm_url")
 
 
-class DifySettings(BaseModel):
-    """Dify settings"""
-
-    translate_engine_type: Literal["Dify"] = Field(default="Dify")
-    dify_url: str | None = Field(default=None, description="Dify url")
-    dify_apikey: str | None = Field(default=None, description="Dify API Key")
-
-    def validate_settings(self) -> None:
-        if not self.dify_apikey:
-            raise ValueError("Dify API Key is required")
-        self.dify_apikey = _clean_string(self.dify_apikey)
-        self.dify_url = _clean_string(self.dify_url)
-
-
-GUI_PASSWORD_FIELDS.append("dify_apikey")
-GUI_SENSITIVE_FIELDS.append("dify_url")
-
-
 class GrokSettings(BaseModel):
     """Grok API settings"""
 
@@ -552,7 +512,7 @@ class GrokSettings(BaseModel):
         default="yes", description="Whether the translator supports LLM"
     )
 
-    grok_model: str = Field(default="grok-2-1212", description="Grok model to use")
+    grok_model: str = Field(default="grok-4.7", description="Grok model to use")
     grok_api_key: str | None = Field(
         default=None, description="API key for Grok service"
     )
@@ -587,7 +547,7 @@ class GroqSettings(BaseModel):
     )
 
     groq_model: str = Field(
-        default="llama-3-3-70b-versatile", description="Groq model to use"
+        default="llama-3.3-70b-versatile", description="Groq model to use"
     )
     groq_api_key: str | None = Field(
         default=None, description="API key for Groq service"
@@ -649,103 +609,6 @@ class QwenMtSettings(BaseModel):
 
 GUI_PASSWORD_FIELDS.append("qwenmt_api_key")
 GUI_SENSITIVE_FIELDS.append("qwenmt_base_url")
-
-
-class OpenAICompatibleSettings(BaseModel):
-    """OpenAICompatible settings"""
-
-    translate_engine_type: Literal["OpenAICompatible"] = Field(
-        default="OpenAICompatible"
-    )
-    support_llm: Literal["yes", "no"] = Field(
-        default="yes", description="Whether the translator supports LLM"
-    )
-
-    openai_compatible_api_protocol: str = Field(default="chat_completions", description="API protocol: auto, chat_completions, responses")
-    openai_compatible_request_options: str | None = Field(default=None, description="Additional API request parameters as JSON")
-    openai_compatible_model: str = Field(
-        default="gpt-4o-mini", description="OpenAI Compatible model to use"
-    )
-    openai_compatible_base_url: str | None = Field(
-        default=None, description="Base URL for OpenAI Compatible service"
-    )
-    openai_compatible_api_key: str | None = Field(
-        default=None, description="API key for OpenAI Compatible service"
-    )
-    openai_compatible_timeout: str | None = Field(
-        default=None, description="Timeout (seconds) for OpenAI Compatible service"
-    )
-    openai_compatible_temperature: str | None = Field(
-        default=None, description="Temperature for OpenAI Compatible service"
-    )
-    openai_compatible_reasoning_effort: str | None = Field(
-        default=None,
-        description="Reasoning effort for OpenAI Compatible service (minimal/low/medium/high)",
-    )
-    openai_compatible_send_temperature: bool | None = Field(
-        default=None, description="Send temperature to OpenAI Compatible service"
-    )
-    openai_compatible_send_reasoning_effort: bool | None = Field(
-        default=None, description="Send reasoning effort to OpenAI Compatible service"
-    )
-    openai_compatible_enable_json_mode: bool | None = Field(
-        default=None, description="Enable JSON mode for OpenAI Compatible service"
-    )
-
-    def validate_settings(self) -> None:
-        if not self.openai_compatible_api_key:
-            raise ValueError("OpenAI Compatible API key is required")
-        if not self.openai_compatible_base_url:
-            raise ValueError("OpenAI Compatible base URL is required")
-        if not self.openai_compatible_model:
-            raise ValueError("OpenAI Compatible model is required")
-        self.openai_compatible_api_key = _clean_string(self.openai_compatible_api_key)
-        self.openai_compatible_base_url = _clean_string(self.openai_compatible_base_url)
-        self.openai_compatible_model = _clean_string(self.openai_compatible_model)
-        self.openai_compatible_timeout = _check_if_positive_float(
-            _clean_string(self.openai_compatible_timeout), field="Timeout"
-        )
-        self.openai_compatible_temperature = _clean_string(
-            self.openai_compatible_temperature
-        )
-        self.openai_compatible_reasoning_effort = _clean_string(
-            self.openai_compatible_reasoning_effort
-        )
-        if self.openai_compatible_send_temperature:
-            if not self.openai_compatible_temperature:
-                raise ValueError(
-                    "Temperature is required when send temperature is enabled"
-                )
-            try:
-                float(self.openai_compatible_temperature)
-            except ValueError as e:
-                raise ValueError("Temperature must be a float") from e
-        if (
-            self.openai_compatible_send_reasoning_effort
-            and not self.openai_compatible_reasoning_effort
-        ):
-            raise ValueError(
-                "Reasoning effort is required when send reasoning effort is enabled"
-            )
-
-    def transform(self) -> OpenAISettings:
-        return OpenAISettings(
-            openai_api_protocol=self.openai_compatible_api_protocol,
-            openai_request_options=self.openai_compatible_request_options,
-            openai_model=self.openai_compatible_model,
-            openai_api_key=self.openai_compatible_api_key,
-            openai_base_url=self.openai_compatible_base_url,
-            openai_timeout=self.openai_compatible_timeout,
-            openai_temperature=self.openai_compatible_temperature,
-            openai_reasoning_effort=self.openai_compatible_reasoning_effort,
-            openai_send_temprature=self.openai_compatible_send_temperature,
-            openai_send_reasoning_effort=self.openai_compatible_send_reasoning_effort,
-            openai_enable_json_mode=self.openai_compatible_enable_json_mode,
-        )
-
-
-GUI_PASSWORD_FIELDS.append("openai_compatible_api_key")
-GUI_SENSITIVE_FIELDS.append("openai_compatible_base_url")
 
 
 class AliyunDashScopeSettings(BaseModel):
@@ -940,15 +803,12 @@ TRANSLATION_ENGINE_SETTING_TYPE: TypeAlias = (
     | ModelScopeSettings
     | ZhipuSettings
     | SiliconFlowSettings
-    | TencentSettings
     | GeminiSettings
     | AzureSettings
     | AnythingLLMSettings
-    | DifySettings
     | GrokSettings
     | GroqSettings
     | QwenMtSettings
-    | OpenAICompatibleSettings
     | ClaudeCodeSettings
     | CodexSettings
     | CLISettings

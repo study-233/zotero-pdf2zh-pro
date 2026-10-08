@@ -55,7 +55,7 @@ class ClaudeCodeTranslator(BaseTranslator):
     )
     def do_translate(self, text, rate_limit_params: dict = None) -> str:
         messages = self.prompt(text)
-        input_data = json.dumps({"type": "user", "message": messages[0]})
+        input_data = "\n\n".join(message["content"] for message in messages)
 
         cmd = [
             self.claude_code_path,
@@ -65,19 +65,21 @@ class ClaudeCodeTranslator(BaseTranslator):
             "--max-turns",
             "1",
             "--input-format",
-            "stream-json",
+            "text",
             "--output-format",
-            "stream-json",
-            "--verbose",
+            "json",
+            "--tools",
+            "",
             "--disallowedTools",
-            "Task Bash Glob Grep LS exit_plan_mode Read Edit MultiEdit Write NotebookRead NotebookEdit TodoRead TodoWrite",
+            "mcp__*",
+            "--no-session-persistence",
         ]
 
         env = os.environ.copy()
         env.pop("ANTHROPIC_API_KEY", None)
 
         try:
-            logger.info(f"Running Claude Code: {cmd}\n{input_data}")
+            logger.debug("Running Claude Code translation")
             process = subprocess.Popen(
                 cmd,
                 stdin=subprocess.PIPE,
@@ -88,7 +90,6 @@ class ClaudeCodeTranslator(BaseTranslator):
             )
 
             stdout, stderr = process.communicate(input=input_data, timeout=120)
-            logger.debug(f"CC: {stdout}")
 
             if process.returncode != 0:
                 logger.error(f"Claude Code failed: {stderr}")
@@ -99,25 +100,17 @@ class ClaudeCodeTranslator(BaseTranslator):
 
         except subprocess.TimeoutExpired as e:
             process.kill()
+            process.communicate()
             raise ValueError("Claude Code translation timed out") from e
 
     def _parse_output(self, output: str) -> str:
-        full_text = []
-        for line in output.strip().split("\n"):
-            if not line.strip() or not line.strip().startswith("{"):
-                continue
-            try:
-                chunk = json.loads(line)
-                if chunk.get("type") == "assistant" and "message" in chunk:
-                    for content in chunk["message"].get("content", []):
-                        if content.get("type") == "text":
-                            full_text.append(content.get("text", ""))
-                elif chunk.get("type") == "text":
-                    full_text.append(chunk.get("text", ""))
-            except json.JSONDecodeError:
-                continue
-
-        result = "".join(full_text).strip()
-        if not result:
+        try:
+            result = json.loads(output)
+        except json.JSONDecodeError as exc:
+            raise ValueError("Invalid JSON result from Claude Code") from exc
+        if not isinstance(result, dict) or result.get("type") != "result" or result.get("is_error") or result.get("subtype") != "success":
+            raise ValueError("Claude Code did not complete the translation successfully")
+        text = result.get("result")
+        if not isinstance(text, str) or not text.strip():
             raise ValueError("No translation received from Claude Code")
-        return result
+        return text.strip()

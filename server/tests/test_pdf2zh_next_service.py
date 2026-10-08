@@ -77,7 +77,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         self.assertEqual(configured.translate_engine_settings.openai_timeout, "300")
 
     def test_api_protocol_options_and_preset_endpoint_reach_runtime(self):
-        for service in ("openai", "openaicompatible", "deepseek", "gemini", "modelscope"):
+        for service in ("openai", "deepseek", "gemini", "modelscope"):
             with self.subTest(service=service):
                 runtime = create_runtime_settings(make_settings_payload(service=service, llm_api={
                     "apiKey": "test-key", "apiUrl": "https://relay.invalid/custom/responses",
@@ -93,7 +93,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
 
     def test_old_config_defaults_to_chat_and_protocol_mismatch_fails(self):
         api = {"apiKey": "test-key", "apiUrl": "https://relay.invalid/v1", "model": "custom"}
-        runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", llm_api=api))
+        runtime = create_runtime_settings(make_settings_payload(service="openai", llm_api=api))
         self.assertEqual(runtime.translate_engine_settings.openai_api_protocol, "chat_completions")
         with self.assertRaisesRegex(ValueError, "冲突"):
             create_runtime_settings(make_settings_payload(service="openai", llm_api={
@@ -102,7 +102,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
 
     def test_dedicated_term_translator_inherits_resolved_protocol_and_base(self):
         from pdf2zh_next.high_level import create_babeldoc_config
-        runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", no_auto_extract_glossary=False, llm_api={
+        runtime = create_runtime_settings(make_settings_payload(service="openai", no_auto_extract_glossary=False, llm_api={
             "apiKey": "test-key", "apiUrl": "https://relay.invalid/custom/chat/completions",
             "model": "model", "apiProtocol": "auto",
         }))
@@ -121,7 +121,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
 
     def test_disabled_term_extraction_never_creates_or_probes_a_dedicated_translator(self):
         from pdf2zh_next.high_level import create_babeldoc_config
-        runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", llm_api={
+        runtime = create_runtime_settings(make_settings_payload(service="openai", llm_api={
             "apiKey": "test-key", "apiUrl": "https://relay.invalid/v1", "model": "main-model",
         }))
         runtime.term_extraction_engine_settings = runtime.translate_engine_settings.model_copy(
@@ -145,7 +145,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
             (1, False, False, True), (None, True, False, True), (None, False, True, True),
         ):
             with self.subTest(term_qps=term_qps, different_model=different_model, dedicated=dedicated):
-                runtime = create_runtime_settings(make_settings_payload(service="openaicompatible", qps=20,
+                runtime = create_runtime_settings(make_settings_payload(service="openai", qps=20,
                     no_auto_extract_glossary=False, llm_api={
                         "apiKey": "test-key", "apiUrl": "https://relay.invalid/v1", "model": "main-model",
                     }))

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12, <3.14"
 resolution-markers = [
     "python_full_version >= '3.13' and platform_machine != 's390x'",
@@ -131,16 +131,16 @@ wheels = [
 
 [[package]]
 name = "azure-ai-translation-text"
-version = "1.0.1"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-core" },
     { name = "isodate" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/04/db/4b9ea0a86c994a7355868a7cc1604ceec5963b94c38dc39bdf9205ebbe30/azure-ai-translation-text-1.0.1.tar.gz", hash = "sha256:8fff37f7ea4f82f25ad6328374859d6bad022d2f30fde9b30b5ee4cf1f7c1769", size = 96931, upload-time = "2024-06-24T21:23:17.844Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/10/ea00242bd7483e8a34ae58557f422d3c35088a7b3315493f269903bbdbf7/azure_ai_translation_text-2.0.0.tar.gz", hash = "sha256:a467c87a7c7a2602447fbc882b7ca8a93471b2957ec15b9b6c2b76dbed7dcc72", size = 103907, upload-time = "2026-05-29T01:17:12.538Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/01/d3efa3e5383744fce4d5ca6f05e749928f5fc4aa62b0399c8027ada189f5/azure_ai_translation_text-1.0.1-py3-none-any.whl", hash = "sha256:2c60d1adcda68809dd9f431ec0b8ac1b1977a69037d10751a39c233bc6bc42d8", size = 87790, upload-time = "2024-06-24T21:23:19.806Z" },
+    { url = "https://files.pythonhosted.org/packages/88/c3/06ca8c3bb18cd666e4eadf05dcb5950ffce574068c60521366bacbbacc6b/azure_ai_translation_text-2.0.0-py3-none-any.whl", hash = "sha256:e07d0c90c11606b4f94f430b1ae75dc2f69e8fb4dfa06b666ec0a803db5c323f", size = 105231, upload-time = "2026-05-29T01:17:13.881Z" },
 ]
 
 [[package]]
@@ -1939,30 +1939,6 @@ wheels = [
 ]
 
 [[package]]
-name = "tencentcloud-sdk-python-common"
-version = "3.1.80"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/04/66/6eebb6baa7872c53f68d1a4dd5ecb5c292811eb5b8881062dccdfa46da30/tencentcloud_sdk_python_common-3.1.80.tar.gz", hash = "sha256:b8b0f98a2e993093c97b65ae88a206706094341fcb29aba9d07f7d92cc4a9c5e", size = 22658, upload-time = "2026-04-16T19:58:31.331Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/94/32/95521b509ecce936f7ab0705bc1886599885d39436a169742904b78c224c/tencentcloud_sdk_python_common-3.1.80-py2.py3-none-any.whl", hash = "sha256:0a80ecfef3f39f2c2df339abc2ea996e8fca5158ee660345a090069aa8a66531", size = 34261, upload-time = "2026-04-16T19:58:28.843Z" },
-]
-
-[[package]]
-name = "tencentcloud-sdk-python-tmt"
-version = "3.1.70"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "tencentcloud-sdk-python-common" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/87/45/2fb622f3a17e9dcbd53295685dfce3dd5a20a2877d11328799fb134b85f9/tencentcloud_sdk_python_tmt-3.1.70.tar.gz", hash = "sha256:f66a222a006c7fb9c8b12465dfb2314bdfa56b599f80d1db029092433645e9d8", size = 10318, upload-time = "2026-04-02T20:07:12.784Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/6c/44281cb9583e9b647ed5150d74e410afd803c62b25f6398a48f20effb781/tencentcloud_sdk_python_tmt-3.1.70-py2.py3-none-any.whl", hash = "sha256:f9641742fd280796d847a3e4fc708fe07c445733e3ff431b302db8fb72ab4a15", size = 12730, upload-time = "2026-04-02T20:07:10.859Z" },
-]
-
-[[package]]
 name = "threadpoolctl"
 version = "3.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2299,7 +2275,6 @@ dependencies = [
     { name = "shapely" },
     { name = "six" },
     { name = "tenacity" },
-    { name = "tencentcloud-sdk-python-tmt" },
     { name = "tiktoken" },
     { name = "toml" },
     { name = "tomlkit" },
@@ -2313,7 +2288,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "anyio", specifier = ">=4.14.2" },
-    { name = "azure-ai-translation-text", specifier = "<=1.0.1" },
+    { name = "azure-ai-translation-text", specifier = ">=2.0.0,<3" },
     { name = "bitstring", specifier = ">=4.3.0" },
     { name = "chardet", specifier = ">=5.2.0" },
     { name = "charset-normalizer", specifier = ">=2.0.0" },
@@ -2353,7 +2328,6 @@ requires-dist = [
     { name = "shapely", specifier = ">=1.7.1,!=2.0.4" },
     { name = "six", specifier = ">=1.15.0" },
     { name = "tenacity", specifier = ">=9.0.0" },
-    { name = "tencentcloud-sdk-python-tmt" },
     { name = "tiktoken", specifier = ">=0.9.0" },
     { name = "toml", specifier = ">=0.10.2" },
     { name = "tomlkit", specifier = ">=0.13.0,<1" },

@@ -29,6 +29,7 @@ import truststore
 truststore.inject_into_ssl()
 
 from flask import Flask, Response, jsonify, request, send_file, stream_with_context
+from pdf2zh_next_service import require_supported_service
 from pdf2zh_next_service import diagnose_service_error
 from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
@@ -448,7 +449,7 @@ def translate_pdf_request(data: dict[str, Any]) -> tuple[bytes, str, str]:
 
 def validate_config_request(data: dict[str, Any]):
     job_id = os.urandom(4).hex()
-    service = normalize_service(data.get("service") or "siliconflowfree")
+    service = normalize_service(data.get("service", "siliconflowfree"))
     request_payload = {
         "source_lang": normalize_language(data.get("sourceLang"), "en"),
         "target_lang": normalize_language(data.get("targetLang"), "zh-CN"),
@@ -481,7 +482,7 @@ def prepare_translation_request(
 ) -> PreparedTranslationRequest:
     file_bytes = decode_pdf_content(data.get("fileContent"))
     file_name = sanitize_pdf_filename(data.get("fileName"))
-    service = normalize_service(data.get("service") or "siliconflowfree")
+    service = normalize_service(data.get("service", "siliconflowfree"))
     output_modes = normalize_output_modes(data)
     input_path = workspace_dir / file_name
     output_dir = workspace_dir / "output"
@@ -620,10 +621,10 @@ def normalize_output_mode_value(output_mode: Any) -> str:
 
 
 def normalize_service(service: Any) -> str:
-    if not isinstance(service, str) or not service.strip():
-        return "siliconflowfree"
-
-    return service.strip().lower().replace("-", "").replace("_", "")
+    try:
+        return require_supported_service(service)
+    except ValueError as exc:
+        raise RequestValidationError(str(exc)) from exc
 
 
 def normalize_language(value: Any, default: str) -> str:

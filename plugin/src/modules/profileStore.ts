@@ -1,6 +1,7 @@
 import { getPref, setPref } from "../utils/prefs";
 import {
     migrateProfiles,
+    isRemovedService,
     selectedProfile,
     type LLMApiData,
 } from "./llmApiManager";
@@ -24,7 +25,7 @@ export function loadProfiles(): LLMApiData[] {
     } catch {
         throw new Error("翻译配置无法读取，请检查配置备份；原数据未修改。");
     }
-    if (getPref("profileSchemaVersion") !== 1) {
+    if (Number(getPref("profileSchemaVersion") || 0) < 1) {
         const oldService = getPref("service")?.toString() || "siliconflowfree";
         if (!getPref("llmApisLegacyBackup")) {
             setPref(
@@ -42,6 +43,22 @@ export function loadProfiles(): LLMApiData[] {
         setPref("profileSchemaVersion", 1);
         profiles = migrated.profiles;
     }
+    if (Number(getPref("profileSchemaVersion") || 0) < 2) {
+        const removedKeys = new Set(
+            profiles
+                .filter((api) => isRemovedService(api.service))
+                .map((api) => api.key),
+        );
+        profiles = profiles.filter((api) => !isRemovedService(api.service));
+        saveProfiles(profiles);
+        if (removedKeys.has(getPref("selectedApiKey")?.toString() || ""))
+            setPref("selectedApiKey", "");
+        if (isRemovedService(getPref("service")?.toString() || ""))
+            setPref("service", "");
+        const backup = getPref("llmApisLegacyBackup")?.toString();
+        if (backup) setPref("llmApisLegacyBackup", cleanLegacyBackup(backup));
+        setPref("profileSchemaVersion", 2);
+    }
     return profiles;
 }
 export function saveProfiles(profiles: LLMApiData[]) {
@@ -57,4 +74,39 @@ export function getSelectedProfile(key?: string): LLMApiData | null {
 export function removeProfile(key: string) {
     saveProfiles(loadProfiles().filter((api) => api.key !== key));
     if (getPref("selectedApiKey") === key) setPref("selectedApiKey", "");
+}
+
+// Leave malformed backups intact: deleting unrelated data cannot repair them.
+function cleanLegacyBackup(raw: string): string {
+    try {
+        const backup = JSON.parse(raw);
+        const rows = JSON.parse(backup.llmApis);
+        if (
+            !Array.isArray(rows) ||
+            rows.some((row) => !row || typeof row.service !== "string")
+        )
+            return raw;
+        const removedKeys = new Set(
+            rows
+                .filter((row) => isRemovedService(row.service))
+                .map((row) => row.key),
+        );
+        const retained = rows.filter((row) => !isRemovedService(row.service));
+        let changed = retained.length !== rows.length;
+        if (changed) backup.llmApis = JSON.stringify(retained);
+        if (removedKeys.has(backup.selectedApiKey)) {
+            backup.selectedApiKey = "";
+            changed = true;
+        }
+        if (
+            typeof backup.service === "string" &&
+            isRemovedService(backup.service)
+        ) {
+            backup.service = "";
+            changed = true;
+        }
+        return changed ? JSON.stringify(backup) : raw;
+    } catch {
+        return raw;
+    }
 }

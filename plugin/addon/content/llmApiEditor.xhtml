@@ -19,16 +19,26 @@
                 ><select id="service" />
             </div>
             <div class="field" id="api-url-field">
-                <label for="apiUrl">API 地址</label
+                <label for="apiUrl" id="api-url-label">API 地址</label
                 ><input
                     id="apiUrl"
                     placeholder="https://example.com/v1"
                     spellcheck="false"
                     autocomplete="off"
                 />
-                <p class="hint">
+                <p class="hint" id="api-url-hint">
                     支持 Base URL 或完整的 /chat/completions、/responses
                     地址；请保留站点提供的路径。
+                </p>
+            </div>
+            <div class="field" id="azure-region-field" hidden="hidden">
+                <label for="azureRegion">Azure 资源区域</label>
+                <input
+                    id="azureRegion"
+                    placeholder="例如 eastus、chinaeast2；全局资源可留空"
+                />
+                <p class="hint">
+                    以 Azure 控制台资源信息为准；旧配置默认使用 chinaeast2。
                 </p>
             </div>
             <div class="field" id="api-key-field">
@@ -44,8 +54,8 @@
                     </button>
                 </div>
             </div>
-            <div class="field">
-                <label for="model">模型</label>
+            <div class="field" id="model-field">
+                <label for="model" id="model-label">模型</label>
                 <div class="inline">
                     <input
                         id="model"
@@ -122,7 +132,7 @@
             </div>
             <details id="advanced">
                 <summary>高级设置</summary>
-                <div class="field">
+                <div class="field" id="protocol-field">
                     <label for="apiProtocol">接口协议</label
                     ><select id="apiProtocol">
                         <option value="auto">自动识别（推荐）</option>
@@ -132,7 +142,7 @@
                         <option value="responses">Responses</option>
                     </select>
                 </div>
-                <div class="field">
+                <div class="field" id="request-options-field">
                     <label for="requestOptions">额外请求参数（JSON）</label
                     ><textarea
                         id="requestOptions"

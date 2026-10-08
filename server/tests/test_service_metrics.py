@@ -22,7 +22,7 @@ class ServiceMetricsTests(unittest.TestCase):
         self.directory = self.enterContext(tempfile.TemporaryDirectory())
         self.payload = make_settings_payload(
             input_path=str(Path(self.directory) / "paper.pdf"), output_dir=str(Path(self.directory) / "output"),
-            service="openaicompatible", qps=20, pool_size=100, target_lang="zh-CN", ocr=False,
+            service="openai", qps=20, pool_size=100, target_lang="zh-CN", ocr=False,
             llm_api={"apiKey": "test-key", "apiUrl": "https://relay.invalid/v1", "model": "test-model", "apiProtocol": "auto"},
         )
         Path(self.payload["input_path"]).write_bytes(b"isolated-test-source")
