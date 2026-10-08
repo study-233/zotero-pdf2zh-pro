@@ -4,7 +4,7 @@
 
 # zotero-pdf2zh-pro
 
-**在 Zotero 中翻译整篇论文，自动导入译文与双语 PDF。**
+**整篇翻译、双语阅读、划词精读，都在 Zotero 中完成。**
 
 支持 Zotero 8、9 和 10，需配合本地服务使用。
 
@@ -26,19 +26,24 @@
 
 ## 功能亮点
 
-- **融入 Zotero 文库**：右键提交单篇或批量 PDF，完成后自动导入翻译附件。
-- **译文与双语输出**：可生成译文 PDF、双语对照 PDF，或同时保留两种版本。
-- **灵活配置模型**：支持 OpenAI 兼容 API、模型列表查询、Chat Completions 与 Responses。
-- **失败段落补译**：保留已验证译文，只请求剩余段落，修复结果新增附件并保留旧版批注。
-- **划词精读**：划选后自动显示释义或译文，支持离线词典、必应或独立模型翻译、个人词典与按需语境解释，并复用精确匹配的已有译文；[使用说明](docs/user-guide.md#selection-translation)。
-- **任务进度与请求指标**：查看阶段、QPS、耗时、重试、token 和缓存，支持导出诊断包。
-- **按需调整翻译**：提供 OCR、表格翻译、参考文献保护与自定义附件标题。
+- **全文翻译**：右键提交单篇或批量 PDF，译文与双语附件自动导入原条目。
+- **划词精读**：选词查释义、选句看译文，按需结合论文上下文解释。
+- **失败补译**：保留已译段落，只补剩余内容，旧附件与批注继续保留。
+- **灵活选择模型**：支持 OpenAI 兼容 API、Codex 登录和多配置切换。
+- **术语与排版**：支持术语库、OCR、表格翻译、参考文献保护和附件标题设置。
+- **任务管理**：查看进度、请求耗时和 token，失败时可导出诊断包。
 
 ## 界面预览
 
-![Zotero 翻译任务列表：任务进度、请求详情与补译入口](assets/task-manager.png)
+**全文翻译与双语阅读**
 
-图中为历史远端任务，“导入状态：无”表示未关联当前文库条目；新任务请检查实际导入状态。
+![在 Zotero 中阅读翻译后的双语 PDF](assets/guide/pdf-bilingual.png)
+
+**划词精读**
+
+![选中单词后自动显示释义](assets/guide/selection-word.png)
+
+[全文翻译教程](docs/user-guide.md#usage) · [划词精读教程](docs/user-guide.md#selection-translation)
 
 <a id="quick-start"></a>
 
@@ -140,7 +145,7 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 - [常用参数：QPS、并发、OCR 与参考文献](docs/user-guide.md#translation-options)
 - [术语包下载与使用](docs/glossary-downloads.md)
-- [Codex 接入验收版：安装与验收](docs/codex-acceptance.md) · [模型与套餐比较](docs/codex-model-value-2026-10-03.md)
+- [Codex 登录配置](docs/user-guide.md#使用-codex-登录配置) · [模型与套餐比较](docs/codex-model-value-2026-10-03.md)
 
 <a id="task-management"></a>
 

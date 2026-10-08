@@ -14,7 +14,9 @@ including trusted proxy CAs on macOS and Windows. Certificate and hostname
 verification remain enabled. For Docker, install any required private CA in
 the container's trust store; the host's trust store is not inherited.
 
-## Reading memory and short text (since v1.8.0)
+<span id="reading-memory-and-short-text-since-v180"></span>
+
+## Reading memory and short text
 
 `POST /translation-lookup` accepts `documentFingerprint` (the original PDF SHA-256),
 `text`, optional one-based `page`, `side` (`source` by default, or `translation`),
@@ -100,7 +102,15 @@ translation/context caches but preserves personal dictionary entries and documen
 request modes remain supported. Empty/invalid AI dictionary output is rejected as `invalid_output`;
 missing usable context is `context_unavailable`.
 
-Reader usage and manual verification: [user guide](../docs/user-guide.md#selection-translation).
+Reader usage: [user guide](../docs/user-guide.md#selection-translation).
+Manual verification: [development notes](../docs/development-notes.md#划词功能验收).
+
+The Reader collects at most two paragraphs / 800 characters from each adjacent page,
+with a 1.5-second per-page timeout and a 12,000-character total context limit. Failed
+adjacent-page reads are skipped. Exact-selection support is advertised through
+`/health.capabilities.exactSelectionTranslation`. Dictionary installation validates
+SHA-256, compressed content and entry structure, skipping empty entries or entries
+without usable Chinese senses. Dictionary data is loaded on demand and shared across Readers.
 
 ## Model discovery
 
@@ -272,3 +282,32 @@ and a deployment name, with no forced sampling parameters. An explicit
 
 See the [dated audit](../docs/provider-audit-2026-10-03.md) for official sources,
 profile and backup removal rules, offline contracts, and live acceptance steps.
+
+## Glossary pack API
+
+
+| 接口 | 行为 |
+| --- | --- |
+| `GET /glossaries` | 本地目录、安装版本、条数、字节数和下载状态，不联网 |
+| `POST /glossaries/check-updates` | 手动刷新远端目录，失败时保留原目录 |
+| `POST /glossaries/<id>/download` | 异步下载当前目录版本；可传 `{"version":"…"}` |
+| `POST /glossaries/<id>/cancel` | 取消进行中的下载，保留已安装版本 |
+| `DELETE /glossaries/<id>` | 移除全部安装版本；进行中的下载须先取消 |
+
+下载接口不接受调用者指定 URL 或路径。正文地址限定项目公开仓库的固定提交，并校验 SHA-256、文件大小、格式和词条数量。临时文件通过全部校验后才安装。
+
+`POST /tasks` 增加可选 `glossaryPacks` 数组：
+
+```json
+{
+  "glossaryPacks": [
+    {"id": "medicine", "version": "目录返回的版本", "sha256": "目录返回的完整 SHA-256"}
+  ],
+  "glossaryEntries": [
+    {"source": "自定义原词", "target": "自定义译法", "tgt_lng": "zh-CN"}
+  ]
+}
+```
+
+
+Usage and merge rules: [glossary guide](../docs/glossary-downloads.md).

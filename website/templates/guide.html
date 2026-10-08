@@ -6,7 +6,7 @@
   </nav></details></aside>
   <article class="doc-article"><div class="doc-heading"><p class="eyebrow">使用教程 / {{ group }}</p><h1>{{ title }}</h1>{% if route == 'guide/' %}<p>按安装、配置、翻译的顺序，完成你的第一次使用。</p>{% endif %}</div>
     <div class="prose">{{ content | safe }}</div>
-    <div class="doc-source"><a href="{{ repo }}/blob/main/{{ source }}{% if anchor %}#{{ anchor }}{% endif %}">在 GitHub 查看源文档 ↗</a><span>适用版本 v{{ version }}</span></div>
+    <div class="doc-source"><a href="{{ repo }}/blob/main/{{ source }}{% if anchor %}#{{ anchor }}{% endif %}">在 GitHub 查看源文档 ↗</a></div>
     <nav class="doc-pagination" aria-label="上下篇教程">{% if previous %}<a href="{{ base }}{{ previous.route }}"><small>← 上一篇</small><span>{{ previous.title }}</span></a>{% else %}<span></span>{% endif %}{% if next %}<a href="{{ base }}{{ next.route }}"><small>下一篇 →</small><span>{{ next.title }}</span></a>{% endif %}</nav>
   </article>
   <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">{{ title }}</a>{% for heading in toc %}<a href="#{{ heading.id }}">{{ heading.title }}</a>{% endfor %}</nav><a class="toc-help" href="{{ base }}guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
