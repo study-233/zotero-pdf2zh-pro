@@ -124,7 +124,25 @@ def resolve_codex_path(cli_path: str | None = None) -> str:
         if found:
             candidates.append(found)
         if os.name == "nt":
-            candidates += [str(Path(os.environ.get("APPDATA", "")) / "npm" / "codex.cmd")]
+            if app_data := os.environ.get("APPDATA"):
+                candidates.append(Path(app_data) / "npm" / "codex.cmd")
+            if install_dir := os.environ.get("CODEX_INSTALL_DIR"):
+                candidates.append(Path(install_dir).expanduser() / "codex.exe")
+            if local_data := os.environ.get("LOCALAPPDATA"):
+                candidates.append(Path(local_data) / "Programs/OpenAI/Codex/bin/codex.exe")
+                # A separately started service may lack the desktop CLI on PATH.
+                # Version directories are hashes; ignore in-progress updates.
+                desktop_binaries = []
+                for path in (Path(local_data) / "OpenAI/Codex/bin").glob("*/codex.exe"):
+                    if path.parent.name.startswith("."):
+                        continue
+                    try:
+                        if path.is_file():
+                            desktop_binaries.append((path.stat().st_mtime_ns, str(path)))
+                    except OSError:
+                        # An app update can remove a version during discovery.
+                        continue
+                candidates.extend(path for _, path in sorted(desktop_binaries, reverse=True))
         else:
             candidates += ["/opt/homebrew/bin/codex", "/usr/local/bin/codex",
                            str(Path.home() / ".local/bin/codex"),

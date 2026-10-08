@@ -3,16 +3,20 @@
 这里记录 `zotero-pdf2zh-pro` 的用户可见变化。旧项目的历史仍保留在 Git 历史中，
 不作为本产品的版本序列。
 
-## 未发布（develop）
+## v1.8.1 - 2026-10-08
 
-- 翻译接口从 22 项精简至 19 项，移除重复 OpenAICompatible 旧预设、腾讯机器翻译和 Dify；配置升级到 v2 并清理这些类型的现存配置与可解析备份，其余已存地址、模型保持原值。
-- 按官方文档修正智谱、ModelScope 预置地址；清理过时模型候选，扩展在线模型发现，区分 Qwen-MT 模型、Azure OpenAI 部署名及 Azure 文本翻译区域。
-- 更新 Azure SDK 与 v1 OpenAI 调用，保留中国区文本翻译 v3；修正 AnythingLLM 字符串消息和 Claude Code 非交互结果处理。补充 [接口审计及验收记录](docs/provider-audit-2026-10-03.md)。
+升级提示：本版会删除 OpenAICompatible 旧预设、腾讯机器翻译和 Dify 配置，并清理可解析的旧配置备份；当前选择被删除时需重新选择。其余已保存配置的地址、模型与参数保持原值。
 
-- Codex 配置新增跟随服务环境、指定 HTTP(S) 代理和直接连接；代理设置覆盖模型发现、连接测试、全文与划词，并按配置隔离子进程。旧服务会提示升级后再使用指定代理。
-- 新增 Codex CLI 翻译配置，通过持久化 app-server 复用当前用户的 ChatGPT 登录，可供 PDF 全文和划词模型选择；支持模型发现、推理档位及主动连接测试。
-- Codex 默认使用 GPT-6 Luna、Standard 速度与模型默认推理档位；已有 API 配置保留，由用户主动切换。
-- 补充 [模型与套餐比较](docs/codex-model-value-2026-10-03.md) 和 [macOS／Windows 安装、验收、排错与回退指南](docs/codex-acceptance.md)。真实翻译质量和双平台使用待用户验收，本条不代表正式发布。
+- 新增 Codex CLI 翻译配置，复用当前用户的 ChatGPT 登录，支持 PDF 全文、划词、模型发现、推理档位和连接测试；默认使用 GPT-6 Luna、Standard 速度与模型默认推理档位，由用户主动切换。
+- Codex 支持跟随服务环境、指定 HTTP(S) 代理和直接连接，模型发现、连接测试、全文与划词使用同一代理配置；不同配置分别建立连接。
+- 修复 Windows 服务未继承终端 PATH 时找不到 Codex 的问题，自动发现桌面应用和独立安装中的原生 CLI，并跳过尚未完成的桌面更新目录。
+- 翻译接口精简至 19 项，修正智谱、ModelScope 预置地址与过时模型候选，扩展在线模型发现，区分 Qwen-MT 模型、Azure OpenAI 部署名及 Azure 文本翻译区域。
+- 更新 Azure SDK 与 v1 OpenAI 调用，保留中国区文本翻译 v3；修复 AnythingLLM 消息格式和 Claude Code 非交互结果处理。
+- 新增插件官网、分章节安装教程与论文译文对照，修复浏览器缓存导致官网仍显示旧样式的问题。
+
+Zotero 插件与本地服务需分别升级至 v1.8.1，才能使用完整 Codex 功能。Windows 用户请完整解压 ZIP 后运行 EXE。Codex 的真实论文译文质量与 macOS／Windows 实际使用仍需按验收指南核对。
+
+[安装与使用指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.8.1/docs/user-guide.md) · [Codex 安装、验收与回退](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.8.1/docs/codex-acceptance.md)
 
 ## v1.8.0 - 2026-10-02
 

@@ -8,6 +8,7 @@ import tempfile
 import threading
 import unittest
 from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import codex_client
@@ -681,6 +682,60 @@ class CodexStartupTests(unittest.TestCase):
 
 
 class CodexPathTests(unittest.TestCase):
+    def setUp(self):
+        directory = self.enterContext(tempfile.TemporaryDirectory(prefix="Codex discovery with spaces "))
+        self.root = Path(directory)
+        self.enterContext(patch.dict(os.environ, {
+            "APPDATA": str(self.root / "Roaming"),
+            "LOCALAPPDATA": str(self.root / "Local"),
+            "CODEX_INSTALL_DIR": "",
+        }))
+        # Simulate Windows discovery without changing pathlib's host platform.
+        self.enterContext(patch.object(codex_client, "os", SimpleNamespace(
+            name="nt", environ=os.environ, path=os.path)))
+        self.which = self.enterContext(patch("codex_client.shutil.which", return_value=None))
+
+    def native(self, relative):
+        path = self.root / relative / "codex.exe"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"fake binary")
+        return path.resolve()
+
+    def test_desktop_cli_is_found_without_path_or_npm(self):
+        native = self.native("Local/OpenAI/Codex/bin/9691020b546a15b2")
+        self.assertEqual(resolve_codex_path(), str(native))
+
+    def test_desktop_discovery_uses_newest_complete_binary_not_staging(self):
+        older = self.native("Local/OpenAI/Codex/bin/ffffffffffffffff")
+        newer = self.native("Local/OpenAI/Codex/bin/1111111111111111")
+        staging = self.native("Local/OpenAI/Codex/bin/.staging-download")
+        (newer.parent.parent / "incomplete-download").mkdir()
+        for timestamp, path in enumerate((older, newer, staging), start=1):
+            os.utime(path, (timestamp, timestamp))
+        self.assertEqual(resolve_codex_path(), str(newer))
+
+    def test_standalone_cli_is_found_without_path(self):
+        native = self.native("Local/Programs/OpenAI/Codex/bin")
+        self.native("Local/OpenAI/Codex/bin/desktop-version")
+        self.assertEqual(resolve_codex_path(), str(native))
+
+    def test_custom_install_directory_is_found_without_path(self):
+        native = self.native("custom installation")
+        with patch.dict(os.environ, {"CODEX_INSTALL_DIR": str(native.parent)}):
+            self.assertEqual(resolve_codex_path(), str(native))
+
+    def test_path_and_explicit_choice_take_precedence_over_desktop(self):
+        self.native("Local/OpenAI/Codex/bin/desktop-version")
+        native = self.native("on PATH")
+        self.which.return_value = str(native)
+        self.assertEqual(resolve_codex_path(), str(native))
+        self.which.return_value = None
+        explicit = self.native("explicit choice")
+        self.assertEqual(resolve_codex_path(str(explicit)), str(explicit))
+        with self.assertRaises(CodexError) as raised:
+            resolve_codex_path(str(self.root / "missing.exe"))
+        self.assertEqual(raised.exception.code, "codex_not_installed")
+
     def test_npm_windows_wrapper_selects_native_matching_architecture(self):
         with tempfile.TemporaryDirectory(prefix="Codex path with spaces ") as directory:
             root = Path(directory)

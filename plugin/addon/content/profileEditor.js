@@ -117,7 +117,12 @@ function readCodexProxy(value) {
         const url = new URL(value.proxyUrl);
         if (
             !/^https?:\/\//i.test(value.proxyUrl) ||
-            /[\s\\\x00-\x1f\x7f]/.test(value.proxyUrl) ||
+            /[\s\\]/.test(value.proxyUrl) ||
+            Array.from(value.proxyUrl).some(
+                (character) =>
+                    character.charCodeAt(0) < 0x20 ||
+                    character.charCodeAt(0) === 0x7f,
+            ) ||
             !["http:", "https:"].includes(url.protocol) ||
             !url.hostname ||
             /^https?:\/\/[^/]*@/i.test(value.proxyUrl) ||
