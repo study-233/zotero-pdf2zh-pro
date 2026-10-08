@@ -9,8 +9,8 @@
   <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
   <script src="/zotero-pdf2zh-pro/ui.js?v=a6ae77c8490b"></script>
   
-  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=00c4452e7048">
-  <script src="/zotero-pdf2zh-pro/site/site.js?v=edb6547183d2" defer></script>
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=ba6f2fc392c3">
+  <script src="/zotero-pdf2zh-pro/site/site.js?v=a6f989a05d83" defer></script>
   
 </head>
 <body class="guide-page" data-base="/zotero-pdf2zh-pro/">
@@ -57,19 +57,17 @@
 <ol>
 <li>首次打开时，在“安装位置”处点击“选择”，按需指定目录；使用默认位置也可以。</li>
 <li>点击主按钮 <strong>“安装并启动”</strong>，等待窗口中的操作记录完成。</li>
-<li>控制中心会在所选产品目录安装私有 uv、uv 托管的 Python 3.13，以及与控制中心同版本的服务端。</li>
-<li>当状态变为 <strong>“运行中”</strong>、显示 <strong>“翻译服务已就绪”</strong>，且主按钮变为 <strong>“停止服务”</strong> 时，本地服务已启动。</li>
+<li>等待运行环境安装完成，出现 <strong>“翻译服务已就绪”</strong> 即可。</li>
 </ol>
-<p>默认产品目录为 <code>%LOCALAPPDATA%\zotero-pdf2zh-pro</code>。也可以像下图一样安装到其他磁盘；图中的目录只是示例。</p>
+<p>默认安装到 <code>%LOCALAPPDATA%\zotero-pdf2zh-pro</code>，也可选择其他磁盘。</p>
 <p><img src="/zotero-pdf2zh-pro/assets/windows-control-center.png" alt="Windows 控制中心：服务已就绪、安装位置、自启开关和日志入口" /></p>
-<p><em>Windows 实机截图。版本号随安装版本变化；图中登录自启已关闭，首次安装默认会开启，可自行调整。</em></p>
 <h2 id="第三步保持服务运行并安装插件">第三步：保持服务运行并安装插件</h2>
 <p>服务地址保持 <code>http://127.0.0.1:8890</code>，接着完成<a href="/zotero-pdf2zh-pro/guide/installation/#installation">安装 Zotero 插件</a>。</p>
 <ul>
 <li><strong>关闭主窗口</strong>只会隐藏到托盘；重新打开控制中心可继续查看状态。</li>
 <li><strong>退出控制中心</strong>也不会停止已经运行的翻译服务。需要停止时，点击“停止服务”。</li>
-<li><strong>登录自启</strong>开启后，登录 Windows 时控制中心静默进入托盘，并确保服务运行；升级不会重置你的选择。</li>
-<li>安装不需要管理员权限，不创建 Windows Service、计划任务或防火墙规则，也不会停止占用 8890 端口的未知进程。</li>
+<li><strong>登录自启</strong>默认开启，登录 Windows 时自动启动服务并进入托盘，可随时关闭。</li>
+<li>安装通常无需管理员权限；若 8890 端口被占用，先检查是否已有服务运行。</li>
 </ul>
 <h2 id="如果控制中心打不开">如果控制中心打不开</h2>
 <ul>
@@ -79,7 +77,7 @@
 <li>图形界面仍无法使用时，可查看解压目录内的 <a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/scripts/windows/README.txt">Windows 说明</a>，使用 <code>install.cmd</code>、<code>start-server.cmd</code> 或 <code>view-log.cmd</code> 等故障恢复入口。</li>
 </ul>
 </div>
-    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#windows">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.1</span></div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#windows">在 GitHub 查看源文档 ↗</a></div>
     <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/"><small>← 上一篇</small><span>安装前准备</span></a><a href="/zotero-pdf2zh-pro/guide/installation/"><small>下一篇 →</small><span>安装 Zotero 插件</span></a></nav>
   </article>
   <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">Windows 安装</a><a href="#第一步下载并完整解压">第一步：下载并完整解压</a><a href="#第二步选择安装位置并启动">第二步：选择安装位置并启动</a><a href="#第三步保持服务运行并安装插件">第三步：保持服务运行并安装插件</a><a href="#如果控制中心打不开">如果控制中心打不开</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>

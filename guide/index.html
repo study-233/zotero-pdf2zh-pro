@@ -9,8 +9,8 @@
   <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
   <script src="/zotero-pdf2zh-pro/ui.js?v=a6ae77c8490b"></script>
   
-  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=00c4452e7048">
-  <script src="/zotero-pdf2zh-pro/site/site.js?v=edb6547183d2" defer></script>
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=ba6f2fc392c3">
+  <script src="/zotero-pdf2zh-pro/site/site.js?v=a6f989a05d83" defer></script>
   
 </head>
 <body class="guide-page" data-base="/zotero-pdf2zh-pro/">
@@ -77,8 +77,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>插件和本地服务都需要安装。</strong> 只安装 XPI 不会自动安装服务端；启动服务后，也仍需配置翻译 API。
-Windows 控制中心会安装自己的 Python 环境，macOS Homebrew 会处理依赖，无需先手动配置系统 Python。</p>
+<p><strong>插件和本地服务都需要安装。</strong> Windows 控制中心和 macOS Homebrew 会自动处理 Python 环境。</p>
 <h2 id="两种地址不要填反">两种地址不要填反</h2>
 <table>
 <thead>
@@ -102,14 +101,13 @@ Windows 控制中心会安装自己的 Python 环境，macOS Homebrew 会处理�
 </tbody>
 </table>
 <p>工作流：<code>Zotero → 本地服务 → 翻译 API → 本地生成 PDF → 导入 Zotero</code>。</p>
-<p>本地服务负责处理 PDF；使用云端 API 时，待翻译文本会发送给所选服务商，并按其规则消耗额度或计费。
-API Key 与模型权限由服务商提供，安装本插件不会自动获得 API 额度。</p>
+<p>PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选服务商，并消耗其 API 额度。</p>
 <blockquote>
 <p><strong>提示</strong></p>
 <p>第一次先用一篇篇幅较短、能够选中文字的 PDF 验证流程。默认已勾选“禁用术语提取”，建议保持：术语提取会额外消耗较多 token。</p>
 </blockquote>
 </div>
-    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#quick-start">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.1</span></div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#quick-start">在 GitHub 查看源文档 ↗</a></div>
     <nav class="doc-pagination" aria-label="上下篇教程"><span></span><a href="/zotero-pdf2zh-pro/guide/windows/"><small>下一篇 →</small><span>Windows 安装</span></a></nav>
   </article>
   <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">安装前准备</a><a href="#需要安装哪些东西">需要安装哪些东西？</a><a href="#两种地址不要填反">两种地址不要填反</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>

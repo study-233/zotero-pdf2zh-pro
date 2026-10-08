@@ -9,8 +9,8 @@
   <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
   <script src="/zotero-pdf2zh-pro/ui.js?v=a6ae77c8490b"></script>
   
-  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=00c4452e7048">
-  <script src="/zotero-pdf2zh-pro/site/site.js?v=edb6547183d2" defer></script>
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=ba6f2fc392c3">
+  <script src="/zotero-pdf2zh-pro/site/site.js?v=a6f989a05d83" defer></script>
   
 </head>
 <body class="guide-page" data-base="/zotero-pdf2zh-pro/">
@@ -49,8 +49,7 @@
 <h2 id="第一步确认-homebrew-可用">第一步：确认 Homebrew 可用</h2>
 <pre><code class="language-bash">brew --version
 </code></pre>
-<p>能看到 Homebrew 版本号即可继续。如果提示 <code>command not found: brew</code>，请先按 <a href="https://brew.sh/">Homebrew 官方安装说明</a>安装，并完成安装结束时提示的 <strong>Next steps</strong>，然后重新打开终端再检查。
-Homebrew 会根据机器环境提示所需前置依赖；系统兼容性以官方说明为准。</p>
+<p>能看到 Homebrew 版本号即可继续。如果提示 <code>command not found: brew</code>，请先按 <a href="https://brew.sh/">Homebrew 官方安装说明</a>安装，并完成安装结束时提示的 <strong>Next steps</strong>，然后重新打开终端再检查。</p>
 <h2 id="第二步安装本地服务">第二步：安装本地服务</h2>
 <pre><code class="language-bash">brew tap study-233/formula
 brew install --build-from-source study-233/formula/zotero-pdf2zh-pro
@@ -63,7 +62,7 @@ brew services list
 <p>在列表中找到 <code>zotero-pdf2zh-pro</code>，检查状态是否为 <code>started</code>。再执行：</p>
 <pre><code class="language-bash">curl -fsS http://127.0.0.1:8890/health
 </code></pre>
-<p>正常情况下会返回 JSON，其中包含 <code>&quot;status&quot;:&quot;ok&quot;</code> 和服务端 <code>version</code>。这表示本地服务可访问，<strong>还不代表翻译 API 已配置成功</strong>。
+<p>返回包含 <code>&quot;status&quot;:&quot;ok&quot;</code> 的 JSON 即表示服务已启动；接下来安装插件并配置 API。
 也可以在浏览器中打开 <a href="http://127.0.0.1:8890/health">本地健康检查</a>。</p>
 <p>上述 <code>brew services start</code> 在不使用 <code>sudo</code> 时会注册当前用户登录启动，终端可以关闭。具体行为见 <a href="https://docs.brew.sh/Manpage#services-subcommand">Homebrew services 文档</a>。
 现在继续<a href="/zotero-pdf2zh-pro/guide/installation/#installation">安装 Zotero 插件</a>。</p>
@@ -100,7 +99,7 @@ brew services list
 </table>
 <p>翻译进行中请保持服务运行；重启或停止前先处理当前任务。</p>
 </div>
-    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#macos">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.1</span></div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#macos">在 GitHub 查看源文档 ↗</a></div>
     <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/windows/"><small>← 上一篇</small><span>Windows 安装</span></a><a href="/zotero-pdf2zh-pro/guide/installation/"><small>下一篇 →</small><span>安装 Zotero 插件</span></a></nav>
   </article>
   <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">macOS 安装</a><a href="#第一步确认-homebrew-可用">第一步：确认 Homebrew 可用</a><a href="#第二步安装本地服务">第二步：安装本地服务</a><a href="#第三步启动并验证">第三步：启动并验证</a><a href="#日常启动停止和查看日志">日常启动、停止和查看日志</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>

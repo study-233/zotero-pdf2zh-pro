@@ -9,8 +9,8 @@
   <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
   <script src="/zotero-pdf2zh-pro/ui.js?v=a6ae77c8490b"></script>
   
-  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=00c4452e7048">
-  <script src="/zotero-pdf2zh-pro/site/site.js?v=edb6547183d2" defer></script>
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=ba6f2fc392c3">
+  <script src="/zotero-pdf2zh-pro/site/site.js?v=a6f989a05d83" defer></script>
   
 </head>
 <body class="guide-page" data-base="/zotero-pdf2zh-pro/">
@@ -46,8 +46,7 @@
 <span id="8-任务管理请求指标与补译"></span>
 
 <p>右键文库条目，打开 <strong>“zotero-pdf2zh-pro → zotero-pdf2zh-pro: 任务列表”</strong>。</p>
-<p><img src="/zotero-pdf2zh-pro/assets/task-manager.png" alt="Zotero 翻译任务列表：任务状态、进度与操作入口" /></p>
-<p><em>macOS 上重新截取的已有任务记录。图中“远端任务 / 导入状态 无”表示当前插件未关联本地原条目，不能据此判断已导入；自己新提交的任务需另外检查导入状态。</em></p>
+<!-- 待补截图：![Zotero 翻译任务列表：任务状态、进度与操作入口](../assets/guide/task-actions.png) -->
 <h2 id="按任务状态选择操作">按任务状态选择操作</h2>
 <table>
 <thead>
@@ -83,7 +82,7 @@
 </tr>
 </tbody>
 </table>
-<p>只要仍有应译段落失败，任务仍显示“未完成”。如果 PDF 已生成，新版服务端与插件会<strong>自动导入 Zotero，并在附件标题标注“未完成”、剩余段落数和轮次</strong>；启动 Zotero 后也会恢复待导入结果。旧服务端未提供结果可获取标志时，仍只导入完整任务。
+<p>仍有段落失败时，任务显示“未完成”。已生成的 PDF 会自动导入，并在附件标题标注剩余段落数和轮次；重开 Zotero 后会恢复待导入结果。
 补译默认使用 QPS 2、并发 4；修复输出新增附件，完整版本标注“完整”和轮次，保留旧附件及其批注。补译仍可能消耗 API 额度；“重试导入”只重新获取 PDF，不发起翻译请求。</p>
 <p>纯网址脚注、明确的邮箱列表、CSS 属性名列表和无可译正文的图片标签会按规则保留，不调用翻译 API；包含这些内容的正常正文仍会翻译。论文中的字面标签受到保护，其内部自然语言仍会翻译。服务重启后可利用任务检查点继续补译。
 “删除记录”会同时删除服务端对应任务的数据和恢复检查点，不只是隐藏列表中的一行。</p>
@@ -131,7 +130,7 @@
 <p>通用 OpenAI 翻译器的 Chat Completions 与 Responses 共用指标面板。上游未返回的数据会显示 <code>-</code> 或不可用，部分缺失时标记不完整，<strong>不能把缺失统计当作零消耗</strong>。
 连接、超时和临时服务错误最多尝试 5 次，重试也受公共限流和并发限制。</p>
 </div>
-    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#task-management">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.1</span></div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#task-management">在 GitHub 查看源文档 ↗</a></div>
     <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/translation-options/"><small>← 上一篇</small><span>常用翻译参数</span></a><a href="/zotero-pdf2zh-pro/guide/selection-translation/"><small>下一篇 →</small><span>划词精读与翻译记忆</span></a></nav>
   </article>
   <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">任务管理与失败补译</a><a href="#按任务状态选择操作">按任务状态选择操作</a><a href="#看懂请求详情">看懂请求详情</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>

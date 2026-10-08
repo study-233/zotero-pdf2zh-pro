@@ -9,8 +9,8 @@
   <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
   <script src="/zotero-pdf2zh-pro/ui.js?v=a6ae77c8490b"></script>
   
-  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=00c4452e7048">
-  <script src="/zotero-pdf2zh-pro/site/site.js?v=edb6547183d2" defer></script>
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=ba6f2fc392c3">
+  <script src="/zotero-pdf2zh-pro/site/site.js?v=a6f989a05d83" defer></script>
   
 </head>
 <body class="guide-page" data-base="/zotero-pdf2zh-pro/">
@@ -80,13 +80,16 @@ brew services restart zotero-pdf2zh-pro
 curl -fsS http://127.0.0.1:8890/health
 </code></pre>
 <p>更新前先等待翻译完成。Windows 更新会下载、校验并升级控制中心和服务端，替换程序时会显示命令行进度，结束后自动关闭。
-任务、结果、日志和自启选择会保留，更新失败会尝试恢复旧版。尚不具备自动更新能力的旧控制中心，需要先手动安装一次新版 Windows ZIP。
-插件通过公开的 <code>update.json</code> 接收稳定版更新，源码可从对应版本标签获取。</p>
+任务、结果、日志和自启选择会保留，更新失败会尝试恢复旧版。尚不具备自动更新能力的旧控制中心，需要先手动安装一次新版 Windows ZIP。</p>
+<details>
+<summary>更新后配置消失或无法调用？</summary>
+<p>已移除的 <code>OpenAICompatible</code> 旧预设、腾讯机器翻译和 Dify 配置需要重新配置；其余已保存的地址、模型和参数保持原值。停用模型或失效地址需手动编辑并测试。阿里云旧共享域名仍可用；Azure 文本翻译旧配置缺少区域时使用 <code>chinaeast2</code>。详情见<a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/provider-audit-2026-10-03.md">接口兼容记录</a>。</p>
+</details>
 <h2 id="数据位置与迁移">数据位置与迁移</h2>
 <ul>
 <li><strong>Windows</strong>：控制中心点击“打开数据目录”或“打开日志”；所选产品目录中的 <code>data</code> 存任务数据，<code>logs</code> 存日志。私有运行时和缓存也在该产品目录，开始菜单、自启项和安装位置记录在 Windows 用户配置中。</li>
 <li><strong>更改 Windows 安装位置</strong>：使用“安装位置 → 更改”。迁移会先停止服务、复制并验证任务数据与检查点，失败时恢复原安装；不要直接拖动正在使用的产品目录。</li>
-<li><strong>macOS / uv</strong>：打开 <code>/health</code>，查看 <code>workspace.path</code> 获取当前实际数据目录；不要根据别人的用户名或版本号猜路径。Homebrew 日志使用上文的 <code>tail</code> 命令查看。</li>
+<li><strong>macOS / uv</strong>：打开 <code>/health</code>，在 <code>workspace.path</code> 查看数据目录；Homebrew 日志使用安装章节中的 <code>tail</code> 命令查看。</li>
 <li>如需保留翻译结果和恢复能力，在卸载或手动迁移前备份实际数据目录；任务中包含原 PDF、译文及恢复信息。</li>
 </ul>
 <h2 id="卸载">卸载</h2>
@@ -97,7 +100,7 @@ curl -fsS http://127.0.0.1:8890/health
 <li><strong>Zotero 插件</strong>：在“工具 → 插件”中禁用或移除。移除插件与卸载本地服务是两件事，需要分别处理。</li>
 </ul>
 </div>
-    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#maintenance">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.1</span></div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#maintenance">在 GitHub 查看源文档 ↗</a></div>
     <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/glossary/"><small>← 上一篇</small><span>下载与使用术语库</span></a><a href="/zotero-pdf2zh-pro/guide/troubleshooting/"><small>下一篇 →</small><span>常见问题</span></a></nav>
   </article>
   <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">更新、迁移与卸载</a><a href="#更新插件和服务端">更新插件和服务端</a><a href="#数据位置与迁移">数据位置与迁移</a><a href="#卸载">卸载</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>

@@ -9,8 +9,8 @@
   <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
   <script src="/zotero-pdf2zh-pro/ui.js?v=a6ae77c8490b"></script>
   
-  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=00c4452e7048">
-  <script src="/zotero-pdf2zh-pro/site/site.js?v=edb6547183d2" defer></script>
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=ba6f2fc392c3">
+  <script src="/zotero-pdf2zh-pro/site/site.js?v=a6f989a05d83" defer></script>
   
 </head>
 <body class="guide-page" data-base="/zotero-pdf2zh-pro/">
@@ -83,9 +83,8 @@
 </tr>
 </tbody>
 </table>
-<p><strong>上表中的域名和模型是占位符，不能直接用于翻译。</strong> 聊天网站的网址、账号套餐名称通常不是 API 地址或模型 ID，请以服务商 API 文档为准。</p>
-<p><img src="/zotero-pdf2zh-pro/assets/zotero-api-config-macos.png" alt="新增翻译配置：名称、接口类型、API 地址、API Key 和模型" /></p>
-<p><em>新增翻译配置窗口实机截图。灰色文字是输入提示，并非已保存的配置；使用时需填入自己的 API 地址、API Key 和模型。</em></p>
+<p>地址与模型按服务商的 API 文档填写，不能使用聊天网页地址或上表占位符。</p>
+<!-- 待补截图：![新增翻译配置：名称、接口类型、API 地址、API Key 和模型](../assets/guide/api-config.png) -->
 <ol>
 <li>填写 API 地址和 API Key。</li>
 <li>点击 <strong>“获取模型”</strong>，输入关键词筛选，使用方向键和回车选择；也可以直接手填模型 ID。</li>
@@ -95,12 +94,56 @@
 <p>获取模型失败不一定代表不能翻译：有些服务商不提供模型列表接口。此时手填模型后测试即可。
 “仅保存”不会切换当前配置；测试未保存的配置也不会改变正在使用的配置。</p>
 <h2 id="接口类型与模型来源">接口类型与模型来源</h2>
-<p>当前提供 19 种接口类型。OpenAI 兼容、DeepSeek、Gemini、Grok、Groq、SiliconFlow 支持“获取模型”，也可手填；列表表示服务返回的目录，调用权限以“测试 API”为准。SiliconFlow 免费翻译使用上游代理，与自备 Key 的 SiliconFlow 是不同入口。</p>
-<p>阿里云通用模型与 Qwen-MT 请从百炼控制台复制业务空间、地域对应的 API 地址；旧共享域名仍有效。Qwen-MT 只使用 <code>qwen-mt-*</code> 翻译模型。智谱新配置地址为 <code>https://open.bigmodel.cn/api/paas/v4</code>，ModelScope 为 <code>https://api-inference.modelscope.cn/v1</code>；模型按控制台填写。</p>
-<p>Azure OpenAI 的“部署名称”填写你创建的部署名，地址使用资源根地址或 <code>/openai/v1</code> 地址。Azure 文本翻译则填写资源端点、Key 和区域，全球资源可以留空区域；缺少区域字段的旧配置继续使用 <code>chinaeast2</code>。中国区文本翻译端点为 <code>https://api.translator.azure.cn</code>。</p>
-<p>Ollama 填写已安装模型，Xinference 填部署 UID。AnythingLLM 填完整的工作区聊天地址，例如 <code>http://localhost:3001/api/v1/workspace/工作区标识/chat</code>；模型由工作区设置。Claude Code 填服务所在电脑的 <code>claude</code> 命令路径并提前登录。</p>
-<p>升级后会删除 <code>OpenAICompatible</code> 旧预设、腾讯机器翻译和 Dify 配置，并清理可解析的旧配置备份；当前选择被删除时需重新选择。其余已保存配置的地址、模型与参数保持原值，旧地址或停用模型需手动编辑后测试。完整依据见 <a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/provider-audit-2026-10-03.md">接口审计与验收记录</a>。</p>
-<h2 id="使用-codex-登录配置自-v181-起">使用 Codex 登录配置（自 v1.8.1 起）</h2>
+<p>提供 19 种接口类型。OpenAI 兼容、DeepSeek、Gemini、Grok、Groq、SiliconFlow 支持“获取模型”，也可手填；调用权限用“测试 API”确认。</p>
+<table>
+<thead>
+<tr>
+<th>接口</th>
+<th>配置要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SiliconFlow</td>
+<td>自备 Key 与免费翻译是不同入口；免费翻译使用上游代理</td>
+</tr>
+<tr>
+<td>阿里云 / Qwen-MT</td>
+<td>从百炼控制台复制业务空间、地域对应的地址；Qwen-MT 选 <code>qwen-mt-*</code> 模型</td>
+</tr>
+<tr>
+<td>智谱</td>
+<td>地址为 <code>https://open.bigmodel.cn/api/paas/v4</code>，模型按控制台填写</td>
+</tr>
+<tr>
+<td>ModelScope</td>
+<td>地址为 <code>https://api-inference.modelscope.cn/v1</code>，模型按控制台填写</td>
+</tr>
+<tr>
+<td>Azure OpenAI</td>
+<td>填部署名称，地址用资源根地址或 <code>/openai/v1</code></td>
+</tr>
+<tr>
+<td>Azure 文本翻译</td>
+<td>填资源端点、Key 和区域；全球资源可留空区域，中国区端点为 <code>https://api.translator.azure.cn</code></td>
+</tr>
+<tr>
+<td>Ollama / Xinference</td>
+<td>分别填写已安装模型名 / 部署 UID</td>
+</tr>
+<tr>
+<td>AnythingLLM</td>
+<td>填完整工作区地址，如 <code>http://localhost:3001/api/v1/workspace/工作区标识/chat</code>；模型由工作区设置</td>
+</tr>
+<tr>
+<td>Claude Code</td>
+<td>填服务所在电脑的 <code>claude</code> 命令路径，并提前登录</td>
+</tr>
+</tbody>
+</table>
+<p>接口依据与兼容记录见<a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/provider-audit-2026-10-03.md">接口审计</a>。</p>
+<p><a id="使用-codex-登录配置自-v181-起"></a><!-- 保留旧链接 --></p>
+<h2 id="使用-codex-登录配置">使用 Codex 登录配置</h2>
 <p>在运行本地服务的同一系统用户下安装 Codex CLI，并完成 ChatGPT 登录。新增配置时选择 <strong>Codex</strong>，
 CLI 路径留空自动发现，或填写实际可执行文件的完整路径；不填写 API Key 或 API URL。
 点击“获取模型”，初始使用 <code>gpt-6-luna</code> 与模型默认推理档位，速度固定 Standard。
@@ -109,8 +152,7 @@ CLI 路径留空自动发现，或填写实际可执行文件的完整路径；�
 例如 <code>http://127.0.0.1:7897</code>（端口以代理软件为准）。保持代理软件运行即可，无需依赖 TUN。
 默认“跟随服务环境”使用服务启动时继承的代理；“直接连接”绕过代理环境变量，系统 TUN 路由仍可能生效。
 设置仅用于当前 Codex 配置，全文与划词均生效；保存后对新请求生效。代理 URL 不支持账号密码或路径。</p>
-<p>Codex 可用于全文翻译，也可在划词设置中独立选择或跟随全文配置。插件与本地服务需分别升级至 v1.8.1 或更新版本。
-真实论文译文质量和双平台实际使用仍需按验收指南核对。
+<p>Codex 可用于全文翻译，也可在划词设置中独立选择或跟随全文配置。
 安装、排错和回退见 <a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/codex-acceptance.md">Codex 验收指南</a>，模型选择见 <a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/codex-model-value-2026-10-03.md">套餐与性价比报告</a>。</p>
 <h2 id="api-地址怎么填">API 地址怎么填？</h2>
 <p>以下均为地址结构示例，需替换成服务商提供的真实地址：</p>
@@ -146,7 +188,7 @@ CLI 路径留空自动发现，或填写实际可执行文件的完整路径；�
 <ul>
 <li>如果填写的是完整端点，手动选择的协议须与 <code>/chat/completions</code> 或 <code>/responses</code> 后缀一致。</li>
 <li>自动识别仅在明确不支持接口时尝试另一协议；鉴权、模型、参数、限流和超时错误会直接提示。任务开始后固定使用已确定的协议。</li>
-<li>新配置默认自动识别；旧配置继续使用 Chat Completions。旧服务端无法使用 Responses 或额外请求参数时，请先升级服务端。</li>
+<li>默认使用自动识别。遇到协议不支持时，检查服务端更新。</li>
 <li>Responses 目前支持同步、非流式文本翻译，各段独立请求且默认 <code>store=false</code>；仅提供流式响应或要求工具调用的接口不适用。</li>
 </ul>
 <p>“额外请求参数（JSON）”留为 <code>{}</code> 即可。只有服务商要求时再填写，例如：</p>
@@ -172,10 +214,10 @@ CLI 路径留空自动发现，或填写实际可执行文件的完整路径；�
 旧配置备份保存在 Zotero 高级配置的 <code>extensions.zotero.pdf2zhpro.llmApisLegacyBackup</code>，其中包含原凭据，不要公开分享。</p>
 </details>
 </div>
-    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#api-configuration">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.1</span></div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#api-configuration">在 GitHub 查看源文档 ↗</a></div>
     <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/installation/"><small>← 上一篇</small><span>安装 Zotero 插件</span></a><a href="/zotero-pdf2zh-pro/guide/usage/"><small>下一篇 →</small><span>首次翻译与批量任务</span></a></nav>
   </article>
-  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">配置翻译 API</a><a href="#新增第一个配置">新增第一个配置</a><a href="#接口类型与模型来源">接口类型与模型来源</a><a href="#使用-codex-登录配置自-v181-起">使用 Codex 登录配置（自 v1.8.1 起）</a><a href="#api-地址怎么填">API 地址怎么填？</a><a href="#高级设置协议和额外请求参数">高级设置：协议和额外请求参数</a><a href="#管理多个配置">管理多个配置</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
+  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">配置翻译 API</a><a href="#新增第一个配置">新增第一个配置</a><a href="#接口类型与模型来源">接口类型与模型来源</a><a href="#使用-codex-登录配置">使用 Codex 登录配置</a><a href="#api-地址怎么填">API 地址怎么填？</a><a href="#高级设置协议和额外请求参数">高级设置：协议和额外请求参数</a><a href="#管理多个配置">管理多个配置</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
 </main>
 
   <footer class="site-footer" id="community">

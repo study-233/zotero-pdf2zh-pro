@@ -9,8 +9,8 @@
   <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
   <script src="/zotero-pdf2zh-pro/ui.js?v=a6ae77c8490b"></script>
   
-  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=00c4452e7048">
-  <script src="/zotero-pdf2zh-pro/site/site.js?v=edb6547183d2" defer></script>
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=ba6f2fc392c3">
+  <script src="/zotero-pdf2zh-pro/site/site.js?v=a6f989a05d83" defer></script>
   
 </head>
 <body class="guide-page" data-base="/zotero-pdf2zh-pro/">
@@ -45,71 +45,128 @@
     <div class="prose"><p><a id="selection-translation"></a></p>
 <span id="reader-划词与翻译记忆"></span>
 
-<p>此功能自 v1.8.0 起提供；插件与本地服务需分别升级至 v1.8.0 或更新版本，才能使用完整功能。
-在原始 PDF 的 Reader 中选中文字，选区稳定 <strong>400 毫秒</strong>后自动打开结果卡片，
-无需再点击查词或翻译按钮；连续调整选区只处理最后一次选择。</p>
-<ul>
-<li><strong>单词与短语</strong>：用户 CSV Glossary 优先，其次已下载或导入的柯林斯词库，最后由内置 5 万条 ECDICT 英汉词条兜底。先查原词；未命中时尝试常见复数原形，仅在词库确有词条时显示，并标注词形还原。中文释义为主，有音标和词性时显示；柯林斯前 3 条释义直接显示，其余释义、英文解释和最多 2 条双语例句默认折叠。词典适用于英语到简体中文，已收录词条无需运行本地服务或联网。</li>
-<li><strong>句段</strong>：只将所选内容的译文作为主结果。先查当前服务的本地译文缓存（包括重翻结果），再复用精确 Translation Memory；仅命中整段时，将其放入默认折叠的“已有段落译文”，继续翻译选文，不按句号或长度猜测对应译文。所选原文默认折叠，复制仅复制主结果。</li>
-<li><strong>翻译服务</strong>：设置页的“选句翻译服务”默认为必应，免注册、免模型密钥，需要联网及本地服务运行。优先使用当前服务缓存，再查询精确记忆和本地术语，未命中才请求所选服务。必应只接收选文和语言，不接收论文上下文或模型密钥；额度不足、超时等失败会显示错误，<strong>不会自动改用付费模型</strong>。也可手动选择“模型翻译”，使用已有 OpenAI 兼容配置和有限页面上下文。</li>
-<li><strong>使用模型</strong>：可选择“跟随全文配置”或独立指定一个已保存的模型配置，用于模型翻译、补充释义和语境解释；独立选择不改变全文翻译配置。删除所选配置后会提示重新选择，不会静默改用其他模型。修改生效配置会取消旧请求，避免旧结果覆盖新选择。</li>
-<li><strong>相邻页上下文</strong>：使用模型翻译时，页首／页尾附近的选文会按需补取上一页末尾、下一页开头，每侧最多 2 段、800 字符；不扫描整篇论文。相邻页并行读取，单页超过 1.5 秒或读取失败即跳过；总上下文不超过 12,000 字符。必应不接收这些上下文。</li>
-<li><strong>错误处理</strong>：记忆查询失败不会当作未命中并发送外部翻译请求。词库读取异常时优先用 ECDICT 兜底并提示重新导入；没有可用结果时显示简短错误。</li>
-<li><strong>浮窗操作</strong>：滚动 PDF、翻页及原生选区菜单消失时保留结果；未固定时点击正文空白或外部、切换 Reader 会关闭，固定后点击空白仍保留。新划选更新同一张卡片。拖动标题栏移动，拖动右下角调整宽高，尺寸、固定状态和位置自动记住；固定浮窗在关闭、切换论文和重启后恢复位置，取消固定后随新选区定位。长内容在窗口内部滚动。Esc 或“关闭”关闭悬浮窗并取消请求，旧响应不会重新弹出。</li>
-<li><strong>右侧窗格</strong>：点击“移到右侧”，结果进入阅读器右侧的“翻译”区块；可“切回悬浮窗”，显示方式在后续划词及重启后沿用。切换保留结果和进行中的请求。右侧通过 Zotero 原生分隔条调宽，点击正文、滚动或按 Esc 不清空，使用“清空”移除当前结果。不同文献分别保留结果；没有右侧宿主的窗口使用悬浮窗。</li>
-</ul>
-<p><strong>个人词典与语境含义</strong>：</p>
-<ul>
-<li><strong>通用释义</strong>：原词典内容保持原样；缺词时先查个人词典，未命中且已配置模型则自动生成词性、常见释义、用法说明和例句。设置中的“缺词时自动补充释义”可关闭。未配置模型时显示必应基础译文；基础译文不作为详细词条保存。</li>
-<li><strong>自动释义</strong>：术语表或离线词典命中后直接显示，不再追加另一份释义。缺词时优先复用已保存的个人词条，再按自动补全设置生成；AI 内容标为“AI 补充 · 模型名”，可重新生成。未配置模型时提示“详细释义和语境解释需要配置模型”，并提供必应基础译文。个人词条跨论文、跨模型复用，不自动过期，不修改导入词典或术语表。句段按所选服务翻译，选了模型但没有配置时回退必应。</li>
-<li><strong>当前语境含义</strong>：点击“结合上下文解释”才调用所选划词模型，结合当前页及必要的相邻页解释此处含义；相同论文、上下文、模型有缓存时直接读取。上下文读取失败时提示重试，不生成脱离语境的解释。</li>
-<li><strong>重翻</strong>：通用释义、语境含义和句段译文分别提供重翻按钮，使用当前配置重新请求；等待期间保留原结果，成功后更新对应缓存，失败保留旧结果。各层可以分别复制。</li>
-<li><strong>本地保存</strong>：后端数据目录的 <code>selection-cache.sqlite3</code> 保存个人词典和译文缓存。普通译文、语境缓存最多 20,000 条，按最近使用顺序保留；个人词典不参与淘汰。“清空翻译缓存”保留个人词典与全文记忆。使用这些记录需要本地服务运行，不自动跨电脑同步。</li>
-</ul>
-<p>若提示“本地服务仍返回段落译文”，需要同时更新配套服务端；仅重新安装插件无法更新服务代码。可通过 <code>/health</code> 返回的 <code>capabilities.exactSelectionTranslation</code> 是否为 <code>true</code> 确认支持精确选文翻译，不能只比较版本号。</p>
-<p>语境含义按需生成；尚不提供查看中文译文按钮或译文 PDF 跳转功能。
-词典数据与许可说明见 <a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/plugin/addon/content/dictionaries/NOTICE.md">词典来源说明</a>。</p>
-<p><strong>下载或导入柯林斯扩展词库</strong>：</p>
+<p>打开<strong>可选中文字的原始 PDF</strong>，划选单词或句子，结果会自动显示。单词可离线查询；选句翻译和语境解释需要本地服务运行。</p>
+<h3 id="查单词与短语">查单词与短语</h3>
 <ol>
-<li>打开设置 → PDF2zh Pro → 划词与选句翻译，点击柯林斯扩展词库的“下载并启用”。下载直接来自项目 GitHub，无需浏览器扩展或本地翻译服务。</li>
-<li>下载约 10.9 MB，过程中显示进度并可取消。安装时校验 SHA-256、压缩数据及词条结构，成功后显示 37,375 个有效词条并默认启用柯林斯；若下载期间主动切换词典，则保留你的选择。</li>
-<li>版本、来源、945 个 AI 补充条目、跳过数量和安装时间收在“详情”。AI 条目显示独立来源，不冒充柯林斯原始释义。</li>
-<li>已安装时可“检查更新”；失败、取消或磁盘写入错误保留旧词库。关闭设置页不取消下载，重新打开可继续查看状态。停止或重启 Zotero 会中止未完成下载，之后可重试。</li>
-<li>“从文件导入”仍支持兼容的柯林斯词库 JSON 文件和本地补充版；已有导入用户无需重新下载。原始文件的空条目及 4 个无有效中文释义的条目会跳过，未收录词由 ECDICT 兜底。</li>
+<li>选中单词或短语，稍等约 0.4 秒。</li>
+<li>查看中文释义、音标和词性；展开可查看更多释义及双语例句。</li>
+<li>点击“复制”保存结果，继续划选会更新同一张卡片。</li>
 </ol>
-<p>词库只在下载或导入后保存到 Zotero 数据目录的 <code>pdf2zhpro/dictionaries/</code> 目录，不打包进 XPI、不写入任务恢复数据库，也不会上传用户词库。按需加载、跨 Reader 共享缓存，更新后自动刷新；迁移 Zotero 时可一并备份此目录。</p>
-<p>全文输出完成后，成功且非空的段落写入数据目录的 <code>translation-memory.sqlite3</code>。
-该库与任务目录中的 <code>paragraph-recovery.sqlite3</code> 分开；删除任务会清除恢复文件，但保留阅读记忆。
-查询按 PDF 文件内容的 SHA-256 和目标语言隔离，切换目标语言后不会显示其他语言的译文。
-服务启动时会从仍保留输入 PDF 和恢复库的历史完成任务补建记忆；升级前已删除的任务无法恢复。
-旧恢复库中无法还原的公式或排版内容保留 <code>⟦原排版内容⟧</code> 标记，说明默认折叠；精确命中时不会为了修饰显示重新翻译。</p>
-<p>当前边界：仅支持可选中文本的原 PDF；尚不支持扫描件划词、精确词级对齐、译文附件自动反查、
-下载术语包查词或墨墨。短文本支持转换为 OpenAI 兼容引擎的现有配置；自 v1.8.1 起另支持 Codex CLI 配置，见上文说明。
-必应长选文按最多 1,000 个 UTF-8 字节分片，优先句界和空白，每秒最多一次请求、总等待 45 秒；失败不把部分结果当作完整译文。
-模型模式的 PDF 页上下文采用简单布局规则，遇到复杂多栏可能不完整，读取失败时退回选文本身。
-内存热点缓存最多 128 条、有效期 1 小时；持久缓存及个人词典在服务重启后仍可读取，全文记忆独立保留。</p>
-<p>手动验收：</p>
+<p><img src="/zotero-pdf2zh-pro/assets/guide/selection-word.png" alt="选中单词后自动显示释义、音标和词性" /></p>
+<p>查词顺序为 <strong>自定义 CSV → 柯林斯扩展词库 → 内置 ECDICT</strong>。内置约 5 万条英汉词条，无需联网或启动服务；柯林斯需先下载。常见复数可尝试还原原形，并显示词形还原标记。</p>
+<h3 id="翻译句子与段落">翻译句子与段落</h3>
+<p>选中句段即可翻译。主结果只对应选文；匹配到的整段译文收在“已有段落译文”，复制主结果不会带上整段参考。</p>
+<p><img src="/zotero-pdf2zh-pro/assets/guide/selection-sentence.png" alt="选句翻译：译文、重新翻译与复制入口" /></p>
+<p>在 <strong>设置 → 划词与选句翻译</strong> 中选择服务：</p>
+<table>
+<thead>
+<tr>
+<th>服务</th>
+<th>需要准备</th>
+<th>使用方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>必应（默认）</td>
+<td>联网并运行本地服务，无需 Key</td>
+<td>只发送选文与语言；失败时显示错误，不会自动调用付费模型</td>
+</tr>
+<tr>
+<td>模型翻译</td>
+<td>已保存的 OpenAI 兼容或 Codex 配置</td>
+<td>可跟随全文配置，也可独立选择；按需结合页面上下文</td>
+</tr>
+</tbody>
+</table>
+<p>优先复用本地缓存、精确匹配的全文译文和术语；重复选择通常无需再次请求。点击“重新翻译”使用当前配置重新生成，失败时保留原结果。</p>
+<p>独立划词模型不改变全文配置。删除所选配置后需重新选择；选择模型模式但尚未配置模型时使用必应基础翻译。</p>
+<h3 id="个人词典与语境解释">个人词典与语境解释</h3>
+<ul>
+<li><strong>缺词补充</strong>：离线词库未命中时，先查个人词典，再按设置自动生成释义、用法和例句；可关闭“缺词时自动补充释义”。未配置模型时只提供必应基础译文。</li>
+<li><strong>结合上下文解释</strong>：点击后由划词模型解释选文在论文中的含义；需要页面上下文，读取失败时可重试。</li>
+<li><strong>分别重翻、复制</strong>：通用释义、语境解释和句段译文各自独立，重翻时原结果继续显示。</li>
+</ul>
+<p><img src="/zotero-pdf2zh-pro/assets/guide/selection-context.png" alt="点击结合上下文解释，理解选文在论文中的含义" /></p>
+<p>AI 释义标注模型来源，保存到个人词典后可跨论文、跨模型复用；不会改写导入词典或术语表。必应基础译文不保存为详细词条。</p>
+<p>模型翻译与语境解释按需读取当前页及相邻页，不扫描整篇论文；复杂多栏可能影响上下文。必应不发送论文上下文。</p>
+<h3 id="浮窗与右侧面板">浮窗与右侧面板</h3>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>拖动标题栏 / 右下角</td>
+<td>移动 / 调整浮窗大小，自动记住尺寸</td>
+</tr>
+<tr>
+<td>固定浮窗</td>
+<td>点击正文空白时继续保留，位置在切换论文、重启后恢复</td>
+</tr>
+<tr>
+<td>移到右侧</td>
+<td>在阅读器右侧“翻译”区块显示，用 Zotero 分隔条调宽</td>
+</tr>
+<tr>
+<td>切回悬浮窗</td>
+<td>保留当前结果和进行中的请求；后续划词沿用显示方式</td>
+</tr>
+<tr>
+<td>Esc / 关闭</td>
+<td>关闭浮窗并取消请求；右侧面板用“清空”移除结果</td>
+</tr>
+</tbody>
+</table>
+<p><img src="/zotero-pdf2zh-pro/assets/guide/selection-sidebar.png" alt="右侧翻译面板：边读原文边查看译文" /></p>
+<p>滚动和翻页不会关闭结果；未固定的浮窗在点击空白或切换论文时关闭。侧栏为每篇论文分别保留结果；不支持侧栏的窗口使用浮窗。连续划选只显示最后一次结果，长内容在卡片内滚动。</p>
+<h3 id="下载与管理词典">下载与管理词典</h3>
 <ol>
-<li>安装本版 XPI 并升级配套服务端，重启 Zotero，打开原始 PDF。</li>
-<li>选中 <code>Unconditional</code>，等待约 400 毫秒：独立卡片自动显示词义和音标，没有查词/翻译按钮，也没有展开的整段原文。暂时停止本地服务后，重复此步仍应能查到词义。</li>
-<li>选中精确命中的已译段落，确认外部翻译调用为零。再只选其中一句，主结果应只对应该句，“已有段落译文”默认折叠，复制不包含整段参考。</li>
-<li>测试复制、拖动、固定、Esc 和关闭按钮，切换深浅主题，并在窗口边缘划选长段落。滚动 PDF、翻页、选区菜单消失不关闭；未固定时点击正文空白或切换 Reader 关闭，固定后保留。验证右下角缩放、尺寸记忆和右侧切换；侧栏结果按 Reader 隔离，切换容器不重复请求，清空后不被旧响应恢复。</li>
-<li>连续选择不同文本，或在加载中关闭卡片，确认仅最后一次选择的结果显示、没有多张卡片堆积，旧结果不会覆盖或重新弹出。手动关闭后等待，再重新划选同一文字才再次显示。</li>
-<li>不配置模型，选择未译句子，确认显示必应结果；重复选择命中缓存。免费服务失败时确认没有模型调用、没有部分译文。手动切到“模型翻译”，分别验证跟随全文配置、独立模型、配置删除、成功和超时；独立选择不影响全文配置。</li>
-<li>下载词库后关闭 Chrome、停止本地服务并断网，选 <code>Unconditional</code> 应显示“柯林斯离线词典”，选 <code>gramme</code> 应显示“AI 补充释义”。原生划选菜单应保留高亮工具和其他插件内容，没有本插件遗留的横线、空白。</li>
-<li>验证下载取消、重试、更新失败保留旧词库，以及导入取消、损坏文件、重新导入、未收录词的 ECDICT 回退。删除已完成任务后，再查询原 PDF，确认已有记忆仍能命中。</li>
+<li>打开 <strong>设置 → 划词与选句翻译</strong>，点击柯林斯扩展词库的 <strong>“下载并启用”</strong>。</li>
+<li>等待下载完成，确认离线词典选为“柯林斯”。支持 37,375 个有效词条，下载约 10.9 MB。</li>
+<li>已安装时可“检查更新”；也可通过“从文件导入”安装兼容的词库 JSON。</li>
 </ol>
-<p>开发者可选浏览器回归检查：安装 Playwright 与 Chrome 后，在仓库根目录运行
-<code>node scripts/check_selection_popup.cjs</code>；也可将 Playwright 模块路径作为第一个参数。
-此检查使用隔离的无头浏览器运行实际划选模块，以模拟资源和翻译响应覆盖自动查询、嵌套 PDF 文档点击、请求取消及初始化异常；截图输出到忽略目录 <code>.local-dev/selection-ui/</code>，不操作 Zotero 或真实模型。
-设置页交互另可运行 <code>node scripts/check_settings_ui.cjs</code>，覆盖拖拽标题、下载状态、深浅主题和窄窗口；该检查将 XUL 控件映射为 HTML 控件。浏览器检查不能代替 Zotero 中的原生验收。</p>
-<p>备份或迁移时一并保存 <code>translation-memory.sqlite3</code>；建议先停止服务再复制数据目录。
-该库含原文与译文，请按论文数据的隐私要求保存。</p>
+<!-- 待补截图：![划词设置：服务、模型、离线词典与下载入口](../assets/guide/selection-settings.png) -->
+<p>下载无需本地服务。关闭设置页不会中止下载；退出 Zotero 会中止，之后可重试。下载、更新或导入失败保留旧词库；下载期间主动切换词典会保留你的选择。</p>
+<p>未收录词由 ECDICT 兜底；读取异常时提示重新导入。词库“详情”显示版本、来源和安装信息，其中 945 条 AI 补充释义单独标注来源。数据与许可见<a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/plugin/addon/content/dictionaries/NOTICE.md">词典来源说明</a>。</p>
+<h3 id="缓存备份与使用范围">缓存、备份与使用范围</h3>
+<table>
+<thead>
+<tr>
+<th>数据</th>
+<th>保存与清理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>个人词典</td>
+<td>保存生成的详细词条，不自动过期；“清空翻译缓存”会保留</td>
+</tr>
+<tr>
+<td>选句与语境缓存</td>
+<td>保存在服务端 <code>selection-cache.sqlite3</code>，最多 20,000 条，优先保留最近使用的结果</td>
+</tr>
+<tr>
+<td>全文翻译记忆</td>
+<td>保存在 <code>translation-memory.sqlite3</code>；删除任务或清空翻译缓存不会删除</td>
+</tr>
+<tr>
+<td>柯林斯词库</td>
+<td>保存在 Zotero 数据目录的 <code>pdf2zhpro/dictionaries/</code>，可随 Zotero 数据迁移</td>
+</tr>
+</tbody>
+</table>
+<p>备份服务数据前先停止服务，保留上述两个数据库；个人词典和缓存不自动跨电脑同步。全文记忆按原 PDF 内容和目标语言匹配，历史任务仍保留输入 PDF 与检查点时可自动补建。</p>
+<p>支持可选中文本的原 PDF；扫描件划词、译文附件反查、精确词级对齐、下载术语包查词及墨墨暂不支持。无法还原的旧排版内容以 <code>⟦原排版内容⟧</code> 标记。</p>
+<p>查询记忆失败时先显示错误，不直接转为外部请求。若提示“本地服务仍返回段落译文”，在<a href="/zotero-pdf2zh-pro/guide/maintenance/#maintenance">更新与维护</a>中更新服务端。更多机制见<a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/README.md#reading-memory-and-short-text">服务端说明</a>，功能验收见<a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md#%E5%88%92%E8%AF%8D%E5%8A%9F%E8%83%BD%E9%AA%8C%E6%94%B6">开发维护笔记</a>。</p>
 </div>
-    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#selection-translation">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.1</span></div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#selection-translation">在 GitHub 查看源文档 ↗</a></div>
     <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/task-management/"><small>← 上一篇</small><span>任务管理与失败补译</span></a><a href="/zotero-pdf2zh-pro/guide/glossary/"><small>下一篇 →</small><span>下载与使用术语库</span></a></nav>
   </article>
-  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">划词精读与翻译记忆</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
+  <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">划词精读与翻译记忆</a><a href="#查单词与短语">查单词与短语</a><a href="#翻译句子与段落">翻译句子与段落</a><a href="#个人词典与语境解释">个人词典与语境解释</a><a href="#浮窗与右侧面板">浮窗与右侧面板</a><a href="#下载与管理词典">下载与管理词典</a><a href="#缓存备份与使用范围">缓存、备份与使用范围</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
 </main>
 
   <footer class="site-footer" id="community">

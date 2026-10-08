@@ -9,8 +9,8 @@
   <link rel="icon" href="/zotero-pdf2zh-pro/assets/logo.svg" type="image/svg+xml">
   <script src="/zotero-pdf2zh-pro/ui.js?v=a6ae77c8490b"></script>
   
-  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=00c4452e7048">
-  <script src="/zotero-pdf2zh-pro/site/site.js?v=edb6547183d2" defer></script>
+  <link rel="stylesheet" href="/zotero-pdf2zh-pro/site/site.css?v=ba6f2fc392c3">
+  <script src="/zotero-pdf2zh-pro/site/site.js?v=a6f989a05d83" defer></script>
   
 </head>
 <body class="guide-page" data-base="/zotero-pdf2zh-pro/">
@@ -54,18 +54,58 @@
 </ul>
 <p>输出选项的中文名称以英译中为例；实际译文语言由“目标语言”决定。</p>
 <h2 id="自定义附件标题">自定义附件标题</h2>
-<p>开启“自定义译文附件标题”，从“添加字段”下拉菜单选择“论文标题”“作者”“年份”“模型”等内容块。拖动手柄调整顺序，或使用块上的前移、后移按钮；手柄获得焦点后也可按 Alt + 方向键移动。点击 × 删除内容块，同一字段不能重复添加。</p>
-<p>点击“添加文字”可加入“精读版”等自己的文字，支持多个文字块。分隔符可直接选择间隔点、短横线、下划线、空格或无，也可输入自己的字符。单语与双语示例预览立即更新，有效修改自动保存；删除全部内容时保留上次有效设置并提示添加内容。</p>
-<p>默认组合为“论文标题 → 译文类型”，例如 <code>Attention Is All You Need · 双语对照</code>。论文标题优先使用短标题，其次完整标题，最后原 PDF 文件名；选择“完整标题”可始终使用完整论文标题。缺少作者、年份、模型等字段时自动跳过，不留下多余分隔符。</p>
-<p>关闭开关后保留输出文件名，再次开启恢复之前的组合。“恢复默认”恢复默认内容块与分隔符。旧模板会转换为内容块并保留固定文字与顺序；不能安全转换的旧设置继续保留，界面提示后可选择恢复默认重新编辑。</p>
-<p>规则仅影响之后导入的附件显示标题，不修改 PDF 文件名或已有附件。未完成和补译次数标记继续追加；语言、模型使用任务记录，不因切换当前翻译配置而改变。</p>
+<ol>
+<li>开启 <strong>“自定义译文附件标题”</strong>，点击“添加字段”选择论文标题、作者、年份、模型等内容。</li>
+<li>拖动手柄调整顺序，或使用前移、后移按钮；手柄聚焦后也支持 <code>Alt + 方向键</code>。点击 × 删除字段。</li>
+<li>用“添加文字”加入“精读版”等固定文字，选择分隔符，查看下方单语与双语标题预览。有效修改自动保存。</li>
+</ol>
+<!-- 待补截图：![自定义附件标题：添加字段、调整顺序和即时预览](../assets/guide/attachment-title.png) -->
+<p>默认组合为“论文标题 → 译文类型”，例如 <code>Attention Is All You Need · 双语对照</code>。</p>
+<table>
+<thead>
+<tr>
+<th>规则</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>论文标题</td>
+<td>优先短标题，其次完整标题，最后原 PDF 文件名；“完整标题”字段始终使用完整题名</td>
+</tr>
+<tr>
+<td>字段与文字</td>
+<td>同一字段只能添加一次，固定文字可添加多块；缺少的字段自动跳过</td>
+</tr>
+<tr>
+<td>分隔符</td>
+<td>可选间隔点、短横线、下划线、空格或无，也可自定义</td>
+</tr>
+<tr>
+<td>删除全部内容</td>
+<td>保留上次有效设置，添加内容后再保存</td>
+</tr>
+<tr>
+<td>关闭 / 恢复默认</td>
+<td>关闭后使用输出文件名，重新开启恢复组合；“恢复默认”重置字段和分隔符</td>
+</tr>
+<tr>
+<td>生效范围</td>
+<td>仅影响之后导入的附件标题，不修改 PDF 文件名或已有附件；模型、语言取自任务记录</td>
+</tr>
+</tbody>
+</table>
+<p>未完成状态与补译轮次会追加到标题末尾。旧模板自动转换；无法转换时按界面提示恢复默认后编辑。</p>
 <h2 id="从文库提交任务">从文库提交任务</h2>
 <ol>
 <li>在 Zotero 文库中找到论文，展开条目，确认存在 <strong>本地 PDF 附件</strong>；先双击原 PDF，确认能够打开。</li>
 <li>右键该 PDF 附件，展开 <strong>“zotero-pdf2zh-pro”</strong> 子菜单，选择 <strong>“zotero-pdf2zh-pro: 翻译PDF”</strong>。</li>
 <li>插件会打开任务列表并提交任务。可以查看当前阶段和总进度。</li>
-<li>等待任务完成，并确认导入状态为已导入；回到文库展开原条目，查看新生成的翻译附件。</li>
+<li>等待任务完成，确认 <strong>“已导入”</strong>，回到原条目下打开译文附件。</li>
 </ol>
+<!-- 待补截图：![右键 PDF，展开插件菜单并选择翻译 PDF](../assets/guide/translate-menu.png) -->
+<!-- 待补截图：![翻译完成后，译文附件出现在原条目下](../assets/guide/translated-attachments.png) -->
+<p><img src="/zotero-pdf2zh-pro/assets/guide/pdf-bilingual.png" alt="在 Zotero 阅读器中查看双语 PDF" /></p>
 <p>英文界面的对应入口为 <code>zotero-pdf2zh-pro: Translate PDF</code> 和 <code>zotero-pdf2zh-pro: Task Manager</code>。</p>
 <p>也可以右键论文父条目，由 Zotero 选择其最佳附件。<strong>一篇论文有多个 PDF 时，直接选择要翻译的原 PDF 更明确</strong>，避免选到补充材料或已经翻译的附件。
 只有网页链接、尚未同步到本地的文件或非 PDF 附件无法直接翻译；先下载或附加原 PDF。</p>
@@ -77,7 +117,7 @@
 <li>PDF 导入失败时，按下一节的“重试导入”处理；仍有段落失败时，使用独立的“补译”操作。</li>
 </ul>
 </div>
-    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#usage">在 GitHub 查看源文档 ↗</a><span>适用版本 v1.8.1</span></div>
+    <div class="doc-source"><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#usage">在 GitHub 查看源文档 ↗</a></div>
     <nav class="doc-pagination" aria-label="上下篇教程"><a href="/zotero-pdf2zh-pro/guide/api-configuration/"><small>← 上一篇</small><span>配置翻译 API</span></a><a href="/zotero-pdf2zh-pro/guide/translation-options/"><small>下一篇 →</small><span>常用翻译参数</span></a></nav>
   </article>
   <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">首次翻译与批量任务</a><a href="#设置语言与输出">设置语言与输出</a><a href="#自定义附件标题">自定义附件标题</a><a href="#从文库提交任务">从文库提交任务</a><a href="#批量翻译与完成后检查">批量翻译与完成后检查</a></nav><a class="toc-help" href="/zotero-pdf2zh-pro/guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>

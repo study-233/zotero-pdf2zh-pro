@@ -81,6 +81,8 @@
   }
   const imageDialog = document.getElementById('image-dialog');
   for (const img of document.querySelectorAll('.prose img, .zoom-image img')) {
+    if (img.getAttribute('fetchpriority') !== 'high') img.loading = 'lazy';
+    img.decoding = 'async';
     let button = img.closest('.zoom-image');
     if (!button) {button = document.createElement('button');button.type = 'button';button.className = 'zoom-image';img.replaceWith(button);button.append(img);}
     button.setAttribute('aria-label', '放大截图：' + img.alt);
