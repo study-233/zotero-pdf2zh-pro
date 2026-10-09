@@ -83,7 +83,7 @@ curl -fsS http://127.0.0.1:8890/health
 任务、结果、日志和自启选择会保留，更新失败会尝试恢复旧版。尚不具备自动更新能力的旧控制中心，需要先手动安装一次新版 Windows ZIP。</p>
 <details>
 <summary>更新后配置消失或无法调用？</summary>
-<p>已移除的 <code>OpenAICompatible</code> 旧预设、腾讯机器翻译和 Dify 配置需要重新配置；其余已保存的地址、模型和参数保持原值。停用模型或失效地址需手动编辑并测试。阿里云旧共享域名仍可用；Azure 文本翻译旧配置缺少区域时使用 <code>chinaeast2</code>。详情见<a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/provider-audit-2026-10-03.md">接口兼容记录</a>。</p>
+<p>已移除的 <code>OpenAICompatible</code> 旧预设、腾讯机器翻译、Dify 和 SiliconFlow 免费代理配置需要重新配置；升级会清理这些配置并取消对应的当前选择，不自动改用其他模型。选文翻译若单独指定了已删除配置，会提示重新选择。自备 Key 的 SiliconFlow 及其他已保存的地址、模型和参数保持原值。停用模型或失效地址需手动编辑并测试。阿里云旧共享域名仍可用。本轮精简的九种专用服务（含 Azure）保留原配置并提示“需重新配置”，停止调用其适配器。详情见<a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/provider-audit-2026-10-03.md">接口兼容记录</a>。</p>
 </details>
 <h2 id="数据位置与迁移">数据位置与迁移</h2>
 <ul>

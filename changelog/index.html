@@ -37,10 +37,22 @@
     </div>
   </header>
   
-<main id="main-content" class="changelog-layout"><div class="doc-heading"><p class="eyebrow">持续改进，保持可追溯</p><h1>更新记录</h1><p>当前版本 v1.8.1 · 插件与本地服务请分别更新。</p><a class="text-link" href="/zotero-pdf2zh-pro/guide/maintenance/">查看更新方法 →</a></div><article class="prose"><span id="更新记录"></span>
+<main id="main-content" class="changelog-layout"><div class="doc-heading"><p class="eyebrow">持续改进，保持可追溯</p><h1>更新记录</h1><p>当前版本 v1.8.2 · 插件与本地服务请分别更新。</p><a class="text-link" href="/zotero-pdf2zh-pro/guide/maintenance/">查看更新方法 →</a></div><article class="prose"><span id="更新记录"></span>
 
 <p>这里记录 <code>zotero-pdf2zh-pro</code> 的用户可见变化。旧项目的历史仍保留在 Git 历史中，
 不作为本产品的版本序列。</p>
+<h2 id="v182---2026-10-09">v1.8.2 - 2026-10-09</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.8.2">下载此版本 ↗</a>
+<p>升级提示：本版移除 SiliconFlow 免费代理并清理对应旧配置，自备 Key 的 SiliconFlow 继续可用。智谱、Grok、Groq、ModelScope、Qwen-MT、Azure OpenAI、Azure 文本翻译、XInference 和 AnythingLLM 停用专用适配器，原配置及凭据保留为“需重新配置”，需手动选择平台并测试；不会自动切换翻译来源。</p>
+<ul>
+<li>翻译配置管理与编辑合并为左右分栏窗口，新增 OpenRouter 预设、分类平台选择和独立草稿；区分当前使用与未保存修改，固定底部操作栏，取消失效的测试与模型列表请求，修复旧样式缓存问题。</li>
+<li>选文面板统一为“词典 / 翻译”页签，单词优先查词、句段默认翻译，切换页签保留结果；精简来源和模型选择，修复阅读器图标缺失，更多菜单支持键盘操作。</li>
+<li>新增无需 Python 服务的有道、必应在线词典和独立缓存；新安装默认有道，升级保留原选择，离线词典仅在未命中后查询在线后备。发音静默预加载并复用缓存，支持取消、停止和失败重试。</li>
+<li>普通 AI 译文支持流式显示与停止生成，兼容旧服务端；取消、错误和截断不保存为成功缓存。修复编辑原文丢失、停止后无法重试及旧请求覆盖新结果的问题。</li>
+<li>新增本地划词收藏、论文出处跳转、检索、JSON 导入导出及 CSV 导出；再次点击星标可取消收藏，加入术语表需单独操作并确认译法冲突。收藏不随 Zotero 云同步。</li>
+<li>精简官网教程与阅读布局，更新配置和划词使用指南；Windows 独立开发环境新增双击切换入口及 <code>switch [dev|formal]</code> 命令，保留任务拦截与正常退出检查。</li>
+</ul>
+<p>Zotero 插件与本地服务需分别升级至 v1.8.2，才能使用完整流式功能。Windows 用户请完整解压 ZIP 后运行 EXE。</p>
+<p><a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.8.2/docs/user-guide.md">安装与使用指南</a> · <a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.8.2/docs/provider-audit-2026-10-03.md">配置兼容与迁移</a></p>
 <h2 id="v181---2026-10-08">v1.8.1 - 2026-10-08</h2><a class="release-download" href="https://github.com/study-233/zotero-pdf2zh-pro/releases/tag/v1.8.1">下载此版本 ↗</a>
 <p>升级提示：本版会删除 OpenAICompatible 旧预设、腾讯机器翻译和 Dify 配置，并清理可解析的旧配置备份；当前选择被删除时需重新选择。其余已保存配置的地址、模型与参数保持原值。</p>
 <ul>
