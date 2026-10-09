@@ -221,6 +221,93 @@ class OpenAITranslator(BaseTranslator):
         ):
             self.add_cache_impact_parameters("deepseek_thinking", "disabled")
 
+    def selection_stream(self, prompt, on_text, cancellation):
+        """Selection-only streaming: never retry or cache an unfinished response."""
+        from text_translation import TextTranslationError
+        protocol = self.resolved_protocol or self.protocol_hint
+        options = self._options(protocol)
+        messages = [{"role": "user", "content": prompt}]
+        stream = None
+        parts, prefix = [], ''
+        ready, thinking, finished = False, False, False
+
+        def publish(delta):
+            nonlocal prefix, ready, thinking
+            if not isinstance(delta, str) or not delta:
+                return
+            if not ready:
+                prefix += delta
+                value = prefix.lstrip()
+                if '<think>'.startswith(value):
+                    return
+                if value.startswith('<think>'):
+                    thinking = True
+                    if '</think>' not in value:
+                        return
+                    delta = value.split('</think>', 1)[1].lstrip()
+                else:
+                    delta = prefix
+                ready = True
+                prefix = ''
+            if delta:
+                parts.append(delta)
+                on_text(delta)
+
+        try:
+            self.check_cancelled()
+            if protocol == 'responses':
+                stream = self.client.responses.create(model=self.model, input=messages, stream=True, extra_body=options)
+            else:
+                stream = self.client.chat.completions.create(model=self.model, messages=messages, stream=True, extra_body=options)
+            cancellation.close_with(stream.close)
+            for event in stream:
+                self.check_cancelled()
+                if protocol == 'responses':
+                    kind = getattr(event, 'type', '')
+                    if kind == 'response.output_text.delta':
+                        publish(getattr(event, 'delta', ''))
+                    elif kind == 'response.completed':
+                        response = event.response
+                        if getattr(response, 'status', None) != 'completed':
+                            raise TextTranslationError('incomplete_output', 502)
+                        self._record_usage(response, protocol)
+                        final = self._remove_cot_content(response_text(response, protocol)).strip()
+                        if not final:
+                            raise TextTranslationError('empty_output', 502)
+                        finished = True
+                    elif kind in ('response.failed', 'response.incomplete', 'error'):
+                        raise TextTranslationError('incomplete_output', 502)
+                else:
+                    choices = getattr(event, 'choices', []) or []
+                    for choice in choices:
+                        if getattr(choice, 'index', 0) != 0:
+                            continue
+                        publish(getattr(getattr(choice, 'delta', None), 'content', None))
+                        reason = getattr(choice, 'finish_reason', None)
+                        if reason:
+                            if reason != 'stop':
+                                raise TextTranslationError('incomplete_output', 502)
+                            finished = True
+                    if getattr(event, 'usage', None):
+                        self._record_usage(event, protocol)
+            self.check_cancelled()
+            if not finished:
+                raise TextTranslationError('incomplete_output', 502)
+            if not ready and prefix and not thinking:
+                publish(' ')
+            answer = final if protocol == 'responses' else ''.join(parts).strip()
+            if not answer:
+                raise TextTranslationError('empty_output', 502)
+            return answer
+        except Exception as error:
+            self.check_cancelled()
+            if getattr(error, 'status_code', None) in (400, 422) and 'stream' in str(getattr(error, 'body', '')).lower() and any(word in str(getattr(error, 'body', '')).lower() for word in ('unsupported', 'not support', 'not allowed')):
+                raise TextTranslationError('stream_unsupported', 400) from None
+            raise
+        finally:
+            if stream is not None:
+                stream.close()
+
     def health_check(self) -> str:
         """Resolve once before cached/parallel paragraph translation begins."""
         first = self.resolved_protocol or self.protocol_hint

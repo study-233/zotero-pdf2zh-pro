@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getPref } from "../utils/prefs";
 import { prepareApiForServer } from "./apiCompatibility";
-import type { LLMApiData } from "./llmApiManager";
+import { assertSupportedProfile, type LLMApiData } from "./llmApiManager";
 import type {
     ServerHealthResponse,
     ValidateConfigResponse,
@@ -23,12 +23,16 @@ function safeError(error: unknown, api: LLMApiData): Error {
     if (api.apiKey) message = message.split(api.apiKey).join("[已隐藏]");
     return new Error(message);
 }
-export async function testProfile(api: LLMApiData): Promise<string> {
+export async function testProfile(
+    api: LLMApiData,
+    signal?: AbortSignal,
+): Promise<string> {
+    assertSupportedProfile(api);
     try {
         const url = serverUrl();
         const { data: health } = await axios.get<ServerHealthResponse>(
             `${url}/health`,
-            { timeout: 5000 },
+            { timeout: 5000, signal },
         );
         const prepared = prepareApiForServer(
             api,
@@ -46,7 +50,7 @@ export async function testProfile(api: LLMApiData): Promise<string> {
                 sourceLang: getPref("sourceLang") || "en",
                 targetLang: getPref("targetLang") || "zh-CN",
             },
-            { timeout: api.service === "codex" ? 65000 : 45000 },
+            { timeout: api.service === "codex" ? 65000 : 45000, signal },
         );
         if (data.liveTest?.ok !== true) {
             throw new Error(
@@ -80,7 +84,9 @@ export interface ProfileModelCatalog {
 }
 export async function fetchProfileModelCatalog(
     api: LLMApiData,
+    signal?: AbortSignal,
 ): Promise<ProfileModelCatalog> {
+    assertSupportedProfile(api);
     try {
         if (
             api.service === "codex" &&
@@ -89,7 +95,7 @@ export async function fetchProfileModelCatalog(
         ) {
             const { data: health } = await axios.get<ServerHealthResponse>(
                 `${serverUrl()}/health`,
-                { timeout: 5000 },
+                { timeout: 5000, signal },
             );
             prepareApiForServer(
                 api,
@@ -114,7 +120,7 @@ export async function fetchProfileModelCatalog(
                       apiKey: api.apiKey,
                       apiProtocol: api.apiProtocol || "auto",
                   },
-            { timeout: api.service === "codex" ? 35000 : 20000 },
+            { timeout: api.service === "codex" ? 35000 : 20000, signal },
         );
         if (
             !Array.isArray(data.models) ||

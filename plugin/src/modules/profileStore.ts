@@ -3,6 +3,7 @@ import {
     migrateProfiles,
     isRemovedService,
     selectedProfile,
+    resolveProviderPreset,
     type LLMApiData,
 } from "./llmApiManager";
 
@@ -26,7 +27,7 @@ export function loadProfiles(): LLMApiData[] {
         throw new Error("翻译配置无法读取，请检查配置备份；原数据未修改。");
     }
     if (Number(getPref("profileSchemaVersion") || 0) < 1) {
-        const oldService = getPref("service")?.toString() || "siliconflowfree";
+        const oldService = getPref("service")?.toString() || "";
         if (!getPref("llmApisLegacyBackup")) {
             setPref(
                 "llmApisLegacyBackup",
@@ -43,7 +44,7 @@ export function loadProfiles(): LLMApiData[] {
         setPref("profileSchemaVersion", 1);
         profiles = migrated.profiles;
     }
-    if (Number(getPref("profileSchemaVersion") || 0) < 2) {
+    if (Number(getPref("profileSchemaVersion") || 0) < 3) {
         const removedKeys = new Set(
             profiles
                 .filter((api) => isRemovedService(api.service))
@@ -55,9 +56,22 @@ export function loadProfiles(): LLMApiData[] {
             setPref("selectedApiKey", "");
         if (isRemovedService(getPref("service")?.toString() || ""))
             setPref("service", "");
+        if (isRemovedService(getPref("serviceSelect")?.toString() || ""))
+            setPref("serviceSelect", "");
+        // Keep an explicit selection-model ID dangling so the existing missing
+        // model notice asks for a choice instead of silently using another model.
         const backup = getPref("llmApisLegacyBackup")?.toString();
         if (backup) setPref("llmApisLegacyBackup", cleanLegacyBackup(backup));
-        setPref("profileSchemaVersion", 2);
+        setPref("profileSchemaVersion", 3);
+    }
+    if (Number(getPref("profileSchemaVersion") || 0) < 4) {
+        profiles = profiles.map((api) => {
+            const preset = resolveProviderPreset(api);
+            return preset ? { ...api, providerPreset: preset.id } : api;
+        });
+        saveProfiles(profiles);
+        // Retired service rows and explicit references remain available for repair.
+        setPref("profileSchemaVersion", 4);
     }
     return profiles;
 }

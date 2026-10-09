@@ -353,7 +353,7 @@ class _Transport:
                         method = message.get("method", "")
                         target = None
                         if thread_id and thread_id not in self._retired and (
-                            method in ("turn/completed", "item/completed", "item/started", "thread/tokenUsage/updated", "error")
+                            method in ("turn/completed", "item/completed", "item/started", "item/agentMessage/delta", "thread/tokenUsage/updated", "error")
                         ):
                             target = self._events.setdefault(thread_id, queue.Queue())
                     if target:
@@ -626,7 +626,7 @@ class CodexClient:
         # cancelled turn nor another ambiguous request continues in the background.
         self._discard(transport)
 
-    def translate(self, prompt, *, model, reasoning_effort=None, timeout=120, check_cancelled=None):
+    def translate(self, prompt, *, model, reasoning_effort=None, timeout=120, check_cancelled=None, on_text=None):
         deadline = time.monotonic() + timeout
 
         def check():
@@ -658,6 +658,7 @@ class CodexClient:
             }, timeout=max(0.01, min(20, deadline - time.monotonic())), check_cancelled=check)
             turn_id = response["turn"]["id"]
             final_messages, usage = {}, {}
+            phases, emitted = {}, {}
             while True:
                 check()
                 try:
@@ -668,9 +669,18 @@ class CodexClient:
                     raise event
                 params, method = event.get("params", {}), event.get("method")
                 event_turn = params.get("turnId") or params.get("turn", {}).get("id")
-                if event_turn != turn_id:
+                if event_turn != turn_id or params.get('threadId') != thread_id:
                     continue
                 item = params.get("item", {})
+                if method == "item/started" and item.get("type") == "agentMessage":
+                    phases[item.get("id")] = item.get("phase")
+                if method == "item/agentMessage/delta" and on_text:
+                    item_id, delta = params.get("itemId"), params.get("delta")
+                    if phases.get(item_id) == "final_answer" and item_id not in final_messages and isinstance(delta, str):
+                        if item_id not in emitted and emitted:
+                            on_text('\n')
+                        emitted[item_id] = emitted.get(item_id, '') + delta
+                        on_text(delta)
                 if method in ("item/started", "item/completed") and item.get("type") in (
                     "commandExecution", "fileChange", "mcpToolCall", "dynamicToolCall",
                     "webSearch", "imageGeneration", "collabAgentToolCall",
@@ -678,6 +688,12 @@ class CodexClient:
                     raise CodexError("codex_isolation_failed", "翻译请求尝试调用工具，已停止。", 502)
                 if method == "item/completed" and item.get("type") == "agentMessage" and item.get("phase") == "final_answer":
                     final_messages[item["id"]] = item.get("text", "")
+                    # Unknown phases are withheld until a completed final answer.
+                    if on_text and item['id'] not in emitted:
+                        if emitted:
+                            on_text('\n')
+                        emitted[item['id']] = item.get('text', '')
+                        on_text(emitted[item['id']])
                 elif method == "error" and params.get("willRetry") is not True:
                     raise _error_from_rpc(params.get("error") or {})
                 elif method == "thread/tokenUsage/updated":

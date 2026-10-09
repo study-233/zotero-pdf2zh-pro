@@ -50,6 +50,13 @@ class CodexTranslator(BaseTranslator):
             return None
         return self._request(text, rate_limit_params)
 
+    def selection_stream(self, prompt, on_text, cancellation):
+        result = self.client.translate(prompt, model=self.model,
+            reasoning_effort=self.reasoning_effort, timeout=float(self.timeout),
+            check_cancelled=self.check_cancelled, on_text=on_text)
+        self.check_cancelled()
+        return result.text
+
     def _request(self, prompt, rate_limit_params=None):
         params = rate_limit_params or {}
 

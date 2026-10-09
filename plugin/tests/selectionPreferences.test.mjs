@@ -79,6 +79,21 @@ test("model menu follows saved profiles, keeps document choice, and invalidates 
     assert.equal(menu.children.length, 3);
     assert.equal(menu.value, "");
     assert.equal(state.changes, 0);
+    const provider = node("zotero-prefpane-test-selection-provider");
+    assert.deepEqual(
+        provider.children.map((n) => n.attributes.value),
+        ["bing", "profile", "a", "b"],
+    );
+    assert.equal(provider.value, "bing");
+    assert.equal(
+        node("zotero-prefpane-test-selection-model-field").hidden,
+        false,
+    );
+    assert.equal(node("zotero-prefpane-test-selection-trigger").value, "auto");
+    assert.equal(
+        node("zotero-prefpane-test-selection-display").value,
+        "floating",
+    );
     prefs.set("selectedApiKey", "b");
     events["profiles-changed"]();
     assert.equal(state.changes, 1);
@@ -114,6 +129,33 @@ test("model menu follows saved profiles, keeps document choice, and invalidates 
         true,
     );
     assert.equal(prefs.get("selectedApiKey"), "a");
+    provider.value = "b";
+    provider.listeners.command();
+    assert.equal(prefs.get("selectionTranslationProvider"), "profile");
+    assert.equal(prefs.get("selectionApiKey"), "b");
+    assert.equal(
+        node("zotero-prefpane-test-selection-model-field").hidden,
+        true,
+    );
+    assert.equal(
+        node("zotero-prefpane-test-selection-model-shared").hidden,
+        false,
+    );
+    provider.value = "bing";
+    provider.listeners.command();
+    assert.equal(prefs.get("selectionApiKey"), "b");
+    assert.equal(
+        node("zotero-prefpane-test-selection-model-field").hidden,
+        false,
+    );
+    const trigger = node("zotero-prefpane-test-selection-trigger");
+    trigger.value = "click";
+    trigger.listeners.command();
+    const display = node("zotero-prefpane-test-selection-display");
+    display.value = "sidebar";
+    display.listeners.command();
+    assert.equal(prefs.get("selectionTrigger"), "click");
+    assert.equal(prefs.get("selectionDisplayMode"), "sidebar");
 });
 
 test("settings import cancel is nonmutating; success enables Collins and invalidates old work", async () => {
@@ -192,6 +234,7 @@ test("settings import cancel is nonmutating; success enables Collins and invalid
         {
             document: { getElementById: (id) => nodes.get(id) },
             addEventListener() {},
+            setTimeout: (fn) => fn(),
         },
         () => state.changed++,
     );

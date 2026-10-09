@@ -13,6 +13,9 @@ export type DictionaryEntry = {
     senses: DictionarySense[];
     aiGenerated?: boolean;
     usage?: string;
+    pronunciations?: { accent: string; phonetic?: string; audioUrl?: string }[];
+    forms?: { label: string; word: string }[];
+    examples?: { english: string; chinese: string }[];
 };
 export type DictionaryInfo = {
     version?: string;

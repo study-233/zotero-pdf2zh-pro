@@ -6,8 +6,8 @@ pref("__prefsPrefix__.targetLang", "zh-CN");
 pref("__prefsPrefix__.sourceLangSelect", "en");
 pref("__prefsPrefix__.targetLangSelect", "zh-CN");
 
-pref("__prefsPrefix__.service", "siliconflowfree");
-pref("__prefsPrefix__.serviceSelect", "siliconflowfree");
+pref("__prefsPrefix__.service", "");
+pref("__prefsPrefix__.serviceSelect", "");
 pref("__prefsPrefix__.outputMono", false);
 pref("__prefsPrefix__.outputDual", true);
 
@@ -40,6 +40,10 @@ pref("__prefsPrefix__.profileSchemaVersion", 0);
 pref("__prefsPrefix__.selectionTranslationProvider", "bing");
 pref("__prefsPrefix__.selectionApiKey", "");
 pref("__prefsPrefix__.selectionDictionary", "ecdict");
+pref("__prefsPrefix__.selectionDictionaryFallback", "youdao");
+pref("__prefsPrefix__.selectionTrigger", "auto");
+pref("__prefsPrefix__.selectionStream", true);
+pref("__prefsPrefix__.selectionPreferenceVersion", 0);
 pref("__prefsPrefix__.selectionAutoDictionary", true);
 
 pref("__prefsPrefix__.attachmentTitleLayout", "");

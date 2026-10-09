@@ -1,0 +1,38 @@
+{
+    "input": "machine learning",
+    "le": "en",
+    "ec": {
+        "word": {
+            "ukphone": "məˌʃiːn ˈlɜːnɪŋ",
+            "return-phrase": "machine learning",
+            "trs": [
+                {
+                    "pos": "n.",
+                    "tran": "机器学习：人工智能的一个分支，指计算机利用算法从数据中学习规律、建立统计模型，并随着新数据的加入不断提高自身性能的过程，通常无需针对每个任务进行显式编程。"
+                },
+                {
+                    "tran": "《Machine Learning》：一种同行评审学术期刊，创刊于 1986 年，主要发表机器学习领域的研究论文。"
+                }
+            ]
+        }
+    },
+    "blng_sents_part": {
+        "sentence-pair": [
+            {
+                "sentence": "Machine learning is now capable of far, far more complex tasks.",
+                "sentence-eng": "<b>Machine</b> <b>learning</b> is now capable of far, far more complex tasks.",
+                "sentence-translation": "机器学习现在能够完成极其复杂的任务。"
+            },
+            {
+                "sentence": "My company, Kaggle, operates on the cutting edge of machine learning.",
+                "sentence-eng": "My company, Kaggle, operates on the cutting edge of <b>machine</b> <b>learning</b>.",
+                "sentence-translation": "我的公司 Kaggle 在机器学习领域处于领先地位。"
+            },
+            {
+                "sentence": "Machine learning started making its way into the industry in the early 90s.",
+                "sentence-eng": "<b>Machine</b> <b>learning</b> started making its way into the industry in the early 90s.",
+                "sentence-translation": "机器学习在90年代早期开始进入工业领域。"
+            }
+        ]
+    }
+}

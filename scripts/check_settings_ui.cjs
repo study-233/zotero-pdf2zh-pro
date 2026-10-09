@@ -22,7 +22,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
    await page.setContent('<html><body></body></html>');
    await page.evaluate(({markup,modules,fluent,language})=>{
     const labels={};let current;
-    for(const line of fluent.split('\n')) {const m=line.match(/^([\w-]+)\s*=\s*(.*)$/);if(m){current=m[1];labels[current]=m[2];}else if(current&&/^\s+\.\w+/.test(line)){const a=line.match(/\.(\w[\w-]*)\s*=\s*(.*)/);labels[current+'.'+a[1]]=a[2];}else if(current&&line.startsWith('    ')) labels[current]+='\n'+line.trim();}
+    for(const line of fluent.split(/\r?\n/)) {const m=line.match(/^([\w-]+)\s*=\s*(.*)$/);if(m){current=m[1];labels[current]=m[2];}else if(current&&/^\s+\.\w+/.test(line)){const a=line.match(/\.(\w[\w-]*)\s*=\s*(.*)/);labels[current+'.'+a[1]]=a[2];}else if(current&&line.startsWith('    ')) labels[current]+='\n'+line.trim();}
     window.msg=(key,args={})=>{if(!(key in labels))throw Error('Missing locale '+key);return labels[key].replace(/\{ \$(\w+) \}/g,(_,k)=>args[k]??'');};
     const xml=new DOMParser().parseFromString('<root xmlns:html="http://www.w3.org/1999/xhtml">'+markup+'</root>','application/xml');
     if(xml.querySelector('parsererror'))throw Error(xml.querySelector('parsererror').textContent);
@@ -69,6 +69,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
      './profileStore':{loadProfiles:()=>profiles},
      './pdf2zhHelper':{PDF2zhHelperFactory:{getServerConfig:()=>({serverUrl:'http://localhost:8890'})}},
      './selectionRequest':{createSelectionRequest:()=>({post:async url=>{window.cacheCalls=(window.cacheCalls||[]).concat(url);return {ok:true,data:url.endsWith('selection-capabilities')?{selectionLearning:true}:{status:'ok'}}}})},
+     './selectionOnlineDictionary':{clearOnlineDictionaryCache:async()=>{}},
      './selectionDictionaryStore':{importODHDictionary:async()=>{prefs.set('selectionDictionary','collins');}},
      './selectionDictionaryDownload':{
       dictionaryDownloadState:()=>downloadState,subscribeDictionaryDownload:fn=>{watchers.add(fn);return()=>watchers.delete(fn)},refreshDictionaryDownload:async()=>{},dictionaryChoiceChanged(){},dictionaryImported:async()=>{},
@@ -105,7 +106,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
      const rect=el=>{const {x,y,width,height,right,bottom}=el.getBoundingClientRect();return {x,y,width,height,right,bottom};};
      return {
       section:rect(document.querySelector('.selection-settings')),
-      menus:['selection-provider','selection-dictionary','selection-model'].map(n=>rect(id(n))),
+      menus:['selection-trigger','selection-display','selection-dictionary','selection-provider','selection-model'].map(n=>rect(id(n))),
       labels:[...document.querySelectorAll('.selection-field > label')].map(rect),
       card:rect(document.querySelector('.dictionary-download-row')),
       auto:rect(document.querySelector('.selection-auto')),
@@ -116,19 +117,22 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
      };
     });
     const near=(a,b,message)=>assert.ok(Math.abs(a-b)<1,message+`: ${a} vs ${b}`);
-    const [service,dictionary,model]=bounds.menus;
+    const [trigger,display,dictionary,service,model]=bounds.menus;
     assert.equal(bounds.overflow,false,'no horizontal overflow');
-    near(service.x,bounds.section.x,'service starts at section edge');
-    near(service.width,dictionary.width,'service and dictionary equal width');
-    near(model.x,bounds.section.x,'model starts at section edge');
-    near(model.width,bounds.section.width,'model spans section');
+    near(trigger.x,bounds.section.x,'trigger starts at section edge');
+    near(dictionary.x,bounds.section.x,'dictionary starts at section edge');
+    near(service.width,dictionary.width,'sources have equal width');
+    near(model.x,bounds.section.x,'AI enhancement model starts at section edge');
+    near(model.width,bounds.section.width,'AI enhancement model spans section');
     near(bounds.card.x,model.x,'dictionary card aligned');
     near(bounds.card.width,model.width,'dictionary card full width');
     near(bounds.auto.x,model.x,'automatic lookup aligned');
     bounds.menus.forEach((menu,i)=>{near(menu.x,bounds.labels[i].x,'label aligns with menu');near(menu.height,32,'consistent control height');});
-    if(stacked){near(service.x,dictionary.x,'narrow service fields stack');assert.ok(dictionary.y>=service.bottom);}
-    else {near(service.y,dictionary.y,'wide service fields share row');assert.ok(dictionary.x>service.right);}
-    assert.ok(model.y>=dictionary.bottom,'model follows first row');
+    for(const [first,second] of [[trigger,display],[dictionary,service]]) {
+     if(stacked){near(first.x,second.x,'narrow fields stack');assert.ok(second.y>=first.bottom);}
+     else {near(first.y,second.y,'wide fields share row');assert.ok(second.x>first.right);}
+    }
+    assert.ok(model.y>=service.bottom,'advanced settings follow common settings');
     for(let row=0;row<2;row++){
      const [first,second]=bounds.output.slice(row*2,row*2+2);
      if(stacked){near(first.x,second.x,'narrow output fields stack');assert.ok(second.y>=first.bottom);}
@@ -137,6 +141,15 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
     bounds.tool.forEach(control=>assert.ok(control.x>=bounds.editor.x&&control.right<=bounds.editor.right+1,'toolbar fits editor'));
     near(bounds.tool[2].right,bounds.editor.right,'reset is aligned right');
    };
+   assert.equal(await page.locator('.selection-advanced').getAttribute('open'),null);
+   assert.equal(await id('selection-model').isVisible(),false);
+   assert.equal(await id('selection-trigger').inputValue(),'auto');
+   await id('selection-trigger').selectOption('click');
+   await id('selection-display').selectOption('sidebar');
+   assert.equal(await page.evaluate(()=>prefs.get('selectionTrigger')),'click');
+   assert.equal(await page.evaluate(()=>prefs.get('selectionDisplayMode')),'sidebar');
+   await page.locator('.selection-settings').screenshot({path:path.join(output,language+'-selection-common.png')});
+   await page.locator('.selection-advanced > summary').click();
    await checkLayout(false);
    assert.equal(await page.evaluate(()=>titleLayout().separator),' · ');
    assert.doesNotMatch(await id('attachmentTitlePreview-dual').textContent(),/�/);
@@ -147,8 +160,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
    await page.evaluate(()=>{
     window.dispatchEvent(new Event('unload'));
     const old=id('selection-model').closest('section');const replacement=old.cloneNode(true);old.replaceWith(replacement);
-    bindMenu(replacement.querySelector('[id$="selection-model"]'));
-    for(const suffix of ['selection-provider','selection-dictionary'])replacement.querySelector('[id$="'+suffix+'"]').addEventListener('change',event=>event.target.dispatchEvent(new Event('command')));
+    for(const suffix of ['selection-model','selection-provider','selection-dictionary','selection-trigger','selection-display','selection-fallback'])bindMenu(replacement.querySelector('[id$="'+suffix+'"]'));
     // Re-registering a new DOM simulates closing and reopening the settings pane.
     window.registerSelection();
    });
@@ -206,8 +218,15 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
    await id('selection-download').click();assert.equal(await id('selection-download-progress').isVisible(),true);assert.equal(await id('selection-import').isDisabled(),true);
    await id('selection-download').click();assert.equal(await id('selection-download-progress').isVisible(),false);
    await id('selection-provider').selectOption('profile');assert.equal(await id('selection-service-hint').evaluate(el=>el.hidden),true);
-   assert.equal(await id('selection-model').isVisible(),true);
+   await page.waitForFunction(()=>id('selection-model-field').hidden);
+   assert.equal(await id('selection-model').isVisible(),false);
+   assert.equal(await id('selection-model-shared').isVisible(),true);
    await id('selection-provider').selectOption('bing');
+   await page.waitForFunction(()=>!id('selection-model-field').hidden);
+   await id('selection-dictionary').selectOption('youdao');
+   assert.equal(await id('selection-fallback-field').isVisible(),false);
+   await id('selection-dictionary').selectOption('ecdict');
+   assert.equal(await id('selection-fallback-field').isVisible(),true);
    assert.equal(await id('selection-model').isVisible(),true);
    await page.locator('.dictionary-details > summary').click();
    assert.equal(await id('selection-service-hint').isVisible(),true);
@@ -242,6 +261,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
    for(const field of ['author','year','model','sourceLang','targetLang'])await addField(field);
    const boxes=await id('attachmentTitleBlocks').locator('.title-block').evaluateAll(nodes=>nodes.map(n=>({x:n.getBoundingClientRect().x,y:n.getBoundingClientRect().y,right:n.getBoundingClientRect().right})));
    assert.ok(new Set(boxes.map(b=>b.y)).size>1);assert.ok(boxes.every(b=>b.x>=0&&b.right<=400));
+   await id('attachmentTitleBlocks').evaluate(el=>el.scrollIntoView({block:'center'}));
    const handle=id('attachmentTitleBlocks').locator('.title-block-handle').last();await handle.dragTo(id('attachmentTitleBlocks').locator('.title-block').first(),{targetPosition:{x:4,y:10}});
    assert.equal(await page.evaluate(()=>titleLayout().blocks[0].field),'targetLang');
    await id('attachmentTitleAddText').click();await id('attachmentTitleBlocks').locator('input').fill('精读版 Reading edition');

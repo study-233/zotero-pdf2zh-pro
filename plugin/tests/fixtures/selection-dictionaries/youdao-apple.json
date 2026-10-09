@@ -1,0 +1,44 @@
+{
+    "input": "apple",
+    "le": "en",
+    "ec": {
+        "word": {
+            "usphone": "ˈæp(ə)l",
+            "ukphone": "ˈæp(ə)l",
+            "return-phrase": "apple",
+            "trs": [
+                {
+                    "pos": "n.",
+                    "tran": "苹果；苹果树；苹果公司（Apple Inc.）"
+                }
+            ],
+            "wfs": [
+                {
+                    "wf": {
+                        "name": "复数",
+                        "value": "apples"
+                    }
+                }
+            ]
+        }
+    },
+    "blng_sents_part": {
+        "sentence-pair": [
+            {
+                "sentence": "She crunched her apple noisily.",
+                "sentence-eng": "She crunched her <b>apple</b> noisily.",
+                "sentence-translation": "她吃苹果发出嘎嚓嘎嚓的声音。"
+            },
+            {
+                "sentence": "Someone threw an apple core.",
+                "sentence-eng": "Someone threw an <b>apple</b> core.",
+                "sentence-translation": "有人扔了一个苹果核。"
+            },
+            {
+                "sentence": "This apple is full of worms.",
+                "sentence-eng": "This <b>apple</b> is full of worms.",
+                "sentence-translation": "这个苹果生满了虫子。"
+            }
+        ]
+    }
+}

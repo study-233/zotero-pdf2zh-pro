@@ -37,7 +37,7 @@ def make_settings_payload(**overrides):
         "input_path": "/private/tmp/source.pdf",
         "output_dir": "/private/tmp/output",
         "output_modes": ["dual"],
-        "service": "siliconflowfree",
+        "service": "openai",
         "source_lang": "en",
         "target_lang": "fr",
         "qps": 99,
@@ -50,7 +50,7 @@ def make_settings_payload(**overrides):
         "no_watermark": True,
         "no_auto_extract_glossary": True,
         "font_family": "sans-serif",
-        "llm_api": {},
+        "llm_api": {"apiKey": "test-key", "apiUrl": "https://relay.invalid/v1", "model": "test-model"},
     }
     payload.update(overrides)
     return payload
@@ -77,7 +77,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         self.assertEqual(configured.translate_engine_settings.openai_timeout, "300")
 
     def test_api_protocol_options_and_preset_endpoint_reach_runtime(self):
-        for service in ("openai", "deepseek", "gemini", "modelscope"):
+        for service in ("openai", "deepseek", "gemini", "aliyundashscope"):
             with self.subTest(service=service):
                 runtime = create_runtime_settings(make_settings_payload(service=service, llm_api={
                     "apiKey": "test-key", "apiUrl": "https://relay.invalid/custom/responses",

@@ -216,6 +216,24 @@ uv run --directory server --locked python -m unittest discover -s tests -p 'test
 .\scripts\dev.ps1 stop
 ```
 
+初始化完成后，双击仓库根目录的 [switch-zotero.cmd](../switch-zotero.cmd)，即可在正式 Zotero 与开发 Zotero 之间切换；启动失败时窗口会保留错误提示。也可在终端运行：
+
+```powershell
+# 正式版运行时切到开发版；开发版运行时切回正式版
+.\scripts\dev.ps1 switch
+# 明确指定目标；已经处于目标环境时不会重复启动
+.\scripts\dev.ps1 switch dev
+.\scripts\dev.ps1 switch formal
+# 双击入口也接受 dev / formal，例如：
+.\switch-zotero.cmd formal
+```
+
+两边都未运行时，自动切换默认启动开发版；若手动关闭了开发窗口、仍有开发后端或监听进程，则先收尾并回到正式版。切换到开发版会请求已核对身份的正式窗口正常关闭，等待最多 30 秒；出现退出确认框时需自行处理，超时后停止切换，不强制结束 Zotero。开发版有活动翻译任务时也会阻止切换。
+
+回到正式版使用初始化时记录的正式 Profile，保留原文献库与设置，正式后端 8890 保持原状；开发数据同样保留。切换不安装插件、不修改默认 Profile、不同步模型配置。遇到多个 Zotero 主进程、其他 Profile、缺少有效开发进程记录时会提示手动处理。原来的 `start` 仍要求先退出 Zotero，只有 `switch` 会主动请求关闭正式窗口。若开发启动失败，可用 `switch formal` 返回正式版。
+
+若提示“无法访问”某个开发目录，先检查该路径的 Windows“属性 → 安全”，确认当前用户拥有访问权限；脚本不会跳过目录隔离检查或自动接管目录权限。
+
 自定义安装位置用 `init --zotero-bin 'D:\Apps\Zotero\zotero.exe'`；多 Profile 时用
 `--source-profile` 指定只读模型来源。入口不注册 Profile、不改默认选择，不安装自启动。
 后续 `sync-models` 只在显式调用时更新测试模型配置；开发 Profile 不登录同步账号。
@@ -239,6 +257,22 @@ Windows 自动检查使用独立解释器，避免 `uv run` 默认选择其他�
 正式安装、升级、卸载及缺失运行库验收应在干净虚拟机执行，不在日常机器运行。
 
 本次结果与待人工检查项目见 [Windows 隔离开发验证记录](windows-development-validation.md)。
+
+## 划词优化测试包验收
+
+本次划词改动需分别使用当前工作区的插件与服务端，版本号保持不变；安装 `plugin/build/zotero-pdf2zh-pro.xpi` 后重启 Zotero。在线、离线词典与收藏不需要 Python 服务；AI 流式需重启当前源码服务端（源码启动命令：`uv run --directory server --locked zotero-pdf2zh-pro`）。不要用旧版已安装服务验证新流式能力。
+
+建议依次检查：
+
+1. 不启动 Python，选择有道查询 `learning`、`point-wise`，检查顶部图标、英美发音、原形、双语例句和窄窗口布局；单词首次切到“翻译”才请求译文。`machine learning`、`I love you` 默认翻译，手动切“词典”可查短语；长句与其他语言不显示词典页签。
+2. 开启点击模式，划选时不弹出新卡片，点击原生工具栏“翻译”才查询；检查复制、标注、固定、Esc、恢复自动大小与右侧切换。
+3. 编辑句段原文，取消编辑不发请求，Ctrl/Cmd + Enter 提交；修订文本不在上下文中时语境解释不可用。
+4. 使用已配置的 OpenAI Chat Completions、Responses 或 Codex 模型，观察真实增量；连续划选、切模型、停止生成后无串结果；中途切右侧不重复请求。结构化释义仍一次显示，旧服务仍走普通模式。
+5. 在不同论文收藏同词，重启验证恢复；测试搜索、导入导出、回原文和独立加入术语表，冲突时不静默覆盖。附件变更后检查页码降级提示。
+6. 切换页签、词典来源和翻译来源，确认各自结果与语境保留、请求不串线；词典未收录与网络失败分别提示，查词失败不自动翻译。检查 280／320／400px、放大字号和明暗主题下的菜单、星标与图标。
+7. 设置页初始收起高级选项；选择 AI 翻译来源时增强功能共用模型，必应时可单独设置增强模型。离线回退只在离线来源时显示，旧偏好不丢失。
+
+自动检查包括插件测试/构建、服务端测试、`scripts/check_selection_popup.cjs`、`scripts/check_selection_audio.cjs`、`scripts/check_selection_favorites.cjs` 与 `scripts/check_settings_ui.cjs`。公开词典实时冒烟运行 `python scripts/selection_dictionary_smoke.py`；固定有道和必应响应在 `plugin/tests/fixtures/selection-dictionaries/`。浏览器检查覆盖无服务查词、点击模式下打开前零请求、编辑草稿保留、真实 `ReadableStream` 分块、停止后重试和迟到结果、窄面板与菜单键盘操作；图标使用内嵌 Lucide SVG，在阻断图片请求时仍可显示。音频检查验证静默预加载、共享下载、缓存上限、取消及真实媒体播放，可用第二个参数传入本地 MP3 文件（第一个参数为 Playwright 模块路径）。浏览器模拟不替代原生 Zotero 验收：选区、音频设备、真实模型与附件页码跳转由用户检查。
 
 ## macOS 本机源码部署
 

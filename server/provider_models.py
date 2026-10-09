@@ -32,8 +32,6 @@ MODEL_ENDPOINTS = {
     "openai": "https://api.openai.com/v1",
     "deepseek": "https://api.deepseek.com/v1",
     "gemini": "https://generativelanguage.googleapis.com/v1beta/openai",
-    "grok": "https://api.x.ai/v1",
-    "groq": "https://api.groq.com/openai/v1",
     "siliconflow": "https://api.siliconflow.cn/v1",
 }
 

@@ -42,6 +42,10 @@ declare namespace _ZoteroTypes {
       "selectionTranslationProvider": string;
       "selectionApiKey": string;
       "selectionDictionary": string;
+      "selectionDictionaryFallback": string;
+      "selectionTrigger": string;
+      "selectionStream": boolean;
+      "selectionPreferenceVersion": number;
       "selectionAutoDictionary": boolean;
       "attachmentTitleLayout": string;
       "selectionDisplayMode": string;

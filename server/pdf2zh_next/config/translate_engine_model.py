@@ -240,135 +240,6 @@ class OllamaSettings(BaseModel):
 GUI_SENSITIVE_FIELDS.append("ollama_host")
 
 
-class XinferenceSettings(BaseModel):
-    """Xinference API settings"""
-
-    translate_engine_type: Literal["Xinference"] = Field(default="Xinference")
-    support_llm: Literal["yes", "no"] = Field(
-        default="yes", description="Whether the translator supports LLM"
-    )
-
-    xinference_model: str = Field(
-        default="gemma-2-it", description="Xinference model to use"
-    )
-    xinference_host: str | None = Field(default=None, description="Xinference host")
-
-    def validate_settings(self) -> None:
-        if not self.xinference_host:
-            raise ValueError("Xinference host is required")
-        self.xinference_host = _clean_string(self.xinference_host)
-        self.xinference_model = _clean_string(self.xinference_model)
-
-
-GUI_SENSITIVE_FIELDS.append("xinference_host")
-
-
-class AzureOpenAISettings(BaseModel):
-    """AzureOpenAI API settings"""
-
-    translate_engine_type: Literal["AzureOpenAI"] = Field(default="AzureOpenAI")
-    support_llm: Literal["yes", "no"] = Field(
-        default="yes", description="Whether the translator supports LLM"
-    )
-
-    azure_openai_model: str = Field(
-        default="", description="Azure OpenAI deployment name"
-    )
-    azure_openai_base_url: str | None = Field(
-        default=None, description="Base URL for AzureOpenAI API"
-    )
-    azure_openai_api_key: str | None = Field(
-        default=None, description="API key for AzureOpenAI service"
-    )
-    azure_openai_api_version: str = Field(
-        default="v1", description="v1 (recommended), or an explicit legacy Azure API version"
-    )
-
-    def validate_settings(self) -> None:
-        if not self.azure_openai_model or not self.azure_openai_base_url:
-            raise ValueError("Azure OpenAI endpoint and deployment name are required")
-        if not self.azure_openai_api_key:
-            raise ValueError("AzureOpenAI API key is required")
-        self.azure_openai_api_key = _clean_string(self.azure_openai_api_key)
-        self.azure_openai_base_url = _clean_string(self.azure_openai_base_url)
-        self.azure_openai_model = _clean_string(self.azure_openai_model)
-        self.azure_openai_api_version = _clean_string(self.azure_openai_api_version)
-
-
-GUI_PASSWORD_FIELDS.append("azure_openai_api_key")
-GUI_SENSITIVE_FIELDS.append("azure_openai_base_url")
-
-
-class ModelScopeSettings(BaseModel):
-    """ModelScope API settings"""
-
-    translate_engine_type: Literal["ModelScope"] = Field(default="ModelScope")
-    support_llm: Literal["yes", "no"] = Field(
-        default="yes", description="Whether the translator supports LLM"
-    )
-
-    modelscope_model: str = Field(
-        default="Qwen/Qwen2.5-32B-Instruct", description="ModelScope model to use"
-    )
-    modelscope_api_key: str | None = Field(
-        default=None, description="API key for ModelScope service"
-    )
-    modelscope_enable_json_mode: bool | None = Field(
-        default=None, description="Enable JSON mode for ModelScope service"
-    )
-
-    def validate_settings(self) -> None:
-        if not self.modelscope_api_key:
-            raise ValueError("ModelScope API key is required")
-        self.modelscope_api_key = _clean_string(self.modelscope_api_key)
-        self.modelscope_model = _clean_string(self.modelscope_model)
-
-    def transform(self) -> OpenAISettings:
-        return OpenAISettings(
-            openai_model=self.modelscope_model,
-            openai_api_key=self.modelscope_api_key,
-            openai_base_url="https://api-inference.modelscope.cn/v1",
-            openai_enable_json_mode=self.modelscope_enable_json_mode,
-        )
-
-
-GUI_PASSWORD_FIELDS.append("modelscope_api_key")
-
-
-class ZhipuSettings(BaseModel):
-    """Zhipu API settings"""
-
-    translate_engine_type: Literal["Zhipu"] = Field(default="Zhipu")
-    support_llm: Literal["yes", "no"] = Field(
-        default="yes", description="Whether the translator supports LLM"
-    )
-
-    zhipu_model: str = Field(default="glm-4-flash", description="Zhipu model to use")
-    zhipu_api_key: str | None = Field(
-        default=None, description="API key for Zhipu service"
-    )
-    zhipu_enable_json_mode: bool | None = Field(
-        default=None, description="Enable JSON mode for Zhipu service"
-    )
-
-    def validate_settings(self) -> None:
-        if not self.zhipu_api_key:
-            raise ValueError("Zhipu API key is required")
-        self.zhipu_api_key = _clean_string(self.zhipu_api_key)
-        self.zhipu_model = _clean_string(self.zhipu_model)
-
-    def transform(self) -> OpenAISettings:
-        return OpenAISettings(
-            openai_model=self.zhipu_model,
-            openai_api_key=self.zhipu_api_key,
-            openai_base_url="https://open.bigmodel.cn/api/paas/v4",
-            openai_enable_json_mode=self.zhipu_enable_json_mode,
-        )
-
-
-GUI_PASSWORD_FIELDS.append("zhipu_api_key")
-
-
 class SiliconFlowSettings(BaseModel):
     """SiliconFlow API settings"""
 
@@ -410,22 +281,6 @@ GUI_PASSWORD_FIELDS.append("siliconflow_api_key")
 GUI_SENSITIVE_FIELDS.append("siliconflow_base_url")
 
 
-class SiliconFlowFreeSettings(BaseModel):
-    """SiliconFlow Free API settings"""
-
-    translate_engine_type: Literal["SiliconFlowFree"] = Field(default="SiliconFlowFree")
-    support_llm: Literal["yes", "no"] = Field(
-        default="yes", description="Whether the translator supports LLM"
-    )
-
-    siliconflow_free_enable_json_mode: bool | None = Field(
-        default=False, description="Enable JSON mode for SiliconFlow Free service"
-    )
-
-    def validate_settings(self) -> None:
-        pass
-
-
 class GeminiSettings(BaseModel):
     """Gemini API settings"""
 
@@ -460,155 +315,6 @@ class GeminiSettings(BaseModel):
 
 
 GUI_PASSWORD_FIELDS.append("gemini_api_key")
-
-
-class AzureSettings(BaseModel):
-    """Azure Translation settings"""
-
-    translate_engine_type: Literal["Azure"] = Field(default="Azure")
-    azure_endpoint: str | None = Field(
-        default="https://api.translator.azure.cn", description="Azure endpoint"
-    )
-    azure_api_key: str | None = Field(default=None, description="Azure API Key")
-    azure_region: str = Field(default="chinaeast2", description="Azure resource region; empty for global resources")
-
-    def validate_settings(self) -> None:
-        if not self.azure_api_key:
-            raise ValueError("Azure API key is required")
-        self.azure_api_key = _clean_string(self.azure_api_key)
-        self.azure_endpoint = _clean_string(self.azure_endpoint)
-        self.azure_region = self.azure_region.strip()
-
-
-GUI_PASSWORD_FIELDS.append("azure_api_key")
-GUI_SENSITIVE_FIELDS.append("azure_endpoint")
-
-
-class AnythingLLMSettings(BaseModel):
-    """AnythingLLM settings"""
-
-    translate_engine_type: Literal["AnythingLLM"] = Field(default="AnythingLLM")
-    anythingllm_url: str | None = Field(default=None, description="AnythingLLM url")
-    anythingllm_apikey: str | None = Field(
-        default=None, description="AnythingLLM API Key"
-    )
-
-    def validate_settings(self) -> None:
-        if not self.anythingllm_apikey:
-            raise ValueError("AnythingLLM API Key is required")
-        self.anythingllm_apikey = _clean_string(self.anythingllm_apikey)
-        self.anythingllm_url = _clean_string(self.anythingllm_url)
-
-
-GUI_PASSWORD_FIELDS.append("anythingllm_apikey")
-GUI_SENSITIVE_FIELDS.append("anythingllm_url")
-
-
-class GrokSettings(BaseModel):
-    """Grok API settings"""
-
-    translate_engine_type: Literal["Grok"] = Field(default="Grok")
-    support_llm: Literal["yes", "no"] = Field(
-        default="yes", description="Whether the translator supports LLM"
-    )
-
-    grok_model: str = Field(default="grok-4.7", description="Grok model to use")
-    grok_api_key: str | None = Field(
-        default=None, description="API key for Grok service"
-    )
-    grok_enable_json_mode: bool | None = Field(
-        default=None, description="Enable JSON mode for Grok service"
-    )
-
-    def validate_settings(self) -> None:
-        if not self.grok_api_key:
-            raise ValueError("Grok API key is required")
-        self.grok_api_key = _clean_string(self.grok_api_key)
-        self.grok_model = _clean_string(self.grok_model)
-
-    def transform(self) -> OpenAISettings:
-        return OpenAISettings(
-            openai_model=self.grok_model,
-            openai_api_key=self.grok_api_key,
-            openai_base_url="https://api.x.ai/v1",
-            openai_enable_json_mode=self.grok_enable_json_mode,
-        )
-
-
-GUI_PASSWORD_FIELDS.append("grok_api_key")
-
-
-class GroqSettings(BaseModel):
-    """Groq API settings"""
-
-    translate_engine_type: Literal["Groq"] = Field(default="Groq")
-    support_llm: Literal["yes", "no"] = Field(
-        default="yes", description="Whether the translator supports LLM"
-    )
-
-    groq_model: str = Field(
-        default="llama-3.3-70b-versatile", description="Groq model to use"
-    )
-    groq_api_key: str | None = Field(
-        default=None, description="API key for Groq service"
-    )
-    groq_enable_json_mode: bool | None = Field(
-        default=None, description="Enable JSON mode for Groq service"
-    )
-
-    def validate_settings(self) -> None:
-        if not self.groq_api_key:
-            raise ValueError("Groq API key is required")
-        self.groq_api_key = _clean_string(self.groq_api_key)
-        self.groq_model = _clean_string(self.groq_model)
-
-    def transform(self) -> OpenAISettings:
-        return OpenAISettings(
-            openai_model=self.groq_model,
-            openai_api_key=self.groq_api_key,
-            openai_base_url="https://api.groq.com/openai/v1",
-            openai_enable_json_mode=self.groq_enable_json_mode,
-        )
-
-
-GUI_PASSWORD_FIELDS.append("groq_api_key")
-
-
-class QwenMtSettings(BaseModel):
-    """QwenMt API settings"""
-
-    translate_engine_type: Literal["QwenMt"] = Field(default="QwenMt")
-    support_llm: Literal["yes", "no"] = Field(
-        default="no", description="Whether the translator supports LLM"
-    )
-
-    qwenmt_model: str = Field(default="qwen-mt-plus", description="QwenMt model to use")
-    qwenmt_base_url: str | None = Field(
-        default="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        description="Base URL for QwenMt API",
-    )
-    qwenmt_api_key: str | None = Field(
-        default=None, description="API key for QwenMt service"
-    )
-    ali_domains: str | None = Field(
-        default="This sentence is extracted from a scientific paper. When translating, please pay close attention to the use of specialized troubleshooting terminologies and adhere to scientific sentence structures to maintain the technical rigor and precision of the original text.",
-        description="the target domain to guide translation style for QwenMt service",
-    )
-
-    def validate_settings(self) -> None:
-        logger.warning(
-            "The current QwenMT is not fully adapted and does not support the glossary function at this time."
-        )
-        if not self.qwenmt_api_key:
-            raise ValueError("QwenMt API key is required")
-        self.qwenmt_api_key = _clean_string(self.qwenmt_api_key)
-        self.qwenmt_base_url = _clean_string(self.qwenmt_base_url)
-        self.qwenmt_model = _clean_string(self.qwenmt_model)
-        self.ali_domains = _clean_string(self.ali_domains)
-
-
-GUI_PASSWORD_FIELDS.append("qwenmt_api_key")
-GUI_SENSITIVE_FIELDS.append("qwenmt_base_url")
 
 
 class AliyunDashScopeSettings(BaseModel):
@@ -790,25 +496,15 @@ class CLISettings(BaseModel):
 
 # 所有翻译引擎
 TRANSLATION_ENGINE_SETTING_TYPE: TypeAlias = (
-    SiliconFlowFreeSettings
-    | OpenAISettings
+    OpenAISettings
     | AliyunDashScopeSettings
     | GoogleSettings
     | BingSettings
     | DeepLSettings
     | DeepSeekSettings
     | OllamaSettings
-    | XinferenceSettings
-    | AzureOpenAISettings
-    | ModelScopeSettings
-    | ZhipuSettings
     | SiliconFlowSettings
     | GeminiSettings
-    | AzureSettings
-    | AnythingLLMSettings
-    | GrokSettings
-    | GroqSettings
-    | QwenMtSettings
     | ClaudeCodeSettings
     | CodexSettings
     | CLISettings
@@ -816,12 +512,6 @@ TRANSLATION_ENGINE_SETTING_TYPE: TypeAlias = (
 
 # 不支持的翻译引擎
 NOT_SUPPORTED_TRANSLATION_ENGINE_SETTING_TYPE: TypeAlias = NoneType
-
-# 默认翻译引擎
-_DEFAULT_TRANSLATION_ENGINE = SiliconFlowFreeSettings
-assert len(_DEFAULT_TRANSLATION_ENGINE.model_fields) == 3, (
-    "Default translation engine cannot have detail settings"
-)
 
 # The following is magic code,
 # if you need to modify it,
@@ -987,10 +677,6 @@ TERM_EXTRACTION_ENGINE_METADATA_MAP = {
     for metadata in TERM_EXTRACTION_ENGINE_METADATA
 }
 
-
-DEFAULT_TRANSLATION_ENGINE_METADATA = TRANSLATION_ENGINE_METADATA_MAP[
-    _DEFAULT_TRANSLATION_ENGINE.model_fields["translate_engine_type"].default
-]
 
 if __name__ == "__main__":
     print(TRANSLATION_ENGINE_METADATA_MAP)

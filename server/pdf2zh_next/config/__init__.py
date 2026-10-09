@@ -5,9 +5,6 @@ from pdf2zh_next.config.model import SettingsModel
 from pdf2zh_next.config.model import TranslationSettings
 from pdf2zh_next.config.model import WatermarkOutputMode
 from pdf2zh_next.config.translate_engine_model import TRANSLATION_ENGINE_METADATA
-from pdf2zh_next.config.translate_engine_model import AnythingLLMSettings
-from pdf2zh_next.config.translate_engine_model import AzureOpenAISettings
-from pdf2zh_next.config.translate_engine_model import AzureSettings
 from pdf2zh_next.config.translate_engine_model import BingSettings
 from pdf2zh_next.config.translate_engine_model import ClaudeCodeSettings
 from pdf2zh_next.config.translate_engine_model import CodexSettings
@@ -15,15 +12,9 @@ from pdf2zh_next.config.translate_engine_model import DeepLSettings
 from pdf2zh_next.config.translate_engine_model import DeepSeekSettings
 from pdf2zh_next.config.translate_engine_model import GeminiSettings
 from pdf2zh_next.config.translate_engine_model import GoogleSettings
-from pdf2zh_next.config.translate_engine_model import GrokSettings
-from pdf2zh_next.config.translate_engine_model import GroqSettings
-from pdf2zh_next.config.translate_engine_model import ModelScopeSettings
 from pdf2zh_next.config.translate_engine_model import OllamaSettings
 from pdf2zh_next.config.translate_engine_model import OpenAISettings
-from pdf2zh_next.config.translate_engine_model import QwenMtSettings
 from pdf2zh_next.config.translate_engine_model import SiliconFlowSettings
-from pdf2zh_next.config.translate_engine_model import XinferenceSettings
-from pdf2zh_next.config.translate_engine_model import ZhipuSettings
 
 __all__ = [
     "ConfigManager",
@@ -37,17 +28,8 @@ __all__ = [
     "OpenAISettings",
     "DeepLSettings",
     "OllamaSettings",
-    "XinferenceSettings",
-    "AzureOpenAISettings",
-    "ModelScopeSettings",
-    "ZhipuSettings",
     "SiliconFlowSettings",
     "GeminiSettings",
-    "AzureSettings",
-    "AnythingLLMSettings",
-    "GrokSettings",
-    "GroqSettings",
-    "QwenMtSettings",
     "DeepSeekSettings",
     "TRANSLATION_ENGINE_METADATA",
     "ClaudeCodeSettings",

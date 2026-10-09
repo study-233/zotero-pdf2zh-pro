@@ -198,35 +198,23 @@
             for="zotero-prefpane-__addonRef__-selectedApiKey"
             data-l10n-id="pref-current-profile"
         />
-        <menulist
-            id="zotero-prefpane-__addonRef__-selectedApiKey"
-            class="profile-select"
-            ><menupopup native="false"
-        /></menulist>
-        <html:p
-            id="zotero-prefpane-__addonRef__-profileSummary"
-            class="pref-description"
-        />
         <html:div class="llm-toolbar">
-            <html:button
-                id="zotero-prefpane-__addonRef__-profile-add"
-                data-l10n-id="pref-profile-add"
-            />
-            <html:button
-                id="zotero-prefpane-__addonRef__-profile-edit"
-                data-l10n-id="pref-profile-edit"
-                disabled="disabled"
-            />
+            <menulist
+                id="zotero-prefpane-__addonRef__-selectedApiKey"
+                class="profile-select"
+                style="flex: 1; min-width: 0; margin: 0"
+            >
+                <menupopup native="false" />
+            </menulist>
             <html:button
                 id="zotero-prefpane-__addonRef__-profile-manage"
                 data-l10n-id="pref-profile-manage"
             />
-            <html:button
-                id="zotero-prefpane-__addonRef__-profile-test"
-                data-l10n-id="pref-profile-test"
-                disabled="disabled"
-            />
         </html:div>
+        <html:p
+            id="zotero-prefpane-__addonRef__-profileSummary"
+            class="pref-description"
+        />
         <html:p
             id="zotero-prefpane-__addonRef__-apiResult"
             class="connection-result"
@@ -429,6 +417,17 @@
         </html:div>
     </html:section>
 
+    <html:style>
+        .selection-settings .selection-controls { display: grid; gap: 12px; }
+        .selection-settings .selection-advanced { margin-top: 16px; }
+        .selection-settings .selection-advanced > summary { font-size: 13px;
+        margin-bottom: 12px; } .selection-settings .selection-fallback {
+        margin-top: 12px; } .selection-settings .dictionary-download-row {
+        border: 0; border-top: 1px solid color-mix(in srgb, FieldText 12%,
+        transparent); border-radius: 0; padding: 12px 0 0; } .selection-settings
+        .llm-toolbar { gap: 6px; } .selection-settings .llm-toolbar button {
+        min-height: 28px; padding: 3px 8px; font-size: 12px; }
+    </html:style>
     <html:section class="pref-section selection-settings">
         <html:div class="section-heading">
             <html:h3
@@ -436,30 +435,54 @@
                 data-l10n-id="pref-selection-title"
             />
         </html:div>
+        <html:p
+            class="pref-description"
+            data-l10n-id="pref-selection-summary"
+        />
         <html:div class="selection-controls">
             <html:div class="selection-service-row">
                 <html:div class="selection-field">
                     <html:label
                         class="field-label"
-                        data-l10n-id="pref-selection-provider"
-                        for="zotero-prefpane-__addonRef__-selection-provider"
+                        data-l10n-id="pref-selection-trigger"
+                        for="zotero-prefpane-__addonRef__-selection-trigger"
                     />
                     <menulist
-                        id="zotero-prefpane-__addonRef__-selection-provider"
+                        id="zotero-prefpane-__addonRef__-selection-trigger"
                         class="select-input"
+                        crop="end"
                     >
-                        <menupopup>
-                            <menuitem
-                                value="bing"
-                                data-l10n-id="pref-selection-bing"
-                            />
-                            <menuitem
-                                value="profile"
-                                data-l10n-id="pref-selection-profile"
-                            />
-                        </menupopup>
+                        <menupopup
+                            ><menuitem
+                                value="auto"
+                                data-l10n-id="pref-selection-trigger-auto" /><menuitem
+                                value="click"
+                                data-l10n-id="pref-selection-trigger-click"
+                        /></menupopup>
                     </menulist>
                 </html:div>
+                <html:div class="selection-field">
+                    <html:label
+                        class="field-label"
+                        data-l10n-id="pref-selection-display"
+                        for="zotero-prefpane-__addonRef__-selection-display"
+                    />
+                    <menulist
+                        id="zotero-prefpane-__addonRef__-selection-display"
+                        class="select-input"
+                        crop="end"
+                    >
+                        <menupopup
+                            ><menuitem
+                                value="floating"
+                                data-l10n-id="pref-selection-display-floating" /><menuitem
+                                value="sidebar"
+                                data-l10n-id="pref-selection-display-sidebar"
+                        /></menupopup>
+                    </menulist>
+                </html:div>
+            </html:div>
+            <html:div class="selection-service-row">
                 <html:div class="selection-field">
                     <html:label
                         class="field-label"
@@ -469,21 +492,55 @@
                     <menulist
                         id="zotero-prefpane-__addonRef__-selection-dictionary"
                         class="select-input"
+                        crop="end"
                     >
-                        <menupopup>
-                            <menuitem
+                        <menupopup
+                            ><menuitem
                                 value="ecdict"
-                                data-l10n-id="pref-selection-ecdict"
-                            />
-                            <menuitem
+                                data-l10n-id="pref-selection-ecdict" /><menuitem
+                                value="youdao"
+                                data-l10n-id="pref-selection-youdao" /><menuitem
+                                value="bing"
+                                data-l10n-id="pref-selection-bing-dictionary" /><menuitem
                                 value="collins"
                                 data-l10n-id="pref-selection-collins"
-                            />
-                        </menupopup>
+                        /></menupopup>
+                    </menulist>
+                </html:div>
+                <html:div class="selection-field">
+                    <html:label
+                        class="field-label"
+                        data-l10n-id="pref-selection-provider"
+                        for="zotero-prefpane-__addonRef__-selection-provider"
+                    />
+                    <menulist
+                        id="zotero-prefpane-__addonRef__-selection-provider"
+                        class="select-input"
+                        crop="end"
+                    >
+                        <menupopup
+                            ><menuitem
+                                value="bing"
+                                data-l10n-id="pref-selection-bing" /><menuitem
+                                value="profile"
+                                data-l10n-id="pref-selection-profile"
+                        /></menupopup>
                     </menulist>
                 </html:div>
             </html:div>
-            <html:div class="selection-field">
+        </html:div>
+        <html:div
+            id="zotero-prefpane-__addonRef__-selection-model-status"
+            class="pref-description"
+            role="alert"
+            hidden="true"
+        />
+        <html:details class="selection-advanced">
+            <html:summary data-l10n-id="pref-selection-advanced" />
+            <html:div
+                class="selection-field"
+                id="zotero-prefpane-__addonRef__-selection-model-field"
+            >
                 <html:label
                     class="field-label"
                     for="zotero-prefpane-__addonRef__-selection-model"
@@ -496,66 +553,100 @@
                     ><menupopup native="false"
                 /></menulist>
             </html:div>
-        </html:div>
-        <html:div
-            id="zotero-prefpane-__addonRef__-selection-model-status"
-            class="pref-description"
-            role="alert"
-            hidden="true"
-        />
-        <html:label class="toggle-row selection-auto">
-            <html:input
-                type="checkbox"
-                id="zotero-prefpane-__addonRef__-selection-auto-dictionary"
-            />
-            <html:span data-l10n-id="pref-selection-auto-dictionary" />
-        </html:label>
-        <html:div class="dictionary-download-row">
-            <html:div
-                ><html:strong data-l10n-id="pref-selection-pack" /><html:div
-                    id="zotero-prefpane-__addonRef__-selection-dictionary-status"
-                    class="pref-description"
-                    aria-live="polite"
-            /></html:div>
-            <html:button id="zotero-prefpane-__addonRef__-selection-download" />
-        </html:div>
-        <html:progress
-            id="zotero-prefpane-__addonRef__-selection-download-progress"
-            max="100"
-            value="0"
-            hidden="true"
-        />
-        <html:div
-            id="zotero-prefpane-__addonRef__-selection-download-error"
-            role="alert"
-            hidden="true"
-        />
-        <html:div class="llm-toolbar">
-            <html:button
-                id="zotero-prefpane-__addonRef__-selection-import"
-                data-l10n-id="pref-selection-import"
-            />
-            <html:button
-                id="zotero-prefpane-__addonRef__-selection-clear-cache"
-                data-l10n-id="pref-selection-clear-cache"
-            />
-        </html:div>
-        <html:p
-            id="zotero-prefpane-__addonRef__-selection-cache-status"
-            class="pref-description"
-            role="status"
-            aria-live="polite"
-        />
-        <html:details class="dictionary-details">
-            <html:summary data-l10n-id="pref-selection-details" />
             <html:p
-                id="zotero-prefpane-__addonRef__-selection-service-hint"
+                id="zotero-prefpane-__addonRef__-selection-model-shared"
                 class="pref-description"
-                data-l10n-id="pref-selection-service-hint"
+                data-l10n-id="pref-selection-model-shared"
+                hidden="true"
             />
             <html:p
                 class="pref-description"
                 data-l10n-id="pref-selection-learning-hint"
+            />
+            <html:label class="toggle-row selection-auto">
+                <html:input
+                    type="checkbox"
+                    id="zotero-prefpane-__addonRef__-selection-auto-dictionary"
+                />
+                <html:span data-l10n-id="pref-selection-auto-dictionary" />
+            </html:label>
+            <html:label class="toggle-row selection-auto">
+                <html:input
+                    type="checkbox"
+                    id="zotero-prefpane-__addonRef__-selection-stream"
+                />
+                <html:span data-l10n-id="pref-selection-stream" />
+            </html:label>
+            <html:div
+                class="selection-field selection-fallback"
+                id="zotero-prefpane-__addonRef__-selection-fallback-field"
+            >
+                <html:label
+                    class="field-label"
+                    for="zotero-prefpane-__addonRef__-selection-fallback"
+                    data-l10n-id="pref-selection-fallback"
+                />
+                <menulist
+                    id="zotero-prefpane-__addonRef__-selection-fallback"
+                    class="select-input"
+                >
+                    <menupopup
+                        ><menuitem
+                            value="youdao"
+                            data-l10n-id="pref-selection-youdao" /><menuitem
+                            value="bing"
+                            data-l10n-id="pref-selection-bing-dictionary"
+                    /></menupopup>
+                </menulist>
+            </html:div>
+            <html:div class="dictionary-download-row">
+                <html:div>
+                    <html:strong data-l10n-id="pref-selection-pack" />
+                    <html:div
+                        id="zotero-prefpane-__addonRef__-selection-dictionary-status"
+                        class="pref-description"
+                        aria-live="polite"
+                    />
+                </html:div>
+                <html:button
+                    id="zotero-prefpane-__addonRef__-selection-download"
+                />
+            </html:div>
+            <html:progress
+                id="zotero-prefpane-__addonRef__-selection-download-progress"
+                max="100"
+                value="0"
+                hidden="true"
+            />
+            <html:div
+                id="zotero-prefpane-__addonRef__-selection-download-error"
+                role="alert"
+                hidden="true"
+            />
+            <html:div class="llm-toolbar">
+                <html:button
+                    id="zotero-prefpane-__addonRef__-selection-import"
+                    data-l10n-id="pref-selection-import"
+                />
+                <html:button
+                    id="zotero-prefpane-__addonRef__-selection-clear-online"
+                    data-l10n-id="pref-selection-clear-online"
+                />
+                <html:button
+                    id="zotero-prefpane-__addonRef__-selection-clear-cache"
+                    data-l10n-id="pref-selection-clear-cache"
+                />
+            </html:div>
+            <html:p
+                id="zotero-prefpane-__addonRef__-selection-cache-status"
+                class="pref-description"
+                role="status"
+                aria-live="polite"
+            />
+            <html:p
+                id="zotero-prefpane-__addonRef__-selection-service-hint"
+                class="pref-description"
+                data-l10n-id="pref-selection-service-hint"
             />
             <html:p
                 class="pref-description"
@@ -565,9 +656,12 @@
                 class="pref-description"
                 data-l10n-id="pref-selection-import-hint"
             />
-            <html:div
-                id="zotero-prefpane-__addonRef__-selection-dictionary-details"
-            />
+            <html:details class="dictionary-details">
+                <html:summary data-l10n-id="pref-selection-details" />
+                <html:div
+                    id="zotero-prefpane-__addonRef__-selection-dictionary-details"
+                />
+            </html:details>
         </html:details>
     </html:section>
 

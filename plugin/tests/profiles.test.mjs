@@ -1,3 +1,4 @@
+/* global AbortController */
 import { URL } from "node:url";
 import { Buffer } from "node:buffer";
 import assert from "node:assert/strict";
@@ -31,7 +32,7 @@ globalThis.__profileTests = {
     getString: (key) => key,
 };
 const store = await asModule(
-    "const {getPref, setPref, migrateProfiles, selectedProfile, isRemovedService} = globalThis.__profileTests;\n" +
+    "const {getPref, setPref, migrateProfiles, selectedProfile, isRemovedService, resolveProviderPreset} = globalThis.__profileTests;\n" +
         compile("profileStore").replace(/^import .*;$/gm, ""),
 );
 const api = (key, service = "openai", activate = false) => ({
@@ -75,10 +76,10 @@ test("ambiguous or unmatched old activation never selects another provider", () 
     }
 });
 
-test("built-in default survives migration, incomplete unknown engine needs editing", () => {
+test("retired default is removed, incomplete unknown engine needs editing", () => {
     assert.equal(
-        model.migrateProfiles([], "siliconflowfree").profiles[0].service,
-        "siliconflowfree",
+        model.migrateProfiles([], "siliconflowfree").profiles.length,
+        0,
     );
     const result = model.migrateProfiles(
         [{ ...api("a", "unknown", true), apiUrl: "" }],
@@ -265,7 +266,7 @@ const compatibility = await asModule(compile("apiCompatibility"));
 globalThis.__profileTests.prepareApiForServer =
     compatibility.prepareApiForServer;
 const client = await asModule(
-    "const {axios, getPref, prepareApiForServer} = globalThis.__profileTests;\n" +
+    "const {axios, getPref, prepareApiForServer, assertSupportedProfile} = globalThis.__profileTests;\n" +
         compile("profileApiClient").replace(/^import .*;$/gm, ""),
 );
 test("testing a draft forwards its credentials/options without changing saved selection", async () => {
@@ -402,12 +403,14 @@ test("invalid Codex model capabilities are rejected before the editor uses them"
     );
 });
 
-test("catalog has 19 providers and excludes the three retired services", () => {
-    assert.equal(Object.keys(model.SERVICE_NAMES).length, 19);
+test("catalog has 9 services and excludes retired services", () => {
+    assert.equal(Object.keys(model.SERVICE_NAMES).length, 9);
+    assert.equal(model.SERVICE_NAMES.siliconflow, "SiliconFlow");
     for (const service of [
         "openaicompatible",
         "tencentmechinetranslation",
         "dify",
+        "siliconflowfree",
     ])
         assert.equal(model.SERVICE_NAMES[service], undefined);
 });
@@ -442,8 +445,11 @@ test("v1 migration removes retired rows and backup credentials without changing 
                 other: "keep-me",
             }),
         );
-        assert.deepEqual(store.loadProfiles(), [keep, rows[4]]);
-        assert.equal(prefs.get("profileSchemaVersion"), 2);
+        assert.deepEqual(store.loadProfiles(), [
+            keep,
+            { ...rows[4], providerPreset: "gemini" },
+        ]);
+        assert.equal(prefs.get("profileSchemaVersion"), 4);
         assert.equal(
             prefs.get("selectedApiKey"),
             selected === "keep" ? "keep" : "",
@@ -485,6 +491,146 @@ test("unparseable backup remains intact while valid active profiles migrate", ()
     prefs.set("profileSchemaVersion", 1);
     prefs.set("llmApis", JSON.stringify([api("keep"), api("old", "dify")]));
     prefs.set("llmApisLegacyBackup", "corrupt backup");
-    assert.deepEqual(store.loadProfiles(), [api("keep")]);
+    assert.deepEqual(store.loadProfiles(), [
+        { ...api("keep"), providerPreset: "custom" },
+    ]);
     assert.equal(prefs.get("llmApisLegacyBackup"), "corrupt backup");
+});
+
+test("v2 migration removes the free proxy without changing keyed SiliconFlow or selecting a replacement", () => {
+    for (const selected of ["free", "own-key"]) {
+        prefs.clear();
+        const keep = {
+            ...api("own-key", "siliconflow"),
+            extraData: { custom: false },
+        };
+        const rows = [api("free", "SiliconFlow_Free"), keep];
+        prefs.set("profileSchemaVersion", 2);
+        prefs.set("llmApis", JSON.stringify(rows));
+        prefs.set("selectedApiKey", selected);
+        prefs.set("selectionApiKey", "free");
+        prefs.set("service", "SiliconFlowFree");
+        prefs.set("serviceSelect", "siliconflowfree");
+        prefs.set(
+            "llmApisLegacyBackup",
+            JSON.stringify({
+                llmApis: JSON.stringify(rows),
+                service: "siliconflowfree",
+                selectedApiKey: "free",
+            }),
+        );
+        assert.deepEqual(store.loadProfiles(), [
+            { ...keep, providerPreset: "siliconflow" },
+        ]);
+        assert.equal(
+            prefs.get("selectedApiKey"),
+            selected === "free" ? "" : "own-key",
+        );
+        assert.equal(prefs.get("service"), "");
+        assert.equal(prefs.get("serviceSelect"), "");
+        assert.equal(
+            prefs.get("selectionApiKey"),
+            "free",
+            "explicit selection model stays missing instead of switching to a paid model",
+        );
+        assert.equal(store.getSelectedProfile("free"), null);
+        const backup = JSON.parse(prefs.get("llmApisLegacyBackup"));
+        assert.deepEqual(JSON.parse(backup.llmApis), [keep]);
+        assert.equal(backup.service, "");
+        assert.equal(backup.selectedApiKey, "");
+        const migrated = new Map(prefs);
+        store.loadProfiles();
+        assert.deepEqual(prefs, migrated);
+    }
+});
+
+test("fresh installation and legacy free defaults leave model selection empty", () => {
+    for (const service of [undefined, "siliconflowfree"]) {
+        prefs.clear();
+        if (service) prefs.set("service", service);
+        assert.deepEqual(store.loadProfiles(), []);
+        assert.equal(store.getSelectedProfile(), null);
+        assert.equal(prefs.get("selectedApiKey"), "");
+    }
+});
+
+test("v3 retirement keeps credentials, references and retired service identity", () => {
+    prefs.clear();
+    const rows = model.RETIRED_SERVICES.map((service) =>
+        api(service, service, true),
+    );
+    prefs.set("profileSchemaVersion", 3);
+    prefs.set("llmApis", JSON.stringify(rows));
+    prefs.set("selectedApiKey", "grok");
+    prefs.set("selectionApiKey", "azure");
+    assert.deepEqual(store.loadProfiles(), rows);
+    assert.equal(prefs.get("selectedApiKey"), "grok");
+    assert.equal(prefs.get("selectionApiKey"), "azure");
+    assert.throws(() => helper.getServerConfig(), /profile-retired/);
+    assert.throws(
+        () => helper.getServerConfig(true, "azure"),
+        /profile-retired/,
+    );
+    const legacy = model.migrateProfiles(rows, "grok");
+    assert.equal(legacy.profiles.find((p) => p.key === "grok").service, "grok");
+});
+
+test("OpenRouter is a preset over the existing OpenAI wire contract", async () => {
+    prefs.set("new_serverip", "http://localhost:8890");
+    const preset = model.PROVIDER_PRESETS.find((p) => p.id === "openrouter");
+    assert.equal(preset.service, "openai");
+    assert.equal(preset.url, "https://openrouter.ai/api/v1");
+    const draft = {
+        ...api("router"),
+        providerPreset: preset.id,
+        apiUrl: preset.url,
+        apiProtocol: "chat_completions",
+        requestOptions: {},
+    };
+    assert.equal(model.resolveProviderPreset(draft).id, "openrouter");
+    assert.equal(
+        model.resolveProviderPreset({ ...draft, providerPreset: undefined }).id,
+        "custom",
+    );
+    assert.equal(
+        model.resolveProviderPreset({
+            ...draft,
+            providerPreset: undefined,
+            apiUrl: "https://api.openai.com/v1/chat/completions",
+        }).id,
+        "openai",
+    );
+    assert.equal(
+        model.resolveProviderPreset({
+            ...draft,
+            providerPreset: undefined,
+            apiUrl: "https://api.openai.com.evil.test/v1",
+        }).id,
+        "custom",
+    );
+    const signal = new AbortController().signal;
+    http.get = async () => ({ data: {} });
+    http.post = async (url, body, options) => {
+        requests.push({ url, body, options });
+        return { data: { liveTest: { ok: true }, models: ["vendor/model"] } };
+    };
+    await client.testProfile(draft, signal);
+    assert.equal(requests.at(-1).options.signal, signal);
+    assert.equal(requests.at(-1).body.llm_api.apiUrl, preset.url);
+    assert.equal(requests.at(-1).body.service, "openai");
+    await client.fetchProfileModelCatalog(draft, signal);
+    assert.equal(requests.at(-1).options.signal, signal);
+    assert.equal(requests.at(-1).body.service, "openai");
+    const before = requests.length;
+    for (const service of model.RETIRED_SERVICES) {
+        await assert.rejects(
+            client.testProfile(api("retired", service)),
+            /已移除/,
+        );
+        await assert.rejects(
+            client.fetchProfileModelCatalog(api("retired", service)),
+            /已移除/,
+        );
+    }
+    assert.equal(requests.length, before);
 });

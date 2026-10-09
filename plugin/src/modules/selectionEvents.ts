@@ -77,6 +77,12 @@ export function watchSelectionDocuments(
                 callbacks.input(raw);
             });
             bind(current, "keydown", (raw) => {
+                if (
+                    (raw.target as Element)?.closest?.(
+                        '.st-menu, [aria-haspopup="menu"][aria-expanded="true"]',
+                    )
+                )
+                    return;
                 if ((raw as KeyboardEvent).key === "Escape") callbacks.escape();
             });
             if (!children) return;

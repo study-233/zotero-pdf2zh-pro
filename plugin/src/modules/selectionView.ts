@@ -4,6 +4,7 @@ import {
     type SelectionPopup,
     type SelectionLearning,
     type SelectionResult,
+    type SelectionControls,
 } from "./selectionPopup";
 import {
     emptySelectionPane,
@@ -30,6 +31,9 @@ export function createSelectionView(
     let result: SelectionResult | undefined;
     let loading = "正在查询…";
     let learning: SelectionLearning | undefined;
+    let controls: SelectionControls | undefined;
+    let streaming: { text: string; origin: string } | undefined;
+    let expandedSections: string[] = [];
     let wantsPane = getPref("selectionDisplayMode") === "sidebar";
     const width = Number(getPref("selectionPopupWidth"));
     const height = Number(getPref("selectionPopupHeight"));
@@ -92,6 +96,11 @@ export function createSelectionView(
                             Math.round(value.height),
                         );
                     },
+                    onAutoSize() {
+                        size = undefined;
+                        setPref("selectionPopupWidth", 0);
+                        setPref("selectionPopupHeight", 0);
+                    },
                     onSwitch: () => {
                         void switchDisplay().catch(() => {
                             onDegraded("switch_failed");
@@ -101,9 +110,12 @@ export function createSelectionView(
                     onClear: close,
                 },
             );
-            if (result) replacement.render(result);
+            if (controls) replacement.setControls(controls);
+            if (streaming) replacement.stream(streaming.text, streaming.origin);
+            else if (result) replacement.render(result);
             else replacement.loading(loading);
             if (learning) replacement.setLearning(learning);
+            if (oldPopup) replacement.editorDraft = oldPopup.editorDraft;
         } catch (error) {
             replacement?.destroy();
             if (oldPopup) oldPopup.card.id = id;
@@ -189,26 +201,67 @@ export function createSelectionView(
             return Boolean(host);
         },
         close,
+        showNotice(message: string) {
+            popup.showNotice(message);
+        },
+        get result() {
+            return result;
+        },
+        get learning() {
+            return learning;
+        },
+        setControls(value: SelectionControls) {
+            controls = value;
+            popup.setControls(value);
+        },
+        stream(text: string, origin: string) {
+            streaming = { text, origin };
+            popup.stream(text, origin);
+        },
         updateSelection(
             text: string,
             kind: "lookup" | "translate",
             nextAnchor: HTMLElement,
         ) {
+            expandedSections =
+                text === selected
+                    ? (
+                          Array.from(
+                              popup.card.querySelectorAll("details[open]"),
+                          ) as unknown as HTMLElement[]
+                      ).map(
+                          (node) =>
+                              node.querySelector("summary")?.textContent || "",
+                      )
+                    : [];
             selected = text;
             action = kind;
             anchor = nextAnchor;
             result = undefined;
             learning = undefined;
+            streaming = undefined;
             popup.updateSelection(text, kind, nextAnchor);
         },
         loading(message: string) {
             result = undefined;
+            streaming = undefined;
             loading = message;
             popup.loading(message);
         },
         render(value: SelectionResult) {
+            streaming = undefined;
             result = value;
             popup.render(value);
+            for (const node of Array.from(
+                popup.card.querySelectorAll("details"),
+            ) as unknown as HTMLDetailsElement[]) {
+                if (
+                    expandedSections.includes(
+                        node.querySelector("summary")?.textContent || "",
+                    )
+                )
+                    node.open = true;
+            }
         },
         setLearning(value: SelectionLearning) {
             learning = value;

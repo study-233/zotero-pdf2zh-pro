@@ -16,6 +16,7 @@ import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 import { recordDiagnostic } from "./diagnostics";
 import { loadProfiles } from "./profileStore";
 import { profileLabel } from "./llmApiManager";
+import { clearOnlineDictionaryCache } from "./selectionOnlineDictionary";
 
 export function registerSelectionPreferences(
     window: Window,
@@ -42,7 +43,6 @@ export function registerSelectionPreferences(
     const renderModels = () => {
         if (!model) return;
         const selected = String(getPref("selectionApiKey") || "");
-        const popup = model.querySelector("menupopup")!;
         const hint = node("selection-model-status");
         const choices: [string, string][] = [
             [getString("selection-model-follow"), ""],
@@ -77,17 +77,40 @@ export function registerSelectionPreferences(
             message = getString("selection-model-unreadable");
             identity = `unreadable:${selected}`;
         }
-        popup.replaceChildren();
-        for (const [label, value] of choices) {
-            const item = window.document.createElementNS(
-                "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
-                "menuitem",
-            );
-            item.setAttribute("label", label);
-            item.setAttribute("value", value);
-            popup.append(item);
+        for (const [control, entries] of [
+            [model, choices],
+            [
+                service,
+                [
+                    [getString("selection-provider-bing"), "bing"],
+                    ...choices.map(([label, value]) => [
+                        label,
+                        value || "profile",
+                    ]),
+                ],
+            ],
+        ] as [XULMenuListElement, string[][]][]) {
+            const popup = control.querySelector("menupopup")!;
+            popup.replaceChildren();
+            for (const [label, value] of entries) {
+                const item = window.document.createElementNS(
+                    "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
+                    "menuitem",
+                );
+                item.setAttribute("label", label);
+                item.setAttribute("value", value);
+                popup.append(item);
+            }
         }
         model.value = selected;
+        service.value =
+            getPref("selectionTranslationProvider") === "profile"
+                ? selected || "profile"
+                : "bing";
+        const modelField = node("selection-model-field");
+        if (modelField) modelField.hidden = service.value !== "bing";
+        const shared = node("selection-model-shared");
+        if (shared) shared.hidden = service.value === "bing";
         hint.textContent = message;
         hint.hidden = !message;
         if (previousModel !== undefined && previousModel !== identity)
@@ -112,6 +135,65 @@ export function registerSelectionPreferences(
         { once: true },
     );
     renderModels();
+    const trigger = node(
+        "selection-trigger",
+    ) as unknown as XULMenuListElement | null;
+    const display = node(
+        "selection-display",
+    ) as unknown as XULMenuListElement | null;
+    const stream = node("selection-stream") as HTMLInputElement | null;
+    if (trigger) {
+        trigger.value =
+            getPref("selectionTrigger") === "click" ? "click" : "auto";
+        trigger.addEventListener("command", () => {
+            setPref("selectionTrigger", trigger.value);
+            changed();
+        });
+    }
+    if (display) {
+        display.value =
+            getPref("selectionDisplayMode") === "sidebar"
+                ? "sidebar"
+                : "floating";
+        display.addEventListener("command", () => {
+            setPref("selectionDisplayMode", display.value);
+            changed();
+        });
+    }
+    if (stream) {
+        stream.checked = getPref("selectionStream") !== false;
+        stream.addEventListener("change", () => {
+            setPref("selectionStream", stream.checked);
+            changed();
+        });
+    }
+    const fallback = node(
+        "selection-fallback",
+    ) as unknown as XULMenuListElement | null;
+    if (fallback) {
+        fallback.value =
+            getPref("selectionDictionaryFallback") === "bing"
+                ? "bing"
+                : "youdao";
+        fallback.addEventListener("command", () => {
+            setPref("selectionDictionaryFallback", fallback.value);
+            changed();
+        });
+    }
+    const clearOnline = node(
+        "selection-clear-online",
+    ) as HTMLButtonElement | null;
+    clearOnline?.addEventListener("click", () => {
+        changed();
+        clearOnline.disabled = true;
+        void clearOnlineDictionaryCache()
+            .then(() => {
+                clearOnline.textContent = "在线词典缓存已清除";
+            })
+            .finally(() => {
+                clearOnline.disabled = false;
+            });
+    });
     const auto = node("selection-auto-dictionary") as HTMLInputElement | null;
     if (auto) {
         auto.checked = getPref("selectionAutoDictionary") !== false;
@@ -168,8 +250,12 @@ export function registerSelectionPreferences(
             installed?.version &&
             available &&
             installed.version !== available.version;
-        dictionary.value =
-            getPref("selectionDictionary") === "collins" ? "collins" : "ecdict";
+        dictionary.value = String(getPref("selectionDictionary") || "ecdict");
+        const fallbackField = node("selection-fallback-field");
+        if (fallbackField)
+            fallbackField.hidden = !["ecdict", "collins"].includes(
+                dictionary.value,
+            );
         node("selection-service-hint").hidden = service.value !== "bing";
         button.disabled = importing || busy;
         download.disabled =
@@ -235,11 +321,23 @@ export function registerSelectionPreferences(
     };
     service.value =
         getPref("selectionTranslationProvider") === "profile"
-            ? "profile"
+            ? String(getPref("selectionApiKey") || "profile")
             : "bing";
     service.addEventListener("command", () => {
-        setPref("selectionTranslationProvider", service.value);
+        setPref(
+            "selectionTranslationProvider",
+            service.value === "bing" ? "bing" : "profile",
+        );
+        if (service.value !== "bing")
+            setPref(
+                "selectionApiKey",
+                service.value === "profile" ? "" : service.value,
+            );
         changed();
+        previousModel = undefined;
+        window.setTimeout(() => {
+            if (service.isConnected) renderModels();
+        }, 0);
         render();
     });
     dictionary.addEventListener("command", () => {

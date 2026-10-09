@@ -2,9 +2,32 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import { URL } from "node:url";
+import path from "node:path";
 import ts from "typescript";
 
 const formatting = {};
+const favoritesCode = ts.transpileModule(
+    fs.readFileSync(
+        new URL("../src/modules/selectionFavorites.ts", import.meta.url),
+        "utf8",
+    ),
+    {
+        compilerOptions: {
+            module: ts.ModuleKind.CommonJS,
+            target: ts.ScriptTarget.ES2022,
+        },
+    },
+).outputText;
+const strings = Object.fromEntries(
+    [
+        ...fs
+            .readFileSync(
+                new URL("../addon/locale/zh-CN/addon.ftl", import.meta.url),
+                "utf8",
+            )
+            .matchAll(/^([\w-]+) = (.+)$/gm),
+    ].map((m) => [m[1], m[2].trim()]),
+);
 new Function(
     "exports",
     ts.transpileModule(
@@ -20,6 +43,7 @@ new Function(
 
 function fixture() {
     const auxiliaryRequests = [];
+    const dictionaryCalls = [];
     const requests = [],
         cards = [],
         timers = new Map(),
@@ -48,17 +72,88 @@ function fixture() {
     };
     let timerId = 0,
         notify;
+    const files = new Map(),
+        favorites = {};
+    new Function(
+        "require",
+        "exports",
+        "Zotero",
+        "IOUtils",
+        "PathUtils",
+        favoritesCode,
+    )(
+        () => ({ config: { addonRef: "test" } }),
+        favorites,
+        {
+            DataDirectory: { dir: "/data" },
+            Libraries: { get: () => ({ libraryType: "user" }) },
+        },
+        {
+            exists: async (p) => files.has(p),
+            readUTF8: async (p) => files.get(p),
+            makeDirectory: async () => {},
+            writeUTF8: async (p, value) => {
+                if (state.favoriteWrite) await state.favoriteWrite();
+                if (state.favoriteFail) throw Error("disk full");
+                files.set(p, value);
+            },
+        },
+        { ...path, parent: path.dirname },
+    );
     const exports = {};
     const imports = {
+        "../utils/locale": { getString: (key) => strings[key] || key },
+        "./profileStore": { loadProfiles: () => [] },
+        "./llmApiManager": { profileLabel: (p) => p.key },
+        "./selectionAudio": { stopSelectionAudio() {} },
+        "./selectionFavorites": favorites,
+        "./selectionFavoritesPane": {
+            registerFavoritesPane() {},
+            unregisterFavoritesPane() {},
+        },
+        "./selectionDictionaryService": {
+            createDictionaryRequest: () => ({
+                abort() {},
+                async lookup(text) {
+                    dictionaryCalls.push({
+                        text,
+                        source: state.dictionarySource || "ecdict",
+                    });
+                    if (state.dictionaryFail)
+                        return {
+                            status: "error",
+                            source: "ecdict",
+                            message: "离线词典读取失败，请重新安装或导入词库。",
+                        };
+                    return state.dictionary
+                        ? {
+                              status: "hit",
+                              source: "ecdict",
+                              entry: state.dictionary,
+                          }
+                        : { status: "miss", source: "youdao" };
+                },
+            }),
+        },
         "./selectionFormatting": formatting,
         "../../package.json": { config: { addonID: "test-addon" } },
         "../utils/prefs": {
+            setPref(name, value) {
+                if (name === "selectionTranslationProvider")
+                    state.provider = value;
+                else if (name === "selectionApiKey")
+                    state.selectionApiKey = value;
+                else if (name === "selectionDictionary")
+                    state.dictionarySource = value;
+            },
             getPref: (name) =>
                 name === "selectionApiKey"
                     ? state.selectionApiKey
-                    : name === "selectionAutoDictionary"
-                      ? state.autoDictionary
-                      : state.provider,
+                    : name === "selectionDictionary"
+                      ? state.dictionarySource || "ecdict"
+                      : name === "selectionAutoDictionary"
+                        ? state.autoDictionary
+                        : state.provider,
         },
         "./pdf2zhHelper": {
             PDF2zhHelperFactory: {
@@ -181,16 +276,32 @@ function fixture() {
                     setLearning(value) {
                         this.learning = value;
                     },
+                    setControls(value) {
+                        this.controls = value;
+                    },
+                    showNotice(value) {
+                        this.notice = value;
+                    },
+                    stream(text, origin) {
+                        this.updates.push({
+                            kind: "translation",
+                            text,
+                            origin,
+                        });
+                    },
                     loading(text) {
+                        this.result = undefined;
                         this.updates.push(text);
                     },
                     render(result) {
                         if (state.renderFail) throw new Error("render failed");
+                        this.result = result;
                         this.updates.push(result);
                     },
                     updateSelection(text, kind) {
                         this.selected = text;
                         this.action = kind;
+                        this.result = undefined;
                     },
                     close() {
                         this.alive = false;
@@ -232,9 +343,14 @@ function fixture() {
                 unregisterEventListener: () => handlers.pop(),
             },
             Items: {
-                get: () => ({ getFilePathAsync: async () => "/paper.pdf" }),
+                get: (id) => ({
+                    key: `PAPER${id}`,
+                    libraryID: 1,
+                    getField: () => "Paper title",
+                    getFilePathAsync: async () => "/paper.pdf",
+                }),
             },
-            getMainWindow: () => ({ document: {} }),
+            getMainWindow: () => ({ document: {}, crypto: globalThis.crypto }),
             Notifier: {
                 registerObserver: (observer) => {
                     notify = observer.notify;
@@ -308,8 +424,10 @@ function fixture() {
         ...exports,
         requests,
         auxiliaryRequests,
+        dictionaryCalls,
         cards,
         state,
+        favorites,
         select,
         advance,
         flush,
@@ -328,6 +446,194 @@ const memory = {
     page: 5,
 };
 const last = (f) => f.cards.at(-1)?.updates.at(-1);
+
+test("favorite star toggles the current occurrence while preserving other papers and explicit snapshot updates", async () => {
+    const f = fixture();
+    f.state.dictionary = { text: "学习", origin: "词典" };
+    f.select("learning");
+    await f.advance();
+    const card = f.cards[0];
+    let notifications = 0;
+    f.favorites.watchFavorites(() => notifications++);
+    card.controls.onFavorite();
+    await f.flush();
+    assert.equal(card.controls.favorite, true);
+    const [saved] = await f.favorites.listFavorites();
+    assert.equal(saved.meaning, "学习");
+    await f.favorites.saveFavorite({
+        ...saved,
+        id: "other-paper",
+        attachmentKey: "OTHER",
+    });
+    card.controls.onMeaning("学问");
+    card.controls.onUpdateFavorite();
+    await f.flush();
+    assert.equal((await f.favorites.listFavorites())[0].meaning, "学问");
+    assert.equal(card.controls.favorite, true);
+    const contextReads = f.state.contextReads;
+    card.controls.onFavorite();
+    await f.flush();
+    assert.equal(card.controls.favorite, false);
+    assert.equal(card.notice, "已取消收藏。");
+    assert.equal(
+        f.state.contextReads,
+        contextReads,
+        "removal does not read context or call models",
+    );
+    assert.deepEqual(
+        (await f.favorites.listFavorites()).map((e) => e.id),
+        ["other-paper"],
+    );
+    assert.equal(notifications, 4, "deletion notifies the favorites pane");
+    card.controls.onFavorite();
+    await f.flush();
+    assert.equal(card.controls.favorite, true);
+    assert.equal((await f.favorites.listFavorites()).length, 2);
+});
+
+test("favorite actions ignore repeated clicks while writing and retain saved state on removal failure", async () => {
+    const f = fixture();
+    f.state.dictionary = { text: "学习", origin: "词典" };
+    f.select("learning");
+    await f.advance();
+    const card = f.cards[0];
+    let finish;
+    const pending = new Promise((resolve) => {
+        finish = resolve;
+    });
+    f.state.favoriteWrite = () => pending;
+    card.controls.onFavorite();
+    card.controls.onFavorite();
+    await f.flush();
+    assert.equal(card.controls.favoriteBusy, true);
+    finish();
+    await f.flush();
+    assert.equal(card.controls.favorite, true);
+    assert.equal(card.controls.favoriteBusy, false);
+    assert.equal((await f.favorites.listFavorites()).length, 1);
+    f.state.favoriteFail = true;
+    card.controls.onFavorite();
+    await f.flush();
+    assert.equal(card.controls.favorite, true);
+    assert.equal(card.controls.favoriteBusy, false);
+    assert.equal((await f.favorites.listFavorites()).length, 1);
+    assert.equal(card.notice, "disk full");
+    f.state.favoriteFail = false;
+    card.controls.onFavorite();
+    await f.flush();
+    assert.equal(card.controls.favorite, false);
+    assert.equal((await f.favorites.listFavorites()).length, 0);
+});
+
+test("word routing is lexical, language-aware, and does not confuse three-word sentences with words", () => {
+    const f = fixture();
+    for (const word of ["requiring", "SELF-ATTENTION", "don't", "researcher’s"])
+        assert.deepEqual(f.selectionRoute(word, "en", "zh-CN"), {
+            dictionary: true,
+            action: "lookup",
+        });
+    for (const phrase of ["machine learning", "I am fine", "in\nterms of"])
+        assert.deepEqual(f.selectionRoute(phrase, "en", "zh-CN"), {
+            dictionary: true,
+            action: "translate",
+        });
+    for (const text of [
+        "I am fine.",
+        "This is a longer sentence",
+        "中文",
+        "123",
+        "",
+    ])
+        assert.deepEqual(f.selectionRoute(text, "en", "zh-CN"), {
+            dictionary: false,
+            action: "translate",
+        });
+    assert.equal(f.selectionRoute("word", "de", "zh-CN").dictionary, false);
+    assert.equal(f.selectionRoute("word", "en", "ja").dictionary, false);
+});
+
+test("word tabs request translation only on demand and retain independent results and sources", async () => {
+    const f = fixture();
+    f.state.dictionary = { text: "需要", origin: "离线词典" };
+    f.state.respond = async () => memory;
+    f.select("requiring");
+    await f.advance();
+    assert.equal(f.requests.length, 0);
+    assert.equal(f.auxiliaryRequests.length, 0);
+    const card = f.cards[0];
+    card.controls.onMode("translate");
+    await f.flush();
+    assert.equal(last(f).text, memory.translation);
+    assert.equal(f.requests.length, 1);
+    card.controls.onMode("lookup");
+    await f.flush();
+    assert.equal(last(f).text, "需要");
+    assert.equal(f.dictionaryCalls.length, 1);
+    card.controls.onDictionary("youdao");
+    await f.flush();
+    assert.equal(f.dictionaryCalls.length, 2);
+    card.controls.onMode("translate");
+    await f.flush();
+    assert.equal(f.requests.length, 1);
+    card.controls.onMode("lookup");
+    await f.flush();
+    card.controls.onDictionary("ecdict");
+    await f.flush();
+    assert.equal(f.dictionaryCalls.length, 2);
+    assert.equal(f.state.provider, "bing");
+    f.select("I am fine");
+    await f.advance();
+    assert.equal(card.action, "translate");
+    card.controls.onMode("lookup");
+    await f.flush();
+    assert.equal(card.action, "lookup");
+    assert.equal(f.dictionaryCalls.at(-1).text, "I am fine");
+});
+
+test("switching away from an unfinished translation aborts it and ignores its late response", async () => {
+    const f = fixture();
+    f.state.dictionary = { text: "需要", origin: "离线词典" };
+    let finish;
+    f.state.respond = () =>
+        new Promise((resolve) => {
+            finish = resolve;
+        });
+    f.select("requiring");
+    await f.advance();
+    const card = f.cards[0];
+    card.controls.onMode("translate");
+    await f.flush();
+    const request = f.requests[0];
+    card.controls.onMode("lookup");
+    await f.flush();
+    assert.equal(request.request.aborted, true);
+    finish(memory);
+    await f.flush();
+    assert.equal(last(f).text, "需要");
+    assert.equal(f.dictionaryCalls.length, 1);
+    f.state.respond = async () => memory;
+    card.controls.onMode("translate");
+    await f.flush();
+    assert.equal(f.requests.length, 2);
+    assert.equal(last(f).text, memory.translation);
+});
+
+test("edited input recalculates its default mode and never reuses another selection's results", async () => {
+    const f = fixture();
+    f.state.dictionary = { text: "学习", origin: "词典" };
+    f.state.respond = async () => memory;
+    f.select("learning");
+    await f.advance();
+    const card = f.cards[0];
+    card.controls.onSubmit("machine learning");
+    await f.flush();
+    assert.equal(card.action, "translate");
+    assert.equal(f.dictionaryCalls.length, 1);
+    card.controls.onSubmit("learning");
+    await f.flush();
+    assert.equal(card.action, "lookup");
+    assert.equal(f.dictionaryCalls.length, 2);
+});
 
 test("selection automatically opens after 400 ms without action buttons; repeated hooks deduplicate", async () => {
     const f = fixture();
@@ -350,15 +656,15 @@ test("selection automatically opens after 400 ms without action buttons; repeate
 test("rapid selection changes only query the last selection", async () => {
     const f = fixture();
     f.state.respond = async () => memory;
-    f.select("A");
-    f.select("B");
-    f.select("C");
+    f.select("Sentence A.");
+    f.select("Sentence B.");
+    f.select("Sentence C.");
     await f.advance();
     assert.equal(f.requests.length, 1);
-    assert.equal(f.requests[0].body.text, "C");
+    assert.equal(f.requests[0].body.text, "Sentence C.");
 });
 
-test("offline dictionary and language-specific glossary require no server", async () => {
+test("dictionary and separately labeled language-specific glossary require no server", async () => {
     const f = fixture();
     f.state.dictionary = {
         text: "a. 无条件的",
@@ -369,19 +675,20 @@ test("offline dictionary and language-specific glossary require no server", asyn
     await f.advance();
     assert.equal(last(f).text, "a. 无条件的");
     f.state.entries = [
-        { source: "physical devices", target: "wrong", tgt_lng: "ja" },
-        { source: "physical devices", target: "物理设备", tgt_lng: "zh-CN" },
+        { source: "architecture", target: "wrong", tgt_lng: "ja" },
+        { source: "architecture", target: "物理设备", tgt_lng: "zh-CN" },
     ];
-    f.select("PHYSICAL\n devices");
+    f.select("ARCHITECTURE");
     await f.advance();
-    assert.equal(last(f).text, "物理设备");
+    assert.equal(last(f).text, "a. 无条件的");
+    assert.match(last(f).notice, /手工术语表：物理设备/);
     assert.equal(f.requests.length, 0);
 });
 
 test("exact and incomplete memory keep types and never use external translation", async () => {
     const f = fixture();
     f.state.respond = async () => ({ ...memory, formattingIncomplete: true });
-    f.select("unknown");
+    f.select("unknown sentence");
     await f.advance();
     assert.equal(last(f).kind, "translation");
     assert.equal(last(f).incomplete, true);
@@ -403,7 +710,7 @@ test("miss automatically requests concise translation and accepts cache; HTTP er
     assert.equal(f.requests.length, 2);
     assert.equal(f.requests[1].body.mode, "translate");
     assert.equal(f.requests[1].timeoutMs, 50000);
-    assert.equal(last(f).origin, "缓存译文");
+    assert.equal(last(f).origin, "模型 · AI 译文 · 本地缓存");
     for (const code of ["provider_timeout", "invalid_config", "empty_output"]) {
         f.state.respond = async ({ url }) =>
             url.endsWith("translation-lookup")
@@ -438,26 +745,27 @@ test("memory failure is not a miss; offline glossary still works", async () => {
     assert.ok(f.requests.every((r) => r.url.endsWith("translation-lookup")));
 });
 
-test("broken dictionary may reuse memory but never silently spends tokens on a dictionary failure", async () => {
+test("broken dictionary reports an error without backend or model requests", async () => {
     const f = fixture();
     f.state.dictionaryFail = true;
     f.state.respond = async () => memory;
     f.select("word");
     await f.advance();
-    assert.equal(last(f).text, "已有译文");
+    assert.match(last(f).text, /词典读取失败/);
     f.state.respond = async () => ({ matched: false });
-    f.select("word2");
+    f.select("secondword");
     await f.advance();
     assert.equal(last(f).kind, "error");
     assert.match(last(f).text, /词典读取失败/);
-    assert.ok(f.requests.every((r) => r.url.endsWith("translation-lookup")));
+    assert.equal(f.requests.length, 0);
+    assert.equal(f.auxiliaryRequests.length, 0);
 });
 
 test("close during request aborts wait, ignores late result and suppresses same selection until new physical interaction", async () => {
     const f = fixture();
     let finish;
     f.state.respond = () => new Promise((r) => (finish = r));
-    f.select("A");
+    f.select("Sentence A.");
     await f.advance();
     const card = f.cards[0];
     card.close();
@@ -465,12 +773,12 @@ test("close during request aborts wait, ignores late result and suppresses same 
     finish(memory);
     await f.flush();
     assert.ok(card.updates.every((x) => typeof x === "string"));
-    f.select("A");
+    f.select("Sentence A.");
     await f.advance();
     assert.equal(f.cards.length, 1);
     f.watches[0].input({ target: "outside" });
     f.state.respond = async () => memory;
-    f.select("A");
+    f.select("Sentence A.");
     await f.advance();
     assert.equal(f.cards.length, 2);
     assert.equal(last(f).text, "已有译文");
@@ -480,24 +788,24 @@ test("selection B invalidates A without stacking cards; native menu rerender doe
     const f = fixture();
     let finish;
     f.state.respond = () => new Promise((r) => (finish = r));
-    f.select("A");
+    f.select("Sentence A.");
     await f.advance();
-    f.select("A");
+    f.select("Sentence A.");
     assert.equal(f.requests.length, 1);
-    f.select("B");
+    f.select("Sentence B.");
     assert.ok(f.requests[0].request.aborted);
-    f.state.respond = async () => ({ ...memory, translation: "B" });
+    f.state.respond = async () => ({ ...memory, translation: "Sentence B." });
     await f.advance();
     finish({ ...memory, translation: "old A" });
     await f.flush();
-    assert.equal(last(f).text, "B");
+    assert.equal(last(f).text, "Sentence B.");
     assert.equal(f.cards.length, 1);
 });
 
 test("pending selection is cancelled by outside click, Escape or tab change", async () => {
     for (const mode of ["outside", "escape", "tab"]) {
         const f = fixture();
-        f.select("A");
+        f.select("Sentence A.");
         if (mode === "outside") f.watches[0].input({ target: "outside" });
         if (mode === "escape") f.watches[0].escape();
         if (mode === "tab") f.notify("select", "tab", ["other"]);
@@ -510,19 +818,19 @@ test("pending selection is cancelled by outside click, Escape or tab change", as
 test("pin keeps one card and next selection updates it; Escape always closes", async () => {
     const f = fixture();
     f.state.respond = async () => memory;
-    f.select("A");
+    f.select("Sentence A.");
     await f.advance();
     f.cards[0].pinned = true;
     f.watches[0].dismiss({ target: "outside" });
     assert.equal(f.cards[0].alive, true);
     f.watches[0].input({ target: "inside" });
-    f.select("A");
+    f.select("Sentence A.");
     await f.advance();
     assert.equal(f.requests.length, 1);
-    f.select("B");
+    f.select("Sentence B.");
     await f.advance();
     assert.equal(f.cards.length, 1);
-    assert.equal(f.cards[0].selected, "B");
+    assert.equal(f.cards[0].selected, "Sentence B.");
     assert.equal(f.cards[0].pinned, true);
     f.watches[0].escape();
     assert.equal(f.cards[0].alive, false);
@@ -533,7 +841,7 @@ test("constructor and rendering failures leave a nonempty closeable fallback wit
         const f = fixture();
         f.state[mode] = true;
         f.state.respond = async () => memory;
-        const anchor = f.select("A");
+        const anchor = f.select("Sentence A.");
         await f.advance();
         assert.equal(anchor.textContent, "");
         assert.ok(f.fallbacks.at(-1).textContent);
@@ -548,7 +856,7 @@ test("constructor and rendering failures leave a nonempty closeable fallback wit
 test("malformed successful server response is an error, not a blank result", async () => {
     const f = fixture();
     f.state.respond = async () => ({ ...memory, translation: "" });
-    f.select("A");
+    f.select("Sentence A.");
     await f.advance();
     assert.equal(last(f).kind, "error");
     assert.equal(f.requests.length, 1);
@@ -556,12 +864,12 @@ test("malformed successful server response is an error, not a blank result", asy
 
 test("Reader disposal and plugin shutdown cancel and unregister", async () => {
     const f = fixture();
-    f.select("A");
+    f.select("Sentence A.");
     f.watches[0].dispose();
     await f.advance();
     assert.equal(f.cards.length, 0);
     assert.ok(f.watches[0].cleaned);
-    f.select("B");
+    f.select("Sentence B.");
     f.unregisterSelectionTranslation();
     await f.advance();
     assert.equal(f.requests.length, 0);
@@ -598,7 +906,7 @@ test("legacy MyMemory preference now requests Bing without model credentials", a
         url.endsWith("translation-lookup")
             ? { matched: false }
             : { translation: "自注意力", provider: "bing", cached: false };
-    f.select("self-attention");
+    f.select("self attention");
     await f.advance();
     assert.equal(f.requests[1].body.selectionProvider, "bing");
     assert.equal(f.requests[1].body.service, "bing");
@@ -779,7 +1087,7 @@ test("dictionary hit shows no supplement and makes no backend request", async ()
     f.state.autoDictionary = true;
     f.select("bank");
     await f.advance();
-    assert.equal(f.cards[0].learning.refreshHidden, true);
+    assert.equal(f.cards[0].learning.refreshHidden, false);
     f.cards[0].learning.onRefresh();
     await f.flush();
     assert.equal(last(f).text, "原始词典内容");
@@ -895,7 +1203,7 @@ test("failed automatic dictionary generation does not silently issue a second mo
     assert.equal(last(f).kind, "error");
 });
 
-test("missing model falls back to Bing basic translation, never a dictionary entry", async () => {
+test("missing model waits for explicit translation before Bing fallback", async () => {
     const f = fixture();
     f.state.autoDictionary = true;
     f.state.provider = "profile";
@@ -906,6 +1214,10 @@ test("missing model falls back to Bing basic translation, never a dictionary ent
             : { translation: "银行", provider: "bing", saved: true };
     f.select("bank");
     await f.advance();
+    assert.equal(last(f).kind, "missing");
+    assert.equal(f.requests.length, 0);
+    f.cards[0].controls.onMode("translate");
+    await f.flush();
     const generated = f.requests.find((r) => r.url.endsWith("translate-text"));
     assert.equal(generated.body.selectionProvider, "bing");
     assert.equal(generated.body.mode, "translate");
@@ -936,18 +1248,18 @@ test("credential-free dictionary lookup never serializes a null model configurat
 test("empty native popup after scrolling preserves pending and completed results", async () => {
     const f = fixture();
     f.state.respond = async () => memory;
-    f.select("word");
+    f.select("selected text");
     f.select("");
     await f.advance();
     assert.equal(last(f).text, "已有译文");
     f.select("");
     assert.equal(f.cards[0].alive, true);
-    f.select("word");
+    f.select("selected text");
     await f.advance();
     assert.equal(f.requests.length, 1);
 });
 
-test("pinned and sidebar views keep pending requests across outside clicks", async () => {
+test("pinned and sidebar views keep requests on outside clicks but cancel on a PDF tab switch", async () => {
     for (const property of ["pinned", "docked"]) {
         const f = fixture();
         let finish;
@@ -955,7 +1267,7 @@ test("pinned and sidebar views keep pending requests across outside clicks", asy
             new Promise((resolve) => {
                 finish = resolve;
             });
-        f.select("word");
+        f.select("selected text");
         await f.advance();
         f.cards[0][property] = true;
         f.watches[0].input({ target: "outside" });
@@ -964,10 +1276,14 @@ test("pinned and sidebar views keep pending requests across outside clicks", asy
             f.watches[0].escape();
             f.notify("select", "tab", ["other"]);
         }
-        assert.equal(f.requests[0].request.aborted, false);
+        assert.equal(f.requests[0].request.aborted, property === "docked");
         finish(memory);
         await f.flush();
-        assert.equal(last(f).text, "已有译文");
+        if (property === "docked")
+            assert.ok(
+                f.cards[0].updates.every((value) => typeof value === "string"),
+            );
+        else assert.equal(last(f).text, "已有译文");
         assert.equal(f.cards[0].alive, true);
     }
 });
@@ -1000,7 +1316,7 @@ test("unconfigured profile falls back to Bing for sentences and refresh, without
     );
 });
 
-test("disabled automatic dictionary uses basic translation even with a model", async () => {
+test("disabled enrichment leaves a miss until explicit translation", async () => {
     const f = fixture();
     f.state.autoDictionary = false;
     f.state.provider = "profile";
@@ -1010,6 +1326,10 @@ test("disabled automatic dictionary uses basic translation even with a model", a
             : { translation: "基础译文", provider: "openai" };
     f.select("unlistedword");
     await f.advance();
+    assert.equal(last(f).kind, "missing");
+    assert.equal(f.requests.length, 0);
+    f.cards[0].controls.onMode("translate");
+    await f.flush();
     assert.ok(f.requests.every((r) => r.body.mode !== "dictionary"));
     f.cards[0].learning.onRefresh();
     await f.flush();
@@ -1053,6 +1373,99 @@ test("personal dictionary usage is separate from failure notices", async () => {
     await f.advance();
     assert.equal(last(f).usage, personalEntry.usage);
     assert.equal(last(f).notice, "本次释义未能保存到本地。");
+});
+
+test("cached AI dictionary keeps regeneration and context when switching tabs", async () => {
+    const f = fixture();
+    f.state.autoDictionary = true;
+    f.state.respond = async ({ body }) =>
+        body.mode === "dictionary"
+            ? personalResult
+            : body.mode === "context"
+              ? { translation: "论文中指河岸。" }
+              : { translation: "翻译结果", provider: "bing" };
+    f.select("bank");
+    await f.advance();
+    const card = f.cards[0];
+    assert.equal(last(f).aiGenerated, true);
+    card.learning.context.onAction();
+    await f.flush();
+    card.controls.onMode("translate");
+    await f.flush();
+    const requests = f.requests.length;
+    card.controls.onMode("lookup");
+    await f.flush();
+    assert.equal(f.requests.length, requests);
+    assert.equal(card.learning.context.text, "论文中指河岸。");
+    assert.equal(card.learning.refreshLabel, "重新生成");
+    card.learning.onRefresh();
+    await f.flush();
+    assert.equal(f.requests.at(-1).body.mode, "dictionary");
+    assert.equal(f.requests.at(-1).body.cachePolicy, "refresh");
+});
+
+test("cached edited results retain the context restriction", async () => {
+    const f = fixture();
+    f.state.dictionary = { text: "词典释义", origin: "词典" };
+    f.state.respond = async () => memory;
+    f.state.contextText = "The paper discusses learning.";
+    f.select("learning");
+    await f.advance();
+    const card = f.cards[0];
+    card.controls.onSubmit("bank");
+    await f.flush();
+    assert.equal(card.learning.context.actionLabel, undefined);
+    card.controls.onMode("translate");
+    await f.flush();
+    card.controls.onMode("lookup");
+    await f.flush();
+    assert.equal(card.learning.context.actionLabel, undefined);
+    assert.match(card.learning.context.error, /重新划选/);
+});
+
+test("stopping translation rebinds context and retry controls without accepting late results", async () => {
+    const f = fixture();
+    f.state.provider = "profile";
+    let finish;
+    f.state.respond = () =>
+        new Promise((resolve) => {
+            finish = resolve;
+        });
+    f.select("I am fine");
+    await f.advance();
+    const card = f.cards[0],
+        count = f.requests.length;
+    card.controls.onStop();
+    await f.flush();
+    assert.equal(
+        f.requests.length,
+        count,
+        "stop never generates a new translation",
+    );
+    assert.equal(card.result.incomplete, true);
+    assert.equal(card.learning.busy, false);
+    assert.equal(card.learning.refreshLabel, "重试");
+    finish(memory);
+    await f.flush();
+    assert.equal(
+        card.result.incomplete,
+        true,
+        "late translation cannot replace stopped output",
+    );
+    f.state.respond = async ({ url, body }) =>
+        url.endsWith("translation-lookup")
+            ? { matched: false }
+            : {
+                  translation:
+                      body.mode === "context" ? "当前语境" : "重试译文",
+                  provider: "openai",
+              };
+    card.learning.context.onAction();
+    await f.flush();
+    assert.equal(card.learning.context.text, "当前语境");
+    card.learning.onRefresh();
+    await f.flush();
+    assert.equal(card.result.text, "重试译文");
 });
 
 test("Codex selection forwards its independent profile and exposes actionable server errors", async () => {

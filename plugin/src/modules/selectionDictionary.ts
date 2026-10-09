@@ -37,7 +37,7 @@ async function readDictionary(): Promise<Record<string, Entry>> {
 }
 
 /** Conservative plural fallback, only used after exact dictionary lookups fail. */
-function pluralCandidates(word: string): string[] {
+export function wordCandidates(word: string): string[] {
     if (!/^[a-z]{3,}$/.test(word)) return [];
     const irregular: Record<string, string> = {
         children: "child",
@@ -51,9 +51,50 @@ function pluralCandidates(word: string): string[] {
         matrices: "matrix",
         analyses: "analysis",
         criteria: "criterion",
+        went: "go",
+        gone: "go",
+        written: "write",
+        wrote: "write",
+        seen: "see",
+        saw: "see",
+        been: "be",
+        was: "be",
+        were: "be",
+        taken: "take",
+        took: "take",
+        made: "make",
+        found: "find",
+        better: "good",
+        best: "good",
+        studies: "study",
+        lying: "lie",
+        dying: "die",
+        tying: "tie",
     };
     if (Object.prototype.hasOwnProperty.call(irregular, word))
         return [irregular[word]];
+    if (word.endsWith("ing") && word.length > 5) {
+        const stem = word.slice(0, -3);
+        return [
+            ...new Set([
+                ...(stem.length === 3
+                    ? [stem + "e", stem]
+                    : [stem, stem + "e"]),
+                /([b-df-hj-np-tv-z])\1$/.test(stem) ? stem.slice(0, -1) : stem,
+            ]),
+        ];
+    }
+    if (word.endsWith("ied")) return [word.slice(0, -3) + "y"];
+    if (word.endsWith("ed") && word.length > 4) {
+        const stem = word.slice(0, -2);
+        return [
+            ...new Set([
+                stem,
+                word.slice(0, -1),
+                /([b-df-hj-np-tv-z])\1$/.test(stem) ? stem.slice(0, -1) : stem,
+            ]),
+        ];
+    }
     if (/[^aeiou]ies$/.test(word)) return [word.slice(0, -3) + "y"];
     if (/(ches|shes|sses|xes|zzes)$/.test(word)) return [word.slice(0, -2)];
     if (/s$/.test(word) && !/(ss|us|is)$/.test(word))
@@ -66,6 +107,7 @@ export async function lookupDictionary(
     text: string,
     sourceLang: string,
     targetLang: string,
+    source = String(getPref("selectionDictionary") || "ecdict"),
 ) {
     if (
         !/^en(?:-|$)/i.test(sourceLang) ||
@@ -81,7 +123,7 @@ export async function lookupDictionary(
     if (!word || word.length > 100 || word.split(" ").length > 3)
         return undefined;
     let notice: string | undefined;
-    let importedAvailable = getPref("selectionDictionary") === "collins";
+    let importedAvailable = source === "collins";
     const imported = async (candidate: string) => {
         if (!importedAvailable) return undefined;
         try {
@@ -142,7 +184,7 @@ export async function lookupDictionary(
     };
     const exactBundled = bundled(word);
     if (exactBundled) return exactBundled;
-    for (const candidate of pluralCandidates(word)) {
+    for (const candidate of wordCandidates(word)) {
         const result = (await imported(candidate)) || bundled(candidate);
         if (result) return result;
     }

@@ -1,0 +1,418 @@
+/* Dedicated chrome-window styles. Keep this token in sync with the XHTML. */
+#profile-window {
+    --profile-ui-build: "__profileUIBuild__";
+    color-scheme: light dark;
+    background: Canvas;
+    color: CanvasText;
+    font: menu;
+    height: 100%;
+    --border: color-mix(in srgb, CanvasText 18%, Canvas);
+    --muted: color-mix(in srgb, CanvasText 65%, Canvas);
+    --selected: color-mix(in srgb, Highlight 15%, Canvas);
+}
+#profile-window * {
+    box-sizing: border-box;
+}
+#profile-window body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+}
+#profile-window h1,
+#profile-window h2 {
+    font-size: 1.15em;
+    line-height: 1.4;
+    margin: 0;
+}
+#profile-window header,
+#profile-window .inline,
+#profile-window .actions,
+#profile-window .platform-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+#profile-window header {
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+#profile-window .sidebar {
+    padding: 16px 12px;
+    border-inline-end: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+}
+#profile-window main {
+    min-width: 0;
+    min-height: 0;
+}
+#profile-window input,
+#profile-window select,
+#profile-window textarea,
+#profile-window button {
+    font: inherit;
+    color: FieldText;
+    background: Field;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    min-width: 0;
+    min-height: max(28px, 2.15em);
+    margin: 0;
+}
+#profile-window input,
+#profile-window select,
+#profile-window textarea {
+    width: 100%;
+    padding: 4px 8px;
+}
+#profile-window button {
+    padding: 4px 10px;
+    cursor: pointer;
+}
+#profile-window button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+#profile-window :focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+}
+#profile-window .primary {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+}
+#profile-window .inline input {
+    flex: 1;
+}
+#profile-window .inline button {
+    flex-shrink: 0;
+}
+/* Keep exactly one password reveal control, including browser previews. */
+#profile-window input::-ms-reveal,
+#profile-window input::-ms-clear {
+    display: none;
+}
+#profile-window #list {
+    overflow-y: auto;
+    min-height: 0;
+    margin-top: 12px;
+    padding: 3px;
+}
+#profile-window .profile-row {
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    min-width: 0;
+}
+#profile-window .profile-row.selected {
+    background: var(--selected);
+}
+#profile-window .profile-row > button {
+    background: transparent;
+    color: inherit;
+    border: 0;
+}
+#profile-window .profile-select {
+    flex: 1;
+    text-align: start;
+    overflow: hidden;
+    padding: 8px;
+}
+#profile-window .profile-select .row-title {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    min-width: 0;
+}
+#profile-window .profile-select .name,
+#profile-window .profile-select .description {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#profile-window .profile-select .name {
+    flex: 1;
+    font-weight: 600;
+}
+#profile-window .profile-select .description {
+    font-size: 0.9em;
+    color: var(--muted);
+    margin-top: 4px;
+}
+#profile-window .badge {
+    font-size: 0.85em;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+#profile-window .dirty {
+    color: CanvasText;
+    font-weight: bold;
+}
+#profile-window .retired-badge {
+    display: block;
+    margin-top: 4px;
+}
+#profile-window .more {
+    flex-shrink: 0;
+    padding: 4px 8px;
+}
+#profile-window .compact-toolbar {
+    display: none;
+}
+#profile-window #profile-form {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+#profile-window .editor-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 24px;
+}
+#profile-window .platform-heading {
+    justify-content: space-between;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+#profile-window #platform-name {
+    overflow-wrap: anywhere;
+}
+#profile-window .section-title {
+    font-size: 1em;
+    margin: 16px 0;
+    font-weight: 600;
+}
+#profile-window .field {
+    display: grid;
+    grid-template-columns: 9em minmax(0, 1fr);
+    align-items: start;
+    column-gap: 16px;
+    row-gap: 4px;
+    margin-bottom: 16px;
+}
+#profile-window .field > label,
+#profile-window .field-label {
+    display: block;
+    grid-column: 1;
+    margin: 0;
+    padding-top: 6px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+#profile-window .field > :not(label):not(.field-label) {
+    grid-column: 2;
+    min-width: 0;
+}
+#profile-window .hint,
+#profile-window #url-summary {
+    color: var(--muted);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+#profile-window .hint {
+    font-size: 0.92em;
+    margin: 4px 0;
+}
+#profile-window #url-summary {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#profile-window summary {
+    cursor: pointer;
+}
+#profile-window #advanced {
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+}
+#profile-window #advanced > summary {
+    padding: 16px 0;
+    font-weight: 600;
+}
+#profile-window .field-help > summary {
+    color: var(--muted);
+    font-size: 0.92em;
+    padding: 4px 0;
+}
+#profile-window textarea {
+    resize: vertical;
+    font-family: monospace;
+}
+#profile-window footer {
+    flex-shrink: 0;
+    padding: 12px 24px 16px;
+    border-top: 1px solid var(--border);
+}
+#profile-window .actions {
+    flex-wrap: wrap;
+}
+#profile-window .spacer {
+    flex: 1;
+}
+#profile-window #status,
+#profile-window #status-full {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+    margin: 0 0 8px;
+    max-height: 2.8em;
+    overflow: auto;
+}
+#profile-window #status:empty {
+    display: none;
+}
+#profile-window #status-details {
+    margin-bottom: 8px;
+}
+#profile-window #status-details > summary {
+    font-size: 0.92em;
+}
+#profile-window #status-full {
+    max-height: min(6em, 15vh);
+    margin-top: 8px;
+}
+#profile-window [data-error="true"],
+#profile-window .notice {
+    color: #a12622;
+}
+@media (prefers-color-scheme: dark) {
+    #profile-window [data-error="true"],
+    #profile-window .notice {
+        color: #ffaaa3;
+    }
+}
+#profile-window #platform-picker {
+    padding: 24px;
+    height: 100%;
+    overflow: auto;
+}
+#profile-window #categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+#profile-window #categories button {
+    background: transparent;
+    border-color: transparent;
+}
+#profile-window #categories [aria-selected="true"] {
+    background: var(--selected);
+    color: CanvasText;
+}
+#profile-window #platforms {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+}
+#profile-window #platforms button {
+    text-align: start;
+    padding: 12px;
+    overflow-wrap: anywhere;
+}
+#profile-window #profile-menu {
+    position: fixed;
+    z-index: 10;
+    padding: 4px;
+    background: Canvas;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 3px 12px #0003;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    overflow: auto;
+}
+#profile-window #profile-menu button {
+    display: block;
+    width: 100%;
+    text-align: start;
+    border: 0;
+    background: transparent;
+}
+#profile-window #profile-menu button:hover {
+    background: var(--selected);
+}
+#profile-window #models {
+    max-height: 9em;
+    margin-top: 4px;
+}
+#profile-window [hidden] {
+    display: none !important;
+}
+@media (min-width: 760px) and (max-width: 959px), (max-width: 599px) {
+    #profile-window .field {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+    }
+    #profile-window .field > :not(label):not(.field-label) {
+        grid-column: 1;
+    }
+    #profile-window .field > label,
+    #profile-window .field-label {
+        padding: 0;
+    }
+}
+@media (max-width: 759px) {
+    #profile-window body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+    #profile-window .sidebar {
+        border-inline-end: 0;
+        border-bottom: 1px solid var(--border);
+        padding: 12px 16px;
+    }
+    #profile-window .sidebar header {
+        margin-bottom: 8px;
+    }
+    #profile-window #list,
+    #profile-window #search {
+        display: none;
+    }
+    #profile-window .compact-toolbar {
+        display: flex;
+        gap: 8px;
+    }
+    #profile-window .editor-scroll,
+    #profile-window #platform-picker {
+        padding: 16px;
+    }
+    #profile-window footer {
+        padding: 12px 16px;
+    }
+}
+@media (max-width: 450px) {
+    #profile-window #platforms {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    #profile-window .inline {
+        flex-wrap: wrap;
+    }
+    #profile-window .inline input {
+        flex-basis: 140px;
+    }
+    #profile-window .actions .spacer {
+        display: none;
+    }
+    #profile-window .actions {
+        justify-content: flex-end;
+    }
+}

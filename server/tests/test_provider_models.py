@@ -13,8 +13,8 @@ class ModelDiscoveryTests(unittest.TestCase):
     def test_base_full_endpoints_and_custom_paths(self):
         for path in ["/custom/v1", "/custom/v1/", "/custom/v1/chat/completions", "/custom/v1/responses", ""]:
             with self.subTest(path=path), patch("provider_models.httpx.get", return_value=self.response()) as get:
-                self.assertEqual(list_provider_models({"apiUrl": "https://relay.invalid" + path, "apiKey": "TEST_SECRET"}), ["a", "b"])
-                expected = "https://relay.invalid/custom/v1/models" if path else "https://relay.invalid/models"
+                self.assertEqual(list_provider_models({"apiUrl": "https://openrouter.ai/api/v1" + path, "apiKey": "TEST_SECRET"}), ["a", "b"])
+                expected = "https://openrouter.ai/api/v1/custom/v1/models" if path else "https://openrouter.ai/api/v1/models"
                 self.assertEqual(get.call_args.args[0], expected)
                 self.assertEqual(get.call_args.kwargs["headers"], {"Authorization": "Bearer TEST_SECRET"})
                 self.assertFalse(get.call_args.kwargs["follow_redirects"])
@@ -28,18 +28,18 @@ class ModelDiscoveryTests(unittest.TestCase):
         for code, expected in [(401, "Key"), (403, "权限"), (404, "不支持"), (405, "不支持"), (429, "额度"), (500, "失败"), (302, "失败")]:
             with self.subTest(code=code), patch("provider_models.httpx.get", return_value=self.response(code, {"message": "TEST_SECRET"})):
                 with self.assertRaises(ModelDiscoveryError) as error:
-                    list_provider_models({"apiUrl": "https://relay.invalid", "apiKey": "TEST_SECRET"})
+                    list_provider_models({"apiUrl": "https://openrouter.ai/api/v1", "apiKey": "TEST_SECRET"})
                 self.assertIn(expected, str(error.exception)); self.assertNotIn("TEST_SECRET", str(error.exception))
 
     def test_network_timeout_and_malformed_response(self):
         for error, expected in [(httpx.ReadTimeout("TEST_SECRET"), "超时"), (httpx.ConnectError("TEST_SECRET"), "无法连接")]:
             with patch("provider_models.httpx.get", side_effect=error):
                 with self.assertRaisesRegex(ModelDiscoveryError, expected):
-                    list_provider_models({"apiUrl": "https://relay.invalid"})
+                    list_provider_models({"apiUrl": "https://openrouter.ai/api/v1"})
         for payload in [[], {}, {"data": "bad"}]:
             with patch("provider_models.httpx.get", return_value=self.response(payload=payload)):
                 with self.assertRaisesRegex(ModelDiscoveryError, "格式"):
-                    list_provider_models({"apiUrl": "https://relay.invalid"})
+                    list_provider_models({"apiUrl": "https://openrouter.ai/api/v1"})
 
     def test_input_validation_happens_before_network(self):
         for data in [{}, {"apiUrl": 123}, {"apiUrl": "file:///tmp"}, {"apiUrl": "https://a.invalid/v1?key=SECRET"}, {"apiUrl": "https://a.invalid", "apiKey": "key\n"}, {"apiUrl": "https://a.invalid/responses", "apiProtocol": "chat_completions"}]:
@@ -51,7 +51,7 @@ class ModelDiscoveryTests(unittest.TestCase):
         import server
         client = server.create_app().test_client()
         with patch("server.list_provider_models", return_value=["model-a"]):
-            response = client.post("/list-models", json={"apiUrl": "https://relay.invalid"})
+            response = client.post("/list-models", json={"apiUrl": "https://openrouter.ai/api/v1"})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json, {"status": "ok", "models": ["model-a"]})
         self.assertEqual(client.post("/list-models", json=[]).status_code, 400)

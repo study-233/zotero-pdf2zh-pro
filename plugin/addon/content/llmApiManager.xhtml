@@ -1,30 +1,279 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
+<html
+    xmlns="http://www.w3.org/1999/xhtml"
+    id="profile-window"
+    data-build="__profileUIBuild__"
+>
     <head>
         <meta charset="utf-8" />
-        <title>管理翻译配置</title>
-        <link rel="stylesheet" href="profileDialogs.css" />
+        <title>Translation profiles</title>
+        <link rel="stylesheet" href="profileManager.css?v=__profileUIBuild__" />
     </head>
     <body>
-        <h2>管理翻译配置</h2>
-        <p class="hint">
-            在设置顶部的下拉框切换当前翻译配置。这里的选择仅用于编辑和管理。
-        </p>
-        <div
-            id="list"
-            class="list"
-            role="group"
-            aria-label="已保存的翻译配置"
-        />
-        <div class="toolbar">
-            <button id="add">新增</button><button id="edit">编辑</button
-            ><button id="copy">复制</button><button id="remove">删除</button
-            ><button id="top">置顶</button>
+        <aside class="sidebar">
+            <header>
+                <h1 data-i18n="title" />
+                <button id="add" data-i18n="new" />
+            </header>
+            <input
+                id="search"
+                type="search"
+                data-placeholder="search"
+                data-label="search"
+            />
+            <div class="compact-toolbar">
+                <select id="compact-list" data-label="choose" /><button
+                    id="compact-more"
+                    data-label="more"
+                >
+                    ⋯
+                </button>
+            </div>
+            <div id="list" role="group" data-label="list" />
+        </aside>
+        <main>
+            <section id="platform-picker" hidden="hidden">
+                <header>
+                    <h2 data-i18n="choose-platform" />
+                    <button id="picker-back" data-i18n="back" />
+                </header>
+                <div id="categories" role="tablist" data-label="categories" />
+                <div id="platforms" role="tabpanel" />
+                <p class="hint" data-i18n="platform-hint" />
+            </section>
+            <form id="profile-form" hidden="hidden">
+                <div class="editor-scroll">
+                    <div class="platform-heading">
+                        <h2 id="platform-name" />
+                        <button
+                            id="change-platform"
+                            type="button"
+                            data-i18n="change"
+                        />
+                    </div>
+                    <p
+                        id="retired-notice"
+                        class="notice"
+                        data-i18n="retired"
+                        hidden="hidden"
+                    />
+                    <p id="account-hint" class="hint" hidden="hidden" />
+                    <h3 class="section-title" data-i18n="basic" />
+                    <div class="field">
+                        <label for="name" data-i18n="name" /><input
+                            id="name"
+                            data-placeholder="name-hint"
+                        />
+                    </div>
+                    <div class="field" id="api-key-field">
+                        <label for="apiKey">API Key</label>
+                        <div class="inline">
+                            <input
+                                id="apiKey"
+                                type="password"
+                                autocomplete="off"
+                                spellcheck="false"
+                            /><button
+                                id="reveal"
+                                type="button"
+                                aria-pressed="false"
+                                data-i18n="show"
+                            />
+                        </div>
+                    </div>
+                    <div class="field" id="model-field">
+                        <label for="model" data-i18n="model" />
+                        <div class="inline">
+                            <input
+                                id="model"
+                                role="combobox"
+                                aria-autocomplete="list"
+                                aria-controls="models"
+                                aria-expanded="false"
+                                data-placeholder="model-hint"
+                                autocomplete="off"
+                                spellcheck="false"
+                            /><button
+                                id="get-models"
+                                type="button"
+                                data-i18n="get-models"
+                            />
+                        </div>
+                        <select
+                            id="models"
+                            size="5"
+                            data-label="models"
+                            hidden="hidden"
+                        />
+                        <details class="field-help">
+                            <summary data-i18n="model-help" />
+                            <p class="hint" data-i18n="model-manual" />
+                        </details>
+                    </div>
+                    <div id="api-address">
+                        <div id="url-summary-row" class="field">
+                            <span class="field-label" data-i18n="api-url" />
+                            <div class="inline">
+                                <span id="url-summary" /><button
+                                    id="edit-url"
+                                    type="button"
+                                    data-i18n="modify"
+                                />
+                            </div>
+                        </div>
+                        <div id="api-url-field" class="field">
+                            <label for="apiUrl" data-i18n="api-url" /><input
+                                id="apiUrl"
+                                placeholder="https://example.com/v1"
+                                spellcheck="false"
+                                autocomplete="off"
+                            />
+                            <details class="field-help">
+                                <summary data-i18n="url-help" />
+                                <p id="api-url-hint" class="hint" />
+                            </details>
+                        </div>
+                    </div>
+                    <details id="advanced">
+                        <summary data-i18n="advanced" />
+                        <div id="protocol-field" class="field">
+                            <label
+                                for="apiProtocol"
+                                data-i18n="protocol"
+                            /><select id="apiProtocol">
+                                <option value="auto" data-i18n="auto" />
+                                <option value="chat_completions">
+                                    Chat Completions
+                                </option>
+                                <option value="responses">Responses</option>
+                            </select>
+                        </div>
+                        <div id="reasoning-mode-field" class="field">
+                            <label
+                                for="reasoningMode"
+                                data-i18n="reasoning"
+                            /><select id="reasoningMode">
+                                <option
+                                    value="default"
+                                    data-i18n="reasoning-default"
+                                />
+                                <option
+                                    value="off"
+                                    id="reasoning-off"
+                                    data-i18n="reasoning-off"
+                                />
+                            </select>
+                            <p id="reasoning-hint" class="hint" />
+                        </div>
+                        <div id="request-options-field" class="field">
+                            <label
+                                for="requestOptions"
+                                data-i18n="request-options"
+                            /><textarea
+                                id="requestOptions"
+                                rows="3"
+                                placeholder='{"temperature": 0.2}'
+                            />
+                            <p class="hint" data-i18n="request-options-hint" />
+                        </div>
+                        <div id="cli-path-field" class="field">
+                            <label for="cliPath" data-i18n="cli-path" /><input
+                                id="cliPath"
+                                spellcheck="false"
+                                autocomplete="off"
+                            />
+                        </div>
+                        <div id="codex-reasoning-field" class="field">
+                            <label
+                                for="reasoningEffort"
+                                data-i18n="reasoning-effort"
+                            /><select id="reasoningEffort" />
+                            <p class="hint" data-i18n="reasoning-effort-hint" />
+                        </div>
+                        <div id="codex-proxy-field" class="field">
+                            <label for="proxyMode" data-i18n="proxy" /><select
+                                id="proxyMode"
+                            >
+                                <option
+                                    value="inherit"
+                                    data-i18n="proxy-inherit"
+                                />
+                                <option
+                                    value="manual"
+                                    data-i18n="proxy-manual"
+                                />
+                                <option
+                                    value="direct"
+                                    data-i18n="proxy-direct"
+                                />
+                            </select>
+                        </div>
+                        <div id="codex-proxy-url-field" class="field">
+                            <label for="proxyUrl" data-i18n="proxy-url" /><input
+                                id="proxyUrl"
+                                placeholder="http://127.0.0.1:7897"
+                                spellcheck="false"
+                            />
+                        </div>
+                        <div id="extra-data-field" class="field">
+                            <label
+                                for="extraData"
+                                data-i18n="extra-data"
+                            /><textarea id="extraData" rows="3" />
+                        </div>
+                        <div
+                            id="legacy-data-field"
+                            class="field"
+                            hidden="hidden"
+                        >
+                            <label
+                                for="legacy-data"
+                                data-i18n="legacy-data"
+                            /><textarea
+                                id="legacy-data"
+                                rows="4"
+                                readonly="readonly"
+                            />
+                        </div>
+                    </details>
+                </div>
+                <footer>
+                    <p id="status" role="status" aria-live="polite" />
+                    <details id="status-details" hidden="hidden">
+                        <summary data-i18n="status-details" />
+                        <p id="status-full" />
+                    </details>
+                    <div class="actions">
+                        <button id="test" type="button" data-i18n="test" /><span
+                            class="spacer"
+                        /><button
+                            id="save-only"
+                            type="button"
+                            data-i18n="save"
+                        /><button
+                            id="save"
+                            class="primary"
+                            type="submit"
+                            data-i18n="save-use"
+                        />
+                    </div>
+                </footer>
+            </form>
+        </main>
+        <div id="profile-menu" role="menu" hidden="hidden">
+            <button
+                role="menuitem"
+                data-action="copy"
+                data-i18n="copy"
+            /><button
+                role="menuitem"
+                data-action="top"
+                data-i18n="top"
+            /><button role="menuitem" data-action="remove" data-i18n="remove" />
         </div>
-        <p id="status" class="status" role="status" aria-live="polite" />
-        <footer><button id="close">关闭</button></footer>
-        <script charset="utf-8" src="profileManager.js" />
+        <script charset="utf-8" src="profileEditor.js?v=__profileUIBuild__" />
+        <script charset="utf-8" src="profileManager.js?v=__profileUIBuild__" />
     </body>
 </html>

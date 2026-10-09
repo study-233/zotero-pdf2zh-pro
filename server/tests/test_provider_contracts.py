@@ -7,9 +7,6 @@ from unittest.mock import Mock, patch
 
 import httpx
 import openai
-from azure.ai.translation.text import TextTranslationClient
-from azure.core.credentials import AzureKeyCredential
-from azure.core.pipeline.transport import HttpTransport, HttpResponse
 from pdf2zh_next.translator import get_translator
 from pdf2zh_next_service import create_runtime_settings, require_supported_service, SERVICE_FIELD_MAP
 from provider_models import list_provider_models, MODEL_ENDPOINTS, ModelDiscoveryError
@@ -25,41 +22,53 @@ def runtime(service, **api):
         llm_api={"apiKey": "TEST_KEY", "apiProtocol": "chat_completions", **api}))
 
 
-class AzureResponse(HttpResponse):
-    def __init__(self, request):
-        super().__init__(request, None)
-        self.status_code = 200
-        self.headers = {"content-type": "application/json"}
-        self.content_type = "application/json"
-    def body(self):
-        return json.dumps({"value": [{"translations": [{"text": "译文", "language": "zh-Hans"}]}]}).encode()
-
-    def json(self):
-        return json.loads(self.body())
-
-
-class AzureTransport(HttpTransport):
-    def open(self): pass
-    def close(self): pass
-    def __enter__(self): return self
-    def __exit__(self, *_): pass
-    def send(self, request, **_):
-        self.request = request
-        return AzureResponse(request)
-
-
 class ProviderContractTests(unittest.TestCase):
+    def test_openrouter_stream_uses_compatible_url_auth_and_model(self):
+        from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+        from text_translation import SelectionCancellation
+        calls = []
+        def capture(request):
+            calls.append(request)
+            chunks = [
+                {"id": "r", "object": "chat.completion.chunk", "created": 0, "model": "vendor/model", "choices": [{"index": 0, "delta": {"content": "译文"}, "finish_reason": None}]},
+                {"id": "r", "object": "chat.completion.chunk", "created": 0, "model": "vendor/model", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]},
+            ]
+            body = "".join("data: " + json.dumps(chunk) + "\n\n" for chunk in chunks) + "data: [DONE]\n\n"
+            return httpx.Response(200, text=body, headers={"content-type": "text/event-stream"})
+        endpoint = "https://openrouter.ai/api/v1"
+        sdk = openai.OpenAI(api_key="TEST_KEY", base_url=endpoint, max_retries=0,
+            http_client=httpx.Client(transport=httpx.MockTransport(capture)))
+        self.addCleanup(sdk.close)
+        with patch("openai.OpenAI", return_value=sdk):
+            translator = OpenAITranslator(runtime("openai", apiUrl=endpoint, model="vendor/model"), NoopRateLimiter())
+        deltas = []
+        self.assertEqual(translator.selection_stream("Hello", deltas.append, SelectionCancellation()), "译文")
+        self.assertEqual(deltas, ["译文"])
+        self.assertEqual(str(calls[0].url), endpoint + "/chat/completions")
+        self.assertEqual(calls[0].headers["authorization"], "Bearer TEST_KEY")
+        body = json.loads(calls[0].content)
+        self.assertEqual(body["model"], "vendor/model")
+        self.assertTrue(body["stream"])
+
+    def test_retired_selection_services_are_rejected_before_generation(self):
+        from text_translation import validate_text_request, TextTranslationError
+        for service in ["zhipu", "grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm"]:
+            with self.subTest(service=service), self.assertRaises(TextTranslationError) as error:
+                validate_text_request({"text": "Hello", "service": service})
+            self.assertEqual(error.exception.code, "invalid_config")
+            self.assertIn("已移除", error.exception.message)
+
     def test_removed_and_unknown_services_never_select_default_engine(self):
         import server
         client = server.create_app().test_client()
-        self.assertEqual(len(SERVICE_FIELD_MAP), 19)
-        for service in ["OpenAI_Compatible", "tencentmechinetranslation", "Dify", "unknown", "", None, 1]:
+        self.assertEqual(len(SERVICE_FIELD_MAP), 9)
+        for service in ["OpenAI_Compatible", "tencentmechinetranslation", "Dify", "SiliconFlow_Free", "zhipu", "grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm", "unknown", "", None, 1]:
             with self.subTest(service=service), patch("server.validate_service_config") as validate:
                 with self.assertRaises(ValueError): require_supported_service(service)
                 self.assertEqual(client.post("/validate-config", json={"service": service}).status_code, 400)
                 validate.assert_not_called()
                 with self.assertRaises(ValueError): runtime(service)
-        for service in ["openaicompatible", "tencentmechinetranslation", "dify", "unknown"]:
+        for service in ["openaicompatible", "tencentmechinetranslation", "dify", "siliconflowfree", "unknown"]:
             with patch("provider_models.httpx.get") as get:
                 with self.assertRaises(ModelDiscoveryError): list_provider_models({"service": service})
                 get.assert_not_called()
@@ -75,18 +84,13 @@ class ProviderContractTests(unittest.TestCase):
     def test_compatible_presets_emit_official_chat_contract(self):
         endpoints = {
             "openai": "https://api.openai.com/v1", "deepseek": "https://api.deepseek.com/v1",
-            "gemini": "https://generativelanguage.googleapis.com/v1beta/openai", "grok": "https://api.x.ai/v1",
-            "groq": "https://api.groq.com/openai/v1", "zhipu": "https://open.bigmodel.cn/api/paas/v4",
-            "modelscope": "https://api-inference.modelscope.cn/v1",
+            "gemini": "https://generativelanguage.googleapis.com/v1beta/openai",
             "aliyundashscope": "https://workspace.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
             "siliconflow": "https://api.siliconflow.cn/v1",
-            "qwenmt": "https://workspace.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
-            "azureopenai": "https://resource.openai.azure.com/openai/v1",
         }
-        for service, endpoint in endpoints.items():
+        for service, endpoint in [*endpoints.items(), ("openai", "https://openrouter.ai/api/v1")]:
             with self.subTest(service=service):
-                api = {"model": "qwen-mt-plus" if service == "qwenmt" else "selected-model"}
-                if service in ["openai", "aliyundashscope", "qwenmt", "azureopenai"]: api["apiUrl"] = endpoint
+                api = {"model": "selected-model", "apiUrl": endpoint}
                 config = runtime(service, **api)
                 calls = []
                 def capture(request):
@@ -104,72 +108,6 @@ class ProviderContractTests(unittest.TestCase):
                 body = json.loads(request.content)
                 self.assertEqual(body["model"], api["model"])
                 self.assertIn("Hello", body["messages"][-1]["content"])
-                if service == "azureopenai": self.assertNotIn("temperature", body)
-                if service == "qwenmt":
-                    self.assertEqual(body["messages"], [{"role": "user", "content": "Hello"}])
-                    self.assertEqual(body["translation_options"]["target_lang"], "Chinese")
-
-    def test_azure_openai_root_url_and_explicit_legacy_version(self):
-        from pdf2zh_next.translator.translator_impl.azureopenai import AzureOpenAITranslator
-        with patch("openai.OpenAI") as factory:
-            AzureOpenAITranslator(runtime("azureopenai", apiUrl="https://resource.openai.azure.com/", model="my-deployment"), NoopRateLimiter())
-            self.assertEqual(factory.call_args.kwargs["base_url"], "https://resource.openai.azure.com/openai/v1")
-        with patch("openai.AzureOpenAI") as factory:
-            AzureOpenAITranslator(runtime("azureopenai", apiUrl="https://resource.openai.azure.com", model="my-deployment", extraData={"azure_openai_api_version": "2024-10-21"}), NoopRateLimiter())
-            self.assertEqual(factory.call_args.kwargs["api_version"], "2024-10-21")
-            self.assertEqual(factory.call_args.kwargs["azure_deployment"], "my-deployment")
-
-    def test_azure_sdk2_serializes_configured_region_and_languages(self):
-        from pdf2zh_next.translator.translator_impl.azure import AzureTranslator
-        for region in ["eastus", ""]:
-            transport = AzureTransport()
-            sdk = TextTranslationClient(credential=AzureKeyCredential("TEST_KEY"), region=region or None, transport=transport)
-            with patch(IMPL + "azure.TextTranslationClient", return_value=sdk) as factory:
-                translator = AzureTranslator(runtime("azure", apiUrl="https://api.cognitive.microsofttranslator.com", azureRegion=region), NoopRateLimiter())
-            self.assertEqual(factory.call_args.kwargs["region"], region or None)
-            self.assertEqual(translator.do_translate("Hello"), "译文")
-            request = transport.request
-            self.assertIn("api-version=2026-06-06", request.url)
-            self.assertEqual(request.headers["Ocp-Apim-Subscription-Key"], "TEST_KEY")
-            self.assertEqual(request.headers.get("Ocp-Apim-Subscription-Region"), region or None)
-            body = json.loads(request.body)
-            self.assertEqual(body["inputs"][0]["text"], "Hello")
-            self.assertEqual(body["inputs"][0]["targets"][0]["language"], "zh-Hans")
-
-    def test_azure_china_preserves_v3_and_legacy_region(self):
-        from pdf2zh_next.translator.translator_impl.azure import AzureTranslator
-        requests = []
-        def capture(request):
-            requests.append(request)
-            return httpx.Response(200, json=[{"translations": [{"text": "译文"}]}])
-        client = httpx.Client(transport=httpx.MockTransport(capture))
-        self.addCleanup(client.close)
-        with patch(IMPL + "azure.httpx.Client", return_value=client): translator = AzureTranslator(runtime("azure"), NoopRateLimiter())
-        self.assertEqual(translator.do_translate("Hello"), "译文")
-        request = requests[0]
-        self.assertEqual(request.url.host, "api.translator.azure.cn")
-        self.assertEqual(request.url.params["api-version"], "3.0")
-        self.assertEqual(request.headers["Ocp-Apim-Subscription-Region"], "chinaeast2")
-        self.assertEqual(json.loads(request.content), [{"Text": "Hello"}])
-
-    def test_anythingllm_string_and_separate_sessions(self):
-        from pdf2zh_next.translator.translator_impl.anythingllm import AnythingLLMTranslator
-        endpoint = "http://localhost:3001/api/v1/workspace/papers/chat"
-        translator = AnythingLLMTranslator(runtime("anythingllm", apiUrl=endpoint), NoopRateLimiter())
-        response = Mock()
-        response.json.return_value = {"type": "textResponse", "textResponse": "译文", "error": None}
-        with patch(IMPL + "anythingllm.requests.post", return_value=response) as post:
-            self.assertEqual(translator.do_translate("Hello"), "译文")
-            translator.do_translate("Hello again")
-        payloads = [json.loads(call.kwargs["data"]) for call in post.call_args_list]
-        self.assertIsInstance(payloads[0]["message"], str)
-        self.assertIn("Hello", payloads[0]["message"])
-        self.assertNotEqual(payloads[0]["sessionId"], payloads[1]["sessionId"])
-        self.assertEqual(post.call_args.args[0], endpoint)
-        self.assertEqual(post.call_args.kwargs["headers"]["Authorization"], "Bearer TEST_KEY")
-        response.json.return_value = {"textResponse": None, "error": "abort"}
-        with patch(IMPL + "anythingllm.requests.post", return_value=response):
-            with self.assertRaises(ValueError): translator.do_translate.__wrapped__(translator, "Hello")
 
     def test_claude_print_cli_final_result_and_timeout_cleanup(self):
         from pdf2zh_next.translator.translator_impl.claudecode import ClaudeCodeTranslator
@@ -193,7 +131,6 @@ class ProviderContractTests(unittest.TestCase):
 
     def test_local_sdk_and_deepl_contracts(self):
         from pdf2zh_next.translator.translator_impl.ollama import OllamaTranslator
-        from pdf2zh_next.translator.translator_impl.xinference import XinferenceTranslator
         from pdf2zh_next.translator.translator_impl.deepl import DeepLTranslator
         with patch(IMPL + "ollama.ollama.Client") as factory:
             translator = OllamaTranslator(runtime("ollama", apiUrl="http://localhost:11434", model="installed-model"), NoopRateLimiter())
@@ -201,12 +138,6 @@ class ProviderContractTests(unittest.TestCase):
             self.assertEqual(translator.do_translate("Hello"), "译文")
             self.assertEqual(factory.call_args.kwargs["host"], "http://localhost:11434")
             self.assertEqual(factory.return_value.chat.call_args.kwargs["model"], "installed-model")
-        with patch(IMPL + "xinference.Client") as factory:
-            translator = XinferenceTranslator(runtime("xinference", apiUrl="http://localhost:9997", model="deployed-uid"), NoopRateLimiter())
-            factory.return_value.get_model.return_value.chat.return_value = chat()
-            self.assertEqual(translator.do_translate("Hello"), "译文")
-            factory.return_value.get_model.assert_called_once_with("deployed-uid")
-            self.assertEqual(factory.call_args.kwargs["base_url"], "http://localhost:9997")
         with patch(IMPL + "deepl.deepl.Translator") as factory:
             translator = DeepLTranslator(runtime("deepl"), NoopRateLimiter())
             factory.return_value.translate_text.return_value = NS(text="译文")
@@ -214,13 +145,30 @@ class ProviderContractTests(unittest.TestCase):
             factory.assert_called_once_with("TEST_KEY")
             factory.return_value.translate_text.assert_called_once_with("Hello", target_lang="ZH-HANS", source_lang="EN")
 
-    def test_free_proxy_is_distinct_from_siliconflow_api(self):
-        from pdf2zh_next.translator.translator_impl.siliconflowfree import SiliconFlowFreeTranslator
-        with patch.object(SiliconFlowFreeTranslator, "get_fast_service"), patch.object(SiliconFlowFreeTranslator, "fetch_setting"), patch(IMPL + "siliconflowfree.httpx.Client") as factory:
-            translator = SiliconFlowFreeTranslator(runtime("siliconflowfree"), NoopRateLimiter())
-            factory.return_value.post.return_value.json.return_value = {"content": "译文"}
-            self.assertEqual(translator.do_translate("Hello"), "译文")
-            call = factory.return_value.post.call_args
-            self.assertEqual(call.args[0], "https://api1.pdf2zh-next.com/chatproxy")
-            self.assertIn("Hello", call.kwargs["json"]["text"])
-            self.assertNotIn("headers", call.kwargs)
+    def test_no_implicit_service_for_pdf_or_validation(self):
+        import server
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from test_server import build_pdf_payload
+        with patch("server.validate_service_config") as validate:
+            response = server.create_app().test_client().post("/validate-config", json={})
+            self.assertEqual(response.status_code, 400)
+            validate.assert_not_called()
+        for config in [{}, {"service": "siliconflowfree"}]:
+            with TemporaryDirectory() as work:
+                with self.assertRaises(server.RequestValidationError):
+                    server.prepare_translation_request({"fileContent": build_pdf_payload(), "fileName": "test.pdf", **config}, Path(work))
+                self.assertEqual(list(Path(work).iterdir()), [])
+
+    def test_engine_catalog_excludes_free_proxy_and_requires_explicit_service(self):
+        from pdf2zh_next.config.cli_env_model import CLIEnvSettingsModel
+        from pdf2zh_next.config.translate_engine_model import TRANSLATION_ENGINE_METADATA
+        engines = {entry.translate_engine_type for entry in TRANSLATION_ENGINE_METADATA}
+        self.assertTrue(engines.isdisjoint({"SiliconFlowFree", "Zhipu", "Grok", "Groq", "ModelScope", "QwenMt", "AzureOpenAI", "Azure", "Xinference", "AnythingLLM"}))
+        self.assertIn("SiliconFlow", engines)
+        settings = CLIEnvSettingsModel().to_settings_model()
+        self.assertIsNone(settings.translate_engine_settings)
+        with self.assertRaisesRegex(ValueError, "Must provide a translation service"):
+            settings.validate_settings()
+        settings.basic.warmup = True
+        settings.validate_settings()

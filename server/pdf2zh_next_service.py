@@ -40,7 +40,6 @@ _TEXT_CHECK_PATCH_INSTALLED = False
 DEFAULT_TRANSLATION_PROVIDER_TIMEOUT_SECONDS = 120
 
 SERVICE_FIELD_MAP = {
-    "siliconflowfree": {},
     "codex": {
         "model": "codex_model",
         "cliPath": "codex_cli_path",
@@ -66,23 +65,6 @@ SERVICE_FIELD_MAP = {
         "model": "ollama_model",
         "apiUrl": "ollama_host",
     },
-    "xinference": {
-        "model": "xinference_model",
-        "apiUrl": "xinference_host",
-    },
-    "azureopenai": {
-        "model": "azure_openai_model",
-        "apiKey": "azure_openai_api_key",
-        "apiUrl": "azure_openai_base_url",
-    },
-    "modelscope": {
-        "model": "modelscope_model",
-        "apiKey": "modelscope_api_key",
-    },
-    "zhipu": {
-        "model": "zhipu_model",
-        "apiKey": "zhipu_api_key",
-    },
     "siliconflow": {
         "model": "siliconflow_model",
         "apiKey": "siliconflow_api_key",
@@ -91,28 +73,6 @@ SERVICE_FIELD_MAP = {
     "gemini": {
         "model": "gemini_model",
         "apiKey": "gemini_api_key",
-    },
-    "azure": {
-        "azureRegion": "azure_region",
-        "apiKey": "azure_api_key",
-        "apiUrl": "azure_endpoint",
-    },
-    "anythingllm": {
-        "apiKey": "anythingllm_apikey",
-        "apiUrl": "anythingllm_url",
-    },
-    "grok": {
-        "model": "grok_model",
-        "apiKey": "grok_api_key",
-    },
-    "groq": {
-        "model": "groq_model",
-        "apiKey": "groq_api_key",
-    },
-    "qwenmt": {
-        "model": "qwenmt_model",
-        "apiKey": "qwenmt_api_key",
-        "apiUrl": "qwenmt_base_url",
     },
     "claudecode": {
         "model": "claude_code_model",
@@ -345,7 +305,7 @@ def require_supported_service(service: Any) -> str:
     if not isinstance(service, str):
         raise ValueError("请选择支持的接口类型。")
     normalized = service.strip().lower().replace("-", "").replace("_", "")
-    if normalized in {"openaicompatible", "tencentmechinetranslation", "dify"}:
+    if normalized in {"openaicompatible", "tencentmechinetranslation", "dify", "siliconflowfree", "zhipu", "grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm"}:
         raise ValueError("此接口类型已移除，请重新选择并配置受支持的接口。")
     if normalized not in SERVICE_FIELD_MAP:
         raise ValueError("未知的接口类型，请重新选择受支持的接口。")
@@ -377,12 +337,6 @@ def build_service_detail(service: str, llm_api: dict[str, Any]) -> dict[str, Any
             if normalized_key and normalized_value not in (None, ""):
                 detail[normalized_key] = normalized_value
 
-    # Explicitly empty means a global resource; an absent field keeps the legacy region.
-    if service == "azure" and "azureRegion" in llm_api:
-        region = llm_api["azureRegion"]
-        if not isinstance(region, str):
-            raise ValueError("Azure 区域必须为文本")
-        detail["azure_region"] = region.strip()
     return detail
 
 

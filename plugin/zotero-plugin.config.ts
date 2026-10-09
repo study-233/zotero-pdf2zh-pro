@@ -20,6 +20,12 @@ export default defineConfig({
     },
     build: {
         assets: ["addon/**/*.*"],
+        hooks: {
+            "build:init": (ctx) => {
+                // Refresh on every build, including development hot reloads.
+                ctx.build.define.profileUIBuild = String(Date.now());
+            },
+        },
         // Zotero 9 requires update_url even for directly distributed XPI files.
         // Keep the source manifest so its stable release-manifest URL is packaged.
         makeManifest: {

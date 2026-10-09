@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zotero-pdf2zh-pro"
-version = "1.8.1"
+version = "1.8.2"
 description = "Minimal pdf2zh_next bridge for the Zotero plugin"
 readme = "README.md"
 authors = [{ name = "study-233" }]
@@ -13,7 +13,6 @@ license = "AGPL-3.0-or-later"
 license-files = ["LICENSES/*.txt", "THIRD_PARTY_NOTICES.md"]
 dependencies = [
     "anyio>=4.14.2",
-    "azure-ai-translation-text>=2.0.0,<3",
     "bitstring>=4.3.0",
     "chardet>=5.2.0",
     "charset-normalizer>=2.0.0",
@@ -59,7 +58,6 @@ dependencies = [
     "tqdm>=4.67.1",
     "truststore>=0.10.4,<1",
     "uharfbuzz>=0.50.2",
-    "xinference-client",
     "xsdata[lxml,soap]>=24.12",
 ]
 

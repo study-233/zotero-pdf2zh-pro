@@ -8,18 +8,20 @@ import { createZToolkit } from "./utils/ztoolkit";
 import { registerPrefsScripts } from "./modules/preferenceScript";
 import { migrateReviewPreference } from "./modules/reviewPreferences";
 import { repairAttachmentNamingPreferences } from "./modules/attachmentNamingSettings";
+import { migrateSelectionPreferences } from "./modules/selectionMigration";
 import {
     registerSelectionTranslation,
     unregisterSelectionTranslation,
 } from "./modules/selectionTranslate";
 
-async function onStartup() {
+async function onStartup(reason?: number) {
     await Promise.all([
         Zotero.initializationPromise,
         Zotero.unlockPromise,
         Zotero.uiReadyPromise,
     ]);
     migrateReviewPreference();
+    migrateSelectionPreferences(reason);
     repairAttachmentNamingPreferences();
     initLocale();
     PDF2zhBasicFactory.registerPrefs();

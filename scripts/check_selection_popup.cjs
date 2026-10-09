@@ -10,21 +10,24 @@ const root = path.resolve(__dirname, "..");
 const output = path.join(root, ".local-dev/selection-ui");
 fs.mkdirSync(output, { recursive: true });
 const modules = {};
-for (const name of ["selectionFormatting", "selectionTranslate", "selectionDictionary", "selectionDictionaryStore", "selectionPopup", "selectionEvents", "selectionRequest", "selectionView", "selectionPane"]) {
+for (const name of ["selectionFormatting", "selectionTranslate", "selectionDictionary", "selectionDictionaryStore", "selectionPopup", "selectionUI", "selectionAudio", "selectionOnlineDictionary", "selectionDictionaryService", "selectionStream", "selectionEvents", "selectionRequest", "selectionView", "selectionPane"]) {
     modules[`./${name}`] = ts.transpileModule(fs.readFileSync(path.join(root, `plugin/src/modules/${name}.ts`), "utf8"), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText;
 }
+const localeStrings = Object.fromEntries([...fs.readFileSync(path.join(root,"plugin/addon/locale/zh-CN/addon.ftl"),"utf8").matchAll(/^([\w-]+) = (.+)$/gm)].map(m=>[m[1],m[2].trim()]));
 const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/dictionaries/ecdict.json"), "utf8");
 (async () => {
     const browser = await chromium.launch({ headless: true, channel: "chrome" });
     try {
         const page = await browser.newPage({ viewport: { width: 920, height: 740 } });
         page.setDefaultTimeout(10000);
+        // Reader icon controls must render with all image/resource loads blocked.
+        await page.route("**/*", route => route.abort());
         const errors = [];
         page.on("pageerror", e => errors.push(e.message));
         await page.setContent('<html><body style="margin:0;background:#dce0e5"><button id="outside">Zotero window toolbar</button><iframe id="reader" style="border:0;width:100%;height:680px"></iframe></body></html>');
-        await page.evaluate(({ modules, dictionary }) => {
+        await page.evaluate(({ modules, dictionary, localeStrings }) => {
             const frame = document.querySelector("#reader");
             const doc = frame.contentDocument;
             doc.open();
@@ -38,12 +41,16 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
             window.matchType = "exact";
             window.imported = false;
             window.copied = "";
-            window.preferences = {};
+            window.preferences = {selectionDictionaryFallback:"youdao"};
             const cache = {
                 "../../package.json": { config: { addonID: "test", addonRef: "pdf2zhpro" } },
                 "./pdf2zhHelper": { PDF2zhHelperFactory: { getServerConfig: () => ({ serverUrl: "http://localhost:8890", sourceLang: "en", targetLang: "zh-CN", apiConfig: {model:"test"} }) } },
-                "../utils/prefs": {getPref: name => preferences[name] ?? (name === "selectionAutoDictionary" ? false : name === "selectionDictionary" && imported ? "collins" : "bing"), setPref: (name,value) => { preferences[name] = value; }},
-                "../utils/locale": {getLocaleID: id => id, getString: () => "划选 PDF 中的文字以查看翻译。"},
+                "../utils/prefs": {getPref: name => preferences[name] ?? (name === "selectionAutoDictionary" ? false : name === "selectionDictionary" ? imported ? "collins" : "ecdict" : "bing"), setPref: (name,value) => { preferences[name] = value; }},
+                "./profileStore": {loadProfiles:()=>[]},
+                "./llmApiManager": {profileLabel:p=>p.key},
+                "./selectionFavorites": {listFavorites:async()=>[],favoriteLibrary:()=>({type:"user"}),favoriteIdentity:()=>""},
+                "./selectionFavoritesPane": {registerFavoritesPane(){},unregisterFavoritesPane(){}},
+                "../utils/locale": {getLocaleID: id => id, getString: key => localeStrings[key] || key},
                 "./glossaryStore": { loadGlossaryEntries: () => [] },
                 "./selectionContext": { getSelectionContext: async () => "page context" },
                 "./diagnostics": { recordDiagnostic: (...args) => logs.push(args) },
@@ -63,6 +70,7 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
             };
             window.Zotero = {
                 DataDirectory: {dir:"/mock-data"},
+                HTTP: {request:async()=>({responseText:JSON.stringify({input:"unknown",suggest:{}})})},
                 getMainWindow: () => window,
                 File: { getResourceAsync: async () => dictionary, getContentsAsync: async () => ({responseText:dictionary}) },
                 Items: {get:()=>({getFilePathAsync:async()=>"paper.pdf"})},
@@ -88,6 +96,7 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
                 return cache[name];
             };
             window.previewFactory = require("./selectionPopup").createSelectionPopup;
+            window.dictionaryAPI = require("./selectionOnlineDictionary");
             window.selection = require("./selectionTranslate");
             selection.registerSelectionTranslation();
             window.reader = {type:"pdf",itemID:1,tabID:"tab1",_window:window,_iframeWindow:frame.contentWindow};
@@ -95,7 +104,7 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
 
                 onSelection({reader,doc,params:{annotation:{text,position:{pageIndex:4,rects:[1,2,3,4]}}},append:node=>{const section=doc.createElement("div");section.className="section";section.append(node);doc.querySelector(".custom-sections").append(section)}});
             };
-        }, {modules,dictionary});
+        }, {modules,dictionary,localeStrings});
         const reader = page.frameLocator("#reader");
         const card = reader.locator(".pdf2zh-selection-card");
         const select = async text => {console.log("Selection:",text);await page.evaluate(text=>trigger(text),text);await card.waitFor();};
@@ -103,6 +112,12 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         await select("distributions"); await expectText("分布");
         assert.equal(await page.evaluate(()=>calls.length),0);
         await expectText("distributions → distribution");
+        const iconState = await card.locator(".st-icon-button:visible").evaluateAll(buttons => buttons.map(button => {
+            const svg = button.querySelector("svg");
+            return {label:button.getAttribute("aria-label"), visible:!!svg && svg.getBBox().width>0 && svg.getBBox().height>0 && getComputedStyle(svg).stroke!=="none", external:!!button.querySelector("[href], [src], image, use")};
+        }));
+        assert.ok(iconState.length >= 5);
+        assert.ok(iconState.every(icon=>icon.label && icon.visible && !icon.external),JSON.stringify(iconState));
         await reader.locator("#next").click(); assert.equal(await card.count(),1);
         await select("Unconditional"); await expectText("无条件");
         assert.equal(await page.evaluate(()=>calls.length),0);
@@ -118,18 +133,18 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         assert.equal(await card.locator(".st-context-meaning").count(),1);
         await reader.getByRole("button",{name:"重翻语境",exact:true}).click();
         await page.waitForFunction(()=>calls.filter(c=>c.body.mode==="context"&&c.body.cachePolicy==="refresh").length===1);
-        assert.equal(await card.locator(".st-footer button").filter({hasText:"重翻"}).isVisible(),false);
+        assert.equal(await card.locator(".st-footer button").filter({hasText:"重翻"}).count(),0);
         await page.screenshot({path:path.join(output,"personal-context-final.png")});
         await page.evaluate(()=>{calls.length=0});
         await reader.getByRole("button",{name:"复制",exact:true}).click();
         assert.match(await page.evaluate(()=>copied),/无条件/);
-        await reader.getByRole("button",{name:"固定",exact:true}).click();
+        await reader.locator(".st-header button[aria-pressed]").click();
         await page.locator("#outside").click(); assert.equal(await card.count(),1);
         await page.evaluate(()=>trigger("Architecture")); await expectText("建筑");assert.equal(await card.count(),1);
-        assert.equal(await reader.getByRole("button",{name:"固定",exact:true}).getAttribute("aria-pressed"),"true");
+        assert.equal(await reader.locator(".st-header button[aria-pressed]").getAttribute("aria-pressed"),"true");
         // Embedded Reader pointer capture can fail: document listeners must still drag.
         await card.locator(".st-header").evaluate(el=>{el.setPointerCapture=()=>{throw new Error("inactive pointer")}});
-        const before=await card.boundingBox();await page.mouse.move(before.x+30,before.y+20);await page.mouse.down();await page.mouse.move(90,100);await page.mouse.up();
+        const before=await card.boundingBox();await page.mouse.move(before.x+5,before.y+5);await page.mouse.down();await page.mouse.move(90,100);await page.mouse.up();
         assert.ok((await card.boundingBox()).x<before.x);
         const savedPosition=await card.evaluate(el=>({left:Math.round(el.getBoundingClientRect().left),top:Math.round(el.getBoundingClientRect().top)}));
         assert.deepEqual(await page.evaluate(()=>({left:preferences.selectionPopupLeft,top:preferences.selectionPopupTop})),savedPosition);
@@ -137,9 +152,9 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         await page.keyboard.press("Escape");await card.waitFor({state:"detached"});
         await page.evaluate(()=>trigger("Architecture"));await page.waitForTimeout(500);assert.equal(await card.count(),0);
         await reader.frameLocator("#pdf").locator("p").click();await select("Architecture");await expectText("建筑");
-        assert.equal(await reader.getByRole("button",{name:"固定",exact:true}).getAttribute("aria-pressed"),"true");
+        assert.equal(await reader.locator(".st-header button[aria-pressed]").getAttribute("aria-pressed"),"true");
         assert.deepEqual(await card.evaluate(el=>({left:Math.round(el.getBoundingClientRect().left),top:Math.round(el.getBoundingClientRect().top)})),savedPosition);
-        await reader.getByRole("button",{name:"固定",exact:true}).click();
+        await reader.locator(".st-header button[aria-pressed]").click();
         assert.equal(await page.evaluate(()=>preferences.selectionPopupPinned),false);
         await reader.getByRole("button",{name:"关闭",exact:true}).click();await card.waitFor({state:"detached"});
         // A throwing optional constructor cannot leave the core blank/uncloseable.
@@ -180,7 +195,7 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         // A stable view moves an in-flight request into another document without cancelling/refetching.
         await select("Another request in flight"); await page.waitForFunction(()=>typeof finish==="function");
         const beforeDockCalls = await page.evaluate(()=>calls.length);
-        await card.getByRole("button",{name:"移到右侧"}).click();
+        await card.getByRole("button",{name:"移到右侧栏"}).click();
         const docked = page.locator("item-details .pdf2zh-selection-card"); await docked.waitFor();
         assert.equal(await card.count(),0);
         await page.evaluate(()=>finish());
@@ -201,8 +216,8 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         assert.ok(resized.width > originalSize.width + 50);
         assert.ok(resized.height > originalSize.height + 40);
         assert.equal(await page.evaluate(()=>preferences.selectionPopupWidth),Math.round(resized.width));
-        await card.getByRole("button",{name:"移到右侧"}).click();await docked.waitFor();
-        await docked.getByRole("button",{name:"清空"}).click();assert.equal(await docked.count(),0);
+        await card.getByRole("button",{name:"移到右侧栏"}).click();await docked.waitFor();
+        await docked.getByRole("button",{name:"更多操作"}).click();await docked.getByRole("menuitem",{name:"清空结果"}).click();assert.equal(await docked.count(),0);
         await page.evaluate(()=>{window.memory=true;window.matchType="exact";trigger("Saved sidebar mode")});await docked.waitFor();
         await page.waitForFunction(()=>paneBody.textContent.includes("布局生成"));
         await page.screenshot({path:path.join(output,"sidebar.png")});
@@ -227,6 +242,108 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         assert.match(await card.locator(".st-body").textContent(),/更多释义/);
         assert.equal(await card.locator(".st-body").getByText("无条件的 3",{exact:true}).isVisible(),false);
         await page.screenshot({path:path.join(output,"collins-dark.png")});
+        // Online lookup is independent of Python; click mode cannot query before the explicit action.
+        const youdaoFixture = JSON.parse(fs.readFileSync(path.join(root,"plugin/tests/fixtures/selection-dictionaries/youdao-learning.json"),"utf8"));
+        const bingFixture = fs.readFileSync(path.join(root,"plugin/tests/fixtures/selection-dictionaries/bing-learning.html"),"utf8");
+        const parsed = await page.evaluate(html=>dictionaryAPI.parseBing(html,"learning",new DOMParser()),bingFixture);
+        assert.ok(parsed.senses.length>=2);assert.ok(parsed.pronunciations.some(p=>p.audioUrl?.startsWith("https://www.bing.com/dict/mediamp3")));
+        assert.ok(parsed.examples.length);assert.ok(!JSON.stringify(parsed).includes("<script"));
+        await page.evaluate(fixture=>{
+            selection.resetSelectionTranslation(); preferences.selectionDictionary="youdao";preferences.selectionTrigger="click";preferences.selectionDisplayMode="floating";preferences.selectionPopupWidth=0;preferences.selectionPopupHeight=0;preferences.selectionPopupPinned=false;
+            window.dictionaryCalls=0;window.audioCalls=0;Zotero.HTTP.request=async(_method,_url,options)=>{
+                if(options.responseType==="arraybuffer"){audioCalls++;return{response:new Uint8Array([1,2,3]).buffer,getResponseHeader:()=>"audio/mpeg"};}
+                dictionaryCalls++;return{responseText:JSON.stringify(fixture)};
+            };
+            window.fetch=async()=>{throw Error("Python service intentionally unavailable")};
+            window.calls.length=0;trigger("learning");
+        },youdaoFixture);
+        await page.waitForTimeout(500);assert.equal(await card.count(),0);assert.equal(await page.evaluate(()=>dictionaryCalls),0);assert.equal(await page.evaluate(()=>audioCalls),0);
+        await reader.locator(".selection-popup").getByRole("button",{name:"翻译选中文字",exact:true}).last().click();await expectText("学习");
+        assert.equal(await page.evaluate(()=>dictionaryCalls),1);assert.equal(await page.evaluate(()=>calls.length),0);
+        assert.equal(await page.evaluate(()=>audioCalls),2,"both accents preload after showing the result");
+        assert.equal(await page.locator("audio").count(),0,"preloading creates no playing media");
+        assert.ok(await card.locator(".st-example mark").count()>0);assert.equal(await card.locator(".st-pronunciation button").count(),2);
+        await card.screenshot({path:path.join(output,"youdao-compact-dark.png")});
+        await card.locator(".st-editor summary").click();await card.locator("textarea").fill("studying");
+        await page.waitForTimeout(450);assert.equal(await page.evaluate(()=>dictionaryCalls),1);
+        await card.getByRole("button",{name:"移到右侧栏"}).click();await docked.waitFor();
+        assert.equal(await docked.locator("textarea").inputValue(),"studying","draft survives moving into the sidebar");
+        assert.equal(await docked.locator("textarea").isVisible(),true);
+        await docked.getByRole("button",{name:"切回悬浮窗"}).click();await card.waitFor();
+        assert.equal(await card.locator("textarea").inputValue(),"studying");
+        assert.equal(await page.evaluate(()=>audioCalls),2,"moving the result reuses its audio");
+        await card.locator("textarea").press("Control+Enter");await page.waitForFunction(()=>dictionaryCalls===2);
+        await card.locator(".st-editor summary").click();await card.getByRole("button",{name:"恢复划选原文",exact:true}).click();
+        assert.equal(await card.locator("textarea").inputValue(),"learning");
+        await card.getByRole("button",{name:"取消",exact:true}).click();
+        await page.evaluate(()=>{rdoc.documentElement.setAttribute("data-color-scheme","light");});
+        await card.screenshot({path:path.join(output,"youdao-compact-light.png")});
+        // Menu keyboard handling must keep the card open, fit the viewport and
+        // remain usable at narrow widths and enlarged text sizes.
+        for (const theme of ["light", "dark"]) {
+            for (const width of [280, 320, 400]) {
+                await page.evaluate(({theme,width})=>{
+                    rdoc.documentElement.setAttribute("data-color-scheme",theme);
+                    const card=rdoc.querySelector(".pdf2zh-selection-card");
+                    card.style.width=width+"px";card.style.left="8px";card.style.top="8px";
+                    card.style.fontSize="18px";
+                },{theme,width});
+                assert.ok(await card.evaluate(el=>el.scrollWidth<=el.clientWidth),`card overflow ${theme}/${width}`);
+                assert.ok(await card.locator(".st-body").evaluate(el=>el.scrollWidth<=el.clientWidth));
+                const more=card.getByRole("button",{name:"更多操作",exact:true});
+                await more.focus();await page.keyboard.press("ArrowDown");
+                const menu=card.getByRole("menu");await menu.waitFor();
+                await page.keyboard.press("End");
+                assert.equal(await menu.getByRole("menuitem").last().evaluate(el=>el===el.ownerDocument.activeElement),true);
+                await page.keyboard.press("Home");await page.keyboard.press("ArrowDown");
+                assert.equal(await menu.getByRole("menuitem").nth(1).evaluate(el=>el===el.ownerDocument.activeElement),true);
+                assert.ok(await menu.evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=el.ownerDocument.defaultView.innerWidth&&r.bottom<=el.ownerDocument.defaultView.innerHeight&&el.contains(el.ownerDocument.elementFromPoint(r.left+10,r.bottom-10));}));
+                await page.screenshot({path:path.join(output,`menu-${width}-${theme}.png`)});
+                await page.keyboard.press("Escape");assert.equal(await card.count(),1);assert.equal(await more.getAttribute("aria-expanded"),"false");
+                await more.click();await card.locator(".st-status").click();assert.equal(await menu.isVisible(),false);
+                await card.locator(".st-body").evaluate(el=>{el.scrollTop=0;});
+                await card.screenshot({path:path.join(output,`dictionary-${width}-${theme}.png`)});
+            }
+        }
+        // Real ReadableStream chunks exercise the POST client and Reader stale-result boundary.
+        await page.evaluate(()=>{
+            selection.resetSelectionTranslation();preferences.selectionTrigger="auto";preferences.selectionTranslationProvider="profile";preferences.selectionStream=true;
+            window.streams=[];window.cancellations=[];
+            window.fetch=async(url,options)=>{
+                const body=JSON.parse(options.body);
+                if(url.endsWith("selection-capabilities"))return new Response(JSON.stringify({selectionLearning:true,selectionStream:true}));
+                if(url.endsWith("cancel-text")){cancellations.push(body.requestId);return new Response('{}');}
+                if(body.allowGenerate===false)return new Response(JSON.stringify({status:"miss"}));
+                if(url.endsWith("translation-lookup"))return new Response(JSON.stringify({matched:false}));
+                if(url.endsWith("translate-text/stream")){
+                    let controller; const readable=new ReadableStream({start(c){controller=c;}});
+                    let seq=0; const send=(event,data)=>controller.enqueue(new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify({...data,requestId:body.requestId,seq:++seq})}\n\n`));
+                    streams.push({send,close:()=>controller.close(),signal:options.signal});send("start",{model:"test"});
+                    return new Response(readable,{headers:{"Content-Type":"text/event-stream"}});
+                }
+                throw Error("unexpected request");
+            };
+            trigger("This sentence tests incremental generation.");
+        });
+        await page.waitForFunction(()=>streams.length===1);await page.evaluate(()=>streams[0].send("delta",{text:"第一段译文"}));await expectText("第一段译文");
+        await card.getByRole("button",{name:"移到右侧栏"}).click();await docked.waitFor();
+        await page.evaluate(()=>{streams[0].send("delta",{text:"仍在生成"});});await page.waitForFunction(()=>paneBody.textContent.includes("仍在生成"));
+        await docked.getByRole("button",{name:"停止生成"}).click();assert.ok(await page.evaluate(()=>streams[0].signal.aborted));
+        await page.waitForFunction(()=>cancellations.length===1);assert.ok((await docked.textContent()).includes("未完成"));
+        assert.equal(await page.evaluate(()=>streams.length),1,"stopping never restarts generation");
+        await docked.getByRole("button",{name:"切回悬浮窗"}).click();await card.waitFor();
+        await page.evaluate(()=>trigger("The next selection must reject old output."));await page.waitForFunction(()=>streams.length===2);
+        await page.evaluate(()=>{streams[0].send("done",{translation:"OLD RESULT"});streams[0].close();streams[1].send("delta",{text:"新选区"});streams[1].send("done",{translation:"新选区完成",saved:true});streams[1].close();});
+        await expectText("新选区完成");assert.ok(!(await card.textContent()).includes("OLD RESULT"));
+        // A stopped refresh must not reset controls belonging to the next
+        // generation when its old request finally settles.
+        await card.getByRole("button",{name:"重新翻译",exact:true}).click();await page.waitForFunction(()=>streams.length===3);
+        await page.evaluate(()=>streams[2].send("delta",{text:"刷新中"}));await expectText("刷新中");
+        await card.getByRole("button",{name:"停止生成"}).click();
+        await card.getByRole("button",{name:"重试",exact:true}).click();await page.waitForFunction(()=>streams.length===4);
+        await page.evaluate(()=>{streams[3].send("delta",{text:"再次生成"});streams[2].send("done",{translation:"过期刷新"});streams[2].close();});
+        await expectText("再次生成");assert.equal(await card.getByRole("button",{name:"停止生成"}).isVisible(),true);
+        await page.evaluate(()=>{streams[3].send("done",{translation:"重新生成完成"});streams[3].close();});await expectText("重新生成完成");
         await page.evaluate(()=>selection.unregisterSelectionTranslation());
         // Use the production renderer for both screenshot examples and both themes.
         const icon = fs.readFileSync(path.join(root, "plugin/addon/content/icons/selection-translate.svg"), "utf8");
@@ -273,6 +390,12 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
                         assert.equal(await preview.locator("details .st-definition").textContent(),"函数");
                         await preview.getByText("更多释义",{exact:true}).click();
                     } else assert.ok(copied.includes("用法说明："));
+                    await page.evaluate(()=>{window.previewControls={dictionaryAvailable:true,original:"original",dictionary:"youdao",translation:"bing",models:[],onMode(){},onDictionary(){},onTranslation(){},onSubmit(){}};preview.setControls(previewControls);});
+                    await preview.locator(".st-editor summary").click();await preview.locator("textarea").fill("unfinished draft");
+                    await preview.locator(".st-status").click();
+                    await page.evaluate(()=>preview.setControls(previewControls));
+                    assert.equal(await preview.locator("textarea").inputValue(),"unfinished draft","async controls cannot overwrite a blurred draft");
+                    await preview.locator(".st-editor summary").click();
                     assert.ok(await preview.locator(".st-body").evaluate(el=>el.scrollWidth<=el.clientWidth));
                     // Narrow layout and very long headwords must wrap, never overflow.
                     await page.evaluate(()=>{preview.card.querySelector(".st-word").textContent="unusuallylongtechnicalcompound".repeat(4);preview.card.style.width="240px";});

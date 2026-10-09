@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-import logging
-
 from pydantic import Field
 from pydantic import create_model
 
 from pdf2zh_next.config.model import SettingsModel
-from pdf2zh_next.config.translate_engine_model import _DEFAULT_TRANSLATION_ENGINE
 from pdf2zh_next.config.translate_engine_model import TERM_EXTRACTION_ENGINE_METADATA
 from pdf2zh_next.config.translate_engine_model import TRANSLATION_ENGINE_METADATA
-
-logger = logging.getLogger(__name__)
 
 # The following is magic code,
 # if you need to modify it,
@@ -100,8 +95,9 @@ def to_settings_model(self) -> SettingsModel:
                 translate_engine_settings = metadata.setting_model_type()
             break
     else:
-        logger.warning("No translation engine selected, using SiliconFlow Free")
-        translate_engine_settings = _DEFAULT_TRANSLATION_ENGINE()
+        # Asset-only commands do not need an engine; translation validation
+        # requires an explicit choice and never selects a remote service.
+        translate_engine_settings = None
 
     # Term extraction engine (optional)
     term_extraction_engine_settings = None

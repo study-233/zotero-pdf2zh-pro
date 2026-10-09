@@ -168,6 +168,31 @@ class ScriptedTransport:
 
 
 class CodexClientTests(unittest.TestCase):
+    def test_selection_stream_filters_phase_turn_and_uses_completed_final_answer(self):
+        def script(t, u, _):
+            return [event('item/started', t, u, item={'id':'comment','type':'agentMessage','phase':'commentary'}),
+                    event('item/agentMessage/delta', t, u, itemId='comment', delta='hidden process'),
+                    event('item/agentMessage/delta', t, 'old-turn', itemId='final', delta='old'),
+                    event('item/started', t, u, item={'id':'final','type':'agentMessage','phase':'final_answer'}),
+                    event('item/agentMessage/delta', t, u, itemId='final', delta='学'),
+                    event('item/agentMessage/delta', t, u, itemId='final', delta='习'),
+                    answer(t, u, text='学习（最终校正）', item_id='final'), completed(t, u)]
+        client, _ = self.client(ScriptedTransport(script))
+        deltas = []
+        result = client.translate('source', model='gpt-6-luna', on_text=deltas.append)
+        self.assertEqual(deltas, ['学', '习'])
+        self.assertEqual(result.text, '学习（最终校正）')
+
+    def test_unknown_phase_is_buffered_until_completed_final_answer(self):
+        def script(t, u, _):
+            return [event('item/started', t, u, item={'id':'answer','type':'agentMessage'}),
+                    event('item/agentMessage/delta', t, u, itemId='answer', delta='unconfirmed'),
+                    answer(t, u, text='verified'), completed(t, u)]
+        client, _ = self.client(ScriptedTransport(script))
+        deltas = []
+        client.translate('source', model='gpt-6-luna', on_text=deltas.append)
+        self.assertEqual(deltas, ['verified'])
+
     def client(self, transport=None):
         transport = transport or ScriptedTransport()
         with patch("codex_client.resolve_codex_path", return_value="/fake/codex"):

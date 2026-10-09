@@ -105,6 +105,30 @@ missing usable context is `context_unavailable`.
 Reader usage: [user guide](../docs/user-guide.md#selection-translation).
 Manual verification: [development notes](../docs/development-notes.md#划词功能验收).
 
+`POST /selection-capabilities` also declares `selectionStream: true`.
+`POST /translate-text/stream` accepts the same ordinary `mode: translate`,
+`selectionProvider: profile` request with a required unique `requestId`.
+It returns `text/event-stream`: `start` (actual provider/model), `delta` (new `text`),
+`done` (authoritative complete result, including cache/save status), or `error`
+(stable `code` and displayable `message`). Every data event carries the request ID
+and an increasing `seq`; idle heartbeats are SSE comments. Cache, glossary and exact
+document-memory hits send only `start` and `done`. Structured dictionary/context
+responses and Bing text translation continue using `/translate-text` JSON.
+
+Chat Completions requires a successful `stop` finish; Responses requires a completed
+response. Codex only forwards confirmed `final_answer` message deltas within the matching
+thread, turn and item, then corrects the full text at completion. Unknown phases remain
+hidden until a completed final answer. Reasoning and tool output are never displayed.
+All streaming requests support `/cancel-text`, including cancellation arriving before
+generation. Established upstream HTTP streams are closed on cancellation; connection
+setup is bounded by the existing timeout. Disconnect, timeout, cancellation, missing
+completion and truncated output do not persist partial translations. No automatic
+model retry follows a stream failure; `stream_unsupported` permits an explicit JSON retry.
+The plugin checks capabilities and uses JSON when connected to an older server.
+
+Youdao and Bing **dictionary** lookups, pronunciation and favorites run in the plugin,
+independently of the Python service. They are distinct from Bing text translation.
+
 The Reader collects at most two paragraphs / 800 characters from each adjacent page,
 with a 1.5-second per-page timeout and a 12,000-character total context limit. Failed
 adjacent-page reads are skipped. Exact-selection support is advertised through
@@ -261,27 +285,31 @@ rules, and [glossary sources](../docs/glossary-sources.md) for attribution.
 Each attempt runs in a spawn process, contained by a POSIX process group or Windows Job Object. Cancellation escalates at 10/12 seconds and reports cleanup failure at 15 seconds rather than waiting indefinitely. A failed cleanup pauses the queue. Stalls alone only trigger diagnostics, never automatic cancellation. See [the owning specification](../docs/task-diagnostics-and-cancellation.md) for fields, retention, recovery and acceptance.
 
 
-## Provider audit and configuration schema v2
+<a id="provider-audit-and-configuration-schema-v2"></a>
 
-The plugin exposes 19 providers. `openaicompatible`, `tencentmechinetranslation`,
-and `dify` are removed. Explicit unknown or removed service IDs return a
-validation error; they cannot select the free default engine. Omitting `service`
-on legacy PDF/validation requests still selects `siliconflowfree`.
+<a id="provider-audit-and-configuration-schema-v3"></a>
 
-`POST /list-models` accepts `service` (`openai` by default), `apiUrl`, `apiKey`,
-and `apiProtocol`. Supported HTTP catalogs: OpenAI, DeepSeek, Gemini, Grok, Groq,
-and SiliconFlow. SiliconFlow requests include `sub_type=chat`. Provider URLs
-are used only when a named preset omits the URL; explicit custom URLs are kept.
-Codex discovery remains an app-server operation.
+## Provider audit and configuration schema v4
 
-Azure Translator accepts `llm_api.azureRegion`: absent retains `chinaeast2`,
-empty omits the region header. SDK 2.0 handles global endpoints; the documented
-sovereign endpoints retain the v3 wire format. Azure OpenAI uses `/openai/v1`
-and a deployment name, with no forced sampling parameters. An explicit
-`extraData.azure_openai_api_version` retains the legacy Azure client.
+The plugin exposes 11 platform presets backed by 9 services. OpenRouter uses
+`service: "openai"` and `apiUrl: "https://openrouter.ai/api/v1"`; the optional
+`providerPreset` profile field is UI metadata, not a new server service ID.
+New profiles use Chat Completions; saved protocols and custom URLs are preserved.
 
-See the [dated audit](../docs/provider-audit-2026-10-03.md) for official sources,
-profile and backup removal rules, offline contracts, and live acceptance steps.
+Zhipu, Grok, Groq, ModelScope, QwenMT, Azure OpenAI, Azure Translator, XInference
+and AnythingLLM adapters are removed. Schema v4 keeps these profiles and their
+references for manual reconfiguration, and prevents translation or tests through
+them. There is no automatic replacement. The earlier removal of
+`openaicompatible`, `tencentmechinetranslation`, `dify`, and `siliconflowfree` remains
+in effect. Missing or removed service IDs return a validation error.
+
+`POST /list-models` retains its existing request and response shape. Supported
+HTTP catalogs are OpenAI-compatible endpoints (including OpenRouter), DeepSeek,
+Gemini and SiliconFlow. SiliconFlow includes `sub_type=chat`; Codex discovery
+uses app-server. Unsupported catalogs and failures allow manual model entry.
+
+See the [dated audit](../docs/provider-audit-2026-10-03.md) for migration and
+[profile acceptance checklist](../docs/profile-acceptance.md) for UI verification.
 
 ## Glossary pack API
 

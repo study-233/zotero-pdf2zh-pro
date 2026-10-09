@@ -4,20 +4,16 @@ import { registerSelectionPreferences } from "./selectionPreferences";
 import { resetSelectionTranslation } from "./selectionTranslate";
 import { config, version } from "../../package.json";
 import { getPref, setPref } from "../utils/prefs";
-import { getLocaleID } from "../utils/locale";
+import { getLocaleID, getString } from "../utils/locale";
 import {
-    emptyLLMApi,
     profileLabel,
-    profileName,
     SERVICE_NAMES,
+    PROVIDER_PRESETS,
+    resolveProviderPreset,
+    assertSupportedProfile,
     type LLMApiData,
 } from "./llmApiManager";
-import {
-    loadProfiles,
-    saveProfiles,
-    getSelectedProfile,
-    removeProfile,
-} from "./profileStore";
+import { loadProfiles, saveProfiles, removeProfile } from "./profileStore";
 import { testProfile, fetchProfileModelCatalog } from "./profileApiClient";
 import type { ServerHealthResponse } from "./pdf2zhTypes";
 import axios from "axios";
@@ -167,41 +163,11 @@ export async function registerPrefsScripts(window: Window) {
             refreshProfiles(false);
         }, 0);
     });
-    element("profile-add")?.addEventListener("click", () => {
-        void openProfileEditor().catch(report);
-    });
-    element("profile-edit")?.addEventListener("click", () => {
-        void openProfileEditor(getPref("selectedApiKey")?.toString()).catch(
-            report,
-        );
-    });
-    element("profile-manage")?.addEventListener("click", openProfileManager);
-    element("profile-test")?.addEventListener("click", async () => {
-        const button = element("profile-test") as HTMLButtonElement;
-        let api: LLMApiData | null;
+    element("profile-manage")?.addEventListener("click", () => {
         try {
-            api = getSelectedProfile();
+            openProfileManager();
         } catch (error) {
             report(error);
-            return;
-        }
-        if (!api) return;
-        button.disabled = true;
-        status("apiResult", "正在发送短翻译请求…");
-        try {
-            const message = await testProfile(api);
-            const profiles = loadProfiles();
-            const saved = profiles.find((entry) => entry.key === api.key);
-            if (saved && JSON.stringify(saved) === JSON.stringify(api)) {
-                saved.needsTest = false;
-                saveProfiles(profiles);
-                if (getPref("selectedApiKey") === api.key)
-                    status("apiResult", message);
-            }
-        } catch (error) {
-            if (getPref("selectedApiKey") === api.key) report(error);
-        } finally {
-            refreshProfiles();
         }
     });
     element("export-diagnostics")?.addEventListener("click", () => {
@@ -252,7 +218,7 @@ function refreshProfiles(rebuildMenu = true) {
     const selected = getPref("selectedApiKey")?.toString() || "";
     if (rebuildMenu)
         fillMenu(select, [
-            ["请选择配置", ""],
+            [getString("profile-choose"), ""],
             ...profiles.map((api): [string, string] => [
                 profileLabel(api),
                 api.key,
@@ -260,68 +226,22 @@ function refreshProfiles(rebuildMenu = true) {
         ]);
     const api = profiles.find((entry) => entry.key === selected);
     select.value = api?.key || "";
-    for (const id of ["profile-edit", "profile-test"])
-        (element(id) as HTMLButtonElement).disabled = !api;
+    const preset = api ? resolveProviderPreset(api) : undefined;
+    const label = preset
+        ? Zotero.locale?.startsWith("zh")
+            ? preset.label
+            : preset.labelEn || preset.label
+        : api?.service;
     status(
         "profileSummary",
         api
-            ? `${api.apiUrl || SERVICE_NAMES[api.service] || api.service}${api.needsTest ? " · 待测试" : ""}`
-            : "选择一份配置即可使用，也可以新增中转站。",
+            ? `${label}${api.model ? ` · ${api.model}` : ""} · ${!preset ? getString("profile-retired-short") : getString(api.needsTest === false ? "profile-tested" : "profile-untested")}`
+            : getString("profile-empty-hint"),
     );
-}
-
-async function openProfileEditor(key?: string, copy = false): Promise<void> {
-    const original = key
-        ? loadProfiles().find((api) => api.key === key)
-        : undefined;
-    if (key && !original) throw new Error("配置已删除，请重新选择。");
-    const data = JSON.parse(
-        JSON.stringify(original || emptyLLMApi),
-    ) as LLMApiData;
-    if (copy) {
-        data.key = "";
-        data.name = `${profileName(data)} 副本`;
-    }
-    return new Promise((resolve) => {
-        const args = {
-            data,
-            isEdit: !!original && !copy,
-            services: SERVICE_NAMES,
-            test: testProfile,
-            listModels: fetchProfileModelCatalog,
-            save: (value: LLMApiData, use: boolean) => {
-                const profiles = loadProfiles();
-                const api = {
-                    ...value,
-                    key: data.key || Zotero.Utilities.generateObjectKey(),
-                };
-                const index = profiles.findIndex(
-                    (entry) => entry.key === api.key,
-                );
-                if (data.key && index < 0)
-                    throw new Error("此配置已被删除，请取消后重新新增。");
-                if (index >= 0) profiles[index] = api;
-                else profiles.push(api);
-                saveProfiles(profiles);
-                if (use && (!original || copy))
-                    setPref("selectedApiKey", api.key);
-                status("apiResult", "");
-                refreshProfiles();
-            },
-        };
-        const url = `chrome://${config.addonRef}/content/llmApiEditor.xhtml`;
-        const win = Zotero.getMainWindow().openDialog(
-            url,
-            "",
-            "chrome,centerscreen,resizable,dialog=no,width=640,height=710",
-            args,
-        );
-        if (!win) {
-            resolve();
-            return;
-        }
-        onDialogClosed(win, url, () => resolve());
-    });
+    status(
+        "profile-manage",
+        getString(profiles.length ? "profile-manage" : "profile-add"),
+    );
 }
 
 function openProfileManager() {
@@ -329,20 +249,50 @@ function openProfileManager() {
         managerWindow.focus();
         return;
     }
-    const url = `chrome://${config.addonRef}/content/llmApiManager.xhtml`;
-    const win = Zotero.getMainWindow().openDialog(
+    // A same-version reinstall may otherwise reuse the previous chrome document.
+    const url = `chrome://${config.addonRef}/content/llmApiManager.xhtml?v=${Date.now()}`;
+    const main = Zotero.getMainWindow();
+    const width = Math.min(1100, main.screen.availWidth - 64);
+    const height = Math.min(780, main.screen.availHeight - 64);
+    const win = main.openDialog(
         url,
         "",
-        "chrome,centerscreen,resizable,dialog=no,width=800,height=500",
+        `chrome,centerscreen,resizable,dialog=no,width=${width},height=${height}`,
         {
-            list: () =>
-                loadProfiles().map((api) => ({
-                    key: api.key,
-                    label: profileLabel(api),
-                    apiUrl: api.apiUrl,
-                    current: getPref("selectedApiKey") === api.key,
-                })),
-            edit: openProfileEditor,
+            presets: PROVIDER_PRESETS.map((preset) => ({
+                ...preset,
+                label: Zotero.locale?.startsWith("zh")
+                    ? preset.label
+                    : preset.labelEn || preset.label,
+            })),
+            services: SERVICE_NAMES,
+            resolvePreset: (api: LLMApiData) => resolveProviderPreset(api)?.id,
+            message: (key: string, args?: Record<string, unknown>) =>
+                getString(`profile-${key}`, { args }),
+            list: loadProfiles,
+            current: () => String(getPref("selectedApiKey") || ""),
+            test: testProfile,
+            listModels: fetchProfileModelCatalog,
+            save: (value: LLMApiData, use: boolean) => {
+                assertSupportedProfile(value);
+                const profiles = loadProfiles();
+                const api = {
+                    ...value,
+                    key: value.key || Zotero.Utilities.generateObjectKey(),
+                };
+                const index = profiles.findIndex(
+                    (entry) => entry.key === api.key,
+                );
+                if (value.key && index < 0)
+                    throw new Error(getString("profile-deleted"));
+                if (index >= 0) profiles[index] = api;
+                else profiles.push(api);
+                saveProfiles(profiles);
+                if (use) setPref("selectedApiKey", api.key);
+                status("apiResult", "");
+                refreshProfiles();
+                return api;
+            },
             remove: (key: string) => {
                 removeProfile(key);
                 status("apiResult", "");

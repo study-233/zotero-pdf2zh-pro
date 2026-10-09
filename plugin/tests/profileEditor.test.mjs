@@ -1,7 +1,9 @@
+/* global AbortController */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import ts from "typescript";
 import { URL } from "node:url";
 
 const source = fs.readFileSync(
@@ -9,11 +11,32 @@ const source = fs.readFileSync(
     "utf8",
 );
 const markup = fs.readFileSync(
-    new URL("../addon/content/llmApiEditor.xhtml", import.meta.url),
+    new URL("../addon/content/llmApiManager.xhtml", import.meta.url),
     "utf8",
 );
 
-function fixture(overrides = {}, isEdit = false) {
+const catalog = {};
+new Function(
+    "exports",
+    ts.transpileModule(
+        fs.readFileSync(
+            new URL("../src/modules/llmApiManager.ts", import.meta.url),
+            "utf8",
+        ),
+        { compilerOptions: { module: ts.ModuleKind.CommonJS } },
+    ).outputText,
+)(catalog);
+const labels = Object.fromEntries(
+    [
+        ...fs
+            .readFileSync(
+                new URL("../addon/locale/zh-CN/addon.ftl", import.meta.url),
+                "utf8",
+            )
+            .matchAll(/^profile-([\w-]+) = (.*)$/gm),
+    ].map((m) => [m[1], m[2]]),
+);
+function fixture(overrides = {}) {
     const node = () => ({
         value: "",
         textContent: "",
@@ -21,6 +44,7 @@ function fixture(overrides = {}, isEdit = false) {
         disabled: false,
         listeners: {},
         children: [],
+        localName: "input",
         addEventListener(name, callback) {
             (this.listeners[name] ||= []).push(callback);
         },
@@ -39,6 +63,19 @@ function fixture(overrides = {}, isEdit = false) {
             node(),
         ]),
     );
+    for (const id of [
+        "apiProtocol",
+        "reasoningMode",
+        "reasoningEffort",
+        "proxyMode",
+        "models",
+    ])
+        nodes[id].localName = "select";
+    const args = {
+        presets: catalog.PROVIDER_PRESETS,
+        resolvePreset: (api) => catalog.resolveProviderPreset(api)?.id,
+        message: (key) => labels[key] || key,
+    };
     const context = vm.createContext({
         URL,
         document: {
@@ -46,40 +83,47 @@ function fixture(overrides = {}, isEdit = false) {
             createElementNS: node,
             addEventListener() {},
         },
-        window: {
-            arguments: [
-                {
-                    isEdit,
-                    services: {
-                        openai: "OpenAI",
-                        deepseek: "DeepSeek",
-                        gemini: "Gemini",
-                        grok: "Grok",
-                        groq: "Groq",
-                        azureopenai: "Azure OpenAI",
-                        azure: "Azure",
-                        zhipu: "Zhipu",
-                        modelscope: "ModelScope",
-                        qwenmt: "Qwen-MT",
-                        aliyundashscope: "Aliyun",
-                        codex: "Codex",
-                    },
-                    data: {
-                        name: "Test",
-                        service: "openai",
-                        model: "deepseek-v4-flash",
-                        apiUrl: "https://relay.invalid/v1",
-                        apiKey: "test",
-                        ...overrides,
-                    },
-                },
-            ],
-            addEventListener() {},
-        },
+        window: { arguments: [args], AbortController, addEventListener() {} },
     });
     vm.runInContext(source, context);
-    return { nodes, context };
+    const editor = context.window.createProfileEditor(args, () => {});
+    editor.load({
+        profile: {
+            key: "test",
+            name: "Test",
+            service: "openai",
+            model: "deepseek-v4-flash",
+            apiUrl: "https://relay.invalid/v1",
+            apiKey: "test",
+            ...overrides,
+        },
+    });
+    context.read = editor.read;
+    context.updateReasoningMode = () => nodes.model.listeners.input[0]();
+    context.perform = (kind) =>
+        nodes[kind === "models" ? "get-models" : "test"].listeners.click[0]();
+    context.catalog = (modelDetails) =>
+        editor.load({ ...editor.snapshot(), modelDetails });
+    context.modelIds = () => editor.snapshot().modelIds;
+    return { nodes, context, editor };
 }
+
+test("long status details survive draft switches without occupying the footer", () => {
+    const { nodes, editor } = fixture();
+    const full = "Network error\n" + "Details ".repeat(100);
+    editor.message(full, true);
+    assert.equal(nodes.status.textContent, "Network error");
+    assert.equal(nodes["status-details"].hidden, false);
+    assert.equal(nodes["status-details"].open, false);
+    assert.equal(nodes["status-full"].textContent, full);
+    const draft = editor.snapshot();
+    editor.message("OK");
+    assert.equal(nodes["status-details"].hidden, true);
+    assert.equal(nodes["status-full"].textContent, "");
+    editor.load(draft);
+    assert.equal(nodes["status-full"].textContent, full);
+    assert.equal(nodes.status.dataset.error, "true");
+});
 
 test("reasoning editor preserves legacy defaults and saves the selected mode", () => {
     const { nodes, context } = fixture();
@@ -124,15 +168,11 @@ test("Codex editor hides HTTP fields and removes inherited HTTP settings", () =>
         reasoningMode: "off",
         apiProtocol: "responses",
     });
-    assert.equal(nodes.model.value, "gpt-6-luna");
-    for (const id of [
-        "api-url-field",
-        "api-key-field",
-        "reasoning-mode-field",
-        "advanced",
-    ])
+    assert.equal(nodes.model.value, "");
+    nodes.model.value = "gpt-6-luna";
+    for (const id of ["api-address", "api-key-field", "reasoning-mode-field"])
         assert.equal(nodes[id].hidden, true);
-    for (const id of ["codex-path-field", "codex-reasoning-field"])
+    for (const id of ["cli-path-field", "codex-reasoning-field"])
         assert.equal(nodes[id].hidden, false);
     assert.equal(nodes["get-models"].disabled, false);
     nodes.requestOptions.value = "invalid hidden JSON";
@@ -162,11 +202,13 @@ test("Codex reasoning options follow the discovered model and retain an explicit
         reasoningEffort: "low",
     });
     assert.equal(nodes.reasoningEffort.value, "low");
-    vm.runInContext(
-        'modelDetails = [{id:"gpt-6-luna",defaultReasoningEffort:"medium",supportedReasoningEfforts:["none","low","medium"]}]',
-        context,
-    );
-    context.updateReasoningMode();
+    context.catalog([
+        {
+            id: "gpt-6-luna",
+            defaultReasoningEffort: "medium",
+            supportedReasoningEfforts: ["none", "low", "medium"],
+        },
+    ]);
     assert.deepEqual(
         nodes.reasoningEffort.children.map((option) => option.value),
         ["", "none", "low", "medium"],
@@ -184,11 +226,9 @@ test("a changed Codex CLI path discards discovered capabilities", () => {
         service: "codex",
         model: "gpt-6-luna",
     });
-    vm.runInContext(
-        'modelDetails = [{id:"gpt-6-luna",supportedReasoningEfforts:["low","medium"]}]',
-        context,
-    );
-    context.updateReasoningMode();
+    context.catalog([
+        { id: "gpt-6-luna", supportedReasoningEfforts: ["low", "medium"] },
+    ]);
     assert.equal(nodes.reasoningEffort.children.length, 3);
     for (const callback of nodes.cliPath.listeners.input) callback();
     assert.equal(nodes.reasoningEffort.children.length, 1);
@@ -202,7 +242,7 @@ test("HTTP service omits Codex settings and retains HTTP fields", () => {
         proxyUrl: "http://localhost:7897",
     });
     assert.equal(nodes["api-url-field"].hidden, false);
-    assert.equal(nodes["codex-path-field"].hidden, true);
+    assert.equal(nodes["cli-path-field"].hidden, true);
     const saved = context.read();
     assert.equal(saved.apiKey, "test");
     assert.equal("cliPath" in saved, false);
@@ -261,12 +301,12 @@ test("changing proxy during discovery rejects the stale model catalog", async ()
     for (const callback of nodes.proxyMode.listeners.change) callback();
     resolve({ models: ["stale-model"], modelDetails: [] });
     await request;
-    assert.equal(vm.runInContext("modelIds.length", context), 0);
-    assert.equal(nodes.status.textContent, "");
+    assert.equal(context.modelIds().length, 0);
+    assert.equal(nodes.status.textContent, labels.untested);
 });
 
 test("verified providers offer discovery and preserve saved model and endpoint", () => {
-    for (const service of ["openai", "deepseek", "gemini", "grok", "groq"]) {
+    for (const service of ["openai", "deepseek", "gemini", "siliconflow"]) {
         const { nodes, context } = fixture(
             { service, model: "saved-model" },
             true,
@@ -274,48 +314,28 @@ test("verified providers offer discovery and preserve saved model and endpoint",
         assert.equal(nodes["get-models"].disabled, false);
         assert.equal(nodes.apiUrl.value, "https://relay.invalid/v1");
         assert.equal(context.read().model, "saved-model");
-        assert.deepEqual(Array.from(vm.runInContext("modelIds", context)), []);
+        assert.deepEqual(Array.from(context.modelIds()), []);
     }
 });
 
-test("new presets use official addresses and Qwen-MT only suggests translation models", () => {
-    const { nodes, context } = fixture({ apiUrl: "" });
-    for (const [service, endpoint] of [
-        ["zhipu", "https://open.bigmodel.cn/api/paas/v4"],
-        ["modelscope", "https://api-inference.modelscope.cn/v1"],
-        ["gemini", "https://generativelanguage.googleapis.com/v1beta/openai"],
-        ["groq", "https://api.groq.com/openai/v1"],
-    ]) {
-        nodes.service.value = service;
-        for (const callback of nodes.service.listeners.change) callback();
-        assert.equal(nodes.apiUrl.value, endpoint);
+test("retired providers retain parameters but cannot test or save", () => {
+    for (const service of catalog.RETIRED_SERVICES) {
+        const { nodes, context } = fixture({ service, azureRegion: "eastus" });
+        assert.equal(nodes["retired-notice"].hidden, false);
+        assert.equal(nodes.test.disabled, true);
+        assert.equal(nodes.save.disabled, true);
+        assert.equal(nodes.apiKey.value, "test");
+        assert.match(nodes["legacy-data"].value, /eastus/);
+        assert.throws(() => context.read(), /已移除/);
     }
-    nodes.service.value = "qwenmt";
-    context.updateService();
-    assert.ok(
-        vm.runInContext(
-            "modelIds.every(id => id.startsWith('qwen-mt-'))",
-            context,
-        ),
-    );
-    nodes.model.value = "qwen-plus";
-    assert.throws(() => context.read(), /qwen-mt/);
 });
 
-test("Azure fields distinguish region from deployment name and retain legacy region", () => {
-    const { nodes, context } = fixture(
-        { service: "azure", azureRegion: undefined },
-        true,
-    );
-    assert.equal(nodes.azureRegion.value, "chinaeast2");
-    assert.equal(nodes["model-field"].hidden, true);
-    assert.equal(context.read().azureRegion, "chinaeast2");
-    nodes.azureRegion.value = "";
-    assert.equal(context.read().azureRegion, "");
-    nodes.service.value = "azureopenai";
-    context.updateService();
-    assert.equal(nodes["model-label"].textContent, "部署名称");
-    assert.equal(nodes["get-models"].disabled, true);
-    nodes.model.value = "";
-    assert.throws(() => context.read(), /部署名称/);
+test("a failed retest invalidates a previously successful test", async () => {
+    const { context } = fixture({ needsTest: false });
+    assert.equal(context.read().needsTest, false);
+    context.window.arguments[0].test = async () => {
+        throw new Error("test failed");
+    };
+    await context.perform("test");
+    assert.equal(context.read().needsTest, true);
 });

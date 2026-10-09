@@ -171,3 +171,35 @@ export function importGlossaryCsv(text: string): GlossaryEntry[] {
 export function clearGlossaryEntries(): void {
     setPref("glossaryEntries", "[]");
 }
+
+export function addGlossaryEntry(
+    entry: GlossaryEntry,
+    replace = false,
+): "added" | "exists" | "conflict" {
+    const checked = uniqueEntries([
+        {
+            entry: {
+                source: entry.source.trim(),
+                target: entry.target.trim(),
+                tgt_lng: entry.tgt_lng.trim(),
+            },
+            line: 1,
+        },
+    ])[0];
+    if (!checked.source || !checked.target)
+        throw new Error("原词和译法不能为空。");
+    const entries = loadGlossaryEntries();
+    const key = (e: GlossaryEntry) =>
+        JSON.stringify([
+            e.source.replace(/\s+/g, " ").toLowerCase(),
+            e.tgt_lng.toLowerCase().replace(/_/g, "-"),
+        ]);
+    const index = entries.findIndex((e) => key(e) === key(checked));
+    if (index >= 0) {
+        if (entries[index].target === checked.target) return "exists";
+        if (!replace) return "conflict";
+        entries[index] = checked;
+    } else entries.push(checked);
+    setPref("glossaryEntries", JSON.stringify(entries));
+    return "added";
+}

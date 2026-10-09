@@ -261,6 +261,8 @@ export class PDF2zhHelperFactory {
             : null;
         if (includeProfile && profileKey && !apiConfig)
             throw new Error(getString("selection-model-missing"));
+        if (apiConfig && !SERVICE_NAMES[apiConfig.service])
+            throw new Error(getString("profile-retired"));
         return {
             apiConfig,
             serverUrl: getPref("new_serverip")?.toString() || "",

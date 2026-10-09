@@ -434,10 +434,6 @@ class SettingsModel(BaseModel):
                 "After enabling automatic OCR Workaround, scan version detection will be forcibly enabled."
             )
 
-        if self.translate_engine_settings.translate_engine_type == "SiliconFlowFree":
-            # Force qps to 20 for SiliconFlowFree
-            self.translation.qps = 20
-
     def parse_pages(self) -> list[tuple[int, int]] | None:
         """Parse pages string into list of page ranges"""
         if not self.pdf.pages:

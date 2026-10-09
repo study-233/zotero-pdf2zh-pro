@@ -244,6 +244,209 @@ class DevelopmentTests(unittest.TestCase):
         with patch.object(self.dev.platform, "zotero", return_value=[good, bad]):
             self.assertEqual(self.dev.development_zotero(), [good])
 
+    def prepare_switch(self, current="formal"):
+        # Mock every OS operation: these tests must never close the user's Zotero.
+        self.dev.platform = Mock(spec=Windows)
+        self.dev.platform.owned.side_effect = lambda record: record is not None
+        self.dev.platform.source_profile.return_value = self.source
+        exe = self.base / "Program Files/Zotero/zotero.exe"
+        exe.parent.mkdir(parents=True)
+        exe.touch()
+        write_json(self.dev.config_path, {"sourceProfile": str(self.source), "zoteroBin": str(exe)})
+        formal = {"pid": 41, "started": 1, "exe": str(exe), "argv": [str(exe)]}
+        development = {"pid": 42, "started": 1, "exe": str(exe), "argv": [str(exe),
+                       "-profile", str(self.dev.paths()["profile"]), "--dataDir", str(self.dev.paths()["library"])]}
+        selected = {"formal": [formal], "dev": [development], None: []}[current]
+        self.dev.platform.zotero.return_value = selected
+        write_json(self.dev.state_path, {"zotero": development} if current == "dev" else {})
+        return formal, development
+
+    def test_switch_formal_to_dev_checks_port_before_normal_close_and_start(self):
+        formal, _ = self.prepare_switch()
+        operations = Mock()
+        operations.attach_mock(self.dev.platform.close_zotero, "close")
+        with patch.object(self.dev, "port_free") as port, patch.object(self.dev, "start") as start:
+            operations.attach_mock(port, "port")
+            operations.attach_mock(start, "start")
+            self.dev.switch()
+        self.assertEqual([c[0] for c in operations.mock_calls], ["port", "close", "start"])
+        self.dev.platform.close_zotero.assert_called_once_with(formal)
+        self.dev.platform.stop.assert_not_called()
+
+    def test_switch_dev_to_formal_stops_before_launch(self):
+        _, development = self.prepare_switch("dev")
+        operations = Mock()
+        with patch.object(self.dev, "stop_state") as stop, patch.object(self.dev, "launch_formal") as launch:
+            operations.attach_mock(stop, "stop")
+            operations.attach_mock(launch, "launch")
+            self.dev.switch()
+            stop.assert_called_once_with({"zotero": development})
+        self.assertEqual([c[0] for c in operations.mock_calls], ["stop", "launch"])
+        self.dev.platform.close_zotero.assert_not_called()
+
+    def test_switch_explicit_target_is_idempotent(self):
+        self.prepare_switch("dev")
+        with patch.object(self.dev, "stop_state") as stop, patch.object(self.dev, "start") as start:
+            self.dev.switch("dev")
+            stop.assert_not_called()
+            start.assert_not_called()
+        self.dev.platform.zotero.return_value = []
+        write_json(self.dev.state_path, {})
+        with patch.object(self.dev, "launch_formal") as launch:
+            self.dev.switch("formal")
+            launch.assert_called_once()
+
+    def test_switch_formal_target_does_not_restart_formal(self):
+        self.prepare_switch()
+        with patch.object(self.dev, "launch_formal") as launch:
+            self.dev.switch("formal")
+            launch.assert_not_called()
+        self.dev.platform.close_zotero.assert_not_called()
+
+    def test_switch_defaults_to_dev_when_closed_and_formal_when_dev_server_remains(self):
+        self.prepare_switch(None)
+        with patch.object(self.dev, "start") as start, patch.object(self.dev, "port_free"):
+            self.dev.switch()
+            start.assert_called_once()
+        write_json(self.dev.state_path, {"server": {"pid": 99}})
+        with patch.object(self.dev, "require_idle"), patch.object(self.dev, "launch_formal") as launch:
+            self.dev.switch()
+            launch.assert_called_once()
+        self.dev.platform.stop.assert_called_once_with({"pid": 99})
+
+    def test_switch_busy_tasks_prevent_closing_either_environment(self):
+        formal, development = self.prepare_switch()
+        for current in (formal, development):
+            self.dev.platform.zotero.return_value = [current]
+            state = {"server": {"pid": 99}}
+            if current == development:
+                state["zotero"] = development
+            write_json(self.dev.state_path, state)
+            with patch.object(self.dev, "check_server"), \
+                    patch.object(self.dev, "request", return_value={"tasks": [{"status": "running"}]}), \
+                    patch.object(self.dev, "start") as start, patch.object(self.dev, "launch_formal") as launch:
+                with self.assertRaisesRegex(DevError, "仍有开发翻译任务"):
+                    self.dev.switch()
+                start.assert_not_called()
+                launch.assert_not_called()
+        self.dev.platform.stop.assert_not_called()
+        self.dev.platform.close_zotero.assert_not_called()
+
+    def test_switch_exit_failure_or_busy_port_does_not_start_dev(self):
+        self.prepare_switch()
+        with patch.object(self.dev, "start") as start:
+            with patch.object(self.dev, "port_free", side_effect=DevError("busy")):
+                with self.assertRaisesRegex(DevError, "busy"):
+                    self.dev.switch()
+            self.dev.platform.close_zotero.assert_not_called()
+            self.dev.platform.close_zotero.side_effect = DevError("still open")
+            with patch.object(self.dev, "port_free"):
+                with self.assertRaisesRegex(DevError, "still open"):
+                    self.dev.switch()
+            start.assert_not_called()
+
+    def test_switch_rejects_unknown_profile_multiple_instances_and_untracked_dev(self):
+        formal, development = self.prepare_switch()
+        unknown = {**formal, "argv": [formal["exe"], "-profile", str(self.base / "another-profile")]}
+        for instances in ([unknown], [formal, development], [development]):
+            self.dev.platform.zotero.return_value = instances
+            with patch.object(self.dev, "stop_state") as stop:
+                with self.assertRaises(DevError):
+                    self.dev.switch()
+                stop.assert_not_called()
+        self.dev.platform.close_zotero.assert_not_called()
+
+    def test_switch_rejects_formal_process_in_dev_state(self):
+        formal, _ = self.prepare_switch()
+        write_json(self.dev.state_path, {"zotero": formal})
+        with patch.object(self.dev, "stop_state") as stop:
+            with self.assertRaisesRegex(DevError, "记录与实际 Profile 不匹配"):
+                self.dev.switch()
+            stop.assert_not_called()
+
+    def test_formal_matching_checks_explicit_or_default_profile(self):
+        formal, _ = self.prepare_switch()
+        for args in ([], ["-profile", str(self.source)], ["--profile=" + str(self.source)]):
+            self.assertTrue(self.dev.is_formal_zotero({**formal, "argv": [formal["exe"], *args]}))
+        for args in (["-P", "another"], ["-profile"], ["-profile="],
+                     ["-profile", str(self.source), "-profile", str(self.source)],
+                     ["--dataDir", str(self.base / "other")]):
+            self.assertFalse(self.dev.is_formal_zotero({**formal, "argv": [formal["exe"], *args]}))
+        self.dev.platform.source_profile.return_value = self.base / "other-profile"
+        self.assertFalse(self.dev.is_formal_zotero(formal))
+
+    def test_switch_ignores_zotero_content_child(self):
+        formal, _ = self.prepare_switch()
+        self.dev.platform.zotero.return_value = [formal, {**formal, "pid": 88, "argv": [formal["exe"], "-contentproc"]}]
+        with patch.object(self.dev, "launch_formal") as launch:
+            self.dev.switch("formal")
+            launch.assert_not_called()
+
+    def test_launch_formal_uses_source_profile_and_does_not_inherit_dev_hook(self):
+        formal, _ = self.prepare_switch()
+        before = (self.source / "prefs.js").read_bytes()
+        process = Mock(pid=formal["pid"])
+        process.poll.return_value = None
+        with patch.dict(os.environ, {"PDF2ZH_DEV_RUNTIME": str(self.dev.runtime)}), \
+                patch("dev.subprocess.Popen", return_value=process) as launch, \
+                patch("dev.subprocess.CREATE_NO_WINDOW", 0, create=True):
+            self.dev.launch_formal()
+            self.assertIn("PDF2ZH_DEV_RUNTIME", os.environ)
+        command = launch.call_args.args[0]
+        self.assertEqual(command, [formal["exe"], "-no-remote", "-profile", str(self.source)])
+        self.assertNotIn("PDF2ZH_DEV_RUNTIME", launch.call_args.kwargs["env"])
+        self.assertEqual((self.source / "prefs.js").read_bytes(), before)
+        self.assertEqual(self.dev.state(), {})  # Formal process is never registered for dev stop.
+
+    def test_normal_close_rejects_reused_pid_before_window_messages(self):
+        adapter = Windows()
+        with patch.object(adapter, "owned", return_value=False):
+            with self.assertRaisesRegex(DevError, "身份已变化"):
+                adapter.close_zotero({"pid": 42})
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows window messages (mocked)")
+    def test_normal_close_only_messages_matching_main_windows(self):
+        adapter = Windows()
+        api = Mock()
+        # Main window, another process, and a Zotero dialog.
+        api.EnumWindows.side_effect = lambda callback, _: all(callback(hwnd, 0) for hwnd in (101, 102, 103))
+        api.GetWindowThreadProcessId.side_effect = lambda hwnd, pointer: setattr(pointer._obj, "value", 99 if hwnd == 102 else 42)
+        api.GetClassNameW.side_effect = lambda hwnd, buffer, _: setattr(buffer, "value", "MozillaDialogClass" if hwnd == 103 else "MozillaWindowClass")
+        api.IsWindowVisible.return_value = True
+        api.GetWindow.return_value = 0
+        api.PostMessageW.return_value = True
+        with patch("ctypes.WinDLL", return_value=api), patch.object(adapter, "owned", side_effect=[True, True, False]), \
+                patch.object(adapter, "stop") as stop:
+            adapter.close_zotero({"pid": 42})
+            api.PostMessageW.assert_called_once_with(101, 0x0010, 0, 0)
+            stop.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows window messages (mocked)")
+    def test_normal_close_timeout_never_terminates_process(self):
+        adapter = Windows()
+        api = Mock()
+        api.EnumWindows.side_effect = lambda callback, _: callback(101, 0)
+        api.GetWindowThreadProcessId.side_effect = lambda hwnd, pointer: setattr(pointer._obj, "value", 42)
+        api.GetClassNameW.side_effect = lambda hwnd, buffer, _: setattr(buffer, "value", "MozillaWindowClass")
+        api.IsWindowVisible.return_value = True
+        api.GetWindow.return_value = 0
+        api.PostMessageW.return_value = True
+        with patch("ctypes.WinDLL", return_value=api), patch.object(adapter, "owned", return_value=True), \
+                patch("dev.time.sleep"), patch.object(adapter, "stop") as stop:
+            with self.assertRaisesRegex(DevError, "尚未退出"):
+                adapter.close_zotero({"pid": 42})
+            stop.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows window messages (mocked)")
+    def test_normal_close_without_main_window_stops_without_sending_messages(self):
+        adapter = Windows()
+        api = Mock()
+        api.EnumWindows.return_value = True
+        with patch("ctypes.WinDLL", return_value=api), patch.object(adapter, "owned", return_value=True):
+            with self.assertRaisesRegex(DevError, "主窗口"):
+                adapter.close_zotero({"pid": 42})
+            api.PostMessageW.assert_not_called()
+
     @unittest.skipUnless(sys.platform == "win32", "Windows native lock")
     def test_windows_lock_rejects_concurrent_commands_then_releases(self):
         path = self.dev.runtime / "command.lock"

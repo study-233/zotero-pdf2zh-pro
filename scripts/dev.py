@@ -263,6 +263,50 @@ class Windows:
         except psutil.TimeoutExpired:
             raise DevError("开发进程未退出；保留进程记录，请查看日志。") from None
 
+    def close_zotero(self, record):
+        """Ask the identified application to close, without terminating its process."""
+        if not self.owned(record):
+            raise DevError("Zotero 进程身份已变化，请重新执行切换。")
+        import ctypes
+        from ctypes import wintypes
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        callback_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+        user32.EnumWindows.argtypes = [callback_type, wintypes.LPARAM]
+        user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+        user32.IsWindowVisible.argtypes = [wintypes.HWND]
+        user32.GetWindow.argtypes = [wintypes.HWND, wintypes.UINT]
+        user32.GetWindow.restype = wintypes.HWND
+        user32.GetClassNameW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+        user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
+        windows = []
+
+        @callback_type
+        def collect(hwnd, _):
+            pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            name = ctypes.create_unicode_buffer(128)
+            user32.GetClassNameW(hwnd, name, len(name))
+            # Do not dismiss dialogs or send messages to another application's windows.
+            if (pid.value == record["pid"] and user32.IsWindowVisible(hwnd)
+                    and not user32.GetWindow(hwnd, 4) and name.value == "MozillaWindowClass"):
+                windows.append(hwnd)
+            return True
+
+        if not user32.EnumWindows(collect, 0) or not windows:
+            raise DevError("找不到可正常关闭的 Zotero 主窗口，请手动退出后重试切换。")
+        for hwnd in windows:
+            if not self.owned(record):
+                break
+            pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if pid.value == record["pid"] and not user32.PostMessageW(hwnd, 0x0010, 0, 0):  # WM_CLOSE
+                raise DevError("无法请求 Zotero 正常关闭，请手动退出后重试切换。")
+        for _ in range(300):
+            if not self.owned(record):
+                return
+            time.sleep(0.1)
+        raise DevError("Zotero 尚未退出；请处理退出确认框或手动退出，再重试切换。未强制结束进程。")
+
     @staticmethod
     def source_profile():
         base = Path(os.environ["APPDATA"]) / "Zotero/Zotero"
@@ -660,6 +704,88 @@ class Development:
         self.stop()
         self.start()
 
+    def is_formal_zotero(self, process):
+        config = self.config()
+        if not same_path(process["exe"], config["zoteroBin"]):
+            return False
+        profile = None
+        args = iter(process["argv"][1:])
+        for arg in args:
+            name, equals, value = arg.partition("=")
+            name = name.lower()
+            if name in ("-p", "--p", "-profilemanager", "--profilemanager", "-datadir", "--datadir"):
+                return False  # A different named profile or library is not ours to close.
+            if name in ("-profile", "--profile"):
+                if profile is not None:
+                    return False
+                profile = value if equals else next(args, "")
+                if not profile:
+                    return False
+        if profile is None:
+            profile = self.platform.source_profile()
+        return same_path(profile, config["sourceProfile"])
+
+    def launch_formal(self):
+        config = self.config()
+        self.platform.require_closed()
+        # Never use launch(): it injects the development library, config and hook.
+        env = dict(os.environ)
+        env.pop("PDF2ZH_DEV_RUNTIME", None)
+        command = [config["zoteroBin"], "-no-remote", "-profile", config["sourceProfile"]]
+        process = subprocess.Popen(command, cwd=Path(config["zoteroBin"]).parent, env=env,
+                                   stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
+        for _ in range(60):
+            if process.poll() is not None:
+                break
+            if any(p["pid"] == process.pid and self.is_formal_zotero(p) for p in self.platform.zotero()):
+                print("已启动正式 Zotero，使用原来的 Profile 与文献库；正式后端保持原状。")
+                return
+            time.sleep(0.5)
+        raise DevError("尚未确认正式 Zotero 启动，请检查窗口；开发数据已保留。")
+
+    def switch(self, target=None):
+        if not isinstance(self.platform, Windows):
+            raise DevError("一键切换当前仅支持 Windows；macOS 请使用 start / stop。")
+        config = self.config()
+        self.validate_paths(config)
+        if not Path(config["zoteroBin"]).is_file() or not (Path(config["sourceProfile"]) / "prefs.js").is_file():
+            raise DevError("Zotero 程序或正式 Profile 不存在，请检查 init 配置后重试。")
+        instances = [p for p in self.platform.zotero() if "-contentproc" not in p["argv"]]
+        if len(instances) > 1:
+            raise DevError("检测到多个 Zotero 主进程，请先手动退出多余实例再切换。")
+        state = self.state()
+        development = self.development_zotero()
+        current = instances[0] if instances else None
+        in_dev = current is not None and current in development
+        if current and not in_dev and not self.is_formal_zotero(current):
+            raise DevError("当前 Zotero 不属于配置中的正式或开发 Profile，未关闭任何窗口。")
+        if self.platform.owned(state.get("zotero")) and state["zotero"] not in development:
+            raise DevError("开发 Zotero 记录与实际 Profile 不匹配，请先核对 status。")
+        if in_dev and (not self.platform.owned(state.get("zotero")) or state["zotero"]["pid"] != current["pid"]):
+            raise DevError("开发 Zotero 缺少有效进程记录，请手动退出后再切换。")
+        if target is None:
+            # Closing the dev window manually can leave its watcher/server running.
+            target = "formal" if in_dev or (not current and any(self.platform.owned(p) for p in state.values())) else "dev"
+        if target == "dev" and in_dev:
+            print("当前已是开发 Zotero；需要重新加载服务端源码时使用 restart-server。")
+            return
+        # All task and process guards run before closing the current application.
+        self.stop_state(state)
+        if target == "formal":
+            if current and not in_dev:
+                print("当前已是正式 Zotero；开发进程已收尾。")
+            else:
+                print("正在切换到正式 Zotero…", flush=True)
+                self.launch_formal()
+        else:
+            self.port_free()
+            if current:
+                print("正在请求正式 Zotero 正常退出；如有确认框，请在 Zotero 中处理…", flush=True)
+                self.platform.close_zotero(current)
+            print("正在启动开发 Zotero 与 8891 测试后端…", flush=True)
+            self.start()
+
     def restart_server(self):
         self.validate_paths(self.config())
         state = self.state()
@@ -724,10 +850,13 @@ class Development:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("init", "start", "status", "stop", "restart", "restart-server", "sync-models", "prepare-samples"))
+    parser.add_argument("command", choices=("init", "start", "status", "stop", "restart", "restart-server", "switch", "sync-models", "prepare-samples"))
+    parser.add_argument("target", nargs="?", choices=("dev", "formal"), help="仅用于 switch；省略时自动切换到另一环境")
     parser.add_argument("--source-profile", type=Path, help="首次 init 时的正式 Profile 路径")
     parser.add_argument("--zotero-bin", type=Path, help="首次 init 时的 Zotero 可执行文件路径")
     args = parser.parse_args()
+    if args.target and args.command != "switch":
+        parser.error("dev / formal 目标只能用于 switch")
     if sys.platform not in ("darwin", "win32"):
         parser.exit(1, "当前仅支持 macOS 和 Windows。\n")
     os.umask(0o077)
@@ -744,12 +873,17 @@ def main():
         with dev.platform.lock(dev.runtime / "command.lock"):
             if args.command == "init":
                 dev.init(args.source_profile, args.zotero_bin)
+            elif args.command == "switch":
+                dev.switch(args.target)
             else:
                 getattr(dev, args.command.replace("-", "_"))()
         return 0
     except (DevError, OSError, ValueError, subprocess.CalledProcessError) as error:
         # Unexpected parser/process failures must not echo source preferences or environment.
-        message = str(error) if isinstance(error, DevError) else type(error).__name__ + "；请查看开发日志。"
+        if isinstance(error, PermissionError) and error.filename:
+            message = f"无法访问 {error.filename}；请检查该路径的“属性 → 安全”，确认当前用户有访问权限后重试。"
+        else:
+            message = str(error) if isinstance(error, DevError) else type(error).__name__ + "；请查看开发日志。"
         print("dev: " + message, file=sys.stderr)
         return 1
 

@@ -42,7 +42,7 @@ from provider_models import ModelDiscoveryError, list_provider_models, list_code
 from babeldoc.glossary_options import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
 
-VERSION = "1.8.1"
+VERSION = "1.8.2"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
 DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
 TRANSLATES_DIR = Path(
@@ -92,7 +92,19 @@ def create_app() -> Flask:
 
     @app.post("/selection-capabilities")
     def selection_capabilities():
-        return jsonify({'selectionLearning': True, 'codexProxy': True})
+        return jsonify({'selectionLearning': True, 'codexProxy': True, 'selectionStream': True})
+
+    @app.post("/translate-text/stream")
+    def translate_text_stream():
+        try:
+            events = TEXT_TRANSLATOR.stream(request.get_json(silent=True),
+                TranslationMemory(TRANSLATES_DIR / "translation-memory.sqlite3"))
+            return Response(stream_with_context(events), mimetype='text/event-stream',
+                headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
+        except TextTranslationError as error:
+            return jsonify({'status': 'error', 'code': error.code}), error.status
+        except Exception:
+            return jsonify({'status': 'error', 'code': 'selection_unavailable'}), 503
 
     @app.post("/cancel-text")
     def cancel_text():
@@ -449,7 +461,7 @@ def translate_pdf_request(data: dict[str, Any]) -> tuple[bytes, str, str]:
 
 def validate_config_request(data: dict[str, Any]):
     job_id = os.urandom(4).hex()
-    service = normalize_service(data.get("service", "siliconflowfree"))
+    service = normalize_service(data.get("service"))
     request_payload = {
         "source_lang": normalize_language(data.get("sourceLang"), "en"),
         "target_lang": normalize_language(data.get("targetLang"), "zh-CN"),
@@ -482,7 +494,7 @@ def prepare_translation_request(
 ) -> PreparedTranslationRequest:
     file_bytes = decode_pdf_content(data.get("fileContent"))
     file_name = sanitize_pdf_filename(data.get("fileName"))
-    service = normalize_service(data.get("service", "siliconflowfree"))
+    service = normalize_service(data.get("service"))
     output_modes = normalize_output_modes(data)
     input_path = workspace_dir / file_name
     output_dir = workspace_dir / "output"

@@ -2,7 +2,10 @@ import { config } from "../../package.json";
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 import { loadGlossaryEntries } from "./glossaryStore";
 import { recordDiagnostic } from "./diagnostics";
-import { getPref } from "../utils/prefs";
+import { getPref, setPref } from "../utils/prefs";
+import { getString } from "../utils/locale";
+import { loadProfiles } from "./profileStore";
+import { profileLabel } from "./llmApiManager";
 import { createSelectionRequest, SelectionRequest } from "./selectionRequest";
 import { watchSelectionDocuments } from "./selectionEvents";
 import { getSelectionContext } from "./selectionContext";
@@ -12,11 +15,26 @@ import {
     contextCopyText,
     type ContextMeaning,
 } from "./selectionFormatting";
-import { lookupDictionary } from "./selectionDictionary";
+import { createDictionaryRequest } from "./selectionDictionaryService";
+import { stopSelectionAudio } from "./selectionAudio";
+import {
+    saveFavorite,
+    deleteFavorite,
+    listFavorites,
+    favoriteIdentity,
+    favoriteLibrary,
+    type SelectionFavorite,
+} from "./selectionFavorites";
+import {
+    registerFavoritesPane,
+    unregisterFavoritesPane,
+    openFavoritesPane,
+} from "./selectionFavoritesPane";
 import {
     selectionElement,
     SelectionResult,
     SelectionLearning,
+    SelectionControls,
 } from "./selectionPopup";
 import { createSelectionView, type SelectionView } from "./selectionView";
 import {
@@ -114,6 +132,9 @@ export async function translateSelection(
         refresh?: boolean;
         allowGenerate?: boolean;
         freeFallback?: boolean;
+        onDelta?: (text: string) => void;
+        onStreamStart?: () => void;
+        plain?: boolean;
     } = {},
 ): Promise<MemoryResult> {
     let selectionProvider =
@@ -141,17 +162,31 @@ export async function translateSelection(
         options.allowGenerate !== false &&
         !!settings.apiConfig?.proxyMode &&
         settings.apiConfig.proxyMode !== "inherit";
+    let stream = false;
+    const wantsStream =
+        !options.plain &&
+        !options.mode &&
+        options.allowGenerate !== false &&
+        selectionProvider === "profile" &&
+        getPref("selectionStream") !== false &&
+        !!options.onDelta;
     if (
         options.mode ||
         options.refresh ||
         options.allowGenerate === false ||
-        needsCodexProxy
+        needsCodexProxy ||
+        wantsStream
     ) {
         const capability = await request.post(
             `${settings.serverUrl.replace(/\/$/, "")}/selection-capabilities`,
             {},
             10000,
         );
+        stream =
+            wantsStream &&
+            capability.ok &&
+            (capability.data as { selectionStream?: boolean })
+                ?.selectionStream === true;
         if (
             needsCodexProxy &&
             (!capability.ok ||
@@ -162,14 +197,18 @@ export async function translateSelection(
                 "当前 Python 服务不支持 Codex 代理设置，请先升级服务端。",
             );
         if (
-            !capability.ok ||
-            !(capability.data as { selectionLearning?: boolean })
-                ?.selectionLearning
+            (options.mode ||
+                options.refresh ||
+                options.allowGenerate === false) &&
+            (!capability.ok ||
+                !(capability.data as { selectionLearning?: boolean })
+                    ?.selectionLearning)
         )
             throw new Error("请升级本地服务后使用个人词典、语境含义或重翻。");
     }
+    if (stream) options.onStreamStart?.();
     const response = await request.post(
-        `${settings.serverUrl.replace(/\/$/, "")}/translate-text`,
+        `${settings.serverUrl.replace(/\/$/, "")}/translate-text${stream ? "/stream" : ""}`,
         {
             documentFingerprint: fingerprint,
             text,
@@ -196,15 +235,17 @@ export async function translateSelection(
         },
         50000,
         selectionProvider === "profile" &&
-            settings.service === "codex" &&
+            (settings.service === "codex" || stream) &&
             options.allowGenerate !== false
             ? {
                   cancelUrl: `${settings.serverUrl.replace(/\/$/, "")}/cancel-text`,
               }
             : undefined,
+        stream ? options.onDelta : undefined,
     );
     if (!response.ok) {
         const errors: Record<string, string> = {
+            stream_unsupported: "模型服务不支持流式，请使用普通模式重试。",
             context_unavailable: "无法读取可靠的论文上下文，请重新划选后重试。",
             invalid_output: "模型返回格式不正确，请重试。",
             invalid_config: "划词翻译配置无效，请检查设置。",
@@ -302,19 +343,35 @@ type ReaderState = {
     dismissed: boolean;
     timer?: ReturnType<typeof setTimeout>;
     request?: SelectionRequest;
+    dictionaryRequest?: ReturnType<typeof createDictionaryRequest>;
+    original?: string;
+    position?: { pageIndex: number; rects?: number[][] };
+    onDelta?: (text: string) => void;
+    onStreamStart?: () => void;
+    onStreamEnd?: (error?: string) => void;
     learningRequests?: Set<SelectionRequest>;
     popup?: SelectionView;
     anchor?: HTMLElement;
     cleanup?: () => void;
+    queryKey?: string;
+    results?: Map<string, SelectionResult>;
+    context?: Pick<
+        SelectionLearning["context"],
+        "text" | "contextMeaning" | "origin"
+    >;
+    contextModel?: string;
 };
 const states = new Map<Reader, ReaderState>();
 
 function invalidate(state: ReaderState) {
+    if (state.popup) stopSelectionAudio(state.popup.card);
     state.version++;
     if (state.timer !== undefined) clearTimeout(state.timer);
     state.timer = undefined;
     state.request?.abort();
     state.request = undefined;
+    state.dictionaryRequest?.abort();
+    state.dictionaryRequest = undefined;
     for (const request of state.learningRequests || []) request.abort();
     state.learningRequests?.clear();
 }
@@ -322,6 +379,9 @@ function dismiss(state: ReaderState, force = false) {
     if (!force && (state.popup?.pinned || state.popup?.docked)) return;
     invalidate(state);
     state.dismissed = true;
+    state.queryKey = undefined;
+    state.results?.clear();
+    state.context = undefined;
     const popup = state.popup;
     state.popup = undefined;
     popup?.close();
@@ -414,6 +474,25 @@ function isShortSelection(text: string) {
     );
 }
 
+/** Only a single English token opens the dictionary automatically. */
+export function selectionRoute(text: string, from: string, to: string) {
+    const normalized = normalizeSelection(text);
+    const dictionary =
+        /^en(?:-|$)/i.test(from) &&
+        /^(zh|zh-cn|zh-hans)$/i.test(to.replace(/_/g, "-")) &&
+        normalized.length <= 100 &&
+        /^[a-z]+(?:['’-][a-z]+)*(?: [a-z]+(?:['’-][a-z]+)*){0,2}$/i.test(
+            normalized,
+        );
+    return {
+        dictionary,
+        action:
+            dictionary && !normalized.includes(" ")
+                ? ("lookup" as const)
+                : ("translate" as const),
+    };
+}
+
 function createLearning(
     state: ReaderState,
     current: () => boolean,
@@ -435,7 +514,7 @@ function createLearning(
             error instanceof Error ? error.message : "翻译配置无法读取。";
     }
     let personal: MemoryResult | undefined;
-    let contextValue = "";
+    let contextValue = state.context?.text || "";
     let automaticDone = false;
     let initializing = true;
     let freeFallback = !modelAvailable && !modelError;
@@ -448,11 +527,16 @@ function createLearning(
         busy: true,
         context: {
             title: "当前语境含义",
-            actionLabel: modelAvailable ? "结合上下文解释" : undefined,
+            actionLabel: modelAvailable
+                ? contextValue
+                    ? "重翻语境"
+                    : "结合上下文解释"
+                : undefined,
             error: modelAvailable
                 ? undefined
                 : modelError || "详细释义和语境解释需要配置模型。",
             onAction: () => void run("context", Boolean(contextValue)),
+            ...state.context,
         },
     };
     const render = () => {
@@ -485,7 +569,11 @@ function createLearning(
             if (
                 mode === "context" &&
                 (!context.trim() ||
-                    normalizeSelection(context) === normalizeSelection(text))
+                    normalizeSelection(context) === normalizeSelection(text) ||
+                    (text !== state.original &&
+                        !normalizeSelection(context)
+                            .toLowerCase()
+                            .includes(normalizeSelection(text).toLowerCase())))
             )
                 throw new Error("无法读取可靠的论文上下文，请重新划选后重试。");
             return await translateSelection(
@@ -499,6 +587,9 @@ function createLearning(
                     refresh,
                     allowGenerate,
                     freeFallback: mode === "translate" && freeFallback,
+                    onDelta: mode === "translate" ? state.onDelta : undefined,
+                    onStreamStart:
+                        mode === "translate" ? state.onStreamStart : undefined,
                 },
             );
         } finally {
@@ -517,6 +608,7 @@ function createLearning(
         popup.render({
             kind: "dictionary",
             ...entry,
+            aiGenerated: true,
             text: [
                 ...entry.senses.map((sense) =>
                     [sense.pos, sense.chinese].filter(Boolean).join(" "),
@@ -575,7 +667,7 @@ function createLearning(
                     origin:
                         result.provider === "bing"
                             ? "必应 · 在线翻译"
-                            : result.model || "翻译",
+                            : `${result.model || "模型"} · AI 译文`,
                     notice:
                         result.saved === false
                             ? "本次译文未能保存到本地。"
@@ -585,18 +677,38 @@ function createLearning(
             if (!current()) return;
             const message =
                 error instanceof Error ? error.message : "请求失败，请重试。";
+            if (mode === "translate") state.onStreamEnd?.(message);
             if (mode === "context") view.context.error = message;
             else {
                 view.error = message;
                 view.refreshLabel = "重试";
             }
         } finally {
+            if (current() && mode === "translate") state.onStreamEnd?.();
             view.busy = false;
             view.context.busy = false;
             render();
         }
     }
     return {
+        restorePersonal() {
+            refreshMode = "dictionary";
+            view.refreshHidden = !modelAvailable;
+            view.refreshLabel = "重新生成";
+        },
+        refreshDictionary(action: () => void) {
+            view.refreshHidden = false;
+            view.refreshLabel = "刷新词典";
+            view.onRefresh = () => {
+                if (!view.busy && !initializing) action();
+            };
+        },
+        disableContext() {
+            view.context.actionLabel = undefined;
+            view.context.error =
+                "修订原文无法在论文语境中匹配，请重新划选后解释。";
+            render();
+        },
         get freeFallback() {
             return freeFallback;
         },
@@ -620,7 +732,7 @@ function createLearning(
                     popup.render({
                         kind: "translation",
                         text: result.translation,
-                        origin: `${result.provider === "bing" ? "必应" : result.model || "翻译"} · 本地缓存`,
+                        origin: `${result.provider === "bing" ? "必应" : `${result.model || "模型"} · AI 译文`} · 本地缓存`,
                         notice:
                             result.saved === false
                                 ? "本次译文未能保存到本地。"
@@ -696,6 +808,10 @@ async function showSelection(
     anchor: HTMLElement,
     text: string,
     page: number | undefined,
+    refresh = false,
+    plain = false,
+    requestedAction?: "lookup" | "translate",
+    interrupted?: SelectionResult,
 ) {
     const current = () =>
         registered &&
@@ -706,8 +822,68 @@ async function showSelection(
     let stage = "popup";
     let learning: ReturnType<typeof createLearning> | undefined;
     let paragraphReference: { text: string; incomplete?: boolean } | undefined;
+    let partial = "";
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+    let controls: SelectionControls | undefined;
+    const previousResult = refresh ? state.popup?.result : undefined;
+    let chosenMeaning: string | undefined;
     try {
-        const kind = isShortSelection(text) ? "lookup" : "translate";
+        const settings = PDF2zhHelperFactory.getServerConfig(false);
+        const route = selectionRoute(
+            text,
+            settings.sourceLang,
+            settings.targetLang,
+        );
+        const kind =
+            requestedAction === "lookup" && route.dictionary
+                ? "lookup"
+                : requestedAction === "translate"
+                  ? "translate"
+                  : route.action;
+        const queryKey = JSON.stringify([state.key, text]);
+        if (state.queryKey !== queryKey) {
+            state.queryKey = queryKey;
+            state.results = new Map();
+            state.context = undefined;
+        }
+        const modelKey = String(getPref("selectionApiKey") || "");
+        if (state.contextModel !== modelKey) state.context = undefined;
+        const resultKey = JSON.stringify([
+            kind,
+            settings.sourceLang,
+            settings.targetLang,
+            ...(kind === "lookup"
+                ? [
+                      getPref("selectionDictionary"),
+                      getPref("selectionDictionaryFallback"),
+                      getPref("selectionAutoDictionary"),
+                  ]
+                : [getPref("selectionTranslationProvider")]),
+            modelKey,
+        ]);
+        const cached =
+            interrupted ||
+            (refresh ? undefined : state.results?.get(resultKey));
+        const remember = () => {
+            const result = state.popup?.result;
+            if (
+                result &&
+                result.kind !== "error" &&
+                result.kind !== "missing" &&
+                !("incomplete" in result && result.incomplete) &&
+                !controls?.streaming
+            )
+                state.results?.set(resultKey, result);
+            const context = state.popup?.learning?.context;
+            if (context?.text || context?.contextMeaning) {
+                state.context = {
+                    text: context.text,
+                    contextMeaning: context.contextMeaning,
+                    origin: context.origin,
+                };
+                state.contextModel = modelKey;
+            }
+        };
         if (state.popup?.alive) state.popup.updateSelection(text, kind, anchor);
         else
             state.popup = createSelectionView(
@@ -724,43 +900,381 @@ async function showSelection(
                 state.id,
                 (part) => recordDiagnostic(`selection_popup_${part}_degraded`),
             );
-        state.popup.loading("正在查询…");
+        if (previousResult) state.popup.render(previousResult);
+        else state.popup.loading("正在查询…");
+        const ownerView = state.popup;
+        const restart = (
+            query = text,
+            bypassCache = false,
+            normal = false,
+            mode: "lookup" | "translate" | undefined = kind,
+        ) => {
+            if (state.disposed || state.dismissed || state.popup !== ownerView)
+                return;
+            remember();
+            invalidate(state);
+            void showSelection(
+                state,
+                state.version,
+                anchor,
+                query,
+                page,
+                bypassCache,
+                normal,
+                mode,
+            );
+        };
+        let models: { value: string; label: string }[] = [];
+        try {
+            models = loadProfiles().map((p) => ({
+                value: p.key,
+                label: profileLabel(p),
+            }));
+        } catch {
+            /* A broken model profile must not prevent dictionary lookup. */
+        }
+        controls = {
+            dictionaryAvailable: route.dictionary,
+            onMode: (mode) => restart(text, false, false, mode),
+            original: state.original || text,
+            dictionary: String(getPref("selectionDictionary") || "ecdict"),
+            translation:
+                getPref("selectionTranslationProvider") === "profile"
+                    ? String(getPref("selectionApiKey") || "profile")
+                    : "bing",
+            models: [
+                { value: "bing", label: getString("selection-provider-bing") },
+                {
+                    value: "profile",
+                    label: getString("selection-model-follow"),
+                },
+                ...models,
+            ],
+            onDictionary(source) {
+                setPref("selectionDictionary", source);
+                restart();
+            },
+            onTranslation(source) {
+                setPref(
+                    "selectionTranslationProvider",
+                    source === "bing" ? "bing" : "profile",
+                );
+                if (source !== "bing")
+                    setPref(
+                        "selectionApiKey",
+                        source === "profile" ? "" : source,
+                    );
+                restart();
+            },
+            onSubmit(query) {
+                if (query.trim()) {
+                    const next = selectionRoute(
+                        query.trim(),
+                        settings.sourceLang,
+                        settings.targetLang,
+                    );
+                    restart(query.trim(), false, false, next.action);
+                }
+            },
+            onMeaning(meaning) {
+                chosenMeaning = meaning;
+            },
+            onStop() {
+                if (!current()) return;
+                remember();
+                invalidate(state);
+                // Rebind controls to the new request version without generating
+                // again. Late chunks retain the invalidated version above.
+                void showSelection(
+                    state,
+                    state.version,
+                    anchor,
+                    text,
+                    page,
+                    false,
+                    false,
+                    kind,
+                    {
+                        kind: "translation",
+                        text: partial || "生成已停止。",
+                        origin: "AI 译文 · 未完成",
+                        incomplete: true,
+                    },
+                );
+            },
+        };
+        state.popup.setControls(controls);
+        const favoriteAction = async (update = false) => {
+            const popup = state.popup!;
+            const result = popup.result;
+            if (
+                !current() ||
+                !result ||
+                result.kind === "error" ||
+                result.kind === "missing" ||
+                !isShortSelection(text)
+            )
+                return;
+            const attachment =
+                state.reader.itemID && Zotero.Items.get(state.reader.itemID);
+            if (!attachment) return;
+            const parent = attachment.parentItem;
+            const position = state.position;
+            const original = state.original || text;
+            const now = new Date().toISOString();
+            const settings = PDF2zhHelperFactory.getServerConfig(false);
+            const favorite: SelectionFavorite = {
+                version: 1,
+                id: Zotero.getMainWindow().crypto.randomUUID(),
+                word: text,
+                headword:
+                    result.kind === "dictionary" ? result.headword : undefined,
+                sourceLang: settings.sourceLang,
+                targetLang: settings.targetLang,
+                meaning:
+                    chosenMeaning ||
+                    (result.kind === "dictionary"
+                        ? result.senses?.[0]?.chinese
+                        : undefined) ||
+                    result.text,
+                source: "origin" in result ? result.origin : "",
+                contextMeaning:
+                    popup.learning?.context.contextMeaning?.meaning ||
+                    popup.learning?.context.text,
+                original,
+                query: text,
+                title: String((parent || attachment).getField("title")),
+                parentKey: parent ? parent.key : undefined,
+                attachmentKey: attachment.key,
+                library: favoriteLibrary(attachment.libraryID),
+                pageIndex: position?.pageIndex ?? Math.max(0, (page || 1) - 1),
+                pageLabel: String(page || 1),
+                rects: position?.rects,
+                createdAt: now,
+                updatedAt: now,
+                result,
+            };
+            try {
+                favorite.sentence = await getSelectionContext(
+                    state.reader,
+                    page,
+                    original,
+                );
+                try {
+                    const view = state.reader._internalReader
+                        ?._primaryView as unknown as {
+                        _iframeWindow?: {
+                            PDFViewerApplication?: {
+                                pdfDocument?: {
+                                    getPageLabels(): Promise<string[] | null>;
+                                };
+                            };
+                        };
+                    };
+                    const labels =
+                        await view?._iframeWindow?.PDFViewerApplication?.pdfDocument?.getPageLabels();
+                    favorite.pageLabel =
+                        labels?.[favorite.pageIndex] || favorite.pageLabel;
+                } catch {
+                    /* Physical page index remains available if page labels cannot be read. */
+                }
+                try {
+                    favorite.fingerprint = await readerFingerprint(
+                        state.reader,
+                    );
+                } catch {
+                    /* A snapshot can still retain the stable attachment key. */
+                }
+                await saveFavorite(favorite, update);
+                if (current()) {
+                    controls!.favorite = true;
+                    popup.setControls(controls!);
+                    popup.showNotice(
+                        update ? "收藏快照已更新。" : "已收藏词语和论文出处。",
+                    );
+                }
+            } catch (error) {
+                if (current())
+                    popup.showNotice(
+                        error instanceof Error
+                            ? error.message
+                            : "收藏保存失败。",
+                    );
+            }
+        };
+        const currentFavorite = async () => {
+            const attachment =
+                state.reader.itemID && Zotero.Items.get(state.reader.itemID);
+            if (!attachment) return undefined;
+            const identity = favoriteIdentity({
+                library: favoriteLibrary(attachment.libraryID),
+                attachmentKey: attachment.key,
+                pageIndex:
+                    state.position?.pageIndex ?? Math.max(0, (page || 1) - 1),
+                rects: state.position?.rects,
+                word: text,
+            });
+            return (await listFavorites()).find(
+                (entry) => favoriteIdentity(entry) === identity,
+            );
+        };
+        let favoriteChanged = false;
+        const toggleFavorite = async (update = false) => {
+            if (!current() || controls!.favoriteBusy) return;
+            favoriteChanged = true;
+            controls!.favoriteBusy = true;
+            state.popup!.setControls(controls!);
+            try {
+                const existing = await currentFavorite();
+                if (!current()) return;
+                if (existing && !update) {
+                    await deleteFavorite(existing.id);
+                    if (current()) {
+                        controls!.favorite = false;
+                        state.popup!.showNotice(
+                            getString("selection-favorite-removed"),
+                        );
+                    }
+                } else await favoriteAction(update);
+            } catch (error) {
+                if (current())
+                    state.popup!.showNotice(
+                        error instanceof Error
+                            ? error.message
+                            : getString("selection-favorite-failed"),
+                    );
+            } finally {
+                controls!.favoriteBusy = false;
+                if (current()) state.popup!.setControls(controls!);
+            }
+        };
+        if (route.dictionary) {
+            controls.onFavorite = () => void toggleFavorite();
+            controls.onUpdateFavorite = () => void toggleFavorite(true);
+        }
+        controls.onShowFavorites = () =>
+            void openFavoritesPane(state.reader).catch((error) =>
+                state.popup?.showNotice(error.message),
+            );
+        state.popup.setControls(controls);
+        void currentFavorite()
+            .then((entry) => {
+                if (!current() || favoriteChanged) return;
+                controls!.favorite = Boolean(entry);
+                state.popup!.setControls(controls!);
+            })
+            .catch(() => {});
+        state.onDelta = (delta) => {
+            if (!current()) return;
+            partial += delta;
+            if (!controls!.streaming) {
+                controls!.streaming = true;
+                state.popup!.setControls(controls!);
+            }
+            if (flushTimer === undefined)
+                flushTimer = setTimeout(() => {
+                    flushTimer = undefined;
+                    if (current())
+                        state.popup!.stream(partial, "AI 译文 · 正在生成");
+                }, 50);
+        };
+        state.onStreamStart = () => {
+            if (!current()) return;
+            partial = "";
+            controls!.streaming = true;
+            state.popup!.setControls(controls!);
+        };
+        state.onStreamEnd = (error) => {
+            if (!current()) return;
+            if (flushTimer !== undefined) {
+                clearTimeout(flushTimer);
+                flushTimer = undefined;
+            }
+            controls!.streaming = false;
+            if (error?.includes("普通模式重试"))
+                controls!.onPlainRetry = () => restart(text, true, true);
+            state.popup!.setControls(controls!);
+            if (error && partial)
+                state.popup!.render({
+                    kind: "translation",
+                    text: partial,
+                    origin: "AI 译文 · 未完成",
+                    notice: error,
+                    incomplete: true,
+                });
+        };
         if (text.length > 20000)
             throw new Error("选中文字过长，请缩小选区后重试。");
         learning = createLearning(state, current, text, page);
-        stage = "dictionary";
-        const settings = PDF2zhHelperFactory.getServerConfig(false);
-        const glossary = lookupGlossary(text, settings.targetLang);
-        let dictionaryError: Error | undefined;
-        if (kind === "lookup") {
-            let definition;
-            try {
-                definition = glossary
-                    ? { text: glossary, origin: "本地术语表" }
-                    : await lookupDictionary(
-                          text,
-                          settings.sourceLang,
-                          settings.targetLang,
-                      );
-            } catch {
-                recordDiagnostic("selection_dictionary_failed");
-                dictionaryError = new Error(
-                    "离线词典读取失败，请重新安装插件后重试。",
-                );
-            }
+        if (text !== state.original) {
+            const context = await getSelectionContext(
+                state.reader,
+                page,
+                state.original || text,
+            );
             if (!current()) return;
-            if (definition) {
-                state.popup!.render({ kind: "dictionary", ...definition });
+            if (
+                !normalizeSelection(context)
+                    .toLowerCase()
+                    .includes(normalizeSelection(text).toLowerCase())
+            )
+                learning.disableContext();
+        }
+        if (cached) {
+            state.popup.render(cached);
+            if (interrupted) learning.failed(() => restart(text, true));
+            else if (cached.kind === "dictionary" && cached.aiGenerated)
+                learning.restorePersonal();
+            else if (kind === "lookup")
+                learning.refreshDictionary(() => restart(text, true));
+            return;
+        }
+        stage = "dictionary";
+        const glossary = lookupGlossary(text, settings.targetLang);
+        const dictionaryEligible = kind === "lookup" && route.dictionary;
+        if (dictionaryEligible) {
+            state.dictionaryRequest = createDictionaryRequest();
+            const lookup = await state.dictionaryRequest.lookup(
+                text,
+                settings.sourceLang,
+                settings.targetLang,
+                refresh,
+            );
+            if (!current()) return;
+            if (lookup.status === "error") {
+                controls.offlineFallback = true;
+                state.popup.setControls(controls);
+                throw new Error(lookup.message);
+            }
+            if (lookup.status === "hit") {
+                const definition = lookup.entry;
+                state.popup!.render({
+                    kind: "dictionary",
+                    ...definition,
+                    origin:
+                        definition.origin +
+                        (lookup.cached ? " · 在线缓存" : ""),
+                    notice: [
+                        definition.notice,
+                        glossary ? `手工术语表：${glossary}` : "",
+                    ]
+                        .filter(Boolean)
+                        .join("\n"),
+                });
                 await learning.dictionary(true);
+                learning.refreshDictionary(() => restart(text, true));
                 return;
             }
         }
-        if (
-            kind === "lookup" &&
-            !dictionaryError &&
-            (await learning.dictionary(false))
-        )
+        if (dictionaryEligible && (await learning.dictionary(false))) return;
+        if (dictionaryEligible) {
+            state.popup.render({
+                kind: "missing",
+                text: getString("selection-dictionary-miss"),
+            });
+            learning.refreshDictionary(() => restart(text, true));
             return;
+        }
         if (!current()) return;
         if (await learning.cachedTranslation()) return;
         if (!current()) return;
@@ -790,9 +1304,7 @@ async function showSelection(
                 });
             else
                 throw new Error(
-                    dictionaryError
-                        ? "离线词典读取失败，且无法查询已有译文。请检查插件安装和本地服务。"
-                        : "无法查询已有译文，请检查本地服务和 PDF 附件。",
+                    "无法查询已有译文，请检查本地服务和 PDF 附件。",
                 );
             return;
         }
@@ -815,8 +1327,6 @@ async function showSelection(
             });
             return;
         }
-        // A broken dictionary isn't a dictionary miss; don't silently spend tokens.
-        if (dictionaryError) throw dictionaryError;
         stage = "context";
         const context =
             !learning.freeFallback &&
@@ -825,14 +1335,20 @@ async function showSelection(
                 : "";
         if (!current()) return;
         stage = "translate";
-        state.popup!.loading("正在翻译…");
+        if (!previousResult) state.popup!.loading("正在翻译…");
         const generated = await translateSelection(
             state.request!,
             fingerprint,
             text,
             page,
             context,
-            { freeFallback: learning.freeFallback },
+            {
+                freeFallback: learning.freeFallback,
+                refresh,
+                plain,
+                onDelta: state.onDelta,
+                onStreamStart: state.onStreamStart,
+            },
         );
         if (!current()) return;
         // Older local services may still return contained memory. Never present
@@ -856,11 +1372,10 @@ async function showSelection(
                       origin:
                           generated.provider === "glossary"
                               ? "本地术语表"
-                              : generated.cached
-                                ? "缓存译文"
-                                : generated.provider === "bing"
-                                  ? "必应 · 在线翻译"
-                                  : "翻译",
+                              : (generated.provider === "bing"
+                                    ? "必应 · 在线翻译"
+                                    : `${generated.model || "模型"} · AI 译文`) +
+                                (generated.cached ? " · 本地缓存" : ""),
                   },
         );
     } catch (error) {
@@ -868,7 +1383,7 @@ async function showSelection(
         recordDiagnostic(`selection_${stage}_failed`);
         learning?.failed(() => {
             if (current())
-                void showSelection(state, version, anchor, text, page);
+                void showSelection(state, version, anchor, text, page, true);
         });
         const message =
             stage === "popup"
@@ -876,13 +1391,41 @@ async function showSelection(
                 : error instanceof Error
                   ? error.message
                   : "翻译失败，请重新划选重试。";
+        if (message.includes("普通模式重试") && controls)
+            controls.onPlainRetry = () => restartPlain();
+        function restartPlain() {
+            if (!current()) return;
+            invalidate(state);
+            void showSelection(
+                state,
+                state.version,
+                anchor,
+                text,
+                page,
+                true,
+                true,
+                requestedAction,
+            );
+        }
         try {
             if (!state.popup?.alive) throw new Error();
-            state.popup.render({
-                kind: "error",
-                text: message,
-                reference: paragraphReference,
-            });
+            state.popup.render(
+                partial
+                    ? {
+                          kind: "translation",
+                          text: partial,
+                          origin: "AI 译文 · 未完成",
+                          incomplete: true,
+                          notice: message,
+                      }
+                    : previousResult
+                      ? { ...previousResult, notice: message }
+                      : {
+                            kind: "error",
+                            text: message,
+                            reference: paragraphReference,
+                        },
+            );
         } catch {
             // Never mutate the native annotation tools when richer rendering fails.
             dismiss(state, true);
@@ -901,7 +1444,17 @@ async function showSelection(
             state.doc.body.append(fallback);
         }
     } finally {
-        if (current()) learning?.ready();
+        if (flushTimer !== undefined) {
+            clearTimeout(flushTimer);
+            flushTimer = undefined;
+        }
+        if (current()) {
+            if (controls) {
+                controls.streaming = false;
+                state.popup?.setControls(controls);
+            }
+            learning?.ready();
+        }
     }
 }
 
@@ -919,6 +1472,34 @@ const onSelection: _ZoteroTypes.Reader.EventHandler<
             normalizeSelection(text),
             params.annotation.position,
         ]);
+        if (getPref("selectionTrigger") === "click") {
+            if (key !== state.key) {
+                invalidate(state);
+                state.key = key;
+                state.original = text;
+                state.position = params.annotation.position;
+                state.dismissed = false;
+            }
+            const button = selectionElement(doc, "button");
+            button.type = "button";
+            button.textContent = "翻译";
+            button.setAttribute("aria-label", "翻译选中文字");
+            button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                invalidate(state);
+                state.dismissed = false;
+                void showSelection(
+                    state,
+                    state.version,
+                    (button.closest(".selection-popup") as HTMLElement) ||
+                        button,
+                    text,
+                    params.annotation.position?.pageIndex + 1,
+                );
+            });
+            append(button);
+            return;
+        }
         // Native popups may rerender without a new selection. In particular,
         // do not reopen a manually dismissed card for those events.
         const anchor = selectionElement(doc, "span");
@@ -944,6 +1525,8 @@ const onSelection: _ZoteroTypes.Reader.EventHandler<
         if (key === state.key) return;
         invalidate(state);
         state.key = key;
+        state.original = text;
+        state.position = params.annotation.position;
         state.dismissed = false;
         const version = state.version;
         const pageIndex = params.annotation.position?.pageIndex;
@@ -976,6 +1559,7 @@ export function registerSelectionTranslation(): void {
     );
     registered = true;
     registerSelectionPane();
+    registerFavoritesPane();
     // Clean old cards left by an interrupted development build.
     for (const reader of Zotero.Reader._readers || []) {
         try {
@@ -1003,8 +1587,11 @@ export function registerSelectionTranslation(): void {
                         else if (
                             event === "select" &&
                             !ids.some((id) => String(id) === state.reader.tabID)
-                        )
+                        ) {
+                            state.onStreamEnd?.("已切换论文，生成已停止。");
+                            invalidate(state);
                             dismiss(state);
+                        }
                     }
                 },
             },
@@ -1019,6 +1606,7 @@ export function unregisterSelectionTranslation(): void {
     for (const state of states.values()) dispose(state);
     states.clear();
     unregisterSelectionPane();
+    unregisterFavoritesPane();
     if (tabObserver) Zotero.Notifier.unregisterObserver(tabObserver);
     tabObserver = undefined;
     Zotero.Reader.unregisterEventListener(
