@@ -66,7 +66,9 @@ class Website:
         self.pages = json.loads((SITE / 'routes.json').read_text(encoding='utf-8'))
         self.anchors = {}
         self.documents = {GUIDE: 'guide/', 'README.md': '', 'CHANGELOG.md': 'changelog/'}
-        self.assets = {'assets/logo.svg', 'assets/task-manager.png'}
+        # Template images must be copied even when the guide no longer uses them.
+        self.assets = {'assets/logo.svg', 'assets/task-manager.png',
+                       'assets/guide/pdf-bilingual.png', 'assets/guide/selection-word.png'}
         self.search = []
         self.version = json.loads((ROOT / 'plugin/package.json').read_text(encoding='utf-8'))['version']
         sections = guide_sections((ROOT / GUIDE).read_text(encoding='utf-8'))
