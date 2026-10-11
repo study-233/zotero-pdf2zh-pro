@@ -58,6 +58,7 @@ export interface ServerHealthResponse {
         reasoningMode?: boolean;
         codexCli?: boolean;
         codexProxy?: boolean;
+        codexDiscovery?: boolean;
         glossaryEntries?: boolean;
         glossaryPacks?: boolean;
         semanticReview?: boolean;
@@ -79,7 +80,21 @@ export interface ServerHealthResponse {
     };
 }
 
+export interface CodexRuntime {
+    source: string;
+    path: string;
+    version: string;
+    compatible: boolean;
+    attempts: Array<{
+        path: string;
+        source: string;
+        code: string;
+        message: string;
+    }>;
+}
+
 export interface ValidateConfigResponse {
+    codexRuntime?: CodexRuntime;
     status?: string;
     service?: string;
     model?: string | null;

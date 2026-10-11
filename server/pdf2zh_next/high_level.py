@@ -548,10 +548,11 @@ def _get_glossaries(settings: SettingsModel, glossary_entries=None) -> list[Glos
     return glossaries or None
 
 
-def create_babeldoc_config(settings: SettingsModel, file: Path, *, glossary_entries=None, metrics_collector=None) -> BabelDOCConfig:
+def create_babeldoc_config(settings: SettingsModel, file: Path, *, glossary_entries=None, metrics_collector=None, check_cancelled=None) -> BabelDOCConfig:
     if not isinstance(settings, SettingsModel):
         raise ValueError(f"{type(settings)} is not SettingsModel")
-    translator = get_translator(settings, metrics_collector=metrics_collector)
+    cancellation = {"check_cancelled": check_cancelled} if check_cancelled else {}
+    translator = get_translator(settings, metrics_collector=metrics_collector, **cancellation)
     if translator is None:
         raise ValueError("No translator found")
 
@@ -584,7 +585,7 @@ def create_babeldoc_config(settings: SettingsModel, file: Path, *, glossary_entr
                 "openai_api_protocol": translator.resolved_protocol,
                 "openai_base_url": str(translator.client.base_url),
             })
-        term_extraction_translator = get_term_translator(settings, metrics_collector=metrics_collector)
+        term_extraction_translator = get_term_translator(settings, metrics_collector=metrics_collector, **cancellation)
 
     # 设置分割策略
     split_strategy = None

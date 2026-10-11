@@ -227,6 +227,14 @@ async function checkLayout(page, width, height) {
               current: () => currentKey,
               test: (api, signal) => perform("test", api, signal),
               listModels: (api, signal) => perform("models", api, signal),
+              codexDiscoverySupported: async () => true,
+              discoverCodex: async () => ({
+                source: "desktop", version: "0.162.0-alpha.17.2", compatible: true,
+                path: "C:/Users/中文 user/AppData/Local/OpenAI/Codex/bin/very-long-update-directory/codex.exe",
+                attempts: [{ source: "desktop", code: "codex_incompatible",
+                  path: "C:/Users/中文 user/AppData/Local/OpenAI/Codex/bin/old-version/codex.exe",
+                  message: labels["codex-source-desktop"] + ": incompatible protocol" }],
+              }),
               save: (api, use) => {
                 const saved = copy({
                   ...api,
@@ -418,6 +426,21 @@ async function checkLayout(page, width, height) {
       await page.locator(".profile-select").first().focus();
       await page.keyboard.press("ArrowDown");
       assert.equal(await page.locator(".profile-select:focus").count(), 1);
+      await page.evaluate(() => {
+        entries.push({ key: "codex", name: "Codex", service: "codex", model: "model" });
+        dispatchEvent(new Event("profiles-changed"));
+      });
+      await select("Codex");
+      await page.locator("#advanced > summary").click();
+      await page.locator("#codex-detect").click();
+      await page.waitForFunction(() => !document.getElementById("codex-runtime-summary").hidden);
+      assert.match(await page.textContent("#codex-runtime-summary"), /0\.162\.0-alpha\.17\.2/);
+      assert.equal(await inputValue("#cliPath"), "");
+      for (const width of [1100, 400]) {
+        await page.setViewportSize({ width, height: 780 });
+        await checkLayout(page, width, 780);
+        await page.screenshot({ path: path.join(output, `${language}-codex-${width}.png`) });
+      }
       // Capture a fresh form, rather than the deliberately dirty regression fixtures.
       await page.reload();
       for (const width of [1100, 920, 760, 700, 400])

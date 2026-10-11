@@ -416,3 +416,9 @@
         justify-content: flex-end;
     }
 }
+
+#codex-runtime-attempts {
+    white-space: pre-wrap;
+    max-height: 12em;
+    overflow: auto;
+}

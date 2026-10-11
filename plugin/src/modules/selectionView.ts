@@ -222,6 +222,7 @@ export function createSelectionView(
             text: string,
             kind: "lookup" | "translate",
             nextAnchor: HTMLElement,
+            preservePosition = false,
         ) {
             expandedSections =
                 text === selected
@@ -240,7 +241,7 @@ export function createSelectionView(
             result = undefined;
             learning = undefined;
             streaming = undefined;
-            popup.updateSelection(text, kind, nextAnchor);
+            popup.updateSelection(text, kind, nextAnchor, preservePosition);
         },
         loading(message: string) {
             result = undefined;

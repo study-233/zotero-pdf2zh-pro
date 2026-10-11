@@ -19,6 +19,7 @@ class TextCancellationTests(unittest.TestCase):
         self.addCleanup(self.service.close)
         self.memory = TranslationMemory(Path(self.directory) / 'memory.sqlite3')
         self.client = Mock()
+        self.client.session.return_value = self.client
         self.client.check_ready.return_value = {'reasoningEffort': 'medium'}
         self.client.translate.return_value = SimpleNamespace(text='样本', usage={})
         self.enterContext(patch('pdf2zh_next.translator.base_translator.TranslationCache'))

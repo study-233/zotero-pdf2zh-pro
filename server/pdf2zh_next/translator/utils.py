@@ -28,6 +28,7 @@ def _create_translator_instance(
     enforce_glossary_support: bool = True,
     term_extraction: bool = False,
     metrics_collector=None,
+    check_cancelled=None,
 ) -> (BaseTranslator, int | None, int | None):
     """Create translator instance from translator_config.
 
@@ -64,6 +65,8 @@ def _create_translator_instance(
             )
             if metrics_collector is not None:
                 translator.set_metrics_collector(metrics_collector)
+            if check_cancelled is not None and hasattr(translator, "check_cancelled"):
+                translator.check_cancelled = check_cancelled
             if term_extraction:
                 configure = getattr(translator, "configure_for_term_extraction", None)
                 if callable(configure):
@@ -88,7 +91,7 @@ def _create_translator_instance(
     raise ValueError("No translator found")
 
 
-def get_translator(settings: SettingsModel, *, metrics_collector=None) -> BaseTranslator:
+def get_translator(settings: SettingsModel, *, metrics_collector=None, check_cancelled=None) -> BaseTranslator:
     """Get main translator instance according to translate_engine_settings."""
     translator_config = settings.translate_engine_settings
     rate_limiter = get_rate_limiter(settings.translation.qps)
@@ -99,6 +102,7 @@ def get_translator(settings: SettingsModel, *, metrics_collector=None) -> BaseTr
             rate_limiter=rate_limiter,
             enforce_glossary_support=True,
             metrics_collector=metrics_collector,
+            check_cancelled=check_cancelled,
         )
     )
     if recommended_qps:
@@ -110,7 +114,7 @@ def get_translator(settings: SettingsModel, *, metrics_collector=None) -> BaseTr
     return translator
 
 
-def get_term_translator(settings: SettingsModel, *, metrics_collector=None) -> BaseTranslator | None:
+def get_term_translator(settings: SettingsModel, *, metrics_collector=None, check_cancelled=None) -> BaseTranslator | None:
     """Get term-extraction translator instance if configured.
 
     This translator uses a potentially different engine and separate rate limit
@@ -132,6 +136,7 @@ def get_term_translator(settings: SettingsModel, *, metrics_collector=None) -> B
             enforce_glossary_support=False,
             term_extraction=True,
             metrics_collector=metrics_collector,
+            check_cancelled=check_cancelled,
         )
     )
     if recommended_qps:

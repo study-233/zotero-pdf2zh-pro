@@ -154,9 +154,9 @@ Clients should allow manual model entry on failure. `/health` advertises
 
 `/health.capabilities.codexCli: true` means this server includes the adapter; it does
 not mean the CLI is installed, signed in, or permitted to use a particular model.
-The first supported CLI version is `0.153.4`. Install and sign in separately as
-the same operating-system user that runs the Python service. macOS and Windows
-are the initial manual acceptance targets; Docker does not include Codex or a login.
+The minimum CLI version is `0.153.4`; protocol and isolation checks must also pass.
+Discovery runs on the service computer as the service user. Desktop login does not
+guarantee that the service can reuse it. Docker does not include Codex or a login.
 
 Use `service: "codex"` with `llm_api.model` (default `gpt-6-luna`), optional
 `llm_api.cliPath`, and optional `llm_api.reasoningEffort`. An omitted effort uses
@@ -165,7 +165,7 @@ speed; API keys, API URLs, Responses options and OpenAI reasoning switches do no
 configure this provider. Profiles keep an explicit model; unavailable models fail
 with an actionable error instead of silently selecting a different one.
 
-`POST /list-models` also accepts `{"service":"codex","cliPath":"codex"}`. It returns
+`POST /list-models` also accepts `{"service":"codex","cliPath":""}`. It returns
 `models` plus `modelDetails`, whose entries contain `id`, `displayName`,
 `defaultReasoningEffort`, and `supportedReasoningEfforts` (an array of strings).
 Catalog visibility is not proof of account entitlement. Discovery performs no
@@ -173,6 +173,51 @@ generation. `/validate-config` checks readiness without a model call when
 `liveTest: false`; `liveTest: true` performs one short translation and reports its
 result through the existing `liveTest` and `diagnostics` fields. `resolvedProtocol`
 is null for Codex.
+
+### Local runtime discovery
+
+`/health.capabilities.codexDiscovery: true` advertises `POST /codex/discover`.
+Send an object with optional `cliPath`, `proxyMode`, `proxyUrl`, `force` (boolean,
+default false), and `requestId` (8–80 ASCII letters, digits, underscores or hyphens).
+An empty path means automatic selection; an explicit path is authoritative.
+This endpoint starts only local version/protocol/isolation probes: no login and no
+translation. Compatibility does not prove authentication or model entitlement.
+
+Success returns `{"status":"ok","codexRuntime":{"source":"desktop","path":"...","version":"0.162.0-alpha.17.2","compatible":true,"attempts":[]}}`.
+`attempts` contains skipped candidates' `path`, `source`, `code`, and fixed local
+`message`; it never includes raw process output or credentials. Sources are
+`manual`, `desktop`, `install_dir`, `path`, `standalone`, `homebrew`, and `npm`.
+`/list-models` and successful Codex `/validate-config` responses also carry
+`codexRuntime`. Errors retain `code`, `message`, and candidate `attempts`.
+
+With `requestId`, clients can cancel discovery, model listing, or a Codex connection
+test via `POST /codex/discover/cancel` with the same ID. Cancellation is idempotent,
+returns `status: ok`, and the cancelled request returns `codex_cancelled` (499).
+Cancellation stops probes; generation in an explicitly requested live connection
+test is interrupted through the existing turn cancellation mechanism. IDs must be
+unique per request. Duplicate active IDs return 409; excessive registrations 429.
+
+Automatic order: desktop bundles (newest full semantic version first),
+`CODEX_INSTALL_DIR`, all PATH entries in order, then known standalone/Homebrew/npm
+locations. macOS checks system/user Applications and registered App locations;
+Windows checks desktop version directories and skips staging entries. Official npm
+launchers resolve to their matching native binary, including old vendor and new
+platform package layouts; no Node lookup or Windows shell wrapper is required.
+Search never traverses the whole disk, runs shell startup files, or mutates PATH.
+
+Each candidate has a 5-second validation budget, with 30 seconds overall including
+lock waits; owned probe processes are cleaned up on timeout/cancel. Local installation
+and protocol errors fall back; authentication, network, quota and isolation errors
+do not. Successful selection is cached in-process for 60 seconds and invalidated
+by file identity, candidate set or environment changes. `force: true` refreshes it.
+Automatic paths are never persisted. Each translator pins its installation for the
+whole PDF or selection request; refreshing discovery does not replay or redirect it.
+
+Clients must check `codexCli` for every Codex model query, including inherited proxy
+mode. Without `codexDiscovery`, hide the detection control and retain the original
+model/test flow. The existing `codexCli` and `codexProxy` contracts remain unchanged.
+
+### Proxy environment
 
 Codex profiles also accept `llm_api.proxyMode`: `inherit` (default), `manual`, or
 `direct`. In manual mode `llm_api.proxyUrl` is an HTTP(S) proxy URL with no
@@ -206,7 +251,9 @@ Job Object, so forced termination of the Python service also stops its owned
 Codex process tree.
 
 Codex selection failures return a safe `code` and fixed local `message`, including `codex_not_installed`,
-`codex_incompatible`, `codex_not_logged_in`, `codex_model_unavailable`,
+`codex_invalid_path`, `codex_dependency_missing`, `codex_start_failed`,
+`codex_permission_denied`, `codex_arch_mismatch`, `codex_version_too_old`,
+`codex_version_unrecognized`, `codex_incompatible`, `codex_not_logged_in`, `codex_model_unavailable`,
 `codex_invalid_reasoning`, `codex_isolation_failed`, `codex_timeout`,
 `codex_process_exited`, `codex_protocol_error`, `codex_quota_exhausted`, and
 `codex_request_failed`. Full-document/configuration errors contain a safe

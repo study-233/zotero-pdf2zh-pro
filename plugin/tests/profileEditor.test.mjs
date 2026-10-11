@@ -339,3 +339,75 @@ test("a failed retest invalidates a previously successful test", async () => {
     await context.perform("test");
     assert.equal(context.read().needsTest, true);
 });
+
+test("detected runtime is visible but never saved as a manual path", async () => {
+    const { nodes, context, editor } = fixture({
+        service: "codex",
+        model: "model",
+    });
+    const runtime = {
+        source: "desktop",
+        version: "0.162.0-alpha.17.2",
+        path: "/Applications/Test.app/codex",
+        compatible: true,
+        attempts: [{ path: "/old/codex", message: "版本过低" }],
+    };
+    context.window.arguments[0].codexDiscoverySupported = async () => true;
+    context.window.arguments[0].discoverCodex = async () => runtime;
+    editor.load(editor.snapshot());
+    await Promise.resolve();
+    assert.equal(nodes["codex-discovery-field"].hidden, false);
+    await nodes["codex-detect"].listeners.click[0]();
+    assert.match(nodes["codex-runtime-summary"].textContent, /桌面 App.*alpha/);
+    assert.equal(nodes["codex-runtime-path"].textContent, runtime.path);
+    assert.match(nodes["codex-runtime-attempts"].textContent, /版本过低/);
+    assert.equal(nodes.cliPath.value, "");
+    assert.equal("cliPath" in editor.read(), false);
+    assert.equal("runtime" in editor.read(), false);
+    assert.equal(editor.read().needsTest, true);
+});
+
+test("old server hides detection and switching a draft discards late runtime", async () => {
+    const { nodes, context, editor } = fixture({ service: "codex" });
+    context.window.arguments[0].codexDiscoverySupported = async () => false;
+    editor.load(editor.snapshot());
+    await Promise.resolve();
+    assert.equal(nodes["codex-discovery-field"].hidden, true);
+    let finish, signal;
+    context.window.arguments[0].discoverCodex = (_api, value) => {
+        signal = value;
+        return new Promise((resolve) => {
+            finish = resolve;
+        });
+    };
+    const pending = nodes["codex-detect"].listeners.click[0]();
+    nodes.cliPath.value = "/changed/codex";
+    nodes.cliPath.listeners.input[0]();
+    assert.equal(signal.aborted, true);
+    finish({
+        source: "desktop",
+        version: "0.160.0",
+        path: "/old/codex",
+        compatible: true,
+        attempts: [],
+    });
+    await pending;
+    assert.equal(nodes["codex-runtime-summary"].hidden, true);
+    assert.equal(nodes.cliPath.value, "/changed/codex");
+});
+
+test("editing while capabilities load does not lose the detection control", async () => {
+    const { nodes, context, editor } = fixture({ service: "codex" });
+    let finish;
+    context.window.arguments[0].codexDiscoverySupported = () =>
+        new Promise((resolve) => {
+            finish = resolve;
+        });
+    editor.load(editor.snapshot());
+    nodes.model.value = "edited";
+    nodes.model.listeners.input[0]();
+    finish(true);
+    await Promise.resolve();
+    assert.equal(nodes["codex-discovery-field"].hidden, false);
+    assert.equal(nodes["codex-detect"].disabled, false);
+});

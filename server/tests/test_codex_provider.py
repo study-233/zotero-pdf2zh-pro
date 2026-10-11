@@ -45,6 +45,7 @@ class CodexProviderTests(unittest.TestCase):
     def setUp(self):
         self.enterContext(patch("pdf2zh_next.translator.base_translator.TranslationCache", MemoryCache))
         self.client = Mock()
+        self.client.session.return_value = self.client
         self.client.check_ready.return_value = {"model": "gpt-6-luna"}
         self.client.translate.return_value = SimpleNamespace(text="样本量有限。", usage={})
         self.factory = self.enterContext(patch(
@@ -159,22 +160,67 @@ class CodexProviderTests(unittest.TestCase):
         self.assertEqual(translator.timeout, 120)
         self.assertEqual(self.client.translate.call_count, 1)
 
+    def test_live_codex_error_retains_code_in_http_response(self):
+        self.client.translate.side_effect = CodexError("codex_not_logged_in", "请登录", 401)
+        response = server.create_app().test_client().post("/validate-config", json={
+            "service": "codex", "llm_api": {"model": "gpt-6-luna"}, "liveTest": True})
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json["code"], "codex_not_logged_in")
+        self.assertEqual(self.client.translate.call_count, 1)
+
+    def test_validation_cancellation_reaches_readiness_before_generation(self):
+        from codex_discovery import cancel_discovery
+        request_id = "cancel-validation-123"
+        def ready(*args, check_cancelled):
+            cancel_discovery(request_id)
+            check_cancelled()
+        self.client.check_ready.side_effect = ready
+        response = server.create_app().test_client().post("/validate-config", json={
+            "service": "codex", "llm_api": {"model": "gpt-6-luna"},
+            "liveTest": True, "requestId": request_id})
+        self.assertEqual(response.status_code, 499)
+        self.assertEqual(response.json["code"], "codex_cancelled")
+        self.client.translate.assert_not_called()
+
     def test_model_discovery_endpoint_includes_reasoning_and_health_capability(self):
         details = [{"id": "gpt-6-luna", "displayName": "GPT-6 Luna", "defaultReasoningEffort": "medium",
                     "supportedReasoningEfforts": ["none", "medium"]}]
         with patch("provider_models.get_codex_client", return_value=self.client):
-            self.client.list_models.return_value = details
+            self.client.model_catalog.return_value = (details, {"path": "/test/codex", "source": "desktop", "version": "0.160.0", "compatible": True, "attempts": []})
             client = server.create_app().test_client()
             response = client.post("/list-models", json={"service": "codex", "cliPath": "codex"})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json["modelDetails"], details)
             self.assertEqual(response.json["models"], ["gpt-6-luna"])
+            self.assertEqual(response.json["codexRuntime"]["source"], "desktop")
         with patch.object(server, "build_workspace_health", return_value={}), \
              patch.object(server, "build_task_stats", return_value={}), \
              patch.object(server, "TASK_MANAGER", SimpleNamespace(_queue_blocked=False)):
             self.assertTrue(client.get("/health").json["capabilities"]["codexCli"])
         with self.assertRaises(ModelDiscoveryError):
             list_codex_models({"cliPath": {"bad": True}})
+
+    def test_discovery_endpoint_is_local_only_and_preserves_typed_errors(self):
+        app = server.create_app().test_client()
+        runtime = {"path": "/test/codex", "source": "desktop", "version": "0.162.0-alpha.17.2", "compatible": True, "attempts": []}
+        with patch("server.get_codex_client", return_value=self.client):
+            self.client.discover.return_value = runtime
+            response = app.post("/codex/discover", json={"cliPath": "", "force": True})
+            self.assertEqual(response.json["codexRuntime"], runtime)
+            self.client.discover.assert_called_once_with(force=True, check_cancelled=None)
+            self.client.translate.assert_not_called()
+            self.client.list_models.assert_not_called()
+            error = CodexError("codex_dependency_missing", "启动器找不到 Node")
+            error.attempts = [{"path": "/test/codex", "source": "path", "code": error.code, "message": str(error)}]
+            self.client.discover.side_effect = error
+            response = app.post("/codex/discover", json={})
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json["code"], error.code)
+            self.assertEqual(len(response.json["attempts"]), 1)
+        for body in ([], {"force": "yes"}, {"cliPath": []}, {"requestId": "bad id"}):
+            self.assertEqual(app.post("/codex/discover", json=body).status_code, 400)
+        self.assertEqual(app.post("/codex/discover/cancel", json={"requestId": "cancel-endpoint-test"}).status_code, 200)
+        self.assertEqual(app.post("/codex/discover", json={"requestId": "cancel-endpoint-test"}).status_code, 499)
 
     def test_selection_modes_use_codex_without_closing_shared_client(self):
         with tempfile.TemporaryDirectory() as directory:

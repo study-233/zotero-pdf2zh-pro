@@ -112,6 +112,12 @@
                             <p class="hint" data-i18n="model-manual" />
                         </details>
                     </div>
+                    <p
+                        id="codex-runtime-summary"
+                        class="hint"
+                        aria-live="polite"
+                        hidden="hidden"
+                    />
                     <div id="api-address">
                         <div id="url-summary-row" class="field">
                             <span class="field-label" data-i18n="api-url" />
@@ -184,6 +190,19 @@
                                 spellcheck="false"
                                 autocomplete="off"
                             />
+                        </div>
+                        <div
+                            id="codex-discovery-field"
+                            class="field"
+                            hidden="hidden"
+                        >
+                            <button
+                                id="codex-detect"
+                                type="button"
+                                data-i18n="codex-detect"
+                            />
+                            <p id="codex-runtime-path" class="hint" />
+                            <pre id="codex-runtime-attempts" class="hint" />
                         </div>
                         <div id="codex-reasoning-field" class="field">
                             <label

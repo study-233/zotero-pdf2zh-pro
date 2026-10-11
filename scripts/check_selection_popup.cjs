@@ -124,6 +124,52 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         assert.equal(await reader.locator("#native button").count(),1);
         assert.equal(await reader.locator(".custom-sections > .section").count(),1);
         assert.equal(await reader.locator(".other-plugin").textContent(),"Other plugin");
+        // Gecko renders an HTML select's native menu in the owning chrome document.
+        // Its mousedown must not dismiss the Reader card before change is delivered.
+        const sourcePreferences = await page.evaluate(()=>({...preferences}));
+        const popupPosition = async () => {const {x,y}=await card.boundingBox();return {x,y};};
+        let sourcePosition = await popupPosition();
+        await page.evaluate(()=>{
+            // Focusing the source can hide Zotero's original selection toolbar.
+            rdoc.querySelector("#native").style.display="none";
+            const dropdown=document.createElement("div");dropdown.id="ContentSelectDropdown";
+            dropdown.innerHTML='<div id="ContentSelectDropdownPopup"><button id="native-source-option">Native source option</button></div>';
+            dropdown.hidden=true;document.body.append(dropdown);
+            window.chooseNativeSource=value=>{
+                const source=rdoc.querySelector(".st-source");source.focus();
+                document.querySelector("#native-source-option").dispatchEvent(new MouseEvent("mousedown",{bubbles:true}));
+                if(!source.isConnected)throw Error("Native source menu dismissed the floating card");
+                source.value=value;source.dispatchEvent(new rdoc.defaultView.Event("change",{bubbles:true}));
+            };
+        });
+        await page.evaluate(()=>chooseNativeSource("collins"));await expectText("无条件的 0");
+        assert.equal(await card.count(),1);assert.equal(await card.locator(".st-source").inputValue(),"collins");
+        assert.deepEqual(await popupPosition(),sourcePosition,"dictionary switching keeps the position after the native anchor disappears");
+        // A dragged, unpinned card must also retain its position across switches.
+        const beforeSourceDrag=await card.boundingBox();
+        await page.mouse.move(beforeSourceDrag.x+5,beforeSourceDrag.y+5);await page.mouse.down();await page.mouse.move(95,100);await page.mouse.up();
+        sourcePosition=await popupPosition();
+        await page.evaluate(()=>chooseNativeSource("ecdict"));await expectText("无条件");
+        assert.deepEqual(await popupPosition(),sourcePosition,"switching dictionaries preserves the dragged position");
+        await card.getByRole("tab",{name:"翻译",exact:true}).click();await expectText("布局生成");
+        assert.deepEqual(await popupPosition(),sourcePosition,"switching result tabs preserves the position");
+        await page.evaluate(()=>chooseNativeSource("profile"));await expectText("布局生成");
+        assert.equal(await card.count(),1);assert.equal(await card.locator(".st-source").inputValue(),"profile");
+        assert.deepEqual(await popupPosition(),sourcePosition,"switching translation services preserves the position");
+        await page.evaluate(()=>chooseNativeSource("bing"));await expectText("布局生成");
+        assert.deepEqual(await popupPosition(),sourcePosition);
+        await page.evaluate(()=>{rdoc.querySelector("#native").style.display="";trigger("Architecture");});await expectText("建筑");
+        assert.notDeepEqual(await popupPosition(),sourcePosition,"a new selection still repositions an unpinned card near its anchor");
+        // A genuine outside click must still dismiss even while the source is focused.
+        await card.locator(".st-source").focus();await page.locator("#outside").click();await card.waitFor({state:"detached"});
+        await page.evaluate(saved=>{
+            document.querySelector("#ContentSelectDropdown").remove();delete window.chooseNativeSource;
+            for(const key of ["selectionDictionary","selectionTranslationProvider","selectionApiKey"]){
+                if(key in saved)preferences[key]=saved[key];else delete preferences[key];
+            }
+            calls.length=0;
+        },sourcePreferences);
+        await select("Unconditional");await expectText("无条件");
         await page.screenshot({path:path.join(output,"auto-word-light.png")});
         assert.equal(await reader.getByRole("button",{name:"补充释义",exact:true}).count(),0);
         await reader.getByRole("button",{name:"结合上下文解释",exact:true}).click();

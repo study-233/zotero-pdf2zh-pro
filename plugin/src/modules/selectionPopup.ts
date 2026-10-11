@@ -204,9 +204,12 @@ export function createSelectionPopup(
         }
     }
     const style = selectionElement(doc, "style");
+    // Exclude this overlay from Gecko's native window drag region, including
+    // when it covers the Reader toolbar. Pointer handlers drag only the card.
     style.textContent = `
 .pdf2zh-selection-card { --st-bg:#fff; --st-text:#202124; --st-muted:#626874; --st-border:#dce0e5; --st-soft:#f3f5f7; --st-accent:#3c64ba; position:fixed; z-index:2147483646; box-sizing:border-box; width:380px; max-width:calc(100vw - 16px); max-height:65vh; display:flex; flex-direction:column; background:var(--st-bg); color:var(--st-text); border:1px solid var(--st-border); border-radius:12px; box-shadow:0 8px 28px #0003; font:14px/1.6 system-ui,-apple-system,sans-serif; text-align:left; user-select:text; overflow:hidden; color-scheme:light; }
 .pdf2zh-selection-card[data-dark="true"] { --st-bg:#25272c; --st-text:#e8eaed; --st-muted:#adb3bf; --st-border:#444851; --st-soft:#32353c; --st-accent:#a4bfff; color-scheme:dark; }
+.pdf2zh-selection-card, .pdf2zh-selection-card * { -moz-window-dragging:no-drag; }
 .pdf2zh-selection-card * { box-sizing:border-box; }
 .pdf2zh-selection-card [hidden] { display:none !important; }
 .pdf2zh-selection-card button { appearance:none; display:inline-flex; align-items:center; justify-content:center; width:auto; min-width:0; margin:0; border:1px solid var(--st-border); border-radius:6px; padding:4px 10px; background:var(--st-bg); color:var(--st-text); font:inherit; line-height:1.4; cursor:pointer; }
@@ -1075,6 +1078,7 @@ ${selectionMenuStyle}
             text: string,
             kind: "lookup" | "translate",
             nextAnchor: HTMLElement,
+            preservePosition = false,
         ) {
             if (text !== selected || !editor.open) input.value = text;
             selected = text;
@@ -1085,9 +1089,11 @@ ${selectionMenuStyle}
             learningContent.replaceChildren();
             refresh.hidden = true;
             anchor = nextAnchor;
-            if (!pinned) manuallyPositioned = false;
+            // Service/tab changes reuse the selection; its native toolbar may
+            // already be hidden. Keep the current position through result updates.
+            if (!pinned) manuallyPositioned = preservePosition;
             if (controls) setControls(controls);
-            if (!pinned) nearSelection();
+            if (!pinned && !preservePosition) nearSelection();
         },
         loading(message: string) {
             if (closed) return;

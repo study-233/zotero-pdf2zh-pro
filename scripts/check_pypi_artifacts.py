@@ -37,6 +37,7 @@ REQUIRED_RUNTIME_FILES = {
     "pdf2zh_next_service.py",
     "provider_models.py",
     "codex_client.py",
+    "codex_discovery.py",
     "server.py",
     "task_manager.py",
     "pdf2zh_next/__init__.py",

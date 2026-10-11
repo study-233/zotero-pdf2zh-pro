@@ -1,5 +1,6 @@
 """Codex protocol tests using fake transports and local Python stdio peers only."""
 import os
+import asyncio
 from pathlib import Path
 import queue
 import subprocess
@@ -16,6 +17,17 @@ from codex_client import CodexClient, CodexError, _Transport, resolve_codex_path
 
 
 class CodexProxyTests(unittest.TestCase):
+    def test_pdf_task_cancel_during_handshake_closes_owned_transport(self):
+        with patch("codex_client.resolve_codex_path", return_value="/fake/codex"), \
+                patch("codex_client._Transport") as factory:
+            client = CodexClient()
+            self.addCleanup(client.close)
+            client._directory = tempfile.TemporaryDirectory()
+            factory.return_value.call.side_effect = asyncio.CancelledError()
+            with self.assertRaises(asyncio.CancelledError):
+                client._launch({})
+            factory.return_value.close.assert_called_once()
+
     def test_manual_proxy_validation_and_safe_errors(self):
         self.assertEqual(codex_client.normalize_codex_proxy("manual", " http://127.0.0.1:7897/ "),
                          ("manual", "http://127.0.0.1:7897"))
@@ -72,7 +84,7 @@ class CodexProxyTests(unittest.TestCase):
     def test_client_reuse_is_scoped_to_proxy_and_does_not_cancel_other_configs(self):
         with patch.dict(codex_client._clients, {}, clear=True), \
                 patch("codex_client.resolve_codex_path", return_value="/fake/codex"), \
-                patch("codex_client.CodexClient", side_effect=lambda *a, **kw: Mock()) as factory:
+                patch("codex_discovery.CodexSelection", side_effect=lambda *a, **kw: Mock()) as factory:
             first = codex_client.get_codex_client(proxy_mode="manual", proxy_url="http://localhost:7897")
             self.assertIs(first, codex_client.get_codex_client(proxy_mode="manual", proxy_url="http://localhost:7897/"))
             other = codex_client.get_codex_client(proxy_mode="manual", proxy_url="http://localhost:7898")
@@ -81,7 +93,7 @@ class CodexProxyTests(unittest.TestCase):
             self.assertEqual(len({id(c) for c in (first, other, inherited, direct)}), 4)
             self.assertEqual(factory.call_count, 4)
             first.close.assert_not_called()
-            factory.assert_called_with("/fake/codex", proxy_mode="direct", proxy_url=None)
+            factory.assert_called_with("", proxy_mode="direct", proxy_url=None)
             codex_client.close_codex_clients()
             for client in (first, other, inherited, direct):
                 client.close.assert_called_once()
@@ -659,7 +671,7 @@ class CodexStartupTests(unittest.TestCase):
                 patch.object(client, "_launch") as launch:
             with self.assertRaises(CodexError) as raised:
                 client.list_models()
-        self.assertEqual(raised.exception.code, "codex_incompatible")
+        self.assertEqual(raised.exception.code, "codex_version_too_old")
         launch.assert_not_called()
 
     def test_mcp_names_that_cannot_be_overridden_are_refused(self):
@@ -718,7 +730,7 @@ class CodexPathTests(unittest.TestCase):
         # Simulate Windows discovery without changing pathlib's host platform.
         self.enterContext(patch.object(codex_client, "os", SimpleNamespace(
             name="nt", environ=os.environ, path=os.path)))
-        self.which = self.enterContext(patch("codex_client.shutil.which", return_value=None))
+        self.which = self.enterContext(patch("codex_discovery.shutil.which", return_value=None))
 
     def native(self, relative):
         path = self.root / relative / "codex.exe"
@@ -741,7 +753,6 @@ class CodexPathTests(unittest.TestCase):
 
     def test_standalone_cli_is_found_without_path(self):
         native = self.native("Local/Programs/OpenAI/Codex/bin")
-        self.native("Local/OpenAI/Codex/bin/desktop-version")
         self.assertEqual(resolve_codex_path(), str(native))
 
     def test_custom_install_directory_is_found_without_path(self):
@@ -749,11 +760,11 @@ class CodexPathTests(unittest.TestCase):
         with patch.dict(os.environ, {"CODEX_INSTALL_DIR": str(native.parent)}):
             self.assertEqual(resolve_codex_path(), str(native))
 
-    def test_path_and_explicit_choice_take_precedence_over_desktop(self):
-        self.native("Local/OpenAI/Codex/bin/desktop-version")
+    def test_desktop_precedes_path_but_explicit_choice_wins(self):
+        desktop = self.native("Local/OpenAI/Codex/bin/desktop-version")
         native = self.native("on PATH")
         self.which.return_value = str(native)
-        self.assertEqual(resolve_codex_path(), str(native))
+        self.assertEqual(resolve_codex_path(), str(desktop))
         self.which.return_value = None
         explicit = self.native("explicit choice")
         self.assertEqual(resolve_codex_path(str(explicit)), str(explicit))
@@ -770,8 +781,9 @@ class CodexPathTests(unittest.TestCase):
                 native = root / "node_modules" / "@openai" / "codex" / "vendor" / (architecture + "-pc-windows-msvc") / "codex" / "codex.exe"
                 native.parent.mkdir(parents=True)
                 native.write_bytes(b"fake binary")
+            (root / "node_modules/@openai/codex/package.json").write_text('{"name":"@openai/codex"}')
             with patch.dict(os.environ, {"PROCESSOR_ARCHITECTURE": "ARM64"}), \
-                    patch("codex_client.shutil.which", return_value=None):
+                    patch("codex_discovery.shutil.which", return_value=None):
                 found = resolve_codex_path(str(wrapper))
             self.assertIn("aarch64", found)
             self.assertTrue(found.endswith("codex.exe"))
@@ -780,7 +792,7 @@ class CodexPathTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             wrapper = Path(directory) / "codex.cmd"
             wrapper.write_text("echo must not execute", encoding="utf-8")
-            with patch("codex_client.shutil.which", return_value=None), patch("codex_client.subprocess.Popen") as launch:
+            with patch("codex_discovery.shutil.which", return_value=None), patch("codex_client.subprocess.Popen") as launch:
                 with self.assertRaises(CodexError) as raised:
                     resolve_codex_path(str(wrapper))
             self.assertEqual(raised.exception.code, "codex_not_installed")

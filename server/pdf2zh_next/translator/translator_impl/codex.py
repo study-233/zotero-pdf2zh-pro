@@ -19,7 +19,7 @@ class CodexTranslator(BaseTranslator):
         self.reasoning_effort = engine.codex_reasoning_effort
         self.timeout = engine.codex_timeout
         self.client = get_codex_client(engine.codex_cli_path,
-            proxy_mode=engine.codex_proxy_mode, proxy_url=engine.codex_proxy_url)
+            proxy_mode=engine.codex_proxy_mode, proxy_url=engine.codex_proxy_url).session()
         self.check_cancelled = lambda: None
         self._request_slots = threading.BoundedSemaphore(2)
         self.configure_cache_namespace(provider="codex")

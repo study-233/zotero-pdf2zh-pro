@@ -27,6 +27,21 @@ window.createProfileEditor = function (args, changed) {
         statusText = "";
     let modelIds = [],
         modelDetails = [];
+    let runtime,
+        discoverySupported = false,
+        supportController;
+    function showRuntime(info, attempts = []) {
+        runtime = info;
+        $("codex-runtime-summary").hidden =
+            !info || preset?.service !== "codex";
+        $("codex-runtime-summary").textContent = info
+            ? `${t("codex-source-" + info.source)} · ${info.version}`
+            : "";
+        $("codex-runtime-path").textContent = info?.path || "";
+        $("codex-runtime-attempts").textContent = (info?.attempts || attempts)
+            .map((item) => `${item.path}\n${item.message}`)
+            .join("\n");
+    }
     const values = () =>
         Object.fromEntries(fields.map((id) => [id, $(id).value]));
     const fingerprint = () =>
@@ -48,12 +63,14 @@ window.createProfileEditor = function (args, changed) {
     }
     function buttons() {
         $("test").disabled = busy || !preset;
+        $("codex-detect").disabled = busy || !discoverySupported;
         $("get-models").disabled = busy || !preset?.discovery;
         $("save").disabled = $("save-only").disabled = !preset;
     }
-    function cancel() {
+    function cancel(cancelSupport = true) {
         sequence++;
         controller?.abort();
+        if (cancelSupport) supportController?.abort();
         controller = undefined;
         if (busy) message(t(tested === fingerprint() ? "tested" : "untested"));
         busy = false;
@@ -126,7 +143,7 @@ window.createProfileEditor = function (args, changed) {
             preset?.service !== "codex" || $("proxyMode").value !== "manual";
     }
     function onChange(id) {
-        cancel();
+        cancel(false);
         if (id !== "name") {
             tested = "";
             message(t("untested"));
@@ -139,6 +156,7 @@ window.createProfileEditor = function (args, changed) {
         ) {
             modelIds = [];
             modelDetails = [];
+            showRuntime(undefined);
             hideModels();
         }
         updateReasoning();
@@ -219,7 +237,22 @@ window.createProfileEditor = function (args, changed) {
                     $("requestOptions").value.replace(/\s/g, ""),
                 ));
         $("cli-path-field").hidden = !cli;
-        $("cliPath").placeholder = codex ? "codex" : "claude";
+        $("cliPath").placeholder = codex ? t("codex-auto-path") : "claude";
+        discoverySupported = false;
+        $("codex-discovery-field").hidden = true;
+        showRuntime(state.runtime);
+        if (codex && args.codexDiscoverySupported) {
+            const support = new window.AbortController();
+            supportController = support;
+            args.codexDiscoverySupported(support.signal)
+                .then((supported) => {
+                    if (window.closed || support.signal.aborted) return;
+                    discoverySupported = supported;
+                    $("codex-discovery-field").hidden = !supported;
+                    buttons();
+                })
+                .catch(() => {});
+        }
         $("codex-reasoning-field").hidden = $("codex-proxy-field").hidden =
             !codex;
         $("extra-data-field").hidden = codex;
@@ -247,6 +280,7 @@ window.createProfileEditor = function (args, changed) {
             tested,
             modelIds,
             modelDetails,
+            runtime,
             advanced: $("advanced").open,
             urlExpanded: !$("api-url-field").hidden,
             status: statusText,
@@ -380,9 +414,28 @@ window.createProfileEditor = function (args, changed) {
             if (kind === "test") tested = "";
             busy = true;
             buttons();
-            message(t(kind === "test" ? "testing" : "loading-models"));
+            message(
+                t(
+                    kind === "test"
+                        ? "testing"
+                        : kind === "discover"
+                          ? "codex-detecting"
+                          : "loading-models",
+                ),
+            );
             if (kind === "test") {
-                const result = await args.test(value, controller.signal);
+                const result = await args.test(
+                    value,
+                    controller.signal,
+                    (info) => {
+                        if (
+                            !window.closed &&
+                            sequence === current &&
+                            fingerprint() === before
+                        )
+                            showRuntime(info);
+                    },
+                );
                 if (
                     window.closed ||
                     sequence !== current ||
@@ -391,6 +444,16 @@ window.createProfileEditor = function (args, changed) {
                     return;
                 tested = before;
                 message(result);
+            } else if (kind === "discover") {
+                const info = await args.discoverCodex(value, controller.signal);
+                if (
+                    window.closed ||
+                    sequence !== current ||
+                    fingerprint() !== before
+                )
+                    return;
+                showRuntime(info);
+                message(t("codex-detected"));
             } else {
                 const catalog = await args.listModels(value, controller.signal);
                 if (
@@ -399,6 +462,7 @@ window.createProfileEditor = function (args, changed) {
                     fingerprint() !== before
                 )
                     return;
+                if (catalog.codexRuntime) showRuntime(catalog.codexRuntime);
                 modelIds = catalog.models;
                 modelDetails = catalog.modelDetails || [];
                 updateReasoning();
@@ -413,6 +477,8 @@ window.createProfileEditor = function (args, changed) {
             changed();
         } catch (error) {
             if (!window.closed && sequence === current) {
+                if (preset?.service === "codex")
+                    showRuntime(undefined, error.attempts || []);
                 message(error.message || t("failed"), true);
                 changed();
             }
@@ -479,6 +545,7 @@ window.createProfileEditor = function (args, changed) {
         $("reveal").textContent = t(reveal ? "hide" : "show");
         $("reveal").setAttribute("aria-pressed", String(reveal));
     });
+    $("codex-detect").addEventListener("click", () => perform("discover"));
     $("test").addEventListener("click", () => perform("test"));
     $("get-models").addEventListener("click", () => perform("models"));
     return { load, snapshot, read, cancel, message };

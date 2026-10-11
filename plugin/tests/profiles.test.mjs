@@ -338,7 +338,7 @@ test("Codex draft discovery forwards its path and proxy and retains model capabi
         data: { capabilities: { codexCli: true, codexProxy: true } },
     });
     assert.deepEqual(await client.fetchProfileModelCatalog(draft), catalog);
-    assert.equal(requests.at(-1).options.timeout, 35000);
+    assert.equal(requests.at(-1).options.timeout, 65000);
     assert.deepEqual(requests.at(-1).body, {
         service: "codex",
         cliPath: draft.cliPath,
@@ -633,4 +633,96 @@ test("OpenRouter is a preset over the existing OpenAI wire contract", async () =
         );
     }
     assert.equal(requests.length, before);
+});
+
+test("default Codex discovery rejects servers without Codex before posting", async () => {
+    http.get = async () => ({ data: { capabilities: {} } });
+    const before = requests.length;
+    await assert.rejects(
+        client.fetchProfileModelCatalog(api("codex", "codex")),
+        /不支持 Codex.*升级/,
+    );
+    assert.equal(requests.length, before);
+});
+
+test("Codex detection preserves runtime metadata and force without saving a path", async () => {
+    const runtime = {
+        path: "/Applications/Test.app/codex",
+        source: "desktop",
+        version: "0.162.0-alpha.17.2",
+        compatible: true,
+        attempts: [],
+    };
+    let body;
+    http.post = async (url, data) => {
+        body = data;
+        return { data: { codexRuntime: runtime } };
+    };
+    const draft = { ...api("codex", "codex"), cliPath: "" };
+    assert.deepEqual(await client.discoverProfileCodex(draft), runtime);
+    assert.equal(body.force, true);
+    assert.equal(body.cliPath, "");
+    assert.equal(typeof body.requestId, "string");
+    assert.equal(draft.cliPath, "");
+});
+
+test("aborting detection sends a separate cancellation and retains error codes", async () => {
+    const controller = new AbortController();
+    const calls = [];
+    http.post = async (url, body, options) => {
+        calls.push({ url, body });
+        if (url.endsWith("/cancel")) return { data: { status: "ok" } };
+        return new Promise((resolve, reject) =>
+            options.signal.addEventListener("abort", () =>
+                reject(new Error("cancelled")),
+            ),
+        );
+    };
+    const pending = client.discoverProfileCodex(
+        api("codex", "codex"),
+        controller.signal,
+    );
+    controller.abort();
+    await assert.rejects(pending, /cancelled/);
+    assert.equal(calls.length, 2);
+    assert.ok(calls[1].url.endsWith("/codex/discover/cancel"));
+    assert.equal(calls[1].body.requestId, calls[0].body.requestId);
+    http.post = async () => {
+        throw {
+            isAxiosError: true,
+            response: {
+                data: {
+                    code: "codex_dependency_missing",
+                    message: "找不到 Node",
+                    attempts: [],
+                },
+            },
+        };
+    };
+    await assert.rejects(
+        client.discoverProfileCodex(api("codex", "codex")),
+        (error) => error.code === "codex_dependency_missing",
+    );
+});
+
+test("new detection controls are unsupported on an old server", async () => {
+    http.get = async () => ({ data: { capabilities: { codexCli: true } } });
+    assert.equal(await client.codexDiscoverySupported(), false);
+    http.get = async () => ({
+        data: { capabilities: { codexCli: true, codexDiscovery: true } },
+    });
+    assert.equal(await client.codexDiscoverySupported(), true);
+});
+
+test("timed-out Codex probes notify the server even without a UI abort", async () => {
+    const calls = [];
+    http.post = async (url, body) => {
+        calls.push({ url, body });
+        if (url.endsWith("/cancel")) return { data: { status: "ok" } };
+        throw { isAxiosError: true, code: "ECONNABORTED" };
+    };
+    await assert.rejects(client.discoverProfileCodex(api("codex", "codex")));
+    assert.equal(calls.length, 2);
+    assert.ok(calls[1].url.endsWith("/codex/discover/cancel"));
+    assert.equal(calls[1].body.requestId, calls[0].body.requestId);
 });

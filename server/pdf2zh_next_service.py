@@ -160,6 +160,7 @@ class ValidationResult:
     live_test: dict[str, Any]
     status: str = "ok"
     resolved_protocol: str | None = None
+    codex_runtime: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -713,6 +714,7 @@ async def translate_pdf_with_callbacks(
             translation_config = create_babeldoc_config(
                 settings, input_path, glossary_entries=payload.get("glossary_entries"),
                 metrics_collector=metrics_collector,
+                check_cancelled=check_cancelled,
             )
         finally:
             if metrics_collector is not None:
@@ -918,6 +920,7 @@ async def translate_pdf_with_callbacks(
 
 def run_live_translator_test(translator: Any, timeout_seconds: int = 20) -> dict[str, Any]:
     if getattr(translator, "name", None) == "codex":
+        from codex_client import CodexError
         # The app-server client interrupts the turn before returning on timeout.
         # Do not leave a background connection test consuming the account quota.
         original_timeout = translator.timeout
@@ -935,6 +938,8 @@ def run_live_translator_test(translator: Any, timeout_seconds: int = 20) -> dict
             translated = translator.translate("Hello", ignore_cache=True,
                                               rate_limit_params={"metric_kind": "initialization"})
             return {"enabled": True, "ok": True, "message": str(translated)[:200]}
+        except CodexError:
+            raise
         except Exception as exc:
             return {"enabled": True, "ok": False, "message": explain_service_error(exc)}
         finally:
@@ -974,7 +979,7 @@ def run_live_translator_test(translator: Any, timeout_seconds: int = 20) -> dict
     }
 
 
-def validate_service_config(payload: dict[str, Any], job_id: str) -> ValidationResult:
+def validate_service_config(payload: dict[str, Any], job_id: str, *, check_cancelled=None) -> ValidationResult:
     with TemporaryDirectory(prefix="zotero-pdf2zh-pro-check-") as temp_dir:
         output_dir = Path(temp_dir) / "output"
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -1008,8 +1013,11 @@ def validate_service_config(payload: dict[str, Any], job_id: str) -> ValidationR
         )
         try:
             settings = create_runtime_settings(validation_payload)
-            translator = get_translator(settings)
+            translator = get_translator(settings, **({"check_cancelled": check_cancelled} if check_cancelled else {}))
         except Exception as exc:
+            from codex_client import CodexError
+            if isinstance(exc, CodexError):
+                raise
             raise RuntimeError(explain_service_error(exc)) from exc
 
         model = getattr(translator, "model", None)
@@ -1060,7 +1068,9 @@ def validate_service_config(payload: dict[str, Any], job_id: str) -> ValidationR
             model or "-",
             live_test.get("ok") if live_test_enabled else "skipped",
         )
+        runtime = getattr(getattr(translator, "client", None), "runtime", None) if validation_payload["service"] == "codex" else None
         return ValidationResult(
+            codex_runtime=runtime if isinstance(runtime, dict) else None,
             service=validation_payload["service"],
             model=model,
             diagnostics=diagnostics,

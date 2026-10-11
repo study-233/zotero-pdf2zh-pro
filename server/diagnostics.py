@@ -33,7 +33,9 @@ STRINGS = {
     'providerCode': {'model_not_found','invalid_api_key','insufficient_quota','rate_limit_exceeded','permission_denied',
                      'codex_invalid_proxy','codex_not_installed','codex_incompatible','codex_not_logged_in','codex_model_unavailable',
                      'codex_invalid_reasoning','codex_isolation_failed','codex_timeout','codex_process_exited',
-                     'codex_protocol_error','codex_quota_exhausted','codex_request_failed'},
+                     'codex_protocol_error','codex_quota_exhausted','codex_request_failed',
+                     'codex_invalid_path','codex_dependency_missing','codex_start_failed','codex_permission_denied',
+                     'codex_arch_mismatch','codex_version_too_old','codex_version_unrecognized','codex_cancelled'},
     'availability': {'complete','partial','unavailable'},
 }
 IDENTIFIERS = {'taskId', 'serverInstanceId'}

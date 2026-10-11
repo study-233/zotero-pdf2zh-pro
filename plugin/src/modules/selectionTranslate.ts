@@ -402,7 +402,17 @@ function dispose(state: ReaderState) {
 }
 function insideCard(state: ReaderState, event: Event) {
     try {
-        return Boolean(state.popup?.card.contains(event.target as Node));
+        const card = state.popup?.card;
+        if (!card) return false;
+        const target = event.target as Element | null;
+        // Gecko mounts an HTML select's native menu in the owning chrome document,
+        // outside the Reader card. Check it before comparing cross-document nodes.
+        if (target?.closest?.("#ContentSelectDropdown")) {
+            const source = card.querySelector("select.st-source");
+            if (source && card.ownerDocument.activeElement === source)
+                return true;
+        }
+        return card.contains(target);
     } catch {
         return false;
     }
@@ -841,7 +851,8 @@ async function showSelection(
                   ? "translate"
                   : route.action;
         const queryKey = JSON.stringify([state.key, text]);
-        if (state.queryKey !== queryKey) {
+        const sameSelection = state.queryKey === queryKey;
+        if (!sameSelection) {
             state.queryKey = queryKey;
             state.results = new Map();
             state.context = undefined;
@@ -884,7 +895,8 @@ async function showSelection(
                 state.contextModel = modelKey;
             }
         };
-        if (state.popup?.alive) state.popup.updateSelection(text, kind, anchor);
+        if (state.popup?.alive)
+            state.popup.updateSelection(text, kind, anchor, sameSelection);
         else
             state.popup = createSelectionView(
                 state.reader,

@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import atexit
 import json
+import errno
 import os
 from pathlib import Path
 import queue
 import re
-import shutil
 import subprocess
 import tempfile
 import threading
@@ -114,58 +114,26 @@ def _error_from_rpc(error) -> CodexError:
 
 
 def resolve_codex_path(cli_path: str | None = None) -> str:
-    """Resolve a native executable without invoking a shell or npm batch shim."""
-    candidates = []
-    if cli_path and cli_path.strip():
-        raw = os.path.expanduser(cli_path.strip())
-        candidates.append(shutil.which(raw) or raw)
-    else:
-        found = shutil.which("codex")
-        if found:
-            candidates.append(found)
-        if os.name == "nt":
-            if app_data := os.environ.get("APPDATA"):
-                candidates.append(Path(app_data) / "npm" / "codex.cmd")
-            if install_dir := os.environ.get("CODEX_INSTALL_DIR"):
-                candidates.append(Path(install_dir).expanduser() / "codex.exe")
-            if local_data := os.environ.get("LOCALAPPDATA"):
-                candidates.append(Path(local_data) / "Programs/OpenAI/Codex/bin/codex.exe")
-                # A separately started service may lack the desktop CLI on PATH.
-                # Version directories are hashes; ignore in-progress updates.
-                desktop_binaries = []
-                for path in (Path(local_data) / "OpenAI/Codex/bin").glob("*/codex.exe"):
-                    if path.parent.name.startswith("."):
-                        continue
-                    try:
-                        if path.is_file():
-                            desktop_binaries.append((path.stat().st_mtime_ns, str(path)))
-                    except OSError:
-                        # An app update can remove a version during discovery.
-                        continue
-                candidates.extend(path for _, path in sorted(desktop_binaries, reverse=True))
-        else:
-            candidates += ["/opt/homebrew/bin/codex", "/usr/local/bin/codex",
-                           str(Path.home() / ".local/bin/codex"),
-                           str(Path.home() / ".npm-global/bin/codex")]
+    # Path normalization only. Shared callers use lazy, validated discovery below.
+    from codex_discovery import collect_candidates
+    candidates = collect_candidates(cli_path, system="win32" if os.name == "nt" else None)
     for candidate in candidates:
-        path = Path(candidate)
-        if not path.is_file():
-            continue
-        if path.suffix.lower() in (".cmd", ".bat", ".ps1"):
-            # npm's Windows launcher interpolates arguments through cmd.exe.
-            # Its packaged native binary avoids quoting and shell injection.
-            root = path.parent / "node_modules" / "@openai"
-            architecture = "aarch64" if os.environ.get("PROCESSOR_ARCHITECTURE", "").lower() == "arm64" else "x86_64"
-            matches = sorted(root.glob("codex*/vendor/*/codex/codex.exe"))
-            preferred = [p for p in matches if architecture in str(p)]
-            if preferred:
-                return str(preferred[0].resolve())
-            continue
-        if os.name == "nt" and path.suffix.lower() != ".exe":
-            continue
-        if os.name == "nt" or os.access(path, os.X_OK):
-            return str(path.resolve())
-    raise CodexError("codex_not_installed", "未找到 Codex CLI。请安装并登录，或指定 codex 可执行文件的完整路径（Windows 使用 codex.exe）。")
+        if not candidate.issue:
+            return candidate.path
+    raise CodexError("codex_not_installed", "未找到可执行的 Codex CLI，请检查安装或指定完整路径。")
+
+
+def codex_environment(proxy_mode=None, proxy_url=None):
+    return {k: v for k, v in codex_proxy_environment(os.environ, proxy_mode, proxy_url).items()
+            if k not in ("OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL")}
+
+
+def _start_error(error):
+    if error.errno in (errno.EACCES, errno.EPERM):
+        return CodexError("codex_permission_denied", "Codex CLI 没有执行权限。")
+    if error.errno in (errno.ENOEXEC, getattr(errno, "EBADARCH", 86)) or getattr(error, "winerror", None) in (193, 216):
+        return CodexError("codex_arch_mismatch", "Codex CLI 格式或架构与当前系统不匹配。")
+    return CodexError("codex_start_failed", "Codex CLI 无法启动，请检查程序路径及运行依赖。")
 
 
 def _toml(value):
@@ -234,11 +202,14 @@ def _preparation_check(check=None):
     return bounded
 
 
-def _read_version(path, check=None):
-    process = subprocess.Popen([path, "--version"], stdout=subprocess.PIPE,
-                               stderr=subprocess.DEVNULL, text=True, encoding="utf-8",
-                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-    deadline = time.monotonic() + 10
+def _read_version(path, check=None, *, env=None):
+    try:
+        process = subprocess.Popen([path, "--version"], stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
+                                   env=env, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    except OSError as error:
+        raise _start_error(error) from None
+    deadline = time.monotonic() + 5
     try:
         while True:
             if check:
@@ -246,17 +217,27 @@ def _read_version(path, check=None):
             if time.monotonic() >= deadline:
                 raise CodexError("codex_timeout", "检查 Codex 版本超时。", 504)
             try:
-                output, _ = process.communicate(timeout=0.1)
+                output, stderr = process.communicate(timeout=0.1)
                 break
             except subprocess.TimeoutExpired:
                 continue
-        version = re.search(r"\b(\d+)\.(\d+)\.(\d+)\b", output)
-        if process.returncode or not version or tuple(map(int, version.groups())) < MIN_VERSION:
-            raise CodexError("codex_incompatible", "Codex CLI 需要 0.153.4 或更高的兼容版本，请升级后重试。")
-        return version.group(0)
+        if process.returncode:
+            raw = (stderr or "").lower()
+            if "node" in raw and any(word in raw for word in ("not found", "no such file", "not recognized", "找不到", "不是内部")):
+                raise CodexError("codex_dependency_missing", "Codex 启动器找不到 Node，请修复安装或使用原生 Codex 程序。")
+            raise CodexError("codex_start_failed", "Codex CLI 启动失败，请检查安装和运行依赖。")
+        version = re.search(r"\bcodex(?:-cli)?\s+(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)", output)
+        if not version:
+            raise CodexError("codex_version_unrecognized", "无法识别 Codex CLI 版本，请检查是否选择了正确的程序。")
+        from codex_discovery import version_key
+        if version_key(version[1]) < version_key(".".join(map(str, MIN_VERSION))):
+            raise CodexError("codex_version_too_old", "Codex CLI 需要 0.153.4 或更高的兼容版本，请升级后重试。")
+        return version[1]
     finally:
         _stop_process(process)
         process.stdout.close()
+        if process.stderr:
+            process.stderr.close()
 
 
 def _owned_windows_job(process):
@@ -276,7 +257,7 @@ class _Transport:
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
         except OSError as exc:
-            raise CodexError("codex_not_installed", "无法启动 Codex CLI，请检查可执行文件路径与权限。") from exc
+            raise _start_error(exc) from None
         try:
             # Closing the service (including forced Windows Stop-Process) closes
             # this non-inherited job handle and its owned app-server descendants.
@@ -436,6 +417,7 @@ class CodexClient:
         self._config = None
         self._permission = None
         self.version = None
+        self._environment = None
         self._active = 0
         self._completed = 0
 
@@ -446,17 +428,15 @@ class CodexClient:
         return command
 
     def _launch(self, config, check=None):
-        # Reuse Codex's own credential store, but never inherit an API-key route.
-        env = {k: v for k, v in codex_proxy_environment(os.environ, self.proxy_mode, self.proxy_url).items() if k not in (
-            "OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL",
-        )}
+        # Discovery and real calls use the same environment snapshot.
+        env = self._environment if self._environment is not None else codex_environment(self.proxy_mode, self.proxy_url)
         transport = _Transport(self._command(config), self._directory.name, env)
         try:
             transport.call("initialize", {"clientInfo": {"name": "zotero_pdf2zh_pro", "version": "1"},
                                           "capabilities": {"experimentalApi": True}}, check_cancelled=check)
             transport._write({"method": "initialized"})
             return transport
-        except Exception:
+        except BaseException:
             transport.close()
             raise
 
@@ -466,7 +446,7 @@ class CodexClient:
                 return self._transport
             self.close()
             try:
-                self.version = _read_version(self.cli_path, check)
+                self.version = self.version or _read_version(self.cli_path, check, env=self._environment)
                 if check:
                     check()
                 self._directory = tempfile.TemporaryDirectory(prefix="zotero-codex-")
@@ -519,7 +499,7 @@ class CodexClient:
             except subprocess.TimeoutExpired as exc:
                 self.close()
                 raise CodexError("codex_timeout", "检查 Codex 版本超时。", 504) from exc
-            except Exception:
+            except BaseException:
                 self.close()
                 raise
 
@@ -763,12 +743,15 @@ _clients_lock = threading.Lock()
 
 
 def get_codex_client(cli_path=None, *, proxy_mode=None, proxy_url=None):
+    from codex_discovery import CodexSelection
     mode, url = normalize_codex_proxy(proxy_mode, proxy_url)
-    path = resolve_codex_path(cli_path)
+    if cli_path is not None and (not isinstance(cli_path, str) or "\x00" in cli_path):
+        raise CodexError("codex_invalid_path", "Codex CLI 路径必须为有效文本。")
+    path = (cli_path or "").strip()
     with _clients_lock:
         key = (os.getpid(), path, mode, url)
         if key not in _clients:
-            _clients[key] = CodexClient(path, proxy_mode=mode, proxy_url=url)
+            _clients[key] = CodexSelection(path, proxy_mode=mode, proxy_url=url)
         return _clients[key]
 
 

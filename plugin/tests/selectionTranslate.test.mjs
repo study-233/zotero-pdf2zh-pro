@@ -815,6 +815,60 @@ test("pending selection is cancelled by outside click, Escape or tab change", as
     }
 });
 
+test("native source menu clicks keep an unpinned view alive while switching dictionary or translation service", async () => {
+    for (const mode of ["lookup", "translate"]) {
+        const f = fixture();
+        f.state.dictionary = { text: "学习", origin: "离线词典" };
+        f.state.respond = async () => memory;
+        f.select(mode === "lookup" ? "learning" : "A selected sentence.");
+        await f.advance();
+        const view = f.cards[0];
+        const source = {};
+        view.card.ownerDocument = { activeElement: source };
+        view.card.contains = () => {
+            throw new Error("Cannot compare chrome menu nodes in the Reader");
+        };
+        view.card.querySelector = (selector) =>
+            selector === "select.st-source" ? source : null;
+        const nativeMenuItem = {
+            closest: (selector) =>
+                selector === "#ContentSelectDropdown" ? {} : null,
+        };
+        f.watches[0].input({ target: nativeMenuItem });
+        assert.equal(view.alive, true);
+        assert.equal(view.pinned, false);
+        if (mode === "lookup") view.controls.onDictionary("youdao");
+        else view.controls.onTranslation("profile");
+        await f.flush();
+        assert.equal(f.cards.length, 1);
+        assert.equal(view.alive, true);
+        assert.equal(
+            mode === "lookup" ? f.state.dictionarySource : f.state.provider,
+            mode === "lookup" ? "youdao" : "profile",
+        );
+    }
+});
+
+test("native menu protection is limited to the focused source selector and its own dropdown", async () => {
+    for (const interaction of ["outside", "other-menu", "blurred-source"]) {
+        const f = fixture();
+        f.state.respond = async () => memory;
+        f.select("A selected sentence.");
+        await f.advance();
+        const view = f.cards[0];
+        const source = {};
+        view.card.ownerDocument = {
+            activeElement: interaction === "blurred-source" ? {} : source,
+        };
+        view.card.querySelector = () => source;
+        const target = {
+            closest: () => (interaction === "blurred-source" ? {} : null),
+        };
+        f.watches[0].input({ target });
+        assert.equal(view.alive, false, interaction);
+    }
+});
+
 test("pin keeps one card and next selection updates it; Escape always closes", async () => {
     const f = fixture();
     f.state.respond = async () => memory;

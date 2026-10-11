@@ -7,25 +7,30 @@ from __future__ import annotations
 
 import httpx
 from codex_client import CodexError, get_codex_client
+from codex_discovery import discovery_request
 
 from pdf2zh_next.translator.openai_protocol import normalize_endpoint
 
 
 class ModelDiscoveryError(ValueError):
-    def __init__(self, message: str, status: int = 400):
+    def __init__(self, message: str, status: int = 400, *, code=None, attempts=None):
         super().__init__(message)
         self.status = status
+        self.code = code
+        self.attempts = attempts
 
 
-def list_codex_models(data: dict) -> list[dict]:
+def list_codex_models(data: dict, *, include_runtime=False):
     path = data.get("cliPath")
-    if path is not None and not isinstance(path, str):
-        raise ModelDiscoveryError("Codex CLI 路径必须为文本。")
     try:
-        return get_codex_client(path, proxy_mode=data.get("proxyMode"),
-                                proxy_url=data.get("proxyUrl")).list_models()
+        client = get_codex_client(path, proxy_mode=data.get("proxyMode"), proxy_url=data.get("proxyUrl"))
+        with discovery_request(data.get("requestId")) as check:
+            if include_runtime:
+                return client.model_catalog(check_cancelled=check)
+            return client.list_models(check_cancelled=check)
     except CodexError as error:
-        raise ModelDiscoveryError(str(error), error.status_code) from None
+        raise ModelDiscoveryError(str(error), error.status_code, code=error.code,
+                                  attempts=getattr(error, "attempts", None)) from None
 
 
 MODEL_ENDPOINTS = {

@@ -14,7 +14,12 @@ import {
     type LLMApiData,
 } from "./llmApiManager";
 import { loadProfiles, saveProfiles, removeProfile } from "./profileStore";
-import { testProfile, fetchProfileModelCatalog } from "./profileApiClient";
+import {
+    testProfile,
+    fetchProfileModelCatalog,
+    discoverProfileCodex,
+    codexDiscoverySupported,
+} from "./profileApiClient";
 import type { ServerHealthResponse } from "./pdf2zhTypes";
 import axios from "axios";
 import {
@@ -273,6 +278,8 @@ function openProfileManager() {
             current: () => String(getPref("selectedApiKey") || ""),
             test: testProfile,
             listModels: fetchProfileModelCatalog,
+            discoverCodex: discoverProfileCodex,
+            codexDiscoverySupported,
             save: (value: LLMApiData, use: boolean) => {
                 assertSupportedProfile(value);
                 const profiles = loadProfiles();

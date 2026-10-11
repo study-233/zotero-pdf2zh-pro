@@ -37,7 +37,8 @@ from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
 from translation_memory import TranslationMemory
 from text_translation import TextTranslationService, TextTranslationError
-from codex_client import close_codex_clients
+from codex_client import close_codex_clients, get_codex_client, CodexError
+from codex_discovery import discovery_request, cancel_discovery
 from provider_models import ModelDiscoveryError, list_provider_models, list_codex_models
 from babeldoc.glossary_options import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
@@ -202,6 +203,30 @@ def create_app() -> Flask:
         except (GlossaryError, OSError) as exc:
             return error_response(str(exc), getattr(exc, "status", 500))
 
+    @app.post("/codex/discover")
+    def discover_codex():
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict) or type(data.get("force", False)) is not bool:
+            return error_response("Expected a JSON body with an optional boolean force", 400)
+        try:
+            with discovery_request(data.get("requestId")) as check:
+                client = get_codex_client(data.get("cliPath"), proxy_mode=data.get("proxyMode"),
+                                          proxy_url=data.get("proxyUrl"))
+                runtime = client.discover(force=data.get("force", False), check_cancelled=check)
+                return jsonify({"status": "ok", "codexRuntime": runtime})
+        except CodexError as error:
+            return error_response(str(error), error.status_code, code=error.code,
+                                  attempts=getattr(error, "attempts", []))
+
+    @app.post("/codex/discover/cancel")
+    def cancel_codex_discovery():
+        data = request.get_json(silent=True)
+        try:
+            cancel_discovery(data.get("requestId") if isinstance(data, dict) else None)
+            return jsonify({"status": "ok"})
+        except CodexError as error:
+            return error_response(str(error), error.status_code, code=error.code)
+
     @app.post("/list-models")
     def list_models():
         data = request.get_json(silent=True)
@@ -209,12 +234,12 @@ def create_app() -> Flask:
             return error_response("Expected a JSON body", 400)
         try:
             if data.get("service") == "codex":
-                details = list_codex_models(data)
+                details, runtime = list_codex_models(data, include_runtime=True)
                 return jsonify({"status": "ok", "models": [model["id"] for model in details],
-                                "modelDetails": details}), 200
+                                "modelDetails": details, "codexRuntime": runtime}), 200
             models = list_provider_models(data)
         except ModelDiscoveryError as exc:
-            return error_response(str(exc), exc.status)
+            return error_response(str(exc), exc.status, **({"code": exc.code, "attempts": exc.attempts or []} if exc.code else {}))
         return jsonify({"status": "ok", "models": models}), 200
 
     @app.post("/translate")
@@ -249,9 +274,13 @@ def create_app() -> Flask:
             return error_response("Expected a JSON body", 400)
 
         try:
-            result = validate_config_request(data)
+            with discovery_request(data.get("requestId") if data.get("service") == "codex" else None) as check:
+                result = validate_config_request(data, check_cancelled=check)
         except RequestValidationError as exc:
             return error_response(str(exc), 400)
+        except CodexError as exc:
+            return error_response(str(exc), exc.status_code, code=exc.code,
+                                  attempts=getattr(exc, "attempts", []))
         except RuntimeError as exc:
             return error_response(explain_service_error(exc), 502)
         except Exception as exc:
@@ -266,6 +295,7 @@ def create_app() -> Flask:
                     "diagnostics": result.diagnostics,
                     "liveTest": result.live_test,
                     "resolvedProtocol": result.resolved_protocol,
+                    **({"codexRuntime": result.codex_runtime} if getattr(result, "codex_runtime", None) else {}),
                 }
             ),
             200,
@@ -459,7 +489,7 @@ def translate_pdf_request(data: dict[str, Any]) -> tuple[bytes, str, str]:
         raise
 
 
-def validate_config_request(data: dict[str, Any]):
+def validate_config_request(data: dict[str, Any], *, check_cancelled=None):
     job_id = os.urandom(4).hex()
     service = normalize_service(data.get("service"))
     request_payload = {
@@ -485,7 +515,7 @@ def validate_config_request(data: dict[str, Any]):
         **quality_request_options(data),
     }
     LOGGER.info("[%s] checking config: service=%s", job_id, service)
-    return validate_service_config(request_payload, job_id)
+    return validate_service_config(request_payload, job_id, **({"check_cancelled": check_cancelled} if check_cancelled else {}))
 
 
 def prepare_translation_request(
@@ -685,7 +715,7 @@ def task_response_payload(task: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def error_response(message: str, status_code: int):
+def error_response(message: str, status_code: int, **details):
     metadata = TASK_MANAGER.sync_metadata() if request.path.startswith("/tasks") else {}
     return (
         jsonify(
@@ -694,6 +724,7 @@ def error_response(message: str, status_code: int):
                 "message": message,
                 "diagnostics": diagnose_service_error(message),
                 **metadata,
+                **details,
             }
         ),
         status_code,
@@ -708,7 +739,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "codexCli": True, "codexProxy": True},
+        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
