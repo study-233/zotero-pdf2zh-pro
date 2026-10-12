@@ -22,6 +22,7 @@ dependencies = [
     "flask>=3.1.0,<4",
     "fonttools",
     "freetype-py>=2.5.1",
+    "fsspec>=2026.6.0",
     "httpx[socks]>=0.28.1",
     "huggingface-hub>=0.27.0",
     "hyperscan>=0.7.13",
@@ -40,7 +41,7 @@ dependencies = [
     "pyclipper>=1.2.0",
     "pydantic>=2.10.6",
     "pymupdf>=1.25.1,<1.25.3",
-    "pypdf>=6.0.0,<7",
+    "pypdf>=6.19.0,<7",
     "pyyaml>=6.0.2",
     "pyzstd>=0.17.0",
     "requests",
@@ -58,6 +59,8 @@ dependencies = [
     "tqdm>=4.67.1",
     "truststore>=0.10.4,<1",
     "uharfbuzz>=0.50.2",
+    "urllib3>=2.8.0",
+    "werkzeug>=3.1.9",
     "xsdata[lxml,soap]>=24.12",
 ]
 
