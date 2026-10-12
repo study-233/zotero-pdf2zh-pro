@@ -2,11 +2,17 @@
     [Parameter(Mandatory=$true)][string]$Version,
     [switch]$SkipLifecycle,
     [switch]$SkipPreviousRelease,
-    [string]$DownloadCache = $env:PDF2ZH_TEST_DOWNLOAD_CACHE
+    [string]$DownloadCache = $env:PDF2ZH_TEST_DOWNLOAD_CACHE,
+    [string]$SourceCommit
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$validationCommit = (& git -C $repo rev-parse HEAD)
+if (-not $SourceCommit) { $SourceCommit = $validationCommit }
+if ($SourceCommit -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected a full source commit.' }
+& git -C $repo merge-base --is-ancestor $SourceCommit $validationCommit
+if ($LASTEXITCODE -ne 0) { throw 'The source commit must be an ancestor of the validation scripts.' }
 $fixture = Join-Path $repo ('.tmp/release-extended-' + [guid]::NewGuid().ToString('N'))
 $registry = 'HKCU:\Software\pdf2zh-release-test-' + [guid]::NewGuid().ToString('N')
 $package = (Resolve-Path (Join-Path $repo 'dist/zotero-pdf2zh-pro-windows-x64.zip')).Path
@@ -65,7 +71,7 @@ try {
         & powershell @arguments
         if ($LASTEXITCODE -ne 0) { throw 'Previous-release migration validation failed.' }
     }
-    @{version=$Version;commit=(& git -C $repo rev-parse HEAD);status='passed';
+    @{version=$Version;commit=$SourceCommit;validationCommit=$validationCommit;status='passed';
       lifecycle=(-not $SkipLifecycle);previousRelease=(-not $SkipPreviousRelease);
       packageSha256=(Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant();
       wheelSha256=(Get-FileHash -LiteralPath $wheel -Algorithm SHA256).Hash.ToLowerInvariant()} |

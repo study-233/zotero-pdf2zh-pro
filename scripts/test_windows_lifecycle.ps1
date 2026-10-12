@@ -97,8 +97,8 @@ function Wait-ControlPanel {
     for ($attempt = 0; $attempt -lt 40; $attempt++) {
         $controlProcessId = Get-ManagedControlPanelProcessId
         if ($controlProcessId) {
-            $controlProcess=Get-Process -Id $controlProcessId
-            if ($controlProcess.MainWindowHandle -ne [IntPtr]::Zero) {throw 'Automatic startup opened a main window.'}
+            & python (Join-Path $PSScriptRoot 'check_windows_background.py') $controlProcessId
+            if ($LASTEXITCODE -ne 0) {throw 'Automatic startup opened an application window.'}
             Assert-ProductShortcutIcon
             return $controlProcessId
         }

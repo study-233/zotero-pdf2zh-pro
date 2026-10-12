@@ -120,7 +120,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: windows-app
-          cache-on-failure: true
+          # A failed pre-build check must not permanently occupy a dependency
+          # cache key with an incomplete target directory.
+          cache-on-failure: false
 
       - name: Cache portable Windows renderer toolchain
         id: renderer-cache
@@ -217,6 +219,15 @@ jobs:
           PY_COPY
           uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$RELEASE_VERSION"
           uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT" --collect
+
+      - name: Use current window validation for reused artifacts
+        if: inputs.reuse_build_run_id != ''
+        shell: bash
+        run: |
+          # Only the test harness comes from this workflow's newer revision.
+          # Product sources, packages and their provenance stay at RELEASE_COMMIT.
+          git restore --source "$GITHUB_SHA" --worktree -- \
+            scripts/test_windows_lifecycle.ps1 scripts/check_windows_background.py
 
       - name: Fresh installed Python 3.13 runtime and OCR
         shell: pwsh
