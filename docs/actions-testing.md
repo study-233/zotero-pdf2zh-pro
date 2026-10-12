@@ -11,7 +11,7 @@
 | 检查 | 内容 | 执行位置 |
 | --- | --- | --- |
 | 核心 CI | 插件构建、lint、单测；服务端及发布守卫 | Ubuntu Actions，最多 15 分钟 |
-| Windows 快速检查 | PowerShell 5.1 语法、路径和进程归属、事务回滚、清理、进度、卸载及产物守卫 | Windows Actions，最多 10 分钟 |
+| Windows 快速检查 | PowerShell 5.1 语法、路径和进程归属、快捷方式、事务回滚、清理、进度、卸载及产物守卫 | Windows Actions，最多 10 分钟 |
 | Codex 原生兼容 | 发现、启动和进程清理；不依赖真实账户 | Windows / macOS Actions，每个平台最多 10 分钟 |
 | 文档与官网 | 本地链接、版本一致性、文档测试与网站构建 | 各自工作流 |
 

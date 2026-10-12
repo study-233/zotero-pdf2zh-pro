@@ -123,6 +123,7 @@ jobs:
           cache-on-failure: true
 
       - name: Cache portable Windows renderer toolchain
+        id: renderer-cache
         if: inputs.reuse_build_run_id == ''
         uses: actions/cache@v4
         with:
@@ -130,6 +131,7 @@ jobs:
           key: windows-slint-1.18.1-skia-153-llvm-21.1.8-v1
 
       - name: Prepare static Slint renderer toolchain
+        id: renderer-tools
         if: inputs.reuse_build_run_id == ''
         shell: pwsh
         run: ./scripts/prepare_windows_build_tools.ps1
@@ -284,6 +286,13 @@ jobs:
             .tmp/release-extended-*/**/logs/**
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Save prepared renderer toolchain after a later failure
+        if: failure() && steps.renderer-tools.outcome == 'success' && steps.renderer-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .tmp/windows-build-tools
+          key: windows-slint-1.18.1-skia-153-llvm-21.1.8-v1
 
       - name: Remove the isolated build drive
         if: always() && env.PDF2ZH_WINDOWS_BUILD_ROOT != ''

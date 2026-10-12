@@ -203,11 +203,8 @@ NODE
 
 UV_DEFAULT_INDEX=https://pypi.org/simple uv --directory server lock --locked
 if [[ "$PUSH" -eq 0 ]]; then
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_shortcuts.ps1
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_runtime.ps1
-uv run --no-project python scripts/test_windows_pe.py
-uv run --no-project python scripts/test_release_gate.py
+# Source/script regressions are covered by the required same-commit core CI.
+# This stage validates the actual artifacts produced below.
 if [[ -z "$REPLACE_EXISTING" ]]; then
     uv build server --out-dir server/dist --clear --no-sources
 fi

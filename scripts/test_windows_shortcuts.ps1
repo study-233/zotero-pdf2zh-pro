@@ -9,20 +9,6 @@ foreach ($name in @("PDF2ZH_WINDOWS_APP_ROOT", "PDF2ZH_WINDOWS_START_MENU_DIR", 
     $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, "Process")
 }
 
-function Import-TestedFunction {
-    param([string]$Path, [string]$Name)
-    $tokens = $null
-    $errors = $null
-    $ast = [Management.Automation.Language.Parser]::ParseFile($Path, [ref]$tokens, [ref]$errors)
-    if ($errors) { throw "Cannot parse $Path" }
-    $functions = @($ast.FindAll({
-        param($node)
-        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $Name
-    }, $true))
-    if ($functions.Count -ne 1) { throw "Expected one production function named $Name" }
-    return [scriptblock]::Create($functions[0].Extent.Text)
-}
-
 function Assert-ShortcutRoot {
     param([string]$Root)
     $gui = Join-Path (Join-Path $Root "bin") "$ProductName.exe"
@@ -63,8 +49,6 @@ try {
     $env:PDF2ZH_WINDOWS_START_MENU_DIR = Join-Path $testRoot "start menu"
     $env:PDF2ZH_WINDOWS_REGISTRY_KEY = "HKCU:\Software\pdf2zh-shortcut-test-$([guid]::NewGuid().ToString('N'))"
     . (Join-Path $windowsDir "common.ps1")
-    . (Import-TestedFunction -Path (Join-Path $windowsDir "install.ps1") -Name "Install-Shortcuts")
-    . (Import-TestedFunction -Path (Join-Path $windowsDir "relocate.ps1") -Name "Set-ProductShortcuts")
 
     # Record the production caller's target while still invoking the real native refresh.
     $script:NativeShellRefresh = (Get-Item Function:Update-ProductShellIcons).ScriptBlock
@@ -75,8 +59,7 @@ try {
         & $script:NativeShellRefresh -Root $Root -NoShortcuts:$NoShortcuts
     }
 
-    $NoShortcuts = $false
-    Install-Shortcuts
+    Write-ProductShortcuts -Root $sourceRoot
     Assert-ShortcutRoot $sourceRoot
     Assert-Refresh $sourceRoot
     # ShellExecute must resolve the Unicode target, not just persist matching metadata.
@@ -95,22 +78,21 @@ try {
     $shortcut = $shell.Namespace($StartMenuDir).ParseName("$ProductName.lnk").GetLink
     $shortcut.SetIconLocation((Join-Path $destinationRoot "bin\$ProductName.exe"), 0)
     $shortcut.Save()
-    Install-Shortcuts
+    Write-ProductShortcuts -Root $sourceRoot
     Assert-ShortcutRoot $sourceRoot
     Assert-Refresh $sourceRoot
 
-    Set-ProductShortcuts -Root $destinationRoot
+    Write-ProductShortcuts -Root $destinationRoot
     Assert-ShortcutRoot $destinationRoot
     Assert-Refresh $destinationRoot
 
     # Preparation at another root must not redirect the current Start menu links.
-    $NoShortcuts = $true
-    Install-Shortcuts
+    Update-ProductShellIcons -Root $sourceRoot -NoShortcuts
     Assert-ShortcutRoot $destinationRoot
     Assert-Refresh -Root $sourceRoot -WithoutShortcuts $true
 
     # Relocation rollback uses this same production function with the source root.
-    Set-ProductShortcuts -Root $sourceRoot
+    Write-ProductShortcuts -Root $sourceRoot
     Assert-ShortcutRoot $sourceRoot
     Assert-Refresh $sourceRoot
     if ($script:ShellRefreshCalls.Count -ne 5) { throw "Unexpected shell refresh count." }

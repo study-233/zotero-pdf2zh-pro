@@ -78,6 +78,8 @@ jobs:
         run: |
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_shortcuts.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_runtime.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_cleanup.ps1
@@ -88,7 +90,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path .tmp | Out-Null
           uv run --no-project python scripts/test_windows_progress.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          foreach ($test in @('test_windows_uninstall.py', 'test_windows_slint_gate.py', 'test_prepare_windows_skia_source.py')) {
+          foreach ($test in @('test_windows_uninstall.py', 'test_windows_pe.py', 'test_windows_slint_gate.py', 'test_prepare_windows_skia_source.py')) {
             uv run --no-project python "scripts/$test"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
