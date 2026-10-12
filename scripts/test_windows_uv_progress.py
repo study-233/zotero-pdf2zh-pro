@@ -89,6 +89,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 @unittest.skipUnless(os.name == 'nt' and CONTROL.is_file() and UV.is_file(), 'Windows candidate and uv required')
 class UvProgressTests(unittest.TestCase):
     def setUp(self):
+        (ROOT / '.tmp/uv-progress-validation').mkdir(parents=True, exist_ok=True)
         self.directory = tempfile.TemporaryDirectory(prefix='uv 进度 中文 ', dir=ROOT / '.tmp')
         self.root = Path(self.directory.name)
         (self.root / 'updates').mkdir()

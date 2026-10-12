@@ -229,7 +229,8 @@ jobs:
           git restore --source "$GITHUB_SHA" --worktree -- \
             scripts/test_windows_lifecycle.ps1 scripts/check_windows_background.py \
             scripts/test_windows_process_helpers.ps1 scripts/test_windows_release_extended.ps1 \
-            scripts/test_windows_previous_release.ps1 scripts/test_windows_update_reuse.ps1
+            scripts/test_windows_previous_release.ps1 scripts/test_windows_update_reuse.ps1 \
+            scripts/test_windows_uv_progress.py
 
       - name: Fresh installed Python 3.13 runtime and OCR
         shell: pwsh
