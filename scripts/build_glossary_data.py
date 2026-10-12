@@ -71,7 +71,6 @@ class ScriptRanges(HTMLParser):
         self.lines.extend(match.end() for match in re.finditer("\n", text))
         self.start = None
         self.ranges = []
-        self.outside_data = []
 
     def source_offset(self):
         line, column = self.getpos()
@@ -91,12 +90,11 @@ class ScriptRanges(HTMLParser):
         if tag == "script":
             if self.start is None:
                 raise ValueError("Unmatched script end tag in source snapshot")
-            self.ranges.append((self.start, self.text.index(">", self.source_offset()) + 1))
+            end = self.text.index(">", self.source_offset()) + 1
+            if not re.fullmatch(r"</script\s*>", self.text[self.source_offset():end], re.I):
+                raise ValueError("Ambiguous script end tag in source snapshot")
+            self.ranges.append((self.start, end))
             self.start = None
-
-    def handle_data(self, value):
-        if self.start is None:
-            self.outside_data.append(value)
 
 
 def strip_script_elements(data: bytes) -> bytes:
@@ -106,13 +104,15 @@ def strip_script_elements(data: bytes) -> bytes:
     parser.close()
     if parser.start is not None:
         raise ValueError("Unterminated script in source snapshot")
-    if re.search(r"<\s*/?\s*script\b", "".join(parser.outside_data), re.I):
-        raise ValueError("Incomplete script tag in source snapshot")
     chunks, cursor = [], 0
     for start, end in parser.ranges:
         chunks.append(data[cursor:start])
         cursor = end
-    return b"".join(chunks) + data[cursor:]
+    result = b"".join(chunks) + data[cursor:]
+    # HTMLParser recovery differs between supported Python maintenance releases.
+    if re.search(rb"<\s*/?\s*script\b", result, re.I):
+        raise ValueError("Incomplete script tag in source snapshot")
+    return result
 
 
 def prepare_snapshot(data: bytes, item: dict) -> bytes:

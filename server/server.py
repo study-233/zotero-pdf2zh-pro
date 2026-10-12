@@ -540,8 +540,17 @@ def prepare_translation_request(
     service = normalize_service(data.get("service"))
     output_modes = normalize_output_modes(data)
     workspace_dir = workspace_dir.resolve()
-    input_path = workspace_dir / file_name
-    if input_path.resolve().parent != workspace_dir or input_path.is_symlink():
+    root_prefix = str(workspace_dir) + os.sep
+    input_name = os.path.normpath(os.path.join(str(workspace_dir), file_name))
+    if not input_name.startswith(root_prefix):
+        raise RequestValidationError("Invalid PDF filename")
+    input_path = Path(input_name)
+    if input_path.parent != workspace_dir or input_path.is_symlink():
+        raise RequestValidationError("Invalid PDF filename")
+    resolved_name = os.path.realpath(input_name)
+    if not resolved_name.startswith(root_prefix):
+        raise RequestValidationError("Invalid PDF filename")
+    if Path(resolved_name).parent != workspace_dir:
         raise RequestValidationError("Invalid PDF filename")
     output_dir = workspace_dir / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -694,7 +703,7 @@ def normalize_service(service: Any) -> str:
     try:
         return require_supported_service(service)
     except ValueError as exc:
-        raise RequestValidationError("Invalid glossary options") from exc
+        raise RequestValidationError("Unsupported translation service") from exc
 
 
 def normalize_language(value: Any, default: str) -> str:
