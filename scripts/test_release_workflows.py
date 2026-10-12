@@ -19,7 +19,7 @@ def inline(workflow, marker):
 
 
 class WorkflowGateTests(unittest.TestCase):
-    def execute(self, workflow, marker, documents, args, ancestor=True):
+    def execute(self, workflow, marker, documents, args, ancestor=True, harness_changed=False):
         with tempfile.TemporaryDirectory() as directory:
             paths = []
             for i, document in enumerate(documents):
@@ -29,6 +29,11 @@ class WorkflowGateTests(unittest.TestCase):
             with patch.object(sys, "argv", ["guard", *paths, *args]), patch("subprocess.run") as git:
                 if not ancestor:
                     git.side_effect = subprocess.CalledProcessError(1, "git")
+                elif harness_changed:
+                    def check_git(command, **kwargs):
+                        if command[1] == "diff":
+                            raise subprocess.CalledProcessError(1, command)
+                    git.side_effect = check_git
                 exec(compile(inline(workflow, marker), marker, "exec"), {})
                 return git.call_args
 
@@ -60,6 +65,32 @@ class WorkflowGateTests(unittest.TestCase):
         for runs in [[], [{**good, "head_sha": "b" * 40}], [{**good, "event": "pull_request"}]]:
             with self.assertRaises(AssertionError):
                 self.execute("build-windows-release.yml", "PY_CORE", [{"workflow_runs": runs}], [SHA])
+
+    def test_collection_recovery_requires_all_passed_tests_and_unchanged_harness(self):
+        run = {"status": "completed", "conclusion": "failure", "head_sha": "b" * 40,
+               "path": ".github/workflows/build-windows-release.yml", "display_title": f"Build v1.9.0 at {SHA}"}
+        names = ["Verify committed versions", "Require successful core CI for the release commit",
+                 "Restore packages from a completed artifact build", "Use current test harness for reused artifacts",
+                 "Fresh installed Python 3.13 runtime and OCR", "Verify installed startup and upgrade",
+                 "Verify real downloads and progress with the release controller"]
+        steps = [{"name": name, "conclusion": "success"} for name in names]
+        steps.append({"name": "Verify and collect release artifacts", "conclusion": "failure"})
+        jobs = {"jobs": [{"name": "build", "steps": steps}]}
+        args = [SHA, "1.9.0", "c" * 40]
+        call = self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args)
+        self.assertEqual(call.args[0][:5], ["git", "diff", "--exit-code", "b" * 40, "c" * 40])
+        for step in steps[:-1]:
+            step["conclusion"] = "failure"
+            with self.assertRaises(AssertionError):
+                self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args)
+            step["conclusion"] = "success"
+        for field, value in [("display_title", "wrong source"), ("status", "in_progress"), ("path", "other.yml")]:
+            with self.assertRaises(AssertionError):
+                self.execute("build-windows-release.yml", "PY_VALIDATION", [{**run, field: value}, jobs], args)
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args, ancestor=False)
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args, harness_changed=True)
 
 
 if __name__ == "__main__":

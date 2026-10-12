@@ -25,6 +25,10 @@ on:
         description: Optional prior run whose artifact build succeeded; reuse its packages for the selected validation
         required: false
         type: string
+      validation_run_id:
+        description: Optional run whose standard tests all passed but final collection failed; resume collection with unchanged test scripts
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -55,6 +59,8 @@ jobs:
           if ($env:REPLACEMENT_COMMIT -and '${{ inputs.full_validation }}' -ne 'true') { throw 'Same-version replacement requires full validation' }
           $reuse = '${{ inputs.reuse_build_run_id }}'
           if ($reuse -and $reuse -cnotmatch '^[0-9]+$') { throw 'Expected numeric prior run ID' }
+          $validation = '${{ inputs.validation_run_id }}'
+          if ($validation -and ($validation -cnotmatch '^[0-9]+$' -or -not $reuse -or '${{ inputs.full_validation }}' -eq 'true' -or $env:REPLACEMENT_COMMIT)) { throw 'Collection recovery requires a build run and standard validation only' }
           git config --global core.autocrlf false
 
       - name: Checkout exact commit
@@ -220,8 +226,43 @@ jobs:
           uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$RELEASE_VERSION"
           uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT" --collect
 
+      - name: Verify completed standard validation before collection recovery
+        if: inputs.validation_run_id != ''
+        shell: bash
+        env:
+          VALIDATION_RUN: ${{ inputs.validation_run_id }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN" > "$RUNNER_TEMP/validation-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN/jobs?filter=latest" > "$RUNNER_TEMP/validation-jobs.json"
+          python - "$RUNNER_TEMP/validation-run.json" "$RUNNER_TEMP/validation-jobs.json" "$RELEASE_COMMIT" "$RELEASE_VERSION" "$GITHUB_SHA" <<'PY_VALIDATION'
+          import json, subprocess, sys
+          from pathlib import Path
+          run, jobs = [json.loads(Path(p).read_text(encoding="utf-8")) for p in sys.argv[1:3]]
+          assert run["status"] == "completed" and run["conclusion"] == "failure"
+          assert run["path"] == ".github/workflows/build-windows-release.yml"
+          assert run["display_title"] == f"Build v{sys.argv[4]} at {sys.argv[3]}"
+          build = [job for job in jobs["jobs"] if job["name"] == "build"]
+          assert len(build) == 1
+          steps = {step["name"]: step["conclusion"] for step in build[0]["steps"]}
+          for name in ["Verify committed versions", "Require successful core CI for the release commit",
+                       "Restore packages from a completed artifact build", "Use current test harness for reused artifacts",
+                       "Fresh installed Python 3.13 runtime and OCR", "Verify installed startup and upgrade",
+                       "Verify real downloads and progress with the release controller"]:
+              assert steps.get(name) == "success", f"Missing passed validation: {name}"
+          assert steps.get("Verify and collect release artifacts") == "failure"
+          subprocess.run(["git", "merge-base", "--is-ancestor", sys.argv[3], run["head_sha"]], check=True)
+          subprocess.run(["git", "merge-base", "--is-ancestor", run["head_sha"], sys.argv[5]], check=True)
+          paths = ["check_installed_runtime.py", "test_windows_lifecycle.ps1", "check_windows_background.py",
+                   "test_windows_process_helpers.ps1", "test_windows_release_extended.ps1",
+                   "test_windows_previous_release.ps1", "test_windows_update_reuse.ps1", "test_windows_uv_progress.py"]
+          subprocess.run(["git", "diff", "--exit-code", run["head_sha"], sys.argv[5], "--",
+                          *["scripts/" + path for path in paths]], check=True)
+          PY_VALIDATION
+          echo 'REUSE_VALIDATION=true' >> "$GITHUB_ENV"
+
       - name: Use current test harness for reused artifacts
-        if: inputs.reuse_build_run_id != ''
+        if: inputs.reuse_build_run_id != '' && env.REUSE_VALIDATION != 'true'
         shell: bash
         run: |
           # Only the test harness comes from this workflow's newer revision.
@@ -233,6 +274,7 @@ jobs:
             scripts/test_windows_uv_progress.py
 
       - name: Fresh installed Python 3.13 runtime and OCR
+        if: env.REUSE_VALIDATION != 'true'
         shell: pwsh
         run: |
           $venv = Join-Path $env:RUNNER_TEMP 'release-runtime'
@@ -246,6 +288,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Verify installed startup and upgrade
+        if: env.REUSE_VALIDATION != 'true'
         shell: powershell
         run: |
           if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'PowerShell 5.1 is required' }
@@ -254,6 +297,7 @@ jobs:
           & scripts/test_windows_lifecycle.ps1 -WindowsPackage 'dist/zotero-pdf2zh-pro-windows-x64.zip' -PackageSource $wheel -SmokeOnly:$smokeOnly
 
       - name: Verify real downloads and progress with the release controller
+        if: env.REUSE_VALIDATION != 'true'
         shell: pwsh
         run: |
           $progressPackage = Join-Path $env:RUNNER_TEMP 'progress-package'
@@ -270,6 +314,17 @@ jobs:
         run: |
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -SkipLifecycle
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Restore source test scripts after validation
+        if: inputs.reuse_build_run_id != '' && env.REUSE_VALIDATION != 'true'
+        shell: bash
+        run: |
+          # Undo only the explicitly overlaid tracked tests. Product changes
+          # remain visible to the clean-source guard; packages are never rebuilt.
+          git restore --source HEAD --worktree -- \
+            scripts/test_windows_lifecycle.ps1 scripts/test_windows_release_extended.ps1 \
+            scripts/test_windows_previous_release.ps1 scripts/test_windows_update_reuse.ps1 \
+            scripts/test_windows_uv_progress.py
 
       - name: Verify and collect release artifacts
         shell: bash
