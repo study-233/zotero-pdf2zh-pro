@@ -24,7 +24,7 @@ GitHub marked all 24 alerts `fixed` on 2026-10-12 between 14:56:54 and
 14:56:59 UTC (22:56:54–22:56:59 Asia/Hong_Kong), after
 [`701acfe`](https://github.com/study-233/zotero-pdf2zh-pro/commit/701acfe9102e8548ce51a52a874aa978dce037f2)
 reached main. None was dismissed or auto-dismissed. The checked alert IDs are
-77, 78, 80, 81, 84–102 (excluding 103), and 104. The SBOM reports Axios 1.20.0,
+77, 78, 80, 81, 84–102, and 104. The SBOM reports Axios 1.20.0,
 both fixed brace-expansion versions, pypdf 6.19.0, urllib3 2.8.0,
 fsspec 2026.6.0 and Werkzeug 3.1.9. Installed-runtime checks now enforce the
 four Python minimums on both Python 3.12 Docker and Python 3.13 CI.
@@ -46,31 +46,47 @@ Actions changes are in
 [`87a2def`](https://github.com/study-233/zotero-pdf2zh-pro/commit/87a2def),
 and input/output boundary changes in
 [`f5a912c`](https://github.com/study-233/zotero-pdf2zh-pro/commit/f5a912c).
-The table records the implemented disposition; final main analysis and
-individual GitHub alert states still require verification after merge.
+The follow-up [path/parser correction](https://github.com/study-233/zotero-pdf2zh-pro/commit/14db2ec)
+uses normalized path prefix checks recognized by CodeQL and explicitly rejects
+HTML recovery ambiguities across Python maintenance versions.
 
-| Alert | Rule | Implemented disposition |
-| --- | --- | --- |
-| 1 | actions/missing-workflow-permissions | CI explicitly grants contents: read |
-| 2 | actions/missing-workflow-permissions | Same workflow permission correction |
-| 3 | actions/missing-workflow-permissions | Same workflow permission correction |
-| 4 | actions/cache-poisoning/direct-cache | Trusted-main source/CI gates precede caches; verify main |
-| 5 | actions/cache-poisoning/direct-cache | Cache only pinned, verified renderer archives; verify main |
-| 6 | actions/cache-poisoning/poisonable-step | Target scripts run only after source/CI gates; verify main |
-| 7 | js/xss-through-dom | Same-origin HTTP(S) or a module-created, hash-verified PDF blob |
-| 8 | js/xss-through-dom | Same URL gate protects both preview and download links |
-| 9 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction |
-| 10 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction |
-| 11 | js/incomplete-multi-character-sanitization | Inert DOM text extraction; remove script/style nodes |
-| 12 | py/path-injection | Cross-platform basename validation, resolved-parent check, exclusive creation |
-| 13 | py/bad-tag-filter | HTML-parser script ranges preserve original bytes; ambiguous tags rejected |
-| 14 | py/stack-trace-exposure | Explicit business messages or fixed diagnoses; correlated, redacted logs |
-| 15 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.5 padding hash |
-| 16 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.2 key derivation |
-| 17 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.7 owner authentication |
-| 18 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 5 authentication hash |
-| 19 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 6 initial hash |
-| 20 | py/overly-large-range | Reviewed false positive: precisely the intended XML control characters |
+[PR #16](https://github.com/study-233/zotero-pdf2zh-pro/pull/16) merged as
+[`42c32e5`](https://github.com/study-233/zotero-pdf2zh-pro/commit/42c32e507a33cca16cc67ad7512659b5d54f1c19).
+All three main language analyses completed successfully for that exact commit
+(analysis IDs: Actions 1937673471, JavaScript/TypeScript 1937675875,
+Python 1937678232), and main CI passed. Twelve original alerts automatically
+became `fixed`; eight individually reviewed findings were dismissed as
+`false positive`, each with an immutable evidence link. The main alert API
+then reported **zero open CodeQL alerts and zero open Dependabot alerts**.
+The table records the verified GitHub states; analysis result counts still
+include the eight dismissed findings because their rules remain enabled.
+
+The intermediate PR analysis produced three additional path findings, 21–23.
+The final PR analysis after the path correction reported zero new findings
+for each language; these PR-only findings were never promoted to main.
+
+| Alert | Rule | Resolution | Verified GitHub state |
+| --- | --- | --- | --- |
+| 1 | actions/missing-workflow-permissions | CI explicitly grants contents: read  fixed |
+| 2 | actions/missing-workflow-permissions | Same workflow permission correction  fixed |
+| 3 | actions/missing-workflow-permissions | Same workflow permission correction  fixed |
+| 4 | actions/cache-poisoning/direct-cache | Trusted-main source/CI gates precede caches  fixed |
+| 5 | actions/cache-poisoning/direct-cache | Cache only pinned, verified renderer archives  fixed |
+| 6 | actions/cache-poisoning/poisonable-step | Target scripts run only after source/CI gates  fixed |
+| 7 | js/xss-through-dom | Same-origin HTTP(S) or a module-created, hash-verified PDF blob  fixed |
+| 8 | js/xss-through-dom | Same URL gate protects both preview and download links  fixed |
+| 9 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction  dismissed: false positive |
+| 10 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction  dismissed: false positive |
+| 11 | js/incomplete-multi-character-sanitization | Inert DOM text extraction; remove script/style nodes  fixed |
+| 12 | py/path-injection | Cross-platform basename validation, resolved-parent check, exclusive creation  fixed |
+| 13 | py/bad-tag-filter | HTML-parser script ranges preserve original bytes; ambiguous tags rejected  fixed |
+| 14 | py/stack-trace-exposure | Explicit business messages or fixed diagnoses; correlated, redacted logs  fixed |
+| 15 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.5 padding hash  dismissed: false positive |
+| 16 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.2 key derivation  dismissed: false positive |
+| 17 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.7 owner authentication  dismissed: false positive |
+| 18 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 5 authentication hash  dismissed: false positive |
+| 19 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 6 initial hash  dismissed: false positive |
+| 20 | py/overly-large-range | Reviewed false positive: precisely the intended XML control characters  dismissed: false positive |
 
 ### Evidence and regression coverage
 
