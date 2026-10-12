@@ -79,6 +79,13 @@ jobs:
       - name: Prepare portable Windows renderer toolchain
         shell: pwsh
         run: ./scripts/prepare_windows_build_tools.ps1
+      - name: Use a short Windows build path
+        shell: pwsh
+        run: |
+          if (Test-Path 'P:\') { throw 'The isolated build drive is already occupied' }
+          subst.exe P: $env:GITHUB_WORKSPACE
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          'PDF2ZH_WINDOWS_BUILD_ROOT=P:\' >> $env:GITHUB_ENV
       - name: Native control center and transaction tests
         run: |
           ./scripts/build_windows_control.ps1 -RunTests
@@ -95,6 +102,10 @@ jobs:
             uv run --no-project python "scripts/$test"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
+      - name: Remove the isolated build drive
+        if: always() && env.PDF2ZH_WINDOWS_BUILD_ROOT != ''
+        shell: pwsh
+        run: subst.exe P: /D
 
   codex-native:
     strategy:

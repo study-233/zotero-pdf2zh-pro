@@ -135,6 +135,15 @@ jobs:
         shell: pwsh
         run: ./scripts/prepare_windows_build_tools.ps1
 
+      - name: Use a short Windows build path
+        if: inputs.reuse_build_run_id == ''
+        shell: pwsh
+        run: |
+          if (Test-Path 'P:\') { throw 'The isolated build drive is already occupied' }
+          subst.exe P: $env:GITHUB_WORKSPACE
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          'PDF2ZH_WINDOWS_BUILD_ROOT=P:\' >> $env:GITHUB_ENV
+
       - name: Verify committed versions
         shell: bash
         run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT"
@@ -300,3 +309,8 @@ jobs:
             ${{ env.PDF2ZH_WINDOWS_APP_ROOT }}/last-operation-error.txt
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Remove the isolated build drive
+        if: always() && env.PDF2ZH_WINDOWS_BUILD_ROOT != ''
+        shell: pwsh
+        run: subst.exe P: /D

@@ -8,7 +8,17 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $probeRepository = Split-Path $PSScriptRoot -Parent
-$probeLlvm = (Resolve-Path -LiteralPath $LlvmRoot).Path
+$physicalRepository = $probeRepository
+function Convert-BuildPath([string]$Path) {
+    $resolved = [IO.Path]::GetFullPath($Path)
+    $prefix = $physicalRepository.TrimEnd('\') + '\'
+    if ($env:PDF2ZH_WINDOWS_BUILD_ROOT -and $resolved.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+        return Join-Path $env:PDF2ZH_WINDOWS_BUILD_ROOT $resolved.Substring($prefix.Length)
+    }
+    return $resolved
+}
+if ($env:PDF2ZH_WINDOWS_BUILD_ROOT) { $probeRepository = $env:PDF2ZH_WINDOWS_BUILD_ROOT }
+$probeLlvm = Convert-BuildPath (Resolve-Path -LiteralPath $LlvmRoot).Path
 if (-not (Test-Path -LiteralPath (Join-Path $probeLlvm 'bin/clang-cl.exe'))) { throw 'LLVM clang-cl is missing' }
 $probeVsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 $probeVs = & $probeVsWhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
@@ -25,11 +35,11 @@ foreach ($probeLine in $probeEnvironment) {
 $env:LLVM_HOME = $probeLlvm
 $env:LIBCLANG_PATH = Join-Path $probeLlvm 'bin'
 if (-not $TargetDirectory) { $TargetDirectory = Join-Path $probeRepository 'windows-app/target' }
-$env:CARGO_TARGET_DIR = [IO.Path]::GetFullPath($TargetDirectory)
+$env:CARGO_TARGET_DIR = Convert-BuildPath $TargetDirectory
 $env:RUSTFLAGS = '-C target-feature=+crt-static'
 $env:FORCE_SKIA_BUILD = '1'
 if ($SkiaSourceRoot) {
-    $env:SKIA_SOURCE_DIR = (Resolve-Path -LiteralPath $SkiaSourceRoot).Path
+    $env:SKIA_SOURCE_DIR = Convert-BuildPath (Resolve-Path -LiteralPath $SkiaSourceRoot).Path
     $probeGn = Join-Path $env:SKIA_SOURCE_DIR 'bin/gn.exe'
     if (Test-Path -LiteralPath $probeGn) { $env:SKIA_GN_COMMAND = $probeGn }
 }
