@@ -67,26 +67,26 @@ for each language; these PR-only findings were never promoted to main.
 
 | Alert | Rule | Resolution | Verified GitHub state |
 | --- | --- | --- | --- |
-| 1 | actions/missing-workflow-permissions | CI explicitly grants contents: read  fixed |
-| 2 | actions/missing-workflow-permissions | Same workflow permission correction  fixed |
-| 3 | actions/missing-workflow-permissions | Same workflow permission correction  fixed |
-| 4 | actions/cache-poisoning/direct-cache | Trusted-main source/CI gates precede caches  fixed |
-| 5 | actions/cache-poisoning/direct-cache | Cache only pinned, verified renderer archives  fixed |
-| 6 | actions/cache-poisoning/poisonable-step | Target scripts run only after source/CI gates  fixed |
-| 7 | js/xss-through-dom | Same-origin HTTP(S) or a module-created, hash-verified PDF blob  fixed |
-| 8 | js/xss-through-dom | Same URL gate protects both preview and download links  fixed |
-| 9 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction  dismissed: false positive |
-| 10 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction  dismissed: false positive |
-| 11 | js/incomplete-multi-character-sanitization | Inert DOM text extraction; remove script/style nodes  fixed |
-| 12 | py/path-injection | Cross-platform basename validation, resolved-parent check, exclusive creation  fixed |
-| 13 | py/bad-tag-filter | HTML-parser script ranges preserve original bytes; ambiguous tags rejected  fixed |
-| 14 | py/stack-trace-exposure | Explicit business messages or fixed diagnoses; correlated, redacted logs  fixed |
-| 15 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.5 padding hash  dismissed: false positive |
-| 16 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.2 key derivation  dismissed: false positive |
-| 17 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.7 owner authentication  dismissed: false positive |
-| 18 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 5 authentication hash  dismissed: false positive |
-| 19 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 6 initial hash  dismissed: false positive |
-| 20 | py/overly-large-range | Reviewed false positive: precisely the intended XML control characters  dismissed: false positive |
+| 1 | actions/missing-workflow-permissions | CI explicitly grants contents: read  | fixed |
+| 2 | actions/missing-workflow-permissions | Same workflow permission correction  | fixed |
+| 3 | actions/missing-workflow-permissions | Same workflow permission correction  | fixed |
+| 4 | actions/cache-poisoning/direct-cache | Trusted-main source/CI gates precede caches  | fixed |
+| 5 | actions/cache-poisoning/direct-cache | Cache only pinned, verified renderer archives  | fixed |
+| 6 | actions/cache-poisoning/poisonable-step | Target scripts run only after source/CI gates  | fixed |
+| 7 | js/xss-through-dom | Same-origin HTTP(S) or a module-created, hash-verified PDF blob  | fixed |
+| 8 | js/xss-through-dom | Same URL gate protects both preview and download links  | fixed |
+| 9 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction  | dismissed: false positive |
+| 10 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction  | dismissed: false positive |
+| 11 | js/incomplete-multi-character-sanitization | Inert DOM text extraction; remove script/style nodes  | fixed |
+| 12 | py/path-injection | Cross-platform basename validation, resolved-parent check, exclusive creation  | fixed |
+| 13 | py/bad-tag-filter | HTML-parser script ranges preserve original bytes; ambiguous tags rejected  | fixed |
+| 14 | py/stack-trace-exposure | Explicit business messages or fixed diagnoses; correlated, redacted logs  | fixed |
+| 15 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.5 padding hash  | dismissed: false positive |
+| 16 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.2 key derivation  | dismissed: false positive |
+| 17 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.7 owner authentication  | dismissed: false positive |
+| 18 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 5 authentication hash  | dismissed: false positive |
+| 19 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 6 initial hash  | dismissed: false positive |
+| 20 | py/overly-large-range | Reviewed false positive: precisely the intended XML control characters  | dismissed: false positive |
 
 ### Evidence and regression coverage
 
