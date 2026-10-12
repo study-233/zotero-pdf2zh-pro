@@ -14,6 +14,9 @@ on:
       - "**/*.md"
       - ".github/ISSUE_TEMPLATE/**"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -83,6 +86,8 @@ jobs:
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_runtime.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_cleanup.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_build_tools.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Windows progress, uninstall and artifact guard tests
         shell: pwsh

@@ -19,6 +19,29 @@ def inline(workflow, marker):
 
 
 class WorkflowGateTests(unittest.TestCase):
+    def test_source_gate_rejects_non_main_invalid_sha_and_non_ancestor(self):
+        good = ["refs/heads/main", SHA, "b" * 40]
+        self.execute("build-windows-release.yml", "PY_SOURCE", [], good)
+        for args in [["refs/heads/topic", *good[1:]], [good[0], "main", good[2]]]:
+            with self.assertRaises(AssertionError):
+                self.execute("build-windows-release.yml", "PY_SOURCE", [], args)
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.execute("build-windows-release.yml", "PY_SOURCE", [], good, ancestor=False)
+
+    def test_source_and_ci_gates_precede_target_checkout_and_all_caches(self):
+        text = (ROOT / ".github/workflows/build-windows-release.yml").read_text(encoding="utf-8")
+        gate = text.index("<<'PY_SOURCE'")
+        ci = text.index("<<'PY_CORE'")
+        checkout = text.index('git switch -C main "$RELEASE_COMMIT"')
+        self.assertLess(gate, ci)
+        self.assertLess(ci, checkout)
+        for marker in ["uses: astral-sh/setup-uv", "uses: Swatinem/rust-cache",
+                       "uses: actions/cache@", "run: uv run", "bash scripts/release.sh"]:
+            self.assertLess(checkout, text.index(marker))
+        self.assertIn("ref: ${{ github.sha }}", text)
+        self.assertIn("persist-credentials: false", text)
+        self.assertNotIn("ref: ${{ inputs.commit }}", text)
+
     def execute(self, workflow, marker, documents, args, ancestor=True, harness_changed=False):
         with tempfile.TemporaryDirectory() as directory:
             paths = []

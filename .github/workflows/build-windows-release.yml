@@ -46,6 +46,8 @@ jobs:
       RELEASE_VERSION: ${{ inputs.version }}
       RELEASE_COMMIT: ${{ inputs.commit }}
       REPLACEMENT_COMMIT: ${{ inputs.replacement_commit }}
+      REUSE_BUILD_RUN_ID: ${{ inputs.reuse_build_run_id }}
+      VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
       GH_TOKEN: ${{ github.token }}
       UV_DEFAULT_INDEX: https://pypi.org/simple
       PDF2ZH_WINDOWS_PORT: "18890"
@@ -53,29 +55,58 @@ jobs:
       - name: Validate inputs
         shell: pwsh
         run: |
+          if ($env:GITHUB_REF -cne 'refs/heads/main') { throw 'Release builds must be dispatched from main' }
           if ($env:RELEASE_VERSION -cnotmatch '^[0-9]+\.[0-9]+\.[0-9]+$') { throw 'Expected stable semver' }
           if ($env:RELEASE_COMMIT -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected full lowercase commit SHA' }
           if ($env:REPLACEMENT_COMMIT -and $env:REPLACEMENT_COMMIT -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected full original replacement commit SHA' }
           if ($env:REPLACEMENT_COMMIT -and '${{ inputs.full_validation }}' -ne 'true') { throw 'Same-version replacement requires full validation' }
-          $reuse = '${{ inputs.reuse_build_run_id }}'
+          $reuse = $env:REUSE_BUILD_RUN_ID
           if ($reuse -and $reuse -cnotmatch '^[0-9]+$') { throw 'Expected numeric prior run ID' }
-          $validation = '${{ inputs.validation_run_id }}'
+          $validation = $env:VALIDATION_RUN_ID
           if ($validation -and ($validation -cnotmatch '^[0-9]+$' -or -not $reuse -or '${{ inputs.full_validation }}' -eq 'true' -or $env:REPLACEMENT_COMMIT)) { throw 'Collection recovery requires a build run and standard validation only' }
           git config --global core.autocrlf false
 
-      - name: Checkout exact commit
+      - name: Checkout trusted workflow commit
         uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.commit }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate release source before using caches or target scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python - "$GITHUB_REF" "$RELEASE_COMMIT" "$GITHUB_SHA" <<'PY_SOURCE'
+          import re, subprocess, sys
+          assert sys.argv[1] == "refs/heads/main", "Dispatch must use main"
+          assert re.fullmatch("[0-9a-f]{40}", sys.argv[2]), "Expected a full commit SHA"
+          subprocess.run(["git", "merge-base", "--is-ancestor", sys.argv[2], sys.argv[3]], check=True)
+          PY_SOURCE
+
+      - name: Require successful core CI for the release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$RELEASE_COMMIT&status=success&per_page=100" > "$RUNNER_TEMP/core-ci.json"
+          python - "$RUNNER_TEMP/core-ci.json" "$RELEASE_COMMIT" <<'PY_CORE'
+          import json, sys
+          from pathlib import Path
+          runs = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["workflow_runs"]
+          assert any(r["head_sha"] == sys.argv[2] and r["conclusion"] == "success"
+                     and r["event"] == "push" for r in runs), "Release commit must pass core CI first"
+          PY_CORE
+          # Use the trusted tool verifier even when building a historical release.
+          mkdir -p "$RUNNER_TEMP/renderer-harness"
+          cp scripts/prepare_windows_build_tools.ps1 scripts/prepare_windows_skia_source.py scripts/prepare_windows_skia_dependencies.py "$RUNNER_TEMP/renderer-harness/"
 
       - name: Prepare temporary local main and isolated test paths
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
-          git merge-base --is-ancestor "$RELEASE_COMMIT" "$GITHUB_SHA"
           git switch -C main "$RELEASE_COMMIT"
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
 
@@ -113,6 +144,7 @@ jobs:
           version: "0.12.10"
           python-version: "3.13"
           enable-cache: true
+          cache-suffix: windows-release
 
       - name: Setup Rust
         if: inputs.reuse_build_run_id == ''
@@ -129,20 +161,22 @@ jobs:
           # A failed pre-build check must not permanently occupy a dependency
           # cache key with an incomplete target directory.
           cache-on-failure: false
+          shared-key: windows-release
 
-      - name: Cache portable Windows renderer toolchain
+      - name: Cache verified Windows renderer archives
         id: renderer-cache
         if: inputs.reuse_build_run_id == ''
         uses: actions/cache@v4
         with:
-          path: .tmp/windows-build-tools
-          key: windows-slint-1.18.1-skia-153-llvm-21.1.8-v1
+          path: .tmp/windows-build-archives
+          key: windows-release-slint-1.18.1-skia-153-llvm-21.1.8-archives-v2
 
       - name: Prepare static Slint renderer toolchain
         id: renderer-tools
         if: inputs.reuse_build_run_id == ''
         shell: pwsh
-        run: ./scripts/prepare_windows_build_tools.ps1
+        run: |
+          & "$env:RUNNER_TEMP/renderer-harness/prepare_windows_build_tools.ps1" -CacheRoot "$env:GITHUB_WORKSPACE/.tmp/windows-build-archives"
 
       - name: Use a short Windows build path
         if: inputs.reuse_build_run_id == ''
@@ -156,19 +190,6 @@ jobs:
       - name: Verify committed versions
         shell: bash
         run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT"
-
-      - name: Require successful core CI for the release commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$RELEASE_COMMIT&status=success&per_page=100" > "$RUNNER_TEMP/core-ci.json"
-          python - "$RUNNER_TEMP/core-ci.json" "$RELEASE_COMMIT" <<'PY_CORE'
-          import json, sys
-          from pathlib import Path
-          runs = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["workflow_runs"]
-          assert any(r["head_sha"] == sys.argv[2] and r["conclusion"] == "success"
-                     and r["event"] == "push" for r in runs), "Release commit must pass core CI first"
-          PY_CORE
 
       - name: Build artifacts and verify Windows startup
         if: inputs.reuse_build_run_id == ''
@@ -360,8 +381,8 @@ jobs:
         if: failure() && steps.renderer-tools.outcome == 'success' && steps.renderer-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: .tmp/windows-build-tools
-          key: windows-slint-1.18.1-skia-153-llvm-21.1.8-v1
+          path: .tmp/windows-build-archives
+          key: windows-release-slint-1.18.1-skia-153-llvm-21.1.8-archives-v2
 
       - name: Remove the isolated build drive
         if: always() && env.PDF2ZH_WINDOWS_BUILD_ROOT != ''
