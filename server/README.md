@@ -9,6 +9,28 @@ zotero-pdf2zh-pro
 
 The default service URL is `http://127.0.0.1:8890`.
 
+## Runtime maintenance
+
+`GET /health` retains existing fields and adds `capabilities.updateMaintenance`
+and `maintenance` (`busy`, `activeRequests`, `idleSeconds`, `held`). PDF queue
+and cancellation cleanup, provider workers still completing after a timeout,
+streamed selections, glossary downloads and data requests prevent maintenance.
+
+`POST /internal/maintenance` atomically pauses admission when work has finished.
+It accepts JSON `idleSeconds` (default 60, range 0–300), only from loopback,
+without an `Origin`, with `X-PDF2ZH-Control-Token` matching the private
+`.control-token` in the data directory. It returns 409 while busy, or 403 for
+unauthorized callers. `DELETE` with the same credential releases maintenance;
+the lease also expires after 120 seconds if the controller crashes.
+
+During maintenance, new work returns HTTP 503 with `code: server_maintenance`,
+`accepted: false`, `Retry-After: 3` and `X-PDF2ZH-Maintenance: not-accepted`.
+Clients may retry only this explicit rejection, polling health through the
+replacement interval. An accepted operation or an ambiguous lost reply must
+never be submitted again automatically. Health and task status polling remain
+available. The capability is optional for older clients and applies equally to
+the Windows, uv, Docker and Homebrew server entrypoints.
+
 The server verifies HTTPS using the operating system's trusted certificates,
 including trusted proxy CAs on macOS and Windows. Certificate and hostname
 verification remain enabled. For Docker, install any required private CA in

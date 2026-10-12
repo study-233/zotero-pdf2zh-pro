@@ -9,12 +9,13 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from build_windows_dependencies import export_dependencies
 from windows_pe import validate_release_pe
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WINDOWS_DIR = REPO_ROOT / "scripts" / "windows"
-TAURI_DIR = REPO_ROOT / "windows-app" / "src-tauri"
-DEFAULT_GUI_BINARY = TAURI_DIR / "target" / "x86_64-pc-windows-msvc" / "release" / "zotero-pdf2zh-pro.exe"
+NATIVE_DIR = REPO_ROOT / "windows-app"
+DEFAULT_GUI_BINARY = NATIVE_DIR / "target" / "x86_64-pc-windows-msvc" / "release" / "zotero-pdf2zh-pro.exe"
 
 
 @dataclass(frozen=True)
@@ -25,7 +26,7 @@ class PackageEntry:
 
 
 SCRIPT_NAMES = [
-    "README.txt",
+    "README.txt", "verify-runtime.py", "runtime.ps1", "recover-install.ps1", "clean-cache.ps1",
     "apply-update.ps1",
     "relocate.ps1",
     "install.cmd",
@@ -62,18 +63,12 @@ def script_version() -> str:
 
 
 def gui_versions() -> dict[str, str]:
-    cargo = tomllib.loads((TAURI_DIR / "Cargo.toml").read_text(encoding="utf-8"))
-    tauri = json.loads((TAURI_DIR / "tauri.conf.json").read_text(encoding="utf-8"))
-    package = json.loads(
-        (REPO_ROOT / "windows-app" / "package.json").read_text(encoding="utf-8")
-    )
+    cargo = tomllib.loads((NATIVE_DIR / "Cargo.toml").read_text(encoding="utf-8"))
     plugin = json.loads(
         (REPO_ROOT / "plugin" / "package.json").read_text(encoding="utf-8")
     )
     return {
-        "tauri Cargo.toml": cargo["package"]["version"],
-        "tauri.conf.json": tauri["version"],
-        "windows-app package.json": package["version"],
+        "windows-app Cargo.toml": cargo["package"]["version"],
         "plugin package.json": plugin["version"],
     }
 
@@ -105,18 +100,26 @@ def validate_versions(version: str) -> None:
 def validate_gui_binary(gui_binary: Path) -> None:
     if not gui_binary.is_file():
         raise RuntimeError(
-            f"Tauri release executable is missing: {gui_binary}. "
-            "Run `pnpm --dir windows-app tauri build --no-bundle --target x86_64-pc-windows-msvc` on Windows first."
+            f"Native release executable is missing: {gui_binary}. "
+            "Run scripts/prepare_windows_build_tools.ps1 and scripts/build_windows_control.ps1 on Windows first."
         )
     if gui_binary.stat().st_size < 1024 or gui_binary.read_bytes()[:2] != b"MZ":
-        raise RuntimeError(f"Tauri output is not a valid Windows PE executable: {gui_binary}")
+        raise RuntimeError(f"Native output is not a valid Windows PE executable: {gui_binary}")
     validate_release_pe(gui_binary.read_bytes())
 
 
-def build_package(version: str, output_dir: Path, gui_binary: Path) -> Path:
+def build_package(version: str, output_dir: Path, gui_binary: Path, uv: str = "uv") -> Path:
     validate_versions(version)
     validate_gui_binary(gui_binary)
-    entries = package_entries(gui_binary)
+    generated = output_dir / "windows-metadata"
+    export_dependencies(generated, uv)
+    entries = package_entries(gui_binary) + [PackageEntry(name, generated / name) for name in ("windows-dependencies.json", "windows-requirements.txt")]
+    gui_notices = gui_binary.parents[2] / "THIRD_PARTY_NOTICES.md"
+    if not gui_notices.is_file():
+        raise RuntimeError("Windows GUI license inventory is missing; use scripts/build_windows_control.ps1")
+    combined_notices = generated / "THIRD_PARTY_NOTICES.md"
+    combined_notices.write_text((REPO_ROOT / "server/THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8") + "\n\n" + gui_notices.read_text(encoding="utf-8"), encoding="utf-8")
+    entries = [PackageEntry(entry.archive_name, combined_notices) if entry.archive_name == "THIRD_PARTY_NOTICES.md" else entry for entry in entries]
 
     non_ascii = [entry.archive_name for entry in entries if not entry.archive_name.isascii()]
     if non_ascii:
@@ -157,6 +160,7 @@ def build_package(version: str, output_dir: Path, gui_binary: Path) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the Windows GUI ZIP")
+    parser.add_argument("--uv", default="uv")
     parser.add_argument("--version", default=project_version())
     parser.add_argument("--output-dir", type=Path, default=REPO_ROOT / "dist")
     parser.add_argument("--gui-binary", type=Path, default=DEFAULT_GUI_BINARY)
@@ -164,7 +168,7 @@ def main() -> None:
     output = build_package(
         args.version,
         args.output_dir.resolve(),
-        args.gui_binary.resolve(),
+        args.gui_binary.resolve(), args.uv,
     )
     print(output)
 

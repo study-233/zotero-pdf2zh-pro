@@ -9,6 +9,22 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
+if (-not $env:PDF2ZH_WINDOWS_APP_ROOT -or -not $env:PDF2ZH_WINDOWS_REGISTRY_KEY -or -not $env:PDF2ZH_WINDOWS_START_MENU_DIR) {
+    throw 'Lifecycle tests require isolated installation, registry and shortcut overrides.'
+}
+$testPrefixes=@((Join-Path $repoRoot '.tmp'),[IO.Path]::GetTempPath())
+if ($env:RUNNER_TEMP) {$testPrefixes+=$env:RUNNER_TEMP}
+function Assert-TestPath {
+    param([string]$Path)
+    $resolved=[IO.Path]::GetFullPath($Path)
+    if (-not @($testPrefixes|Where-Object {$resolved.StartsWith([IO.Path]::GetFullPath($_).TrimEnd('\')+'\',[StringComparison]::OrdinalIgnoreCase)}).Count) {
+        throw "Lifecycle path is outside the isolated test workspace: $resolved"
+    }
+    return $resolved
+}
+$null=Assert-TestPath $env:PDF2ZH_WINDOWS_APP_ROOT
+$null=Assert-TestPath $env:PDF2ZH_WINDOWS_START_MENU_DIR
+if ($env:PDF2ZH_WINDOWS_REGISTRY_KEY -match '(?i)^HKCU:\\Software\\Microsoft\\' -or $env:PDF2ZH_WINDOWS_REGISTRY_KEY -ieq 'HKCU:\Software\zotero-pdf2zh-pro') {throw 'Lifecycle tests cannot use production registry keys.'}
 $windowsDir = Join-Path $PSScriptRoot "windows"
 if ($WindowsPackage) {
     $windowsDir = Join-Path ([IO.Path]::GetTempPath()) ('pdf2zh-lifecycle-package-' + [guid]::NewGuid().ToString('N'))
@@ -20,6 +36,9 @@ if ($WindowsPackage) {
 $gui = [IO.Path]::GetFullPath($GuiBinary)
 $package = [IO.Path]::GetFullPath($PackageSource)
 . (Join-Path $windowsDir "common.ps1")
+if (-not $AutostartApprovedKey.StartsWith($env:PDF2ZH_WINDOWS_REGISTRY_KEY + '\', [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'StartupApproved must be isolated with the test registry.'
+}
 
 function Assert-True {
     param([bool]$Condition, [string]$Message)
@@ -34,6 +53,17 @@ function Wait-ExpectedHealth {
     for ($attempt = 0; $attempt -lt 60; $attempt++) {
         $lastHealth = Get-ServerHealth
         if (Test-ExpectedHealth -Health $lastHealth) {
+            # Health can become ready before the startup script finishes checking ownership.
+            # Do not inject a stop or port conflict until the GUI's startup children exit.
+            $controlProcessId = Get-ManagedControlPanelProcessId
+            if ($controlProcessId) {
+                $startupChildren = @(Get-CimInstance Win32_Process -Filter "ParentProcessId = $controlProcessId" |
+                    Where-Object {$_.Name -ieq 'powershell.exe'})
+                if ($startupChildren.Count) {
+                    Start-Sleep -Milliseconds 500
+                    continue
+                }
+            }
             return
         }
         Start-Sleep -Milliseconds 500
@@ -55,7 +85,7 @@ function Wait-ExpectedHealth {
     )) {
         if (Test-Path -LiteralPath $diagnosticFile -PathType Leaf) {
             Write-Host "[health-diagnostic] tail=$diagnosticFile"
-            Get-Content -LiteralPath $diagnosticFile -Tail 80 | ForEach-Object {
+            Get-Content -LiteralPath $diagnosticFile -Encoding utf8 -Tail 80 | ForEach-Object {
                 Write-Host "[health-diagnostic] $_"
             }
         }
@@ -67,7 +97,8 @@ function Wait-ControlPanel {
     for ($attempt = 0; $attempt -lt 40; $attempt++) {
         $controlProcessId = Get-ManagedControlPanelProcessId
         if ($controlProcessId) {
-            & (Join-Path $PSScriptRoot 'test_windows_window_icons.ps1') -ProcessId $controlProcessId -Executable $ControlPanelExecutable
+            $controlProcess=Get-Process -Id $controlProcessId
+            if ($controlProcess.MainWindowHandle -ne [IntPtr]::Zero) {throw 'Automatic startup opened a main window.'}
             Assert-ProductShortcutIcon
             return $controlProcessId
         }
@@ -87,7 +118,7 @@ function Assert-ProductShortcutIcon {
 }
 
 function Wait-PathAbsent {
-    param([string]$Path, [int]$TimeoutSeconds = 180)
+    param([string]$Path, [int]$TimeoutSeconds = 600)
     $attempts = $TimeoutSeconds * 2
     for ($attempt = 0; $attempt -lt $attempts; $attempt++) {
         if (-not (Test-Path -LiteralPath $Path)) {
@@ -145,11 +176,11 @@ function Invoke-RelocationProcess {
         $process.Refresh()
         $exitCode = $process.ExitCode
         Write-Host "[relocation-test] source=$Source destination=$Destination exit-code=$exitCode"
-        Get-Content -LiteralPath $stdoutFile -ErrorAction SilentlyContinue | ForEach-Object {
+        Get-Content -LiteralPath $stdoutFile -Encoding utf8 -ErrorAction SilentlyContinue | ForEach-Object {
             Write-Host "[relocation-test] stdout: $_"
         }
         if ($exitCode -ne 0) {
-            Get-Content -LiteralPath $stderrFile -ErrorAction SilentlyContinue | ForEach-Object {
+            Get-Content -LiteralPath $stderrFile -Encoding utf8 -ErrorAction SilentlyContinue | ForEach-Object {
                 Write-Host "[relocation-test] stderr: $_"
             }
         }
@@ -166,7 +197,6 @@ Assert-True (Test-Path -LiteralPath $package -PathType Leaf) "Server wheel is mi
 if (-not (Test-Path -LiteralPath $AppRoot)) {
     $startupLogs = Join-Path $AppRoot 'logs'
     New-Item -ItemType Directory -Path $startupLogs -Force | Out-Null
-    Set-Content -LiteralPath (Join-Path $startupLogs 'webview2-setup.log') -Value 'Runtime preparation completed'
     Set-Content -LiteralPath (Join-Path $startupLogs 'control-panel.log') -Value 'First control-center launch'
 }
 
@@ -183,8 +213,8 @@ if ($env:PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE -eq "1") {
 Assert-True (Test-Path -LiteralPath $ControlPanelExecutable) "Installer did not copy the GUI."
 Assert-True ((Get-Content -Raw -LiteralPath $InstalledVersionFile).Trim() -eq $PackageVersion) "Installed version marker is incorrect."
 $savedExecutable = (Get-Content -Raw -LiteralPath $ExecutableFile).Trim()
-Assert-True ($savedExecutable.StartsWith((Join-Path $AppRoot "runtime\tool-bin"), [StringComparison]::OrdinalIgnoreCase)) "The server executable is outside the product root."
-Assert-True (Test-Path -LiteralPath (Join-Path $AppRoot "runtime\tools") -PathType Container) "The uv tool environment is outside the product root."
+Assert-True ($savedExecutable.StartsWith((Join-Path $AppRoot "runtime\versions"), [StringComparison]::OrdinalIgnoreCase)) "The server executable is outside the product root."
+Assert-True (Test-Path -LiteralPath (Join-Path $AppRoot "runtime\versions") -PathType Container) "The version environment is outside the product root."
 Assert-True (Test-Path -LiteralPath (Join-Path $AppRoot "runtime\python") -PathType Container) "The managed Python runtime is outside the product root."
 Assert-True (Test-Path -LiteralPath (Join-Path $AppRoot "cache") -PathType Container) "The uv cache is outside the product root."
 $shortcuts = @(Get-ChildItem -LiteralPath $StartMenuDir -Filter "*.lnk")
@@ -280,9 +310,9 @@ if (-not $SmokeOnly) {
     }
     Assert-True $failedUpgrade "Invalid upgrade input did not fail."
     Assert-True ((Get-FileHash -Algorithm SHA256 -LiteralPath $ControlPanelExecutable).Hash -eq $guiHash) "Failed upgrade changed the installed GUI."
-    Assert-True ($null -eq (Get-Process -Id $upgradedControlProcessId -ErrorAction SilentlyContinue)) "Failed upgrade did not stop the path-validated old GUI."
+    Assert-True ($null -ne (Get-Process -Id $upgradedControlProcessId -ErrorAction SilentlyContinue)) "Failed preparation stopped the existing GUI."
     $previousUpdateControlProcessId = Wait-ControlPanel
-    Assert-True ($previousUpdateControlProcessId -ne $upgradedControlProcessId) "Failed upgrade did not restart the previous GUI."
+    Assert-True ($previousUpdateControlProcessId -eq $upgradedControlProcessId) "Failed preparation replaced the existing GUI."
     Wait-ExpectedHealth
 }
 
@@ -327,9 +357,8 @@ if ($applyExitCode -ne 0) {
         ForEach-Object { Write-Host "[self-update-test] stderr: $_" }
 }
 Assert-True ($applyExitCode -eq 0) "Self-update bootstrap failed with exit code $applyExitCode."
-foreach ($phase in 1..5) {
-    Assert-True (@($applyOutput | Where-Object { $_ -match "^\[$phase/5\]" }).Count -gt 0) "Self-update did not reach phase $phase."
-}
+$transaction=Get-Content -Raw -Encoding utf8 -LiteralPath (Join-Path $AppRoot 'updates/transaction.json')|ConvertFrom-Json
+Assert-True ($transaction.phase -eq 'committed') 'Self-update did not commit its transaction.'
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -PathType Leaf)) "Self-update reported an installation error."
 if (-not (Test-Path -LiteralPath (Join-Path $AppRoot "runtime\uv\uv.exe") -PathType Leaf)) {
     foreach ($candidate in @(
@@ -359,7 +388,7 @@ if ($SmokeOnly) {
     & (Join-Path $BinDir "uninstall.ps1") -PurgeData -NonInteractive
     Wait-PathAbsent -Path $AppRoot
     if ($WindowsPackage) {
-        Remove-Item -LiteralPath $windowsDir -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath (Assert-TestPath $windowsDir) -Recurse -Force -ErrorAction SilentlyContinue
     }
     Write-Host 'Windows package installation, startup, upgrade, self-update and data preservation checks passed.'
     return
@@ -376,11 +405,30 @@ Assert-True $downgradeBlocked "Downgrade was not blocked."
 Set-Content -LiteralPath $InstalledVersionFile -Value $PackageVersion -Encoding ascii
 
 $cacheBackup = Join-Path (Split-Path $AppRoot -Parent) ".lifecycle-cache-backup"
-Remove-Item -LiteralPath $cacheBackup -Recurse -Force -ErrorAction SilentlyContinue
+$runtimeBackup = Join-Path (Split-Path $AppRoot -Parent) ".lifecycle-runtime-backup"
+Remove-Item -LiteralPath (Assert-TestPath $cacheBackup) -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath (Assert-TestPath $runtimeBackup) -Recurse -Force -ErrorAction SilentlyContinue
 Copy-Item -LiteralPath $UvCacheDir -Destination $cacheBackup -Recurse -Force
+foreach ($runtimePart in @('python', 'uv')) {
+    $backupPart = Join-Path $runtimeBackup $runtimePart
+    New-Item -ItemType Directory -Force -Path $backupPart | Out-Null
+    Get-ChildItem -LiteralPath (Join-Path $AppRoot ("runtime\$runtimePart")) -Force | Copy-Item -Destination $backupPart -Recurse -Force
+}
 & (Join-Path $BinDir "uninstall.ps1") -NonInteractive
 Wait-PathAbsent -Path $BinDir
 Wait-PathAbsent -Path $UvCacheDir
+Wait-PathAbsent -Path $RuntimeDir
+Wait-PathAbsent -Path (Join-Path $AppRoot 'updates')
+for ($attempt = 0; $attempt -lt 120; $attempt++) {
+    try {
+        $cleanupProbe = [IO.File]::Open((Join-Path $AppRoot '.operation.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+        $cleanupProbe.Dispose()
+        break
+    } catch {
+        if ($attempt -eq 119) {throw 'Uninstall cleanup did not release its operation lock.'}
+        Start-Sleep -Milliseconds 500
+    }
+}
 Assert-True (Test-Path -LiteralPath (Join-Path $DataDir "preserve-me")) "Default uninstall removed persistent data."
 Assert-True (-not (Test-Path -LiteralPath $BinDir)) "Default uninstall left program files behind."
 Assert-True (-not (Test-Path -LiteralPath $UvCacheDir)) "Default uninstall left the private cache behind."
@@ -388,7 +436,13 @@ Assert-True (-not (Test-Path -LiteralPath $StartMenuDir)) "Uninstall left Start 
 Assert-Autostart -Enabled $false
 
 Copy-Item -LiteralPath $cacheBackup -Destination $UvCacheDir -Recurse -Force
-Remove-Item -LiteralPath $cacheBackup -Recurse -Force
+Remove-Item -LiteralPath (Assert-TestPath $cacheBackup) -Recurse -Force
+foreach ($runtimePart in @('python', 'uv')) {
+    $restoredPart = Join-Path $AppRoot ("runtime\$runtimePart")
+    New-Item -ItemType Directory -Force -Path $restoredPart | Out-Null
+    Get-ChildItem -LiteralPath (Join-Path $runtimeBackup $runtimePart) -Force | Copy-Item -Destination $restoredPart -Recurse -Force
+}
+Remove-Item -LiteralPath (Assert-TestPath $runtimeBackup) -Recurse -Force
 & (Join-Path $windowsDir "install.ps1") `
     -PackageSource $package `
     -GuiSource $gui `

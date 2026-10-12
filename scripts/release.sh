@@ -124,6 +124,7 @@ TAP_URL="https://github.com/study-233/homebrew-formula.git"
 PYPI_VERSION_URL="https://pypi.org/pypi/$PRODUCT/$VERSION/json"
 PYPI_CHECK_URL="https://pypi.org/simple/$PRODUCT/"
 WINDOWS_PACKAGE="dist/$PRODUCT-windows-x64.zip"
+WINDOWS_INSTALLER="dist/$PRODUCT-windows-x64-setup.exe"
 WINDOWS_UPDATE_MANIFEST="dist/windows-update.json"
 SOURCE_ARCHIVE="dist/$PRODUCT-$VERSION-source.zip"
 XPI="plugin/build/$PRODUCT.xpi"
@@ -160,8 +161,6 @@ const fs = require("fs");
 const version = process.argv[2];
 for (const file of [
   "plugin/package.json",
-  "windows-app/package.json",
-  "windows-app/src-tauri/tauri.conf.json",
 ]) {
   const data = JSON.parse(fs.readFileSync(file, "utf8"));
   data.version = version;
@@ -170,7 +169,7 @@ for (const file of [
 NODE
 
 VERSION="$VERSION" perl -0pi -e 's/version = "[^"]+"/version = "$ENV{VERSION}"/' server/pyproject.toml
-VERSION="$VERSION" perl -0pi -e 's/^(version = ")[^"]+("\s*)$/$1$ENV{VERSION}$2/m' windows-app/src-tauri/Cargo.toml
+VERSION="$VERSION" perl -0pi -e 's/^(version = ")[^"]+("\s*)$/$1$ENV{VERSION}$2/m' windows-app/Cargo.toml
 VERSION="$VERSION" perl -0pi -e 's/VERSION = "[^"]+"/VERSION = "$ENV{VERSION}"/' server/server.py
 VERSION="$VERSION" perl -0pi -e 's/(\$PackageVersion = ")[^"]+(" # release-version)/$1$ENV{VERSION}$2/' scripts/windows/common.ps1
 
@@ -191,7 +190,7 @@ replaceOnce(
   "server lock version",
 );
 replaceOnce(
-  "windows-app/src-tauri/Cargo.lock",
+  "windows-app/Cargo.lock",
   /(\[\[package\]\]\r?\nname = "zotero-pdf2zh-pro-control"\r?\nversion = ")[^"]+(")/g,
   `$1${version}$2`,
   "control-center lock version",
@@ -202,7 +201,7 @@ UV_DEFAULT_INDEX=https://pypi.org/simple uv --directory server lock --locked
 if [[ "$PUSH" -eq 0 ]]; then
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_shortcuts.ps1
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_bootstrap.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_runtime.ps1
 uv run --no-project python scripts/test_windows_pe.py
 uv run --no-project python scripts/test_release_gate.py
 if [[ -z "$REPLACE_EXISTING" ]]; then
@@ -214,11 +213,12 @@ CI=true "${PNPM[@]}" --dir plugin install --frozen-lockfile
 rm -rf -- plugin/build
 "${PNPM[@]}" --dir plugin build
 
-CI=true "${PNPM[@]}" --dir windows-app install --frozen-lockfile
-RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-msvc "${PNPM[@]}" --dir windows-app tauri build --no-bundle --target x86_64-pc-windows-msvc
-cargo +stable-x86_64-pc-windows-msvc test --release --locked --target x86_64-pc-windows-msvc --manifest-path windows-app/src-tauri/Cargo.toml
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build_windows_control.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build_windows_control.ps1 -RunTests
 
 uv run --no-project python scripts/build_windows_package.py --version "$VERSION"
+uv run --no-project python scripts/build_windows_installer.py --version "$VERSION"
+uv run --no-project python scripts/test_windows_installer.py
 uv run --no-project python scripts/build_windows_update_manifest.py \
     --version "$VERSION" --package "$WINDOWS_PACKAGE" --output "$WINDOWS_UPDATE_MANIFEST"
 uv run --no-project python scripts/test_windows_update_manifest.py
@@ -226,8 +226,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_pac
 fi
 
 git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock \
-    scripts/windows/common.ps1 windows-app/package.json windows-app/src-tauri/Cargo.toml \
-    windows-app/src-tauri/Cargo.lock windows-app/src-tauri/tauri.conf.json
+    scripts/windows/common.ps1 windows-app/Cargo.toml \
+    windows-app/Cargo.lock
 if ! git diff --cached --quiet; then
     git commit -m "chore: release $TAG"
 fi
@@ -318,6 +318,7 @@ const destinations = {
   [`${product}.xpi`]: `plugin/build/${product}.xpi`,
   "update.json": "plugin/build/update.json",
   [`${product}-windows-x64.zip`]: `dist/${product}-windows-x64.zip`,
+  [`${product}-windows-x64-setup.exe`]: `dist/${product}-windows-x64-setup.exe`,
   "windows-update.json": "dist/windows-update.json",
   [`${product}-${version}-source.zip`]: `dist/${product}-${version}-source.zip`,
   [`zotero_pdf2zh_pro-${version}-py3-none-any.whl`]: `server/dist/zotero_pdf2zh_pro-${version}-py3-none-any.whl`,
@@ -339,7 +340,7 @@ VERIFY_BUILD
     uv run --no-project python scripts/check_release_artifacts.py "$VERSION" "$COMMIT" --collect
 fi
 
-for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_UPDATE_MANIFEST" "$SOURCE_ARCHIVE"; do
+for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$WINDOWS_UPDATE_MANIFEST" "$SOURCE_ARCHIVE"; do
     [[ -f "$artifact" ]] || die "missing release artifact: $artifact"
 done
 
@@ -386,6 +387,7 @@ process.stdout.write(hash);
 XPI_SHA256="$(sha256_file "$XPI")"
 UPDATE_SHA256="$(sha256_file "$UPDATE_MANIFEST")"
 WINDOWS_SHA256="$(sha256_file "$WINDOWS_PACKAGE")"
+WINDOWS_INSTALLER_SHA256="$(sha256_file "$WINDOWS_INSTALLER")"
 WINDOWS_UPDATE_SHA256="$(sha256_file "$WINDOWS_UPDATE_MANIFEST")"
 SOURCE_SHA256="$(sha256_file "$SOURCE_ARCHIVE")"
 
@@ -447,10 +449,10 @@ if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
         REPLACEMENT_BACKUP="$(cat "$REPLACEMENT_BACKUP_FILE")"
         [[ -n "$REPLACEMENT_BACKUP" ]] || die "Replacement did not record its recovery backup"
     elif gh release view "$TAG" --repo "$MAIN_REPO" >/dev/null 2>&1; then
-        gh release upload "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_UPDATE_MANIFEST" \
+        gh release upload "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$WINDOWS_UPDATE_MANIFEST" \
             --repo "$MAIN_REPO" --clobber
     else
-        gh release create "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_UPDATE_MANIFEST" \
+        gh release create "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$WINDOWS_UPDATE_MANIFEST" \
             --repo "$MAIN_REPO" --target "$COMMIT" --title "$TAG" \
             --notes-file "$NOTES_FILE" --latest
     fi
@@ -508,10 +510,11 @@ echo "Released $TAG at $COMMIT"
 if [[ -n "$REPLACE_EXISTING" ]]; then
     echo "PyPI distributions preserved from $REPLACE_EXISTING; client source $COMMIT"
 fi
-echo "Artifacts: $XPI $UPDATE_MANIFEST $WINDOWS_PACKAGE $WINDOWS_UPDATE_MANIFEST $SOURCE_ARCHIVE"
+echo "Artifacts: $XPI $UPDATE_MANIFEST $WINDOWS_PACKAGE $WINDOWS_INSTALLER $WINDOWS_UPDATE_MANIFEST $SOURCE_ARCHIVE"
 echo "SHA-256:"
 echo "  $XPI_SHA256  $XPI"
 echo "  $UPDATE_SHA256  $UPDATE_MANIFEST"
 echo "  $WINDOWS_SHA256  $WINDOWS_PACKAGE"
+echo "  $WINDOWS_INSTALLER_SHA256  $WINDOWS_INSTALLER"
 echo "  $WINDOWS_UPDATE_SHA256  $WINDOWS_UPDATE_MANIFEST"
 echo "  $SOURCE_SHA256  $SOURCE_ARCHIVE"

@@ -4,7 +4,10 @@
 )
 
 . (Join-Path $PSScriptRoot "common.ps1")
+. (Join-Path $PSScriptRoot "runtime.ps1")
 Assert-WindowsX64
+$operation=Enter-RuntimeOperation
+Request-SafeMaintenance | Out-Null
 
 foreach ($registryPath in @($AutostartRunKey, $AutostartApprovedKey)) {
     if (Test-Path -LiteralPath $registryPath) {
@@ -28,12 +31,12 @@ try {
 
 $usingPrivateUv = Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf
 $uv = Get-UvExecutable
-if ($uv) {
+if ($uv -and -not (Test-Path -LiteralPath (Join-Path $RuntimeDir 'versions'))) {
     & $uv tool uninstall $ProductName
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "uv tool uninstall returned exit code $LASTEXITCODE."
     }
-} else {
+} elseif (-not $uv) {
     Write-Warning "uv.exe was not found; the Python tool may need manual removal."
 }
 
@@ -70,10 +73,15 @@ $cleanupFile = Join-Path ([IO.Path]::GetTempPath()) (
     "zotero-pdf2zh-pro-cleanup-{0}.ps1" -f [guid]::NewGuid().ToString("N")
 )
 $cleanup = @'
-param([string]$RootPath, [switch]$PurgeData)
+param([string]$RootPath, [switch]$PurgeData, [switch]$NonInteractive)
+$ErrorActionPreference='Stop'
 Start-Sleep -Seconds 2
+$fullRoot=[IO.Path]::GetFullPath($RootPath).TrimEnd('\')
+if ($fullRoot -eq [IO.Path]::GetPathRoot($fullRoot).TrimEnd('\') -or ((Get-Item -LiteralPath $fullRoot).Attributes -band [IO.FileAttributes]::ReparsePoint)) {throw 'Unsafe uninstall root.'}
+$cleanupLock=[IO.File]::Open((Join-Path $fullRoot '.operation.lock'),'OpenOrCreate','ReadWrite','None')
+try {
 $targets = if ($PurgeData) {
-    @($RootPath)
+    @(Get-ChildItem -LiteralPath $fullRoot -Force|Where-Object {$_.Name -ne '.operation.lock'}|Select-Object -ExpandProperty FullName)
 } else {
     @(
         (Join-Path $RootPath "bin"),
@@ -86,10 +94,19 @@ $targets = if ($PurgeData) {
         (Join-Path $RootPath "control-panel-executable.txt"),
         (Join-Path $RootPath "control-panel.pid"),
         (Join-Path $RootPath "last-operation-error.txt")
+        (Join-Path $RootPath "install-state.json")
     )
 }
 foreach ($target in $targets) {
+    $fullTarget=[IO.Path]::GetFullPath($target)
+    $fullRoot=[IO.Path]::GetFullPath($RootPath).TrimEnd('\')
+    if ($fullTarget -ne $fullRoot -and -not $fullTarget.StartsWith($fullRoot+'\',[StringComparison]::OrdinalIgnoreCase)) {throw 'Unsafe uninstall cleanup path.'}
     Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+}
+} finally {$cleanupLock.Dispose()}
+if ($PurgeData) {
+    Remove-Item -LiteralPath (Join-Path $fullRoot '.operation.lock') -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $fullRoot -Force -ErrorAction SilentlyContinue
 }
 $remainingTargets = @($targets | Where-Object { Test-Path -LiteralPath $_ })
 if ($remainingTargets.Count -gt 0) {
@@ -108,7 +125,7 @@ if ($remainingTargets.Count -gt 0) {
         ""
         $remaining
     ) | Set-Content -LiteralPath $reportPath -Encoding utf8
-    Start-Process -FilePath "notepad.exe" -ArgumentList ('"{0}"' -f $reportPath)
+    if (-not $NonInteractive) {Start-Process -FilePath "notepad.exe" -ArgumentList ('"{0}"' -f $reportPath)}
 }
 Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
 '@
@@ -117,7 +134,9 @@ $cleanupArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -RootPath "{
 if ($PurgeData) {
     $cleanupArguments += " -PurgeData"
 }
+if ($NonInteractive) {$cleanupArguments += ' -NonInteractive'}
 Start-Process -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList $cleanupArguments -WindowStyle Hidden
+$operation.Dispose()
 
 if ($PurgeData) {
     Write-Host "Uninstall complete. Program files, task data, results, and logs will be removed."

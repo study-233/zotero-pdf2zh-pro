@@ -36,7 +36,7 @@
       {% for heading, text, path in [('安装本地服务','按操作系统安装并启动翻译服务。',''),('安装 Zotero 插件','下载 XPI，装入 Zotero 并检查连接。','installation/'),('配置翻译 API','填写地址、Key 和模型，测试后保存。','api-configuration/'),('翻译第一篇 PDF','右键提交任务，完成后阅读新附件。','usage/')] %}<li><span>{{ '%02d' % loop.index }}</span><h3>{{ heading }}</h3><p>{{ text }}</p><a href="{{ base }}guide/{{ path }}">查看步骤 →</a></li>{% endfor %}
     </ol>
     <div class="install-grid">
-      <article class="install-card" id="windows"><div><p class="eyebrow">WINDOWS 10 / 11 · x64</p><h3>从控制中心开始</h3><p>完整解压安装包，打开控制中心，点击“安装并启动”。</p></div><div><a class="button primary" href="{{ release }}/download/zotero-pdf2zh-pro-windows-x64.zip">下载 Windows 安装包 ↓</a><a class="text-link" href="{{ base }}guide/windows/">Windows 图文教程 →</a></div></article>
+      <article class="install-card" id="windows"><div><p class="eyebrow">WINDOWS 10 / 11 · x64</p><h3>从控制中心开始</h3><p>双击安装 EXE，确认位置与启动选项，按向导完成安装。</p></div><div><a class="button primary" href="{{ release }}/download/zotero-pdf2zh-pro-windows-x64-setup.exe">下载 Windows 安装包 ↓</a><a class="text-link" href="{{ base }}guide/windows/">Windows 图文教程 →</a></div></article>
       <article class="install-card" id="macos"><div><p class="eyebrow">macOS · HOMEBREW</p><h3>让服务在后台运行</h3><p>使用 Homebrew 安装与管理本地服务，终端关闭后仍可运行。</p></div><div><a class="button" href="{{ base }}guide/macos/">macOS 安装教程 →</a><a class="text-link" href="{{ base }}guide/uv/">uv 手动运行 / Linux / Docker →</a></div></article>
     </div>
     <p class="usage-note">PDF 在本地处理；使用云端 API 时，待翻译文本会发送给你选择的服务商，并消耗其 API 额度。</p>

@@ -56,9 +56,14 @@ and the project's regression tests.
 
 ## GHSA-wrw7-89jp-8q8g / RUSTSEC-2024-0429
 
+The following is the historical Tauri assessment from 2026-09-22. The native
+Windows candidate removes Tauri, GTK and glib; its current dependency list is
+[`windows-app/Cargo.lock`](../windows-app/Cargo.lock). Commands and workflow
+descriptions below refer to the earlier implementation.
+
 Reviewed 2026-09-22 for the Windows control center, using `glib 0.18.5`,
 `gtk 0.18.2` and `tauri 2.11.5` in
-[`windows-app/src-tauri/Cargo.lock`](../windows-app/src-tauri/Cargo.lock).
+the former `windows-app/src-tauri/Cargo.lock`.
 
 **The vulnerable Rust code is not included in the supported Windows artifact.**
 This is a target-specific applicability assessment, not a claim that the locked

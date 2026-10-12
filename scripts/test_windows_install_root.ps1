@@ -43,6 +43,14 @@ function Test-UpdateRoot {
         $key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey($testRegistrySubKey)
         try { $key.SetValue("InstallRoot", $target) } finally { $key.Dispose() }
     }
+    @'
+function Enter-RuntimeOperation { return [IO.MemoryStream]::new() }
+function Write-RuntimeLog { param($Message) Write-Host $Message }
+function Get-ListeningProcessId { return $null }
+function Apply-PreparedRuntime { param([switch]$KeepStopped, [switch]$DeferLocationCommit)
+    Set-Content -LiteralPath (Join-Path $AppRoot 'stop-root.txt') -Value $AppRoot -Encoding utf8
+}
+'@ | Set-Content -LiteralPath (Join-Path $package 'runtime.ps1') -Encoding utf8
     Copy-Item -LiteralPath (Join-Path $windowsDir "apply-update.ps1"), (Join-Path $windowsDir "common.ps1") -Destination $package
     @'
 
@@ -65,9 +73,10 @@ param([switch]$Quiet)
 Set-Content -LiteralPath (Join-Path $AppRoot "stop-root.txt") -Value $AppRoot -Encoding utf8
 '@ | Set-Content -LiteralPath (Join-Path $package "stop-server.ps1") -Encoding utf8
     @'
-param([string]$GuiSource, [string]$InstallRoot, [switch]$NonInteractive, [switch]$DeferLocationCommit, [string]$PackageSource)
+param([string]$GuiSource, [string]$InstallRoot, [switch]$NonInteractive, [switch]$DeferLocationCommit, [string]$PackageSource, [switch]$PrepareOnly)
 @{ Root = $InstallRoot; Defer = [bool]$DeferLocationCommit } | ConvertTo-Json |
     Set-Content -LiteralPath (Join-Path $InstallRoot "install-arguments.json") -Encoding utf8
+$global:LASTEXITCODE = 0
 '@ | Set-Content -LiteralPath (Join-Path $package "install.ps1") -Encoding utf8
     if ($FailInstall) {
         Add-Content -LiteralPath (Join-Path $package "install.ps1") -Value 'throw "Expected fixture installation failure"'
@@ -83,8 +92,8 @@ param([string]$GuiSource, [string]$InstallRoot, [switch]$NonInteractive, [switch
     $captured = Get-Content -Raw -LiteralPath (Join-Path $target "install-arguments.json") | ConvertFrom-Json
     Assert-Equal $captured.Root $target "Update installation destination"
     Assert-Equal $captured.Defer $ExpectedDefer "Update registry commit policy"
-    Assert-Equal ((Get-Content -Raw -LiteralPath (Join-Path $target "stop-root.txt")).Trim()) $target "Update stop-server destination"
-    Assert-Equal ((Get-Content -LiteralPath (Join-Path $target "launches.txt"))[0]) (Join-Path $target "bin\zotero-pdf2zh-pro.exe") "Updated GUI destination"
+    if (-not $FailInstall) { Assert-Equal ((Get-Content -Raw -LiteralPath (Join-Path $target "stop-root.txt")).Trim()) $target "Update stop-server destination" }
+    Assert-Equal (@(Get-Content -LiteralPath (Join-Path $target "launches.txt"))[0]) (Join-Path $target "bin\zotero-pdf2zh-pro.exe") "Updated GUI destination"
     $relaunchEnvironment = Get-Content -Raw -LiteralPath (Join-Path $target "relaunch-environment.json") | ConvertFrom-Json
     $expectedOverride = if ($ExpectedDefer) { $target } else { $null }
     Assert-Equal $relaunchEnvironment.RootOverride $expectedOverride "Relaunched GUI installation override"
@@ -95,6 +104,8 @@ try {
     $env:PDF2ZH_WINDOWS_APP_ROOT = $null
     $env:PDF2ZH_WINDOWS_REGISTRY_KEY = "HKCU:\$testRegistrySubKey"
     . (Join-Path $windowsDir "common.ps1")
+    Assert-Equal $AutostartRunKey "HKCU:\$testRegistrySubKey\Run" "Isolated autostart command"
+    Assert-Equal $AutostartApprovedKey "HKCU:\$testRegistrySubKey\StartupApproved" "Isolated autostart approval"
     Assert-Equal $InstallRegistryReadStatus "missing" "Missing registry diagnostics"
     Assert-Equal $InstallRegistryReadErrorCode $null "Missing registry has no error code"
 

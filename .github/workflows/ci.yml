@@ -59,11 +59,42 @@ jobs:
       - name: Test glossary source snapshot guards
         run: uv run --no-project python -m unittest discover -s scripts -p 'test_glossary_data.py'
 
-      - name: Test Windows control center state
-        working-directory: windows-app
+  windows-native:
+    runs-on: windows-latest
+    env:
+      RUSTFLAGS: "-C target-feature=+crt-static"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: windows-app
+      - uses: astral-sh/setup-uv@v8.3.2
+      - uses: actions/cache@v4
+        with:
+          path: .tmp/windows-build-tools
+          key: windows-slint-1.18.1-skia-153-llvm-21.1.8-v1
+      - name: Prepare portable Windows renderer toolchain
+        shell: pwsh
+        run: ./scripts/prepare_windows_build_tools.ps1
+      - name: Native control center and transaction tests
         run: |
-          pnpm install --frozen-lockfile
-          pnpm test
+          ./scripts/build_windows_control.ps1 -RunTests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_runtime.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_cleanup.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv run --no-project python scripts/test_windows_progress.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          foreach ($test in @('test_windows_uninstall.py', 'test_windows_slint_gate.py', 'test_prepare_windows_skia_source.py')) {
+            uv run --no-project python "scripts/$test"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
   codex-native:
     strategy:
@@ -78,6 +109,8 @@ jobs:
           python-version: "3.13"
       - name: Test native Codex discovery and process cleanup without accounts
         working-directory: server
+        shell: bash
         run: |
+          set -euo pipefail
           uv run --no-project --with psutil python -m unittest discover -s tests -p test_codex_discovery.py
           uv run --no-project --with psutil python -m unittest discover -s tests -p test_codex_client.py

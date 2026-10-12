@@ -1,372 +1,164 @@
 ﻿param(
-    [string]$PackageSource,
-    [string]$GuiSource,
-    [string]$InstallRoot,
-    [switch]$DeferLocationCommit,
-    [switch]$AllowPreparedDestination,
-    [switch]$SkipUvBootstrap,
-    [switch]$NoShortcuts,
-    [switch]$NonInteractive
+    [string]$PackageSource, [string]$GuiSource, [string]$InstallRoot,
+    [switch]$PrepareOnly, [switch]$Repair, [switch]$DeferLocationCommit,
+    [switch]$AllowPreparedDestination, [switch]$SkipUvBootstrap,
+    [switch]$NoShortcuts, [switch]$NonInteractive
 )
-
-$explicitInstallRoot = $InstallRoot
-if ($explicitInstallRoot) {
-    if (-not [IO.Path]::IsPathRooted($explicitInstallRoot)) {
-        throw "The installation directory must be an absolute path."
-    }
-    $env:PDF2ZH_WINDOWS_APP_ROOT = [IO.Path]::GetFullPath($explicitInstallRoot)
+if ($InstallRoot) {
+    if (-not [IO.Path]::IsPathRooted($InstallRoot)) {throw 'An absolute installation path is required.'}
+    $env:PDF2ZH_WINDOWS_APP_ROOT=[IO.Path]::GetFullPath($InstallRoot)
 }
-. (Join-Path $PSScriptRoot "common.ps1")
+. (Join-Path $PSScriptRoot 'common.ps1')
+. (Join-Path $PSScriptRoot 'runtime.ps1')
 Assert-WindowsX64
-
-$managementFiles = @(
-    "common.ps1",
-    "apply-update.ps1",
-    "relocate.ps1",
-    "install.ps1",
-    "start-server.ps1",
-    "stop-server.ps1",
-    "view-log.ps1",
-    "uninstall.ps1",
-    "install.cmd",
-    "start-server.cmd",
-    "stop-server.cmd",
-    "view-log.cmd",
-    "uninstall.cmd"
-)
-
-function Install-Uv {
-    Use-PrivateUvEnvironment
-    New-Item -ItemType Directory -Force -Path $UvInstallDir | Out-Null
-    Write-Host "[install] Installing private uv in $UvInstallDir..."
-    $installerFile = Join-Path ([IO.Path]::GetTempPath()) (
-        "zotero-pdf2zh-pro-uv-installer-{0}.ps1" -f [guid]::NewGuid().ToString("N")
-    )
-    try {
-        for ($attempt = 1; $attempt -le 3; $attempt++) {
-            try {
-                Invoke-WebRequest -UseBasicParsing "https://astral.sh/uv/install.ps1" -OutFile $installerFile
-                $powerShellExecutable = (Get-Process -Id $PID).Path
-                $modulePathBefore = $env:PSModulePath
-                try {
-                    if ([IO.Path]::GetFileName($powerShellExecutable) -ieq "powershell.exe") {
-                        $builtInModulePath = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\Modules"
-                        $env:PSModulePath = "$builtInModulePath;$modulePathBefore"
-                    }
-                    $installerOutput = & $powerShellExecutable -NoProfile -ExecutionPolicy Bypass -File $installerFile 2>&1
-                    $installerExitCode = $LASTEXITCODE
-                } finally {
-                    $env:PSModulePath = $modulePathBefore
-                }
-                $installerOutput | ForEach-Object { Write-Host $_ }
-                if ($installerExitCode -ne 0) {
-                    throw "The uv installer failed with exit code $installerExitCode."
-                }
-                if (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf) {
-                    break
-                }
-                throw "The uv installer completed without creating $PrivateUvExecutable"
-            } catch {
-                if ($attempt -eq 3) {
-                    throw
-                }
-                Write-Warning "Private uv installation attempt $attempt failed; retrying: $($_.Exception.Message)"
-                Start-Sleep -Seconds 1
-            }
-        }
-    } finally {
-        Remove-Item -LiteralPath $installerFile -Force -ErrorAction SilentlyContinue
-    }
-    if (-not (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf)) {
-        throw "The uv installer completed without creating $PrivateUvExecutable"
-    }
-    Write-Host "[install] Private uv is ready at $PrivateUvExecutable"
-}
-
-function Assert-InstallDestination {
-    $fullRoot = [IO.Path]::GetFullPath($AppRoot)
-    if (-not [IO.Path]::IsPathRooted($fullRoot)) {
-        throw "The installation directory must be an absolute path."
-    }
-    if (Test-Path -LiteralPath $fullRoot -PathType Leaf) {
-        throw "The installation directory points to a file: $fullRoot"
-    }
-    if (Test-Path -LiteralPath $fullRoot -PathType Container) {
-        $entries = @(Get-ChildItem -Force -LiteralPath $fullRoot)
-        $knownNames = @(
-            "bin", "cache", "data", "logs", "runtime", "updates",
-            "installed-version.txt", "server.pid", "server-executable.txt",
-            "control-panel.pid", "control-panel-executable.txt", "last-operation-error.txt"
-        )
-        $unknown = @($entries | Where-Object {
-            $_.Name -notin $knownNames -and $_.Name -notlike ".install-*"
-        })
-        if ($unknown.Count -gt 0) {
-            throw "The installation directory contains unrelated files: $($unknown[0].FullName)"
-        }
-        $recognizedInstallation =
-            (Test-Path -LiteralPath (Join-Path $fullRoot "installed-version.txt") -PathType Leaf) -or
-            (Test-Path -LiteralPath (Join-Path $fullRoot "bin\$ProductName.exe") -PathType Leaf)
-        $savedRoot = Get-SavedInstallRoot
-        $preservedInstallation = $savedRoot -and
-            (Test-PathEqual -Left $savedRoot -Right $fullRoot) -and
-            @($entries | Where-Object { $_.Name -notin @("data", "logs") }).Count -eq 0
-        $preparationOnly = Test-PreparationOnlyRoot -Path $fullRoot
-        if ($entries.Count -gt 0 -and -not $recognizedInstallation -and -not $preservedInstallation -and -not $preparationOnly -and -not $AllowPreparedDestination) {
-            throw "The installation directory is not empty and is not a recognized installation: $fullRoot"
-        }
-    }
-    New-Item -ItemType Directory -Force -Path $fullRoot | Out-Null
-    $probe = Join-Path $fullRoot (".write-test-{0}" -f [guid]::NewGuid().ToString("N"))
-    try {
-        Set-Content -LiteralPath $probe -Value "ok" -Encoding ascii
-    } finally {
-        Remove-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue
-    }
-}
-
 function Copy-LegacyData {
     param([string]$UvExecutable)
-    if (Test-Path -LiteralPath $DataDir) {
-        $existing = Get-ChildItem -Force -LiteralPath $DataDir -ErrorAction SilentlyContinue
-        if ($existing) {
-            return
-        }
-    }
-    $toolRoot = Get-UvToolDirectory -UvExecutable $UvExecutable
-    $legacyData = Join-Path (Join-Path $toolRoot $ProductName) "Lib\site-packages\translates"
-    if (-not (Test-Path -LiteralPath $legacyData)) {
-        return
-    }
-    New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
-    Copy-Item -Path (Join-Path $legacyData "*") -Destination $DataDir -Recurse -Force
-    Write-Host "Copied legacy task data to $DataDir"
-}
-
-function Resolve-GuiSource {
-    $candidate = if ($GuiSource) {
-        [IO.Path]::GetFullPath($GuiSource)
-    } else {
-        Join-Path $PSScriptRoot "$ProductName.exe"
-    }
-    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
-        throw "The Windows control center executable was not found at $candidate"
-    }
-    $stream = [IO.File]::OpenRead($candidate)
-    try {
-        if ($stream.Length -lt 2 -or $stream.ReadByte() -ne 0x4d -or $stream.ReadByte() -ne 0x5a) {
-            throw "The control center executable is not a valid Windows PE file."
-        }
-    } finally {
-        $stream.Dispose()
-    }
-    return [IO.Path]::GetFullPath($candidate)
-}
-
-function Copy-PackageFiles {
-    param([string]$Destination)
-    New-Item -ItemType Directory -Force -Path $Destination | Out-Null
-    foreach ($file in $managementFiles) {
-        $source = Join-Path $PSScriptRoot $file
-        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
-            throw "The Windows package is missing $file"
-        }
-        Copy-Item -LiteralPath $source -Destination (Join-Path $Destination $file) -Force
+    if ((Test-Path -LiteralPath $DataDir) -and @(Get-ChildItem -LiteralPath $DataDir -Force).Count) {return}
+    $legacy=Join-Path (Get-UvToolDirectory -UvExecutable $UvExecutable) "$ProductName/Lib/site-packages/translates"
+    if (Test-Path -LiteralPath $legacy) {
+        New-Item -ItemType Directory -Force -Path $DataDir|Out-Null
+        Copy-Item -Path (Join-Path $legacy '*') -Destination $DataDir -Recurse -Force
+        Write-Host "Copied legacy task data to $DataDir"
     }
 }
-
-function Backup-InstalledFiles {
-    param([string]$Destination)
-    New-Item -ItemType Directory -Force -Path $Destination | Out-Null
-    foreach ($file in @($managementFiles) + @("$ProductName.exe")) {
-        $source = Join-Path $BinDir $file
-        if (Test-Path -LiteralPath $source -PathType Leaf) {
-            Copy-Item -LiteralPath $source -Destination (Join-Path $Destination $file) -Force
-        }
+$known=@('bin','cache','data','logs','runtime','updates','settings.json','install-state.json','.operation.lock','installed-version.txt',
+    'server.pid','server-executable.txt','control-panel.pid','control-panel-executable.txt','last-operation-error.txt','candidate-profile.json')
+if (Test-Path -LiteralPath $AppRoot) {
+    if (-not (Test-Path -LiteralPath $AppRoot -PathType Container)) {throw 'Installation path points to a file.'}
+    $entries=@(Get-ChildItem -LiteralPath $AppRoot -Force)
+    if (@($entries|Where-Object {$_.Name -notin $known}).Count) {throw 'Installation path contains unrelated files.'}
+    $ownedPreparation=$false
+    $ownershipPath=Join-Path $AppRoot 'install-state.json'
+    if (Test-Path -LiteralPath $ownershipPath) {
+        $ownership=Get-Content -Raw -Encoding utf8 -LiteralPath $ownershipPath|ConvertFrom-Json
+        $ownedPreparation=$ownership.product -eq $ProductName -and (Test-PathEqual $ownership.root $AppRoot)
+    }
+    if ($entries.Count -and -not $ownedPreparation -and -not (Test-ManagedInstallRoot $AppRoot) -and -not (Test-PreparationOnlyRoot $AppRoot) -and -not $AllowPreparedDestination) {
+        $saved=Get-SavedInstallRoot
+        if (-not (Test-PathEqual $saved $AppRoot) -or @($entries|Where-Object {$_.Name -notin @('data','logs','settings.json','.operation.lock')}).Count) {throw 'Installation path is not a recognized product directory.'}
     }
 }
-
-function Restore-InstalledFiles {
-    param([string]$BackupDirectory)
-    New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
-    foreach ($file in @($managementFiles) + @("$ProductName.exe")) {
-        Remove-Item -LiteralPath (Join-Path $BinDir $file) -Force -ErrorAction SilentlyContinue
-        $backup = Join-Path $BackupDirectory $file
-        if (Test-Path -LiteralPath $backup -PathType Leaf) {
-            Copy-Item -LiteralPath $backup -Destination (Join-Path $BinDir $file) -Force
-        }
-    }
-}
-
-function Install-StagedFiles {
-    param([string]$StagedBin)
-    New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
-    $stagedGui = Join-Path $StagedBin "$ProductName.exe"
-    $atomicBackup = Join-Path (Split-Path $StagedBin -Parent) "control-panel.previous.exe"
-    if (Test-Path -LiteralPath $ControlPanelExecutable -PathType Leaf) {
-        [IO.File]::Replace($stagedGui, $ControlPanelExecutable, $atomicBackup, $true)
-    } else {
-        [IO.File]::Move($stagedGui, $ControlPanelExecutable)
-    }
-    foreach ($file in $managementFiles) {
-        Copy-Item -LiteralPath (Join-Path $StagedBin $file) -Destination (Join-Path $BinDir $file) -Force
-    }
-}
-
-function Install-Shortcuts {
-    if ($NoShortcuts) {
-        Update-ProductShellIcons -Root $AppRoot -NoShortcuts
-        return
-    }
-    Write-ProductShortcuts -Root $AppRoot
-}
-
-Assert-InstallDestination
-$resolvedGuiSource = Resolve-GuiSource
-$firstGuiInstall = -not (Test-Path -LiteralPath $ControlPanelExecutable -PathType Leaf)
-$previousVersion = if (Test-Path -LiteralPath $InstalledVersionFile) {
-    (Get-Content -Raw -LiteralPath $InstalledVersionFile).Trim()
-} else {
-    $null
-}
-if ($previousVersion) {
-    try {
-        if ([version]$PackageVersion -lt [version]$previousVersion) {
-            throw "Downgrade blocked: installed version is $previousVersion, candidate is $PackageVersion."
-        }
-    } catch [System.Management.Automation.RuntimeException] {
-        throw
-    } catch {
-        throw "Cannot compare installed version '$previousVersion' with '$PackageVersion'."
-    }
-}
-
-New-Item -ItemType Directory -Force -Path $AppRoot, $DataDir, $LogsDir | Out-Null
-$stagingRoot = Join-Path $AppRoot (".install-{0}" -f [guid]::NewGuid().ToString("N"))
-$stagedBin = Join-Path $stagingRoot "new"
-$backupBin = Join-Path $stagingRoot "previous"
-$serverInstalled = $false
-$filesInstalled = $false
-$previousControlPanelRunning = $null -ne (Get-ManagedControlPanelProcessId)
-$savedInstallRootBefore = Get-SavedInstallRoot
-
+if (-not $GuiSource) {$GuiSource=Join-Path $PSScriptRoot "$ProductName.exe"}
+if (-not (Test-Path -LiteralPath $GuiSource -PathType Leaf)) {throw 'The control center executable is missing.'}
+if ([Diagnostics.FileVersionInfo]::GetVersionInfo($GuiSource).FileVersion -ne $PackageVersion) {throw 'The control center version does not match the package.'}
+$manifest=Get-Content -Raw -Encoding utf8 -LiteralPath (Join-Path $PSScriptRoot 'windows-dependencies.json')|ConvertFrom-Json
+$requirements=Join-Path $PSScriptRoot 'windows-requirements.txt'
+if ($manifest.version -ne $PackageVersion -or (Get-ProductFileSha256 $requirements) -ine $manifest.requirementsSha256) {throw 'The dependency lock is damaged or belongs to another version.'}
+if ((Test-Path -LiteralPath $InstalledVersionFile) -and [version](Get-Content -Raw -LiteralPath $InstalledVersionFile).Trim() -gt [version]$PackageVersion) {throw 'Downgrade blocked.'}
+$operation=Enter-RuntimeOperation
 try {
-    Copy-PackageFiles -Destination $stagedBin
-    Copy-Item -LiteralPath $resolvedGuiSource -Destination (Join-Path $stagedBin "$ProductName.exe") -Force
-    Backup-InstalledFiles -Destination $backupBin
-    Stop-ManagedControlPanel
-
-    $existingStop = Join-Path $BinDir "stop-server.ps1"
-    if (Test-Path -LiteralPath $existingStop) {
-        & $existingStop -Quiet
-    } else {
-        & (Join-Path $PSScriptRoot "stop-server.ps1") -Quiet
-    }
-
-    $uv = if (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf) {
-        Use-PrivateUvEnvironment
-        $PrivateUvExecutable
-    } elseif ($SkipUvBootstrap) {
-        $existingUv = Get-UvExecutable
-        if ($existingUv) {
-            Use-PrivateUvEnvironment
+    New-Item -ItemType Directory -Force -Path $DataDir,$LogsDir,(Join-Path $AppRoot 'updates/downloads'),(Join-Path $RuntimeDir 'versions')|Out-Null
+    Write-AtomicJson (Join-Path $AppRoot 'install-state.json') @{product=$ProductName;root=$AppRoot}
+    Write-OperationProgress 'checking' '正在检查安装环境'
+    $preparationError=Join-Path $AppRoot 'updates/preparation-error.json'
+    Remove-Item -LiteralPath $preparationError -Force -ErrorAction SilentlyContinue
+    $script:RuntimeFailureCategory='install'
+    Use-PrivateUvEnvironment
+    $script:RuntimeUv=Get-UvExecutable
+    if (-not (Test-Path -LiteralPath $PrivateUvExecutable)) {
+        New-Item -ItemType Directory -Force -Path $UvInstallDir|Out-Null
+        if ($script:RuntimeUv -and $SkipUvBootstrap) {Copy-Item -LiteralPath $script:RuntimeUv -Destination $PrivateUvExecutable}
+        else {
+            $archive=Join-Path $AppRoot "updates/downloads/uv-$($manifest.uvVersion).zip"
+            if (-not (Test-Path -LiteralPath $archive)) {
+                Save-ProgressDownload -Uri "https://github.com/astral-sh/uv/releases/download/$($manifest.uvVersion)/uv-x86_64-pc-windows-msvc.zip" -Destination "$archive.part" -Message '正在下载安装工具'
+                Move-Item -LiteralPath "$archive.part" -Destination $archive -Force
+                Write-RuntimeLog "Downloaded uv bytes=$((Get-Item -LiteralPath $archive).Length); reason=missing runtime."
+            }
+            Expand-Archive -LiteralPath $archive -DestinationPath (Join-Path $UvInstallDir 'bootstrap') -Force
+            $binary=Get-ChildItem -LiteralPath (Join-Path $UvInstallDir 'bootstrap') -Recurse -Filter uv.exe|Select-Object -First 1
+            if (-not $binary -or (Get-ProductFileSha256 $binary.FullName) -ine $manifest.uvBinarySha256) {
+                Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
+                throw 'uv bootstrap checksum failed; retry to download again.'
+            }
+            Copy-Item -LiteralPath $binary.FullName -Destination $PrivateUvExecutable -Force
         }
-        $existingUv
+    }
+    $script:RuntimeUv=$PrivateUvExecutable
+    Write-OperationProgress 'files' '正在准备服务程序'
+    Write-RuntimeLog "Reusing uv=$script:RuntimeUv; Python=$($manifest.python); cache=$UvCacheDir; link-mode=hardlink."
+    Copy-LegacyData -UvExecutable $script:RuntimeUv
+    $wheel=Join-Path $AppRoot ('updates/downloads/'+$manifest.serverWheel.name)
+    if (-not $PackageSource) {
+        $sidecar=Join-Path $PSScriptRoot $manifest.serverWheel.name
+        if (Test-Path -LiteralPath $sidecar -PathType Leaf) {$PackageSource=$sidecar}
+    }
+    if ($PackageSource) {
+        if ((Get-ProductFileSha256 $PackageSource) -ine $manifest.serverWheel.sha256) {throw 'The supplied service wheel does not match the release checksum.'}
+        if (-not (Test-PathEqual $PackageSource $wheel)) {Copy-Item -LiteralPath $PackageSource -Destination $wheel -Force}
+    }
+    $valid=(Test-Path -LiteralPath $wheel) -and ((Get-ProductFileSha256 $wheel) -ieq $manifest.serverWheel.sha256)
+    if (-not $valid) {
+        $metadata=Invoke-RestMethod -Uri "https://pypi.org/pypi/$ProductName/$PackageVersion/json" -TimeoutSec 30
+        $asset=@($metadata.urls|Where-Object {$_.filename -eq $manifest.serverWheel.name -and $_.digests.sha256 -eq $manifest.serverWheel.sha256})
+        if ($asset.Count -ne 1 -or -not $asset[0].url.StartsWith('https://files.pythonhosted.org/')) {throw 'The service release checksum does not match PyPI.'}
+        Save-ProgressDownload -Uri $asset[0].url -Destination "$wheel.part" -Message '正在下载翻译服务程序'
+        if ((Get-ProductFileSha256 "$wheel.part") -ine $manifest.serverWheel.sha256) {throw 'The service download is damaged.'}
+        Move-Item -LiteralPath "$wheel.part" -Destination $wheel -Force
+        Write-RuntimeLog "Downloaded service bytes=$((Get-Item -LiteralPath $wheel).Length); reason=new service package."
     } else {
-        Install-Uv
-        Get-UvExecutable
+        Write-RuntimeLog 'Cache hit: verified service wheel; bytes=0.'
+        Write-OperationProgress 'files' '服务程序已复用'
     }
-    if (-not $uv) {
-        throw "uv installation completed but uv.exe could not be found."
-    }
-
-    Copy-LegacyData -UvExecutable $uv
-    $package = if ($PackageSource) {
-        [IO.Path]::GetFullPath($PackageSource)
+    $identity="$PackageVersion-py$($manifest.python)-$($manifest.requirementsSha256.Substring(0,12))-$($manifest.serverWheel.sha256.Substring(0,8))"
+    if ($Repair) {$identity+='-'+[guid]::NewGuid().ToString('N').Substring(0,8)}
+    $environment=Join-Path $RuntimeDir "versions/$identity"
+    $marker=Join-Path $environment '.prepared.json';$python=Join-Path $environment 'Scripts/python.exe'
+    if (-not (Test-Path -LiteralPath $marker)) {
+        if (Test-Path -LiteralPath $environment) {
+            $environment+='-'+[guid]::NewGuid().ToString('N').Substring(0,8)
+            $marker=Join-Path $environment '.prepared.json';$python=Join-Path $environment 'Scripts/python.exe'
+        }
+        Write-OperationProgress 'python' '正在准备 Python'
+        Invoke-Uv -Arguments @('venv','--python',$manifest.python,'--managed-python','--no-config',$environment)
+        Write-OperationProgress 'dependencies' '正在准备依赖'
+        Invoke-Uv -Arguments @('pip','install','--python',$python,'--no-deps','--require-hashes','--no-config','--link-mode','hardlink','--default-index','https://pypi.org/simple','-r',$requirements)
+        Invoke-Uv -Arguments @('pip','install','--python',$python,'--no-deps','--no-config','--link-mode','hardlink',$wheel)
+        & $python -c 'import sys, server, maintenance; assert server.VERSION == sys.argv[1]' $PackageVersion
+        if ($LASTEXITCODE -ne 0) {throw 'Candidate failed import/version validation.'}
+        Write-AtomicJson $marker @{version=$PackageVersion;python=$manifest.python;requirementsSha256=$manifest.requirementsSha256;wheelSha256=$manifest.serverWheel.sha256}
     } else {
-        "$ProductName==$PackageVersion"
+        Invoke-Uv -Arguments @('pip','check','--python',$python)
+        Write-RuntimeLog 'Cache hit: candidate environment; verifying installed hashes.'
     }
-    Write-Host "Installing $package with managed Python 3.13..."
-    & $uv tool install --python 3.13 --managed-python --force --no-config --default-index https://pypi.org/simple $package
-    if ($LASTEXITCODE -ne 0) {
-        throw "uv tool install failed with exit code $LASTEXITCODE."
+    Write-OperationProgress 'verifying' '正在校验服务与依赖文件'
+    $damaged=@(& $python (Join-Path $PSScriptRoot 'verify-runtime.py'))
+    if ($LASTEXITCODE -eq 2) {
+        if (-not $damaged.Count) {throw 'Runtime verification did not identify the damaged package.'}
+        Write-RuntimeLog "Supplemental download reason=missing/corrupt package; packages=$($damaged -join ',')."
+        Write-OperationProgress 'dependencies' '正在补齐缺失或损坏的依赖'
+        Invoke-Uv -Arguments (@('cache','clean')+$damaged)
+        $arguments=@('pip','install','--python',$python,'--no-deps','--require-hashes','--no-config','--link-mode','hardlink','-r',$requirements)
+        foreach ($name in $damaged) {if ($name -ne $ProductName) {$arguments+=@('--reinstall-package',$name)}}
+        Invoke-Uv -Arguments $arguments
+        if ($damaged -contains $ProductName) {Invoke-Uv -Arguments @('pip','install','--python',$python,'--no-deps','--reinstall-package',$ProductName,$wheel)}
+        & $python (Join-Path $PSScriptRoot 'verify-runtime.py')
+        if ($LASTEXITCODE -ne 0) {throw 'Repaired dependencies still failed verification.'}
+    } elseif ($LASTEXITCODE -ne 0) {throw 'Dependency verification failed.'}
+    $candidate=Join-Path $AppRoot ('updates/candidates/'+[guid]::NewGuid().ToString('N')+'/bin')
+    New-Item -ItemType Directory -Force -Path $candidate|Out-Null
+    foreach ($file in @('common.ps1','runtime.ps1','recover-install.ps1','clean-cache.ps1','verify-runtime.py','windows-dependencies.json','windows-requirements.txt',
+        'apply-update.ps1','relocate.ps1','install.ps1','start-server.ps1','stop-server.ps1','view-log.ps1','uninstall.ps1',
+        'install.cmd','start-server.cmd','stop-server.cmd','view-log.cmd','uninstall.cmd','LICENSE.txt','THIRD_PARTY_NOTICES.md')) {
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination (Join-Path $candidate $file)
     }
-    $serverInstalled = $true
-
-    $toolBin = Get-UvToolDirectory -UvExecutable $uv -Bin
-    $serverExecutable = Join-Path $toolBin "$ProductName.exe"
-    if (-not (Test-Path -LiteralPath $serverExecutable)) {
-        throw "Installed server executable was not found at $serverExecutable"
-    }
-    & $serverExecutable --help | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        throw "The installed server failed its startup smoke check."
-    }
-
-    $filesInstalled = $true
-    Install-StagedFiles -StagedBin $stagedBin
-    Save-ManagedProcess -ProcessId 0 -ServerExecutable $serverExecutable
-    Remove-ManagedProcessState
-    $versionTemp = Join-Path $stagingRoot "installed-version.txt"
-    Set-Content -LiteralPath $versionTemp -Value $PackageVersion -Encoding ascii
-    Move-Item -LiteralPath $versionTemp -Destination $InstalledVersionFile -Force
-    Install-Shortcuts
-    if (-not $DeferLocationCommit -and ($explicitInstallRoot -or -not $env:PDF2ZH_WINDOWS_APP_ROOT)) {
-        Save-InstallRoot -Path $AppRoot
-    }
-    Remove-Item -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -Force -ErrorAction SilentlyContinue
+    Copy-Item -LiteralPath $GuiSource -Destination (Join-Path $candidate "$ProductName.exe")
+    Write-AtomicJson (Join-Path $AppRoot 'updates/prepared.json') @{version=$PackageVersion;environment=$environment;bin=$candidate;created=(Get-Date).ToUniversalTime().ToString('o')}
+    Write-RuntimeLog "Prepared $PackageVersion; old service stayed available."
+    Write-OperationProgress 'waiting' '新版已准备，等待空闲后切换' -Status 'waiting'
+    if (-not $PrepareOnly) {Apply-PreparedRuntime -AllowLegacy -DeferLocationCommit:$DeferLocationCommit -NoShortcuts:$NoShortcuts}
 } catch {
-    $installError = $_
-    if (-not $DeferLocationCommit -and ($explicitInstallRoot -or -not $env:PDF2ZH_WINDOWS_APP_ROOT)) {
-        if ($savedInstallRootBefore) {
-            Save-InstallRoot -Path $savedInstallRootBefore
-        } else {
-            Remove-InstallRoot
-        }
+    $failure=$_
+    if ($failure.Exception -is [OperationCanceledException]) {
+        Write-RuntimeLog 'Installation cancelled; verified downloads and existing data were retained.'
+        Write-OperationProgress 'cancelled' '安装已取消，已下载的文件可在重试时复用。' -Status 'cancelled'
+        exit 1223
     }
-    if ($filesInstalled) {
-        try {
-            Restore-InstalledFiles -BackupDirectory $backupBin
-            if ($previousVersion) {
-                Set-Content -LiteralPath $InstalledVersionFile -Value $previousVersion -Encoding ascii
-            } else {
-                Remove-Item -LiteralPath $InstalledVersionFile -Force -ErrorAction SilentlyContinue
-            }
-            if (Test-Path -LiteralPath $ControlPanelExecutable -PathType Leaf) {
-                Install-Shortcuts
-            }
-        } catch {
-            Write-Warning "Failed to restore the previous control center files: $_"
-        }
-    }
-    if ($serverInstalled -and $previousVersion -and $uv) {
-        Write-Warning "Installation failed; restoring server $previousVersion."
-        & $uv tool install --python 3.13 --managed-python --force --no-config --default-index https://pypi.org/simple "$ProductName==$previousVersion"
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warning "The previous server version could not be restored automatically."
-        }
-    }
-    if ($previousControlPanelRunning -and (Test-Path -LiteralPath $ControlPanelExecutable)) {
-        try {
-            Start-Process -FilePath $ControlPanelExecutable -ArgumentList "--post-install"
-        } catch {
-            Write-Warning "The previous control center could not be restarted automatically."
-        }
-    }
-    throw $installError
-} finally {
-    Remove-Item -LiteralPath $stagingRoot -Recurse -Force -ErrorAction SilentlyContinue
-}
-
-Write-Host ""
-Write-Host "Installation complete."
-Write-Host "Data: $DataDir"
-Write-Host "Logs: $LogsDir"
-
-if (-not $NonInteractive) {
-    $arguments = @("--post-install")
-    if ($firstGuiInstall) {
-        $arguments += "--enable-autostart"
-    }
-    Start-Process -FilePath $ControlPanelExecutable -ArgumentList $arguments
+    if ($failure.Exception -is [Net.WebException]) {$script:RuntimeFailureCategory='network'}
+    Write-AtomicJson (Join-Path $AppRoot 'updates/preparation-error.json') @{category=$script:RuntimeFailureCategory;error=$failure.Exception.Message}
+    Write-OperationProgress 'failed' $failure.Exception.Message -Status 'failed'
+    throw $failure
+} finally {$operation.Dispose()}
+if (-not $PrepareOnly -and -not $NonInteractive) {
+    Start-Process -FilePath $ControlPanelExecutable -ArgumentList '--post-install','--keep-stopped' -WindowStyle Hidden
 }

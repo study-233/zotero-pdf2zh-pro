@@ -1,3 +1,4 @@
+import { maintenanceFetch } from "./diagnostics";
 import { getPref, setPref } from "../utils/prefs";
 
 export const GLOSSARY_PACK_IDS = [
@@ -151,7 +152,7 @@ async function glossaryRequest(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30000);
     try {
-        const response = await fetch(
+        const response = await maintenanceFetch(
             `${normalizeGlossaryServerUrl(serverUrl)}/glossaries${path}`,
             {
                 method,
@@ -159,6 +160,7 @@ async function glossaryRequest(
                 ...(body ? { body: JSON.stringify(body) } : {}),
                 signal: controller.signal,
             },
+            (url, options) => fetch(url, options),
         );
         if ((response.status === 404 && !path) || response.status === 405)
             throw new Error(

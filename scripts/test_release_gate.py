@@ -16,7 +16,7 @@ class ReleaseGateTests(unittest.TestCase):
             root = Path(temporary)
             downloaded = root / "download"
             downloaded.mkdir()
-            names = ["zotero-pdf2zh-pro.xpi", "update.json", "zotero-pdf2zh-pro-windows-x64.zip",
+            names = ["zotero-pdf2zh-pro.xpi", "update.json", "zotero-pdf2zh-pro-windows-x64.zip", "zotero-pdf2zh-pro-windows-x64-setup.exe",
                      "windows-update.json", "zotero-pdf2zh-pro-1.6.9-source.zip",
                      "zotero_pdf2zh_pro-1.6.9-py3-none-any.whl", "zotero_pdf2zh_pro-1.6.9.tar.gz"]
             manifest = {"version": "1.6.9", "commit": "a" * 40, "artifacts": {}}

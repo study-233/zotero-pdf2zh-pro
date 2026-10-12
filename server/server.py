@@ -15,6 +15,7 @@ import shutil
 import signal
 import sys
 import threading
+import time
 import uuid
 from dataclasses import dataclass
 from io import BytesIO
@@ -35,6 +36,7 @@ from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
+from maintenance import install_routes, control_token
 from translation_memory import TranslationMemory
 from text_translation import TextTranslationService, TextTranslationError
 from codex_client import close_codex_clients, get_codex_client, CodexError
@@ -43,7 +45,7 @@ from provider_models import ModelDiscoveryError, list_provider_models, list_code
 from babeldoc.glossary_options import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
 
-VERSION = "1.8.2"
+VERSION = "1.9.0"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
 DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
 TRANSLATES_DIR = Path(
@@ -72,6 +74,7 @@ class PreparedTranslationRequest:
 
 def create_app() -> Flask:
     app = Flask(__name__)
+    install_routes(app, runtime_busy, lambda: TRANSLATES_DIR)
 
     @app.get("/health")
     def health() -> tuple[dict[str, Any], int]:
@@ -731,21 +734,34 @@ def error_response(message: str, status_code: int, **details):
     )
 
 
+def runtime_busy() -> bool:
+    if build_task_stats().get("active", 0) or TASK_MANAGER._queue_blocked:
+        return True
+    if TEXT_TRANSLATOR.busy():
+        return True
+    with GLOSSARY_MANAGER._lock:
+        return any(job.get("state") in {"downloading", "cancelling"}
+                   for job in GLOSSARY_MANAGER._downloads.values())
+
+
 def build_health_payload() -> dict[str, Any]:
     workspace = build_workspace_health()
     task_stats = build_task_stats()
+    from flask import current_app, has_app_context
+    gate = current_app.extensions.get("update_maintenance") if has_app_context() else None
     return {
         "status": "ok" if workspace.get("writable") else "degraded",
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True},
+        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
         "workspace": workspace,
         "tasks": task_stats,
         "queueBlocked": TASK_MANAGER._queue_blocked,
+        "maintenance": gate.snapshot() if gate else {"held": False, "busy": runtime_busy()},
     }
 
 
@@ -890,6 +906,29 @@ def main() -> None:
     args = parse_args()
     configure_runtime_paths(args.data_dir)
     configure_logging(args.log_level, args.log_file)
+    control_token(TRANSLATES_DIR)
+    def cache_preflight():
+        if os.name == "nt":
+            import ctypes
+            kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel.GetCurrentThread.restype = ctypes.c_void_p
+            kernel.SetThreadPriority.argtypes = [ctypes.c_void_p, ctypes.c_int]
+            kernel.SetThreadPriority(kernel.GetCurrentThread(), -2)
+        time.sleep(3)
+        # Inspect existing files only; PDF engine loading/download behavior stays unchanged.
+        from babeldoc.const import CACHE_FOLDER
+        available = 0
+        for folder in (CACHE_FOLDER / "models", CACHE_FOLDER / "fonts"):
+            if not folder.is_dir():
+                continue
+            for path in folder.iterdir():
+                if runtime_busy():
+                    return
+                if path.is_file() and path.stat().st_size:
+                    available += 1
+                time.sleep(0.02)
+        LOGGER.debug("existing model/font cache preflight: files=%s", available)
+    threading.Thread(target=cache_preflight, name="cache-preflight", daemon=True).start()
     LOGGER.info("server starting on http://%s:%s", args.host, args.port)
     previous_sigterm = None
     if threading.current_thread() is threading.main_thread():

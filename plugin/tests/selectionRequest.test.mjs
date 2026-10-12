@@ -4,6 +4,7 @@ import test from "node:test";
 import { URL } from "node:url";
 import ts from "typescript";
 import { webcrypto } from "node:crypto";
+import { maintenanceFetch } from "./maintenanceFixture.mjs";
 
 function fixture() {
     const logs = [],
@@ -66,7 +67,10 @@ function fixture() {
         "clearTimeout",
         code,
     )(
-        () => ({ recordDiagnostic: (...args) => logs.push(args) }),
+        () => ({
+            maintenanceFetch,
+            recordDiagnostic: (...args) => logs.push(args),
+        }),
         exports,
         {
             getMainWindow: () => {

@@ -34,12 +34,13 @@ $process = Start-Process -FilePath $serverExecutable -ArgumentList $arguments -W
 Save-ManagedProcess -ProcessId $process.Id -ServerExecutable $serverExecutable
 
 try {
-    for ($attempt = 0; $attempt -lt 40; $attempt++) {
+    $startupDeadline=[Diagnostics.Stopwatch]::StartNew()
+    while ($startupDeadline.ElapsedMilliseconds -lt 60000) {
         Start-Sleep -Milliseconds 500
         if ($process.HasExited) {
             throw "The server exited during startup. See $LogFile"
         }
-        $health = Get-ServerHealth
+        $health = Get-ServerHealth -TimeoutMilliseconds ([int][Math]::Max(1,[Math]::Min(2000,60000-$startupDeadline.ElapsedMilliseconds)))
         if (Test-ExpectedHealth -Health $health) {
             $activePid = Get-ListeningProcessId
             if (

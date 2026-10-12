@@ -26,6 +26,7 @@ FORBIDDEN_DISTRIBUTIONS = {
 }
 REQUIRED_RUNTIME_FILES = {
     "service_launcher.py",
+    "maintenance.py",
     "diagnostics.py",
     "task_runtime.py",
     "glossary_manager.py",

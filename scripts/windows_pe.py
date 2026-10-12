@@ -10,14 +10,14 @@ from pathlib import Path
 # intentionally absent: the control center must statically link these runtimes.
 SYSTEM_DLLS = frozenset("""
 advapi32.dll avrt.dll bcrypt.dll bcryptprimitives.dll cabinet.dll cfgmgr32.dll
-comctl32.dll comdlg32.dll credui.dll crypt32.dll cryptbase.dll cryptnet.dll
-cryptsp.dll d2d1.dll d3d11.dll dcomp.dll dbghelp.dll dnsapi.dll dwmapi.dll
+combase.dll comctl32.dll comdlg32.dll credui.dll crypt32.dll cryptbase.dll cryptnet.dll
+cryptsp.dll d2d1.dll d3d11.dll d3d12.dll d3dcompiler_47.dll dcomp.dll dbghelp.dll dnsapi.dll dwmapi.dll
 dwrite.dll dxgi.dll gdi32.dll gdiplus.dll hid.dll imm32.dll iphlpapi.dll
 kernel32.dll kernelbase.dll ktmw32.dll mpr.dll msimg32.dll msvcrt.dll
-ncrypt.dll netapi32.dll normaliz.dll ntdll.dll ole32.dll oleacc.dll oleaut32.dll
+ncrypt.dll netapi32.dll normaliz.dll ntdll.dll ole32.dll oleacc.dll oleaut32.dll opengl32.dll
 powrprof.dll profapi.dll propsys.dll psapi.dll rpcrt4.dll secur32.dll
 setupapi.dll shcore.dll shell32.dll shlwapi.dll sspicli.dll ucrtbase.dll
-urlmon.dll user32.dll userenv.dll usp10.dll uxtheme.dll version.dll
+uiautomationcore.dll urlmon.dll user32.dll userenv.dll usp10.dll uxtheme.dll version.dll
 winhttp.dll wininet.dll winmm.dll winspool.drv wintrust.dll wldap32.dll
 ws2_32.dll wtsapi32.dll
 """.split())

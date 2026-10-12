@@ -105,6 +105,7 @@ jobs:
       - name: Setup uv and Python 3.13
         uses: astral-sh/setup-uv@v8.3.2
         with:
+          version: "0.12.10"
           python-version: "3.13"
           enable-cache: true
 
@@ -119,8 +120,20 @@ jobs:
         if: inputs.reuse_build_run_id == ''
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: windows-app/src-tauri
+          workspaces: windows-app
           cache-on-failure: true
+
+      - name: Cache portable Windows renderer toolchain
+        if: inputs.reuse_build_run_id == ''
+        uses: actions/cache@v4
+        with:
+          path: .tmp/windows-build-tools
+          key: windows-slint-1.18.1-skia-153-llvm-21.1.8-v1
+
+      - name: Prepare static Slint renderer toolchain
+        if: inputs.reuse_build_run_id == ''
+        shell: pwsh
+        run: ./scripts/prepare_windows_build_tools.ps1
 
       - name: Verify committed versions
         shell: bash
@@ -138,19 +151,6 @@ jobs:
           assert any(r["head_sha"] == sys.argv[2] and r["conclusion"] == "success"
                      and r["event"] == "push" for r in runs), "Release commit must pass core CI first"
           PY_CORE
-
-      - name: Prepare Windows GUI test environment
-        shell: powershell
-        run: |
-          # auto-launch opens this Windows shell key; minimal hosted profiles may lack it.
-          # Create only the empty OS container. The GUI must write its own startup value.
-          $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
-          Write-Host "Windows shell Run key exists: $(Test-Path -LiteralPath $runKey)"
-          if (-not (Test-Path -LiteralPath $runKey)) { New-Item -Path $runKey -Force | Out-Null }
-          . scripts/windows/prepare-webview2.ps1 -FunctionsOnly
-          $preparation = @{ Status = 'working'; Message = ''; Installer = $null }
-          Invoke-WebView2Preparation -State $preparation -DiagnosticPath "$env:RUNNER_TEMP/webview2-setup.log"
-          if ($preparation.Status -ne 'ready') { throw $preparation.Message }
 
       - name: Build artifacts and verify Windows startup
         if: inputs.reuse_build_run_id == ''
@@ -195,7 +195,7 @@ jobs:
           source, version = Path(sys.argv[1]), sys.argv[2]
           product = "zotero-pdf2zh-pro"
           paths = [f"plugin/build/{product}.xpi", "plugin/build/update.json",
-                   f"dist/{product}-windows-x64.zip", "dist/windows-update.json",
+                   f"dist/{product}-windows-x64.zip", f"dist/{product}-windows-x64-setup.exe", "dist/windows-update.json",
                    f"dist/{product}-{version}-source.zip",
                    f"server/dist/zotero_pdf2zh_pro-{version}-py3-none-any.whl",
                    f"server/dist/zotero_pdf2zh_pro-{version}.tar.gz"]
@@ -244,6 +244,34 @@ jobs:
           $smokeOnly = '${{ inputs.full_validation }}' -ne 'true'
           & scripts/test_windows_lifecycle.ps1 -WindowsPackage 'dist/zotero-pdf2zh-pro-windows-x64.zip' -PackageSource $wheel -SmokeOnly:$smokeOnly
 
+      - name: Verify real downloads and progress with the release controller
+        shell: pwsh
+        run: |
+          $progressPackage = Join-Path $env:RUNNER_TEMP 'progress-package'
+          Expand-Archive -LiteralPath 'dist/zotero-pdf2zh-pro-windows-x64.zip' -DestinationPath $progressPackage
+          $env:PDF2ZH_TEST_CONTROL = Join-Path $progressPackage 'zotero-pdf2zh-pro.exe'
+          $env:PDF2ZH_TEST_UV = (Get-Command uv).Source
+          $env:PDF2ZH_TEST_PYTHON = (uv python find 3.13 | Out-String).Trim()
+          uv run --no-project python scripts/test_windows_uv_progress.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify v1.8.2 migration and locked dependency reuse
+        if: inputs.full_validation && inputs.replacement_commit == ''
+        shell: pwsh
+        run: |
+          $previous = Join-Path $env:RUNNER_TEMP 'previous-release'
+          New-Item -ItemType Directory -Force -Path $previous | Out-Null
+          gh release download v1.8.2 --repo study-233/zotero-pdf2zh-pro --pattern 'zotero-pdf2zh-pro-windows-x64.zip' --dir $previous
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $metadata = Invoke-RestMethod 'https://pypi.org/pypi/zotero-pdf2zh-pro/1.8.2/json'
+          $wheel = @($metadata.urls | Where-Object {$_.filename -eq 'zotero_pdf2zh_pro-1.8.2-py3-none-any.whl'})
+          if ($wheel.Count -ne 1) { throw 'Expected one published v1.8.2 wheel' }
+          $oldWheel = Join-Path $previous $wheel[0].filename
+          Invoke-WebRequest $wheel[0].url -OutFile $oldWheel
+          if ((Get-FileHash -LiteralPath $oldWheel -Algorithm SHA256).Hash -ine $wheel[0].digests.sha256) { throw 'Previous wheel checksum mismatch' }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_previous_release.ps1 -PreviousPackage (Join-Path $previous 'zotero-pdf2zh-pro-windows-x64.zip') -PreviousWheel $oldWheel -Package 'dist/zotero-pdf2zh-pro-windows-x64.zip' -Wheel "server/dist/zotero_pdf2zh_pro-$env:RELEASE_VERSION-py3-none-any.whl" -Root (Join-Path $PWD '.tmp/release-upgrade 中文 with spaces')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Verify and collect release artifacts
         shell: bash
         run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT" --collect
@@ -266,9 +294,9 @@ jobs:
             plugin/build/update*.json
             server/dist/*
             dist/*.zip
+            dist/*.exe
             dist/*.json
             ${{ env.PDF2ZH_WINDOWS_APP_ROOT }}/logs/**
             ${{ env.PDF2ZH_WINDOWS_APP_ROOT }}/last-operation-error.txt
-            ${{ runner.temp }}/webview2-setup.log
           if-no-files-found: ignore
           retention-days: 14

@@ -1,8 +1,6 @@
 ﻿param([Parameter(Mandatory = $true)][string]$Package)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot 'windows\prepare-webview2.ps1') -FunctionsOnly
-if (-not (Test-WebView2Runtime)) { throw 'The GUI smoke-test runner must have WebView2 Runtime; test missing-runtime setup separately in a clean VM.' }
 $root = Join-Path ([IO.Path]::GetTempPath()) ('pdf2zh-package-smoke-' + [guid]::NewGuid().ToString('N'))
 $process = $null
 $processPath = $null
@@ -45,8 +43,7 @@ try {
     New-Item -ItemType Directory -Path $working, $env:LOCALAPPDATA -Force | Out-Null
     Expand-Archive -LiteralPath (Resolve-Path $Package).Path -DestinationPath $unpacked
     $env:PDF2ZH_UPDATE_CONTRACT_PACKAGE = (Resolve-Path $Package).Path
-    $manifest = Join-Path $PSScriptRoot '..\windows-app\src-tauri\Cargo.toml'
-    & cargo +stable-x86_64-pc-windows-msvc test --release --locked --target x86_64-pc-windows-msvc --manifest-path $manifest update_handoff_binds_packaged_script
+    & (Join-Path $PSScriptRoot 'build_windows_control.ps1') -RunTests -TestFilter update_handoff_binds_packaged_script
     if ($LASTEXITCODE -ne 0) { throw 'Packaged updater rejected production or legacy invocation arguments.' }
     Write-Host 'Final ZIP accepts production and legacy updater commands, including Chinese characters and spaces.'
     $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot;$env:SystemRoot\System32\WindowsPowerShell\v1.0"

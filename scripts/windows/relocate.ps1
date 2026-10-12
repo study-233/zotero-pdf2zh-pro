@@ -13,7 +13,9 @@ $SourceRoot = [IO.Path]::GetFullPath($SourceRoot)
 $DestinationRoot = [IO.Path]::GetFullPath($DestinationRoot)
 $env:PDF2ZH_WINDOWS_APP_ROOT = $SourceRoot
 . (Join-Path $PSScriptRoot "common.ps1")
+. (Join-Path $PSScriptRoot "runtime.ps1")
 Assert-WindowsX64
+$sourceOperation=Enter-RuntimeOperation
 
 $sourcePaths = @{
     Root = $SourceRoot
@@ -188,7 +190,18 @@ function Start-SourceCleanup {
     $cleanup = @'
 param([string]$SourcePath, [string]$WarningPath)
 Start-Sleep -Seconds 4
-Remove-Item -LiteralPath $SourcePath -Recurse -Force -ErrorAction SilentlyContinue
+$resolvedSource=[IO.Path]::GetFullPath($SourcePath).TrimEnd('\')
+if ($resolvedSource -eq [IO.Path]::GetPathRoot($resolvedSource).TrimEnd('\') -or ((Get-Item -LiteralPath $resolvedSource).Attributes -band [IO.FileAttributes]::ReparsePoint)) {throw 'Unsafe migration cleanup root.'}
+if (-not (Test-Path -LiteralPath (Join-Path $resolvedSource 'installed-version.txt'))) {throw 'Migration source is no longer a recognized installation.'}
+foreach ($name in @('bin','cache','data','logs','runtime','updates','settings.json','install-state.json','.operation.lock',
+    'installed-version.txt','server.pid','server-executable.txt','control-panel.pid','control-panel-executable.txt','last-operation-error.txt')) {
+    $child=Join-Path $resolvedSource $name
+    if (Test-Path -LiteralPath $child) {
+        if ((Get-Item -LiteralPath $child -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {throw 'Migration cleanup cannot follow a junction.'}
+        Remove-Item -LiteralPath $child -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+if (-not @(Get-ChildItem -LiteralPath $resolvedSource -Force).Count) {Remove-Item -LiteralPath $resolvedSource -Force}
 if (Test-Path -LiteralPath $SourcePath) {
     Set-Content -LiteralPath $WarningPath -Value "The new installation is active, but the old directory could not be removed: $SourcePath" -Encoding utf8
 }
@@ -201,6 +214,7 @@ Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
 
 try {
     Assert-RelocationDestination
+    Request-SafeMaintenance | Out-Null
     Write-RelocationLog "[1/8] Waiting for the control center to exit..."
     for ($attempt = 0; $attempt -lt 80; $attempt++) {
         if (-not (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue)) {
@@ -220,6 +234,19 @@ try {
     Copy-DirectoryContents -Source $sourcePaths.Data -Destination (Join-Path $DestinationRoot "data")
     Copy-DirectoryContents -Source $sourcePaths.Logs -Destination (Join-Path $DestinationRoot "logs")
     Copy-DirectoryContents -Source (Join-Path $SourceRoot "cache") -Destination (Join-Path $DestinationRoot "cache")
+    # Managed Python and uv are relocatable; rebuild only the environment at the new path.
+    foreach ($runtimePart in @('python', 'uv')) {
+        $runtimeSource = Join-Path $SourceRoot ("runtime\$runtimePart")
+        if (Test-Path -LiteralPath $runtimeSource -PathType Container) {
+            Copy-DirectoryContents -Source $runtimeSource -Destination (Join-Path $DestinationRoot ("runtime\$runtimePart"))
+        }
+    }
+    if (Test-Path -LiteralPath (Join-Path $SourceRoot 'settings.json')) {Copy-Item -LiteralPath (Join-Path $SourceRoot 'settings.json') -Destination (Join-Path $DestinationRoot 'settings.json')}
+    if (-not $PackageSource) {
+        $dependencies=Get-Content -Raw -Encoding utf8 -LiteralPath (Join-Path $sourcePaths.Bin 'windows-dependencies.json')|ConvertFrom-Json
+        $cachedWheel=Join-Path $SourceRoot ('updates/downloads/'+$dependencies.serverWheel.name)
+        if (Test-Path -LiteralPath $cachedWheel) {$PackageSource=$cachedWheel}
+    }
 
     Write-RelocationLog "[4/8] Installing the private uv and Python runtime..."
     $installArguments = @{
@@ -266,7 +293,7 @@ try {
     if ($sourceWasRunning) {
         Start-Process -FilePath $targetGui -ArgumentList "--post-install" -WindowStyle Hidden
     } else {
-        Start-Process -FilePath $targetGui -WindowStyle Hidden
+        Start-Process -FilePath $targetGui -ArgumentList '--post-install','--keep-stopped' -WindowStyle Hidden
     }
     Write-RelocationLog "[8/8] Cleaning the old installation..."
     try {
@@ -347,4 +374,6 @@ try {
         Write-RelocationErrorDetails -Operation "Restart source control center" -ErrorRecord $_
     }
     exit 1
+} finally {
+    $sourceOperation.Dispose()
 }

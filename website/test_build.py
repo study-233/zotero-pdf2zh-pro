@@ -44,7 +44,7 @@ class WebsiteTests(unittest.TestCase):
             self.assertRegex(html, r'下一篇 →</small><span>安装 Zotero 插件</span>')
         home = (self.output / 'index.html').read_text(encoding='utf-8')
         self.assertIn('/releases/latest/download/zotero-pdf2zh-pro.xpi', home)
-        self.assertIn('/releases/latest/download/zotero-pdf2zh-pro-windows-x64.zip', home)
+        self.assertIn('/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe', home)
         self.assertIn('本地服务与 Zotero 插件都需要安装', home)
 
     def test_public_benchmark_downloads_are_unchanged(self):

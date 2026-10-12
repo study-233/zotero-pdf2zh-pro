@@ -152,6 +152,13 @@ class TextTranslationService:
         self.free_rate_lock = threading.Lock()
         self.free_last_request = 0.0
         self.stream_slots = threading.BoundedSemaphore(2)
+        self._stream_workers = 0
+
+    def busy(self):
+        # Timed-out HTTP requests can leave provider workers completing in the background.
+        with self.lock:
+            return bool(self._stream_workers or self._request_events
+                        or any(not future.done() for future in self.pending.values()))
 
     def close(self):
         with self.lock:
@@ -269,6 +276,8 @@ class TextTranslationService:
                 messages.put(('error', {'code': 'provider_error', 'message': '翻译未完成，请手动重试。'}))
             finally:
                 self.stream_slots.release()
+                with self.lock:
+                    self._stream_workers -= 1
         def events():
             sequence, started = 0, False
             def frame(kind, payload):
@@ -279,7 +288,15 @@ class TextTranslationService:
                 yield frame('start', {'provider': data.get('service', 'openai')})
                 yield frame('error', {'code': 'selection_busy', 'message': '已有翻译请求正在处理，请稍后重试。'})
                 return
-            threading.Thread(target=work, daemon=True, name='selection-stream').start()
+            with self.lock:
+                self._stream_workers += 1
+            try:
+                threading.Thread(target=work, daemon=True, name='selection-stream').start()
+            except Exception:
+                with self.lock:
+                    self._stream_workers -= 1
+                self.stream_slots.release()
+                raise
             try:
                 while True:
                     try:

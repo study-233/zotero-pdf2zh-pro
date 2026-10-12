@@ -15,7 +15,7 @@
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 
-当前统一版本：<!-- release-version --> `1.8.2`
+当前统一版本：<!-- release-version --> `1.9.0`
 
 [插件官网](https://study-233.github.io/zotero-pdf2zh-pro/) · [快速开始](#quick-start) · [使用指南](docs/user-guide.md) ·
 [常见问题](#troubleshooting) · [更新记录](CHANGELOG.md)
@@ -59,10 +59,10 @@
 #### Windows 10/11 x64
 
 1. 从 [最新 Release](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest) 下载：
-   - `zotero-pdf2zh-pro-windows-x64.zip`
+   - `zotero-pdf2zh-pro-windows-x64-setup.exe`
    - `zotero-pdf2zh-pro.xpi`，留待下一步安装。
-2. **完整解压 ZIP**，双击其中的 `zotero-pdf2zh-pro.exe`。
-3. 选择安装位置，点击 **“安装并启动”**，等待显示 **“翻译服务已就绪”**。
+2. 双击安装 EXE，按向导确认安装位置、自启和自动更新选项，点击 **“开始安装”**。
+3. 安装完成后点击 **“完成并打开控制中心”**，等待显示 **“翻译服务已就绪”**。
 
 首次安装需要联网。关闭控制中心窗口会隐藏到托盘；停止服务请使用“停止服务”按钮。
 

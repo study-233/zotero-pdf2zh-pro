@@ -32,3 +32,6 @@ server/*.pdf
 server/*.csv
 server/translates/*
 !server/translates/.gitkeep
+
+windows-app/target/
+windows-app/slint-probe/target/

@@ -1,0 +1,65 @@
+import { Button, LineEdit, Switch, ComboBox, ScrollView, ProgressIndicator, Palette } from "std-widgets.slint";
+
+export component ProbeWindow inherits Window {
+    title: "zotero-pdf2zh-pro · Slint 框架验证";
+    preferred-width: 520px;
+    preferred-height: 440px;
+    min-width: 460px;
+    min-height: 410px;
+    background: Palette.background;
+    default-font-size: 14px;
+    in-out property <int> theme: 0;
+    in-out property <bool> running: false;
+    in-out property <float> progress: 0.0;
+    in-out property <string> message: "界面验证版 · 不执行服务安装";
+    in-out property <string> input-text: "D:\\研究资料\\中文与空格路径\\翻译服务";
+    in-out property <bool> checked: true;
+    callback hide-panel();
+    callback finish();
+    callback start-progress();
+    changed theme => {
+        Palette.color-scheme = root.theme == 1 ? ColorScheme.light : root.theme == 2 ? ColorScheme.dark : ColorScheme.unknown;
+    }
+
+    VerticalLayout {
+        padding: 24px;
+        spacing: 16px;
+        Text { text: "本地翻译服务"; font-size: 22px; font-weight: 600; color: Palette.foreground; }
+        Text { text: "Fluent 控件 · 中文输入 · Skia 软件渲染"; color: Palette.foreground; opacity: 0.7; }
+        Rectangle {
+            background: Palette.alternate-background;
+            border-width: 1px;
+            border-color: Palette.border;
+            border-radius: 8px;
+            VerticalLayout {
+                padding: 16px;
+                spacing: 12px;
+                HorizontalLayout {
+                    Text { text: "外观"; color: Palette.foreground; vertical-alignment: center; }
+                    ComboBox {
+                        accessible-label: "外观主题";
+                        model: ["跟随系统", "浅色", "深色"];
+                        current-index <=> root.theme;
+                        horizontal-stretch: 1;
+                    }
+                }
+                LineEdit { accessible-label: "中文输入与路径"; text <=> root.input-text; placeholder-text: "输入中文，检查输入法与复制粘贴"; }
+                Switch { text: "空闲时自动更新"; checked <=> root.checked; }
+            }
+        }
+        ScrollView {
+            height: 72px;
+            VerticalLayout {
+                spacing: 8px;
+                Text { text: root.message; wrap: word-wrap; color: Palette.foreground; }
+                Text { text: "中文字体回退测试：简体中文、繁體中文、English 123。\n长路径和错误详情在这里自动换行。\n此验证版仅演示控件和进度；不会修改日常安装、配置、注册表或数据。"; wrap: word-wrap; color: Palette.foreground; }
+            }
+        }
+        ProgressIndicator { progress: root.progress; }
+        HorizontalLayout {
+            Button { text: root.running ? "正在演示…" : "演示进度"; enabled: !root.running; clicked => { root.start-progress(); } }
+            Button { text: "收起到托盘"; clicked => { root.hide-panel(); } }
+            Button { text: "结束验证"; clicked => { root.finish(); } }
+        }
+    }
+}

@@ -1,100 +1,44 @@
 ﻿param(
     [Parameter(Mandatory = $true)][int]$ParentProcessId,
     [string]$PackageSource,
-    [string]$InstallRoot
+    [string]$InstallRoot,
+    [switch]$Prepared,
+    [switch]$KeepStopped
 )
-
 $inheritedInstallRootOverride = -not [string]::IsNullOrWhiteSpace($env:PDF2ZH_WINDOWS_APP_ROOT)
-if (-not [string]::IsNullOrWhiteSpace($InstallRoot)) {
-    $resolvedInstallRoot = [IO.Path]::GetFullPath($InstallRoot)
-    if ([IO.Path]::GetPathRoot($InstallRoot) -ne [IO.Path]::GetPathRoot($resolvedInstallRoot)) {
-        throw "The installation directory must be an absolute path."
-    }
-    $env:PDF2ZH_WINDOWS_APP_ROOT = $resolvedInstallRoot
+if ($InstallRoot) {
+    if (-not [IO.Path]::IsPathRooted($InstallRoot)) { throw 'An absolute installation path is required.' }
+    $env:PDF2ZH_WINDOWS_APP_ROOT = [IO.Path]::GetFullPath($InstallRoot)
 }
-. (Join-Path $PSScriptRoot "common.ps1")
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
-
-function Write-UpdateLog {
-    param([string]$Message)
-    New-Item -ItemType Directory -Force -Path $LogsDir | Out-Null
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Add-Content -LiteralPath $ControlLogFile -Value "$timestamp [update] $Message" -Encoding utf8
-    Write-Host $Message
-}
-
-function Start-Cleanup {
-    param([string]$Target)
-    $cleanupFile = Join-Path ([IO.Path]::GetTempPath()) (
-        "zotero-pdf2zh-pro-update-cleanup-{0}.ps1" -f [guid]::NewGuid().ToString("N")
-    )
-    $cleanup = @'
-param([string]$TargetPath)
-Start-Sleep -Seconds 5
-Remove-Item -LiteralPath $TargetPath -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
-'@
-    Set-Content -LiteralPath $cleanupFile -Value $cleanup -Encoding utf8
-    $arguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -TargetPath "{1}"' -f $cleanupFile, $Target
-    Start-Process -FilePath $PSHOME\powershell.exe -ArgumentList $arguments -WindowStyle Hidden
-}
-
-$stagingRoot = Split-Path $PSScriptRoot -Parent
-$installScript = Join-Path $PSScriptRoot "install.ps1"
-$guiSource = Join-Path $PSScriptRoot "$ProductName.exe"
-
+. (Join-Path $PSScriptRoot 'common.ps1')
+. (Join-Path $PSScriptRoot 'runtime.ps1')
+$wasStopped = $KeepStopped -or -not (Get-ListeningProcessId)
 try {
-    Remove-Item -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -Force -ErrorAction SilentlyContinue
-    Write-UpdateLog "[1/5] Waiting for the previous control center to exit..."
     for ($attempt = 0; $attempt -lt 80; $attempt++) {
-        if (-not (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue)) {
-            break
-        }
+        if (-not (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue)) { break }
         Start-Sleep -Milliseconds 250
     }
-    if (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue) {
-        throw "The previous control center did not exit within 20 seconds."
+    if (Get-Process -Id $ParentProcessId -ErrorAction SilentlyContinue) { throw 'Previous control center did not exit.' }
+    if (-not $Prepared) {
+        $arguments = @{PrepareOnly=$true;NonInteractive=$true;InstallRoot=$AppRoot;GuiSource=(Join-Path $PSScriptRoot "$ProductName.exe");DeferLocationCommit=$inheritedInstallRootOverride}
+        if ($PackageSource) {$arguments.PackageSource=$PackageSource}
+        & (Join-Path $PSScriptRoot 'install.ps1') @arguments
+        if ($LASTEXITCODE -ne 0) {throw 'Candidate preparation failed.'}
     }
-
-    Write-UpdateLog "[2/5] Stopping the translation service..."
-    & (Join-Path $PSScriptRoot "stop-server.ps1") -Quiet
-    Write-UpdateLog "[3/5] Installing Windows package $PackageVersion and its runtime..."
-    $installArguments = @{
-        GuiSource = $guiSource
-        InstallRoot = $AppRoot
-        NonInteractive = $true
-    }
-    if ($inheritedInstallRootOverride) {
-        $installArguments.DeferLocationCommit = $true
-    }
-    if ($PackageSource) {
-        $installArguments.PackageSource = [IO.Path]::GetFullPath($PackageSource)
-    }
-    & $installScript @installArguments
-    Write-UpdateLog "[4/5] Control center and management files replaced successfully."
-    Write-UpdateLog "[5/5] Starting the updated control center..."
-    if (-not $inheritedInstallRootOverride) {
-        $env:PDF2ZH_WINDOWS_APP_ROOT = $null
-    }
-    Start-Process -FilePath $ControlPanelExecutable -ArgumentList "--post-install" -WindowStyle Hidden
-    Start-Cleanup -Target $stagingRoot
-    exit 0
+    $operation = Enter-RuntimeOperation
+    try { Apply-PreparedRuntime -KeepStopped:$wasStopped -DeferLocationCommit:$inheritedInstallRootOverride }
+    finally { $operation.Dispose() }
+    $arguments = @('--post-install')
+    if ($wasStopped) { $arguments += '--keep-stopped' }
+    if (-not $inheritedInstallRootOverride) {$env:PDF2ZH_WINDOWS_APP_ROOT=$null}
+    Start-Process -FilePath $ControlPanelExecutable -ArgumentList $arguments -WindowStyle Hidden
 } catch {
-    $failureMessage = "Update failed: $($_.Exception.Message)"
-    Write-UpdateLog $failureMessage
-    Set-Content -LiteralPath (Join-Path $AppRoot "last-operation-error.txt") -Value $failureMessage -Encoding utf8
-    if (Test-Path -LiteralPath $ControlPanelExecutable -PathType Leaf) {
-        try {
-            if (-not $inheritedInstallRootOverride) {
-                $env:PDF2ZH_WINDOWS_APP_ROOT = $null
-            }
-            Start-Process -FilePath $ControlPanelExecutable -ArgumentList "--post-install" -WindowStyle Hidden
-            Write-UpdateLog "Restarted the previous control center."
-        } catch {
-            Write-UpdateLog "Could not restart the previous control center: $($_.Exception.Message)"
-        }
+    Write-RuntimeLog "Update failed: $_"
+    Set-Content -LiteralPath (Join-Path $AppRoot 'last-operation-error.txt') -Value $_.Exception.Message -Encoding utf8
+    if (Test-Path -LiteralPath $ControlPanelExecutable) {
+        $arguments = @('--post-install'); if ($wasStopped) {$arguments += '--keep-stopped'}
+        if (-not $inheritedInstallRootOverride) {$env:PDF2ZH_WINDOWS_APP_ROOT=$null}
+        Start-Process -FilePath $ControlPanelExecutable -ArgumentList $arguments -WindowStyle Hidden
     }
-    Start-Cleanup -Target $stagingRoot
     exit 1
 }

@@ -5,9 +5,11 @@ import test from "node:test";
 import ts from "typescript";
 import { URL } from "node:url";
 import { createContext, runInContext } from "node:vm";
+import { maintenanceFetch } from "./maintenanceFixture.mjs";
 
 const prefs = new Map();
 globalThis.__glossaryPacksTest = {
+    maintenanceFetch,
     getPref: (key) => prefs.get(key),
     setPref: (key, value) => prefs.set(key, value),
 };
@@ -27,7 +29,8 @@ const compiled = ts
     .outputText.replace(/^import[\s\S]*?;\r?\n/gm, "");
 const packs = await import(
     `data:text/javascript;base64,${Buffer.from(
-        "const {getPref,setPref}=globalThis.__glossaryPacksTest;\n" + compiled,
+        "const {getPref,setPref,maintenanceFetch}=globalThis.__glossaryPacksTest;\n" +
+            compiled,
     ).toString("base64")}`
 );
 const server = "http://localhost:8890";
@@ -194,6 +197,7 @@ test("plugin startup supplies abort support in a Zotero sandbox without browser 
     const timers = new Map();
     const signals = [];
     const sandbox = createContext({
+        maintenanceFetch,
         URL,
         Zotero: {},
         config: { addonInstance: "pdf2zhpro" },

@@ -1,5 +1,19 @@
 ﻿Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = New-Object Text.UTF8Encoding($false)
+$OutputEncoding = [Console]::OutputEncoding
+# Managed scripts only use Windows' own modules. Avoid inheriting PowerShell 7
+# modules through a native launcher when running in Windows PowerShell 5.1.
+$env:PSModulePath = Join-Path $PSHOME 'Modules'
+
+function Get-ProductFileSha256 {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    # Use the built-in .NET implementation, even when module autoloading is disabled.
+    $stream = [IO.File]::OpenRead($Path)
+    $hash = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($hash.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }
+    finally { $hash.Dispose(); $stream.Dispose() }
+}
 
 function Test-PreparationOnlyRoot {
     param([string]$Path)
@@ -14,8 +28,20 @@ function Test-PreparationOnlyRoot {
     return $true
 }
 
-$PackageVersion = "1.8.2" # release-version
+$PackageVersion = "1.9.0" # release-version
 $ProductName = "zotero-pdf2zh-pro"
+if (-not $env:PDF2ZH_WINDOWS_APP_ROOT -and (Split-Path $PSScriptRoot -Leaf) -ieq 'bin') {
+    $candidateRoot = Split-Path $PSScriptRoot -Parent
+    $candidateProfile = Join-Path $candidateRoot 'candidate-profile.json'
+    if (Test-Path -LiteralPath $candidateProfile) {
+        $profile = Get-Content -Raw -Encoding utf8 -LiteralPath $candidateProfile | ConvertFrom-Json
+        if ($profile.candidate -ne $true) {throw 'Invalid isolated candidate profile.'}
+        $env:PDF2ZH_WINDOWS_APP_ROOT = $candidateRoot
+        $env:PDF2ZH_WINDOWS_PORT = '19892'
+        $env:PDF2ZH_WINDOWS_REGISTRY_KEY = 'HKCU:\Software\pdf2zh-native-candidate'
+        $env:PDF2ZH_WINDOWS_START_MENU_DIR = Join-Path $env:LOCALAPPDATA 'zotero-pdf2zh-pro-native-candidate-shortcuts'
+    }
+}
 $ServerHost = "127.0.0.1"
 $ServerPort = if ($env:PDF2ZH_WINDOWS_PORT) {
     [int]$env:PDF2ZH_WINDOWS_PORT
@@ -144,8 +170,8 @@ $InstalledVersionFile = Join-Path $AppRoot "installed-version.txt"
 $ControlPanelExecutable = Join-Path $BinDir "$ProductName.exe"
 $ControlPanelPidFile = Join-Path $AppRoot "control-panel.pid"
 $ControlPanelExecutableFile = Join-Path $AppRoot "control-panel-executable.txt"
-$AutostartRunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
-$AutostartApprovedKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
+$AutostartRunKey = if ($env:PDF2ZH_WINDOWS_REGISTRY_KEY) { Join-Path $InstallRegistryKey 'Run' } else { 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' }
+$AutostartApprovedKey = if ($env:PDF2ZH_WINDOWS_REGISTRY_KEY) { Join-Path $InstallRegistryKey 'StartupApproved' } else { 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run' }
 $StartMenuDir = if ($env:PDF2ZH_WINDOWS_START_MENU_DIR) {
     [IO.Path]::GetFullPath($env:PDF2ZH_WINDOWS_START_MENU_DIR)
 } else {
@@ -460,6 +486,11 @@ function Test-PathEqual {
 }
 
 function Get-ToolPythonExecutable {
+    if (Test-Path -LiteralPath $ExecutableFile) {
+        $saved = (Get-Content -Raw -Encoding utf8 -LiteralPath $ExecutableFile).Trim()
+        $python = Join-Path (Split-Path $saved -Parent) 'python.exe'
+        if (Test-Path -LiteralPath $python) { return [IO.Path]::GetFullPath($python) }
+    }
     $uv = Get-UvExecutable
     if (-not $uv) {
         return $null
@@ -509,12 +540,13 @@ function Test-ExpectedServerProcess {
 }
 
 function Get-ServerHealth {
+    param([int]$TimeoutMilliseconds=2000)
     $response = $null
     $reader = $null
     try {
         $request = [Net.WebRequest]::Create($HealthUrl)
         $request.Proxy = $null
-        $request.Timeout = 2000
+        $request.Timeout = $TimeoutMilliseconds
         $response = $request.GetResponse()
         $reader = New-Object IO.StreamReader($response.GetResponseStream())
         return ($reader.ReadToEnd() | ConvertFrom-Json)
@@ -531,8 +563,8 @@ function Get-ServerHealth {
 }
 
 function Test-ExpectedHealth {
-    param($Health)
-    if (-not $Health -or $Health.version -ne $PackageVersion) {
+    param($Health, [string]$ExpectedVersion = $PackageVersion)
+    if (-not $Health -or $Health.version -ne $ExpectedVersion) {
         return $false
     }
     if (-not $Health.workspace -or -not $Health.workspace.writable) {
@@ -595,4 +627,15 @@ function Stop-ManagedControlPanel {
         Start-Sleep -Milliseconds 250
     }
     throw "The managed control center did not stop within 10 seconds."
+}
+
+function Rotate-ProductLog {
+    param([string]$Path)
+    if ((Test-Path -LiteralPath $Path) -and (Get-Item -LiteralPath $Path).Length -ge 5MB) {
+        Remove-Item -LiteralPath "$Path.3" -Force -ErrorAction SilentlyContinue
+        foreach ($number in @(2,1)) {
+            if (Test-Path -LiteralPath "$Path.$number") { Move-Item -LiteralPath "$Path.$number" -Destination "$Path.$($number+1)" -Force }
+        }
+        Move-Item -LiteralPath $Path -Destination "$Path.1" -Force
+    }
 }

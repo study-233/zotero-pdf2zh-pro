@@ -68,16 +68,44 @@ pdf2zh-next、BabelDOC 和 RapidOCR 核心快照；来源、SHA 和许可证记�
 
 ## Windows
 
-Windows 包包含 Tauri 2 控制中心 EXE、故障恢复管理脚本、README、许可证和第三方声明。
-正式构建固定使用 `stable-x86_64-pc-windows-msvc` 工具链和 `x86_64-pc-windows-msvc`
-目标，根目录 `.cargo/config.toml` 启用静态 CRT。打包器只读取显式目标目录并检查普通和
-延迟导入表：不能依赖外部 WebView2Loader、VC++ 或其他未交付的非系统 DLL。
-WebView2 准备脚本嵌入 EXE，在 Tauri 窗口创建前通过 Windows PowerShell 5.1 / WinForms
-运行；不依赖解压目录里的额外脚本。下载文件必须验证微软 Authenticode 签名后才能执行。
-控制中心使用 Rust 后端和原生 TypeScript/CSS 单页前端，不授予通用 Shell 权限。安装时
-通过官方 Astral 安装私有 uv，由 uv 安装托管的 Python 3.13，并从公共 PyPI 安装与控制中心
-相同版本的 `zotero-pdf2zh-pro`。安装根目录优先读取测试覆盖，其次读取当前用户注册表
-`HKCU\Software\zotero-pdf2zh-pro\InstallRoot`，最后回退到 `%LOCALAPPDATA%`。
+Windows 包包含 Rust + Slint Fluent 控制中心、故障恢复脚本、依赖校验清单和许可证。
+界面使用 Winit 和显式 Skia 软件渲染；Win32 仅用于托盘、单实例、目录选择等系统集成。
+构建机需要 Rust MSVC stable、Visual Studio C++ 工具、Windows SDK、Python 和 7-Zip。
+在同一 PowerShell 会话运行以下命令，工具链只解包到仓库缓存，不安装到用户系统：
+
+```powershell
+./scripts/prepare_windows_build_tools.ps1
+./scripts/build_windows_control.ps1
+./scripts/build_windows_control.ps1 -RunTests
+```
+
+框架锁定 Slint 1.18.1，构建脚本准备 LLVM 21.1.8 与固定 Skia 源码及依赖。
+Windows SDK 的资源编译器嵌入图标、版本、DPI 清单；根目录 `.cargo/config.toml` 启用静态 CRT。
+`src/controller.rs` 管理后台操作与消息，`src/ui.rs` 连接界面状态，`ui/app.slint` 定义布局，
+`src/platform.rs` 管理 Windows 集成。构建同时生成第三方许可清单，打包时缺失即失败。
+控制中心构建不需要 Node 或 WebView2；Zotero 插件构建仍使用 Node。打包器检查普通和延迟导入表，
+只允许 Windows 10/11 自带的 DLL。先构建服务 wheel，再运行 `scripts/build_windows_package.py`，
+依赖从 `server/uv.lock` 冻结导出版本和哈希，随 ZIP 交付。
+
+再运行 `python scripts/build_windows_installer.py`，将同版控制包、依赖清单和服务 wheel
+嵌入轻量引导 EXE。对外安装入口是 `dist/zotero-pdf2zh-pro-windows-x64-setup.exe`；
+控制 ZIP 继续用于自动更新，不携带整份安装器。`--candidate` 会生成使用独立目录、
+端口、注册表和快捷方式的试用安装器。安装器与 ZIP 都校验 PE、版本和文件哈希，
+安装器另外校验载荷边界、ZIP 内容和内置服务包，拒绝超过 40,000,000 字节的完整安装器。
+
+`scripts/test_windows_installer.py` 验证真实产物及损坏包拒绝；
+`scripts/test_windows_progress.py` 验证 PowerShell 5.1 模块兼容、下载进度与重启快照。
+安装、修复及更新使用 `OperationProgress` 和 `updates/operation-progress.json` 展示
+当前状态；该快照不替代事务恢复判断。已知下载大小显示字节与百分比，依赖准备等
+无法估算总量的阶段使用活动指示器并显示耗时，不显示总体百分比。
+`settings.json` 的 `appearanceTheme` 支持 `system`、`light`、`dark`，缺失时跟随系统；
+修改主题保留原有更新选项和其他配置字段。
+
+服务环境使用 `runtime/versions/` 中的永久路径，准备期间旧服务继续运行。切换前通过
+本机凭据保护的维护接口原子暂停新工作；更新事务写入 `updates/transaction.json`，失败或
+中断后只使用本地备份回退。控制包和服务 wheel 整包更新，依赖通过共享 uv 缓存复用。
+当前候选及未验证设备范围见 [Slint 迁移验收](windows-slint-acceptance.md)；
+早期后台与安装机制检查见 [原生 Windows 验收记录](windows-native-acceptance.md)。
 
 默认目录：
 
@@ -103,15 +131,14 @@ pnpm --dir plugin install --frozen-lockfile
 pnpm --dir plugin build
 pnpm --dir plugin test
 uv run --directory server --locked python -m unittest discover -s tests
-pnpm --dir windows-app install --frozen-lockfile
-pnpm --dir windows-app test
 git diff --check
 ```
 
+Windows Rust 单测使用上方 `build_windows_control.ps1 -RunTests`，与 CI 共用静态渲染工具链。
 修改 Windows 原生后端或安装脚本时，可在 Windows 本地显式运行 Rust 单测、PowerShell
-语法/安全检查和 `scripts/test_windows_lifecycle.ps1`。Tauri release、ZIP 与 PyPI
-产物只在正式发布流程中构建和校验，不进入日常 CI。
-发布检查还运行 `scripts/test_windows_bootstrap.ps1` 和 `scripts/test_windows_package.ps1`；
+语法/安全检查和 `scripts/test_windows_lifecycle.ps1`。原生 release、ZIP 与 PyPI
+产物在候选及正式发布流程中构建和校验；日常 CI 执行 release 配置的 Rust 单测。
+发布检查还运行 `scripts/test_windows_runtime.ps1` 和 `scripts/test_windows_package.ps1`；
 后者从最终 ZIP 解压，以独立工作目录、精简 PATH 验证真实窗口。生命周期验证使用
 `-WindowsPackage dist/zotero-pdf2zh-pro-windows-x64.zip`，从同一 ZIP 读取 EXE 和管理脚本。
 候选版本可以在开发分支触发只构建的 Windows 工作流，输入该分支包含的精确提交；

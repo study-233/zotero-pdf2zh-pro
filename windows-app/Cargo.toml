@@ -1,0 +1,31 @@
+[package]
+name = "zotero-pdf2zh-pro-control"
+version = "1.9.0"
+edition = "2021"
+description = "Native Windows control center for zotero-pdf2zh-pro"
+license = "AGPL-3.0-only"
+rust-version = "1.92"
+[[bin]]
+name = "zotero-pdf2zh-pro"
+path = "src/main.rs"
+[[bin]]
+name = "zotero-pdf2zh-pro-setup"
+path = "src/bootstrap.rs"
+[dependencies]
+slint = { version = "=1.18.1", default-features = false, features = ["std", "compat-1-18", "backend-winit", "renderer-skia", "accessibility", "raw-window-handle-06", "unstable-winit-030"] }
+reqwest = { version = "0.13.4", features = ["json", "stream"] }
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync"] }
+semver = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+vt100 = "=0.15.2"
+sha2 = "0.10"
+winreg = "0.55"
+windows-sys = { version = "0.59", features = ["Win32_System_JobObjects", "Win32_System_Console", "Win32_System_Pipes", "Win32_System_IO", "Win32_Foundation", "Win32_UI_Accessibility", "Win32_System_SystemServices", "Win32_System_LibraryLoader", "Win32_System_Threading", "Win32_System_Com", "Win32_System_DataExchange", "Win32_System_Memory", "Win32_UI_HiDpi", "Win32_UI_Controls", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Gdi", "Win32_Security", "Win32_Storage_FileSystem"] }
+zip = { version = "7.2", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+[build-dependencies]
+slint-build = "=1.18.1"
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"

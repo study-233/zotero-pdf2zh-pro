@@ -38,33 +38,7 @@ async function writeAsset(relativePath, contents) {
 
 await writeAsset("plugin/addon/content/icons/favicon.svg", svgAtSize(256));
 await writeAsset("plugin/addon/content/icons/favicon@0.5x.svg", svgAtSize(128));
-await writeAsset("windows-app/public/logo.svg", svg);
 await writeAsset("assets/logo.png", await renderPng(512));
-
-const windowsIcons = {
-    "32x32.png": 32,
-    "64x64.png": 64,
-    "128x128.png": 128,
-    "128x128@2x.png": 256,
-    "icon.png": 512,
-    "StoreLogo.png": 50,
-    "Square30x30Logo.png": 30,
-    "Square44x44Logo.png": 44,
-    "Square71x71Logo.png": 71,
-    "Square89x89Logo.png": 89,
-    "Square107x107Logo.png": 107,
-    "Square142x142Logo.png": 142,
-    "Square150x150Logo.png": 150,
-    "Square284x284Logo.png": 284,
-    "Square310x310Logo.png": 310,
-};
-
-for (const [filename, size] of Object.entries(windowsIcons)) {
-    await writeAsset(
-        `windows-app/src-tauri/icons/${filename}`,
-        await renderPng(size),
-    );
-}
 
 const icoSizes = [16, 24, 32, 48, 64, 256];
 const icoHeader = Buffer.alloc(6);
@@ -88,7 +62,7 @@ for (const [index, size] of icoSizes.entries()) {
 }
 
 await writeAsset(
-    "windows-app/src-tauri/icons/icon.ico",
+    "windows-app/icons/icon.ico",
     Buffer.concat([icoHeader, icoDirectory, ...icoFrames]),
 );
 

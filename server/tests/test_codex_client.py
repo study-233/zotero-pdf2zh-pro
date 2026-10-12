@@ -726,6 +726,7 @@ class CodexPathTests(unittest.TestCase):
             "APPDATA": str(self.root / "Roaming"),
             "LOCALAPPDATA": str(self.root / "Local"),
             "CODEX_INSTALL_DIR": "",
+            "PATH": "",
         }))
         # Simulate Windows discovery without changing pathlib's host platform.
         self.enterContext(patch.object(codex_client, "os", SimpleNamespace(

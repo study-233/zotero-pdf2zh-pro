@@ -264,7 +264,93 @@ export async function diagnosticFetch(
     url: string,
     options?: RequestInit,
 ): Promise<Response> {
+    return maintenanceFetch(url, options);
+}
+
+export async function maintenanceFetch(
+    url: string,
+    options?: RequestInit,
+    perform: (
+        url: string,
+        options?: RequestInit,
+    ) => Promise<Response> = diagnosticFetchOnce,
+): Promise<Response> {
+    const deadline = Date.now() + 90000;
+    for (;;) {
+        const response = await perform(url, options);
+        if (
+            response.status !== 503 ||
+            response.headers.get("X-PDF2ZH-Maintenance") !== "not-accepted" ||
+            Date.now() >= deadline
+        )
+            return response;
+        const rejection = (await response
+            .clone()
+            .json()
+            .catch(() => null)) as { code?: string; accepted?: boolean } | null;
+        if (
+            rejection?.code !== "server_maintenance" ||
+            rejection.accepted !== false
+        )
+            return response;
+        const delay =
+            Math.min(
+                10,
+                Math.max(1, Number(response.headers.get("Retry-After")) || 3),
+            ) * 1000;
+        const wait = () =>
+            new Promise<void>((resolve, reject) => {
+                if (options?.signal?.aborted) {
+                    reject(new DOMException("Aborted", "AbortError"));
+                    return;
+                }
+                const abort = () => {
+                    clearTimeout(timer);
+                    reject(new DOMException("Aborted", "AbortError"));
+                };
+                const timer = setTimeout(() => {
+                    options?.signal?.removeEventListener("abort", abort);
+                    resolve();
+                }, delay);
+                options?.signal?.addEventListener("abort", abort, {
+                    once: true,
+                });
+            });
+        // Once rejection is proven, wait using harmless health reads while the port switches.
+        // A lost response to an actual submission remains an error and is never replayed.
+        for (;;) {
+            await wait();
+            if (Date.now() >= deadline) return response;
+            try {
+                const probe = await perform(new URL("/health", url).href, {
+                    method: "GET",
+                    signal: options?.signal,
+                });
+                const health = (await probe.json()) as {
+                    status?: string;
+                    maintenance?: { held?: boolean };
+                };
+                if (
+                    probe.ok &&
+                    health?.status === "ok" &&
+                    !health?.maintenance?.held
+                )
+                    break;
+            } catch (error) {
+                if (options?.signal?.aborted) throw error;
+            }
+        }
+    }
+}
+
+async function diagnosticFetchOnce(
+    url: string,
+    options?: RequestInit,
+): Promise<Response> {
     const controller = new AbortController();
+    const abort = () => controller.abort();
+    if (options?.signal?.aborted) controller.abort();
+    options?.signal?.addEventListener("abort", abort, { once: true });
     const timer = setTimeout(() => controller.abort(), 10000);
     try {
         const response = await fetch(url, {
@@ -280,6 +366,7 @@ export async function diagnosticFetch(
         throw error;
     } finally {
         clearTimeout(timer);
+        options?.signal?.removeEventListener("abort", abort);
     }
 }
 

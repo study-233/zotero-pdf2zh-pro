@@ -108,13 +108,11 @@ export class ServerTaskClient {
                 }
             }
         }
-        const response = await PDF2zhHelperFactory.retryOperation(() =>
-            diagnosticFetch(`${serverUrl}/tasks`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(requestBody),
-            }),
-        );
+        const response = await diagnosticFetch(`${serverUrl}/tasks`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+        });
         if (!response.ok) {
             throw new Error(await this.readErrorMessage(response));
         }

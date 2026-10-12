@@ -45,7 +45,7 @@ foreach ($pattern in $forbiddenPatterns) {
 }
 
 $commonText = Get-Content -Raw -LiteralPath (Join-Path $windowsDir "common.ps1")
-$expectedAutostart = '$AutostartRunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"'
+$expectedAutostart = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 if ($commonText.IndexOf($expectedAutostart, [StringComparison]::Ordinal) -lt 0) {
     Write-Error "The only allowed autostart mechanism is the current-user HKCU Run value."
     $failed = $true

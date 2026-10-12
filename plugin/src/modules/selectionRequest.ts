@@ -1,4 +1,4 @@
-import { recordDiagnostic } from "./diagnostics";
+import { maintenanceFetch, recordDiagnostic } from "./diagnostics";
 import { createSelectionStreamParser } from "./selectionStream";
 
 type RequestScope = {
@@ -107,12 +107,16 @@ export function createSelectionRequest() {
                 abort();
             }, timeoutMs);
             try {
-                const response = await runtime.fetch.call(runtime, url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(body),
-                    signal: controller.signal,
-                });
+                const response = await maintenanceFetch(
+                    url,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(body),
+                        signal: controller.signal,
+                    },
+                    runtime.fetch.bind(runtime),
+                );
                 recordDiagnostic("selection_http_response", {
                     statusCode: response.status,
                 });

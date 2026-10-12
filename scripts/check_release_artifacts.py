@@ -15,6 +15,7 @@ from pathlib import Path
 
 from build_windows_package import package_entries, validate_versions
 from windows_pe import validate_release_pe
+from build_windows_installer import verify_installer, METADATA_NAMES
 from release_replacement import replacement_metadata, validate_source as verify_replacement_source
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,7 +39,7 @@ def verify_source(version: str, commit: str, replace_existing: str = "") -> None
     if replace_existing:
         verify_replacement_source(version, replace_existing, commit, ROOT)
     validate_versions(version)
-    for lock, name in [("server/uv.lock", PRODUCT), ("windows-app/src-tauri/Cargo.lock", f"{PRODUCT}-control")]:
+    for lock, name in [("server/uv.lock", PRODUCT), ("windows-app/Cargo.lock", f"{PRODUCT}-control")]:
         packages = tomllib.loads((ROOT / lock).read_text(encoding="utf-8"))["package"]
         own = [p["version"] for p in packages if p["name"] == name]
         if own != [version]:
@@ -85,16 +86,18 @@ def collect(version: str, commit: str, replace_existing: str = "") -> None:
     }
     with zipfile.ZipFile(windows) as archive:
         assert archive.testzip() is None
-        assert archive.namelist() == [e.archive_name for e in package_entries(Path("unused"))]
+        assert archive.namelist() == [e.archive_name for e in package_entries(Path("unused"))] + METADATA_NAMES
         validate_release_pe(archive.read(f"{PRODUCT}.exe"))
         assert f'$PackageVersion = "{version}" # release-version' in archive.read("common.ps1").decode("utf-8-sig")
+    installer = ROOT / f"dist/{PRODUCT}-windows-x64-setup.exe"
+    verify_installer(installer, version)
     source = ROOT / f"dist/{PRODUCT}-{version}-source.zip"
     # git archive records the source commit in the ZIP comment.
     with zipfile.ZipFile(source) as archive:
         assert archive.comment.decode("ascii") == commit
         assert archive.testzip() is None
         assert json.loads(archive.read(f"{PRODUCT}-{version}/plugin/package.json"))["version"] == version
-    artifacts = [xpi, update_path, windows, windows_update, source,
+    artifacts = [xpi, update_path, windows, installer, windows_update, source,
                  ROOT / f"server/dist/zotero_pdf2zh_pro-{version}-py3-none-any.whl",
                  ROOT / f"server/dist/zotero_pdf2zh_pro-{version}.tar.gz"]
     target = ROOT / "dist/release"

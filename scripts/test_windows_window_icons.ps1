@@ -1,7 +1,7 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)][int]$ProcessId,
     [Parameter(Mandatory = $true)][string]$Executable,
-    [string]$ExpectedIcon = (Join-Path $PSScriptRoot '..\windows-app\src-tauri\icons\icon.ico'),
+    [string]$ExpectedIcon = (Join-Path $PSScriptRoot '..\windows-app\icons\icon.ico'),
     [string]$ScreenshotPath,
     [string]$TaskbarScreenshotPath
 )
@@ -27,6 +27,7 @@ namespace Pdf2zh {
     public static class WindowIconProbe {
         delegate bool EnumWindow(IntPtr window, IntPtr parameter);
         [DllImport("user32.dll")] static extern bool EnumWindows(EnumWindow callback, IntPtr parameter);
+        [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr window);
         [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetClassName(IntPtr window, StringBuilder name, int length);
         [DllImport("user32.dll", SetLastError = true)] static extern IntPtr SendMessageTimeout(IntPtr window, uint message, UIntPtr wparam, IntPtr lparam, uint flags, uint timeout, out UIntPtr result);
@@ -59,7 +60,8 @@ namespace Pdf2zh {
                 uint owner; GetWindowThreadProcessId(window, out owner);
                 if (owner != processId) return true;
                 var name = new StringBuilder(256); GetClassName(window, name, name.Capacity);
-                if (name.ToString() != "Tauri Window") return true;
+                // Slint/Winit owns the class name; the verified process owns the window.
+                if (!IsWindowVisible(window)) return true;
                 found = window; return false;
             }, IntPtr.Zero);
             return found;
@@ -142,7 +144,7 @@ $sourceIcon = (Resolve-Path -LiteralPath $ExpectedIcon).Path
 $window = [IntPtr]::Zero
 $ready = $false
 $verified = @()
-$lastDiagnostic = 'No Tauri window belongs to the expected test process.'
+$lastDiagnostic = 'No visible native window belongs to the expected test process.'
 $deadline = [Diagnostics.Stopwatch]::StartNew()
 while ($deadline.ElapsedMilliseconds -lt 10000) {
     $process.Refresh()

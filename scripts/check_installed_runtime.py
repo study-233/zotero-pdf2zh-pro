@@ -20,6 +20,7 @@ import truststore
 import task_manager
 import glossary_manager
 import glossary_catalog
+import maintenance
 
 FORBIDDEN_DISTRIBUTIONS = {
     "babeldoc",
@@ -84,6 +85,8 @@ def main() -> None:
         raise RuntimeError("Downloadable glossary runtime is incomplete")
 
     health = server.build_health_payload()
+    if not callable(maintenance.MaintenanceGate) or health.get("capabilities", {}).get("updateMaintenance") is not True:
+        raise RuntimeError("Runtime is missing authenticated update maintenance")
     if health.get("capabilities", {}).get("glossaryPacks") is not True:
         raise RuntimeError("Runtime is missing downloadable glossary capabilities")
     if health.get("supportedApiProtocols") != ["auto", "chat_completions", "responses"]:
