@@ -139,7 +139,8 @@ class ProgressTests(unittest.TestCase):
         (self.root / "candidate-profile.json").write_text('{"candidate":true}', encoding="utf-8")
         result = self.run_script("Write-Host $AppRoot\nWrite-Host $ServerPort\nWrite-Host $InstallRegistryKey", common, False)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(str(self.root), result.stdout)
+        # PowerShell may expand the runner's 8.3 TEMP alias to its long path.
+        self.assertTrue(self.root.samefile(result.stdout.splitlines()[0]), result.stdout)
         self.assertIn("19892", result.stdout)
         self.assertIn(r"HKCU:\Software\pdf2zh-native-candidate", result.stdout)
 

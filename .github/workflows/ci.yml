@@ -14,6 +14,10 @@ on:
       - "**/*.md"
       - ".github/ISSUE_TEMPLATE/**"
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   core:
     runs-on: ubuntu-latest
@@ -61,52 +65,32 @@ jobs:
 
   windows-native:
     runs-on: windows-latest
-    env:
-      RUSTFLAGS: "-C target-feature=+crt-static"
+    timeout-minutes: 10
+    # Compile Slint/Skia and run Rust tests locally; keep push/PR checks lightweight.
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: windows-app
-          cache-on-failure: true
       - uses: astral-sh/setup-uv@v8.3.2
-      - uses: actions/cache@v4
         with:
-          path: .tmp/windows-build-tools
-          key: windows-slint-1.18.1-skia-153-llvm-21.1.8-v1
-      - name: Prepare portable Windows renderer toolchain
-        shell: pwsh
-        run: ./scripts/prepare_windows_build_tools.ps1
-      - name: Use a short Windows build path
+          python-version: "3.13"
+      - name: Windows script and transaction checks
         shell: pwsh
         run: |
-          if (Test-Path 'P:\') { throw 'The isolated build drive is already occupied' }
-          subst.exe P: $env:GITHUB_WORKSPACE
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          'PDF2ZH_WINDOWS_BUILD_ROOT=P:\' >> $env:GITHUB_ENV
-      - name: Native control center and transaction tests
-        run: |
-          ./scripts/build_windows_control.ps1 -RunTests
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_runtime.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_cleanup.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Windows progress, uninstall and artifact guard tests
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path .tmp | Out-Null
           uv run --no-project python scripts/test_windows_progress.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           foreach ($test in @('test_windows_uninstall.py', 'test_windows_slint_gate.py', 'test_prepare_windows_skia_source.py')) {
             uv run --no-project python "scripts/$test"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-      - name: Remove the isolated build drive
-        if: always() && env.PDF2ZH_WINDOWS_BUILD_ROOT != ''
-        shell: pwsh
-        run: 'subst.exe P: /D'
 
   codex-native:
     strategy:

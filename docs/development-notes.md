@@ -134,10 +134,16 @@ uv run --directory server --locked python -m unittest discover -s tests
 git diff --check
 ```
 
-Windows Rust 单测使用上方 `build_windows_control.ps1 -RunTests`，与 CI 共用静态渲染工具链。
-修改 Windows 原生后端或安装脚本时，可在 Windows 本地显式运行 Rust 单测、PowerShell
-语法/安全检查和 `scripts/test_windows_lifecycle.ps1`。原生 release、ZIP 与 PyPI
-产物在候选及正式发布流程中构建和校验；日常 CI 执行 release 配置的 Rust 单测。
+日常 CI 的 `windows-native` 只运行 PowerShell 语法/安全、事务回滚、缓存清理、
+下载进度、卸载及产物守卫测试，限时 10 分钟；不下载 LLVM/Skia，也不编译 Rust/Slint。
+同一分支的新提交会取消仍在运行的旧 CI，避免重复等待。
+
+Windows Rust 单测移到本机：修改 Windows 原生代码或准备发布时，使用上方
+`prepare_windows_build_tools.ps1` 和 `build_windows_control.ps1 -RunTests`，复用本机静态
+渲染工具链与 release 编译缓存。涉及安装脚本时，还应在本机运行 PowerShell
+语法/安全检查和 `scripts/test_windows_lifecycle.ps1`。记录测试对应的提交与结果，
+日常 CI 通过不代表 Rust 编译和真实安装已验证。原生 release、ZIP 与 PyPI
+产物仍在按需触发的候选及正式发布流程中构建和校验。
 发布检查还运行 `scripts/test_windows_runtime.ps1` 和 `scripts/test_windows_package.ps1`；
 后者从最终 ZIP 解压，以独立工作目录、精简 PATH 验证真实窗口。生命周期验证使用
 `-WindowsPackage dist/zotero-pdf2zh-pro-windows-x64.zip`，从同一 ZIP 读取 EXE 和管理脚本。
