@@ -6,17 +6,44 @@ updates:
       schedule:
           interval: "weekly"
       groups:
-          all-non-major:
-              update-types:
-                  - "minor"
-                  - "patch"
-    - package-ecosystem: "pip"
+          security:
+              applies-to: security-updates
+              patterns: ["*"]
+    - package-ecosystem: "uv"
       directory: "/server"
       open-pull-requests-limit: 0
       schedule:
           interval: "weekly"
       groups:
-          all-non-major:
-              update-types:
-                  - "minor"
-                  - "patch"
+          security:
+              applies-to: security-updates
+              patterns: ["*"]
+    - package-ecosystem: "pip"
+      directory: "/website"
+      open-pull-requests-limit: 0
+      schedule:
+          interval: "weekly"
+      groups:
+          security:
+              applies-to: security-updates
+              patterns: ["*"]
+    - package-ecosystem: "cargo"
+      directories:
+          - "/windows-app"
+          - "/windows-app/slint-probe"
+      open-pull-requests-limit: 0
+      schedule:
+          interval: "weekly"
+      groups:
+          security:
+              applies-to: security-updates
+              patterns: ["*"]
+    - package-ecosystem: "github-actions"
+      directory: "/"
+      open-pull-requests-limit: 0
+      schedule:
+          interval: "weekly"
+      groups:
+          security:
+              applies-to: security-updates
+              patterns: ["*"]
