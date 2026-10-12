@@ -121,7 +121,7 @@ class UvProgressTests(unittest.TestCase):
         venv = self.root / label
         subprocess.run([str(UV), 'venv', '--python', str(PYTHON), '--no-config', str(venv)], env=self.environment, capture_output=True, check=True, timeout=30)
         args = ['pip', 'install', '--python', str(venv / 'Scripts/python.exe'), '--no-deps', '--no-config',
-                '--index-url', f'http://127.0.0.1:{self.server.server_port}/simple', 'progress-alpha==1.0', 'progress-beta==1.0']
+                '--default-index', f'http://127.0.0.1:{self.server.server_port}/simple', 'progress-alpha==1.0', 'progress-beta==1.0']
         request = self.root / 'request.json'
         request.write_text(json.dumps(dict(executable=str(UV), arguments=args, root=str(self.root), uvVersion=version)), encoding='utf-8')
         snapshot = self.root / 'updates/operation-progress.json'
