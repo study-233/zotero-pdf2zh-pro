@@ -29,11 +29,22 @@
 
 若 GitHub Release 已存在，上述 workflow 的 `gh release create` 不会完成续发。先检查已有附件和 PyPI 状态，只完成缺失阶段；不直接重跑包含 `--clobber` 的脚本覆盖全部附件。相同版本附件内容不同属于同版本替换，需单独处理。
 
+## 远端制品已成功，本机扩展验证未完成
+
+Windows 的 `--full-validation` 会在远端标准构建后下载最终制品并在本机验证。
+这一步中断不代表远端构建失败，也未授权跳过扩展验证。先核对 `dist/verified-<run>`
+的 manifest 与当前 ZIP/wheel，使用 `test_windows_release_extended.ps1 -Version <version>`
+继续；通过后保存其 `validation.json` 与原 run 的对应关系，再按上方复用成功构建的
+方式发布。不要为了重试本机检查再次运行整个发布入口。
+
+若本机条件不足，使用同一源提交的 `reuse_build_run_id` 补跑远端扩展验证；不能只跑
+标准检查便宣称扩展验证完成。若修复涉及产品或打包输入，则新提交需要新制品。
+
 ## 构建成功但后续验证失败
 
-`build-windows-release.yml` 的 `reuse_build_run_id` 可复用同一源提交已完成的制品构建，再执行标准验证。先确认原 run 已结束且 `Build artifacts and verify Windows startup` 成功、制品完整可用；后续验证未通过时不能发布。
+`build-windows-release.yml` 的 `reuse_build_run_id` 可复用同一源提交已完成的制品构建，再执行所选的标准或扩展验证。先确认原 run 已结束且 `Build artifacts and verify Windows startup` 成功、制品完整可用；后续验证未通过时不能发布。
 
-这一路径只支持标准验证，不与 `full_validation=true` 混用。若失败要求修改产品源码或打包内容，应新建提交并重新构建，不绕过版本/来源检查。
+复用制品时仍须完成所选验证，不能用旧的成功打包结果替代后续检查。若失败要求修改产品源码或打包内容，应新建提交并重新构建，不绕过版本/来源检查。
 
 ## PyPI 延迟和部分成功
 

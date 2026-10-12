@@ -128,7 +128,8 @@ try {
     Write-Host 'Real v1.8.2 migration, legacy admission protection, native takeover, retained data/startup and three offline updates passed.'
 } finally {
     if (Test-Path -LiteralPath (Join-Path $Root 'bin/common.ps1')) {
-        . (Join-Path $Root 'bin/common.ps1')
+        # Use the current ownership checks even when migration left legacy files.
+        . (Join-Path $repo 'scripts/windows/common.ps1')
         Stop-ManagedControlPanel
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Root 'bin/stop-server.ps1') -Quiet
     }

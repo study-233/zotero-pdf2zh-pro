@@ -21,6 +21,7 @@ concurrency:
 jobs:
   core:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       UV_DEFAULT_INDEX: https://pypi.org/simple
     steps:
@@ -66,7 +67,7 @@ jobs:
   windows-native:
     runs-on: windows-latest
     timeout-minutes: 10
-    # Compile Slint/Skia and run Rust tests locally; keep push/PR checks lightweight.
+    # Native compilation belongs to local development or the release build.
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v8.3.2
@@ -93,6 +94,7 @@ jobs:
           }
 
   codex-native:
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:

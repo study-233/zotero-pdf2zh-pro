@@ -138,17 +138,15 @@ git diff --check
 下载进度、卸载及产物守卫测试，限时 10 分钟；不下载 LLVM/Skia，也不编译 Rust/Slint。
 同一分支的新提交会取消仍在运行的旧 CI，避免重复等待。
 
-Windows Rust 单测移到本机：修改 Windows 原生代码或准备发布时，使用上方
-`prepare_windows_build_tools.ps1` 和 `build_windows_control.ps1 -RunTests`，复用本机静态
-渲染工具链与 release 编译缓存。涉及安装脚本时，还应在本机运行 PowerShell
-语法/安全检查和 `scripts/test_windows_lifecycle.ps1`。记录测试对应的提交与结果，
-日常 CI 通过不代表 Rust 编译和真实安装已验证。原生 release、ZIP 与 PyPI
-产物仍在按需触发的候选及正式发布流程中构建和校验。
+Windows 开发优先在本机运行受影响的原生测试，使用上方工具链和 release 编译缓存；
+macOS 开发或本机缺少条件时，按需触发远端 Windows 验证。正式制品仍由 Actions
+构建一次，检查最终 EXE、安装包和运行环境。具体分工、时限及发布门槛见
+[Actions 测试规范](actions-testing.md)。日常 CI 通过不代表原生编译或真实安装已验证。
 发布检查还运行 `scripts/test_windows_runtime.ps1` 和 `scripts/test_windows_package.ps1`；
 后者从最终 ZIP 解压，以独立工作目录、精简 PATH 验证真实窗口。生命周期验证使用
 `-WindowsPackage dist/zotero-pdf2zh-pro-windows-x64.zip`，从同一 ZIP 读取 EXE 和管理脚本。
 候选版本可以在开发分支触发只构建的 Windows 工作流，输入该分支包含的精确提交；
-默认验证启动、安装、升级、自更新、卸载及全新 Python 3.13/OCR；勾选 `full_validation` 才追加完整回滚、迁移和重复的全量测试。
+默认验证启动、安装、升级、自更新、卸载及全新 Python 3.13/OCR；勾选 `full_validation` 才追加回滚、迁移及旧版升级，不重跑已通过的插件和服务端全量测试。
 Rust 单测复用 release 编译依赖，不再额外编译 debug 依赖。在新电脑上补充启动验收后发布。
 
 ## macOS 独立开发环境

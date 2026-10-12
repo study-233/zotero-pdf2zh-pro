@@ -35,7 +35,7 @@ try {
 } catch {
     Write-RuntimeLog "Update failed: $_"
     Set-Content -LiteralPath (Join-Path $AppRoot 'last-operation-error.txt') -Value $_.Exception.Message -Encoding utf8
-    if (Test-Path -LiteralPath $ControlPanelExecutable) {
+    if ((Test-Path -LiteralPath $ControlPanelExecutable) -and -not (Get-ManagedControlPanelProcessId)) {
         $arguments = @('--post-install'); if ($wasStopped) {$arguments += '--keep-stopped'}
         if (-not $inheritedInstallRootOverride) {$env:PDF2ZH_WINDOWS_APP_ROOT=$null}
         Start-Process -FilePath $ControlPanelExecutable -ArgumentList $arguments -WindowStyle Hidden

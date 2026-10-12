@@ -18,7 +18,7 @@
 按本次需要简述，常规教程链接至对应 tag 的 README：
 
 - Zotero 用户安装 XPI 或检查插件更新；服务端需单独更新，不能暗示插件更新会同时升级 Python 服务。
-- Windows 用户下载 ZIP、完整解压并运行 EXE；缺少 WebView2 时首次准备需要联网。旧程序无法启动的修复版应写明恢复方法。
+- Windows 用户下载单 EXE 安装器并按向导安装或升级；首次准备 Python 与翻译依赖需要联网，Slint 控制中心不依赖 WebView2。ZIP 保留用于自动更新。旧程序无法启动的修复版应写明恢复方法；历史版本说明保持当时的安装方式。
 - macOS 的 Homebrew 更新与服务重启命令以当前 README 为准。只有处理明确的本机 pin 问题时才讨论解除 pin，不把开发机状态变成所有用户的操作要求。
 - 同版本客户端修订需解释哪些包变了、PyPI 是否保持原包、已安装同版本用户如何手动覆盖，以及数据是否保留；不使用源码 SHA 对作为用户说明。
 - 已知限制须绑定具体版本和证据，不能把 v1.6.9 的历史限制复制到新版本；也不能为了简洁删掉仍适用的重要限制。
@@ -41,7 +41,7 @@
 ### 安装与更新
 
 - Zotero：安装附件中的 XPI，或在插件管理中检查更新；服务端需单独升级。
-- Windows：下载 ZIP，完整解压后运行 EXE。
+- Windows：下载 `zotero-pdf2zh-pro-windows-x64-setup.exe`，按向导安装或升级。
 
 [安装教程](https://github.com/study-233/zotero-pdf2zh-pro/blob/vX.Y.Z/README.md)
 ```

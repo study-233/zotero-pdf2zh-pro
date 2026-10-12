@@ -613,20 +613,22 @@ function Remove-ManagedControlPanelState {
 }
 
 function Stop-ManagedControlPanel {
-    $controlProcessId = Get-ManagedControlPanelProcessId
-    if (-not $controlProcessId) {
-        Remove-ManagedControlPanelState
-        return
-    }
-    Stop-Process -Id $controlProcessId
-    for ($attempt = 0; $attempt -lt 40; $attempt++) {
-        if (-not (Get-Process -Id $controlProcessId -ErrorAction SilentlyContinue)) {
-            Remove-ManagedControlPanelState
-            return
+    # Legacy controllers can leave duplicate windows or overwrite one another's
+    # PID marker. Match every instance of this installation's exact executable.
+    $controllers = @(Get-CimInstance Win32_Process -Filter "Name = '$ProductName.exe'" |
+        Where-Object { Test-PathEqual -Left $_.ExecutablePath -Right $ControlPanelExecutable })
+    foreach ($controller in $controllers) {
+        $controlProcessId = [int]$controller.ProcessId
+        $actualExecutable = Get-ProcessExecutablePath -ProcessId $controlProcessId
+        if (-not (Test-PathEqual -Left $actualExecutable -Right $ControlPanelExecutable)) { continue }
+        $process = Get-Process -Id $controlProcessId -ErrorAction SilentlyContinue
+        if (-not $process) { continue }
+        Stop-Process -InputObject $process
+        if (-not $process.WaitForExit(10000)) {
+            throw "The managed control center did not stop within 10 seconds."
         }
-        Start-Sleep -Milliseconds 250
     }
-    throw "The managed control center did not stop within 10 seconds."
+    Remove-ManagedControlPanelState
 }
 
 function Rotate-ProductLog {

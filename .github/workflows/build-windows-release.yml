@@ -13,7 +13,7 @@ on:
         required: true
         type: string
       full_validation:
-        description: Optional repeated backend, rollback and relocation checks; standard publication reuses core CI
+        description: Additional Windows rollback, relocation and previous-release migration; core CI is reused
         required: false
         type: boolean
         default: false
@@ -22,7 +22,7 @@ on:
         required: false
         type: string
       reuse_build_run_id:
-        description: Optional prior run whose artifact build succeeded; reuse its packages for standard validation
+        description: Optional prior run whose artifact build succeeded; reuse its packages for the selected validation
         required: false
         type: string
 
@@ -55,7 +55,6 @@ jobs:
           if ($env:REPLACEMENT_COMMIT -and '${{ inputs.full_validation }}' -ne 'true') { throw 'Same-version replacement requires full validation' }
           $reuse = '${{ inputs.reuse_build_run_id }}'
           if ($reuse -and $reuse -cnotmatch '^[0-9]+$') { throw 'Expected numeric prior run ID' }
-          if ($reuse -and '${{ inputs.full_validation }}' -eq 'true') { throw 'Reuse supports standard validation only' }
           git config --global core.autocrlf false
 
       - name: Checkout exact commit
@@ -217,21 +216,6 @@ jobs:
           uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$RELEASE_VERSION"
           uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT" --collect
 
-      - name: Plugin lint, type check and tests
-        if: inputs.full_validation
-        working-directory: plugin
-        shell: bash
-        run: |
-          set -euo pipefail
-          pnpm lint:check
-          pnpm exec tsc --noEmit
-          pnpm test
-
-      - name: Python tests
-        if: inputs.full_validation
-        shell: bash
-        run: uv run --directory server --locked python -m unittest discover -s tests
-
       - name: Fresh installed Python 3.13 runtime and OCR
         shell: pwsh
         run: |
@@ -268,17 +252,7 @@ jobs:
         if: inputs.full_validation && inputs.replacement_commit == ''
         shell: pwsh
         run: |
-          $previous = Join-Path $env:RUNNER_TEMP 'previous-release'
-          New-Item -ItemType Directory -Force -Path $previous | Out-Null
-          gh release download v1.8.2 --repo study-233/zotero-pdf2zh-pro --pattern 'zotero-pdf2zh-pro-windows-x64.zip' --dir $previous
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $metadata = Invoke-RestMethod 'https://pypi.org/pypi/zotero-pdf2zh-pro/1.8.2/json'
-          $wheel = @($metadata.urls | Where-Object {$_.filename -eq 'zotero_pdf2zh_pro-1.8.2-py3-none-any.whl'})
-          if ($wheel.Count -ne 1) { throw 'Expected one published v1.8.2 wheel' }
-          $oldWheel = Join-Path $previous $wheel[0].filename
-          Invoke-WebRequest $wheel[0].url -OutFile $oldWheel
-          if ((Get-FileHash -LiteralPath $oldWheel -Algorithm SHA256).Hash -ine $wheel[0].digests.sha256) { throw 'Previous wheel checksum mismatch' }
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_previous_release.ps1 -PreviousPackage (Join-Path $previous 'zotero-pdf2zh-pro-windows-x64.zip') -PreviousWheel $oldWheel -Package 'dist/zotero-pdf2zh-pro-windows-x64.zip' -Wheel "server/dist/zotero_pdf2zh_pro-$env:RELEASE_VERSION-py3-none-any.whl" -Root (Join-Path $PWD '.tmp/release-upgrade 中文 with spaces')
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -SkipLifecycle
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Verify and collect release artifacts
@@ -307,6 +281,7 @@ jobs:
             dist/*.json
             ${{ env.PDF2ZH_WINDOWS_APP_ROOT }}/logs/**
             ${{ env.PDF2ZH_WINDOWS_APP_ROOT }}/last-operation-error.txt
+            .tmp/release-extended-*/**/logs/**
           if-no-files-found: ignore
           retention-days: 14
 

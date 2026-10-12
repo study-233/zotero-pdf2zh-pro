@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: scripts/release.sh <version> [--full-validation] [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
+Usage: scripts/release.sh <version> [--full-validation] [--remote-validation] [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
 
 Build, validate, and publish a unified zotero-pdf2zh-pro release.
 
@@ -12,6 +12,8 @@ Windows GUI ZIP, a local corresponding-source archive, and an optional
 update to the public source-only Homebrew tap. Add a matching CHANGELOG.md
 section first. Publication reuses verified CI artifacts; --no-push builds on Windows.
 --full-validation also runs rollback and relocation checks against the final packages.
+Extended checks run locally on Windows, remotely on macOS/Linux. Use
+--remote-validation if this Windows host cannot run the extended checks.
 --replace-existing explicitly replaces clients at an existing tag, preserves the
 original PyPI files, and requires unchanged server and license inputs.
 EOF
@@ -66,6 +68,7 @@ PUBLISH_RELEASE=1
 PUBLISH_PYPI=1
 UPDATE_TAP=1
 FULL_VALIDATION=false
+REMOTE_VALIDATION=false
 TAP_PATH=""
 REPLACE_EXISTING=""
 PYPI_TOKEN="${UV_PUBLISH_TOKEN:-}"
@@ -74,6 +77,7 @@ unset UV_PUBLISH_TOKEN
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --full-validation) FULL_VALIDATION=true ;;
+        --remote-validation) REMOTE_VALIDATION=true ;;
         --no-push)
             PUSH=0
             PUBLISH_RELEASE=0
@@ -273,8 +277,16 @@ if [[ "$PUSH" -eq 1 ]]; then
     gh run watch "$CORE_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
     BUILD_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     [[ -z "$REPLACE_EXISTING" ]] || FULL_VALIDATION=true
+    # BEGIN_VALIDATION_ROUTING
+    REMOTE_FULL_VALIDATION="$FULL_VALIDATION"
+    LOCAL_EXTENDED_VALIDATION=false
+    if [[ "$FULL_VALIDATION" == true && "${OS:-}" == Windows_NT && "$REMOTE_VALIDATION" == false && -z "$REPLACE_EXISTING" ]]; then
+        REMOTE_FULL_VALIDATION=false
+        LOCAL_EXTENDED_VALIDATION=true
+    fi
+    # END_VALIDATION_ROUTING
     gh workflow run build-windows-release.yml --repo "$MAIN_REPO" --ref main \
-        -f version="$VERSION" -f commit="$COMMIT" -f full_validation="$FULL_VALIDATION" \
+        -f version="$VERSION" -f commit="$COMMIT" -f full_validation="$REMOTE_FULL_VALIDATION" \
         -f replacement_commit="$REPLACE_EXISTING"
     for _ in {1..40}; do
         BUILD_RUN="$(gh run list --repo "$MAIN_REPO" --workflow build-windows-release.yml \
@@ -338,6 +350,11 @@ for (const [name, destination] of Object.entries(destinations)) {
 }
 VERIFY_BUILD
     uv run --no-project python scripts/check_release_artifacts.py "$VERSION" "$COMMIT" --collect
+    if [[ "$LOCAL_EXTENDED_VALIDATION" == true ]]; then
+        extended_args=(-Version "$VERSION")
+        [[ -z "$REPLACE_EXISTING" ]] || extended_args+=(-SkipPreviousRelease)
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 "${extended_args[@]}"
+    fi
 fi
 
 for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$WINDOWS_UPDATE_MANIFEST" "$SOURCE_ARCHIVE"; do

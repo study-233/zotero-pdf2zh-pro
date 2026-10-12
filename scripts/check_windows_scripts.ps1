@@ -139,3 +139,4 @@ if ($failed) {
 
 & (Join-Path $PSScriptRoot "test_windows_install_root.ps1")
 & (Join-Path $PSScriptRoot "test_windows_uv_paths.ps1")
+& (Join-Path $PSScriptRoot "test_windows_control_processes.ps1")
