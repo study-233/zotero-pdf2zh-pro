@@ -9,7 +9,8 @@ python3 scripts/check_docs.py
 python3 -m unittest discover -s scripts -p 'test_check_docs.py'
 ```
 
-文档 CI 不安装应用依赖；业务 CI 的触发规则保持不变。
+文档与官网共用 `Documentation and website` 工作流，每次只执行一遍文档检查，
+不安装应用依赖；业务 CI 的触发规则保持不变。
 
 ### 官网开发与发布
 
@@ -34,10 +35,27 @@ python scripts/serve_site.py
 `benchmarks/translation/site/` 继续维护评测资源；原 JSON、CSV 与 PDF 根路径保持不变，
 官网将评测界面包装到 `/benchmark/`。测试快照与当前插件版本分别标示，不改写历史测试口径。
 
-唯一官网发布入口为 `.github/workflows/website.yml`：PR 验证并保存预览产物，main 验证通过后
-将完整站点以普通快进提交推送到既有 `codex/translation-benchmark-pages` 分支，并显式请求 Pages 构建。
-仓库 Pages 设置保持该分支根目录；不要恢复旧 `benchmark-pages.yml` 的单独发布逻辑，否则会覆盖官网。
-工作流仅构建公开静态内容，不调用翻译接口。恢复旧站点时，在发布分支还原目标发布提交的文件后创建新提交并请求 Pages 构建。
+唯一官网发布入口为 `.github/workflows/website.yml`：PR 验证并保存 7 天预览产物，
+main 验证通过后使用官方 Pages artifact 直接部署。仓库 Pages 来源设为 GitHub Actions，
+`github-pages` 环境只允许 main 部署；构建任务只读，部署任务单独取得 Pages 与 OIDC 权限。
+工作流仅构建公开静态内容，不调用翻译接口，也不再提交生成文件到发布分支。
+
+旧 `codex/translation-benchmark-pages` 分支和禁用的评测工作流仅保留历史，不能恢复成第二个发布入口。
+首次迁移前保存 Pages 来源、环境分支规则及旧发布提交；部署失败时将 Pages 来源恢复到旧分支根目录，
+恢复环境规则并请求该分支的 Pages 构建。迁移后的内容回退通过还原 main 中的源文件并重新部署完成。
+
+### 安全检查与依赖维护
+
+`Security` 工作流在代码 PR、main 提交和每周运行 CodeQL，覆盖 Python、JavaScript/TypeScript
+及 Actions。PR 依赖审查同时检查运行和开发依赖，新增高危或严重漏洞会失败；不自动发表评论。
+Rust 依赖由 Dependabot 检查，原生代码继续通过 Windows 验证，不在 CodeQL 中编译 Slint。
+依赖更新后可手动运行 Security 并勾选 `validate_container`，构建冻结的 Python 3.12 Docker
+镜像并验证已安装服务与 OCR；日常扫描不构建镜像。
+
+Dependabot 只创建安全修复 PR，按生态分组，不自动合并。配置覆盖插件 npm、服务端 uv、
+官网 pip、两个 Cargo 工程和 Actions；`open-pull-requests-limit: 0` 关闭普通版本更新，
+安全分组必须使用 `applies-to: security-updates`。仓库设置中的安全更新开关也必须开启。
+保留 Dependency Graph、密钥扫描及推送保护；普通升级仍由维护者安排。
 
 ## 产品边界
 

@@ -1,35 +1,30 @@
-name: Plugin website
+name: Documentation and website
 
 on:
   push:
     branches: [main]
     paths:
       - 'website/**'
-      - 'docs/**'
+      - '**/*.md'
       - 'assets/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
+      - 'LICENSE'
       - 'plugin/package.json'
-      - 'server/pyproject.toml'
-      - 'server/server.py'
+      - 'server/**'
       - 'benchmarks/translation/**'
-      - 'scripts/*site*'
-      - 'scripts/*docs*'
-      - '.github/workflows/website.yml'
+      - 'scripts/**'
+      - '.github/workflows/**'
   pull_request:
+    branches: [main]
     paths:
       - 'website/**'
-      - 'docs/**'
+      - '**/*.md'
       - 'assets/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
+      - 'LICENSE'
       - 'plugin/package.json'
-      - 'server/pyproject.toml'
-      - 'server/server.py'
+      - 'server/**'
       - 'benchmarks/translation/**'
-      - 'scripts/*site*'
-      - 'scripts/*docs*'
-      - '.github/workflows/website.yml'
+      - 'scripts/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:
@@ -42,6 +37,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
@@ -58,39 +54,31 @@ jobs:
       - run: node --test website/test_site.cjs benchmarks/translation/test_ui.cjs
       - run: python scripts/build_site.py
       - run: python scripts/check_site.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
+        if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
         with:
           name: plugin-website
           path: dist/site/
           include-hidden-files: true
           retention-days: 7
+      - uses: actions/upload-pages-artifact@v5
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: dist/site/
+          include-hidden-files: true
 
   publish:
     needs: validate
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
-      contents: write
       pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: actions/download-artifact@v4
-        with:
-          name: plugin-website
-          path: .tmp/website-output
-      - name: Publish the complete site to the existing Pages branch
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git fetch origin codex/translation-benchmark-pages
-          git worktree add --detach .tmp/pages-checkout origin/codex/translation-benchmark-pages
-          rsync -a --delete --exclude=.git .tmp/website-output/ .tmp/pages-checkout/
-          git -C .tmp/pages-checkout add --all
-          if ! git -C .tmp/pages-checkout diff --cached --quiet; then
-            git -C .tmp/pages-checkout -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "Publish plugin website from $GITHUB_SHA"
-            git -C .tmp/pages-checkout push origin HEAD:codex/translation-benchmark-pages
-          fi
-          # GITHUB_TOKEN pushes do not automatically start a branch-based Pages build.
-          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
+      - uses: actions/configure-pages@v6
+      - uses: actions/deploy-pages@v5
+        id: deployment

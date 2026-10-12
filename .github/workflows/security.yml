@@ -1,0 +1,81 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'assets/**'
+      - '.github/ISSUE_TEMPLATE/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'assets/**'
+      - '.github/ISSUE_TEMPLATE/**'
+  schedule:
+    - cron: '27 2 * * 1'
+  workflow_dispatch:
+    inputs:
+      validate_container:
+        description: Also build the frozen Python 3.12 Docker image and verify its installed runtime
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions, javascript-typescript, python]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
+
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime, development
+          comment-summary-in-pr: never
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 120
+
+  container-runtime:
+    if: github.event_name == 'workflow_dispatch' && inputs.validate_container
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the frozen Docker runtime
+        run: docker build --file server/Dockerfile --tag pdf2zh-security-check .
+      - name: Verify installed Python 3.12 runtime and OCR
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open("plugin/package.json"))["version"])')"
+          docker run --rm \
+            --mount type=bind,source="$PWD/scripts/check_installed_runtime.py",target=/tmp/check_installed_runtime.py,readonly \
+            pdf2zh-security-check uv run --no-sync python /tmp/check_installed_runtime.py "$version"

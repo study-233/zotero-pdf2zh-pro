@@ -1,5 +1,31 @@
 # Security review
 
+## Dependency fixes — 2026-10-12
+
+The default branch audit found 24 open Dependabot alerts across six packages.
+The following fixes update source manifests and lockfiles; they do not replace
+the already published 1.9.0 artifacts.
+
+| Dependency | Minimum fixed version | Alert count |
+| --- | --- | --- |
+| Axios | `1.20.0` | 9 |
+| brace-expansion | `1.1.21` / `5.0.12` | 2 |
+| pypdf | `6.19.0` (retain `<7`) | 8 |
+| urllib3 | `2.8.0` | 3 |
+| fsspec | `2026.6.0` | 1 |
+| Werkzeug | `3.1.9` | 1 |
+
+All four Python minimums are declared in the wheel dependency metadata as well
+as the uv lockfile, covering PyPI installation without a checkout. Axios is
+imported and bundled into the plugin despite its `devDependencies` classification;
+it must not be excluded from security review on that basis.
+
+The Security workflow analyzes Python, JavaScript/TypeScript and Actions with
+CodeQL and rejects new high/critical dependency findings in pull requests.
+Dependabot is configured for grouped security updates only, including uv,
+website requirements, Cargo and Actions. Rust source analysis remains outside
+this CodeQL configuration; native Windows validation is unchanged.
+
 ## Dependency fixes
 
 These changes were reviewed against 1.6.9 and ship in the 1.7.0 release.
