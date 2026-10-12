@@ -286,7 +286,9 @@ Assert-True (Test-Path -LiteralPath $ControlLogFile) "Control log cannot be open
 
 Remove-ItemProperty -LiteralPath $AutostartRunKey -Name $ProductName -Force -ErrorAction SilentlyContinue
 Remove-ItemProperty -LiteralPath $AutostartApprovedKey -Name $ProductName -Force -ErrorAction SilentlyContinue
-Set-Content -LiteralPath $InstalledVersionFile -Value "1.0.0" -Encoding ascii
+# Keep the version marker truthful while the current server is running: the
+# maintenance gate validates it against health before taking ownership. This
+# exercises replacement/data retention; real cross-version migration uses 1.8.2.
 & (Join-Path $windowsDir "install.ps1") `
     -PackageSource $package `
     -GuiSource $gui `
