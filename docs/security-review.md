@@ -20,11 +20,108 @@ as the uv lockfile, covering PyPI installation without a checkout. Axios is
 imported and bundled into the plugin despite its `devDependencies` classification;
 it must not be excluded from security review on that basis.
 
+GitHub marked all 24 alerts `fixed` on 2026-10-12 between 14:56:54 and
+14:56:59 UTC (22:56:54–22:56:59 Asia/Hong_Kong), after
+[`701acfe`](https://github.com/study-233/zotero-pdf2zh-pro/commit/701acfe9102e8548ce51a52a874aa978dce037f2)
+reached main. None was dismissed or auto-dismissed. The checked alert IDs are
+77, 78, 80, 81, 84–102 (excluding 103), and 104. The SBOM reports Axios 1.20.0,
+both fixed brace-expansion versions, pypdf 6.19.0, urllib3 2.8.0,
+fsspec 2026.6.0 and Werkzeug 3.1.9. Installed-runtime checks now enforce the
+four Python minimums on both Python 3.12 Docker and Python 3.13 CI.
+
 The Security workflow analyzes Python, JavaScript/TypeScript and Actions with
 CodeQL and rejects new high/critical dependency findings in pull requests.
 Dependabot is configured for grouped security updates only, including uv,
 website requirements, Cargo and Actions. Rust source analysis remains outside
 this CodeQL configuration; native Windows validation is unchanged.
+
+## CodeQL remediation — 2026-10-13
+
+The first complete main analysis at `df21a39` reported 20 existing findings:
+six Actions, five JavaScript/TypeScript and nine Python. All three language
+categories remain enabled; no rule, test directory or bundled-source directory
+is excluded. These source changes do not update published 1.9.0 packages.
+
+Actions changes are in
+[`87a2def`](https://github.com/study-233/zotero-pdf2zh-pro/commit/87a2def),
+and input/output boundary changes in
+[`f5a912c`](https://github.com/study-233/zotero-pdf2zh-pro/commit/f5a912c).
+The table records the implemented disposition; final main analysis and
+individual GitHub alert states still require verification after merge.
+
+| Alert | Rule | Implemented disposition |
+| --- | --- | --- |
+| 1 | actions/missing-workflow-permissions | CI explicitly grants contents: read |
+| 2 | actions/missing-workflow-permissions | Same workflow permission correction |
+| 3 | actions/missing-workflow-permissions | Same workflow permission correction |
+| 4 | actions/cache-poisoning/direct-cache | Trusted-main source/CI gates precede caches; verify main |
+| 5 | actions/cache-poisoning/direct-cache | Cache only pinned, verified renderer archives; verify main |
+| 6 | actions/cache-poisoning/poisonable-step | Target scripts run only after source/CI gates; verify main |
+| 7 | js/xss-through-dom | Same-origin HTTP(S) or a module-created, hash-verified PDF blob |
+| 8 | js/xss-through-dom | Same URL gate protects both preview and download links |
+| 9 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction |
+| 10 | js/bad-tag-filter | Reviewed false positive: fixed local test-script extraction |
+| 11 | js/incomplete-multi-character-sanitization | Inert DOM text extraction; remove script/style nodes |
+| 12 | py/path-injection | Cross-platform basename validation, resolved-parent check, exclusive creation |
+| 13 | py/bad-tag-filter | HTML-parser script ranges preserve original bytes; ambiguous tags rejected |
+| 14 | py/stack-trace-exposure | Explicit business messages or fixed diagnoses; correlated, redacted logs |
+| 15 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.5 padding hash |
+| 16 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.2 key derivation |
+| 17 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF Algorithm 3.7 owner authentication |
+| 18 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 5 authentication hash |
+| 19 | py/weak-sensitive-data-hashing | Reviewed false positive: PDF revision 6 initial hash |
+| 20 | py/overly-large-range | Reviewed false positive: precisely the intended XML control characters |
+
+### Evidence and regression coverage
+
+Alerts 9–10 read a fixed repository XHTML file and extract its script for a
+Node VM test fixture. The regex is not an HTML filter for user input, and its
+output never enters a product HTML rendering sink. The tests and their coverage
+are retained; the two individual findings are eligible for false-positive closure.
+
+Alerts 15–19 are in the bundled PDF Standard Security Handler, not an application
+password database. MD5/SHA-256 are required to reproduce existing PDF encryption
+and authentication algorithms. Replacing them with Argon2 or another password
+hash would change the derived keys and break decryption. See the
+[Adobe PDF reference](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.4.pdf)
+and the [upstream security handler](https://github.com/pdfminer/pdfminer.six/blob/master/pdfminer/pdfdocument.py).
+[PDF security regressions](../server/tests/test_pdf_security_compatibility.py)
+generate RC4-40, RC4-128, AES-128, AES-256-R5 and AES-256 PDFs, check user/owner
+and empty passwords, reject incorrect passwords and verify decrypted metadata.
+The bundled parser's raw AES result includes PKCS#7 padding, which the test
+accounts for explicitly without changing the cryptography.
+
+Alert 20's XML filter was evaluated against all 1,114,112 Unicode code points.
+It matches exactly 29 characters: U+0000–U+0008, U+000B–U+000C and
+U+000E–U+001F. Tab, LF, CR and printable Unicode remain intact. The same
+PDF regression file preserves this exact-set assertion.
+
+[Input/error regressions](../server/tests/test_security_boundaries.py) cover
+Windows and POSIX paths, Unicode names, ADS/device names, existing files and
+symbolic links, and errors containing credentials, URLs and absolute paths.
+Unknown failures return an errorId; local diagnostics keep only exception type
+and bounded frame metadata, without messages, source lines or local variables.
+Explicit business errors retain status and public messages.
+
+[Release guards](../scripts/test_release_workflows.py) reject non-main dispatch,
+malformed SHAs, non-ancestor sources and missing successful push CI. Guards run
+before target checkout, dependency installation, cache use or target scripts.
+The trusted workflow revision supplies the renderer verifier for historical builds.
+[Archive checks](../scripts/test_windows_build_tools.ps1) verify warm reuse,
+replacement of poisoned cache bytes and rejection of poisoned downloads.
+Expanded tools are reconstructed into a fresh directory from pinned archives.
+
+[PDF preview checks](../benchmarks/translation/test_pdf_viewer.cjs) exercise both
+actual link assignments and local file selection. Arbitrary blob strings,
+cross-origin URLs, credentials in URLs, javascript: and data: are rejected.
+Local object URLs are created only after SHA-256 matching, with application/pdf
+MIME regardless of the selected file's declared type.
+
+The snapshot parser was rerun on six original archived upstream inputs from
+`18d67c0^`. All prepared SHA-256 values match the existing data manifest.
+No glossary-data history, prepared snapshots, packs or term counts were changed.
+The complete plugin audit still reports only the two pre-existing PDF.js
+declarations matches assessed below; the new DOM test dependency adds no finding.
 
 ## Dependency fixes
 
