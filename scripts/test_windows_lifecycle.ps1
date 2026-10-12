@@ -25,6 +25,9 @@ function Assert-TestPath {
 $null=Assert-TestPath $env:PDF2ZH_WINDOWS_APP_ROOT
 $null=Assert-TestPath $env:PDF2ZH_WINDOWS_START_MENU_DIR
 if ($env:PDF2ZH_WINDOWS_REGISTRY_KEY -match '(?i)^HKCU:\\Software\\Microsoft\\' -or $env:PDF2ZH_WINDOWS_REGISTRY_KEY -ieq 'HKCU:\Software\zotero-pdf2zh-pro') {throw 'Lifecycle tests cannot use production registry keys.'}
+# Exercise real startup and explicit updates without a scheduled cleanup racing
+# this script's immediately following install/uninstall operations.
+$env:PDF2ZH_WINDOWS_LIFECYCLE_TEST = '1'
 $windowsDir = Join-Path $PSScriptRoot "windows"
 if ($WindowsPackage) {
     $windowsDir = Join-Path ([IO.Path]::GetTempPath()) ('pdf2zh-lifecycle-package-' + [guid]::NewGuid().ToString('N'))
@@ -228,7 +231,7 @@ $firstControlProcessId = Wait-ControlPanel
 Wait-ExpectedHealth
 Assert-Autostart -Enabled $true
 
-if (-not $SmokeOnly -and $env:PDF2ZH_WINDOWS_LIFECYCLE_TEST -ne "1") {
+if (-not $SmokeOnly) {
     $duplicate = Start-Process -FilePath $ControlPanelExecutable -PassThru -WindowStyle Hidden
     Assert-True ($duplicate.WaitForExit(10000)) "A duplicate control center instance remained running."
     Assert-True ((Get-ManagedControlPanelProcessId) -eq $firstControlProcessId) "Duplicate launch replaced the primary instance."
