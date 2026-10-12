@@ -105,7 +105,7 @@ jobs:
       - name: Remove the isolated build drive
         if: always() && env.PDF2ZH_WINDOWS_BUILD_ROOT != ''
         shell: pwsh
-        run: subst.exe P: /D
+        run: 'subst.exe P: /D'
 
   codex-native:
     strategy:
