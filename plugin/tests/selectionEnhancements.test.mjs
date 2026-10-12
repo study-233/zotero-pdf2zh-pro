@@ -5,8 +5,15 @@ import test from "node:test";
 import { URL } from "node:url";
 import { TextEncoder, TextDecoder } from "node:util";
 import ts from "typescript";
+import { JSDOM } from "jsdom";
+
+const { DOMParser } = new JSDOM("").window;
 
 function load(name, imports = {}, globals = {}) {
+    globals = {
+        Zotero: { getMainWindow: () => ({ DOMParser }) },
+        ...globals,
+    };
     const exports = {};
     const code = ts.transpileModule(
         fs.readFileSync(
@@ -145,6 +152,7 @@ test("online cache refresh, cancellation and network errors do not poison later 
                 writeUTF8: async () => {},
             },
             Zotero: {
+                getMainWindow: () => ({ DOMParser }),
                 DataDirectory: { dir: "/data" },
                 HTTP: {
                     request: async () => {
@@ -203,6 +211,32 @@ test("online cache refresh, cancellation and network errors do not poison later 
             .cached,
         false,
     );
+});
+
+test("dictionary HTML is extracted as inert text with scripts and styles removed", () => {
+    const api = load("selectionOnlineDictionary", {
+        "../../package.json": config,
+        "./diagnostics": diagnostics,
+    });
+    const parser = new DOMParser();
+    for (const html of [
+        '<b>word</b>&nbsp;&amp;释义<script>throw Error("execute")</script><style>secret</style>',
+        '<b onclick="throw Error()">word</b>&nbsp;&amp;释义<SCRIPT src="https://evil.test/x">bad</SCRIPT>',
+    ]) {
+        assert.equal(api.dictionaryPlainText(html, parser), "word &释义");
+    }
+    assert.equal(
+        api.dictionaryPlainText("&lt;script&gt;literal&lt;/script&gt;", parser),
+        "<script>literal</script>",
+    );
+    assert.equal(
+        api.dictionaryPlainText(
+            '<img src="x" onerror="evil()"><b>safe',
+            parser,
+        ),
+        "safe",
+    );
+    assert.equal(api.dictionaryPlainText(null, parser), "");
 });
 
 test("preference migration distinguishes new installs, implicit old defaults, explicit choices and restart", () => {

@@ -51,7 +51,7 @@ jobs:
       - run: python -m unittest discover -s scripts -p 'test_check_docs.py'
       - run: python -m unittest discover -s website -p 'test_*.py'
       - run: python benchmarks/translation/validate_site.py
-      - run: node --test website/test_site.cjs benchmarks/translation/test_ui.cjs
+      - run: node --test website/test_site.cjs benchmarks/translation/test_ui.cjs benchmarks/translation/test_pdf_viewer.cjs
       - run: python scripts/build_site.py
       - run: python scripts/check_site.py
       - uses: actions/upload-artifact@v6

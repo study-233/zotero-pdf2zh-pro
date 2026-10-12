@@ -38,7 +38,7 @@ STRINGS = {
                      'codex_arch_mismatch','codex_version_too_old','codex_version_unrecognized','codex_cancelled'},
     'availability': {'complete','partial','unavailable'},
 }
-IDENTIFIERS = {'taskId', 'serverInstanceId'}
+IDENTIFIERS = {'taskId', 'serverInstanceId', 'errorId'}
 LABELS = {'provider', 'service', 'model', 'sourceLang', 'targetLang'}
 CONTAINERS = set('requestedConfiguration effectiveConfiguration translationSummary qualitySummary metrics requests tokens byKind translation review initialization localCache providerCache'.split())
 COUNT_MAPS = {'statusCodes', 'errorTypes', 'finishReasons', 'protocols'}

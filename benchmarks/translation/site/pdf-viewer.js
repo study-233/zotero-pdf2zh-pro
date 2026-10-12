@@ -12,7 +12,15 @@ window.PdfShowcase=(()=>{
   const modelName=id=>data.models.find(m=>m.id===id)?.name||id;
   const current=()=>catalog?.documents.find(d=>d.paper===paper&&d.model===model);
   const result=()=>data.results.find(r=>r.paper===paper&&r.model===model);
-  const fileUrl=d=>localFiles.get(d?.taskId)||(d?.url ? new URL(d.url,assetBase).href : null);
+  function fileUrl(d){
+    const local=localFiles.get(d?.taskId);
+    if(local){const url=new URL(local);return url.protocol==='blob:'?url.href:null;}
+    if(typeof d?.url!=='string')return null;
+    try{
+      const url=new URL(d.url,assetBase);
+      return (url.protocol==='https:'||url.protocol==='http:')&&url.origin===assetBase.origin&&!url.username&&!url.password?url.href:null;
+    }catch{return null;}
+  }
   function setControls(enabled){
     for(const id of ['pdf-prev','pdf-next','pdf-page','pdf-zoom-in','pdf-zoom-out','pdf-fit'])$(id).disabled=!enabled;
     if(enabled){$('pdf-prev').disabled=page<=1;$('pdf-next').disabled=page>=pdf.numPages;$('pdf-zoom-out').disabled=zoom<=.5;$('pdf-zoom-in').disabled=zoom>=3;}
@@ -172,7 +180,9 @@ window.PdfShowcase=(()=>{
       const bytes=await file.arrayBuffer();const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');
       if(current()?.taskId!==task)return;
       if(hash!==entry.sha256){message('文件与当前任务不匹配','请选择这一模型对应的原始 PDF，避免展示错误的测评结果。',true);return;}
-      if(localFiles.has(task))URL.revokeObjectURL(localFiles.get(task));localFiles.set(task,URL.createObjectURL(file));loadDocument();
+      if(localFiles.has(task))URL.revokeObjectURL(localFiles.get(task));
+      const pdfBlob=new Blob([bytes],{type:'application/pdf'});
+      localFiles.set(task,URL.createObjectURL(pdfBlob));loadDocument();
     }catch{if(current()?.taskId===task)message('无法读取文件','请重新选择本地 PDF。',true);}
   }
   function configure(input){

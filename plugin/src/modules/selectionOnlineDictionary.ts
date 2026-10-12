@@ -31,12 +31,22 @@ const array = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const plain = (v: unknown): string =>
     typeof v === "string"
         ? v
-              .replace(/<[^>]*>/g, "")
-              .replace(/&nbsp;/g, " ")
-              .replace(/&amp;/g, "&")
+              .replace(/\u00a0/g, " ")
               .trim()
               .slice(0, 4000)
         : "";
+
+export function dictionaryPlainText(value: unknown, parser: DOMParser): string {
+    if (typeof value !== "string") return "";
+    const doc = parser.parseFromString(
+        value,
+        "text/html",
+    ) as unknown as Document;
+    for (const node of Array.from(doc.querySelectorAll("script, style"))) {
+        if (node) node.parentNode?.removeChild(node);
+    }
+    return plain(doc.body?.textContent);
+}
 
 export function safeDictionaryAudio(value: unknown): string | undefined {
     if (typeof value !== "string") return;
@@ -57,7 +67,9 @@ export function safeDictionaryAudio(value: unknown): string | undefined {
 export function parseYoudao(
     raw: unknown,
     selected: string,
+    parser: DOMParser = new (Zotero.getMainWindow().DOMParser)(),
 ): DictionaryDefinition | undefined {
+    const plain = (value: unknown) => dictionaryPlainText(value, parser);
     const data = object(raw);
     if (
         !Object.keys(data).length ||

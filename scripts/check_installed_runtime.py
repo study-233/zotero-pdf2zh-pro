@@ -40,6 +40,9 @@ FORBIDDEN_DISTRIBUTIONS = {
     "uvicorn",
 }
 
+SECURITY_MINIMUMS = {"pypdf": "6.19.0", "urllib3": "2.8.0",
+                     "fsspec": "2026.6.0", "werkzeug": "3.1.9"}
+
 
 def canonicalize_name(value: str) -> str:
     return re.sub(r"[-_.]+", "-", value).lower()
@@ -49,6 +52,9 @@ def main() -> None:
     if len(sys.argv) != 2:
         raise SystemExit("usage: check_installed_runtime.py <version>")
     expected_version = sys.argv[1]
+    for package, minimum in SECURITY_MINIMUMS.items():
+        if Version(importlib.metadata.version(package)) < Version(minimum):
+            raise RuntimeError(f"Installed {package} is below the security minimum {minimum}")
     installed = {
         canonicalize_name(distribution.metadata["Name"])
         for distribution in importlib.metadata.distributions()
