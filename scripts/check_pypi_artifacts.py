@@ -134,6 +134,9 @@ def check_wheel(wheel: Path, version: str) -> None:
     openai_requirements = [value for value in metadata.get_all("Requires-Dist", []) if requirement_name(value) == "openai"]
     if len(openai_requirements) != 1 or ">=2.32.0" not in openai_requirements[0]:
         raise RuntimeError("Wheel must require the Responses-capable OpenAI SDK >=2.32.0")
+    bitstring_requirements = [value for value in metadata.get_all("Requires-Dist", []) if requirement_name(value) == "bitstring"]
+    if len(bitstring_requirements) != 1 or "<5" not in bitstring_requirements[0]:
+        raise RuntimeError("Wheel must retain the BitStream-compatible bitstring <5 dependency")
     unexpected = requirements & FORBIDDEN_DISTRIBUTIONS
     if unexpected:
         raise RuntimeError(f"Wheel declares forbidden dependencies: {sorted(unexpected)}")

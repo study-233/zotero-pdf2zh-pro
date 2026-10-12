@@ -34,6 +34,11 @@ foreach ($probeLine in $probeEnvironment) {
 }
 $env:LLVM_HOME = $probeLlvm
 $env:LIBCLANG_PATH = Join-Path $probeLlvm 'bin'
+$env:CLANG_PATH = Join-Path $probeLlvm 'bin/clang.exe'
+$env:Path = (Join-Path $probeLlvm 'bin') + ';' + $env:Path
+$clangResources = Join-Path $probeLlvm 'lib/clang/21'
+if (-not (Test-Path -LiteralPath (Join-Path $clangResources 'include/stddef.h'))) { throw 'LLVM 21 resource headers are missing' }
+$env:BINDGEN_EXTRA_CLANG_ARGS = ($env:BINDGEN_EXTRA_CLANG_ARGS + ' -resource-dir="' + $clangResources.Replace('\', '/') + '"').Trim()
 if (-not $TargetDirectory) { $TargetDirectory = Join-Path $probeRepository 'windows-app/target' }
 $env:CARGO_TARGET_DIR = Convert-BuildPath $TargetDirectory
 $env:RUSTFLAGS = '-C target-feature=+crt-static'

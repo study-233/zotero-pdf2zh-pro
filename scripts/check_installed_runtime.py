@@ -21,6 +21,7 @@ import task_manager
 import glossary_manager
 import glossary_catalog
 import maintenance
+from bitstring import BitStream
 
 FORBIDDEN_DISTRIBUTIONS = {
     "babeldoc",
@@ -75,6 +76,8 @@ def main() -> None:
         raise RuntimeError(f"Unexpected BabelDOC snapshot: {babeldoc.__version__}")
     if not callable(observability.empty_metrics):
         raise RuntimeError("Observability runtime is incomplete")
+    if BitStream("0b1").read("uint:1") != 1:
+        raise RuntimeError("Installed PDF bitstream dependency is incompatible")
     if Version(openai.__version__) < Version("2.32.0"):
         raise RuntimeError("Installed OpenAI SDK is too old for the dual-protocol runtime")
     if "cost" in observability.empty_metrics():

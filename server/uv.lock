@@ -1903,7 +1903,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "anyio", specifier = ">=4.14.2" },
-    { name = "bitstring", specifier = ">=4.3.0" },
+    { name = "bitstring", specifier = ">=4.3.0,<5" },
     { name = "chardet", specifier = ">=5.2.0" },
     { name = "charset-normalizer", specifier = ">=2.0.0" },
     { name = "configargparse", specifier = ">=1.7" },

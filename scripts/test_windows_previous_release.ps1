@@ -3,7 +3,8 @@
     [Parameter(Mandatory=$true)][string]$PreviousWheel,
     [Parameter(Mandatory=$true)][string]$Package,
     [Parameter(Mandatory=$true)][string]$Wheel,
-    [Parameter(Mandatory=$true)][string]$Root
+    [Parameter(Mandatory=$true)][string]$Root,
+    [string]$DownloadCache
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
@@ -59,7 +60,22 @@ function Wait-Version([string]$Version) {
     throw "Expected isolated service version $Version did not become healthy."
 }
 try {
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $old 'install.ps1') -PackageSource $PreviousWheel -GuiSource (Join-Path $old 'zotero-pdf2zh-pro.exe') -SkipUvBootstrap -NonInteractive
+    if ($DownloadCache) {
+        $cacheSource=(Resolve-Path -LiteralPath $DownloadCache).Path
+        if (-not $cacheSource.StartsWith($temporaryRoot,[StringComparison]::OrdinalIgnoreCase)) {throw 'Only a repository .tmp download cache may be reused.'}
+        New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root 'runtime') | Out-Null
+        Copy-Item -LiteralPath (Join-Path $cacheSource 'cache') -Destination (Join-Path $Root 'cache') -Recurse
+        Copy-Item -LiteralPath (Join-Path $cacheSource 'runtime/python') -Destination (Join-Path $Root 'runtime/python') -Recurse
+    }
+    # Recreate a supported pre-5 environment for the unchanged published wheel.
+    # v1.9.0 adds this compatibility bound to its own package metadata.
+    $constraint=Join-Path $fixture 'previous-constraints.txt'
+    Set-Content -LiteralPath $constraint -Encoding ascii -Value 'bitstring==4.4.0'
+    $previousConstraint=$env:UV_CONSTRAINT
+    try {
+        $env:UV_CONSTRAINT=$constraint
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $old 'install.ps1') -PackageSource $PreviousWheel -GuiSource (Join-Path $old 'zotero-pdf2zh-pro.exe') -SkipUvBootstrap -NonInteractive -AllowPreparedDestination
+    } finally {$env:UV_CONSTRAINT=$previousConstraint}
     Assert-True ($LASTEXITCODE -eq 0) 'The real v1.8.2 baseline failed to install.'
     $bin=Join-Path $Root 'bin'
     $control=Join-Path $bin 'zotero-pdf2zh-pro.exe'
