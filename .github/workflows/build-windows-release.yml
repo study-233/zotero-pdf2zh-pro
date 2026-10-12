@@ -220,14 +220,16 @@ jobs:
           uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$RELEASE_VERSION"
           uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT" --collect
 
-      - name: Use current window validation for reused artifacts
+      - name: Use current test harness for reused artifacts
         if: inputs.reuse_build_run_id != ''
         shell: bash
         run: |
           # Only the test harness comes from this workflow's newer revision.
           # Product sources, packages and their provenance stay at RELEASE_COMMIT.
           git restore --source "$GITHUB_SHA" --worktree -- \
-            scripts/test_windows_lifecycle.ps1 scripts/check_windows_background.py
+            scripts/test_windows_lifecycle.ps1 scripts/check_windows_background.py \
+            scripts/test_windows_process_helpers.ps1 scripts/test_windows_release_extended.ps1 \
+            scripts/test_windows_previous_release.ps1 scripts/test_windows_update_reuse.ps1
 
       - name: Fresh installed Python 3.13 runtime and OCR
         shell: pwsh

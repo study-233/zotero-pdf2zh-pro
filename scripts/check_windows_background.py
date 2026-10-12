@@ -27,7 +27,7 @@ def visible_windows(process_id):
             # Winit creates this untitled event-dispatch window even without a
             # Slint component. .NET MainWindowHandle can incorrectly select it.
             if window_class.value != 'Winit Thread Event Target' or title.value:
-                windows.append({'title': title.value, 'class': window_class.value})
+                windows.append({'handle': window, 'title': title.value, 'class': window_class.value})
         return True
 
     if not user32.EnumWindows(visit, 0):
@@ -37,6 +37,10 @@ def visible_windows(process_id):
 
 if __name__ == '__main__':
     windows = visible_windows(int(sys.argv[1]))
+    if '--panel' in sys.argv[2:]:
+        panels = [window for window in windows if window['title'] == 'zotero-pdf2zh-pro']
+        print(panels[0]['handle'] if panels else 0)
+        raise SystemExit(0)
     if windows:
         print(json.dumps(windows, ensure_ascii=True))
         raise SystemExit(1)

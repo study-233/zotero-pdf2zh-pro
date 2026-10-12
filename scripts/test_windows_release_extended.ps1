@@ -8,6 +8,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+. (Join-Path $PSScriptRoot 'test_windows_process_helpers.ps1')
 $validationCommit = (& git -C $repo rev-parse HEAD)
 if (-not $SourceCommit) { $SourceCommit = $validationCommit }
 if ($SourceCommit -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected a full source commit.' }
@@ -52,13 +53,19 @@ try {
     if (-not $SkipPreviousRelease) {
         $previous = Join-Path $fixture 'previous-release'
         New-Item -ItemType Directory -Force -Path $previous | Out-Null
-        gh release download v1.8.2 --repo study-233/zotero-pdf2zh-pro --pattern 'zotero-pdf2zh-pro-windows-x64.zip' --dir $previous
-        if ($LASTEXITCODE -ne 0) { throw 'Previous Windows package download failed.' }
-        $metadata = Invoke-RestMethod 'https://pypi.org/pypi/zotero-pdf2zh-pro/1.8.2/json'
+        $downloadArgs = 'release download v1.8.2 --repo study-233/zotero-pdf2zh-pro --pattern zotero-pdf2zh-pro-windows-x64.zip --dir "{0}"' -f $previous
+        $download = Start-Process -FilePath (Get-Command gh).Source -ArgumentList $downloadArgs -WindowStyle Hidden -PassThru
+        $null = $download.Handle
+        if (-not $download.WaitForExit(300000)) {
+            $download.Kill(); $download.WaitForExit()
+            throw 'Previous package download exceeded five minutes; retry only this validation stage.'
+        }
+        if ($download.ExitCode -ne 0) { throw 'Previous Windows package download failed.' }
+        $metadata = Invoke-RestMethod 'https://pypi.org/pypi/zotero-pdf2zh-pro/1.8.2/json' -TimeoutSec 30
         $oldWheelInfo = @($metadata.urls | Where-Object {$_.filename -eq 'zotero_pdf2zh_pro-1.8.2-py3-none-any.whl'})
         if ($oldWheelInfo.Count -ne 1) { throw 'Expected one published v1.8.2 wheel.' }
         $oldWheel = Join-Path $previous $oldWheelInfo[0].filename
-        Invoke-WebRequest $oldWheelInfo[0].url -OutFile $oldWheel -UseBasicParsing
+        Invoke-WebRequest $oldWheelInfo[0].url -OutFile $oldWheel -UseBasicParsing -TimeoutSec 120
         if ((Get-FileHash -LiteralPath $oldWheel -Algorithm SHA256).Hash -ine $oldWheelInfo[0].digests.sha256) {
             throw 'Previous wheel checksum mismatch.'
         }
@@ -79,16 +86,7 @@ try {
     Write-Host "Extended validation passed; evidence: $fixture/validation.json"
 } finally {
     # Also clean up failed/relocated fixtures; never match the production directory.
-    $prefix = [IO.Path]::GetFullPath($fixture).TrimEnd('\') + '\'
-    foreach ($process in @(Get-CimInstance Win32_Process | Where-Object {
-        $_.ExecutablePath -and $_.ExecutablePath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) -and
-        $_.Name -in @('zotero-pdf2zh-pro.exe','python.exe','pythonw.exe')
-    })) {
-        $current = Get-CimInstance Win32_Process -Filter "ProcessId=$($process.ProcessId)"
-        if ($current -and $current.ExecutablePath -eq $process.ExecutablePath -and $current.CreationDate -eq $process.CreationDate) {
-            Stop-Process -Id $current.ProcessId -ErrorAction SilentlyContinue
-        }
-    }
+    Stop-IsolatedTestProcesses -Roots @($fixture)
     if ($registry -notlike 'HKCU:\Software\pdf2zh-release-test-*') { throw 'Unsafe test registry cleanup.' }
     Remove-Item -LiteralPath $registry -Recurse -Force -ErrorAction SilentlyContinue
     foreach ($name in $saved.Keys) { [Environment]::SetEnvironmentVariable($name, $saved[$name], 'Process') }

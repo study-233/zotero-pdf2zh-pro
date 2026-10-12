@@ -47,6 +47,7 @@ description: Prepare, publish, or resume zotero-pdf2zh-pro releases across Zoter
 `--no-push` **不是 dry-run 或“只提交”模式**：它在 Windows 本地构建制品，并可能产生版本提交。只提交推送的请求应单独更新版本文件、运行相关检查、commit/push。
 
 - 核心 CI 验证插件、服务端、Windows PowerShell/事务/进程/进度等快速检查、两平台 Codex 兼容及发布守卫。日常 CI 不编译 Slint/Skia；不能将其成功当作原生构建或安装验收。成功证据必须对应实际发布提交，修复后只重跑受影响检查。
+- 架构迁移或连续出现验收不匹配时，先集中审查测试与当前实现的契约，再重测：窗口识别、启动完成时机、版本/进程归属、后台任务、升级迁移及失败清理。版本标记应与运行服务一致；隐藏启动不能只用 `MainWindowHandle` 判断。不要每修一个旧假设就重跑整套发布。
 - Windows 标准流程复用核心 CI，构建一批制品，Rust 单测共用该次 release 编译。保留最终 EXE/DLL、安装器载荷和大小、窗口启动、全新 Python 3.13/OCR、安装和自更新检查，不因本机回归通过就略过最终制品验证。
 - 普通补丁不默认加 `--full-validation`。安装、迁移、回滚或依赖布局变更时需要扩展验证：Windows 入口会先下载并核验远端最终制品，再在本机执行；macOS/Linux 交给远端。同版本替换沿用远端完整验证。Windows 本机环境确实不足时加 `--remote-validation`，产品失败不能当作环境问题绕过。扩展验证不重复插件或服务端全量测试。
 - 发布前保留扩展验证的提交与制品哈希；本机记录位于 `.tmp/release-extended-*/validation.json`，必须与本次最终 ZIP/wheel 一致。仅编译成功、运行中或曾经通过都不能代替所需验证。测试须隔离并清理进程，不能关闭正式服务；失败时保留日志后从该阶段恢复。

@@ -24,6 +24,7 @@ $env:PDF2ZH_WINDOWS_PORT='18891'
 $env:PDF2ZH_WINDOWS_REGISTRY_KEY=$registry
 $env:PDF2ZH_WINDOWS_START_MENU_DIR=$menu
 $env:PDF2ZH_WINDOWS_LIFECYCLE_TEST='1'
+. (Join-Path $PSScriptRoot 'test_windows_process_helpers.ps1')
 Expand-Archive -LiteralPath (Resolve-Path $PreviousPackage).Path -DestinationPath $old
 Expand-Archive -LiteralPath (Resolve-Path $Package).Path -DestinationPath $new
 $PreviousWheel=(Resolve-Path $PreviousWheel).Path
@@ -119,6 +120,7 @@ try {
     Stop-ManagedControlPanel
     Start-Process -FilePath $ControlPanelExecutable -ArgumentList '--post-install' -WindowStyle Hidden | Out-Null
     Wait-Version $PackageVersion
+    $null=Wait-TestControlStartup
     Assert-True ($null -ne (Get-ManagedControlPanelProcessId)) 'New control center did not take over.'
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $bin 'stop-server.ps1') -Quiet
     Assert-True ($LASTEXITCODE -eq 0) 'New service did not stop.'
@@ -127,12 +129,7 @@ try {
     Assert-True ($LASTEXITCODE -eq 0) 'Locked dependency/cache reuse failed.'
     Write-Host 'Real v1.8.2 migration, legacy admission protection, native takeover, retained data/startup and three offline updates passed.'
 } finally {
-    if (Test-Path -LiteralPath (Join-Path $Root 'bin/common.ps1')) {
-        # Use the current ownership checks even when migration left legacy files.
-        . (Join-Path $repo 'scripts/windows/common.ps1')
-        Stop-ManagedControlPanel
-        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Root 'bin/stop-server.ps1') -Quiet
-    }
+    Stop-IsolatedTestProcesses -Roots @($Root, $fixture)
     if ($registry -notlike 'HKCU:\Software\pdf2zh-previous-release-*') {throw 'Unsafe test registry cleanup.'}
     Remove-Item -LiteralPath $registry -Recurse -Force -ErrorAction SilentlyContinue
 }

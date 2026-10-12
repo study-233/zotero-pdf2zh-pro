@@ -16,9 +16,14 @@ New-Item -ItemType Directory -Force -Path $Root|Out-Null
 if (-not $AutostartApprovedKey.StartsWith($env:PDF2ZH_WINDOWS_REGISTRY_KEY+'\',[StringComparison]::OrdinalIgnoreCase)) {throw 'The test startup approval key was not isolated.'}
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
+function Get-PanelHandle([Diagnostics.Process]$Process) {
+ $handle=& python (Join-Path $PSScriptRoot 'check_windows_background.py') $Process.Id --panel
+ if ($LASTEXITCODE -ne 0) {throw 'Application window enumeration failed.'}
+ return [IntPtr]([long]$handle)
+}
 function Invoke-SetupButton([Diagnostics.Process]$Process,[string]$Name) {
  $Process.Refresh()
- $window=[Windows.Automation.AutomationElement]::FromHandle($Process.MainWindowHandle)
+ $window=[Windows.Automation.AutomationElement]::FromHandle((Get-PanelHandle $Process))
  $condition=New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::NameProperty,$Name)
  $button=$window.FindFirst([Windows.Automation.TreeScope]::Descendants,$condition)
  if (-not $button -or -not $button.Current.IsEnabled) {throw "Setup button unavailable: $Name"}
@@ -29,7 +34,7 @@ $installer=Start-Process -FilePath (Join-Path $source 'zotero-pdf2zh-pro.exe') -
 try {
  Start-Sleep -Seconds 6
  $installer.Refresh()
- if ($installer.MainWindowHandle -eq [IntPtr]::Zero) {throw 'First installation panel did not open.'}
+ if ((Get-PanelHandle $installer) -eq [IntPtr]::Zero) {throw 'First installation panel did not open.'}
  Invoke-SetupButton $installer '开始安装'
  $clock=[Diagnostics.Stopwatch]::StartNew()
  do {
@@ -48,7 +53,7 @@ try {
  if (-not $control -or -not (Test-ExpectedHealth $health)) {throw 'Native first-install handoff did not start the installed service.'}
  if (-not $installer.HasExited -or $control -eq $installer.Id) {throw 'The unpacked installer retained the instance instead of handing off.'}
  $installed=Get-Process -Id $control
- if ($installed.MainWindowHandle -eq [IntPtr]::Zero) {throw 'Explicit completion did not open the installed control center.'}
+ if ((Get-PanelHandle $installed) -eq [IntPtr]::Zero) {throw 'Explicit completion did not open the installed control center.'}
  Write-Host "Native installation wizard, sidecar wheel, explicit completion handoff and original data directory passed; readyMilliseconds=$($clock.ElapsedMilliseconds)."
 } finally {
  if (-not $installer.HasExited) {$installer.Kill();$installer.WaitForExit()}

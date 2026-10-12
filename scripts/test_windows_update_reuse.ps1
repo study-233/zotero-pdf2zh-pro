@@ -12,6 +12,7 @@ $env:PDF2ZH_WINDOWS_START_MENU_DIR=if ($StartMenuDirectory) {$StartMenuDirectory
 $env:UV_OFFLINE='1'
 $bin=Join-Path $Root 'bin'
 . (Join-Path $bin 'common.ps1')
+. (Join-Path $PSScriptRoot 'test_windows_process_helpers.ps1')
 if (-not $AutostartApprovedKey.StartsWith($env:PDF2ZH_WINDOWS_REGISTRY_KEY+'\',[StringComparison]::OrdinalIgnoreCase)) {throw 'The test startup approval key was not isolated.'}
 function Space {
  $text=& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $bin 'clean-cache.ps1') -ReportOnly
@@ -30,10 +31,9 @@ for ($iteration=1;$iteration -le 3;$iteration++) {
  & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $bin 'apply-update.ps1') -ParentProcessId 2147483647 -Prepared -KeepStopped
  if ($LASTEXITCODE -ne 0) {throw 'Prepared runtime switch failed.'}
  $totalMs=$clock.ElapsedMilliseconds
- for ($attempt=0;$attempt -lt 30;$attempt++) {
-     if (Get-ManagedControlPanelProcessId) {Stop-ManagedControlPanel;break}
-     Start-Sleep -Milliseconds 100
- }
+ $null=Wait-TestControlStartup
+ if (Get-ListeningProcessId) {throw 'An offline switch restarted the stopped service.'}
+ Stop-ManagedControlPanel
  $space=Space
  $rows+=@{iteration=$iteration;preparationMilliseconds=$prepareMs;totalMilliseconds=$totalMs;networkBytes=0;
      logicalBytes=$space.logicalBytes;uniqueFileBytes=$space.uniqueFileBytes;netUniqueBytes=$space.uniqueFileBytes-$baseline.uniqueFileBytes}

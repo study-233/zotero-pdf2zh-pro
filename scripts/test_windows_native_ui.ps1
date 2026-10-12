@@ -9,16 +9,18 @@ $env:PDF2ZH_WINDOWS_REGISTRY_KEY='HKCU:\Software\pdf2zh-native-ui-test'
 $env:PDF2ZH_WINDOWS_PORT='19891'
 Add-Type -TypeDefinition @'
 using System;
+using System.Text;
 using System.Runtime.InteropServices;
 public static class NativeUiProbe {
  delegate bool Callback(IntPtr window,IntPtr parameter);
  [DllImport("user32.dll")] static extern bool EnumWindows(Callback callback,IntPtr parameter);
  [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr window,out uint process);
  [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr window);
+ [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetWindowText(IntPtr window,StringBuilder text,int length);
  [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr window,uint message,UIntPtr value,IntPtr parameter);
  public static IntPtr Visible(int process) {
   IntPtr found=IntPtr.Zero;
-  EnumWindows(delegate(IntPtr window,IntPtr parameter){uint owner;GetWindowThreadProcessId(window,out owner);if(owner==process&&IsWindowVisible(window)){found=window;return false;}return true;},IntPtr.Zero);
+  EnumWindows(delegate(IntPtr window,IntPtr parameter){uint owner;GetWindowThreadProcessId(window,out owner);if(owner==process&&IsWindowVisible(window)){var title=new StringBuilder(256);GetWindowText(window,title,title.Capacity);if(title.ToString()=="zotero-pdf2zh-pro"){found=window;return false;}}return true;},IntPtr.Zero);
   return found;
  }
 }

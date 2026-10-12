@@ -39,6 +39,9 @@ if ($WindowsPackage) {
 $gui = [IO.Path]::GetFullPath($GuiBinary)
 $package = [IO.Path]::GetFullPath($PackageSource)
 . (Join-Path $windowsDir "common.ps1")
+. (Join-Path $PSScriptRoot 'test_windows_process_helpers.ps1')
+$initialTestRoot = $AppRoot
+$destinationRoot = $null
 if (-not $AutostartApprovedKey.StartsWith($env:PDF2ZH_WINDOWS_REGISTRY_KEY + '\', [StringComparison]::OrdinalIgnoreCase)) {
     throw 'StartupApproved must be isolated with the test registry.'
 }
@@ -193,6 +196,7 @@ function Invoke-RelocationProcess {
     }
 }
 
+try {
 Assert-True (Test-Path -LiteralPath $gui -PathType Leaf) "GUI binary is missing."
 Assert-True (Test-Path -LiteralPath $package -PathType Leaf) "Server wheel is missing."
 
@@ -510,3 +514,8 @@ Assert-True (-not (Test-Path -LiteralPath $AppRoot)) "Purge uninstall left appli
 Assert-True (-not (Get-SavedInstallRoot)) "Purge uninstall left the saved installation root behind."
 
 Write-Host "Windows GUI lifecycle checks passed."
+} finally {
+    $cleanupRoots = @($initialTestRoot, $destinationRoot)
+    if ($WindowsPackage) { $cleanupRoots += $windowsDir }
+    Stop-IsolatedTestProcesses -Roots $cleanupRoots
+}
