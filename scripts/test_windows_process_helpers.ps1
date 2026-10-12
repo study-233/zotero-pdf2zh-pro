@@ -43,15 +43,26 @@ function Stop-IsolatedTestProcesses {
     throw 'Isolated test processes did not stop after bounded cleanup.'
 }
 
+function Get-TestControlStartupChildren {
+    param([int]$ControlProcessId)
+    $controller = Get-CimInstance Win32_Process -Filter "ProcessId=$ControlProcessId"
+    if (-not $controller) { return }
+    Get-CimInstance Win32_Process -Filter "ParentProcessId=$ControlProcessId" | Where-Object {
+        # Windows can reuse an exited parent's PID; older processes are not
+        # children of this controller even if their numeric parent ID matches.
+        $_.Name -ieq 'powershell.exe' -and $_.CreationDate -ge $controller.CreationDate
+    }
+}
+
 function Wait-TestControlStartup {
     # A PID marker precedes recovery/startup completion. Wait for its PowerShell
     # children before stopping the service or starting another transaction.
     $quietSamples = 0
-    for ($attempt = 0; $attempt -lt 120; $attempt++) {
+    $deadline = [Diagnostics.Stopwatch]::StartNew()
+    while ($deadline.ElapsedMilliseconds -lt 90000) {
         $controlProcessId = Get-ManagedControlPanelProcessId
         if ($controlProcessId) {
-            $children = @(Get-CimInstance Win32_Process -Filter "ParentProcessId=$controlProcessId" |
-                Where-Object { $_.Name -ieq 'powershell.exe' })
+            $children = @(Get-TestControlStartupChildren -ControlProcessId $controlProcessId)
             if (-not $children.Count) {
                 $quietSamples++
                 if ($quietSamples -ge 4) { return $controlProcessId }

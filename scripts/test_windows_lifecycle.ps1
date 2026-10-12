@@ -56,15 +56,19 @@ function Assert-True {
 function Wait-ExpectedHealth {
     param([string]$Stage = "health check")
     $lastHealth = $null
-    for ($attempt = 0; $attempt -lt 60; $attempt++) {
+    $startupChildren = @()
+    $deadline = [Diagnostics.Stopwatch]::StartNew()
+    # A live service answers immediately during replacement. Counting polls
+    # shortened that case to 30 seconds, even though first startup allowed much
+    # longer network waits. Give both cases the same bounded startup deadline.
+    while ($deadline.ElapsedMilliseconds -lt 90000) {
         $lastHealth = Get-ServerHealth
         if (Test-ExpectedHealth -Health $lastHealth) {
             # Health can become ready before the startup script finishes checking ownership.
             # Do not inject a stop or port conflict until the GUI's startup children exit.
             $controlProcessId = Get-ManagedControlPanelProcessId
             if ($controlProcessId) {
-                $startupChildren = @(Get-CimInstance Win32_Process -Filter "ParentProcessId = $controlProcessId" |
-                    Where-Object {$_.Name -ieq 'powershell.exe'})
+                $startupChildren = @(Get-TestControlStartupChildren -ControlProcessId $controlProcessId)
                 if ($startupChildren.Count) {
                     Start-Sleep -Milliseconds 500
                     continue
@@ -78,6 +82,7 @@ function Wait-ExpectedHealth {
     Write-Host "[health-diagnostic] app-root=$AppRoot"
     Write-Host "[health-diagnostic] data-dir=$DataDir"
     Write-Host "[health-diagnostic] health=$($lastHealth | ConvertTo-Json -Depth 5 -Compress)"
+    Write-Host "[health-diagnostic] startup-children=$($startupChildren | Select-Object ProcessId,CreationDate,CommandLine | ConvertTo-Json -Compress)"
     $listenerProcessId = Get-ListeningProcessId
     Write-Host "[health-diagnostic] listener-pid=$listenerProcessId"
     if ($listenerProcessId) {
