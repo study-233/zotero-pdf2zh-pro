@@ -61,7 +61,7 @@
 </tr>
 <tr>
 <td>Windows 控制中心</td>
-<td>启动时静默检查稳定版本；也可打开右下角“更多 → 检查更新”，发现新版后点击“更新到 vX.X.X”</td>
+<td>启动 60 秒后检查稳定版，此后每 24 小时检查；“设置 → 更新”可手动检查，或关闭自动更新</td>
 </tr>
 <tr>
 <td>macOS Homebrew</td>
@@ -79,8 +79,9 @@ brew upgrade zotero-pdf2zh-pro
 brew services restart zotero-pdf2zh-pro
 curl -fsS http://127.0.0.1:8890/health
 </code></pre>
-<p>更新前先等待翻译完成。Windows 更新会下载、校验并升级控制中心和服务端，替换程序时会显示命令行进度，结束后自动关闭。
-任务、结果、日志和自启选择会保留，更新失败会尝试恢复旧版。尚不具备自动更新能力的旧控制中心，需要先手动安装一次新版 Windows ZIP。</p>
+<p>Windows 更新先在独立目录准备，连续空闲 60 秒后静默切换。PDF 任务、划词流式请求和词库下载期间不切换；维护期尚未接收的请求由新版插件等待重试。
+任务、结果、配置和自启选择会保留；新版健康检查失败或更新中断时使用本地旧环境回退。旧控制中心需人工迁移一次原生版 ZIP：先等全部任务和划词请求结束，通过旧控制中心停止服务，再安装原生版。
+普通更新仍需下载完整控制包和服务包，Python、未变化的依赖和独立缓存的模型字体会复用。清理安装缓存后可能需要补下载。</p>
 <details>
 <summary>更新后配置消失或无法调用？</summary>
 <p>已移除的 <code>OpenAICompatible</code> 旧预设、腾讯机器翻译、Dify 和 SiliconFlow 免费代理配置需要重新配置；升级会清理这些配置并取消对应的当前选择，不自动改用其他模型。选文翻译若单独指定了已删除配置，会提示重新选择。自备 Key 的 SiliconFlow 及其他已保存的地址、模型和参数保持原值。停用模型或失效地址需手动编辑并测试。阿里云旧共享域名仍可用。本轮精简的九种专用服务（含 Azure）保留原配置并提示“需重新配置”，停止调用其适配器。详情见<a href="https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/provider-audit-2026-10-03.md">接口兼容记录</a>。</p>
@@ -94,7 +95,7 @@ curl -fsS http://127.0.0.1:8890/health
 </ul>
 <h2 id="卸载">卸载</h2>
 <ul>
-<li><strong>Windows</strong>：在“更多 → 卸载”或开始菜单进入卸载，默认保留任务数据和日志；只有确定不再需要时才选择彻底删除。</li>
+<li><strong>Windows</strong>：在“设置”底部或开始菜单进入卸载，默认保留任务数据和日志。需要彻底删除时，使用安装目录的卸载脚本并确认删除数据。</li>
 <li><strong>Homebrew</strong>：先停止服务并备份所需数据，再执行 <code>brew uninstall zotero-pdf2zh-pro</code>。</li>
 <li><strong>uv</strong>：停止前台服务并备份所需数据，再执行 <code>uv tool uninstall zotero-pdf2zh-pro</code>。</li>
 <li><strong>Zotero 插件</strong>：在“工具 → 插件”中禁用或移除。移除插件与卸载本地服务是两件事，需要分别处理。</li>
