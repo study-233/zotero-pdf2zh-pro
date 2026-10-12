@@ -62,6 +62,59 @@ def validate_snapshot(data: bytes, item: dict):
         raise ValueError(f"Prepared snapshot checksum mismatch: {item['file']}")
 
 
+class ScriptRanges(HTMLParser):
+    """Locate script spans without decoding or reserializing the source bytes."""
+    def __init__(self, text: str):
+        super().__init__(convert_charrefs=False)
+        self.text = text
+        self.lines = [0]
+        self.lines.extend(match.end() for match in re.finditer("\n", text))
+        self.start = None
+        self.ranges = []
+        self.outside_data = []
+
+    def source_offset(self):
+        line, column = self.getpos()
+        return self.lines[line - 1] + column
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script":
+            if self.start is not None:
+                raise ValueError("Nested script in source snapshot")
+            self.start = self.source_offset()
+
+    def handle_startendtag(self, tag, attrs):
+        if tag == "script":
+            raise ValueError("Ambiguous self-closing script in source snapshot")
+
+    def handle_endtag(self, tag):
+        if tag == "script":
+            if self.start is None:
+                raise ValueError("Unmatched script end tag in source snapshot")
+            self.ranges.append((self.start, self.text.index(">", self.source_offset()) + 1))
+            self.start = None
+
+    def handle_data(self, value):
+        if self.start is None:
+            self.outside_data.append(value)
+
+
+def strip_script_elements(data: bytes) -> bytes:
+    # Latin-1 maps each byte to exactly one character, including non-UTF-8 sources.
+    parser = ScriptRanges(data.decode("latin-1"))
+    parser.feed(parser.text)
+    parser.close()
+    if parser.start is not None:
+        raise ValueError("Unterminated script in source snapshot")
+    if re.search(r"<\s*/?\s*script\b", "".join(parser.outside_data), re.I):
+        raise ValueError("Incomplete script tag in source snapshot")
+    chunks, cursor = [], 0
+    for start, end in parser.ranges:
+        chunks.append(data[cursor:start])
+        cursor = end
+    return b"".join(chunks) + data[cursor:]
+
+
 def prepare_snapshot(data: bytes, item: dict) -> bytes:
     """Remove unrelated client scripts while retaining traceable source hashes."""
     expected = item.get("upstreamSha256", item["sha256"])
@@ -69,8 +122,7 @@ def prepare_snapshot(data: bytes, item: dict) -> bytes:
         raise ValueError(f"Upstream changed: {item['file']}; use the archived data checkout")
     transform = item.get("transform")
     if transform == "strip-script-elements-v1":
-        data = re.sub(rb"<script\b[^>]*>.*?</script\s*>", b"", data,
-                      flags=re.IGNORECASE | re.DOTALL)
+        data = strip_script_elements(data)
     elif transform is not None:
         raise ValueError(f"Unknown snapshot transform: {transform}")
     validate_snapshot(data, item)

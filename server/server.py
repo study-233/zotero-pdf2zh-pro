@@ -11,6 +11,7 @@ import logging
 import multiprocessing
 import os
 import queue
+import re
 import shutil
 import signal
 import sys
@@ -30,9 +31,9 @@ import truststore
 truststore.inject_into_ssl()
 
 from flask import Flask, Response, jsonify, request, send_file, stream_with_context
+from werkzeug.exceptions import HTTPException
 from pdf2zh_next_service import require_supported_service
 from pdf2zh_next_service import diagnose_service_error
-from pdf2zh_next_service import explain_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
 from task_manager import TaskManager
@@ -44,6 +45,7 @@ from codex_discovery import discovery_request, cancel_discovery
 from provider_models import ModelDiscoveryError, list_provider_models, list_codex_models
 from babeldoc.glossary_options import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
+from diagnostics import exception_frames
 
 VERSION = "1.9.0"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
@@ -61,7 +63,9 @@ LOG_BACKUP_COUNT = 3
 
 
 class RequestValidationError(ValueError):
-    pass
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.public_message = message
 
 
 @dataclass(frozen=True)
@@ -75,6 +79,12 @@ class PreparedTranslationRequest:
 def create_app() -> Flask:
     app = Flask(__name__)
     install_routes(app, runtime_busy, lambda: TRANSLATES_DIR)
+
+    @app.errorhandler(Exception)
+    def unexpected_error(error):
+        if isinstance(error, HTTPException):
+            return error
+        return exception_response(error, 500)
 
     @app.get("/health")
     def health() -> tuple[dict[str, Any], int]:
@@ -169,14 +179,14 @@ def create_app() -> Flask:
         try:
             return jsonify({"status": "ok", "packs": GLOSSARY_MANAGER.list_packs()}), 200
         except (GlossaryError, OSError) as exc:
-            return error_response(str(exc), getattr(exc, "status", 500))
+            return exception_response(exc, getattr(exc, "status", 500))
 
     @app.post("/glossaries/check-updates")
     def check_glossary_updates():
         try:
             return jsonify({"status": "ok", "packs": GLOSSARY_MANAGER.refresh_catalog()}), 200
         except GlossaryError as exc:
-            return error_response(str(exc), exc.status)
+            return exception_response(exc, exc.status)
 
     @app.post("/glossaries/<pack_id>/download")
     def download_glossary(pack_id):
@@ -190,21 +200,21 @@ def create_app() -> Flask:
             pack = GLOSSARY_MANAGER.download(pack_id, data.get("version"))
             return jsonify({"status": "ok", "pack": pack}), 202
         except (GlossaryError, OSError) as exc:
-            return error_response(str(exc), getattr(exc, "status", 500))
+            return exception_response(exc, getattr(exc, "status", 500))
 
     @app.post("/glossaries/<pack_id>/cancel")
     def cancel_glossary_download(pack_id):
         try:
             return jsonify({"status": "ok", "pack": GLOSSARY_MANAGER.cancel(pack_id)}), 200
         except (GlossaryError, OSError) as exc:
-            return error_response(str(exc), getattr(exc, "status", 500))
+            return exception_response(exc, getattr(exc, "status", 500))
 
     @app.delete("/glossaries/<pack_id>")
     def uninstall_glossary(pack_id):
         try:
             return jsonify({"status": "ok", "pack": GLOSSARY_MANAGER.uninstall(pack_id)}), 200
         except (GlossaryError, OSError) as exc:
-            return error_response(str(exc), getattr(exc, "status", 500))
+            return exception_response(exc, getattr(exc, "status", 500))
 
     @app.post("/codex/discover")
     def discover_codex():
@@ -218,7 +228,7 @@ def create_app() -> Flask:
                 runtime = client.discover(force=data.get("force", False), check_cancelled=check)
                 return jsonify({"status": "ok", "codexRuntime": runtime})
         except CodexError as error:
-            return error_response(str(error), error.status_code, code=error.code,
+            return exception_response(error, error.status_code, code=error.code,
                                   attempts=getattr(error, "attempts", []))
 
     @app.post("/codex/discover/cancel")
@@ -228,7 +238,7 @@ def create_app() -> Flask:
             cancel_discovery(data.get("requestId") if isinstance(data, dict) else None)
             return jsonify({"status": "ok"})
         except CodexError as error:
-            return error_response(str(error), error.status_code, code=error.code)
+            return exception_response(error, error.status_code, code=error.code)
 
     @app.post("/list-models")
     def list_models():
@@ -242,7 +252,7 @@ def create_app() -> Flask:
                                 "modelDetails": details, "codexRuntime": runtime}), 200
             models = list_provider_models(data)
         except ModelDiscoveryError as exc:
-            return error_response(str(exc), exc.status, **({"code": exc.code, "attempts": exc.attempts or []} if exc.code else {}))
+            return exception_response(exc, exc.status, **({"code": exc.code, "attempts": exc.attempts or []} if exc.code else {}))
         return jsonify({"status": "ok", "models": models}), 200
 
     @app.post("/translate")
@@ -254,11 +264,11 @@ def create_app() -> Flask:
         try:
             pdf_bytes, filename, output_mode = translate_pdf_request(data)
         except RequestValidationError as exc:
-            return error_response(str(exc), 400)
+            return exception_response(exc, 400)
         except RuntimeError as exc:
-            return error_response(explain_service_error(exc), 502)
+            return exception_response(exc, 502)
         except Exception as exc:
-            return error_response(str(exc), 500)
+            return exception_response(exc, 500)
 
         response = send_file(
             BytesIO(pdf_bytes),
@@ -280,14 +290,14 @@ def create_app() -> Flask:
             with discovery_request(data.get("requestId") if data.get("service") == "codex" else None) as check:
                 result = validate_config_request(data, check_cancelled=check)
         except RequestValidationError as exc:
-            return error_response(str(exc), 400)
+            return exception_response(exc, 400)
         except CodexError as exc:
-            return error_response(str(exc), exc.status_code, code=exc.code,
+            return exception_response(exc, exc.status_code, code=exc.code,
                                   attempts=getattr(exc, "attempts", []))
         except RuntimeError as exc:
-            return error_response(explain_service_error(exc), 502)
+            return exception_response(exc, 502)
         except Exception as exc:
-            return error_response(str(exc), 500)
+            return exception_response(exc, 500)
 
         return (
             jsonify(
@@ -328,10 +338,10 @@ def create_app() -> Flask:
             )
         except RequestValidationError as exc:
             remove_workspace_dir(workspace_dir)
-            return error_response(str(exc), 400)
+            return exception_response(exc, 400)
         except Exception as exc:
             remove_workspace_dir(workspace_dir)
-            return error_response(str(exc), 500)
+            return exception_response(exc, 500)
 
         return jsonify(task_response_payload(task)), 202
 
@@ -347,7 +357,7 @@ def create_app() -> Flask:
         try:
             task = TASK_MANAGER.delete_task(task_id)
         except ValueError as exc:
-            return error_response(str(exc), 409)
+            return exception_response(exc, 409)
         if task is None:
             return error_response("Task not found", 404)
         return jsonify(task_response_payload(task)), 200
@@ -364,7 +374,7 @@ def create_app() -> Flask:
         try:
             task = TASK_MANAGER.retry_task(task_id)
         except ValueError as exc:
-            return error_response(str(exc), 409)
+            return exception_response(exc, 409)
         if task is None:
             return error_response("Task not found", 404)
         return jsonify(task_response_payload(task)), 202
@@ -374,7 +384,7 @@ def create_app() -> Flask:
         try:
             task = TASK_MANAGER.repair_task(task_id)
         except ValueError as exc:
-            return error_response(str(exc), 409)
+            return exception_response(exc, 409)
         if task is None:
             return error_response("Task not found", 404)
         return jsonify(task_response_payload(task)), 202
@@ -433,7 +443,7 @@ def create_app() -> Flask:
             try:
                 requested_mode = normalize_output_mode_value(requested_mode)
             except RequestValidationError as exc:
-                return error_response(str(exc), 400)
+                return exception_response(exc, 400)
 
         result = TASK_MANAGER.get_result_file(task_id, requested_mode)
         if result is None:
@@ -529,10 +539,17 @@ def prepare_translation_request(
     file_name = sanitize_pdf_filename(data.get("fileName"))
     service = normalize_service(data.get("service"))
     output_modes = normalize_output_modes(data)
+    workspace_dir = workspace_dir.resolve()
     input_path = workspace_dir / file_name
+    if input_path.resolve().parent != workspace_dir or input_path.is_symlink():
+        raise RequestValidationError("Invalid PDF filename")
     output_dir = workspace_dir / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
-    input_path.write_bytes(file_bytes)
+    try:
+        with input_path.open("xb") as output:
+            output.write(file_bytes)
+    except FileExistsError:
+        raise RequestValidationError("PDF input file already exists") from None
 
     request_payload = {
         "source_lang": normalize_language(data.get("sourceLang"), "en"),
@@ -622,7 +639,15 @@ def sanitize_pdf_filename(file_name: Any) -> str:
     if not isinstance(file_name, str) or not file_name.strip():
         return "document.pdf"
 
-    sanitized = Path(file_name.strip()).name
+    if "\x00" in file_name:
+        raise RequestValidationError("Invalid PDF filename")
+    sanitized = file_name.strip().replace("\\", "/").rsplit("/", 1)[-1]
+    if (not sanitized or sanitized in {".", ".."} or ":" in sanitized
+            or any(char in sanitized for char in '<>"|?*')
+            or any(ord(char) < 32 for char in sanitized)
+            or sanitized.endswith((" ", "."))
+            or re.fullmatch(r"(?i)(CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\..*)?", sanitized)):
+        raise RequestValidationError("Invalid PDF filename")
     if not sanitized.lower().endswith(".pdf"):
         sanitized += ".pdf"
     return sanitized
@@ -669,7 +694,7 @@ def normalize_service(service: Any) -> str:
     try:
         return require_supported_service(service)
     except ValueError as exc:
-        raise RequestValidationError(str(exc)) from exc
+        raise RequestValidationError("Invalid glossary options") from exc
 
 
 def normalize_language(value: Any, default: str) -> str:
@@ -716,6 +741,26 @@ def task_response_payload(task: dict[str, Any]) -> dict[str, Any]:
         "status": "ok", "task": task,
         "serverInstanceId": task["serverInstanceId"], "revision": task["revision"],
     }
+
+
+def exception_response(error: Exception, status_code: int, **details):
+    """Only explicit business messages or fixed diagnoses cross the HTTP boundary."""
+    if isinstance(error, (RequestValidationError, GlossaryError, CodexError, ModelDiscoveryError)):
+        message = error.public_message
+    else:
+        diagnoses = diagnose_service_error(error)
+        details.setdefault("diagnostics", diagnoses)
+        message = next((row["message"] for row in diagnoses if row["code"] != "unknown_error"),
+                       "The server could not complete this request. Check server logs with the error ID.")
+        if status_code < 500:
+            message = "The requested operation is not available in the current state."
+    if status_code >= 500 or not isinstance(error, (RequestValidationError, GlossaryError, CodexError, ModelDiscoveryError)):
+        error_id = uuid.uuid4().hex
+        frames = exception_frames(error)
+        LOGGER.error("request failed errorId=%s errorType=%s frames=%s", error_id, type(error).__name__, frames)
+        TASK_MANAGER.diagnostics.record("request_error", {"errorId": error_id, "errorType": type(error).__name__}, frames=frames)
+        details["errorId"] = error_id
+    return error_response(message, status_code, **details)
 
 
 def error_response(message: str, status_code: int, **details):

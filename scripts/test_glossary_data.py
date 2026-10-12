@@ -2,10 +2,23 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from build_glossary_data import Headings, prepare_snapshot, sha256, source_entries
+from build_glossary_data import Headings, prepare_snapshot, sha256, source_entries, strip_script_elements
 
 
 class SnapshotTests(unittest.TestCase):
+    def test_parser_preserves_bytes_around_scripts_and_quoted_attributes(self):
+        prefix = '<h2 id="x">中文 &amp;术语</h2>\r\n'.encode()
+        suffix = b'<p>CC BY 4.0</p>'
+        raw = prefix + b'<ScRiPt data-x=">">one\n two</sCrIpT \t> ' + b'<script>three</script>' + suffix
+        self.assertEqual(strip_script_elements(raw), prefix + b' ' + suffix)
+        self.assertEqual(strip_script_elements(b'\xff<p>license</p>'), b'\xff<p>license</p>')
+
+    def test_ambiguous_or_incomplete_scripts_fail_closed(self):
+        for raw in [b'<script>key</script\t\n bar>', b'<script>key',
+                    b'<script/>', b'<script', b'</script>']:
+            with self.subTest(raw=raw), self.assertRaises(ValueError):
+                strip_script_elements(raw)
+
     def test_removes_client_scripts_without_changing_terms_or_licensing(self):
         token = b"AIza" + b"0" * 35
         content = b'<h2 id="airway">airway</h2><p>CC BY 4.0</p>'

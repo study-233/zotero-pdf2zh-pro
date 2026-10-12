@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import logging
 import re
 import shutil
 import threading
@@ -26,6 +27,7 @@ class GlossaryError(ValueError):
     def __init__(self, message: str, status: int = 400):
         super().__init__(message)
         self.status = status
+        self.public_message = message
 
 
 def _language(value: str) -> str:
@@ -81,7 +83,7 @@ def _decode_pack(content: bytes, metadata: dict) -> list[dict]:
         if len(entries) != metadata["entryCount"] or any(row["tgt_lng"] != "zh-cn" for row in entries):
             raise ValueError("entry count or language mismatch")
     except (ValueError, TypeError, UnicodeError) as error:
-        raise GlossaryError(f"Invalid glossary pack: {error}") from None
+        raise GlossaryError("Invalid glossary pack") from error
     return entries
 
 
@@ -150,9 +152,11 @@ class GlossaryManager:
             return _decode_pack(path.read_bytes(), metadata)
         except (OSError, GlossaryError) as error:
             self._installed.pop(self._key(metadata), None)
-            message = f"Glossary {metadata['id']} is damaged or missing; download it again: {error}"
+            message = f"Glossary {metadata['id']} is damaged or missing; download it again"
+            if isinstance(error, GlossaryError):
+                message += ": " + error.public_message
             self._integrity_errors[metadata["id"]] = message
-            raise GlossaryError(message) from None
+            raise GlossaryError(message) from error
 
     def _require_pack(self, pack_id):
         pack = self._catalog.get(pack_id)
@@ -216,7 +220,9 @@ class GlossaryManager:
                 self._catalog = parsed
                 return self.list_packs()
         except (requests.RequestException, OSError, ValueError) as error:
-            raise GlossaryError(f"Could not update glossary catalog: {error}", 502) from None
+            if isinstance(error, GlossaryError):
+                raise GlossaryError(error.public_message, 502) from error
+            raise GlossaryError("Could not update glossary catalog; check network and retry", 502) from error
 
     def download(self, pack_id: str, version: str | None = None):
         with self._lock:
@@ -277,7 +283,8 @@ class GlossaryManager:
                 self._installed[self._key(metadata)] = installed
         except Exception as error:
             # A background worker has no caller to receive unexpected errors.
-            error_message = str(error) or type(error).__name__
+            error_message = error.public_message if isinstance(error, GlossaryError) else "Glossary download failed; check network and retry"
+            logging.getLogger("zotero_pdf2zh_server.glossaries").warning("glossary download failed errorType=%s", type(error).__name__)
         finally:
             with self._lock:
                 for leftover in (temporary, metadata_temporary):

@@ -15,6 +15,7 @@ from pdf2zh_next.translator.openai_protocol import normalize_endpoint
 class ModelDiscoveryError(ValueError):
     def __init__(self, message: str, status: int = 400, *, code=None, attempts=None):
         super().__init__(message)
+        self.public_message = message
         self.status = status
         self.code = code
         self.attempts = attempts
@@ -29,7 +30,7 @@ def list_codex_models(data: dict, *, include_runtime=False):
                 return client.model_catalog(check_cancelled=check)
             return client.list_models(check_cancelled=check)
     except CodexError as error:
-        raise ModelDiscoveryError(str(error), error.status_code, code=error.code,
+        raise ModelDiscoveryError(error.public_message, error.status_code, code=error.code,
                                   attempts=getattr(error, "attempts", None)) from None
 
 
