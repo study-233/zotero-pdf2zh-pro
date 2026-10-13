@@ -45,7 +45,7 @@ pub struct WindowsUpdateManifest {
     sha256: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateCheck {
     pub available: bool,
@@ -254,9 +254,10 @@ fn extract_package(payload: Vec<u8>, destination: &Path, version: &str) -> Resul
     Ok(())
 }
 
-pub async fn download_and_stage(app: &AppHandle, app_root: &Path) -> Result<StagedUpdate, String> {
+pub async fn download_and_stage(app: &AppHandle, app_root: &Path, expected_version: &str) -> Result<StagedUpdate, String> {
     emit_progress(app, app_root, "checking", 0, 0);
     let (manifest, latest_version) = fetch_manifest().await?;
+    validate_target(&manifest.version, expected_version)?;
     let current = parse_stable_version(env!("CARGO_PKG_VERSION"))?;
     if latest_version <= current {
         return Err("当前已经是最新稳定版本。".to_owned());
@@ -341,10 +342,22 @@ pub async fn download_and_stage(app: &AppHandle, app_root: &Path) -> Result<Stag
     result
 }
 
+fn validate_target(actual: &str, expected: &str) -> Result<(), String> {
+    if actual != expected {
+        return Err("稳定版本已变更，请重新检查更新后确认下载。".into());
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use zip::{write::SimpleFileOptions, CompressionMethod, ZipWriter};
+    #[test]
+    fn download_cannot_change_the_version_the_user_confirmed() {
+        assert!(validate_target("2.0.0", "2.0.0").is_ok());
+        assert!(validate_target("2.0.1", "2.0.0").is_err());
+    }
 
     fn manifest(version: &str, url: &str) -> WindowsUpdateManifest {
         WindowsUpdateManifest {

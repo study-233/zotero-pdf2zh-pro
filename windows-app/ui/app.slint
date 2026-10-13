@@ -28,6 +28,30 @@ component SettingRow inherits HorizontalLayout {
     }
     @children
 }
+component BackButton inherits Rectangle {
+    width: 36px; height: 36px; border-radius: 4px;
+    background: pointer.pressed ? Appearance.border : pointer.has-hover ? Appearance.card : transparent;
+    border-width: 1px; border-color: focus.has-focus ? Appearance.foreground : transparent;
+    accessible-role: button;
+    accessible-label: "返回主页";
+    accessible-action-default => { root.clicked(); }
+    callback clicked();
+    forward-focus: focus;
+    Path {
+        x: 9px; y: 9px; width: 18px; height: 18px;
+        viewbox-width: 24; viewbox-height: 24;
+        commands: "M 14 5 L 7 12 L 14 19 M 7 12 L 22 12";
+        stroke: Appearance.foreground; stroke-width: 2px; fill: transparent;
+    }
+    pointer := TouchArea { clicked => { focus.focus(); root.clicked(); } }
+    focus := FocusScope {
+        width: 0px; height: 0px;
+        key-pressed(event) => {
+            if event.text == Key.Return || event.text == Key.Space { root.clicked(); return accept; }
+            return reject;
+        }
+    }
+}
 component OperationFeedback inherits VerticalLayout {
     in property <string> message;
     in property <string> detail;
@@ -75,6 +99,40 @@ component LogView inherits ScrollView {
     }
     log-text := Label { text: root.text; y: 4px; width: root.visible-width - 16px; height: self.preferred-height; font-size: 0.86rem; }
 }
+component SettingsFeedback inherits VerticalLayout {
+    in property <string> message;
+    in property <string> detail;
+    in property <string> logs;
+    in property <float> progress;
+    in property <bool> known;
+    in property <bool> failed;
+    in property <bool> busy;
+    in property <[DownloadRow]> files;
+    in-out property <bool> expanded;
+    callback retry();
+    callback copy();
+    callback log();
+    callback state-changed();
+    spacing: 10px;
+    OperationFeedback { message: root.message; detail: root.detail; progress: root.progress; known: root.known; }
+    if root.files.length == 1: DownloadList { files: root.files; }
+    if root.files.length > 1: ScrollView { height: 132px;
+        VerticalLayout { padding-right: 8px; alignment: start; DownloadList { files: root.files; } }
+    }
+    if root.expanded || root.failed || root.logs != "暂无详情。": HorizontalLayout { spacing: 8px;
+        Button { text: root.expanded ? "收起详情" : "查看详情"; clicked => { root.expanded = !root.expanded; root.state-changed(); } }
+        if root.failed: Button { text: "重试"; enabled: !root.busy; clicked => { root.retry(); } }
+        Rectangle { horizontal-stretch: 1; }
+    }
+    if root.expanded: VerticalLayout { spacing: 8px;
+        LogView { text: root.logs; height: 120px; }
+        HorizontalLayout { spacing: 8px;
+            Button { text: "复制详情"; clicked => { root.copy(); } }
+            Button { text: "打开日志"; clicked => { root.log(); } }
+            Rectangle { horizontal-stretch: 1; }
+        }
+    }
+}
 component Details inherits VerticalLayout {
     in-out property <bool> expanded;
     in-out property <bool> follow;
@@ -102,7 +160,7 @@ export component AppWindow inherits Window {
     title: page == 2 ? "zotero-pdf2zh-pro 安装" : "zotero-pdf2zh-pro";
     icon: @image-url("../../assets/logo.png");
     preferred-width: page == 0 ? 400px : page == 2 ? 560px : 520px;
-    preferred-height: page == 0 ? 300px : page == 1 ? 440px : 480px;
+    preferred-height: page == 0 ? 300px : 480px;
     min-width: max(380px, content.min-width);
     min-height: max(300px, content.min-height);
     background: Appearance.background;
@@ -152,6 +210,30 @@ export component AppWindow inherits Window {
     in-out property <bool> automatic-updates;
     in-out property <string> install-path;
     in-out property <bool> advanced: false;
+    in-out property <float> settings-offset;
+    in-out property <bool> update-details-open;
+    in-out property <bool> maintenance-details-open;
+    in property <string> settings-notice;
+    in property <string> update-message;
+    in property <string> update-checked;
+    in property <bool> update-checking;
+    in property <bool> update-pending;
+    in property <bool> update-available;
+    in property <string> update-action-label: "下载并更新";
+    in property <bool> update-failed;
+    in property <string> update-detail;
+    in property <string> update-logs;
+    in property <float> update-progress;
+    in property <bool> update-progress-known;
+    in property <[DownloadRow]> update-files;
+    in property <string> maintenance-message;
+    in property <string> maintenance-detail;
+    in property <string> maintenance-logs;
+    in property <bool> maintenance-failed;
+    in property <float> maintenance-progress;
+    in property <bool> maintenance-progress-known;
+    in property <[DownloadRow]> maintenance-files;
+    callback settings-state();
     callback action(string);
     callback preferences(int, bool, bool);
     callback install(string, bool, bool);
@@ -174,7 +256,7 @@ export component AppWindow inherits Window {
             }
             HorizontalLayout {
                 spacing: 12px;
-                Button { text: root.action-label; primary: true; horizontal-stretch: 1; enabled: root.ready && !root.busy; clicked => { root.action("primary"); } }
+                Button { text: root.action-label; primary: true; horizontal-stretch: 1; enabled: root.ready && !root.busy && !root.update-pending; clicked => { root.action("primary"); } }
                 Button { text: "设置"; clicked => { root.action("settings"); } }
             }
             OperationFeedback { message: root.operation-message; detail: root.operation-detail; progress: root.progress; known: root.progress-known; active: root.progress-active; animate: root.animate; }
@@ -192,16 +274,22 @@ export component AppWindow inherits Window {
         if root.page == 1: VerticalLayout {
             spacing: 16px;
             HorizontalLayout {
-                Button { text: "返回"; clicked => { root.action("home"); } }
-                Label { text: "设置"; font-size: 1.57rem; font-weight: 600; horizontal-stretch: 1; }
+                spacing: 12px; vertical-stretch: 0; alignment: start;
+                BackButton { clicked => { root.action("home"); } }
+                Label { text: "设置"; font-size: 1.57rem; font-weight: 600; horizontal-stretch: 1; vertical-alignment: center; }
             }
-            ScrollView {
+            settings-scroll := ScrollView {
+                horizontal-scrollbar-policy: ScrollBarPolicy.always-off;
+                content-width: self.visible-width;
+                content-y: root.settings-offset * 1px;
+                scrolled => { root.settings-offset = self.content-y / 1px; root.settings-state(); }
                 VerticalLayout {
-                    spacing: 16px; padding-right: 8px;
+                    spacing: 16px; padding-right: 8px; alignment: start;
+                    if root.settings-notice != "": Card { VerticalLayout { padding: 12px; Label { text: root.settings-notice; } } }
                     Label { text: "外观与启动"; font-weight: 600; }
                     Card { VerticalLayout { padding: 16px; spacing: 16px;
                         SettingRow { name: "主题"; description: Appearance.high-contrast ? "系统高对比度优先" : "选择控制中心的显示方式";
-                            ComboBox { model: ["跟随系统", "浅色", "深色"]; current-index <=> root.theme; enabled: !Appearance.high-contrast; accessible-label: "外观主题";
+                            ComboBox { width: max(176px, 10rem); model: ["跟随系统", "浅色", "深色"]; current-index <=> root.theme; enabled: !Appearance.high-contrast; accessible-label: "外观主题";
                                 selected(_) => { root.preferences(root.theme, root.autostart, root.automatic-updates); } }
                         }
                         SettingRow { name: "登录时启动"; description: "自动进入托盘，保持面板关闭";
@@ -215,31 +303,48 @@ export component AppWindow inherits Window {
                             Switch { checked <=> root.automatic-updates; enabled: root.installed && !root.busy; accessible-label: "自动更新";
                                 toggled => { root.preferences(root.theme, root.autostart, root.automatic-updates); } }
                         }
-                        SettingRow { name: "检查稳定版"; description: root.operation-message;
-                            Button { text: "检查更新"; enabled: root.installed && !root.busy; clicked => { root.action("check"); } }
+                        SettingRow { name: "稳定版本"; description: root.version;
+                            Button { text: root.update-checking ? "正在检查…" : "检查更新"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("check"); } }
                         }
+                        Caption { text: root.update-checked; }
+                        SettingsFeedback {
+                            message: root.update-message; detail: root.update-detail; logs: root.update-logs;
+                            known: root.update-progress-known; progress: root.update-progress;
+                            files: root.update-files; failed: root.update-failed; busy: root.busy;
+                            expanded <=> root.update-details-open; state-changed => { root.settings-state(); }
+                            retry => { root.action("retry-update"); } copy => { root.action("copy-update"); } log => { root.action("log"); }
+                        }
+                        if root.update-available: Button { text: root.update-action-label; primary: true; enabled: root.installed && !root.busy; clicked => { root.action("update"); } }
+                        if root.update-available || root.update-pending: Caption { text: "服务空闲后切换版本，控制中心将在后台重新启动。"; }
                     }}
                     Label { text: "存储与维护"; font-weight: 600; }
                     Card { VerticalLayout { padding: 16px; spacing: 12px;
                         Caption { text: "安装位置"; }
-                        Label { text: root.install-path; }
+                        Label { text: root.install-path; wrap: no-wrap; overflow: elide; }
                         HorizontalLayout {
                             spacing: 8px;
                             Button { text: "打开目录"; clicked => { root.action("location"); } }
                             Button { text: "数据目录"; clicked => { root.action("data"); } }
                             Button { text: "打开日志"; clicked => { root.action("log"); } }
                         }
-                        Button { text: root.advanced ? "收起维护工具" : "展开维护工具"; clicked => { root.advanced = !root.advanced; } }
+                        Button { text: root.advanced ? "收起维护工具" : "展开维护工具"; clicked => { root.advanced = !root.advanced; root.settings-state(); } }
                         if root.advanced: VerticalLayout { spacing: 12px;
-                            SettingRow { name: "修复环境"; description: "保留配置和翻译数据，复用已下载文件";
-                                Button { text: "修复"; enabled: root.installed && !root.busy; clicked => { root.action("repair"); } }
+                            SettingRow { name: "修复环境"; description: "保留配置和数据，完成后控制中心将在后台重新启动";
+                                Button { text: "修复"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("repair"); } }
                             }
                             SettingRow { name: "安装缓存"; description: "清理后，更新或修复可能需要补下载";
-                                Button { text: "清理"; enabled: root.installed && !root.busy; clicked => { root.action("clean"); } }
+                                Button { text: "清理"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("clean"); } }
                             }
                             SettingRow { name: "更改安装位置"; description: "迁移配置和数据，过程需要暂停服务";
-                                Button { text: "迁移"; enabled: root.can-relocate && !root.busy; clicked => { root.action("relocate"); } }
+                                Button { text: "迁移"; enabled: root.can-relocate && !root.busy && !root.update-pending; clicked => { root.action("relocate"); } }
                             }
+                        }
+                        if root.maintenance-message != "": SettingsFeedback {
+                            message: root.maintenance-message; detail: root.maintenance-detail; logs: root.maintenance-logs;
+                            known: root.maintenance-progress-known; progress: root.maintenance-progress;
+                            files: root.maintenance-files; failed: root.maintenance-failed; busy: root.busy || root.update-pending;
+                            expanded <=> root.maintenance-details-open; state-changed => { root.settings-state(); }
+                            retry => { root.action("retry-maintenance"); } copy => { root.action("copy-maintenance"); } log => { root.action("log"); }
                         }
                     }}
                     Label { text: "关于"; font-weight: 600; }
@@ -247,14 +352,14 @@ export component AppWindow inherits Window {
                     SettingRow { name: "License"; description: "AGPL-3.0-only";
                         Button { text: "查看许可证"; clicked => { root.action("license"); } }
                     }
-                    Button { text: root.thanks-open ? "收起致谢" : "致谢"; clicked => { root.thanks-open = !root.thanks-open; } }
+                    Button { text: root.thanks-open ? "收起致谢" : "致谢"; clicked => { root.thanks-open = !root.thanks-open; root.settings-state(); } }
                     if root.thanks-open: VerticalLayout { spacing: 8px;
                         Caption { text: "感谢 PDFMathTranslate、PDFMathTranslate-next、BabelDOC、uv、Slint 及其他上游项目。"; }
                         Button { text: "第三方许可证"; clicked => { root.action("notices"); } }
                     }
                     HorizontalLayout { spacing: 12px;
                         Button { text: "退出控制中心"; enabled: !root.busy; clicked => { root.action("quit"); } }
-                        Button { text: "卸载…"; enabled: root.installed && !root.busy; clicked => { root.action("uninstall"); } }
+                        Button { text: "卸载…"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("uninstall"); } }
                     }
                 }
             }

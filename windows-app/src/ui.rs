@@ -1,5 +1,6 @@
 //! Slint owns pages on the main thread; workers only send controller events.
 use crate::*;
+use crate::ui_state::{Page, SettingsView, Feedback, UpdateView, UpdatePhase};
 use slint::{winit_030::WinitWindowAccessor, ComponentHandle, Model};
 use std::{cell::RefCell, sync::mpsc::Receiver, time::Instant};
 slint::include_modules!();
@@ -12,8 +13,15 @@ struct Ui {
     window: Option<AppWindow>,
     timer: slint::Timer,
     state: Option<ControlState>,
-    page: i32,
-    previous: i32,
+    page: Page,
+    previous: Page,
+    page_sizes: [Option<slint::LogicalSize>; 5],
+    settings_view: SettingsView,
+    update_view: UpdateView,
+    maintenance: Feedback,
+    settings_notice: String,
+    request_id: u64,
+    last_destination: Option<PathBuf>,
     wizard_stage: i32,
     existing: bool,
     keep_stopped: bool,
@@ -39,6 +47,8 @@ struct Ui {
     follow_logs: bool,
     log_offset: f32,
     active_rows: std::rc::Rc<slint::VecModel<DownloadRow>>,
+    update_rows: std::rc::Rc<slint::VecModel<DownloadRow>>,
+    maintenance_rows: std::rc::Rc<slint::VecModel<DownloadRow>>,
     retired_operations: std::collections::HashSet<String>,
 }
 
@@ -92,6 +102,54 @@ fn bytes_label(bytes: u64) -> String {
 }
 
 impl Ui {
+    fn new(app: AppHandle, rx: Receiver<Value>, tray: platform::Tray, root: PathBuf, preferences: controller::Settings) -> Self {
+        Self {
+            app,
+            rx,
+            tray,
+            window: None,
+            timer: slint::Timer::default(),
+            state: None,
+            page: if has_argument("--setup") { Page::Setup } else { Page::Home },
+            previous: Page::Home,
+            page_sizes: [None; 5],
+            settings_view: SettingsView::default(),
+            update_view: UpdateView::default(),
+            maintenance: Feedback::default(),
+            settings_notice: String::new(),
+            request_id: 0,
+            last_destination: None,
+            wizard_stage: 0,
+            existing: false,
+            keep_stopped: false,
+            selected_root: root,
+            choices: (true, !preferences.auto_update_disabled),
+            preferences,
+            busy: false,
+            failed: false,
+            cancelled: false,
+            purge_data: false,
+            last_action: String::new(),
+            status: String::new(),
+            details: String::new(),
+            confirmation: String::new(),
+            pending_action: String::new(),
+            progress: None,
+            download_sample: None,
+            speed: 0.0,
+            copied_until: None,
+            notification: String::new(),
+            ignored_snapshot: None,
+            details_open: false,
+            follow_logs: true,
+            log_offset: 0.0,
+            active_rows: std::rc::Rc::new(slint::VecModel::default()),
+            update_rows: std::rc::Rc::new(slint::VecModel::default()),
+            maintenance_rows: std::rc::Rc::new(slint::VecModel::default()),
+            retired_operations: std::collections::HashSet::new(),
+        }
+    }
+
     fn active(&self) -> bool {
         self.busy || self.app.context().operation_busy.load(Ordering::Acquire)
     }
@@ -104,7 +162,7 @@ impl Ui {
         if self.pending_action != "cancel-install" { self.previous = self.page; }
         self.pending_action = "cancel-install".into();
         self.confirmation = "取消后会停止下载和安装。已下载的文件将保留，方便重试；已有配置和翻译数据会保留。".into();
-        self.navigate(4);
+        self.navigate(Page::Confirm);
     }
     fn open(&mut self) -> Result<(), String> {
         if self.window.is_none() {
@@ -117,6 +175,8 @@ impl Ui {
             window.window().set_rendering_notifier(|_, _| {})
                 .map_err(|e| format!("无法启用完整窗口重绘：{e}"))?;
             window.set_active_files(self.active_rows.clone().into());
+            window.set_update_files(self.update_rows.clone().into());
+            window.set_maintenance_files(self.maintenance_rows.clone().into());
             let app = self.app.clone();
             window.on_purge_changed(move |purge| { let _ = app.emit("purge-data", purge); });
             let app = self.app.clone();
@@ -146,6 +206,10 @@ impl Ui {
                 let _ = app.emit("command", "close");
                 slint::CloseRequestResponse::KeepWindowShown
             });
+            let app = self.app.clone();
+            window.on_settings_state(move || { let _ = app.emit("settings-state", Value::Null); });
+            let (width, height) = self.page.size();
+            window.window().set_size(self.page_sizes[self.page as usize].unwrap_or(slint::LogicalSize::new(width, height)));
             self.window = Some(window);
         }
         self.render();
@@ -163,6 +227,7 @@ impl Ui {
         Ok(())
     }
     fn close(&mut self) {
+        self.remember_window();
         if has_argument("--setup") && !self.active() {
             self.app.exit(0);
             return;
@@ -174,20 +239,24 @@ impl Ui {
         self.app.0.panel_open.store(false, Ordering::Release);
         // Dropping the component also drops its renderer/surface. State lives here, not in the page.
     }
-    fn navigate(&mut self, page: i32) {
+    fn remember_window(&mut self) {
+        if let Some(window) = &self.window {
+            self.page_sizes[self.page as usize] = Some(window.window().size().to_logical(window.window().scale_factor()));
+            self.settings_view.offset = window.get_settings_offset();
+            self.settings_view.advanced = window.get_advanced();
+            self.settings_view.thanks = window.get_thanks_open();
+            self.settings_view.update_details = window.get_update_details_open();
+            self.settings_view.maintenance_details = window.get_maintenance_details_open();
+        }
+    }
+    fn navigate(&mut self, page: Page) {
+        if self.page == page { return; }
+        self.remember_window();
         self.page = page;
         if let Some(window) = &self.window {
-            window.set_page(page);
-            window.window().set_size(slint::LogicalSize::new(
-                if page == 0 { 400.0 } else if page == 2 { 560.0 } else { 520.0 },
-                if page == 0 {
-                    300.0
-                } else if page == 1 {
-                    440.0
-                } else {
-                    480.0
-                },
-            ));
+            window.set_page(page as i32);
+            let (width, height) = page.size();
+            window.window().set_size(self.page_sizes[page as usize].unwrap_or(slint::LogicalSize::new(width, height)));
         }
     }
     fn render(&self) {
@@ -197,9 +266,42 @@ impl Ui {
         window
             .window()
             .with_winit_window(platform::sync_window_icons);
-        window.set_page(self.page);
+        window.set_page(self.page as i32);
         window.set_wizard_stage(self.wizard_stage);
         window.set_busy(self.active());
+        window.set_settings_offset(self.settings_view.offset);
+        window.set_advanced(self.settings_view.advanced);
+        window.set_thanks_open(self.settings_view.thanks);
+        window.set_update_details_open(self.settings_view.update_details);
+        window.set_maintenance_details_open(self.settings_view.maintenance_details);
+        window.set_settings_notice(self.settings_notice.as_str().into());
+        let update = &self.update_view;
+        window.set_update_message(if update.feedback.message.is_empty() { "点击检查以查询最新稳定版本" } else { &update.feedback.message }.into());
+        window.set_update_checking(update.phase == UpdatePhase::Checking);
+        window.set_update_pending(update.pending());
+        window.set_update_available(update.downloadable());
+        window.set_update_action_label(if update.phase == UpdatePhase::Waiting { "应用已准备的更新" } else { "下载并更新" }.into());
+        window.set_update_failed(update.feedback.failed);
+        window.set_update_detail(update.feedback.detail().into());
+        window.set_update_progress_known(update.feedback.percent().is_some());
+        window.set_update_progress(update.feedback.percent().unwrap_or(0.));
+        window.set_update_logs(update.feedback.logs().into());
+        window.set_update_checked(if update.checked_at == 0 { "尚未检查".into() } else {
+            let minutes = progress::now().saturating_sub(update.checked_at) / 60;
+            if minutes == 0 { "最近检查：刚刚".into() } else if minutes < 60 { format!("最近检查：{minutes} 分钟前") }
+            else if minutes < 1440 { format!("最近检查：{} 小时前", minutes / 60) }
+            else { format!("最近检查：{} 天前", minutes / 1440) }
+        }.into());
+        let rows = |feedback: &Feedback| feedback.progress.iter().flat_map(|p| &p.files)
+            .filter(|f| matches!(f.status.as_str(), "downloading" | "extracting" | "failed")).map(file_row).collect::<Vec<_>>();
+        sync_rows(&self.update_rows, &rows(&update.feedback));
+        sync_rows(&self.maintenance_rows, &rows(&self.maintenance));
+        window.set_maintenance_message(self.maintenance.message.as_str().into());
+        window.set_maintenance_failed(self.maintenance.failed);
+        window.set_maintenance_detail(self.maintenance.detail().into());
+        window.set_maintenance_progress_known(self.maintenance.percent().is_some());
+        window.set_maintenance_progress(self.maintenance.percent().unwrap_or(0.));
+        window.set_maintenance_logs(self.maintenance.logs().into());
         window.set_details_open(self.details_open);
         window.set_follow_logs(self.follow_logs);
         window.set_log_offset(self.log_offset);
@@ -213,12 +315,12 @@ impl Ui {
         window.set_ready(self.state.is_some());
         window.set_existing(self.existing);
         window.set_install_path(self.selected_root.to_string_lossy().as_ref().into());
-        window.set_autostart(if self.page == 2 {
+        window.set_autostart(if self.page == Page::Setup {
             self.choices.0
         } else {
             self.state.as_ref().is_some_and(|s| s.autostart_enabled)
         });
-        window.set_automatic_updates(if self.page == 2 {
+        window.set_automatic_updates(if self.page == Page::Setup {
             self.choices.1
         } else {
             !self.preferences.auto_update_disabled
@@ -418,11 +520,11 @@ impl Ui {
                 return;
             }
             "home" => {
-                self.navigate(0);
+                self.navigate(Page::Home);
                 return;
             }
             "settings" => {
-                self.navigate(1);
+                self.navigate(Page::Settings);
                 return;
             }
             "back" => {
@@ -434,12 +536,25 @@ impl Ui {
                 self.details_open = !self.details_open;
                 return;
             }
+            "retry-update" => {
+                if !self.active() { let action = self.update_view.feedback.retry.clone(); self.perform(&action, None); }
+                return;
+            }
+            "retry-maintenance" => {
+                if !self.active() && !self.update_view.pending() { let action = self.maintenance.retry.clone(); self.perform(&action, self.last_destination.clone()); }
+                return;
+            }
+            "copy-update" | "copy-maintenance" => {
+                let logs = if command == "copy-update" { self.update_view.feedback.logs() } else { self.maintenance.logs() };
+                if let Err(error) = platform::copy(&logs) { self.settings_notice = error; }
+                return;
+            }
             "license" | "notices" => {
                 let file = if command == "license" { "LICENSE.txt" } else { "THIRD_PARTY_NOTICES.md" };
                 let beside = current_executable().ok().and_then(|p| p.parent().map(|d| d.join(file)));
                 let path = self.selected_root.join("bin").join(file);
                 let path = if path.is_file() { path } else { beside.unwrap_or(path) };
-                if let Err(e) = open_with("notepad.exe", &path) { self.app.error(e); }
+                if let Err(e) = open_with("notepad.exe", &path) { self.settings_notice = e; }
                 return;
             }
             "quit" => {
@@ -463,9 +578,9 @@ impl Ui {
                 return;
             }
             "log" => {
-                if self.page != 2 && !has_argument("--setup") {
+                if self.page != Page::Setup && !has_argument("--setup") {
                     if let Err(e) = open_log() {
-                        self.app.error(e);
+                        self.settings_notice = e;
                     }
                     return;
                 }
@@ -477,19 +592,19 @@ impl Ui {
                     let _ = fs::write(&log, []);
                 }
                 if let Err(e) = open_with("notepad.exe", &log) {
-                    self.app.error(e);
+                    self.settings_notice = e;
                 }
                 return;
             }
             "data" => {
                 if let Err(e) = open_data_dir() {
-                    self.app.error(e);
+                    self.settings_notice = e;
                 }
                 return;
             }
             "location" => {
                 if let Err(e) = open_with("explorer.exe", &self.selected_root) {
-                    self.app.error(e);
+                    self.settings_notice = e;
                 }
                 return;
             }
@@ -530,7 +645,7 @@ impl Ui {
             match (&state.installation, &state.service) {
                 (InstallationStatus::NotInstalled | InstallationStatus::UpdateAvailable, _) => {
                     self.wizard_stage = 0;
-                    self.navigate(2);
+                    self.navigate(Page::Setup);
                     return;
                 }
                 (InstallationStatus::DowngradeBlocked, _) | (_, ServiceStatus::PortConflict) => {
@@ -554,10 +669,10 @@ impl Ui {
             }
             let action = self.last_action.clone();
             if action == "install" {
-                self.navigate(2);
+                self.navigate(Page::Setup);
                 self.wizard_stage = 1;
             }
-            self.perform(&action, None);
+            self.perform(&action, self.last_destination.clone());
             return;
         }
         if ["uninstall", "clean", "relocate"].contains(&command) {
@@ -570,7 +685,7 @@ impl Ui {
             self.pending_action = command.into();
             self.purge_data = false;
             self.previous = self.page;
-            self.navigate(4);
+            self.navigate(Page::Confirm);
             return;
         }
         if command == "confirm" {
@@ -585,7 +700,7 @@ impl Ui {
             }
             return;
         }
-        if ["install", "check", "repair", "start", "stop"].contains(&command) {
+        if ["install", "check", "update", "repair", "start", "stop"].contains(&command) {
             self.perform(command, None);
         }
     }
@@ -593,9 +708,12 @@ impl Ui {
         if self.active() {
             return;
         }
-        if self.page == 1 {
-            self.navigate(0);
-        }
+        if self.update_view.pending() && !(action == "update" && self.update_view.phase == UpdatePhase::Waiting) { return; }
+        if action == "update" && self.update_view.latest.is_empty() { return; }
+        self.request_id += 1;
+        let request_id = self.request_id;
+        if action == "relocate" { self.last_destination = destination.clone(); }
+
         self.ignored_snapshot = progress::read(&self.selected_root);
         self.busy = true;
         self.failed = false;
@@ -606,16 +724,30 @@ impl Ui {
         self.details_open = false;
         self.follow_logs = true;
         self.log_offset = 0.0;
-        self.progress = None;
+        if let Some(previous) = self.progress.take() {
+            // The installer owns its snapshot identity; it may continue an interrupted attempt.
+            if action != "install" { self.retired_operations.insert(previous.operation_id); }
+        }
         self.status = match action {
             "install" => "正在安装…",
             "start" => "正在启动…",
             "stop" => "正在停止…",
             "check" => "正在检查更新…",
-            "repair" => "正在修复…",
+            "update" => "正在下载并准备更新…",
+            "repair" => "正在修复，完成后控制中心将在后台重新启动…",
+            "clean" => "正在清理安装缓存…",
+            "relocate" => "正在迁移，完成后控制中心将在后台重新启动…",
             _ => "正在处理…",
         }
         .into();
+        if action == "check" { self.update_view.checking(request_id); }
+        else if action == "update" {
+            self.update_view.phase = UpdatePhase::Preparing;
+            self.update_view.feedback.start(action, &self.status);
+        } else if matches!(action, "repair" | "clean" | "relocate" | "uninstall") {
+            self.maintenance.start(action, &self.status);
+        }
+        let target = self.update_view.latest.clone();
         let app = self.app.clone();
         let action = action.to_owned();
         let purge_data = self.purge_data;
@@ -637,7 +769,11 @@ impl Ui {
                         start_server(app.clone(), app.context()).await?;
                     }
                     "stop" => scheduler::stop_safely(&app).await?,
-                    "check" => scheduler::request_update(&app, true).await?,
+                    "check" => {
+                        let result = scheduler::check_latest(&app).await;
+                        let _ = app.emit("update-check-result", serde_json::json!({"id":request_id,"result":result,"at":progress::now()}));
+                    }
+                    "update" => scheduler::request_update(&app, Some(&target)).await?,
                     "repair" => scheduler::repair(&app).await?,
                     "clean" => scheduler::clean_cache(&app).await?,
                     "relocate" => {
@@ -654,13 +790,8 @@ impl Ui {
                 Ok(())
             }
             .await;
-            if let Err(e) = result {
-                if e == cancellation::ERROR {
-                    let _ = app.emit("cancelled", Value::Null);
-                } else { app.error(e); }
-            }
             app.refresh();
-            let _ = app.emit("done", Value::Null);
+            let _ = app.emit("command-completed", serde_json::json!({"id":request_id,"action":action,"result":result}));
         });
     }
     fn accept_progress(&mut self, value: progress::OperationProgress) {
@@ -672,6 +803,16 @@ impl Ui {
         if self.progress.as_ref().is_some_and(|p| p == &value ||
             (p.operation_id == value.operation_id && value.sequence < p.sequence)) {
             return;
+        }
+        if value.operation == "update" {
+            if value.active() && self.progress.as_ref().is_none_or(|p| p.operation_id != value.operation_id) {
+                self.update_view.feedback.start("update", &value.message);
+            }
+            self.update_view.progress(&value);
+        }
+        else if matches!(value.operation.as_str(), "repair" | "clean" | "relocate") {
+            self.maintenance.retry = value.operation.clone();
+            self.maintenance.accept(&value);
         }
         if value.active()
             && self
@@ -726,6 +867,51 @@ impl Ui {
     fn event(&mut self, event: Value) {
         let payload = &event["payload"];
         match event["kind"].as_str().unwrap_or("") {
+            "settings-state" => self.remember_window(),
+            "update-state" => {
+                if payload["operationId"].as_str().is_some_and(|id| self.retired_operations.contains(id)) { return; }
+                if let Ok(state) = serde_json::from_value::<scheduler::UpdateState>(payload["state"].clone()) {
+                    if matches!(state.phase.as_str(), "current" | "failed" | "network") && self.progress.as_ref().is_some_and(|p| p.operation == "update") {
+                        self.ignored_snapshot = progress::read(&self.selected_root);
+                        self.progress = None;
+                    }
+                    if matches!(state.phase.as_str(), "failed" | "network") && !self.app.panel_open() && self.notification != state.error {
+                        self.tray.notify(&short_message(&state.error));
+                        self.notification = state.error.clone();
+                    }
+                    self.update_view.state(&state);
+                }
+            }
+            "update-check-result" => {
+                if let Ok(result) = serde_json::from_value(payload["result"].clone()) {
+                    if self.update_view.checked(payload["id"].as_u64().unwrap_or(0), result, payload["at"].as_u64().unwrap_or(0)) {
+                        self.status = self.update_view.feedback.message.clone();
+                        self.failed = self.update_view.feedback.failed;
+                    }
+                }
+            }
+            "command-completed" => {
+                if payload["id"].as_u64() != Some(self.request_id) { return; }
+                let action = payload["action"].as_str().unwrap_or("");
+                let result: Result<(), String> = serde_json::from_value(payload["result"].clone()).unwrap_or_else(|e| Err(e.to_string()));
+                if let Err(error) = result {
+                    if error == cancellation::ERROR { self.event(serde_json::json!({"kind":"cancelled"})); }
+                    else {
+                        self.failed = true;
+                        self.status = friendly_error(&error);
+                        self.details.push_str(&format!("\n{error}"));
+                        self.details_open = true;
+                        if action == "update" { self.update_view.phase = UpdatePhase::Failed; self.update_view.feedback.fail(&error); }
+                        else if matches!(action, "repair" | "clean" | "relocate" | "uninstall") { self.maintenance.fail(&error); }
+                        self.ignored_snapshot = progress::read(&self.selected_root);
+                        self.progress = None;
+                        if !self.app.panel_open() { self.tray.notify(&self.status); }
+                    }
+                } else if matches!(action, "repair" | "clean" | "relocate") {
+                    self.maintenance.message = match action { "clean" => "安装缓存已清理", "repair" => "修复完成", _ => "迁移完成" }.into();
+                }
+                self.event(serde_json::json!({"kind":"done"}));
+            }
             "purge-data" => { if self.pending_action == "uninstall" { self.purge_data = payload.as_bool().unwrap_or(false); } }
             "cancelled" => {
                 self.cancelled = true;
@@ -762,11 +948,14 @@ impl Ui {
                 }
             }
             "preferences" => {
+                self.settings_notice.clear();
+                let old_theme = self.preferences.appearance_theme;
+                let old_updates = self.preferences.auto_update_disabled;
                 let start = payload[1].as_bool().unwrap_or(false);
                 if let Some(state) = &self.state {
                     if state.running_from_installed_path && state.autostart_enabled != start {
                         if let Err(e) = crate::set_autostart(self.app.clone(), start) {
-                            self.app.error(e);
+                            self.settings_notice = format!("登录启动设置未保存：{e}");
                             return;
                         }
                     }
@@ -783,7 +972,9 @@ impl Ui {
                     .is_some_and(|state| state.running_from_installed_path)
                 {
                     if let Err(e) = controller::save_settings(&self.preferences) {
-                        self.app.error(e);
+                        self.settings_notice = format!("设置未保存：{e}");
+                        self.preferences.appearance_theme = old_theme;
+                        self.preferences.auto_update_disabled = old_updates;
                     }
                 }
                 if let Some(state) = &mut self.state {
@@ -830,6 +1021,13 @@ impl Ui {
             }
             "operation-log" => {
                 if let Some(line) = payload["line"].as_str() {
+                    let feedback = if self.progress.as_ref().is_some_and(|p| p.operation == "update" && p.active()) || (self.busy && self.last_action == "update") {
+                        Some(&mut self.update_view.feedback)
+                    } else if self.busy && matches!(self.last_action.as_str(), "repair" | "clean" | "relocate" | "uninstall") { Some(&mut self.maintenance) } else { None };
+                    if let Some(feedback) = feedback {
+                        feedback.details.push_str(line); feedback.details.push('\n');
+                        if feedback.details.len() > 16000 { feedback.details = feedback.details.chars().rev().take(8000).collect::<Vec<_>>().into_iter().rev().collect(); }
+                    }
                     self.details.push_str(line);
                     self.details.push('\n');
                     if self.details.len() > 16000 {
@@ -848,6 +1046,7 @@ impl Ui {
             "status" => self.status = payload.as_str().unwrap_or("").into(),
             "error" => {
                 let message = payload.as_str().unwrap_or("操作失败");
+                self.settings_notice = message.into();
                 self.details.push_str(&format!("\n{message}"));
                 self.status = friendly_error(message);
                 self.failed = true;
@@ -946,44 +1145,8 @@ fn run_inner() -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     }
     let preferences = controller::settings();
-    let choices = (true, !preferences.auto_update_disabled);
     let snapshot = progress::read(&paths.app_root);
-    let mut ui = Ui {
-        app: app.clone(),
-        rx,
-        tray,
-        window: None,
-        timer: slint::Timer::default(),
-        state: None,
-        page: if has_argument("--setup") { 2 } else { 0 },
-        previous: 0,
-        wizard_stage: 0,
-        existing: false,
-        keep_stopped: false,
-        selected_root: paths.app_root.clone(),
-        choices,
-        preferences,
-        busy: false,
-        failed: false,
-        cancelled: false,
-        purge_data: false,
-        last_action: String::new(),
-        status: String::new(),
-        details: String::new(),
-        confirmation: String::new(),
-        pending_action: String::new(),
-        progress: None,
-        download_sample: None,
-        speed: 0.0,
-        copied_until: None,
-        notification: String::new(),
-        ignored_snapshot: None,
-        details_open: false,
-        follow_logs: true,
-        log_offset: 0.0,
-        active_rows: std::rc::Rc::new(slint::VecModel::default()),
-        retired_operations: std::collections::HashSet::new(),
-    };
+    let mut ui = Ui::new(app.clone(), rx, tray, paths.app_root.clone(), preferences);
     if let Some(p) = snapshot {
         ui.last_action = match p.operation.as_str() {
             "update" => "check",
@@ -1037,5 +1200,116 @@ fn run_inner() -> Result<(), String> {
 pub fn run() {
     if let Err(e) = run_inner() {
         platform::message(&e);
+    }
+}
+
+#[cfg(test)]
+mod visual_tests {
+    use super::*;
+
+    fn render_next(fixture: AppWindow, controller: Ui, output: PathBuf, count: std::rc::Rc<std::cell::Cell<usize>>) {
+        let (name, theme, text, contrast) = [
+            ("dark", 2, 1., false), ("light", 1, 1., false),
+            ("large-text", 2, 1.5, false), ("high-contrast", 2, 1., true),
+        ][count.get()];
+        fixture.set_effective_theme(theme);
+        fixture.set_theme(theme);
+        fixture.set_text_scale(text);
+        let appearance = fixture.global::<Appearance>();
+        appearance.set_high_contrast(contrast);
+        appearance.set_system_background(slint::Color::from_rgb_u8(0, 0, 0));
+        appearance.set_system_foreground(slint::Color::from_rgb_u8(255, 255, 255));
+        // Resolve the bindings, then let the real event loop finish Fluent's transitions.
+        let _ = fixture.window().take_snapshot().unwrap();
+        slint::Timer::single_shot(Duration::from_millis(250), move || {
+            let scale = fixture.window().scale_factor();
+            let pixels = fixture.window().take_snapshot().unwrap();
+            assert_eq!((pixels.width(), pixels.height()), ((520. * scale) as u32, (480. * scale) as u32));
+            let name = format!("{name}-{}", (scale * 100.) as u32);
+            fs::write(output.join(format!("{name}.rgba")), pixels.as_bytes()).unwrap();
+            fs::write(output.join(format!("{name}.json")), format!("{{\"width\":{},\"height\":{}}}", pixels.width(), pixels.height())).unwrap();
+            count.set(count.get() + 1);
+            if count.get() == 4 { slint::quit_event_loop().unwrap(); }
+            else { render_next(fixture, controller, output, count); }
+        });
+    }
+
+    // Explicitly opt in: this renders fixtures only and never creates a controller or service.
+    #[test]
+    #[ignore = "Set PDF2ZH_UI_SNAPSHOTS to an isolated output directory"]
+    fn settings_render_matrix() {
+        let output = PathBuf::from(env::var_os("PDF2ZH_UI_SNAPSHOTS").expect("snapshot directory"));
+        fs::create_dir_all(&output).unwrap();
+        slint::BackendSelector::new().backend_name("winit".into()).renderer_name("skia-software".into()).select().unwrap();
+        let window = AppWindow::new().unwrap();
+        window.set_page(Page::Settings as i32);
+        window.set_installed(true);
+        window.set_version("控制中心 1.9.0 · 服务 1.9.0".into());
+        window.set_install_path("D:\\隔离测试\\带空格的安装位置\\zotero-pdf2zh-pro".into());
+        window.set_update_message("已是最新稳定版".into());
+        window.set_update_checked("最近检查：刚刚".into());
+        window.set_update_logs("暂无详情。".into());
+        window.show().unwrap();
+        let fixture = window.clone_strong();
+        let rendered = std::rc::Rc::new(std::cell::Cell::new(0));
+        let rendered_count = rendered.clone();
+        slint::Timer::single_shot(Duration::from_millis(100), move || {
+            let (app, rx) = controller::channel();
+            let root = output.join("controller-fixture");
+            let tray = platform::Tray::new(app.clone(), &root).unwrap();
+            let mut ui = Ui::new(app, rx, tray, root, controller::Settings::default());
+            ui.window = Some(fixture.clone_strong());
+            ui.navigate(Page::Settings);
+            fixture.set_settings_offset(-120.);
+            fixture.set_advanced(true);
+            fixture.set_thanks_open(true);
+            ui.command("clean");
+            assert_eq!(ui.page, Page::Confirm);
+            ui.command("back");
+            ui.render();
+            assert_eq!(ui.page, Page::Settings);
+            assert!(fixture.get_advanced() && fixture.get_thanks_open());
+            assert_eq!(fixture.get_settings_offset(), -120.);
+            ui.command("check");
+            assert_eq!(ui.page, Page::Settings, "Starting a check must preserve the page");
+            let check_id = ui.request_id;
+            ui.command("check");
+            assert_eq!(ui.request_id, check_id, "Repeated clicks must not start another request");
+            ui.command("home");
+            for _ in 0..100 {
+                while let Ok(event) = ui.rx.try_recv() { ui.event(event); }
+                if !ui.busy { break; }
+                thread::sleep(Duration::from_millis(10));
+            }
+            assert!(!ui.busy);
+            assert_eq!(ui.page, Page::Home, "A late failure must not navigate");
+            assert_eq!(ui.update_view.phase, UpdatePhase::Failed);
+            assert!(ui.maintenance.message.is_empty());
+            ui.command("settings"); ui.render();
+            assert_eq!(fixture.get_settings_offset(), -120.);
+            assert!(fixture.get_advanced());
+            ui.close();
+            assert!(ui.window.is_none());
+            ui.open().unwrap();
+            assert_eq!(ui.page, Page::Settings);
+            assert!(ui.window.as_ref().unwrap().get_advanced());
+            assert_eq!(ui.window.as_ref().unwrap().get_settings_offset(), -120.);
+            ui.close();
+            // Use a fresh renderer; OS size changes are delivered asynchronously.
+            let fixture = AppWindow::new().unwrap();
+            fixture.set_page(Page::Settings as i32);
+            fixture.set_update_message("已是最新稳定版".into());
+            fixture.set_update_checked("最近检查：刚刚".into());
+            fixture.set_update_logs("暂无详情。".into());
+            fixture.set_version("控制中心 1.9.0 · 服务 1.9.0".into());
+            fixture.set_install_path("D:\\隔离测试\\带空格的安装位置\\zotero-pdf2zh-pro".into());
+            fixture.set_installed(true);
+            fixture.set_autostart(true);
+            fixture.set_automatic_updates(true);
+            fixture.show().unwrap();
+            render_next(fixture, ui, output, rendered_count);
+        });
+        slint::run_event_loop_until_quit().unwrap();
+        assert_eq!(rendered.get(), 4, "All requested snapshots must be rendered");
     }
 }

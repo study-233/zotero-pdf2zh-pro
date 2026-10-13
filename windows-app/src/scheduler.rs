@@ -3,17 +3,18 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-struct UpdateState {
-    phase: String,
-    version: String,
-    directory: PathBuf,
-    last_check: u64,
-    retry_at: u64,
-    failures: usize,
-    cleanup_at: u64,
-    error: String,
+pub struct UpdateState {
+    pub phase: String,
+    pub version: String,
+    pub(crate) directory: PathBuf,
+    pub last_check: u64,
+    pub(crate) retry_at: u64,
+    pub(crate) failures: usize,
+    pub(crate) cleanup_at: u64,
+    pub error: String,
+    pub manual_version: Option<String>,
 }
 
 fn now() -> u64 {
@@ -25,11 +26,57 @@ fn now() -> u64 {
 fn state_path(paths: &ProductPaths) -> PathBuf {
     paths.app_root.join("updates/state.json")
 }
-fn read_state(paths: &ProductPaths) -> UpdateState {
+pub fn read_state(paths: &ProductPaths) -> UpdateState {
     fs::read(state_path(paths))
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
         .unwrap_or_default()
+}
+
+fn save_update_state(app: &AppHandle, paths: &ProductPaths, state: &UpdateState) -> Result<(), String> {
+    write_json(&state_path(paths), state)?;
+    app.emit("update-state", json!({"state":state,"operationId":progress::read(&paths.app_root).map(|p| p.operation_id)}))
+}
+
+fn should_apply(state: &UpdateState, automatic: bool) -> bool {
+    state.phase == "ready" && (automatic || state.manual_version.as_deref() == Some(&state.version))
+}
+
+fn reconcile_update(state: &mut UpdateState, current: &str) {
+    let installed = Version::parse(current).ok();
+    let target = Version::parse(&state.version).ok();
+    if matches!((installed, target), (Some(a), Some(b)) if a >= b) {
+        state.phase = "current".into();
+        state.manual_version = None;
+        state.error.clear();
+    } else if matches!(state.phase.as_str(), "switching" | "preparing") {
+        state.phase = "failed".into();
+        state.manual_version = None;
+        state.error = "更新未完成，原版本继续保留。请重试更新或查看日志。".into();
+    }
+}
+
+fn update_failed(app: &AppHandle, paths: &ProductPaths, error: &str) {
+    let mut state = read_state(paths);
+    // Network preparation failures keep the existing automatic backoff policy.
+    let transient = state.phase == "network" || ["检查更新失败", "下载更新失败", "读取更新数据失败"].iter().any(|text| error.contains(text));
+    state.phase = if transient && state.manual_version.is_none() { "network" } else { "failed" }.into();
+    state.manual_version = None;
+    state.error = error.into();
+    let _ = save_update_state(app, paths, &state);
+    progress::phase(app, &paths.app_root, "update", "failed", error, "failed");
+}
+
+// A manual check is deliberately read-only: no staging, scheduling or progress-file writes.
+pub async fn check_latest(app: &AppHandle) -> Result<update::UpdateCheck, String> {
+    let paths = ProductPaths::discover()?;
+    if !running_from_installed_path(&paths) { return Err("请先安装控制中心。".into()); }
+    check_only(app.context(), check_for_update()).await
+}
+
+async fn check_only(context: &AppContext, query: impl std::future::Future<Output = Result<update::UpdateCheck, String>>) -> Result<update::UpdateCheck, String> {
+    let _guard = begin_operation(context)?;
+    query.await
 }
 pub fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<(), String> {
     if let Some(parent) = path.parent() {
@@ -96,6 +143,13 @@ pub fn start(app: AppHandle, installed: bool) {
                 app.error(error);
             }
         }
+        if installed {
+            if let Ok(paths) = ProductPaths::discover() {
+                let mut state = read_state(&paths);
+                reconcile_update(&mut state, env!("CARGO_PKG_VERSION"));
+                let _ = save_update_state(&app, &paths, &state);
+            }
+        }
         // UI tests suppress periodic work, while exercising the real startup handoff.
         if std::env::var("PDF2ZH_WINDOWS_LIFECYCLE_TEST").as_deref() == Ok("1") {
             return;
@@ -133,21 +187,21 @@ pub fn start(app: AppHandle, installed: bool) {
                     }
                 }
             }
-            if installed
-                && now().saturating_sub(started) >= 60
-                && !controller::settings().auto_update_disabled
-            {
+            if installed && !app.context().operation_busy.load(Ordering::Acquire) {
                 if let Ok(paths) = ProductPaths::discover() {
                     let state = read_state(&paths);
-                    if state.phase == "ready" {
-                        if let Err(error) = try_apply(&app, &paths, &state, false).await {
+                    let automatic = !controller::settings().auto_update_disabled;
+                    if should_apply(&state, automatic) {
+                        if let Err(error) = try_apply(&app, &paths, &state).await {
+                            if error != OPERATION_BUSY { update_failed(&app, &paths, &error); }
                             emit_log(&app, &paths.control_log, error);
                         }
-                    } else if now() >= state.retry_at
+                    } else if automatic && now().saturating_sub(started) >= 60 && now() >= state.retry_at
                         && (startup_check || now().saturating_sub(state.last_check) >= 86400)
                     {
                         startup_check = false;
-                        if let Err(error) = request_update(&app, false).await {
+                        if let Err(error) = request_update(&app, None).await {
+                            if error == OPERATION_BUSY { continue; }
                             let mut state = read_state(&paths);
                             state.failures += 1;
                             state.retry_at =
@@ -165,38 +219,68 @@ pub fn start(app: AppHandle, installed: bool) {
     });
 }
 
-pub async fn request_update(app: &AppHandle, manual: bool) -> Result<(), String> {
+pub async fn request_update(app: &AppHandle, target: Option<&str>) -> Result<(), String> {
     let _guard = begin_operation(app.context())?;
     let paths = ProductPaths::discover()?;
     if !running_from_installed_path(&paths) {
         return Err("请先安装控制中心。".into());
     }
-    progress::phase(app, &paths.app_root, "update", "checking", "正在检查稳定版本", "running");
+    let result = prepare_update(app, &paths, target).await;
+    if let Err(error) = &result { update_failed(app, &paths, error); }
+    result
+}
+
+async fn prepare_update(app: &AppHandle, paths: &ProductPaths, target: Option<&str>) -> Result<(), String> {
+    let manual = target.is_some();
+    let mut state = read_state(paths);
+    // A ready package retains its identity; a repeated request must not download it again.
+    if state.phase == "ready" && target.is_none_or(|version| version == state.version) {
+        if manual { state.manual_version = target.map(str::to_owned); }
+        progress::begin(app, &paths.app_root, "update", "更新已准备");
+        save_update_state(app, paths, &state)?;
+        progress::phase(app, &paths.app_root, "update", "waiting", "更新已准备，等待连续空闲 60 秒后切换", "waiting");
+        return Ok(());
+    }
+    progress::begin(app, &paths.app_root, "update", "正在检查稳定版本");
+    if let Some(version) = target {
+        state.version = version.into();
+        state.manual_version = Some(version.into());
+        state.phase = "preparing".into();
+        state.error.clear();
+        save_update_state(app, paths, &state)?;
+    }
     let check = check_for_update().await?;
-    let mut state = read_state(&paths);
+    if target.is_some_and(|version| version != check.latest_version) {
+        return Err("稳定版本已变更，请重新检查更新后确认下载。".into());
+    }
     state.last_check = now();
     state.retry_at = 0;
     if !check.available {
         state.phase = "current".into();
         state.error.clear();
-        write_json(&state_path(&paths), &state)?;
+        state.manual_version = None;
+        state.version = check.latest_version;
+        save_update_state(app, paths, &state)?;
         let _ = app.emit("status", "已是最新稳定版");
         progress::phase(app, &paths.app_root, "update", "complete", "已是最新稳定版", "completed");
         return Ok(());
     }
     if state.phase == "failed" && state.version == check.latest_version && !manual {
-        write_json(&state_path(&paths), &state)?;
+        save_update_state(app, paths, &state)?;
+        progress::phase(app, &paths.app_root, "update", "failed", &state.error, "failed");
         return Ok(());
     }
-    if state.phase == "ready" && !manual {
-        return Ok(());
-    }
-    let staged = update::download_and_stage(app, &paths.app_root).await?;
+    state.version = check.latest_version.clone();
+    state.manual_version = target.map(str::to_owned);
+    state.phase = "preparing".into();
+    state.error.clear();
+    save_update_state(app, paths, &state)?;
+    let staged = update::download_and_stage(app, &paths.app_root, &check.latest_version).await?;
     state.version = staged.version;
     state.directory = staged.directory;
     state.phase = "preparing".into();
     state.error.clear();
-    write_json(&state_path(&paths), &state)?;
+    save_update_state(app, paths, &state)?;
     let script = state.directory.join("package/install.ps1");
     let gui = state.directory.join("package/zotero-pdf2zh-pro.exe");
     let args = vec![
@@ -221,14 +305,10 @@ pub async fn request_update(app: &AppHandle, manual: bool) -> Result<(), String>
         state.phase = if network_failure { "network" } else { "failed" }.into();
         state.error = error.clone();
         write_json(&state_path(&paths), &state)?;
-        if manual || network_failure {
-            return Err(error);
-        }
-        app.error("更新准备失败，旧服务继续运行；请在设置中重试或查看日志。".into());
-        return Ok(());
+        return Err(error);
     }
     state.phase = "ready".into();
-    write_json(&state_path(&paths), &state)?;
+    save_update_state(app, paths, &state)?;
     let _ = app.emit("status", "更新已准备，等待空闲后自动切换");
     progress::phase(app, &paths.app_root, "update", "waiting", "更新已准备，等待连续空闲 60 秒后切换", "waiting");
     // Preparation only holds the operation lock, application is serialized on the next tick.
@@ -291,7 +371,6 @@ async fn try_apply(
     app: &AppHandle,
     paths: &ProductPaths,
     state: &UpdateState,
-    manual: bool,
 ) -> Result<(), String> {
     let _guard = begin_operation(app.context())?;
     let worker = paths.clone();
@@ -301,22 +380,31 @@ async fn try_apply(
     if running.listening && !running.valid {
         return Err("端口由其他程序占用，未进行更新。".into());
     }
-    if running.listening && !acquire(paths, if manual { 0 } else { 60 }).await? {
+    if running.listening && !acquire(paths, 60).await? {
         return Ok(());
     }
     progress::phase(app, &paths.app_root, "update", "switching", "正在切换版本，请勿中断", "running");
+    let mut switching = state.clone();
+    switching.phase = "switching".into();
+    if let Err(error) = save_update_state(app, paths, &switching) {
+        if running.listening { let _ = release(paths).await; }
+        return Err(error);
+    }
     let script = state.directory.join("package/apply-update.ps1");
     let mut command = apply_update_command(&script, std::process::id(), &paths.app_root);
     command.arg("-Prepared");
     if !running.listening {
         command.arg("-KeepStopped");
     }
-    command
+    let spawned = command
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .spawn()
-        .map_err(|e| e.to_string())?;
+        .spawn();
+    if let Err(error) = spawned {
+        if running.listening { let _ = release(paths).await; }
+        return Err(error.to_string());
+    }
     app.context().exiting.store(true, Ordering::Release);
     app.exit(0);
     Ok(())
@@ -338,6 +426,7 @@ pub async fn stop_safely(app: &AppHandle) -> Result<(), String> {
 pub async fn repair(app: &AppHandle) -> Result<(), String> {
     let _guard = begin_operation(app.context())?;
     let paths = ProductPaths::discover()?;
+    progress::begin(app, &paths.app_root, "repair", "正在修复环境，完成后控制中心将在后台重新启动");
     let script = paths.script("install.ps1");
     let worker = app.clone();
     let root = paths.app_root.clone();
@@ -374,6 +463,7 @@ pub async fn repair(app: &AppHandle) -> Result<(), String> {
 pub async fn clean_cache(app: &AppHandle) -> Result<(), String> {
     let _guard = begin_operation(app.context())?;
     let paths = ProductPaths::discover()?;
+    progress::begin(app, &paths.app_root, "clean", "正在清理安装缓存");
     let root = paths.app_root.clone();
     let log = paths.control_log.clone();
     let worker = app.clone();
@@ -389,12 +479,44 @@ pub async fn clean_cache(app: &AppHandle) -> Result<(), String> {
     })
     .await
     .map_err(|e| e.to_string())??;
+    progress::phase(app, &paths.app_root, "clean", "complete", "安装缓存已清理", "completed");
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn manual_request_is_version_bound_and_survives_disabled_automatic_updates() {
+        let mut state: UpdateState = serde_json::from_str(r#"{"phase":"ready","version":"2.0.0"}"#).unwrap();
+        assert!(!should_apply(&state, false));
+        assert!(should_apply(&state, true));
+        state.manual_version = Some("2.0.0".into());
+        let restored: UpdateState = serde_json::from_str(&serde_json::to_string(&state).unwrap()).unwrap();
+        assert!(should_apply(&restored, false));
+        state.manual_version = Some("3.0.0".into()); assert!(!should_apply(&state, false));
+        state.phase = "failed".into(); assert!(!should_apply(&state, true));
+    }
+    #[test]
+    fn successful_handoff_clears_intent_and_failed_handoff_does_not_loop() {
+        let mut state = UpdateState { phase: "switching".into(), version: "2.0.0".into(), manual_version: Some("2.0.0".into()), ..Default::default() };
+        reconcile_update(&mut state, "1.0.0");
+        assert_eq!(state.phase, "failed"); assert!(state.manual_version.is_none());
+        assert!(!should_apply(&state, true));
+        reconcile_update(&mut state, "2.0.0");
+        assert_eq!(state.phase, "current"); assert!(state.error.is_empty());
+    }
+    #[test]
+    fn check_returns_metadata_or_error_and_releases_the_shared_lock() {
+        let context = AppContext::default();
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        let result = runtime.block_on(check_only(&context, async { Ok(update::UpdateCheck { available: true, current_version: "1.0.0".into(), latest_version: "2.0.0".into() }) })).unwrap();
+        assert!(result.available); assert!(!context.operation_busy.load(Ordering::Acquire));
+        let result = runtime.block_on(check_only(&context, async { Err("offline".into()) }));
+        assert_eq!(result.unwrap_err(), "offline"); assert!(!context.operation_busy.load(Ordering::Acquire));
+        let _guard = begin_operation(&context).unwrap();
+        assert!(runtime.block_on(check_only(&context, async { panic!("Concurrent query must not execute") })).is_err());
+    }
     #[test]
     fn scheduler_state_survives_replacement() {
         let path = env::temp_dir().join(format!("pdf2zh-state-{}.json", std::process::id()));

@@ -4,6 +4,7 @@ mod install_root;
 mod controller;
 mod platform;
 mod ui;
+mod ui_state;
 mod progress;
 mod uv_progress;
 mod uv_terminal;
@@ -31,6 +32,7 @@ use std::{
 const PRODUCT_NAME: &str = "zotero-pdf2zh-pro";
 const DEFAULT_PORT: u16 = 8890;
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+const OPERATION_BUSY: &str = "另一项操作仍在进行，请稍候。";
 
 #[derive(Default)]
 struct AppContext {
@@ -472,7 +474,7 @@ fn begin_operation(context: &AppContext) -> Result<OperationGuard<'_>, String> {
     context
         .operation_busy
         .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
-        .map_err(|_| "另一项操作仍在进行，请稍候。".to_owned())?;
+        .map_err(|_| OPERATION_BUSY.to_owned())?;
     Ok(OperationGuard(&context.operation_busy))
 }
 

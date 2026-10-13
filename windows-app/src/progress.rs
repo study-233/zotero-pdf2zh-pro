@@ -41,6 +41,14 @@ pub fn now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs()
 }
 
+pub fn begin(app: &AppHandle, root: &Path, operation: &str, message: &str) {
+    publish(app, root, OperationProgress {
+        operation_id: format!("{}-{}", std::process::id(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos()),
+        operation: operation.into(), phase: "starting".into(), status: "running".into(),
+        message: message.into(), started_at: now(), ..Default::default()
+    });
+}
+
 impl OperationProgress {
     pub fn active(&self) -> bool {
         matches!(self.status.as_str(), "running" | "waiting")
