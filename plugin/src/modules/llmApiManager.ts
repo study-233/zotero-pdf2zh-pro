@@ -20,6 +20,7 @@ export interface LLMApiData {
     proxyMode?: "inherit" | "manual" | "direct";
     proxyUrl?: string;
     azureRegion?: string;
+    accountId?: string;
 }
 
 export interface ProviderPreset {
@@ -33,11 +34,21 @@ export interface ProviderPreset {
     model?: boolean;
     protocol?: boolean;
     discovery?: boolean;
+    legacy?: boolean;
 }
 
 // One catalog for platform choice, defaults, and form capabilities. Preset IDs
 // describe the UI; wire requests continue to use the existing service IDs.
 export const PROVIDER_PRESETS: ProviderPreset[] = [
+    {
+        id: "chatgpt",
+        service: "chatgpt",
+        group: "official",
+        label: "ChatGPT（使用套餐）",
+        labelEn: "ChatGPT plan",
+        model: true,
+        discovery: true,
+    },
     {
         id: "openrouter",
         service: "openai",
@@ -125,7 +136,9 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
         id: "codex",
         service: "codex",
         group: "local",
-        label: "Codex",
+        label: "Codex（兼容回退）",
+        labelEn: "Codex (fallback)",
+        legacy: true,
         model: true,
         discovery: true,
     },

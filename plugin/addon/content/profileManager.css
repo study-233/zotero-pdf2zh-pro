@@ -273,6 +273,7 @@
     max-height: 2.8em;
     overflow: auto;
 }
+#profile-window #chatgpt-notice:empty,
 #profile-window #status:empty {
     display: none;
 }

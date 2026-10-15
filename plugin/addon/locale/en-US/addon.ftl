@@ -232,3 +232,23 @@ profile-codex-source-path = Codex from PATH
 profile-codex-source-standalone = Standalone Codex
 profile-codex-source-homebrew = Codex in Homebrew directory
 profile-codex-source-npm = npm Codex
+
+profile-chatgpt-login = Continue with ChatGPT
+profile-chatgpt-relogin = Sign in again
+profile-chatgpt-expired = Your ChatGPT sign-in has expired. Please sign in again.
+profile-chatgpt-switch = Switch account
+profile-chatgpt-logout = Sign out
+profile-chatgpt-refresh = Refresh status
+profile-chatgpt-manage-usage = Manage ChatGPT plan usage
+profile-chatgpt-pending = Complete authorization in your browser. This status updates automatically.
+profile-chatgpt-authorized = Plan usage enabled
+profile-chatgpt-no-permission = Plan usage disabled; sign in again to authorize
+profile-chatgpt-login-failed = Sign-in did not complete. Please try again.
+profile-chatgpt-signed-out = Not signed in to ChatGPT
+profile-chatgpt-revocation-unknown = Signed out locally; remote revocation was not confirmed. Disconnect this app in ChatGPT settings.
+profile-chatgpt-sign-in-first = Sign in and enable ChatGPT plan usage first.
+
+profile-chatgpt-cancel = Cancel sign-in
+profile-codex-removed = Old Codex translation profiles have been removed. Add a ChatGPT plan profile in the plugin settings, click Sign in with ChatGPT, then test and save the profile to use it.
+profile-chatgpt-cancelling = Cancelling sign-in…
+profile-chatgpt-cancelled = Sign-in cancelled. You can sign in again.

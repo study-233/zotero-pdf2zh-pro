@@ -49,6 +49,11 @@ def validate_text(source, output, lang_out="", same_text_check=True):
 class BatchValidationResult:
     valid_outputs: dict[int, str]
     invalid_outputs: dict[int, str]
+    unassigned_rows: bool = False
+
+    @property
+    def complete(self):
+        return not self.invalid_outputs and not self.unassigned_rows
 
 
 def inspect_batch(output, sources, lang_out="", same_text_check=True):
@@ -58,22 +63,32 @@ def inspect_batch(output, sources, lang_out="", same_text_check=True):
         raise InvalidTranslation("invalid_json") from exc
     if isinstance(rows, dict):
         rows = [rows]
-    if not isinstance(rows, list) or len(rows) != len(sources):
+    if not isinstance(rows, list):
         raise InvalidTranslation("paragraph_count_mismatch")
     results = BatchValidationResult({}, {})
-    seen = set()
+    by_id = {}
     for row in rows:
         if not isinstance(row, dict):
-            raise InvalidTranslation("invalid_paragraph")
+            results.unassigned_rows = True
+            continue
         key = row.get("id")
         if isinstance(key, str) and key.isdecimal():
             key = int(key)
-        if type(key) is not int or key not in range(len(sources)) or key in seen:
-            raise InvalidTranslation("invalid_or_duplicate_paragraph_id")
-        seen.add(key)
-        value = row.get("output")
+        if type(key) is not int or key not in range(len(sources)):
+            results.unassigned_rows = True
+            continue
+        by_id.setdefault(key, []).append(row.get("output"))
+    for key, source in enumerate(sources):
+        values = by_id.get(key, [])
+        if not values:
+            results.invalid_outputs[key] = "paragraph_count_mismatch"
+            continue
+        if len(values) != 1:
+            results.invalid_outputs[key] = "invalid_or_duplicate_paragraph_id"
+            continue
+        value = values[0]
         try:
-            validate_text(sources[key], value, lang_out, same_text_check)
+            validate_text(source, value, lang_out, same_text_check)
         except InvalidTranslation as error:
             results.invalid_outputs[key] = str(error)
         else:
@@ -83,6 +98,8 @@ def inspect_batch(output, sources, lang_out="", same_text_check=True):
 
 def validate_batch(output, sources, lang_out="", same_text_check=True):
     result = inspect_batch(output, sources, lang_out, same_text_check)
+    if result.unassigned_rows:
+        raise InvalidTranslation("invalid_paragraph")
     if result.invalid_outputs:
         raise InvalidTranslation(next(iter(result.invalid_outputs.values())))
     return result.valid_outputs

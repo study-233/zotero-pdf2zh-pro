@@ -49,6 +49,7 @@ export class ServerTaskClient {
         const needsApiCheck = Boolean(
             api &&
             (api.service === "codex" ||
+                api.service === "chatgpt" ||
                 api.reasoningMode === "off" ||
                 api.apiProtocol === "auto" ||
                 api.apiProtocol === "responses" ||
@@ -99,6 +100,7 @@ export class ServerTaskClient {
                     health.capabilities?.reasoningMode,
                     health.capabilities?.codexCli,
                     health.capabilities?.codexProxy,
+                    health.capabilities?.chatgptPlan,
                 );
                 requestBody = { ...requestBody, llm_api: prepared.api };
                 if (prepared.warning) {

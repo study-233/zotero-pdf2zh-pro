@@ -1,0 +1,9 @@
+{
+  "provider": "chatgpt",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "low",
+  "auth_directory": "server/translates/chatgpt-auth",
+  "timeout_seconds": 120,
+  "cache": "cold",
+  "limits": { "max_requests": 60, "max_seconds": 1800 }
+}

@@ -8,12 +8,44 @@ from unittest.mock import Mock, patch
 import test_partial_batch as partial
 import test_quality_review as review_fixtures
 from babeldoc.format.pdf.document_il.midend.il_translator import ILTranslator
+from observability import TaskMetricsCollector
 
 
 CLOCK = "babeldoc.format.pdf.document_il.midend.il_translator.perf_counter"
 
 
 class EngineMetricsTests(unittest.TestCase):
+    def test_partial_batch_repair_keeps_parent_call_and_counts_only_live_repairs(self):
+        with ExitStack() as stack:
+            directory = stack.enter_context(tempfile.TemporaryDirectory())
+            _, _, engine, _, run = partial.PartialBatchTests().fixture(
+                stack, directory, partial.PartialBatchTests.partial_response,
+            )
+            events = []
+            collector = TaskMetricsCollector(task_id='test', provider='test', model='test', journal=events.append)
+            engine.metrics_collector = collector
+            original_request = engine.do_llm_translate
+            def request(text, rate_limit_params=None):
+                params = rate_limit_params
+                call = collector.request_started(parent_call=params.get('_metric_last_call'),
+                    paragraph_ids=params.get('paragraph_ids'), retry_cause=params.get('metric_retry_cause'))
+                params['_metric_last_call'] = call
+                result = original_request(text, params)
+                collector.request_finished(call, succeeded=True)
+                return result
+            engine.do_llm_translate = request
+            run()
+            calls = [e for e in events if e['event'] == 'request_started']
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(calls[1]['parentCallId'], calls[0]['callId'])
+            self.assertEqual(calls[1]['paragraphIds'], ['p-2'])
+            self.assertEqual(calls[1]['retryCause'], 'batch_partial')
+            self.assertEqual(collector.snapshot()['requests']['repairs'], 1)
+            # A repaired batch served from cache makes no model or repair call.
+            engine.llm_translate(engine.requests[0])
+            self.assertEqual(collector.snapshot()['requests']['attempts'], 2)
+            self.assertEqual(collector.snapshot()['requests']['repairs'], 1)
+
     def test_batch_and_single_repair_report_actual_unit_counts(self):
         with ExitStack() as stack:
             directory = stack.enter_context(tempfile.TemporaryDirectory())

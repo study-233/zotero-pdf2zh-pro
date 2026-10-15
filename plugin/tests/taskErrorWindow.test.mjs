@@ -222,3 +222,35 @@ test("structured diagnostics clarify failures without showing raw messages", () 
     );
     assert.equal(result, "未能翻译：无法连接翻译服务；翻译服务异常等问题。");
 });
+
+test("ChatGPT failures show actionable reasons and relogin only for invalid authorization", () => {
+    const ui = fixture();
+    for (const failure of [
+        { error: "ChatGPT 登录已失效，请重新登录。" },
+        { error: "ChatGPT 授权无法续期，请重新登录。" },
+        { errorDiagnostics: [{ code: "chatgpt_sign_in_required" }] },
+        { failedParagraphs: [{ providerCode: "chatgpt_sign_in_required" }] },
+    ]) {
+        const view = ui.createTaskCardView(
+            task({ service: "chatgpt", status: "failed", ...failure }),
+        );
+        assert.equal(
+            view.error.textContent,
+            "ChatGPT 登录已失效，请重新登录后重试翻译。",
+        );
+        assert.equal(view.reloginButton.hidden, false);
+        assert.equal(view.reloginButton.textContent, "重新登录");
+        ui.updateTaskCardView(view, task({ status: "completed" }));
+        assert.equal(view.reloginButton.hidden, true);
+    }
+    for (const message of [
+        "暂时无法续期 ChatGPT 授权，请检查网络后重试。",
+        "ChatGPT 套餐或此应用的用量已达上限，请在 ChatGPT 用量设置中查看。",
+    ]) {
+        const view = ui.createTaskCardView(
+            task({ service: "chatgpt", status: "failed", error: message }),
+        );
+        assert.equal(view.error.textContent, message);
+        assert.equal(view.reloginButton.hidden, true);
+    }
+});

@@ -1,0 +1,13 @@
+{
+  "dataset": "legacy-v1",
+  "text_samples": 60,
+  "text_samples_sha256": "50e30b31aab1c6affce9e9977b95111316c784fb2fd5dd2739383d9699551af3",
+  "pdfs": [
+    "attention",
+    "bert",
+    "resnet"
+  ],
+  "pdf_results": "../../site/results.json",
+  "historical_runner_commit": "ec8001d346856baad9dcb263e3aa2c3d9af69c09",
+  "policy": "Read-only historical evidence. Preserve original prompt, review and usage conventions; never combine scores with cs-en-zh-v2."
+}

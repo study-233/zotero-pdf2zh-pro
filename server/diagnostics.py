@@ -15,14 +15,14 @@ from pathlib import Path
 
 SCHEMA_VERSION = 1
 MAX_EXPORT = 10 * 1024 * 1024
-NUMBERS = set('attempt attempts averageLatencyMs p95LatencyMs qps10s revision stageCurrent stageTotal stageProgress overallProgress currentPage selectedPage completedPages totalPages fontObject fontParseCount fontCacheHits operations idleSeconds stageElapsedSeconds latencyMs statusCode batchSize visibleOutputChars input output total active retries count pid cpuPercent rssBytes parentCpuPercent parentRssBytes exitCode elapsedSeconds droppedLogRecords promptTokens completionTokens totalTokens requestsUsed requestLimit succeeded failed pending translated cacheHits inFlight qps'.split())
+NUMBERS = set('attempt attempts averageLatencyMs p95LatencyMs qps10s revision stageCurrent stageTotal stageProgress overallProgress currentPage selectedPage completedPages totalPages fontObject fontParseCount fontCacheHits operations idleSeconds stageElapsedSeconds latencyMs statusCode batchSize visibleOutputChars input output total active retries repairs count pid cpuPercent rssBytes parentCpuPercent parentRssBytes exitCode elapsedSeconds droppedLogRecords promptTokens completionTokens totalTokens requestsUsed requestLimit succeeded failed cancelled pending translated cacheHits inFlight qps'.split())
 FLAGS = {'cancelRequested', 'stalled', 'success', 'truncated', 'queueBlocked'}
 NUMBERS.update('poolSize page skipped selected checked passed corrected unchecked notSelected requestsUsed requestLimit paragraphLimit hits misses hitRate hitTokens missTokens reasoning visibleOutputChars'.split())
 FLAGS.update({'canRepair', 'canDownloadResult', 'failedParagraphsTruncated'})
 STRINGS = {
     'stage': {'Queue Wait','Initialization','Check Fonts','Download Fonts','Font Preparation','Parse PDF and Create Intermediate Representation','Detect Scanned Pages','Parse Page Layout','Parse Table','Parse Paragraphs','Parse Formulas and Styles','Extract Terms','Translate Paragraphs','Typesetting','Add Fonts','Generate drawing instructions','Subset font','Save PDF','Finalize'},
     'retryReason': {'timeout','rate_limit','connection','server_error','invalid_output','other'},
-    'errorType': {'ReadTimeout','ConnectTimeout','TimeoutError','APITimeoutError','RateLimitError','APIConnectionError','APIStatusError','AuthenticationError','PermissionDeniedError','NotFoundError','BadRequestError','InternalServerError','InvalidTranslation','UnprocessedParagraph','RuntimeError','ValueError','CancelledError','ConnectionError','CodexError'},
+    'errorType': {'ReadTimeout','ConnectTimeout','TimeoutError','APITimeoutError','RateLimitError','APIConnectionError','APIStatusError','AuthenticationError','PermissionDeniedError','NotFoundError','BadRequestError','InternalServerError','InvalidTranslation','UnprocessedParagraph','RuntimeError','ValueError','CancelledError','ConnectionError','CodexError','ChatGPTError'},
     'finishReason': {'stop','length','content_filter','tool_calls','function_call','completed','incomplete','failed','cancelled','max_output_tokens','other'},
     'status': {'queued','running','cancelling','completed','incomplete','failed','cancelled'},
     'operation': {'page_start','page_end','font','resources','content_stream','initialization'},
@@ -30,7 +30,9 @@ STRINGS = {
     'cancelReason': {'user','forced','shutdown'},
     'kind': {'initialization','translation','term_extraction','review','repair'},
     'protocol': {'chat_completions','responses','auto','codex_app_server'},
-    'providerCode': {'model_not_found','invalid_api_key','insufficient_quota','rate_limit_exceeded','permission_denied',
+    'providerCode': {'chatgpt_sign_in_required','chatgpt_usage_limit','chatgpt_permission_denied','chatgpt_invalid_request',
+                     'chatgpt_rate_limited','chatgpt_unavailable','chatgpt_model_unavailable','chatgpt_invalid_reasoning',
+                     'chatgpt_account_changed','chatgpt_timeout','chatgpt_network_error','chatgpt_incomplete','model_not_found','invalid_api_key','insufficient_quota','rate_limit_exceeded','permission_denied',
                      'codex_invalid_proxy','codex_not_installed','codex_incompatible','codex_not_logged_in','codex_model_unavailable',
                      'codex_invalid_reasoning','codex_isolation_failed','codex_timeout','codex_process_exited',
                      'codex_protocol_error','codex_quota_exhausted','codex_request_failed',
@@ -41,6 +43,8 @@ STRINGS = {
 IDENTIFIERS = {'taskId', 'serverInstanceId', 'errorId'}
 LABELS = {'provider', 'service', 'model', 'sourceLang', 'targetLang'}
 CONTAINERS = set('requestedConfiguration effectiveConfiguration translationSummary qualitySummary metrics requests tokens byKind translation review initialization localCache providerCache'.split())
+CONTAINERS.update({'byPurpose', 'term_extraction', 'validation'})
+NUMBERS.update({'accepted', 'partial', 'rejected', 'firstParagraphMs'})
 COUNT_MAPS = {'statusCodes', 'errorTypes', 'finishReasons', 'protocols'}
 
 

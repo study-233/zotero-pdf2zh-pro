@@ -30,6 +30,10 @@ window.createProfileEditor = function (args, changed) {
     let runtime,
         discoverySupported = false,
         supportController;
+    const chatgptPanel = window.createChatGPTPanel?.(args, () => {
+        tested = "";
+        changed();
+    });
     function showRuntime(info, attempts = []) {
         runtime = info;
         $("codex-runtime-summary").hidden =
@@ -208,13 +212,15 @@ window.createProfileEditor = function (args, changed) {
         modelDetails = state.modelDetails || [];
         const retired = !preset;
         const codex = preset?.service === "codex";
+        const chatgpt = preset?.service === "chatgpt";
+        chatgptPanel?.load(chatgpt);
         const cli = codex || preset?.service === "claudecode";
         $("platform-name").textContent = preset?.label || base.service;
         $("retired-notice").hidden = !retired;
         $("api-key-field").hidden = !retired && !preset.key;
         $("model-field").hidden = !retired && !preset.model;
         $("api-address").hidden =
-            !retired && (cli || preset.service === "deepl");
+            !retired && (cli || chatgpt || preset.service === "deepl");
         $("api-url-field").hidden = !!preset?.url && !state.urlExpanded;
         $("url-summary-row").hidden = !$("api-url-field").hidden;
         $("url-summary").textContent = base.apiUrl || preset?.url || "";
@@ -227,11 +233,16 @@ window.createProfileEditor = function (args, changed) {
         $("account-hint").hidden = !cli;
         $("account-hint").textContent = t(codex ? "codex-hint" : "claude-hint");
         $("protocol-field").hidden =
-            codex || (!preset?.protocol && source.apiProtocol !== "responses");
+            codex ||
+            chatgpt ||
+            (!preset?.protocol && source.apiProtocol !== "responses");
         $("reasoning-mode-field").hidden =
-            codex || (!preset?.protocol && source.reasoningMode !== "off");
+            codex ||
+            chatgpt ||
+            (!preset?.protocol && source.reasoningMode !== "off");
         $("request-options-field").hidden =
             codex ||
+            chatgpt ||
             (!preset?.protocol &&
                 ["", "{}"].includes(
                     $("requestOptions").value.replace(/\s/g, ""),
@@ -253,9 +264,9 @@ window.createProfileEditor = function (args, changed) {
                 })
                 .catch(() => {});
         }
-        $("codex-reasoning-field").hidden = $("codex-proxy-field").hidden =
-            !codex;
-        $("extra-data-field").hidden = codex;
+        $("codex-reasoning-field").hidden = !(codex || chatgpt);
+        $("codex-proxy-field").hidden = !codex;
+        $("extra-data-field").hidden = codex || chatgpt;
         $("legacy-data-field").hidden = !retired;
         const legacy = { ...base };
         delete legacy.apiKey;
@@ -309,15 +320,16 @@ window.createProfileEditor = function (args, changed) {
             providerPreset: preset.id,
         };
         const codex = preset.service === "codex";
+        const chatgpt = preset.service === "chatgpt";
         const claude = preset.service === "claudecode";
         for (const id of ["extraData", "requestOptions"])
-            value[id] = codex ? {} : jsonField(id);
+            value[id] = codex || chatgpt ? {} : jsonField(id);
         if (requireModel && preset.model && !value.model)
             throw new Error(t("model-required"));
         if (preset.key && !value.apiKey) throw new Error(t("key-required"));
         if (!preset.key) value.apiKey = "";
         if (!preset.model) value.model = "";
-        if (codex || preset.service === "deepl") value.apiUrl = "";
+        if (codex || chatgpt || preset.service === "deepl") value.apiUrl = "";
         else if (claude) value.apiUrl = value.cliPath || "claude";
         else {
             let url;
@@ -335,9 +347,34 @@ window.createProfileEditor = function (args, changed) {
             )
                 throw new Error(t("url-error"));
         }
-        if (!codex && value.reasoningMode === "off" && !supportsReasoningOff())
+        if (
+            !codex &&
+            !chatgpt &&
+            value.reasoningMode === "off" &&
+            !supportsReasoningOff()
+        )
             throw new Error(t("reasoning-error"));
-        if (codex) {
+        if (chatgpt) {
+            value.accountId = chatgptPanel
+                ? chatgptPanel.accountId()
+                : base.accountId;
+            if (requireModel && !value.accountId)
+                throw new Error(
+                    chatgptPanel?.signInMessage() || t("chatgpt-sign-in-first"),
+                );
+            for (const id of [
+                "apiProtocol",
+                "reasoningMode",
+                "requestOptions",
+                "extraData",
+                "cliPath",
+                "proxyMode",
+                "proxyUrl",
+            ])
+                delete value[id];
+            if (!value.reasoningEffort) delete value.reasoningEffort;
+        } else if (codex) {
+            delete value.accountId;
             if (!["inherit", "manual", "direct"].includes(value.proxyMode))
                 throw new Error(t("proxy-error"));
             if (value.proxyMode === "manual") {
@@ -389,6 +426,7 @@ window.createProfileEditor = function (args, changed) {
             if (!value.cliPath) delete value.cliPath;
             if (!value.reasoningEffort) delete value.reasoningEffort;
         } else {
+            delete value.accountId;
             for (const id of [
                 "cliPath",
                 "reasoningEffort",
@@ -480,6 +518,8 @@ window.createProfileEditor = function (args, changed) {
                 if (preset?.service === "codex")
                     showRuntime(undefined, error.attempts || []);
                 message(error.message || t("failed"), true);
+                if (preset?.service === "chatgpt")
+                    await chatgptPanel?.refresh();
                 changed();
             }
         } finally {
@@ -548,5 +588,15 @@ window.createProfileEditor = function (args, changed) {
     $("codex-detect").addEventListener("click", () => perform("discover"));
     $("test").addEventListener("click", () => perform("test"));
     $("get-models").addEventListener("click", () => perform("models"));
-    return { load, snapshot, read, cancel, message };
+    return {
+        load,
+        snapshot,
+        read,
+        cancel,
+        message,
+        reloginChatGPT: () => {
+            message();
+            return chatgptPanel?.login();
+        },
+    };
 };

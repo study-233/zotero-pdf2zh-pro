@@ -180,6 +180,102 @@ class ScriptedTransport:
 
 
 class CodexClientTests(unittest.TestCase):
+    def test_cumulative_usage_replaces_snapshots_and_survives_failed_turn(self):
+        for status in ("completed", "failed"):
+            with self.subTest(status=status):
+                def script(t, u, _):
+                    usage = event("thread/tokenUsage/updated", t, u, tokenUsage={
+                        "last": {"inputTokens": 10, "outputTokens": 5},
+                        "total": {"inputTokens": 100, "outputTokens": 50,
+                                  "cachedInputTokens": 40, "reasoningOutputTokens": 20},
+                    })
+                    return [usage, usage, answer(t, u), completed(t, u, status)]
+                client, _ = self.client(ScriptedTransport(script))
+                snapshots = []
+                if status == "failed":
+                    with self.assertRaises(CodexError):
+                        client.translate("source", model="gpt-6-luna", on_usage=snapshots.append)
+                else:
+                    result = client.translate("source", model="gpt-6-luna", on_usage=snapshots.append)
+                    self.assertEqual(result.usage, snapshots[-1])
+                self.assertEqual(snapshots, [dict(prompt_tokens=100, completion_tokens=50,
+                    cache_hit_tokens=40, cache_miss_tokens=60, reasoning_tokens=20)] * 2)
+
+    def test_cancellation_retains_usage_received_during_interrupt(self):
+        def script(t, u, _):
+            return [event("thread/tokenUsage/updated", t, "old-turn", tokenUsage={
+                        "total": {"inputTokens": 9000}}),
+                    event("thread/tokenUsage/updated", t, u, tokenUsage={
+                        "total": {"inputTokens": 100, "outputTokens": 50}})]
+        client, transport = self.client(ScriptedTransport(script))
+        def cancel():
+            if transport.turn_started.is_set():
+                raise asyncio.CancelledError()
+        snapshots = []
+        with self.assertRaises(asyncio.CancelledError):
+            client.translate("source", model="gpt-6-luna", check_cancelled=cancel, on_usage=snapshots.append)
+        self.assertEqual(snapshots, [{"prompt_tokens": 100, "completion_tokens": 50}])
+        self.assertFalse(transport.closed)
+
+    def test_recycling_blocks_admission_and_next_request_uses_fresh_transport(self):
+        client, old = self.client()
+        client._completed = 127
+        recycling, release, waiting = threading.Event(), threading.Event(), threading.Event()
+        self.addCleanup(release.set)
+        discard = client._discard
+        fresh = ScriptedTransport()
+
+        def pause_discard(transport):
+            recycling.set()
+            self.assertTrue(release.wait(3))
+            discard(transport)
+
+        def ensure_started(check=None):
+            with client._lock:
+                if client._transport is None:
+                    client._transport = fresh
+                    client._directory = tempfile.TemporaryDirectory(prefix="test-codex-fresh-")
+                    client._config = {"model_provider": "openai"}
+                return client._transport
+
+        def check_waiting():
+            if client._recycling:
+                waiting.set()
+
+        with patch.object(client, "_discard", side_effect=pause_discard), \
+                patch.object(client, "_ensure_started", side_effect=ensure_started), \
+                ThreadPoolExecutor(max_workers=2) as pool:
+            first = pool.submit(client.translate, "first", model="gpt-6-luna")
+            try:
+                self.assertTrue(recycling.wait(2))
+                second = pool.submit(client.translate, "second", model="gpt-6-luna", check_cancelled=check_waiting)
+                self.assertTrue(waiting.wait(2))
+                self.assertEqual(old.thread_counter, 1)
+                self.assertFalse(second.done())
+            finally:
+                release.set()
+            self.assertEqual(first.result(3).text, "译文")
+            self.assertEqual(second.result(3).text, "译文")
+        self.assertTrue(old.closed)
+        self.assertEqual(fresh.thread_counter, 1)
+        self.assertEqual(client._active, 0)
+        self.assertFalse(client._recycling)
+
+    def test_cancel_while_waiting_for_recycle_does_not_leak_a_slot(self):
+        client, transport = self.client()
+        client._recycling = True
+        def cancel():
+            raise asyncio.CancelledError()
+        with self.assertRaises(asyncio.CancelledError):
+            client.translate("cancelled", model="gpt-6-luna", check_cancelled=cancel)
+        self.assertEqual(client._active, 0)
+        self.assertEqual(transport.calls, [])
+        self.assertTrue(client._slots.acquire(blocking=False))
+        self.assertTrue(client._slots.acquire(blocking=False))
+        client._slots.release()
+        client._slots.release()
+        client._recycling = False
+
     def test_selection_stream_filters_phase_turn_and_uses_completed_final_answer(self):
         def script(t, u, _):
             return [event('item/started', t, u, item={'id':'comment','type':'agentMessage','phase':'commentary'}),
@@ -307,7 +403,7 @@ class CodexClientTests(unittest.TestCase):
         self.assertIn("thread/unsubscribe", methods)
         self.assertFalse(transport.closed)
 
-    def test_cancel_after_thread_creation_before_turn_start_recycles_peer(self):
+    def test_cancel_before_turn_start_only_retires_the_unused_thread(self):
         client, transport = self.client()
         def cancelled():
             if transport.thread_counter:
@@ -315,9 +411,45 @@ class CodexClientTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "user cancelled"):
             client.translate("source", model="gpt-6-luna", check_cancelled=cancelled)
         self.assertFalse(transport.turn_started.is_set())
-        self.assertTrue(transport.closed)
+        self.assertFalse(transport.closed)
         self.assertEqual(transport.retired, ["thread-1"])
         self.assertEqual(client._active, 0)
+
+    def test_task_stop_is_checked_while_waiting_for_client_capacity(self):
+        client, transport = self.client()
+        client._slots.acquire()
+        client._slots.acquire()
+        def stopped():
+            raise CodexError("codex_quota_exhausted", "stopped")
+        try:
+            with self.assertRaises(CodexError) as caught:
+                client.translate("queued", model="gpt-6-luna", check_admission=stopped)
+            self.assertEqual(caught.exception.code, "codex_quota_exhausted")
+            self.assertEqual(transport.calls, [])
+        finally:
+            client._slots.release()
+            client._slots.release()
+
+    def test_task_stop_before_generation_keeps_peer_but_does_not_abort_inflight_turns(self):
+        client, transport = self.client()
+        def stopped_before_start():
+            if transport.thread_counter:
+                raise CodexError("codex_quota_exhausted", "stopped")
+        with self.assertRaises(CodexError):
+            client.translate("queued", model="gpt-6-luna", check_admission=stopped_before_start)
+        self.assertFalse(transport.closed)
+        self.assertFalse(transport.turn_started.is_set())
+        def stopped_after_start():
+            if transport.turn_started.is_set():
+                raise CodexError("codex_quota_exhausted", "stopped")
+        self.assertEqual(client.translate("in flight", model="gpt-6-luna",
+                                         check_admission=stopped_after_start).text, "译文")
+
+    def test_interrupted_terminal_is_classified_as_cancellation(self):
+        client, _ = self.client(ScriptedTransport(lambda t, u, _: [completed(t, u, "interrupted")]))
+        with self.assertRaises(CodexError) as caught:
+            client.translate("source", model="gpt-6-luna")
+        self.assertEqual(caught.exception.code, "codex_cancelled")
 
     def test_cancellation_reaches_account_preparation(self):
         client, transport = self.client()

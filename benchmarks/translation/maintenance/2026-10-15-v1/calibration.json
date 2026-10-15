@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "version": "engineering-calibration-20261015-v1",
+  "rubric_unchanged": true,
+  "corrections": [
+    {
+      "run": ".local-dev/translation-bench/live-20261014/quick-01",
+      "job_id": "main:C4-02:0",
+      "reason": "预热次数歧义由备注转为语义 3 分，与同类结果一致。",
+      "archive": ".local-dev/translation-bench/live-20261014/quick-01/review-history/before-maintenance-20261015-r2"
+    },
+    {
+      "run": ".local-dev/translation-bench/semantic-stability-20261014/candidates-02",
+      "job_id": "main:recall-at-ten--original:0",
+      "reason": "Recall@10 局部术语错误统一为 minor / 3 分。",
+      "archive": ".local-dev/translation-bench/semantic-stability-20261014/candidates-02/review-history/before-maintenance-20261015-r2"
+    },
+    {
+      "run": ".local-dev/translation-bench/semantic-stability-20261014/candidates-02",
+      "job_id": "main:sum-indices--original:0",
+      "reason": "联合体词义局部错误统一为 minor，不改变总分。",
+      "archive": ".local-dev/translation-bench/semantic-stability-20261014/candidates-02/review-history/before-maintenance-20261015-r2"
+    },
+    {
+      "run": ".local-dev/translation-bench/semantic-stability-20261014/selection-repeat-03",
+      "job_id": "main:rustbelt-07:0",
+      "reason": "联合体词义局部错误统一为 minor，不改变总分。",
+      "archive": ".local-dev/translation-bench/semantic-stability-20261014/selection-repeat-03/review-history/before-maintenance-20261015-r2"
+    }
+  ],
+  "principles": [
+    "同一现象统一等级；局部 Recall@10 术语错误为 minor / 3，关键 sum indices 类型语义为 major / 2。",
+    "预热次数范围歧义为 minor / 3，不把歧义断言为数字错。",
+    "普通 tagged unions 局部术语不准为 minor；同段已有关键术语问题不重复扣其他维度。",
+    "执行失败、文本质量、内容完整性和排版分别报告；部分译文有分数不等于通过。",
+    "受限来源全文只留本地；候选记录通过哈希和 job ID 定位证据。"
+  ]
+}

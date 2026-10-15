@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "version": "2026-10-15-v1",
+  "status": "engineering-review-only",
+  "live_calls": 0,
+  "baseline_promoted": false,
+  "reviewer": "Codex executing assistant",
+  "independent": false,
+  "blind": false,
+  "audit_rule": "All major/critical plus ceil(20% of remaining), seed 61013, same reviewer second pass",
+  "files": {
+    "calibration.json": "4791f56bfcae4506a76ed80e54f74934da46eb2ffc90b700d556877fb8f12388",
+    "candidates.json": "6dcaa682dd8a26454b4848718738d6e8c862a956a315b86ad224b9b200a69d5d",
+    "exposure.json": "82bf429ffc9a5c92c38a66bf62e2cdcd58fd073f2a6fc6da122b8ac224716cc0",
+    "frozen.json": "3a09a8c24da5cdd6edd691b427280662c590edee958e8fff8881be04eacc8acb",
+    "inventory.json": "a83b1cd47d3b76f258376978753fb77cdc029009b54fff482a56020882ca4cec",
+    "preservation.json": "c4f19c3e12413e2ddc797efa3da2f16bb327fde9d208e49dbf83b57d3fb645a6",
+    "visual-check.json": "9afbc1635eedbd41dcd217419fa937bff8af568477082e1e036904ecfa908650"
+  }
+}

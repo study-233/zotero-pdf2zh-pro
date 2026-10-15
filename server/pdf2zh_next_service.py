@@ -24,7 +24,7 @@ from pdf2zh_next.high_level import BabelDOCConfig
 from pdf2zh_next.high_level import babeldoc_translate, create_babeldoc_config
 from pdf2zh_next.translator import get_translator
 from observability import TaskMetricsCollector
-from pdf2zh_next.config.translate_engine_model import CodexSettings, OpenAISettings
+from pdf2zh_next.config.translate_engine_model import CodexSettings, ChatGPTSettings, OpenAISettings
 from pdf2zh_next.translator.openai_protocol import (
     normalize_endpoint, parse_request_options, protocol_rejection_message,
 )
@@ -40,6 +40,7 @@ _TEXT_CHECK_PATCH_INSTALLED = False
 DEFAULT_TRANSLATION_PROVIDER_TIMEOUT_SECONDS = 120
 
 SERVICE_FIELD_MAP = {
+    "chatgpt": {"model": "chatgpt_model", "reasoningEffort": "chatgpt_reasoning_effort", "accountId": "chatgpt_account_id"},
     "codex": {
         "model": "codex_model",
         "cliPath": "codex_cli_path",
@@ -321,14 +322,19 @@ def build_service_detail(service: str, llm_api: dict[str, Any]) -> dict[str, Any
     for key, field_name in field_map.items():
         value = llm_api.get(key)
         # "none" is a real Codex reasoning effort, not an empty setting.
-        if service == "codex":
+        if service in {"codex", "chatgpt"}:
             if value is not None and not isinstance(value, str):
-                raise ValueError("Codex 配置字段必须为文本")
+                raise ValueError("账号通道配置字段必须为文本")
             value = value.strip() if isinstance(value, str) else value
         else:
             value = coerce_value(value)
         if value not in (None, ""):
             detail[field_name] = value
+
+    if service == "chatgpt":
+        if llm_api.get("extraData") or llm_api.get("apiKey") or llm_api.get("apiUrl") or llm_api.get("requestOptions"):
+            raise ValueError("ChatGPT 套餐通道不接受 API Key、自定义地址或额外参数")
+        return detail
 
     extra_data = llm_api.get("extraData") or {}
     if isinstance(extra_data, dict):
@@ -477,6 +483,14 @@ def diagnose_service_error(error: Exception | str) -> list[dict[str, str]]:
     lowered = message.lower()
 
     diagnostics: list[DiagnosticMessage] = []
+    if "chatgpt_sign_in_required" in lowered or any(text in message for text in (
+        "ChatGPT 登录已失效", "ChatGPT 授权已失效", "ChatGPT 授权无法续期", "请先登录 ChatGPT",
+    )):
+        return [DiagnosticMessage(
+            code="chatgpt_sign_in_required", severity="error",
+            message="ChatGPT 登录已失效，请重新登录。",
+            suggestion="点击“重新登录”，在浏览器完成授权后重试翻译。",
+        ).to_dict()]
     if "tls 证书验证失败" in lowered:
         return [DiagnosticMessage(
             code="network_tls", severity="error",
@@ -703,10 +717,11 @@ async def translate_pdf_with_callbacks(
         ensure_translation_provider_timeout(settings)
         check_cancelled()
         engine_settings = getattr(settings, "translate_engine_settings", None)
-        if isinstance(engine_settings, (OpenAISettings, CodexSettings)):
+        if isinstance(engine_settings, (OpenAISettings, CodexSettings, ChatGPTSettings)):
             metrics_collector = TaskMetricsCollector(
                 task_id=job_id, provider=str(payload["service"]),
                 model=(engine_settings.codex_model if isinstance(engine_settings, CodexSettings)
+                       else engine_settings.chatgpt_model if isinstance(engine_settings, ChatGPTSettings)
                        else engine_settings.openai_model), callback=metrics_callback,
             )
             metrics_collector.record_stage("Queue Wait", initialization_started_at - started_at)
@@ -747,12 +762,17 @@ async def translate_pdf_with_callbacks(
         if fingerprint_payload["llm_api"].get("reasoningMode") == "default":
             fingerprint_payload["llm_api"].pop("reasoningMode")
         fingerprint_payload["body_input_version"] = BODY_INPUT_VERSION
+        from babeldoc.glossary_options import GLOSSARY_POLICY_VERSION
+        uses_glossary = bool(payload.get("glossary_entries")) or not payload.get("no_auto_extract_glossary", True)
+        if uses_glossary:
+            fingerprint_payload["glossary_policy_version"] = GLOSSARY_POLICY_VERSION
         review_policy = {"enabled": translation_config.semantic_review, "version": REVIEW_VERSION}
         fingerprint_payload["review_policy"] = review_policy
         fingerprint = hashlib.sha256(input_path.read_bytes())
         fingerprint.update(json.dumps(fingerprint_payload, sort_keys=True).encode())
         recovery = TranslationRecovery(
-            input_path.parent / "paragraph-recovery.sqlite3", fingerprint.hexdigest(), progress_callback
+            input_path.parent / "paragraph-recovery.sqlite3", fingerprint.hexdigest(), progress_callback,
+            first_success_callback=metrics_collector.first_paragraph_completed if metrics_collector is not None else None,
         )
         translation_config.recovery = recovery
         if translation_config.semantic_review:
@@ -764,8 +784,12 @@ async def translate_pdf_with_callbacks(
                 engine.add_cache_impact_parameters("body_input_version", BODY_INPUT_VERSION)
                 engine.add_cache_fingerprint("task_glossary", payload.get("glossary_entries", []))
                 engine.add_cache_fingerprint("review_policy", review_policy)
+                if uses_glossary:
+                    engine.add_cache_impact_parameters("glossary_policy_version", GLOSSARY_POLICY_VERSION)
             if engine is not None and hasattr(engine, "configure_execution"):
-                engine.rate_limiter = main_translator.rate_limiter
+                if (getattr(engine.rate_limiter, "max_qps", None)
+                        == getattr(main_translator.rate_limiter, "max_qps", None)):
+                    engine.rate_limiter = main_translator.rate_limiter
                 engine.configure_execution(translation_config.pool_max_workers, translation_config.raise_if_cancelled, slots)
         if metrics_collector is not None:
             translator = translation_config.translator
@@ -905,6 +929,8 @@ async def translate_pdf_with_callbacks(
         finally:
             try:
                 if recovery is not None:
+                    if metrics_collector is not None:
+                        metrics_collector.set_translation_summary(recovery.snapshot()[0])
                     recovery.close()
             finally:
                 set_text_checks_skipped(previous_skip_text_checks)
@@ -919,8 +945,9 @@ async def translate_pdf_with_callbacks(
 
 
 def run_live_translator_test(translator: Any, timeout_seconds: int = 20) -> dict[str, Any]:
-    if getattr(translator, "name", None) == "codex":
+    if getattr(translator, "name", None) in {"codex", "chatgpt"}:
         from codex_client import CodexError
+        from chatgpt_client import ChatGPTError
         # The app-server client interrupts the turn before returning on timeout.
         # Do not leave a background connection test consuming the account quota.
         original_timeout = translator.timeout
@@ -930,7 +957,7 @@ def run_live_translator_test(translator: Any, timeout_seconds: int = 20) -> dict
         def check_deadline():
             original_check()
             if time.monotonic() >= deadline:
-                raise TimeoutError(f"Codex 连接测试超过 {timeout_seconds} 秒，请重试。")
+                raise TimeoutError(f"账号通道连接测试超过 {timeout_seconds} 秒，请重试。")
 
         translator.timeout = min(float(original_timeout), timeout_seconds)
         translator.check_cancelled = check_deadline
@@ -938,7 +965,7 @@ def run_live_translator_test(translator: Any, timeout_seconds: int = 20) -> dict
             translated = translator.translate("Hello", ignore_cache=True,
                                               rate_limit_params={"metric_kind": "initialization"})
             return {"enabled": True, "ok": True, "message": str(translated)[:200]}
-        except CodexError:
+        except (CodexError, ChatGPTError):
             raise
         except Exception as exc:
             return {"enabled": True, "ok": False, "message": explain_service_error(exc)}
@@ -1016,7 +1043,8 @@ def validate_service_config(payload: dict[str, Any], job_id: str, *, check_cance
             translator = get_translator(settings, **({"check_cancelled": check_cancelled} if check_cancelled else {}))
         except Exception as exc:
             from codex_client import CodexError
-            if isinstance(exc, CodexError):
+            from chatgpt_client import ChatGPTError
+            if isinstance(exc, (CodexError, ChatGPTError)):
                 raise
             raise RuntimeError(explain_service_error(exc)) from exc
 

@@ -26,6 +26,9 @@ def safe_error(error):
     code = getattr(error, "code", None)
     # Provider codes are untrusted. Only retain known machine labels.
     if code not in {
+        "chatgpt_sign_in_required", "chatgpt_usage_limit", "chatgpt_permission_denied", "chatgpt_invalid_request",
+        "chatgpt_rate_limited", "chatgpt_unavailable", "chatgpt_model_unavailable", "chatgpt_invalid_reasoning",
+        "chatgpt_account_changed", "chatgpt_timeout", "chatgpt_network_error", "chatgpt_incomplete",
         "model_not_found", "invalid_api_key", "insufficient_quota", "rate_limit_exceeded", "permission_denied",
         "codex_not_installed", "codex_incompatible", "codex_not_logged_in", "codex_model_unavailable",
         "codex_invalid_reasoning", "codex_invalid_proxy", "codex_isolation_failed", "codex_timeout", "codex_process_exited",
@@ -47,11 +50,12 @@ class TranslationRecovery:
     QUALITY_STATES = frozenset(("not_selected", "pending", "passed", "corrected", "unchecked", "failed"))
     QUALITY_REASONS = frozenset(("budget_exhausted", "provider_error", "invalid_review", "unsupported", "semantic_error_unresolved"))
 
-    def __init__(self, path, fingerprint, callback=None):
+    def __init__(self, path, fingerprint, callback=None, *, first_success_callback=None):
         requested_path = Path(path)
         self.path = requested_path.with_suffix(".sqlite3")
         self.fingerprint = fingerprint
         self.callback = callback
+        self.first_success_callback = first_success_callback
         self.lock = threading.RLock()
         self._notification_lock = threading.Lock()
         self._last_notification = float("-inf")
@@ -176,6 +180,9 @@ class TranslationRecovery:
             else:
                 self._failed.pop(key, None)
         self._notification_pending = self._notification_pending or bool(changes)
+        if self._summary['succeeded'] and self.first_success_callback is not None:
+            callback, self.first_success_callback = self.first_success_callback, None
+            callback()
 
     def register(self, docs, config):
         skipped = find_reference_paragraph_ids(docs) if config.skip_references else set()

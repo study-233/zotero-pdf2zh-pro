@@ -29,7 +29,7 @@
 - **全文翻译**：右键提交单篇或批量 PDF，译文与双语附件自动导入原条目。
 - **划词精读**：选词查释义、选句看译文，按需结合论文上下文解释。
 - **失败补译**：保留已译段落，只补剩余内容，旧附件与批注继续保留。
-- **灵活选择模型**：支持 OpenAI 兼容 API、Codex 登录和多配置切换。
+- **灵活选择模型**：支持 OpenAI 兼容 API、ChatGPT 套餐登录和多配置切换。
 - **术语与排版**：支持术语库、OCR、表格翻译、参考文献保护和附件标题设置。
 - **任务管理**：查看进度、请求耗时和 token，失败时可导出诊断包。
 
@@ -145,7 +145,7 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 - [常用参数：QPS、并发、OCR 与参考文献](docs/user-guide.md#translation-options)
 - [术语包下载与使用](docs/glossary-downloads.md)
-- [Codex 登录配置](docs/user-guide.md#使用-codex-登录配置) · [模型与套餐比较](docs/codex-model-value-2026-10-03.md)
+- [ChatGPT 套餐登录](docs/user-guide.md#使用-chatgpt-套餐登录) · [模型与套餐比较](docs/codex-model-value-2026-10-03.md)
 
 <a id="task-management"></a>
 

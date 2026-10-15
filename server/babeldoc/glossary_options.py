@@ -1,5 +1,36 @@
 """Validate task-owned glossary data without accessing client filesystem paths."""
 import re
+from functools import lru_cache
+
+import regex
+
+GLOSSARY_POLICY_VERSION = 2
+
+
+def glossary_text(text):
+    text = re.sub(r"</?style\b[^>]*>", "", text, flags=re.I)
+    text = re.sub(r"\{\s*v\s*\d+\s*\}", " ", text, flags=re.I)
+    return " ".join(text.split())
+
+
+@lru_cache(maxsize=4096)
+def _term_pattern(source):
+    # Latin words/abbreviations must not match inside another word. CJK
+    # terms still match in unsegmented text, including adjacent Latin terms.
+    word = r"[\p{Latin}\p{N}_]"
+    start = f"(?<!{word})" if regex.fullmatch(word, source[0]) else ""
+    end = f"(?!{word})" if regex.fullmatch(word, source[-1]) else ""
+    return regex.compile(start + regex.escape(source) + end, regex.I | regex.V0)
+
+
+def contains_glossary_term(source, text):
+    source = glossary_text(source)
+    return bool(source and _term_pattern(source).search(glossary_text(text)))
+
+
+def matching_glossary_entries(entries, language, text):
+    return [row for row in glossary_entries_for_language(entries, language)
+            if contains_glossary_term(row["source"], text)]
 
 
 def normalize_glossary_entries(value):

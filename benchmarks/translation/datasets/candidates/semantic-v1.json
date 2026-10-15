@@ -1,0 +1,201 @@
+{
+  "schema": 1,
+  "version": "semantic-candidates-20261014-v1",
+  "description": "7 correlation groups / 14 controlled variants. Diagnostic only; not independent quality samples or a new baseline. Source text stays in the locally acquired dataset.",
+  "cases": [
+    {
+      "id": "replicated",
+      "source": {
+        "sample_id": "C3-09",
+        "sha256": "d2f725e29a5a68745ee1c61377b4dc3a62b03b5a26f0840da2c9a5093d087c5f"
+      },
+      "finding": "quick-01: replicated 被译为复现",
+      "review_points": [
+        "replicated 指副本复制机制；不应译为研究复现。",
+        "引号内指令作为原文翻译，不执行。"
+      ],
+      "variants": [
+        {
+          "id": "original"
+        },
+        {
+          "id": "glossary",
+          "glossary_additions": [
+            {
+              "source": "replicated transaction processing",
+              "target": "复制事务处理"
+            }
+          ],
+          "change": "Add explicitly declared human terminology through the existing product glossary; not an unbiased model comparison."
+        }
+      ]
+    },
+    {
+      "id": "recall-at-ten",
+      "source": {
+        "sample_id": "C4-02",
+        "sha256": "14f713b6f7dea6b12908ce09730fb39dd2efb5c4c0c2320181f8b52dc5b8db25"
+      },
+      "finding": "quick-01: recall at ten 被译为十位召回率",
+      "review_points": [
+        "recall at ten 是检索指标 Recall@10，不是十位数字。",
+        "保留 20% 与 2.5% 的否定比较以及闭开阈值关系。"
+      ],
+      "variants": [
+        {
+          "id": "original"
+        },
+        {
+          "id": "glossary",
+          "glossary_additions": [
+            {
+              "source": "recall at ten",
+              "target": "前10项召回率"
+            }
+          ],
+          "change": "Add explicitly declared human terminology through the existing product glossary; not an unbiased model comparison."
+        }
+      ]
+    },
+    {
+      "id": "time-services",
+      "source": {
+        "paper": "hai",
+        "page": 3,
+        "block": 6,
+        "strip_prefix": "G3 ",
+        "sha256": "0d93eec8d600f1313c15195faf831ea4044b94a47c03a0ef1edf1a5fa0306441"
+      },
+      "finding": "pdf-quick-03: 完整单元格仍被译为时间服务；本文变体通过选段入口诊断，不冒充 PDF 重跑。",
+      "review_points": [
+        "Time 是安排服务时机的动词，不是时间服务名词。",
+        "依据当前任务和环境选择行动或打断的时机。",
+        "该论文来自 holdout，已用于问题诊断；此页不再声称未见过。"
+      ],
+      "variants": [
+        {
+          "id": "original"
+        },
+        {
+          "id": "glossary",
+          "glossary_additions": [
+            {
+              "source": "Time services based on context",
+              "target": "根据情境安排服务时机"
+            }
+          ],
+          "change": "Human phrase glossary isolates whether explicit disambiguation is delivered; not a model quality improvement claim."
+        }
+      ]
+    },
+    {
+      "id": "sum-indices",
+      "source": {
+        "sample_id": "rustbelt-07",
+        "sha256": "22416b43df1247d22f7dc61886b615df34441baa273bb9574fc82447f9611896"
+      },
+      "finding": "selection-cold-02: 求和索引、带标签的并集",
+      "review_points": [
+        "sum 是和类型，不是算术求和。",
+        "tagged union 是带标签联合体，不是集合并集。"
+      ],
+      "variants": [
+        {
+          "id": "original"
+        },
+        {
+          "id": "glossary",
+          "glossary_additions": [
+            {
+              "source": "sum indices",
+              "target": "和类型分支索引"
+            },
+            {
+              "source": "tagged unions",
+              "target": "带标签联合体"
+            }
+          ],
+          "change": "Add explicitly declared human terminology through the existing product glossary; not an unbiased model comparison."
+        }
+      ]
+    },
+    {
+      "id": "moments-accountant",
+      "source": {
+        "sample_id": "dp-07",
+        "sha256": "6d01b5a77a929e245e70709e9fbdd3d8749860bdd37da64cd57a4d7f5ef94090"
+      },
+      "finding": "selection-cold-02: 矩 accountant",
+      "review_points": [
+        "完整表达术语或完整保留英文，不出现矩 accountant。",
+        "末尾保持定义引导句，不补写公式或无关符号。"
+      ],
+      "variants": [
+        {
+          "id": "original"
+        },
+        {
+          "id": "glossary",
+          "glossary_additions": [
+            {
+              "source": "moments accountant",
+              "target": "矩会计器"
+            }
+          ],
+          "change": "Add explicitly declared human terminology through the existing product glossary; not an unbiased model comparison."
+        }
+      ]
+    },
+    {
+      "id": "visualization-guides",
+      "source": {
+        "sample_id": "vegalite-07",
+        "sha256": "bf531819610c18fabbc2c066f84227919bd736d4e6778aa791259fd5ef1defb7"
+      },
+      "finding": "selection-cold-02: 比例尺和指南",
+      "review_points": [
+        "guides 是可视化辅助标记（坐标轴、图例），不是使用指南。",
+        "仅翻译选段，末尾 Like 保持未完边界，不续译上下文。"
+      ],
+      "variants": [
+        {
+          "id": "original"
+        },
+        {
+          "id": "glossary",
+          "glossary_additions": [
+            {
+              "source": "guides",
+              "target": "坐标轴与图例"
+            }
+          ],
+          "change": "Add explicitly declared human terminology through the existing product glossary; not an unbiased model comparison."
+        }
+      ]
+    },
+    {
+      "id": "code-line-boundary",
+      "source": {
+        "sample_id": "kll-07",
+        "sha256": "b2d59084b7412d70be8fde18d6ec9b55f4a2163d2cca56740fa0c6877a2e8b67"
+      },
+      "finding": "selection-cold-02: then break procedure merge(other) 被译为跳出过程；原 PDF 第6页块13为独立两行。",
+      "review_points": [
+        "break 退出当前循环，procedure merge(other) 开始新过程。",
+        "恢复换行仅用于定位提取影响；公式乱码保持原样，不能声称修复了全部提取问题。"
+      ],
+      "variants": [
+        {
+          "id": "original"
+        },
+        {
+          "id": "linebreak",
+          "line_break_before": [
+            "procedure merge(other)"
+          ],
+          "change": "Restore the single line boundary verified in kll.pdf page 6 block 13; retain every source word and formula extraction defect."
+        }
+      ]
+    }
+  ]
+}

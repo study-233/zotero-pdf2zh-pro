@@ -1,6 +1,7 @@
 import { getPref, setPref } from "../utils/prefs";
 import {
     migrateProfiles,
+    normalizeService,
     isRemovedService,
     selectedProfile,
     resolveProviderPreset,
@@ -26,6 +27,7 @@ export function loadProfiles(): LLMApiData[] {
     } catch {
         throw new Error("翻译配置无法读取，请检查配置备份；原数据未修改。");
     }
+    profiles = retireCodexProfiles(profiles, raw);
     if (Number(getPref("profileSchemaVersion") || 0) < 1) {
         const oldService = getPref("service")?.toString() || "";
         if (!getPref("llmApisLegacyBackup")) {
@@ -76,6 +78,8 @@ export function loadProfiles(): LLMApiData[] {
     return profiles;
 }
 export function saveProfiles(profiles: LLMApiData[]) {
+    if (profiles.some((api) => normalizeService(api.service) === "codex"))
+        throw new Error("Codex 配置已停用，请改用 ChatGPT 登录。");
     setPref("llmApis", JSON.stringify(profiles));
 }
 export function getSelectedProfile(key?: string): LLMApiData | null {
@@ -88,6 +92,61 @@ export function getSelectedProfile(key?: string): LLMApiData | null {
 export function removeProfile(key: string) {
     saveProfiles(loadProfiles().filter((api) => api.key !== key));
     if (getPref("selectedApiKey") === key) setPref("selectedApiKey", "");
+}
+
+// Run before legacy normalization so an old Codex row cannot become a custom
+// OpenAI profile. Also handle preferences restored after the initial upgrade.
+function retireCodexProfiles(
+    profiles: LLMApiData[],
+    raw: string,
+): LLMApiData[] {
+    const removedKeys = new Set(
+        profiles
+            .filter((api) => normalizeService(api.service) === "codex")
+            .map((api) => api.key),
+    );
+    const oldServices = ["service", "serviceSelect"].filter(
+        (key) => normalizeService(String(getPref(key) || "")) === "codex",
+    );
+    if (!removedKeys.size && !oldServices.length) return profiles;
+    // Keep a single local snapshot for older-version recovery; never restore it
+    // automatically or expose it through diagnostics or the current UI.
+    if (!getPref("codexRetirementBackup")) {
+        setPref(
+            "codexRetirementBackup",
+            JSON.stringify({
+                version: 1,
+                createdAt: new Date().toISOString(),
+                preferences: {
+                    llmApis: raw,
+                    ...Object.fromEntries(
+                        [
+                            "selectedApiKey",
+                            "selectionApiKey",
+                            "service",
+                            "serviceSelect",
+                            "profileSchemaVersion",
+                        ].map((key) => [key, getPref(key) ?? null]),
+                    ),
+                },
+            }),
+        );
+    }
+    setPref("codexRetirementNoticePending", true);
+    if (removedKeys.has(String(getPref("selectedApiKey") || "")))
+        setPref("selectedApiKey", "");
+    for (const key of oldServices) setPref(key, "");
+    // Preserve an explicit selection-model ID as missing. Clearing it would
+    // silently send selections to the default model, possibly a paid API.
+    const retained = profiles.filter((api) => !removedKeys.has(api.key));
+    saveProfiles(retained);
+    return retained;
+}
+
+export function notifyCodexRetirement(showNotice: () => void) {
+    if (!getPref("codexRetirementNoticePending")) return;
+    showNotice();
+    setPref("codexRetirementNoticePending", false);
 }
 
 // Leave malformed backups intact: deleting unrelated data cannot repair them.

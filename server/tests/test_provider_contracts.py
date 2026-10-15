@@ -61,7 +61,7 @@ class ProviderContractTests(unittest.TestCase):
     def test_removed_and_unknown_services_never_select_default_engine(self):
         import server
         client = server.create_app().test_client()
-        self.assertEqual(len(SERVICE_FIELD_MAP), 9)
+        self.assertEqual(len(SERVICE_FIELD_MAP), 10)
         for service in ["OpenAI_Compatible", "tencentmechinetranslation", "Dify", "SiliconFlow_Free", "zhipu", "grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm", "unknown", "", None, 1]:
             with self.subTest(service=service), patch("server.validate_service_config") as validate:
                 with self.assertRaises(ValueError): require_supported_service(service)

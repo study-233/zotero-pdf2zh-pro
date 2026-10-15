@@ -389,6 +389,24 @@ class AliyunDashScopeSettings(BaseModel):
 GUI_PASSWORD_FIELDS.append("aliyun_dashscope_api_key")
 
 
+class ChatGPTSettings(BaseModel):
+    """Translation with an independently authorized ChatGPT plan."""
+    translate_engine_type: Literal['ChatGPT'] = Field(default='ChatGPT')
+    support_llm: Literal['yes', 'no'] = Field(default='yes')
+    chatgpt_model: str = Field(default='gpt-6-luna')
+    chatgpt_reasoning_effort: str | None = Field(default=None)
+    chatgpt_account_id: str | None = Field(default=None)
+    chatgpt_timeout: float = Field(default=120, gt=0, le=600)
+
+    def validate_settings(self):
+        if not self.chatgpt_model.strip():
+            raise ValueError('请选择 ChatGPT 模型')
+        if self.chatgpt_reasoning_effort not in (None, 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'):
+            raise ValueError('ChatGPT 推理档位无效，请重新获取模型列表')
+        if self.chatgpt_account_id is not None and not re.fullmatch(r'[0-9a-f]{64}', self.chatgpt_account_id):
+            raise ValueError('ChatGPT 账号标识无效，请重新登录并保存配置')
+
+
 class CodexSettings(BaseModel):
     """Translation through an installed, signed-in Codex CLI."""
 
@@ -507,6 +525,7 @@ TRANSLATION_ENGINE_SETTING_TYPE: TypeAlias = (
     | GeminiSettings
     | ClaudeCodeSettings
     | CodexSettings
+    | ChatGPTSettings
     | CLISettings
 )
 

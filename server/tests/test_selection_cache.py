@@ -33,6 +33,22 @@ class SelectionCacheTests(unittest.TestCase):
     def answer(self, text='银行', **extra):
         return {'status': 'ok', 'translation': text, 'provider': 'test', 'model': 'one', 'cached': False, **extra}
 
+    def test_stricter_selection_prompt_does_not_reuse_old_boundary_leaking_cache(self):
+        data = {'text': 'Like', 'mode': 'translate', 'context': 'Like the earlier view, this supports scales.',
+                'service': 'codex', 'llm_api': {'model': 'test'}, 'source': 'en', 'target': 'zh-CN'}
+        # Captured from the previous product prompt's cache identity.
+        old_key = '240c90e1c747331d07ea8ec365143a0cbbbefe644c73c51b2d442f36d9568af4'
+        SelectionCache(self.memory.path.parent / 'selection-cache.sqlite3').put(
+            old_key, 'translate', self.answer('与前一个视图一样，它支持比例尺。'))
+        self.assertNotEqual(self.service._key(data, data['context']), old_key)
+        with patch.object(self.service, '_generate', return_value=self.answer('如同')) as generate:
+            result = self.service.translate(data, self.memory)
+            self.assertEqual(result['translation'], '如同')
+            generate.assert_called_once()
+        with patch.object(self.service, '_generate') as generate:
+            self.assertEqual(self.service.translate(data, self.memory)['translation'], '如同')
+            generate.assert_not_called()
+
     def test_dictionary_persists_across_restart_papers_and_models_without_context_or_keys(self):
         with patch.object(self.service, '_generate', return_value=self.answer(entry=self.entry)) as generate:
             first = self.service.translate({**self.data, 'context': 'PRIVATE_CONTEXT'}, self.memory)
@@ -49,11 +65,11 @@ class SelectionCacheTests(unittest.TestCase):
         for private in (b'PRIVATE_KEY', b'PRIVATE_CONTEXT', b'example.invalid'):
             self.assertNotIn(private, raw)
 
-    def test_refresh_bypasses_memory_glossary_and_replaces_cache_only_on_success(self):
+    def test_refresh_bypasses_memory_and_replaces_cache_only_on_success(self):
         data = {**self.data, 'mode': 'translate'}
         self.memory.upsert('paper', [{'source': 'bank', 'translation': '旧全文译文', 'page': 1, 'paragraphId': 'p', 'status': 'succeeded'}])
         with patch.object(self.service, '_generate', return_value=self.answer('新译文')) as generate:
-            self.service.translate({**data, 'cachePolicy': 'refresh', 'glossaryEntries': [{'source': 'bank', 'target': '术语'}]}, self.memory)
+            self.service.translate({**data, 'cachePolicy': 'refresh'}, self.memory)
             self.assertEqual(self.service.translate(data, self.memory)['translation'], '新译文')
             generate.assert_called_once()
         with patch.object(self.service, '_generate', side_effect=TextTranslationError('provider_error')):
@@ -61,6 +77,48 @@ class SelectionCacheTests(unittest.TestCase):
                 self.service.translate({**data, 'cachePolicy': 'refresh'}, self.memory)
         self.assertEqual(self.service.translate(data, self.memory)['translation'], '新译文')
         self.assertEqual(self.memory.lookup('paper', 'bank')['translation'], '旧全文译文')
+
+    def test_new_manual_term_overrides_old_cache_and_document_memory(self):
+        data = {**self.data, 'mode': 'translate'}
+        with patch.object(self.service, '_generate', return_value=self.answer('旧机器译文')):
+            self.service.translate(data, self.memory)
+        self.memory.upsert('paper', [{'source': 'bank', 'translation': '旧全文译文', 'page': 1,
+                                     'paragraphId': 'p', 'status': 'succeeded'}])
+        for service in (self.service, self.service_instance()):
+            with patch.object(service, '_generate') as generate:
+                updated = {**data, 'glossaryEntries': [{'source': 'bank', 'target': '人工译法'}]}
+                result = service.translate(updated, self.memory)
+                self.assertEqual(result['translation'], '人工译法')
+                self.assertEqual(result['provider'], 'glossary')
+                generate.assert_not_called()
+
+    def test_only_effective_terms_change_cache_identity_and_stale_memory_is_bypassed(self):
+        data = {**self.data, 'mode': 'translate', 'text': 'The bank lends money.'}
+        updated = {**data, 'glossaryEntries': [{'source': 'bank', 'target': '指定银行'}]}
+        self.assertNotEqual(self.service._key(data, ''), self.service._key(updated, ''))
+        irrelevant = {**updated, 'glossaryEntries': [*updated['glossaryEntries'],
+                      {'source': 'absent', 'target': '无关术语'}, {'source': 'bank', 'target': 'banque', 'tgt_lng': 'fr'}]}
+        self.assertEqual(self.service._key(updated, ''), self.service._key(irrelevant, ''))
+        self.memory.upsert('paper', [{'source': data['text'], 'translation': '旧全文译文', 'page': 1,
+                                     'paragraphId': 'p', 'status': 'succeeded'}])
+        with patch.object(self.service, '_generate', return_value=self.answer('指定银行提供贷款。')) as generate:
+            self.assertEqual(self.service.translate(updated, self.memory)['translation'], '指定银行提供贷款。')
+            self.assertTrue(self.service.translate(irrelevant, self.memory)['cached'])
+            generate.assert_called_once()
+
+    def test_refresh_generation_receives_effective_terms_but_dictionary_stays_general(self):
+        data = {**self.data, 'mode': 'translate', 'service': 'openai', 'cachePolicy': 'refresh',
+                'glossaryEntries': [{'source': 'bank', 'target': '指定译法'}, {'source': 'absent', 'target': '不应传入'}]}
+        translator = SimpleNamespace(resolved_protocol='chat_completions', model='test',
+                                     llm_translate=Mock(return_value='指定译法'), client=Mock())
+        with patch('text_translation.OpenAITranslator', return_value=translator):
+            self.service.translate(data, self.memory)
+        prompt = translator.llm_translate.call_args.args[0]
+        self.assertIn('指定译法', prompt)
+        self.assertNotIn('不应传入', prompt)
+        self.assertEqual(self.service._terms({**data, 'mode': 'dictionary'}, ''), [])
+        self.assertEqual(self.service._key(self.data, ''), self.service._key(
+            {**self.data, 'glossaryEntries': data['glossaryEntries']}, ''))
 
     def test_context_cache_isolates_papers_models_endpoints_options_and_context(self):
         data = {**self.data, 'mode': 'context', 'context': 'The river bank is steep.'}

@@ -1,0 +1,22 @@
+{
+  "provider": "lmstudio",
+  "model": "replace-with-model-id",
+  "base_url": "http://127.0.0.1:1234/v1",
+  "protocol": "chat_completions",
+  "api_key_env": "TRANSLATION_BENCH_API_KEY",
+  "parameters": {
+    "temperature": 0,
+    "max_tokens": 4096
+  },
+  "timeout_seconds": 120,
+  "limits": {
+    "max_requests": 283,
+    "max_seconds": 7200
+  },
+  "cache": "cold",
+  "model_file": "/path/to/model.gguf",
+  "quantization": "Q4_K_M",
+  "context_length": 8192,
+  "chat_template_sha256": "replace-with-verified-template-hash",
+  "gpu": "max"
+}

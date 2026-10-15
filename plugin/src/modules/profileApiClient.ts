@@ -147,6 +147,7 @@ export async function testProfile(
             health.capabilities?.reasoningMode,
             health.capabilities?.codexCli,
             health.capabilities?.codexProxy,
+            health.capabilities?.chatgptPlan,
         );
         const body = {
             service: api.service,
@@ -182,7 +183,7 @@ export async function testProfile(
             data.resolvedProtocol === "responses"
                 ? "Responses"
                 : "Chat Completions";
-        return `${api.service === "codex" ? "Codex 连接测试成功" : "API 测试成功"}${data.resolvedProtocol ? ` · ${protocol}` : ""}${prepared.warning ? `（${prepared.warning}）` : ""}${data.liveTest?.reasoningMessage ? ` · ${data.liveTest.reasoningMessage}` : ""}`;
+        return `${api.service === "codex" ? "Codex 连接测试成功" : api.service === "chatgpt" ? "ChatGPT 连接测试成功" : "API 测试成功"}${data.resolvedProtocol ? ` · ${protocol}` : ""}${prepared.warning ? `（${prepared.warning}）` : ""}${data.liveTest?.reasoningMessage ? ` · ${data.liveTest.reasoningMessage}` : ""}`;
     } catch (error) {
         if (axios.isAxiosError(error)) throw safeError(error, api);
         const message = error instanceof Error ? error.message : "API 测试失败";
@@ -209,7 +210,7 @@ export async function fetchProfileModelCatalog(
     assertSupportedProfile(api);
     try {
         let cancellable = false;
-        if (api.service === "codex") {
+        if (["codex", "chatgpt"].includes(api.service)) {
             const { data: health } = await axios.get<ServerHealthResponse>(
                 `${serverUrl()}/health`,
                 { timeout: 5000, signal },
@@ -221,6 +222,7 @@ export async function fetchProfileModelCatalog(
                 health.capabilities?.reasoningMode,
                 health.capabilities?.codexCli,
                 health.capabilities?.codexProxy,
+                health.capabilities?.chatgptPlan,
             );
         }
         const { data } =
@@ -244,6 +246,7 @@ export async function fetchProfileModelCatalog(
                           apiUrl: api.apiUrl,
                           apiKey: api.apiKey,
                           apiProtocol: api.apiProtocol || "auto",
+                          accountId: api.accountId,
                       },
                       { timeout: 20000, signal },
                   );

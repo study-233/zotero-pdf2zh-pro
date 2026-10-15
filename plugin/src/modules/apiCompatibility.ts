@@ -14,7 +14,15 @@ export function prepareApiForServer<
     supportsReasoningMode?: boolean,
     supportsCodexCli?: boolean,
     supportsCodexProxy?: boolean,
+    supportsChatGPTPlan?: boolean,
 ): { api: T; warning?: string } {
+    if (api.service === "chatgpt") {
+        if (supportsChatGPTPlan !== true)
+            throw new Error(
+                "当前 Python 服务不支持 ChatGPT 套餐，请先升级服务端。",
+            );
+        return { api };
+    }
     if (api.service === "codex") {
         if (supportsCodexCli !== true)
             throw new Error("当前 Python 服务不支持 Codex，请先升级服务端。");

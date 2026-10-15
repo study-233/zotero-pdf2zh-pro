@@ -88,6 +88,7 @@ export type SelectionControls = {
     offlineFallback?: boolean;
     onPlainRetry?: () => void;
     onMeaning?: (meaning: string) => void;
+    onReloginChatGPT?: () => void;
 };
 
 const HTML = "http://www.w3.org/1999/xhtml";
@@ -650,6 +651,18 @@ ${selectionMenuStyle}
         content.append(node);
         return node;
     }
+    function appendRelogin(container: HTMLElement, message: string) {
+        if (
+            !controls?.onReloginChatGPT ||
+            !/ChatGPT (?:登录已失效|授权已失效|授权无法续期)|请先登录 ChatGPT/.test(
+                message,
+            )
+        )
+            return;
+        const login = button(getString("profile-chatgpt-relogin"));
+        login.addEventListener("click", () => controls?.onReloginChatGPT?.());
+        container.append(login);
+    }
     function senseList(senses: DictionarySense[]) {
         const list = selectionElement(doc, "ul");
         list.className = "st-senses";
@@ -716,6 +729,10 @@ ${selectionMenuStyle}
             error.textContent = value.error;
             learningContent.append(error);
         }
+        appendRelogin(
+            learningContent,
+            [value.error, value.context?.error].filter(Boolean).join(" "),
+        );
         for (const panel of [value.context]) {
             if (!panel) continue;
             const section = selectionElement(doc, "section");
@@ -1277,6 +1294,12 @@ ${selectionMenuStyle}
                     );
             }
             if (result.notice) paragraph(result.notice, "st-label");
+            appendRelogin(
+                content,
+                [result.kind === "error" ? result.text : "", result.notice]
+                    .filter(Boolean)
+                    .join(" "),
+            );
             if (
                 (result.kind === "missing" || result.kind === "error") &&
                 action === "lookup" &&

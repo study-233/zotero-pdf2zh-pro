@@ -32,7 +32,7 @@ globalThis.__profileTests = {
     getString: (key) => key,
 };
 const store = await asModule(
-    "const {getPref, setPref, migrateProfiles, selectedProfile, isRemovedService, resolveProviderPreset} = globalThis.__profileTests;\n" +
+    "const {getPref, setPref, migrateProfiles, normalizeService, selectedProfile, isRemovedService, resolveProviderPreset} = globalThis.__profileTests;\n" +
         compile("profileStore").replace(/^import .*;$/gm, ""),
 );
 const api = (key, service = "openai", activate = false) => ({
@@ -403,8 +403,8 @@ test("invalid Codex model capabilities are rejected before the editor uses them"
     );
 });
 
-test("catalog has 9 services and excludes retired services", () => {
-    assert.equal(Object.keys(model.SERVICE_NAMES).length, 9);
+test("catalog has 10 services and excludes retired services", () => {
+    assert.equal(Object.keys(model.SERVICE_NAMES).length, 10);
     assert.equal(model.SERVICE_NAMES.siliconflow, "SiliconFlow");
     for (const service of [
         "openaicompatible",
@@ -725,4 +725,111 @@ test("timed-out Codex probes notify the server even without a UI abort", async (
     assert.equal(calls.length, 2);
     assert.ok(calls[1].url.endsWith("/codex/discover/cancel"));
     assert.equal(calls[1].body.requestId, calls[0].body.requestId);
+});
+
+test("Codex retirement removes old rows, preserves other profiles and never switches models", () => {
+    for (const selected of ["old", "other"]) {
+        prefs.clear();
+        prefs.set("profileSchemaVersion", 4);
+        const old = {
+            ...api("old", "codex"),
+            cliPath: "/custom/codex",
+            proxyMode: "manual",
+        };
+        const other = api("other");
+        const chatgpt = { ...api("new", "chatgpt"), accountId: "a".repeat(64) };
+        const raw = JSON.stringify([old, other, chatgpt]);
+        prefs.set("llmApis", raw);
+        prefs.set("selectedApiKey", selected);
+        prefs.set("selectionApiKey", "old");
+        prefs.set("service", "codex");
+        prefs.set("serviceSelect", "Codex");
+        prefs.set("chatgptCodexBackups", "existing archive");
+        assert.deepEqual(store.loadProfiles(), [other, chatgpt]);
+        assert.equal(
+            prefs.get("selectedApiKey"),
+            selected === "old" ? "" : "other",
+        );
+        assert.equal(prefs.get("service"), "");
+        assert.equal(prefs.get("serviceSelect"), "");
+        assert.equal(prefs.get("selectionApiKey"), "old");
+        assert.equal(store.getSelectedProfile("old"), null);
+        assert.throws(
+            () => helper.getServerConfig(true, "old"),
+            /selection-model-missing/,
+        );
+        assert.equal(prefs.get("chatgptCodexBackups"), "existing archive");
+        assert.equal(
+            JSON.parse(prefs.get("codexRetirementBackup")).preferences.llmApis,
+            raw,
+        );
+        assert.equal(prefs.get("codexRetirementNoticePending"), true);
+        const after = new Map(prefs);
+        store.loadProfiles();
+        assert.deepEqual(prefs, after);
+    }
+});
+
+test("pre-v1 Codex rows and default-only setups are removed before legacy fallback", () => {
+    for (const rows of [[], [api("old", "Codex", true)]]) {
+        prefs.clear();
+        prefs.set("llmApis", JSON.stringify(rows));
+        prefs.set("service", "Codex");
+        assert.deepEqual(store.loadProfiles(), []);
+        assert.equal(store.getSelectedProfile(), null);
+        assert.equal(prefs.get("service"), "");
+        assert.equal(prefs.get("codexRetirementNoticePending"), true);
+    }
+});
+
+test("Codex retirement notice survives reload and is acknowledged only after display", () => {
+    prefs.clear();
+    prefs.set("llmApis", JSON.stringify([api("old", "codex")]));
+    store.loadProfiles();
+    store.loadProfiles();
+    assert.throws(() =>
+        store.notifyCodexRetirement(() => {
+            throw new Error("window unavailable");
+        }),
+    );
+    assert.equal(prefs.get("codexRetirementNoticePending"), true);
+    let notices = 0;
+    store.notifyCodexRetirement(() => notices++);
+    store.loadProfiles();
+    store.notifyCodexRetirement(() => notices++);
+    assert.equal(notices, 1);
+    const backup = prefs.get("codexRetirementBackup");
+    prefs.set("llmApis", JSON.stringify([api("restored", "codex")]));
+    assert.deepEqual(store.loadProfiles(), []);
+    assert.equal(prefs.get("codexRetirementBackup"), backup);
+    store.notifyCodexRetirement(() => notices++);
+    assert.equal(notices, 2);
+});
+
+test("new installs and non-Codex users do not get a retirement notice", () => {
+    for (const rows of [[], [api("other")]]) {
+        prefs.clear();
+        prefs.set("profileSchemaVersion", 4);
+        prefs.set("llmApis", JSON.stringify(rows));
+        assert.deepEqual(store.loadProfiles(), rows);
+        store.notifyCodexRetirement(() => assert.fail("unexpected notice"));
+        assert.equal(prefs.has("codexRetirementBackup"), false);
+    }
+});
+
+test("stale editors cannot save a Codex profile after retirement", () => {
+    prefs.clear();
+    store.saveProfiles([api("keep")]);
+    const original = prefs.get("llmApis");
+    assert.throws(
+        () => store.saveProfiles([api("old", "Codex")]),
+        /ChatGPT 登录/,
+    );
+    assert.equal(prefs.get("llmApis"), original);
+});
+
+test("new catalog offers ChatGPT and hides Codex", () => {
+    const available = model.PROVIDER_PRESETS.filter((p) => !p.legacy);
+    assert.ok(available.some((p) => p.service === "chatgpt"));
+    assert.ok(!available.some((p) => p.service === "codex"));
 });

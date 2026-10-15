@@ -242,6 +242,17 @@ class ParagraphFinder:
         paragraphs = self._group_characters_into_paragraphs(
             page, layout_index, layout_map
         )
+        # A cell's text can be interleaved with adjacent cells in PDF drawing order.
+        cells, grouped = {}, []
+        for paragraph in paragraphs:
+            if paragraph.layout_label == "wired_table_cell":
+                key = (paragraph.layout_id, paragraph.xobj_id, paragraph.vertical)
+                if key in cells:
+                    cells[key].pdf_paragraph_composition.extend(paragraph.pdf_paragraph_composition)
+                    continue
+                cells[key] = paragraph
+            grouped.append(paragraph)
+        paragraphs = grouped
         page.pdf_paragraph = paragraphs
 
         page_level_formula_font_ids, xobj_specific_formula_font_ids = (
@@ -846,7 +857,8 @@ class ParagraphFinder:
         i = 0
         while i < len(paragraphs):
             paragraph = paragraphs[i]
-            if len(paragraph.pdf_paragraph_composition) <= 1:  # 跳过只有一行的段落
+            if (paragraph.layout_label == "wired_table_cell"
+                    or len(paragraph.pdf_paragraph_composition) <= 1):
                 i += 1
                 continue
 

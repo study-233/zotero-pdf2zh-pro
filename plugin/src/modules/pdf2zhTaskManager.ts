@@ -30,6 +30,7 @@ type TaskDialogArgs = {
     exportDiagnostics: (taskId: string) => Promise<void>;
     retryTask: (taskId: string) => Promise<void>;
     repairTask: (taskId: string) => Promise<void>;
+    reloginChatGPT: (taskId: string) => void;
     retryFailedTasks: () => Promise<void>;
     deleteTask: (taskId: string) => Promise<void>;
     clearFailedTasks: () => Promise<void>;
@@ -284,6 +285,18 @@ export class PDF2zhTaskManager {
             },
             retryTask: (taskId: string) => this.retryTask(taskId),
             repairTask: (taskId: string) => this.repairTask(taskId),
+            reloginChatGPT: (taskId: string) => {
+                const task = this.tasks.get(taskId);
+                const current = String(getPref("new_serverip") || "").replace(
+                    /\/+$/,
+                    "",
+                );
+                if (!task || task.serverUrl.replace(/\/+$/, "") !== current)
+                    throw new Error(
+                        "请先在设置中连接此任务使用的本机服务，再重新登录。",
+                    );
+                addon.hooks.onDialogEvents("reloginChatGPT");
+            },
             retryFailedTasks: () => this.retryFailedTasks(),
             deleteTask: (taskId: string) => this.deleteTask(taskId),
             clearFailedTasks: () => this.clearFailedTasks(),

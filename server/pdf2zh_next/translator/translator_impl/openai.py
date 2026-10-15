@@ -53,6 +53,7 @@ def _record_retry_before_sleep(retry_state) -> None:
         budget.reserve_wait(retry_state.next_action.sleep)
     if collector is not None:
         collector.retry_scheduled(kind=params.get("metric_kind", "translation"))
+    params['metric_retry_cause'] = 'provider_error'
     error = retry_state.outcome.exception() if retry_state.outcome else None
     logger.warning(
         "provider retry scheduled: error_type=%s status_code=%s attempt=%s",
@@ -230,6 +231,11 @@ class OpenAITranslator(BaseTranslator):
         stream = None
         parts, prefix = [], ''
         ready, thinking, finished = False, False, False
+        succeeded, failure = False, None
+        collector = self.metrics_collector
+        started = None
+        self._request_metrics.usage = None
+        self._request_metrics.capturing = True
 
         def publish(delta):
             nonlocal prefix, ready, thinking
@@ -255,6 +261,8 @@ class OpenAITranslator(BaseTranslator):
 
         try:
             self.check_cancelled()
+            if collector is not None:
+                started = collector.request_started(kind='translation')
             if protocol == 'responses':
                 stream = self.client.responses.create(model=self.model, input=messages, stream=True, extra_body=options)
             else:
@@ -298,15 +306,31 @@ class OpenAITranslator(BaseTranslator):
             answer = final if protocol == 'responses' else ''.join(parts).strip()
             if not answer:
                 raise TextTranslationError('empty_output', 502)
+            succeeded = True
             return answer
-        except Exception as error:
-            self.check_cancelled()
+        except BaseException as error:
+            failure = error
+            try:
+                self.check_cancelled()
+            except BaseException as cancelled:
+                failure = cancelled
+                raise
             if getattr(error, 'status_code', None) in (400, 422) and 'stream' in str(getattr(error, 'body', '')).lower() and any(word in str(getattr(error, 'body', '')).lower() for word in ('unsupported', 'not support', 'not allowed')):
                 raise TextTranslationError('stream_unsupported', 400) from None
             raise
         finally:
             if stream is not None:
                 stream.close()
+            self._request_metrics.capturing = False
+            if collector is not None and started is not None:
+                values = self._request_metrics.usage or dict(prompt_tokens=None, completion_tokens=None, cache_hit_tokens=None, cache_miss_tokens=None)
+                collector.record_usage(**values, call=started, complete=finished)
+                cancelled = getattr(failure, 'code', None) == 'selection_cancelled' or type(failure).__name__ == 'CancelledError'
+                collector.request_finished(started, succeeded=succeeded,
+                    finish_reason='completed' if succeeded else 'cancelled' if cancelled else 'failed', protocol=protocol,
+                    visible_chars=sum(map(len, parts)))
+                if succeeded:
+                    collector.record_validation(started, 'accepted')
 
     def health_check(self) -> str:
         """Resolve once before cached/parallel paragraph translation begins."""
@@ -412,11 +436,12 @@ class OpenAITranslator(BaseTranslator):
         if prompt is not None and hit is not None:
             hit = min(hit, prompt)
             miss = prompt - hit
-        self.prompt_token_count.inc(prompt or 0)
-        self.completion_token_count.inc(completion or 0)
-        self.token_count.inc((prompt or 0) + (completion or 0))
-        self.cache_hit_prompt_token_count.inc(hit or 0)
-        self.cache_miss_prompt_token_count.inc(miss or 0)
+        previous = (getattr(self._request_metrics, 'usage', None) or {}) if getattr(self._request_metrics, 'capturing', False) else {}
+        self.prompt_token_count.inc((prompt or 0) - (previous.get('prompt_tokens') or 0))
+        self.completion_token_count.inc((completion or 0) - (previous.get('completion_tokens') or 0))
+        self.token_count.inc((prompt or 0) + (completion or 0) - (previous.get('prompt_tokens') or 0) - (previous.get('completion_tokens') or 0))
+        self.cache_hit_prompt_token_count.inc((hit or 0) - (previous.get('cache_hit_tokens') or 0))
+        self.cache_miss_prompt_token_count.inc((miss or 0) - (previous.get('cache_miss_tokens') or 0))
         values = dict(prompt_tokens=prompt, completion_tokens=completion,
                       cache_hit_tokens=hit, cache_miss_tokens=miss, reasoning_tokens=reasoning)
         self._request_metrics.usage = values
@@ -497,13 +522,17 @@ class OpenAITranslator(BaseTranslator):
             else self.client
         )
         kind = "initialization" if health_check else (rate_limit_params or {}).get("metric_kind", "translation")
-        if kind not in {"translation", "review", "initialization"}:
+        if kind not in {"translation", "review", "initialization", "term_extraction"}:
             kind = "translation"
         batch_size = (rate_limit_params or {}).get("batch_size")
         if type(batch_size) is not int or batch_size < 1:
             batch_size = None
         collector = self.metrics_collector
-        started = collector.request_started(kind=kind) if collector else None
+        params = rate_limit_params if rate_limit_params is not None else {}
+        started = collector.request_started(kind=kind, operation_id=params.get('metric_operation_id'),
+            paragraph_ids=params.get('paragraph_ids'), parent_call=params.get('_metric_last_call'),
+            retry_cause=params.get('metric_retry_cause')) if collector else None
+        params['_metric_last_call'] = started
         request_started = time.perf_counter()
         self._request_metrics.status_code = None
         self._request_metrics.usage = None
@@ -554,7 +583,7 @@ class OpenAITranslator(BaseTranslator):
                            visible_chars=visible_chars, batch_size=batch_size)
             usage = self._request_metrics.usage
             if collector is not None:
-                collector.record_usage(**usage, kind=kind)
+                collector.record_usage(**usage, kind=kind, call=started, complete=response is not None)
                 collector.request_finished(started, **request)
             elif kind == "initialization":
                 request["latency_ms"] = max((time.perf_counter() - request_started) * 1000, 0.0)

@@ -41,6 +41,8 @@ from maintenance import install_routes, control_token
 from translation_memory import TranslationMemory
 from text_translation import TextTranslationService, TextTranslationError
 from codex_client import close_codex_clients, get_codex_client, CodexError
+from chatgpt_client import close_chatgpt_clients, get_chatgpt_client, ChatGPTError
+from chatgpt_routes import install_chatgpt_routes
 from codex_discovery import discovery_request, cancel_discovery
 from provider_models import ModelDiscoveryError, list_provider_models, list_codex_models
 from babeldoc.glossary_options import normalize_glossary_entries
@@ -79,6 +81,7 @@ class PreparedTranslationRequest:
 def create_app() -> Flask:
     app = Flask(__name__)
     install_routes(app, runtime_busy, lambda: TRANSLATES_DIR)
+    install_chatgpt_routes(app, runtime_busy)
 
     @app.errorhandler(Exception)
     def unexpected_error(error):
@@ -106,7 +109,7 @@ def create_app() -> Flask:
 
     @app.post("/selection-capabilities")
     def selection_capabilities():
-        return jsonify({'selectionLearning': True, 'codexProxy': True, 'selectionStream': True})
+        return jsonify({'selectionLearning': True, 'codexProxy': True, 'selectionStream': True, 'chatgptPlan': True})
 
     @app.post("/translate-text/stream")
     def translate_text_stream():
@@ -246,11 +249,16 @@ def create_app() -> Flask:
         if not isinstance(data, dict):
             return error_response("Expected a JSON body", 400)
         try:
+            if data.get("service") == "chatgpt":
+                details = get_chatgpt_client(data.get("accountId")).model_catalog()
+                return jsonify(status="ok", models=[m["id"] for m in details], modelDetails=details)
             if data.get("service") == "codex":
                 details, runtime = list_codex_models(data, include_runtime=True)
                 return jsonify({"status": "ok", "models": [model["id"] for model in details],
                                 "modelDetails": details, "codexRuntime": runtime}), 200
             models = list_provider_models(data)
+        except ChatGPTError as exc:
+            return exception_response(exc, exc.status_code, code=exc.code)
         except ModelDiscoveryError as exc:
             return exception_response(exc, exc.status, **({"code": exc.code, "attempts": exc.attempts or []} if exc.code else {}))
         return jsonify({"status": "ok", "models": models}), 200
@@ -291,7 +299,7 @@ def create_app() -> Flask:
                 result = validate_config_request(data, check_cancelled=check)
         except RequestValidationError as exc:
             return exception_response(exc, 400)
-        except CodexError as exc:
+        except (CodexError, ChatGPTError) as exc:
             return exception_response(exc, exc.status_code, code=exc.code,
                                   attempts=getattr(exc, "attempts", []))
         except RuntimeError as exc:
@@ -754,7 +762,7 @@ def task_response_payload(task: dict[str, Any]) -> dict[str, Any]:
 
 def exception_response(error: Exception, status_code: int, **details):
     """Only explicit business messages or fixed diagnoses cross the HTTP boundary."""
-    if isinstance(error, (RequestValidationError, GlossaryError, CodexError, ModelDiscoveryError)):
+    if isinstance(error, (RequestValidationError, GlossaryError, CodexError, ChatGPTError, ModelDiscoveryError)):
         message = error.public_message
     else:
         diagnoses = diagnose_service_error(error)
@@ -763,7 +771,7 @@ def exception_response(error: Exception, status_code: int, **details):
                        "The server could not complete this request. Check server logs with the error ID.")
         if status_code < 500:
             message = "The requested operation is not available in the current state."
-    if status_code >= 500 or not isinstance(error, (RequestValidationError, GlossaryError, CodexError, ModelDiscoveryError)):
+    if status_code >= 500 or not isinstance(error, (RequestValidationError, GlossaryError, CodexError, ChatGPTError, ModelDiscoveryError)):
         error_id = uuid.uuid4().hex
         frames = exception_frames(error)
         LOGGER.error("request failed errorId=%s errorType=%s frames=%s", error_id, type(error).__name__, frames)
@@ -808,7 +816,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True},
+        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
@@ -959,6 +967,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     configure_runtime_paths(args.data_dir)
+    # Resolve account storage after --data-dir and propagate it to spawned workers.
+    os.environ["PDF2ZH_DATA_DIR"] = str(TRANSLATES_DIR)
     configure_logging(args.log_level, args.log_file)
     control_token(TRANSLATES_DIR)
     def cache_preflight():
@@ -1000,6 +1010,7 @@ def main() -> None:
         finally:
             try:
                 close_codex_clients()
+                close_chatgpt_clients()
             finally:
                 try:
                     TASK_MANAGER.close()

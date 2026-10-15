@@ -1,0 +1,11 @@
+{
+  "protected_files": 416,
+  "unchanged": 415,
+  "archived_originals": [
+    {
+      "original": ".local-dev/translation-bench/live-20261014/quick-01/reviews.json",
+      "archive": ".local-dev/translation-bench/live-20261014/quick-01/review-history/before-maintenance-20261015-r2/reviews.json",
+      "sha256": "482e2fadd1581eae93d86115f4fbf5ef907cc1beee1a25466676ec02fdaf4be2"
+    }
+  ]
+}

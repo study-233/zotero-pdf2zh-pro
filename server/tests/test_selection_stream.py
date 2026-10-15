@@ -91,6 +91,8 @@ class OpenAISelectionStreamTests(unittest.TestCase):
     def translator(self, protocol, events):
         stream = FakeStream(events)
         translator = OpenAITranslator.__new__(OpenAITranslator)
+        translator.metrics_collector = None
+        translator._request_metrics = threading.local()
         translator.resolved_protocol = protocol
         translator.model = 'test'
         translator._options = lambda _: {'temperature': 0}

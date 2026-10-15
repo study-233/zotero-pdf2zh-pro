@@ -175,6 +175,7 @@ export async function translateSelection(
         options.refresh ||
         options.allowGenerate === false ||
         needsCodexProxy ||
+        settings.service === "chatgpt" ||
         wantsStream
     ) {
         const capability = await request.post(
@@ -182,6 +183,13 @@ export async function translateSelection(
             {},
             10000,
         );
+        if (
+            settings.service === "chatgpt" &&
+            (capability.data as { chatgptPlan?: boolean })?.chatgptPlan !== true
+        )
+            throw new Error(
+                "当前 Python 服务不支持 ChatGPT 套餐，请先升级服务端。",
+            );
         stream =
             wantsStream &&
             capability.ok &&
@@ -235,7 +243,7 @@ export async function translateSelection(
         },
         50000,
         selectionProvider === "profile" &&
-            (settings.service === "codex" || stream) &&
+            (["codex", "chatgpt"].includes(settings.service) || stream) &&
             options.allowGenerate !== false
             ? {
                   cancelUrl: `${settings.serverUrl.replace(/\/$/, "")}/cancel-text`,
@@ -250,7 +258,7 @@ export async function translateSelection(
             invalid_output: "模型返回格式不正确，请重试。",
             invalid_config: "划词翻译配置无效，请检查设置。",
             unsupported_selection_provider:
-                "当前服务不支持此划词配置，请升级服务端并使用 OpenAI 兼容或 Codex 配置。",
+                "当前服务不支持此划词配置，请升级服务端并使用 OpenAI 兼容或 ChatGPT 配置。",
             provider_timeout: "翻译请求超时，请重新划选重试。",
             provider_error: "模型请求失败，请检查翻译配置与网络。",
             empty_output: "翻译服务返回空内容，请重新划选重试。",
@@ -270,14 +278,17 @@ export async function translateSelection(
         };
         const code = (response.data as { code?: string } | null)?.code;
         const message =
-            selectionProvider === "bing" && code === "provider_error"
-                ? "必应暂时不可用，请稍后重试。未调用模型。"
-                : errors[code || ""];
+            code === "chatgpt_sign_in_required"
+                ? "ChatGPT 登录已失效，请重新登录。"
+                : selectionProvider === "bing" && code === "provider_error"
+                  ? "必应暂时不可用，请稍后重试。未调用模型。"
+                  : errors[code || ""];
         const serverMessage = (response.data as { message?: unknown } | null)
             ?.message;
         const codexMessage =
-            settings.service === "codex" &&
-            code?.startsWith("codex_") &&
+            ["codex", "chatgpt"].includes(settings.service) &&
+            code !== "chatgpt_sign_in_required" &&
+            (code?.startsWith("codex_") || code?.startsWith("chatgpt_")) &&
             typeof serverMessage === "string"
                 ? serverMessage
                 : undefined;
@@ -1168,6 +1179,8 @@ async function showSelection(
             void openFavoritesPane(state.reader).catch((error) =>
                 state.popup?.showNotice(error.message),
             );
+        controls.onReloginChatGPT = () =>
+            addon.hooks.onDialogEvents("reloginChatGPT");
         state.popup.setControls(controls);
         void currentFavorite()
             .then((entry) => {

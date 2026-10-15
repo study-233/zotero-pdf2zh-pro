@@ -1,0 +1,963 @@
+{
+  "schema": 1,
+  "version": "maintenance-candidates-20261015-v1",
+  "mode": "offline-evidence-regression",
+  "extends": "benchmarks/translation/datasets/candidates/semantic-v1.json",
+  "live_execution_recipe": false,
+  "policy": "Replay retained evidence offline; before live regression, create a separately versioned input recipe and obtain explicit run authorization. No frozen samples added.",
+  "cases": [
+    {
+      "id": "citation-prose-boundary",
+      "title": "引用方括号包含正文",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-t5",
+      "expected": "作者年份引用与正文边界分开检查；占位符存在不能证明边界正确。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-4",
+          "job_id": "main:t5-2:0",
+          "result_sha256": "2c24bc8de53e2e83df3d242141dfab867a58f34c7ad69c5eab4883e89cd8aec7",
+          "error_index": 0,
+          "error_sha256": "d7836bd22f9ca3a57bc8fc2213f2c45d2e07ccef34bfffa8c41e3a6bc1f53e57"
+        }
+      ]
+    },
+    {
+      "id": "ordinary-english-residue",
+      "title": "正文残留 notoriously",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-raft",
+      "expected": "普通副词应译出，代码和专名可保留；2 路连接实验也出现过，不能据此归因为 4 路并发。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-4",
+          "job_id": "main:raft-2:0",
+          "result_sha256": "de55b013a3e90a8e4caf34b08ff23af5aff28e8b1e4a315e7dd03c8184ef85f8",
+          "error_index": 0,
+          "error_sha256": "604fa5b3cfa59c9b4d3eb6c88a617ba7d269a0acf083c961bd5a5c4f5fba9c5c"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-2-workers-4",
+          "job_id": "main:raft-2:0",
+          "result_sha256": "ccfbe986bc2e20412cf4dd008ebe14ede6b0053b8207f6b95b4735027e47d653",
+          "error_index": 0,
+          "error_sha256": "604fa5b3cfa59c9b4d3eb6c88a617ba7d269a0acf083c961bd5a5c4f5fba9c5c"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/retest-round-3-workers-4-01",
+          "job_id": "main:raft-2:0",
+          "result_sha256": "376faa663b1447a7897bdad12c59a35a3f187d05cbe8dead8c9cdcc1c935adac",
+          "error_index": 0,
+          "error_sha256": "604fa5b3cfa59c9b4d3eb6c88a617ba7d269a0acf083c961bd5a5c4f5fba9c5c"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-warm",
+          "job_id": "main:raft-2:0",
+          "result_sha256": "146fea3f28f572ae8d619f738872aa471295f54015dadc58627fa159cce88a21",
+          "error_index": 0,
+          "error_sha256": "604fa5b3cfa59c9b4d3eb6c88a617ba7d269a0acf083c961bd5a5c4f5fba9c5c"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-cold",
+          "job_id": "main:raft-2:0",
+          "result_sha256": "465dbe507745e5f6d3cd72442d4af4e6a88825e0f96bb29926f8170a210e29b5",
+          "error_index": 0,
+          "error_sha256": "604fa5b3cfa59c9b4d3eb6c88a617ba7d269a0acf083c961bd5a5c4f5fba9c5c"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-warm",
+          "job_id": "main:raft-2:0",
+          "result_sha256": "bc16b114470a1d4fe1c9f026c56575d6db8569f824415a710df405f79c63433d",
+          "error_index": 0,
+          "error_sha256": "604fa5b3cfa59c9b4d3eb6c88a617ba7d269a0acf083c961bd5a5c4f5fba9c5c"
+        }
+      ]
+    },
+    {
+      "id": "cross-column-repeat",
+      "title": "跨栏衔接重复日志一致性短语",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-raft",
+      "expected": "跨栏句子只输出一次；先定位提取、拼接与生成各阶段，暂不归因于单一模型。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/01-direct",
+          "job_id": "main:raft-2:0",
+          "result_sha256": "7b189e49dbddee1f5c9651d80aa37bf145431da1f0078b8d9344237cf9b813ee",
+          "error_index": 0,
+          "error_sha256": "82e5244b54c4878ae7d9359d4e43557a0c878601439d6b57e54de28f9a0db510"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-direct",
+          "job_id": "main:raft-2:0",
+          "result_sha256": "179ceb45b486dbf06ff07786e4ff3d4be72e00b560b4ebd165de3db6188c4609",
+          "error_index": 0,
+          "error_sha256": "82e5244b54c4878ae7d9359d4e43557a0c878601439d6b57e54de28f9a0db510"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-cold",
+          "job_id": "main:raft-2:0",
+          "result_sha256": "b4c9ae12453be15048dc1c43db22e75a5247035bf47f5984f0082a80cf6b8d4f",
+          "error_index": 0,
+          "error_sha256": "ac5d5206fa9e6c6bb103a8c95b8d86b57d5927f0099d954726282aea9d1749de"
+        }
+      ]
+    },
+    {
+      "id": "t5-transfer-name",
+      "title": "模型名称 Transfer 译成转换",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-t5",
+      "expected": "Transfer 体现迁移学习含义；不要求唯一中文译名，允许保留完整英文名称。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-codex",
+          "job_id": "main:t5-2:0",
+          "result_sha256": "f660815a0083feffa76144b72d9808bdee661a2010593fb110a8fddbf4610bfd",
+          "error_index": 0,
+          "error_sha256": "c81c130da672b6a31d9049b617d88759355628ba7edd0ae2ddcca89918623b2d"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-3-workers-2",
+          "job_id": "main:t5-2:0",
+          "result_sha256": "07bd8daea9f21c1a9d2304bad8d69f36134ed71bcc450358f9b471892a1e39e6",
+          "error_index": 0,
+          "error_sha256": "08891bef85a50cb9cf83acca1274ad240328309936c6fc97852fcff0af1753ce"
+        }
+      ]
+    },
+    {
+      "id": "register-semi-formal",
+      "title": "semi-formal 的语域限定弱化",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-hai",
+      "expected": "保留半正式限定，不泛化为比较正式。与同页时机误译共用关联组，不累计为独立材料。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/01-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4ed313b947288dcb18f6742ffaef0eda51be7704389e86816cf4423b03c4a0e2",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/01-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "acb0b6d549ad5e57ae06586c73ff220f1efd31ea8a28f72070651c71db0e9e25",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "6c472cd189aad32c2f0d5cbe0d31b07cf6c9238f8f25c7876d6f4d042f556be1",
+          "error_index": 2,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "9160ade0b9ebb559b8c2ccb0f083018699b93ac3c1b4349381bfbfff25f09ea0",
+          "error_index": 2,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "110edb2d414e0d1ca8af10bcd2fc2c2a639fd9842caee63fb53f752a0e304381",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-4",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4723423e8965548d0baf2f8a384ddc5515f123392bdb9508a045f51ab7677ca8",
+          "error_index": 2,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/retest-round-3-workers-4-01",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4009ad1047b9c2fca155eba5db240e3d3dacdb5fa0b9b57f11fb7f7a8fc3ccaa",
+          "error_index": 1,
+          "error_sha256": "c1d3cb5fabf81a9a46d8b058217f658955ffb0e8aedf640025c022c1e7c93aa1"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-after-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "31ea1b506819ff2ef7054b696b2cdab04cd7719a649fd7ee55497a9b870e6642",
+          "error_index": 2,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-after-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "8507b169b7bde8288447e1927a7965ea2b596333e6fb33360a1ed4f6b7839168",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-before-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "c8e9cec842f9f543e8964c67cf8a8a7d82874fdd8a91f79293bf61b1752496be",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-before-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "d885fc0234b23b999912c4bdeed985de2326df1a8fe68c61142284966f8c1f33",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-after-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "e5fd70ca63808e4593e564332b88e577d156e3960577432b12c0a3380198f02f",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-before-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "c1537640ede839874d49288f6a89ffae2cc3d272289ebd49d7d2673c0bc6ecdb",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-before-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "d710e29600f273dd41e8fe230b8c63392113658c187d88d048a5a0188d882fce",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "193d69c28873037287278494b1c63cf634f6f1c5bd06560705c59cfee1a51b39",
+          "error_index": 1,
+          "error_sha256": "80fa790606d28af52076fa1a5121c18f1d4df6ec9bfe6e2b8c0be678e5f4ffd8"
+        }
+      ]
+    },
+    {
+      "id": "could-modality",
+      "title": "could 的可能性变为确定性",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-kll",
+      "expected": "区分可能、必然和允许，核对后续算法论证；局部轻微错误不扩大为结论完全反转。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-direct",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "940647c1ea1341ec66393b231f4ec9e42194f379111295fba4942dd31eefa54a",
+          "error_index": 0,
+          "error_sha256": "8e1e7f28e8b0230e87c8b9933d6fdcf11e4115bded5334065c09407640ee9262"
+        }
+      ]
+    },
+    {
+      "id": "kh-variable-relation",
+      "title": "kh 指代和变量关系含混",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-kll",
+      "expected": "kh 本身可指数递减，避免重复变量构成错误使动关系；保留公式。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-after-cold",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "3a71dbd432cd0b690c853056bb7f3796e0638ec8df75d40fbb4b9a8791420c16",
+          "error_index": 0,
+          "error_sha256": "5f0a8e49e1c81a16d348c4ba62a3769cc3ce9cb75f7db29dc60978a7f704ee15"
+        }
+      ]
+    },
+    {
+      "id": "selection-context-boundary",
+      "title": "选段片尾由上下文擅自补全",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-vegalite",
+      "expected": "译文只覆盖选段；上下文用于消歧，不得补出后句或加入选段中没有的比较对象。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/selection-live-20261014/selection-cold-01",
+          "job_id": "main:vegalite-07:0",
+          "result_sha256": "579807c4e9d40c2abc42b6545078b4875d6e398490678e937d55d2f295b42d1b",
+          "error_index": 0,
+          "error_sha256": "a94aaae2b06c1dcf92e3f3f4c55348db58b791665a4dfd5bc1d287e00d2b96f6"
+        },
+        {
+          "run": ".local-dev/translation-bench/semantic-stability-20261014/selection-repeat-03",
+          "job_id": "main:vegalite-07:0",
+          "result_sha256": "aea40e731ac637c8575310bbeefa3fa7e89c01f0f1e534e906cb9aba663aa9cd",
+          "error_index": 1,
+          "error_sha256": "382c46c6633e201ae772c7c7cb8ce4b1203f4bbe8eef35bb302b3170878fdf3f"
+        }
+      ]
+    },
+    {
+      "id": "ghost-qualifier",
+      "title": "术语变体仍漏译 ghost 限定",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-rustbelt",
+      "expected": "术语修正后仍核对整段完整性；ghost 指令限定必须保留，不凭目标译词出现判通过。",
+      "related_case": "sum-indices",
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/semantic-stability-20261014/candidates-02",
+          "job_id": "main:sum-indices--glossary:0",
+          "result_sha256": "cc02d96bac18397e9459dc66438e762f5b023d167d198c16edcf4c4e4b0fa5e2",
+          "error_index": 0,
+          "error_sha256": "9008926b0cf4d4e4362da888c1615725248229e4e729ac3cd22e4887ae1a2aac"
+        }
+      ]
+    },
+    {
+      "id": "warmup-run-scope",
+      "title": "预热剔除与正式五次运行范围歧义",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "challenge-number-comparison",
+      "expected": "明确五次正式运行发生在丢弃预热之后；现有歧义按 minor，不断言实际运行只剩四次。",
+      "related_case": "recall-at-ten",
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/chatgpt-production-20261014/quick",
+          "job_id": "main:C4-02:0",
+          "result_sha256": "d998d3495ff79151bd14dbb99a43a8fa5fa4ebd24571e138c1690d28a75154ff",
+          "error_index": 0,
+          "error_sha256": "79691fd5e70b48b2163d2356d95a9dacbdaeb235ad202089bff0f41c4ca5fcf7"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/quick-01",
+          "job_id": "main:C4-02:0",
+          "result_sha256": "ae61dc7f670083ff601d6f3a2f5c1743806db2b124426a41ed84dafe2561a97f",
+          "error_index": 1,
+          "error_sha256": "7c1ce7d07d5de255b959b87653f228171e0adf2cc93e7230d0241046cf82fd39"
+        },
+        {
+          "run": ".local-dev/translation-bench/semantic-stability-20261014/candidates-02",
+          "job_id": "main:recall-at-ten--glossary:0",
+          "result_sha256": "ad074dee8a2846f93a745892f5fc4e82835345a0f9d0e00779524414e7b6c467",
+          "error_index": 0,
+          "error_sha256": "82f17bef81fbb9f9a617deaa3d8b565da2731e1cd989504d3eaf017d42069280"
+        }
+      ]
+    },
+    {
+      "id": "hai-time-services-recurrence",
+      "title": "服务时机误译在多轮间波动",
+      "lane": "translation",
+      "status": "candidate",
+      "correlation_group": "paper-hai",
+      "expected": "Time 是安排时机，不是时间服务类别；正确和错误输出同时保留，人工术语消歧不算模型自然改进。",
+      "related_case": "time-services",
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/chatgpt-production-20261014/pdf-quick-fixed",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "5c5428d82fcf9b2b72871c4f4d1e38d185e8861518878ba28cf91f4454af9341",
+          "error_index": 1,
+          "error_sha256": "02932808790e35a094ec2555f9d373e62504592e0b65fd7c35363930829a5fe8"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "b30f92ea3fa21e987c45670249aa36bed5c5ed7fdfdb205a4927828e684d684e",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "6c472cd189aad32c2f0d5cbe0d31b07cf6c9238f8f25c7876d6f4d042f556be1",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "9160ade0b9ebb559b8c2ccb0f083018699b93ac3c1b4349381bfbfff25f09ea0",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-01",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "7e84b59e576190e4c85b4ef6e457f8d582095e4c189bfc5f64be8cf3501f7920",
+          "error_index": 0,
+          "error_sha256": "582a3c71c010bb21bdf842146b65172074abec6e62acc1662184d81d0a149662"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-02",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "063b7a460ab56804d72e6104c407ca34dc2b573a07f68ffddedc383d1267e2f6",
+          "error_index": 1,
+          "error_sha256": "0ac085e9f0ae8d2616820bb0482ee76f24963be7e5735f103bd9087d79773ef1"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-03",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "2a4d8b36c1ce713df1daf5bddafa17f0e321fa3b530d66bed2563852c30d84fe",
+          "error_index": 1,
+          "error_sha256": "02932808790e35a094ec2555f9d373e62504592e0b65fd7c35363930829a5fe8"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-04",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "eff9fcea2e45eaa72a9f0318f66523dd0cc186ee62dd842c8b6b059d3de52bb2",
+          "error_index": 0,
+          "error_sha256": "a98ea59ca128b6dd90b9d75663fd6f9285aa03baaad47feb66a8e2503c9772b9"
+        },
+        {
+          "run": ".local-dev/translation-bench/semantic-stability-20261014/candidates-02",
+          "job_id": "main:time-services--original:0",
+          "result_sha256": "9590323c4d42f6252550cb52e6dcd0f64a51475679b01e64f157cac68c65903b",
+          "error_index": 0,
+          "error_sha256": "6def1ebbdb9979f0f63656a357ae4c07c1cfff9c00d777ee8b13bf345513672d"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-2",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "1ad08136ecd8ab618c5e029e7bb9776a123c3004ac1ca3852951217344e3e893",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-4",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4723423e8965548d0baf2f8a384ddc5515f123392bdb9508a045f51ab7677ca8",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-2-workers-2",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "7348deb45afb0c56f48fb340aa4d8cee96b312ff68facedcb2169668f23ba8eb",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-2-workers-4",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "1518d80f73dc24f4cf8fd589cb267272bcee3260f009c5c6cd2fce2a9bb1030a",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-after-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "f0f4dfeeb53982bdd80ba2d23838fc7019922c38eaaed43d476c08c03e200a23",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "75c744b4e4cbca1982e7b2746946d67c7d60d2d9c88313c1dbf6a2a9117bd0be",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "dcbdec68dbdc73a21f83b69f1c32c02fda4cf1a9e6ebf36ed2c6d64bf6f96dad",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "b456a6f1e61ef6cf531ff394e9869d770ee47e70290500df747d4a0e3aa64b6f",
+          "error_index": 1,
+          "error_sha256": "c57317003e7d01c77466410edfb712b22c0a5ee263966016b239ae9c79d0e77b"
+        }
+      ]
+    },
+    {
+      "id": "rotated-table-labels",
+      "title": "表格竖排分组标签未译",
+      "lane": "layout",
+      "status": "candidate",
+      "correlation_group": "paper-hai",
+      "expected": "单列标签提取与渲染覆盖；检查 18 行内容、四个分组标题和阅读方向，不混成纯模型语义错误。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/chatgpt-production-20261014/pdf-quick-fixed",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "5c5428d82fcf9b2b72871c4f4d1e38d185e8861518878ba28cf91f4454af9341",
+          "error_index": 0,
+          "error_sha256": "409363eb5a97b203e41947b261e183e357e594bac9335e329f24fc824b98ed60"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/01-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4ed313b947288dcb18f6742ffaef0eda51be7704389e86816cf4423b03c4a0e2",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/01-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "acb0b6d549ad5e57ae06586c73ff220f1efd31ea8a28f72070651c71db0e9e25",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "b30f92ea3fa21e987c45670249aa36bed5c5ed7fdfdb205a4927828e684d684e",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "6c472cd189aad32c2f0d5cbe0d31b07cf6c9238f8f25c7876d6f4d042f556be1",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "9160ade0b9ebb559b8c2ccb0f083018699b93ac3c1b4349381bfbfff25f09ea0",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "110edb2d414e0d1ca8af10bcd2fc2c2a639fd9842caee63fb53f752a0e304381",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-01",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "7e84b59e576190e4c85b4ef6e457f8d582095e4c189bfc5f64be8cf3501f7920",
+          "error_index": 2,
+          "error_sha256": "2614081b36aa1408e9692e503b2cd72a26e0bdce4cf583be6314e3c8bc05aa0f"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-02",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "063b7a460ab56804d72e6104c407ca34dc2b573a07f68ffddedc383d1267e2f6",
+          "error_index": 0,
+          "error_sha256": "409363eb5a97b203e41947b261e183e357e594bac9335e329f24fc824b98ed60"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-03",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "2a4d8b36c1ce713df1daf5bddafa17f0e321fa3b530d66bed2563852c30d84fe",
+          "error_index": 0,
+          "error_sha256": "409363eb5a97b203e41947b261e183e357e594bac9335e329f24fc824b98ed60"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-04",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "eff9fcea2e45eaa72a9f0318f66523dd0cc186ee62dd842c8b6b059d3de52bb2",
+          "error_index": 1,
+          "error_sha256": "6a98f31c90e54f82599727dc485fbb2bf6e9a2cfa49843832473eb3142e1c743"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-2",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "1ad08136ecd8ab618c5e029e7bb9776a123c3004ac1ca3852951217344e3e893",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-4",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4723423e8965548d0baf2f8a384ddc5515f123392bdb9508a045f51ab7677ca8",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-2-workers-2",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "7348deb45afb0c56f48fb340aa4d8cee96b312ff68facedcb2169668f23ba8eb",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-2-workers-4",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "1518d80f73dc24f4cf8fd589cb267272bcee3260f009c5c6cd2fce2a9bb1030a",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-3-workers-2",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "691eec3a537990bdf7a8c69695bd71c285460c7638e7056592c769f2e6b3941b",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/retest-round-3-workers-4-01",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4009ad1047b9c2fca155eba5db240e3d3dacdb5fa0b9b57f11fb7f7a8fc3ccaa",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-after-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "31ea1b506819ff2ef7054b696b2cdab04cd7719a649fd7ee55497a9b870e6642",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-after-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "8507b169b7bde8288447e1927a7965ea2b596333e6fb33360a1ed4f6b7839168",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-before-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "c8e9cec842f9f543e8964c67cf8a8a7d82874fdd8a91f79293bf61b1752496be",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-before-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "d885fc0234b23b999912c4bdeed985de2326df1a8fe68c61142284966f8c1f33",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-after-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "f0f4dfeeb53982bdd80ba2d23838fc7019922c38eaaed43d476c08c03e200a23",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-after-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "e5fd70ca63808e4593e564332b88e577d156e3960577432b12c0a3380198f02f",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-before-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "c1537640ede839874d49288f6a89ffae2cc3d272289ebd49d7d2673c0bc6ecdb",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-before-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "d710e29600f273dd41e8fe230b8c63392113658c187d88d048a5a0188d882fce",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "193d69c28873037287278494b1c63cf634f6f1c5bd06560705c59cfee1a51b39",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "75c744b4e4cbca1982e7b2746946d67c7d60d2d9c88313c1dbf6a2a9117bd0be",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "dcbdec68dbdc73a21f83b69f1c32c02fda4cf1a9e6ebf36ed2c6d64bf6f96dad",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "b456a6f1e61ef6cf531ff394e9869d770ee47e70290500df747d4a0e3aa64b6f",
+          "error_index": 0,
+          "error_sha256": "7d7e112abbe291ff84188849a07a0bbed93a26930ba95d92da5a1c6498ef3d4a"
+        }
+      ]
+    },
+    {
+      "id": "formula-root-layout",
+      "title": "根号横线与中文换行错位",
+      "lane": "layout",
+      "status": "candidate",
+      "correlation_group": "paper-kll",
+      "expected": "对照 PDF 图像检查根号覆盖范围及行内公式，不把文本提取的 p 误当翻译错误。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/chatgpt-production-20261014/pdf-quick-fixed",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "79494c27f839fa8cecb0ea9b05a278af4df38fa6ad361126016d08e5a822713b",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/01-codex",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "efeb5246ec0973a8c797504d54e12e70864a277ef688a2d5359f8262437512c1",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/01-direct",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "db1361d1a0305ab4d7f9e983e5c1cabedde91dae36e6e106c0af4ab44aad509f",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-codex",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "e866b38f6ac02199d734f2c3f1cdb22a5ccafd32eb9add18b2eb7c04db4fe13c",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-direct",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "9ed201492dbd5a9554fe579ef8be559947cb2e2db98fd6f5d0a34ab326056462",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-codex",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "53981646d6d802598c92cb160375835ee19242a22e4d8baaf39a29ab8d2842a6",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-direct",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "940647c1ea1341ec66393b231f4ec9e42194f379111295fba4942dd31eefa54a",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-01",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "49de4a9784ed1672afd9f8f266fc9318d90698242bbd887784e2823941c6db4d",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-02",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "8f5a8d9a714d16b5ea5ed855d7d3347bec7f02b23230b2da4d06331b7e202f7f",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-03",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "7857a60fb35a38dc6cfc4d99ca4ea988854cbd07e642d0ffc16ef195c287a72c",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-04",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "dbac72878ce8d727dad7e8ed814a6dc32b5be66a78d2bbd799955687b3dc2390",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-2",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "09530a1820b2b101845225084df6944f91f299ad84675beacc850194a3e5976a",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-4",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "6ece19d5525ddad9d464b80c7036bb33fadb08521335165bc4869127db9aef23",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-2-workers-2",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "430df3019927cab66d032bfeae114826e06b18f8d5341f70853736f7bb35c3b8",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-2-workers-4",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "8f00888ca26a5a91b54291a3c81cbf67ac9ebf8f35724e91d87aed480d011671",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-3-workers-2",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "930828a012a1118787c9f387d4d9af25caaa4e7c743cc8761b30acbfd70b250f",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/retest-round-3-workers-4-01",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "6e84916bcd1a0e02b6c34d8cb173bcd4b8fa2d3456684c59a45741fe3b25b031",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-after-cold",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "3a71dbd432cd0b690c853056bb7f3796e0638ec8df75d40fbb4b9a8791420c16",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-after-warm",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "a1a8583cad290ac5c1419ace96348dc0ede631d2ea6b19f59d3f8c6d4891b6b3",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-before-cold",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "e081d3db20c45f248bede1340fd7e3c90045d20e61ec5d043bb08e0be2ee4e4a",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-before-warm",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "10aaed0df3dca3937211b79ea2b949683731c04e061a550636693956da9abaa9",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-after-cold",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "ae8886eb07fb89eef1ef07d7079f58233c263d2f932e545008c2564aa7aa17f4",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-after-warm",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "3447b4e2a0d908e01426f747f2322055059c026279f6ac61e578d871ebf98183",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-before-cold",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "af90200d02a4a4910e03e2ec82980495bb184a6d673513fc92264b1030c320c0",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-before-warm",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "da9336f4723514e4b630d183a744098a592e08afd873b2fc28d3fbd84b039aae",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-cold",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "450847ff637e969fdbe37bba5bc83370f9056badf9d46f8e4fcefb4673047e78",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-warm",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "36a966e4b8f7a439d670aadd8d9aa36aa7ac44fb9292924e57d72eabca343f4b",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-cold",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "e0e36cabae4e10b36308127b811b18abf26da1e49d4a86758dcd7cdb4626c88c",
+          "review_field": "layout_readability"
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-warm",
+          "job_id": "main:kll-4:0",
+          "result_sha256": "fe3fa28893db19bf525827a83d3b5db5da5ed2783f7e8dba9909285c4bc80274",
+          "review_field": "layout_readability"
+        }
+      ]
+    },
+    {
+      "id": "url-trailing-punctuation",
+      "title": "URL 尾随标点导致硬检查误报",
+      "lane": "annotation",
+      "status": "candidate",
+      "correlation_group": "paper-duckdb",
+      "expected": "保留 URL 本体即可；标点不属于 URL。现有冻结标注不回写，依证据豁免，下一版修订提取规则。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/chatgpt-production-20261014/selection",
+          "job_id": "main:duckdb-03:0",
+          "result_sha256": "639f492dc9d119b6affd672936ab220598772f5b14ddc1807d450ed0f77b0317",
+          "review_field": "rule_override_reason"
+        },
+        {
+          "run": ".local-dev/translation-bench/selection-live-20261014/selection-cold-01",
+          "job_id": "main:duckdb-03:0",
+          "result_sha256": "37541dfd819fe3611209f2f1affb0e42966818982ea44619b91f65ad0b07f939",
+          "review_field": "rule_override_reason"
+        },
+        {
+          "run": ".local-dev/translation-bench/selection-live-20261014/selection-cold-02",
+          "job_id": "main:duckdb-03:0",
+          "result_sha256": "87cb5152d675a78aef3292150ed7405fd4f10211abff37ff757abe71a518e5b1",
+          "review_field": "rule_override_reason"
+        },
+        {
+          "run": ".local-dev/translation-bench/selection-live-20261014/selection-warm-01",
+          "job_id": "main:duckdb-03:0",
+          "result_sha256": "b9ee52b0de9c3d18c90c2055c2c56f1028819e699c9a683bba1fc36fd87839e4",
+          "review_field": "rule_override_reason"
+        },
+        {
+          "run": ".local-dev/translation-bench/semantic-stability-20261014/selection-repeat-01",
+          "job_id": "main:duckdb-03:0",
+          "result_sha256": "5501ca10c6955420145501566ac6ba8ed05af238fdd2e85eea5f5bdc431ec2d9",
+          "review_field": "rule_override_reason"
+        },
+        {
+          "run": ".local-dev/translation-bench/semantic-stability-20261014/selection-repeat-02",
+          "job_id": "main:duckdb-03:0",
+          "result_sha256": "af00fbaaff71425b5f7dfb7d5a2e4c93515ad36406cf25a0b8f08f1f332a6a44",
+          "review_field": "rule_override_reason"
+        },
+        {
+          "run": ".local-dev/translation-bench/semantic-stability-20261014/selection-repeat-03",
+          "job_id": "main:duckdb-03:0",
+          "result_sha256": "e8d0064004c0db3449c3af15dd9a309a7066740af1dddfdd4410abe09f45a5cf",
+          "review_field": "rule_override_reason"
+        }
+      ]
+    },
+    {
+      "id": "partial-pdf-after-tls-failure",
+      "title": "TLS 失败后 PDF 有两段仍为英文",
+      "lane": "workflow",
+      "status": "candidate",
+      "correlation_group": "workflow-transport-partial",
+      "expected": "保留失败和部分译文；不得将子集分当成功、不得将未知 Token 填零；显式重测另存运行，不覆盖原失败。",
+      "related_case": null,
+      "evidence": [
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-3-workers-4",
+          "job_id": "main:t5-2:0",
+          "result_sha256": "7bc60d3dd48c63c2d9104341f2caddf5b6214ac8d57cf70dc5be426bdd92bb87"
+        }
+      ]
+    }
+  ]
+}

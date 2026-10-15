@@ -1,0 +1,9 @@
+{
+  "benchmarks/translation/datasets/candidates/semantic-v1.json": "f8ed0df3a3a45e14ad949e25006a02546210245ba4093a5a917fd44fc82fd435",
+  "benchmarks/translation/datasets/legacy-v1/manifest.json": "838d9a45a8791894dd2592ef067a24a87438cbf60ad11ca33354254f5480cb2c",
+  "benchmarks/translation/datasets/cs-en-zh-v2/sources.json": "2ffea76729a9996e9871af0c21b7602834db0d112a97df1b4b992edd89e3c03e",
+  "benchmarks/translation/datasets/cs-en-zh-v2/recipes.json": "e88a72a65aa0f5b34a56711be0fa147e3a316442de89d070d8744de45b56620d",
+  "benchmarks/translation/datasets/cs-en-zh-v2/rubric.json": "64dfbc04bfaad0b40a27dae33128d2a7f4fc49f52d4cfd94b8d98e5cb3895a06",
+  "benchmarks/translation/datasets/cs-en-zh-v2/manifest.json": "f4001e0b7edf15fc12e2fb61fe779a7d1800f5616642fe2da534b05f83873b03",
+  "benchmarks/translation/datasets/cs-en-zh-v2/challenges.jsonl": "8c274f916e1e0078037c72426e5d466cf2ff7d06c2724c135d9b356d025b0b68"
+}

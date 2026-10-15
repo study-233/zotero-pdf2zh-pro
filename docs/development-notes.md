@@ -84,6 +84,13 @@ pdf2zh-next、BabelDOC 和 RapidOCR 核心快照；来源、SHA 和许可证记�
 `server/THIRD_PARTY_NOTICES.md`。更新快照后必须重建锁文件、wheel/sdist，
 再执行产物校验。
 
+## 翻译测评与回归
+
+`python -m benchmarks.translation` 提供数据校验、离线测试、模型/选段/PDF 运行、续跑、评审及报告。
+新版 `cs-en-zh-v2` 包含 16 篇计算机论文、240 条英译中样本；旧展示与 `legacy-v1` 保留原口径。
+具体命令、预算、版本维护和基准晋升见[英译中测评与翻译回归](translation-benchmark.md)。
+普通 CI 只执行离线套件，真实模型调用需要显式 `--execute`。
+
 ## Windows
 
 Windows 包包含 Rust + Slint Fluent 控制中心、故障恢复脚本、依赖校验清单和许可证。

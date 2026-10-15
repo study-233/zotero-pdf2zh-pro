@@ -567,14 +567,13 @@ def create_babeldoc_config(settings: SettingsModel, file: Path, *, glossary_entr
     ):
         term_extraction_translator = translator
         if recommended_qps := getattr(translator, "pdf2zh_next_recommended_qps", None):
-            settings.translation.term_qps = recommended_qps
-            logger.info(f"Updated term qps to {recommended_qps}")
+            settings.translation.term_qps = min(settings.translation.qps, recommended_qps)
         if recommended_pool_max_workers := getattr(
             translator, "pdf2zh_next_recommended_pool_max_workers", None
         ):
-            settings.translation.term_pool_max_workers = recommended_pool_max_workers
-            logger.info(
-                f"Updated term pool max workers to {recommended_pool_max_workers}"
+            settings.translation.term_pool_max_workers = min(
+                settings.translation.term_pool_max_workers or settings.translation.pool_max_workers
+                or recommended_pool_max_workers, recommended_pool_max_workers,
             )
     else:
         if (
@@ -586,6 +585,9 @@ def create_babeldoc_config(settings: SettingsModel, file: Path, *, glossary_entr
                 "openai_base_url": str(translator.client.base_url),
             })
         term_extraction_translator = get_term_translator(settings, metrics_collector=metrics_collector, **cancellation)
+
+    if hasattr(translator, "request_state") and hasattr(term_extraction_translator, "request_state"):
+        term_extraction_translator.request_state = translator.request_state
 
     # 设置分割策略
     split_strategy = None

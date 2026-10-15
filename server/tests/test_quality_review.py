@@ -252,6 +252,16 @@ class QualityReviewTests(unittest.TestCase):
         self.assertEqual(review.run()["selected"], 0)
         self.assertEqual(translator.requests, [])
 
+    def test_glossary_risk_uses_whole_terms_without_unicode_casefold_collisions(self):
+        terms = [{"source": "AI", "target": "人工智能"}, {"source": "Straße", "target": "街道"}]
+        for source, expected in (("The training is complete.", 0), ("AI is useful.", 1),
+                                 ("Die Straße ist lang.", 1), ("Die STRASSE ist lang.", 0)):
+            with self.subTest(source=source):
+                translator = ReviewTranslator(passed)
+                review = self.review(translator, terms=terms)
+                review.register_candidate(object(), source, "尚未使用术语的译文。", Mock())
+                self.assertEqual(review.run()["selected"], expected)
+
     def test_document_order_is_independent_of_worker_registration_order(self):
         translator = ReviewTranslator(passed)
         review = self.review(translator)

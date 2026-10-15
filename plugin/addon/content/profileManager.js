@@ -259,7 +259,7 @@
         $("platforms").setAttribute("aria-labelledby", "category-" + category);
         $("platforms").replaceChildren();
         for (const preset of args.presets.filter(
-            (item) => item.group === category,
+            (item) => item.group === category && !item.legacy,
         )) {
             const button = make("button", preset.label);
             button.dataset.preset = preset.id;
@@ -342,7 +342,9 @@
     }
     $("profile-menu").addEventListener("keydown", (event) => {
         const buttons = [
-            ...$("profile-menu").querySelectorAll("button:not(:disabled)"),
+            ...$("profile-menu").querySelectorAll(
+                "button:not(:disabled):not([hidden])",
+            ),
         ];
         if (event.key === "Escape") {
             event.stopPropagation();
@@ -491,9 +493,38 @@
     });
     window.addEventListener("unload", () => editor.cancel());
     window.addEventListener("profiles-changed", renderList);
+    function reloginChatGPT() {
+        stash();
+        renderList();
+        let record = records.get(active);
+        if (record?.presetId !== "chatgpt")
+            record = [...records.values()].find(
+                (item) => item.presetId === "chatgpt",
+            );
+        if (!record) {
+            const id = "draft-" + ++newSequence;
+            record = recordFor(
+                {
+                    key: "",
+                    name: "",
+                    service: "chatgpt",
+                    providerPreset: "chatgpt",
+                    apiKey: "",
+                    apiUrl: "",
+                    model: "",
+                },
+                id,
+            );
+            records.set(id, record);
+        }
+        openRecord(record.id);
+        void editor.reloginChatGPT();
+    }
+    window.addEventListener("chatgpt-relogin", reloginChatGPT);
     renderList();
     const first =
         args.list().find((api) => api.key === args.current()) || args.list()[0];
     if (first) openRecord(first.key);
     else add();
+    if (args.reloginChatGPT) reloginChatGPT();
 })();

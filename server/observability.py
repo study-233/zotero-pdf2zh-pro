@@ -3,14 +3,66 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
+import sqlite3
+from pathlib import Path
 import threading
 import time
+import uuid
 from collections import Counter, deque
 from typing import Any, Callable
 
 METRIC_LOGGER = logging.getLogger("zotero_pdf2zh_server.metrics")
 MetricsCallback = Callable[[dict[str, Any]], None]
 REQUEST_KINDS = ("translation", "review", "initialization")
+REQUEST_PURPOSES = (*REQUEST_KINDS, "term_extraction")
+
+
+def benchmark_journal(task_id):
+    """Explicit benchmark-only ledger, separate from bounded product diagnostics."""
+    directory = os.environ.get('PDF2ZH_BENCHMARK_LEDGER_DIR')
+    if not directory:
+        return None
+    if not task_id or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in task_id):
+        raise ValueError('Invalid benchmark task identifier')
+    path = Path(directory) / (task_id + '.jsonl')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock = threading.Lock()
+
+    def record(event):
+        with lock, path.open('a', encoding='utf-8') as stream:
+            stream.write(json.dumps(event, ensure_ascii=False, separators=(',', ':')) + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+    return record
+
+
+def reserve_benchmark_request():
+    directory, limit = os.environ.get('PDF2ZH_BENCHMARK_LEDGER_DIR'), os.environ.get('PDF2ZH_BENCHMARK_MAX_REQUESTS')
+    if not directory or not limit:
+        return
+    with sqlite3.connect(Path(directory) / 'budget.sqlite3', timeout=10) as connection:
+        connection.execute('BEGIN IMMEDIATE')
+        connection.execute('CREATE TABLE IF NOT EXISTS budget (id INTEGER PRIMARY KEY CHECK(id=1), calls INTEGER NOT NULL)')
+        connection.execute('INSERT OR IGNORE INTO budget VALUES (1, 0)')
+        count = connection.execute('SELECT calls FROM budget WHERE id=1').fetchone()[0]
+        if count >= int(limit):
+            raise RuntimeError('benchmark_request_limit')
+        connection.execute('UPDATE budget SET calls=calls+1 WHERE id=1')
+
+
+class RequestHandle(float):
+    """A timestamp-compatible, unique handle; concurrent starts may share a clock tick."""
+
+    def __new__(cls, timestamp, call_id, purpose):
+        value = super().__new__(cls, timestamp)
+        value.call_id, value.purpose = call_id, purpose
+        value.finished = value.usage_recorded = value.validated = False
+        return value
+
+
+def _purpose(value):
+    return value if value in REQUEST_PURPOSES else "translation"
 
 
 def _kind(value):
@@ -25,6 +77,8 @@ def _number(value):
 class _RequestStats:
     def __init__(self):
         self.attempts = self.succeeded = self.failed = self.active = self.retries = 0
+        self.cancelled = 0
+        self.repairs = 0
         self.latency_total = 0.0
         self.latencies = deque(maxlen=200)
         self.status_codes, self.errors, self.finishes, self.protocols, self.batch_sizes = (Counter() for _ in range(5))
@@ -33,7 +87,8 @@ class _RequestStats:
     def finish(self, *, succeeded, latency_ms, status_code=None, error_type=None,
                finish_reason=None, protocol=None, visible_chars=None, batch_size=None):
         self.succeeded += bool(succeeded)
-        self.failed += not succeeded
+        self.cancelled += finish_reason == "cancelled"
+        self.failed += not succeeded and finish_reason != "cancelled"
         self.latency_total += latency_ms
         self.latencies.append(latency_ms)
         self.status_codes[str(status_code) if status_code is not None else "unknown"] += 1
@@ -50,11 +105,11 @@ class _RequestStats:
             self.batch_sizes[str(batch_size)] += 1
 
     def snapshot(self):
-        total = self.succeeded + self.failed
+        total = self.succeeded + self.failed + self.cancelled
         ordered = sorted(self.latencies)
         return {
-            "attempts": self.attempts, "succeeded": self.succeeded, "failed": self.failed,
-            "active": self.active, "retries": self.retries,
+            "attempts": self.attempts, "succeeded": self.succeeded, "failed": self.failed, "cancelled": self.cancelled,
+            "active": self.active, "retries": self.retries, "repairs": self.repairs,
             "averageLatencyMs": round(self.latency_total / total, 1) if total else None,
             "p95LatencyMs": round(ordered[max(math.ceil(len(ordered) * .95) - 1, 0)], 1) if ordered else None,
             "statusCodes": dict(self.status_codes), "errorTypes": dict(self.errors),
@@ -67,11 +122,12 @@ class _RequestStats:
 class _TokenTotals:
     def __init__(self):
         self.calls = 0
+        self.incomplete_calls = 0
         self.values = Counter()
         self.known = Counter()
 
     def record(self, *, prompt_tokens, completion_tokens, cache_hit_tokens, cache_miss_tokens,
-               reasoning_tokens=None):
+               reasoning_tokens=None, complete=True):
         prompt, completion, hit, miss, reasoning = map(_number, (
             prompt_tokens, completion_tokens, cache_hit_tokens, cache_miss_tokens, reasoning_tokens))
         if prompt is not None and hit is not None:
@@ -83,6 +139,7 @@ class _TokenTotals:
         if reasoning is not None and completion is not None:
             reasoning = min(reasoning, completion)
         self.calls += 1
+        self.incomplete_calls += not complete
         for key, value in (("input", prompt), ("output", completion), ("reasoning", reasoning)):
             if value is not None:
                 self.values[key] += value
@@ -96,7 +153,7 @@ class _TokenTotals:
         counts = [self.known[key] for key in keys]
         if not any(counts):
             return "unavailable"
-        return "complete" if all(count == self.calls for count in counts) else "partial"
+        return "complete" if not self.incomplete_calls and all(count == self.calls for count in counts) else "partial"
 
     def snapshot(self):
         return {
@@ -122,6 +179,8 @@ class _TokenTotals:
 REQUEST_METRIC_SERVICES = frozenset(
     {
         "openai",
+        "codex",
+        "chatgpt",
         "openaicompatible",
         "deepseek",
         "aliyundashscope",
@@ -168,22 +227,32 @@ class TaskMetricsCollector:
         model: str,
         callback: MetricsCallback | None = None,
         clock: Callable[[], float] = time.monotonic,
+        journal: MetricsCallback | None = None,
     ) -> None:
         self.task_id = task_id
         self.provider = provider
         self.model = model
         self.callback = callback
         self.clock = clock
+        self.journal = journal if journal is not None else benchmark_journal(task_id)
+        self._journal_errors = 0
+        self._call_prefix = uuid.uuid4().hex
+        self._call_sequence = 0
         self._lock = threading.RLock()
         self._started_at = clock()
         self._last_emit_at = float("-inf")
         self._attempt_starts: deque[float] = deque()
         self._requests = _RequestStats()
         self._requests_by_kind = {kind: _RequestStats() for kind in REQUEST_KINDS}
+        self._requests_by_purpose = {kind: _RequestStats() for kind in REQUEST_PURPOSES}
         self._local_hits = 0
         self._local_misses = 0
         self._usage = _TokenTotals()
         self._usage_by_kind = {kind: _TokenTotals() for kind in REQUEST_KINDS}
+        self._usage_by_purpose = {kind: _TokenTotals() for kind in REQUEST_PURPOSES}
+        self._validation = Counter(accepted=0, partial=0, rejected=0)
+        self._translation_summary = None
+        self._first_paragraph_ms = None
         self._stage_started = {}
         self._stage_durations = Counter()
         self._progress_samples: deque[tuple[float, float]] = deque()
@@ -194,17 +263,35 @@ class TaskMetricsCollector:
         self._active_requests = Counter()
         self._last_paragraph_completed = None
 
-    def request_started(self, *, kind="translation") -> float:
+    def _journal(self, event, **fields):
+        if self.journal is not None:
+            try:
+                self.journal({"event": event, "taskId": self.task_id,
+                              "timestamp": time.time(), "elapsedMs": max(0, (self.clock() - self._started_at) * 1000),
+                              "provider": self.provider, "model": self.model, **fields})
+            except Exception:
+                self._journal_errors += 1
+                METRIC_LOGGER.warning("benchmark journal write failed")
+
+    def request_started(self, *, kind="translation", operation_id=None, paragraph_ids=None,
+                        parent_call=None, retry_cause=None) -> RequestHandle:
+        reserve_benchmark_request()
         now = self.clock()
         with self._lock:
-            for stats in (self._requests, self._requests_by_kind[_kind(kind)]):
+            self._call_sequence += 1
+            handle = RequestHandle(now, f"{self._call_prefix}:{self._call_sequence}", _purpose(kind))
+            for stats in (self._requests, self._requests_by_kind[_kind(kind)], self._requests_by_purpose[_purpose(kind)]):
                 stats.attempts += 1
                 stats.active += 1
+                stats.repairs += retry_cause in {"batch_partial", "batch_fallback"}
             self._attempt_starts.append(now)
-            self._active_requests[now] += 1
+            self._active_requests[handle.call_id] = now
+            self._journal("request_started", callId=handle.call_id, purpose=handle.purpose,
+                          operationId=operation_id, paragraphIds=paragraph_ids or [],
+                          parentCallId=getattr(parent_call, 'call_id', None), retryCause=retry_cause)
             self._trim_locked(now)
         self._emit_if_due()
-        return now
+        return handle
 
     def request_finished(
         self,
@@ -217,9 +304,18 @@ class TaskMetricsCollector:
     ) -> None:
         now = self.clock()
         with self._lock:
-            self._active_requests[started_at] -= 1
-            if self._active_requests[started_at] <= 0:
-                del self._active_requests[started_at]
+            if isinstance(started_at, RequestHandle):
+                if started_at.finished:
+                    return
+                started_at.finished = True
+                kind = started_at.purpose
+                self._active_requests.pop(started_at.call_id, None)
+                if not started_at.usage_recorded:
+                    self.record_usage(prompt_tokens=None, completion_tokens=None, cache_hit_tokens=None,
+                                      cache_miss_tokens=None, kind=kind, complete=False, call=started_at)
+                self._journal("request_finished", callId=started_at.call_id, purpose=kind,
+                              succeeded=succeeded, cancelled=finish_reason == 'cancelled',
+                              latencyMs=max((now - started_at) * 1000, 0), statusCode=status_code)
         latency_ms = max((now - started_at) * 1000, 0.0)
         self._finish_request(kind=kind, latency_ms=latency_ms, succeeded=succeeded,
                              status_code=status_code, error_type=error_type, finish_reason=finish_reason,
@@ -230,7 +326,7 @@ class TaskMetricsCollector:
                                  visible_chars=None, batch_size=None):
         """Replay completed initialization without fabricating current active/QPS."""
         with self._lock:
-            for stats in (self._requests, self._requests_by_kind[_kind(kind)]):
+            for stats in (self._requests, self._requests_by_kind[_kind(kind)], self._requests_by_purpose[_purpose(kind)]):
                 stats.attempts += 1
         self._finish_request(kind=kind, latency_ms=latency_ms, succeeded=succeeded,
                              status_code=status_code, error_type=error_type, finish_reason=finish_reason,
@@ -238,7 +334,7 @@ class TaskMetricsCollector:
 
     def _finish_request(self, *, kind, latency_ms, succeeded, status_code, error_type,
                         finish_reason, protocol, visible_chars, batch_size, replay=False):
-        kind = _kind(kind)
+        purpose, kind = _purpose(kind), _kind(kind)
         status_code = status_code if type(status_code) is int and 100 <= status_code <= 599 else None
         error_type = error_type if isinstance(error_type, str) and error_type.isidentifier() and len(error_type) <= 80 else None
         finish_reason = (finish_reason if finish_reason in {
@@ -249,7 +345,7 @@ class TaskMetricsCollector:
         visible_chars, batch_size = _number(visible_chars), _number(batch_size)
         latency_ms = max(float(latency_ms), 0.0) if math.isfinite(float(latency_ms)) else 0.0
         with self._lock:
-            for stats in (self._requests, self._requests_by_kind[kind]):
+            for stats in (self._requests, self._requests_by_kind[kind], self._requests_by_purpose[purpose]):
                 if not replay:
                     stats.active = max(stats.active - 1, 0)
                 stats.finish(succeeded=succeeded, latency_ms=latency_ms, status_code=status_code,
@@ -280,6 +376,7 @@ class TaskMetricsCollector:
         with self._lock:
             self._requests.retries += 1
             self._requests_by_kind[_kind(kind)].retries += 1
+            self._requests_by_purpose[_purpose(kind)].retries += 1
         self._emit_if_due()
 
     def local_cache_hit(self) -> None:
@@ -301,13 +398,64 @@ class TaskMetricsCollector:
         cache_miss_tokens: int | None,
         reasoning_tokens: int | None = None,
         kind="translation",
+        complete=True,
+        call=None,
     ) -> None:
         with self._lock:
-            for totals in (self._usage, self._usage_by_kind[_kind(kind)]):
-                totals.record(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
-                              cache_hit_tokens=cache_hit_tokens, cache_miss_tokens=cache_miss_tokens,
-                              reasoning_tokens=reasoning_tokens)
+            values = dict(prompt_tokens=_number(prompt_tokens), completion_tokens=_number(completion_tokens),
+                          cache_hit_tokens=_number(cache_hit_tokens), cache_miss_tokens=_number(cache_miss_tokens),
+                          reasoning_tokens=_number(reasoning_tokens), complete=complete)
+            previous = None
+            if isinstance(call, RequestHandle):
+                previous = getattr(call, 'usage_values', None)
+                if previous is not None:
+                    # Provider usage notifications are cumulative. Repeated or older
+                    # snapshots must not add cost or discard a known later total.
+                    for key in values:
+                        if key != 'complete' and previous[key] is not None:
+                            values[key] = max(previous[key], values[key] or 0)
+                    values['complete'] = previous['complete'] or complete
+                if values == previous:
+                    return
+                call.usage_recorded = True
+                call.usage_values = values
+                kind = call.purpose
+                self._journal("usage", callId=call.call_id, purpose=kind, complete=values['complete'],
+                              input=values['prompt_tokens'], output=values['completion_tokens'],
+                              cachedInput=values['cache_hit_tokens'], reasoning=values['reasoning_tokens'])
+            for totals in (self._usage, self._usage_by_kind[_kind(kind)], self._usage_by_purpose[_purpose(kind)]):
+                if previous is not None:
+                    old = _TokenTotals()
+                    old.record(**previous)
+                    totals.calls -= old.calls
+                    totals.incomplete_calls -= old.incomplete_calls
+                    totals.values.subtract(old.values)
+                    totals.known.subtract(old.known)
+                totals.record(**values)
         self._emit_if_due()
+
+    def record_validation(self, call, status, *, accepted=None, rejected=None):
+        if not isinstance(call, RequestHandle) or status not in {'accepted', 'partial', 'rejected'}:
+            return
+        with self._lock:
+            if call.validated:
+                return
+            call.validated = True
+            self._validation[status] += 1
+            self._journal('validation', callId=call.call_id, status=status,
+                          accepted=_number(accepted), rejected=_number(rejected))
+        self._emit_if_due()
+
+    def set_translation_summary(self, summary):
+        with self._lock:
+            self._translation_summary = {k: _number(summary.get(k)) for k in ('total', 'succeeded', 'failed', 'skipped', 'pending')}
+            self._journal('translation_summary', **self._translation_summary)
+
+    def first_paragraph_completed(self):
+        with self._lock:
+            if self._first_paragraph_ms is None:
+                self._first_paragraph_ms = max(0, (self.clock() - self._started_at) * 1000)
+                self._journal('first_paragraph_completed')
 
     def record_stage(self, name: str, seconds: float) -> None:
         if not isinstance(name, str) or not isinstance(seconds, (int, float)) or not math.isfinite(seconds) or seconds < 0:
@@ -384,6 +532,7 @@ class TaskMetricsCollector:
             metrics = empty_metrics()
             metrics["requests"] = {**self._requests.snapshot(),
                 "byKind": {kind: stats.snapshot() for kind, stats in self._requests_by_kind.items()},
+                "byPurpose": {kind: stats.snapshot() for kind, stats in self._requests_by_purpose.items()},
                 "qps10s": round(len(self._attempt_starts) / 10.0, 2),
             }
             metrics["localCache"] = {
@@ -395,7 +544,12 @@ class TaskMetricsCollector:
             }
             metrics["providerCache"] = self._usage.cache_snapshot()
             metrics["tokens"] = {**self._usage.snapshot(),
-                                 "byKind": {kind: totals.snapshot() for kind, totals in self._usage_by_kind.items()}}
+                                 "byKind": {kind: totals.snapshot() for kind, totals in self._usage_by_kind.items()},
+                                 "byPurpose": {kind: totals.snapshot() for kind, totals in self._usage_by_purpose.items()}}
+            metrics['validation'] = dict(self._validation)
+            metrics['translationSummary'] = self._translation_summary
+            metrics['firstParagraphMs'] = self._first_paragraph_ms
+            metrics['journal'] = {'enabled': self.journal is not None, 'errors': self._journal_errors}
             metrics["stageDurations"] = {name: round(seconds, 6) for name, seconds in self._stage_durations.items()}
             metrics["throughput"] = {
                 "paragraphsPerMinute": (
@@ -406,7 +560,7 @@ class TaskMetricsCollector:
             metrics["referencesSkipped"] = self._references_skipped
             metrics["activity"] = {
                 **self._activity,
-                "oldestRequestSeconds": max(0, now - min(self._active_requests)) if self._active_requests else None,
+                "oldestRequestSeconds": max(0, now - min(self._active_requests.values())) if self._active_requests else None,
                 "lastParagraphCompletedAgoSeconds": max(0, now - self._last_paragraph_completed)
                     if self._last_paragraph_completed is not None else None,
             }

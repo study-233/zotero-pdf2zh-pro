@@ -3,7 +3,7 @@ import { config, version } from "../../package.json";
 const MAX_PACKAGE = 20 * 1024 * 1024;
 const MAX_LOG = 2 * 1024 * 1024;
 const numeric = new Set(
-    "schemaVersion averageLatencyMs p95LatencyMs qps10s stageElapsedSeconds promptTokens completionTokens totalTokens succeeded failed pending translated attempt attempts revision stageCurrent stageTotal stageProgress overallProgress currentPage selectedPage completedPages totalPages fontParseCount fontCacheHits fontObject operations idleSeconds latencyMs statusCode input output total active retries count pid cpuPercent rssBytes parentCpuPercent parentRssBytes exitCode elapsedSeconds droppedLogRecords line qps poolSize page skipped selected checked passed corrected unchecked notSelected requestsUsed requestLimit paragraphLimit hits misses hitRate hitTokens missTokens reasoning visibleOutputChars".split(
+    "accepted partial rejected firstParagraphMs schemaVersion averageLatencyMs p95LatencyMs qps10s stageElapsedSeconds promptTokens completionTokens totalTokens succeeded failed cancelled pending translated attempt attempts revision stageCurrent stageTotal stageProgress overallProgress currentPage selectedPage completedPages totalPages fontParseCount fontCacheHits fontObject operations idleSeconds latencyMs statusCode input output total active retries repairs count pid cpuPercent rssBytes parentCpuPercent parentRssBytes exitCode elapsedSeconds droppedLogRecords line qps poolSize page skipped selected checked passed corrected unchecked notSelected requestsUsed requestLimit paragraphLimit hits misses hitRate hitTokens missTokens reasoning visibleOutputChars".split(
         " ",
     ),
 );
@@ -13,7 +13,7 @@ const strings = new Set(
     ),
 );
 const containers = new Set(
-    "tasks records frames environment progress requestedConfiguration effectiveConfiguration translationSummary qualitySummary metrics requests tokens byKind translation review initialization localCache providerCache".split(
+    "tasks records frames environment progress requestedConfiguration effectiveConfiguration translationSummary qualitySummary metrics requests tokens byKind byPurpose translation review initialization term_extraction validation localCache providerCache".split(
         " ",
     ),
 );
@@ -21,7 +21,7 @@ const labels = new Set(
     "provider service model sourceLang targetLang".split(" "),
 );
 const errorTypes = new Set(
-    "ReadTimeout ConnectTimeout TimeoutError APITimeoutError RateLimitError APIConnectionError APIStatusError AuthenticationError PermissionDeniedError NotFoundError BadRequestError InternalServerError InvalidTranslation UnprocessedParagraph RuntimeError ValueError CancelledError ConnectionError".split(
+    "ReadTimeout ConnectTimeout TimeoutError APITimeoutError RateLimitError APIConnectionError APIStatusError AuthenticationError PermissionDeniedError NotFoundError BadRequestError InternalServerError InvalidTranslation UnprocessedParagraph RuntimeError ValueError CancelledError ConnectionError CodexError ChatGPTError".split(
         " ",
     ),
 );
@@ -185,7 +185,7 @@ export function diagnosticSummary(task: Record<string, any>): string {
             "ConnectTimeout",
         ].reduce((sum, key) => sum + (errors[key] || 0), 0);
         lines.push(
-            `模型请求（含初始化和重试）：尝试=${requests.attempts ?? "未知"}，成功=${requests.succeeded ?? "未知"}，失败=${requests.failed ?? "未知"}，重试=${requests.retries ?? "未知"}，429=${requests.statusCodes ? (codes["429"] ?? 0) : "未记录"}，超时=${requests.errorTypes ? timeouts : "未记录"}`,
+            `模型请求（含初始化和重试）：尝试=${requests.attempts ?? "未知"}，成功=${requests.succeeded ?? "未知"}，失败=${requests.failed ?? "未知"}，取消=${requests.cancelled ?? "未记录"}，重试=${requests.retries ?? "未知"}，批次修复=${requests.repairs ?? "未记录"}，429=${requests.statusCodes ? (codes["429"] ?? 0) : "未记录"}，超时=${requests.errorTypes ? timeouts : "未记录"}`,
         );
         if (codes["429"])
             lines.push(

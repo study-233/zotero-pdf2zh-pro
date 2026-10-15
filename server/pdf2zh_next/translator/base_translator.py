@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import re
+import uuid
 from babeldoc.translator.validation import InvalidTranslation
 
 from abc import ABC
@@ -141,7 +142,8 @@ class BaseTranslator(ABC):
 
     def _translate_cached(self, text, ignore_cache, rate_limit_params, method):
         self.translate_call_count += 1
-        params = rate_limit_params or {}
+        params = dict(rate_limit_params or {})
+        params.setdefault('metric_operation_id', uuid.uuid4().hex)
         validate = params.get("validate_output", lambda value: None)
         cache_output_if = params.get("cache_output_if", lambda value: True)
         use_cache = not (self.ignore_cache or ignore_cache)
@@ -175,9 +177,17 @@ class BaseTranslator(ABC):
                 if params.get("on_attempt"):
                     params["on_attempt"]()
             try:
-                translation = method(text, rate_limit_params)
-                validate(translation)
+                try:
+                    translation = method(text, params)
+                finally:
+                    context = params.get("metric_call_context")
+                    if isinstance(context, dict):
+                        context["last_call"] = params.get("_metric_last_call")
+                validation = validate(translation)
             except InvalidTranslation:
+                if self.metrics_collector is not None:
+                    self.metrics_collector.record_validation(params.get('_metric_last_call'), 'rejected')
+                params['metric_retry_cause'] = 'output_validation'
                 budget = params.get("request_budget")
                 if generation or (budget is not None and (
                     params.get("batch_size", 1) > 1 or not budget.available()
@@ -186,6 +196,11 @@ class BaseTranslator(ABC):
                 if self.metrics_collector is not None:
                     self.metrics_collector.retry_scheduled(kind=params.get("metric_kind", "translation"))
                 continue
+            if self.metrics_collector is not None:
+                partial = hasattr(validation, 'complete') and not validation.complete
+                self.metrics_collector.record_validation(params.get('_metric_last_call'), 'partial' if partial else 'accepted',
+                    accepted=len(validation.valid_outputs) if hasattr(validation, 'valid_outputs') else None,
+                    rejected=len(validation.invalid_outputs) if hasattr(validation, 'invalid_outputs') else None)
             if use_cache and not params.get("defer_cache_write", False):
                 self._commit_validated_cache(text, translation, params)
             return translation

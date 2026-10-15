@@ -10,6 +10,30 @@ import server
 
 
 class GlossaryOptionsTests(unittest.TestCase):
+    def test_automatic_terms_fill_gaps_without_replacing_manual_terms(self):
+        from babeldoc.format.pdf.translation_config import SharedContextCrossSplitPart
+        from babeldoc.glossary import Glossary, GlossaryEntry
+        shared = SharedContextCrossSplitPart()
+        manual = Glossary("manual", [GlossaryEntry("World  Model", "人工指定译法")])
+        shared.initialize_glossaries([manual])
+        shared.add_raw_extracted_term_pair("world model", "自动译法")
+        shared.add_raw_extracted_term_pair("training", "训练")
+        shared.finalize_auto_extracted_glossary()
+        for enabled in (True, False):
+            glossaries = shared.get_glossaries_for_translation(enabled)
+            self.assertIs(glossaries[0], manual)
+            pairs = [pair for g in glossaries for pair in g.get_active_entries_for_text("World model training")]
+            self.assertEqual(pairs, [("World  Model", "人工指定译法"), ("training", "训练")])
+
+    def test_word_boundaries_reject_substrings_and_preserve_cjk_and_styled_terms(self):
+        from babeldoc.glossary import Glossary, GlossaryEntry
+        glossary = Glossary("terms", [GlossaryEntry("AI", "人工智能"), GlossaryEntry("模型", "model")])
+        for text in ("training", "retail", "AI_model", "AI2"):
+            self.assertEqual(glossary.get_active_entries_for_text(text), [], text)
+        for text in ("(AI)", "ai-based", "用AI训练", "<style id='1'>AI</style>"):
+            self.assertEqual(glossary.get_active_entries_for_text(text), [("AI", "人工智能")], text)
+        self.assertEqual(glossary.get_active_entries_for_text("这个模型很好"), [("模型", "model")])
+
     def test_old_requests_keep_review_disabled_and_glossary_empty(self):
         self.assertEqual(server.quality_request_options({}), {"semantic_review": False, "glossary_entries": []})
 

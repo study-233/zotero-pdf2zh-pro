@@ -1,0 +1,17 @@
+{
+  "provider": "openai",
+  "model": "replace-with-model-id",
+  "base_url": "https://api.example.org/v1",
+  "protocol": "chat_completions",
+  "api_key_env": "TRANSLATION_BENCH_API_KEY",
+  "parameters": {
+    "temperature": 0,
+    "max_tokens": 4096
+  },
+  "timeout_seconds": 120,
+  "limits": {
+    "max_requests": 283,
+    "max_seconds": 7200
+  },
+  "cache": "cold"
+}

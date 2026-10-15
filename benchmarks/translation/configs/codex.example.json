@@ -1,0 +1,11 @@
+{
+  "provider": "codex",
+  "model": "replace-with-available-model-id",
+  "reasoning_effort": "low",
+  "timeout_seconds": 120,
+  "limits": {
+    "max_requests": 283,
+    "max_seconds": 7200
+  },
+  "cache": "cold"
+}

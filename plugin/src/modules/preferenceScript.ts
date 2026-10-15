@@ -1,3 +1,4 @@
+import { chatgptAccountRequest, openChatGPTPage } from "./chatgptAccount";
 import { exportDiagnostics } from "./diagnostics";
 import { registerAttachmentNamingPreferences } from "./attachmentNamingPreferences";
 import { registerSelectionPreferences } from "./selectionPreferences";
@@ -13,7 +14,12 @@ import {
     assertSupportedProfile,
     type LLMApiData,
 } from "./llmApiManager";
-import { loadProfiles, saveProfiles, removeProfile } from "./profileStore";
+import {
+    loadProfiles,
+    saveProfiles,
+    removeProfile,
+    notifyCodexRetirement,
+} from "./profileStore";
 import {
     testProfile,
     fetchProfileModelCatalog,
@@ -207,6 +213,18 @@ export async function registerPrefsScripts(window: Window) {
     void refreshServerVersion();
 }
 
+export function initializeProfileMigration() {
+    const profiles = loadProfiles();
+    notifyCodexRetirement(() =>
+        Zotero.alert(
+            Zotero.getMainWindow(),
+            config.addonName,
+            getString("profile-codex-removed"),
+        ),
+    );
+    return profiles;
+}
+
 function refreshProfiles(rebuildMenu = true) {
     refreshProfileManager();
     const win = addon.data.prefs?.window;
@@ -215,7 +233,7 @@ function refreshProfiles(rebuildMenu = true) {
         event.initEvent("profiles-changed", false, false);
         win.dispatchEvent(event);
     }
-    const profiles = loadProfiles();
+    const profiles = initializeProfileMigration();
     const select = element(
         "selectedApiKey",
     ) as unknown as XULMenuListElement | null;
@@ -249,9 +267,18 @@ function refreshProfiles(rebuildMenu = true) {
     );
 }
 
-function openProfileManager() {
+export function openChatGPTLogin() {
+    openProfileManager(true);
+}
+
+function openProfileManager(reloginChatGPT = false) {
     if (managerWindow && !managerWindow.closed) {
         managerWindow.focus();
+        if (reloginChatGPT) {
+            const event = managerWindow.document.createEvent("Event");
+            event.initEvent("chatgpt-relogin", false, false);
+            managerWindow.dispatchEvent(event);
+        }
         return;
     }
     // A same-version reinstall may otherwise reuse the previous chrome document.
@@ -264,6 +291,7 @@ function openProfileManager() {
         "",
         `chrome,centerscreen,resizable,dialog=no,width=${width},height=${height}`,
         {
+            reloginChatGPT,
             presets: PROVIDER_PRESETS.map((preset) => ({
                 ...preset,
                 label: Zotero.locale?.startsWith("zh")
@@ -274,12 +302,14 @@ function openProfileManager() {
             resolvePreset: (api: LLMApiData) => resolveProviderPreset(api)?.id,
             message: (key: string, args?: Record<string, unknown>) =>
                 getString(`profile-${key}`, { args }),
-            list: loadProfiles,
+            list: initializeProfileMigration,
             current: () => String(getPref("selectedApiKey") || ""),
             test: testProfile,
             listModels: fetchProfileModelCatalog,
             discoverCodex: discoverProfileCodex,
             codexDiscoverySupported,
+            chatgptAccount: chatgptAccountRequest,
+            openChatGPTPage,
             save: (value: LLMApiData, use: boolean) => {
                 assertSupportedProfile(value);
                 const profiles = loadProfiles();
@@ -292,8 +322,9 @@ function openProfileManager() {
                 );
                 if (value.key && index < 0)
                     throw new Error(getString("profile-deleted"));
-                if (index >= 0) profiles[index] = api;
-                else profiles.push(api);
+                if (index >= 0) {
+                    profiles[index] = api;
+                } else profiles.push(api);
                 saveProfiles(profiles);
                 if (use) setPref("selectedApiKey", api.key);
                 status("apiResult", "");

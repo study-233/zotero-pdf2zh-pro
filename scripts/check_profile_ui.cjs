@@ -14,7 +14,7 @@ const build = path.join(root, "plugin/build/addon");
 const zip = new Zip(path.join(root, "plugin/build/zotero-pdf2zh-pro.xpi"));
 const markup = zip.readAsText("content/llmApiManager.xhtml");
 const resources = [...markup.matchAll(/(?:href|src)="([^"?]+)\?v=(\d+)"/g)];
-assert.equal(resources.length, 3, "CSS and both scripts must carry a build ID");
+assert.equal(resources.length, 4, "CSS and all scripts must carry a build ID");
 const buildId = markup.match(/data-build="(\d+)"/)?.[1];
 assert.ok(buildId);
 for (const [_, name, revision] of resources) {
@@ -227,6 +227,11 @@ async function checkLayout(page, width, height) {
               current: () => currentKey,
               test: (api, signal) => perform("test", api, signal),
               listModels: (api, signal) => perform("models", api, signal),
+              chatgptAccount: async (kind) => kind === "usage"
+                ? {usage: {calls: 12, inputTokens: 12345, outputTokens: 2345, cachedInputTokens: 128, unknownUsageCalls: 1}}
+                : {account: {authenticated: true, plan_usage_authorized: true, account_label: "reader@example.test", account_fingerprint: "a".repeat(64)}, login: {status: "idle"}},
+              openChatGPTPage: () => {},
+              hasCodexRollback: () => false,
               codexDiscoverySupported: async () => true,
               discoverCodex: async () => ({
                 source: "desktop", version: "0.162.0-alpha.17.2", compatible: true,
@@ -440,6 +445,21 @@ async function checkLayout(page, width, height) {
         await page.setViewportSize({ width, height: 780 });
         await checkLayout(page, width, 780);
         await page.screenshot({ path: path.join(output, `${language}-codex-${width}.png`) });
+      }
+      await page.evaluate(() => {
+        entries.push({key: "chatgpt", name: "ChatGPT", service: "chatgpt", model: "gpt-6-luna", accountId: "a".repeat(64)});
+        dispatchEvent(new Event("profiles-changed"));
+      });
+      await page.setViewportSize({width: 1100, height: 780});
+      await select("ChatGPT");
+      await page.waitForFunction(() => document.getElementById("chatgpt-account-status").textContent.includes("reader@example.test"));
+      assert.equal(await page.isVisible("#api-key-field"), false);
+      assert.equal(await page.isVisible("#chatgpt-manage-usage"), true);
+      for (const width of [1100, 400]) {
+        await page.setViewportSize({width, height: 780});
+        await checkLayout(page, width, 780);
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await page.screenshot({path: path.join(output, `${language}-chatgpt-${width}.png`)});
       }
       // Capture a fresh form, rather than the deliberately dirty regression fixtures.
       await page.reload();

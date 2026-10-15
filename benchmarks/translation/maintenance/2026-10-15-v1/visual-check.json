@@ -1,0 +1,13 @@
+{
+  "method": "All 97 experimental mono pages visually inspected; source/full translation read. One dual representative visually inspected, all dual halves checked offline against mono/source renders.",
+  "translation_characters_identical": 97,
+  "max_coordinate_delta_pt": 0.0001220703125,
+  "max_mean_rgb_difference": 0.003422459893048128,
+  "max_changed_pixel_fraction": 0.00011355383904403513,
+  "source_pixel_identical": 97,
+  "scope": "97 experiment pages only; separate 20 regular PDF page reviews retain their own visual evidence",
+  "artifacts": {
+    ".local-dev/translation-bench/maintenance-20261015/dual-geometry-check.json": "f4b1f4571c698dcb929951dc88284a8507251690fe775623dde8dad1a905338b",
+    ".local-dev/translation-bench/maintenance-20261015/dual-pixel-check.json": "7a9895c5c882c15d195990f39d3a4d8adfd974909ac42d525a54586c9855e589"
+  }
+}

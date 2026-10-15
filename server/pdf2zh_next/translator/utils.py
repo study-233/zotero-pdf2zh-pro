@@ -24,12 +24,11 @@ def get_rate_limiter(qps: int | None) -> BaseRateLimiter | None:
 def _create_translator_instance(
     settings: SettingsModel,
     translator_config,
-    rate_limiter: BaseRateLimiter | None,
     enforce_glossary_support: bool = True,
     term_extraction: bool = False,
     metrics_collector=None,
     check_cancelled=None,
-) -> (BaseTranslator, int | None, int | None):
+) -> BaseTranslator:
     """Create translator instance from translator_config.
 
     Args:
@@ -58,11 +57,25 @@ def _create_translator_instance(
                 raise TranslateEngineSettingError(
                     f"{translate_engine_type} does not support glossary. Please choose a different translator or remove the glossary."
                 )
+            translator_type = getattr(module, f"{translate_engine_type}Translator")
+            prefix = "term_" if term_extraction else ""
+            qps = getattr(settings.translation, prefix + "qps") or settings.translation.qps
+            recommended_qps = getattr(translator_type, "pdf2zh_next_recommended_qps", None)
+            if recommended_qps:
+                qps = min(qps, recommended_qps) if qps and qps > 0 else recommended_qps
+                setattr(settings.translation, prefix + "qps", qps)
+                logger.info("Effective %sqps: %s", prefix, qps)
+            recommended_pool = getattr(translator_type, "pdf2zh_next_recommended_pool_max_workers", None)
+            if recommended_pool:
+                pool = (getattr(settings.translation, prefix + "pool_max_workers")
+                        or settings.translation.pool_max_workers or recommended_pool)
+                pool = min(pool, recommended_pool)
+                setattr(settings.translation, prefix + "pool_max_workers", pool)
+                logger.info("Effective %spool max workers: %s", prefix, pool)
+            rate_limiter = get_rate_limiter(qps)
             temp_settings = settings.model_copy()
             temp_settings.translate_engine_settings = translator_config
-            translator = getattr(module, f"{translate_engine_type}Translator")(
-                temp_settings, rate_limiter
-            )
+            translator = translator_type(temp_settings, rate_limiter)
             if metrics_collector is not None:
                 translator.set_metrics_collector(metrics_collector)
             if check_cancelled is not None and hasattr(translator, "check_cancelled"):
@@ -71,22 +84,13 @@ def _create_translator_instance(
                 configure = getattr(translator, "configure_for_term_extraction", None)
                 if callable(configure):
                     configure()
-            recommended_qps = None
-            recommended_pool_max_workers = None
-            if getattr(translator, "pdf2zh_next_recommended_qps", None):
-                recommended_qps = translator.pdf2zh_next_recommended_qps
-            if getattr(translator, "pdf2zh_next_recommended_pool_max_workers", None):
-                recommended_pool_max_workers = (
-                    translator.pdf2zh_next_recommended_pool_max_workers
-                )
-
             # Health check: perform a short translation ignoring cache to validate translator availability
             health_check = getattr(translator, "health_check", None)
             if callable(health_check):
                 translator.health_check()
             else:
                 translator.translate("Hello", ignore_cache=True)
-            return translator, recommended_qps, recommended_pool_max_workers
+            return translator
 
     raise ValueError("No translator found")
 
@@ -94,24 +98,13 @@ def _create_translator_instance(
 def get_translator(settings: SettingsModel, *, metrics_collector=None, check_cancelled=None) -> BaseTranslator:
     """Get main translator instance according to translate_engine_settings."""
     translator_config = settings.translate_engine_settings
-    rate_limiter = get_rate_limiter(settings.translation.qps)
-    translator, recommended_qps, recommended_pool_max_workers = (
-        _create_translator_instance(
-            settings=settings,
-            translator_config=translator_config,
-            rate_limiter=rate_limiter,
-            enforce_glossary_support=True,
-            metrics_collector=metrics_collector,
-            check_cancelled=check_cancelled,
-        )
+    return _create_translator_instance(
+        settings=settings,
+        translator_config=translator_config,
+        enforce_glossary_support=True,
+        metrics_collector=metrics_collector,
+        check_cancelled=check_cancelled,
     )
-    if recommended_qps:
-        settings.translation.qps = recommended_qps
-        logger.info(f"Updated qps to {recommended_qps}")
-    if recommended_pool_max_workers:
-        settings.translation.pool_max_workers = recommended_pool_max_workers
-        logger.info(f"Updated pool max workers to {recommended_pool_max_workers}")
-    return translator
 
 
 def get_term_translator(settings: SettingsModel, *, metrics_collector=None, check_cancelled=None) -> BaseTranslator | None:
@@ -124,25 +117,11 @@ def get_term_translator(settings: SettingsModel, *, metrics_collector=None, chec
     if translator_config is None:
         return None
 
-    # Prefer dedicated term_qps, fallback to main qps when not set
-    term_qps = settings.translation.term_qps or settings.translation.qps
-    rate_limiter = get_rate_limiter(term_qps)
-
-    translator, recommended_qps, recommended_pool_max_workers = (
-        _create_translator_instance(
-            settings=settings,
-            translator_config=translator_config,
-            rate_limiter=rate_limiter,
-            enforce_glossary_support=False,
-            term_extraction=True,
-            metrics_collector=metrics_collector,
-            check_cancelled=check_cancelled,
-        )
+    return _create_translator_instance(
+        settings=settings,
+        translator_config=translator_config,
+        enforce_glossary_support=False,
+        term_extraction=True,
+        metrics_collector=metrics_collector,
+        check_cancelled=check_cancelled,
     )
-    if recommended_qps:
-        settings.translation.term_qps = recommended_qps
-        logger.info(f"Updated term qps to {recommended_qps}")
-    if recommended_pool_max_workers:
-        settings.translation.term_pool_max_workers = recommended_pool_max_workers
-        logger.info(f"Updated term pool max workers to {recommended_pool_max_workers}")
-    return translator

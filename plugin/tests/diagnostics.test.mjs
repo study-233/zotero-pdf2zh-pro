@@ -32,6 +32,22 @@ const module = await import(
 );
 const { safeDiagnostic, diagnosticZip, exportDiagnostics } = module;
 
+test("cancelled requests remain separate in diagnostic export and summary", () => {
+    const payload = {
+        metrics: {
+            requests: { attempts: 1, succeeded: 0, failed: 0, cancelled: 1 },
+        },
+    };
+    assert.equal(safeDiagnostic(payload).metrics.requests.cancelled, 1);
+    assert.match(module.diagnosticSummary(payload), /取消=1/);
+});
+
+test("batch repair calls remain separate from provider retries", () => {
+    const payload = { metrics: { requests: { retries: 1, repairs: 7 } } };
+    assert.equal(safeDiagnostic(payload).metrics.requests.repairs, 7);
+    assert.match(module.diagnosticSummary(payload), /批次修复=7/);
+});
+
 function readZip(zip, entry) {
     const result = spawnSync(
         process.env.PYTHON ||

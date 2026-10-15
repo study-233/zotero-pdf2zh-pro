@@ -108,8 +108,8 @@ class ServiceMetricsTests(unittest.TestCase):
             clock.advance(7)
             return {}
 
-        def recovery(*args):
-            value = TranslationRecovery(*args)
+        def recovery(*args, **kwargs):
+            value = TranslationRecovery(*args, **kwargs)
             databases.append(value)
             close = value.close
 

@@ -682,6 +682,7 @@ class ILTranslatorLLMOnly:
         completed_indices = set()
         fallback_indices = set()
         restored_indices = set()
+        call_context = {}
         try:
             inputs = []
             llm_translate_trackers = []
@@ -776,11 +777,12 @@ class ILTranslatorLLMOnly:
                     "metric_kind": "translation",
                     "batch_size": len(inputs),
                     "paragraph_ids": [item[2].debug_id for item in inputs],
+                    "metric_call_context": call_context,
                     "check_cancelled": self.translation_config.raise_if_cancelled,
                     "request_json_mode": True,
                     "defer_cache_write": True,
                     "validate_output": inspect_output,
-                    "cache_output_if": lambda value: not inspect_output(value).invalid_outputs,
+                    "cache_output_if": lambda value: inspect_output(value).complete,
                     "on_attempt": lambda: self.translation_config.recovery.attempt(
                         [item[2] for item in inputs], final_input
                     ) if getattr(self.translation_config, "recovery", None) is not None else None,
@@ -891,6 +893,8 @@ class ILTranslatorLLMOnly:
                             paragraph_token_count=paragraph_token_count,
                             title_paragraph=title_paragraph,
                             local_title_paragraph=local_title_paragraph,
+                            parent_call=call_context.get("last_call"),
+                            retry_cause="batch_partial",
                         )
                         fallback_indices.add(id_)
                         finalizer.add_future(id_, future)
@@ -957,6 +961,8 @@ class ILTranslatorLLMOnly:
                     paragraph_token_count=paragraph_token_count,
                     title_paragraph=title_paragraph,
                     local_title_paragraph=local_title_paragraph,
+                    parent_call=call_context.get("last_call"),
+                    retry_cause="batch_fallback",
                 )
                 if finalizer is not None:
                     finalizer.add_future(index, future)

@@ -59,6 +59,47 @@
                         data-i18n="retired"
                         hidden="hidden"
                     />
+                    <section id="chatgpt-account" class="field" hidden="hidden">
+                        <p
+                            id="chatgpt-account-status"
+                            role="status"
+                            aria-live="polite"
+                        />
+                        <div class="actions">
+                            <button
+                                id="chatgpt-login"
+                                type="button"
+                                data-i18n="chatgpt-login"
+                            />
+                            <button
+                                id="chatgpt-switch"
+                                type="button"
+                                data-i18n="chatgpt-switch"
+                            />
+                            <button
+                                id="chatgpt-logout"
+                                type="button"
+                                data-i18n="chatgpt-logout"
+                            />
+                            <button
+                                id="chatgpt-cancel"
+                                type="button"
+                                data-i18n="chatgpt-cancel"
+                                hidden="hidden"
+                            />
+                            <button
+                                id="chatgpt-refresh"
+                                type="button"
+                                data-i18n="chatgpt-refresh"
+                            />
+                        </div>
+                        <p id="chatgpt-notice" role="status" />
+                        <button
+                            id="chatgpt-manage-usage"
+                            type="button"
+                            data-i18n="chatgpt-manage-usage"
+                        />
+                    </section>
                     <p id="account-hint" class="hint" hidden="hidden" />
                     <h3 class="section-title" data-i18n="basic" />
                     <div class="field">
@@ -286,12 +327,10 @@
                 role="menuitem"
                 data-action="copy"
                 data-i18n="copy"
-            /><button
-                role="menuitem"
-                data-action="top"
-                data-i18n="top"
-            /><button role="menuitem" data-action="remove" data-i18n="remove" />
+            /><button role="menuitem" data-action="top" data-i18n="top" />
+            <button role="menuitem" data-action="remove" data-i18n="remove" />
         </div>
+        <script charset="utf-8" src="chatgptPanel.js?v=__profileUIBuild__" />
         <script charset="utf-8" src="profileEditor.js?v=__profileUIBuild__" />
         <script charset="utf-8" src="profileManager.js?v=__profileUIBuild__" />
     </body>

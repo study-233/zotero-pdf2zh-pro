@@ -944,6 +944,27 @@ class Typesetting:
             return initial_scale, None
 
         box = paragraph.box
+        native_cell = next(
+            (
+                layout.box
+                for layout in page.page_layout
+                if paragraph.layout_label == "wired_table_cell"
+                and layout.class_name == "wired_table_cell"
+                and layout.id == paragraph.layout_id
+            ),
+            None,
+        )
+        if native_cell:
+            # Ruled cells have hard boundaries; the text bounding box does not
+            # include the usable space below the last source line.
+            cell_box = Box(
+                x=max(box.x, native_cell.x + 1),
+                y=native_cell.y + 1,
+                x2=native_cell.x2 - 1,
+                y2=min(box.y2, native_cell.y2 - 1),
+            )
+            if cell_box.x < cell_box.x2 and cell_box.y < cell_box.y2:
+                box = cell_box
         scale = initial_scale
         line_skip = 1.50 if self.is_cjk else 1.3
         min_scale = 0.1
@@ -994,7 +1015,7 @@ class Typesetting:
             else:
                 scale -= 0.1
 
-            if scale < 0.7:
+            if scale < 0.7 and not native_cell:
                 space_expanded = False  # 标记是否成功扩展了空间
 
                 if expand_space_flag == 0:
@@ -1383,9 +1404,20 @@ class Typesetting:
             else:
                 width_before_next_break_point = 0
 
+            # Table borders cannot accommodate hanging punctuation. Reserve
+            # trailing punctuation with the preceding character where possible.
+            trailing_width = 0
+            bounded_cell = paragraph.layout_label == "wired_table_cell"
+            if bounded_cell and not unit.is_hung_punctuation:
+                for following in typesetting_units[i + 1 :]:
+                    if not following.is_hung_punctuation:
+                        break
+                    trailing_width += following.width * scale
+
             # 如果当前行放不下这个元素，换行
-            if not unit.is_hung_punctuation and (
+            if (bounded_cell or not unit.is_hung_punctuation) and (
                 (current_x + unit_width > box.x2)
+                or (current_x + unit_width + trailing_width > box.x2)
                 or (
                     use_english_line_break
                     and current_x + unit_width + width_before_next_break_point > box.x2
@@ -1419,6 +1451,11 @@ class Typesetting:
 
             # 放置当前单元
             relocated_unit = unit.relocate(current_x, current_y, scale)
+            if bounded_cell and (
+                relocated_unit.box.x2 > box.x2 + 0.01
+                or relocated_unit.box.y < box.y - 0.01
+            ):
+                all_units_fit = False
             typeset_units.append(relocated_unit)
 
             # 添加当前单元的高度到当前行高度列表

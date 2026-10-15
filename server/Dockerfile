@@ -24,7 +24,7 @@ COPY server/babeldoc ./babeldoc
 COPY server/pdf2zh_next ./pdf2zh_next
 COPY server/rapidocr_onnxruntime ./rapidocr_onnxruntime
 COPY server/THIRD_PARTY_NOTICES.md ./
-COPY server/service_launcher.py server/diagnostics.py server/task_runtime.py server/server.py server/task_manager.py server/pdf2zh_next_service.py server/observability.py server/provider_models.py server/codex_client.py server/codex_discovery.py server/glossary_manager.py server/glossary_catalog.py server/translation_memory.py server/text_translation.py server/selection_cache.py server/maintenance.py ./
+COPY server/service_launcher.py server/diagnostics.py server/task_runtime.py server/server.py server/task_manager.py server/pdf2zh_next_service.py server/observability.py server/provider_models.py server/codex_client.py server/codex_discovery.py server/chatgpt_auth.py server/chatgpt_client.py server/chatgpt_routes.py server/chatgpt_usage.py server/glossary_manager.py server/glossary_catalog.py server/translation_memory.py server/text_translation.py server/selection_cache.py server/maintenance.py ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 

@@ -1,0 +1,324 @@
+{
+  "schema": 1,
+  "version": "exposure-20261015-v1",
+  "dataset": "cs-en-zh-v2",
+  "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+  "scope": "42 saved run manifests; no claim about provider training data or unsaved historical calls",
+  "frozen_text_sample_ids_reviewed": [
+    "C1-01",
+    "C1-05",
+    "C2-04",
+    "C2-08",
+    "C3-05",
+    "C3-09",
+    "C4-02",
+    "C4-08",
+    "C5-03",
+    "C5-09",
+    "C6-02",
+    "C6-06",
+    "C7-03",
+    "C7-07",
+    "C8-06",
+    "C8-10",
+    "dp-01",
+    "dp-03",
+    "dp-07",
+    "duckdb-01",
+    "duckdb-03",
+    "duckdb-07",
+    "kll-01",
+    "kll-03",
+    "kll-07",
+    "nerf-01",
+    "nerf-03",
+    "nerf-07",
+    "raft-01",
+    "raft-03",
+    "raft-07",
+    "rustbelt-01",
+    "rustbelt-03",
+    "rustbelt-07",
+    "t5-01",
+    "t5-03",
+    "t5-07",
+    "vegalite-01",
+    "vegalite-03",
+    "vegalite-07"
+  ],
+  "holdout_exposures": [
+    {
+      "paper": "hai",
+      "source_sha256": "82fff584c6b986f573608361478e93447538c6ce707e4b9b04d45d584272ea03",
+      "pages": [
+        3
+      ],
+      "first_observed_run_date": "2026-10-14",
+      "registered_at": "2026-10-15",
+      "original_split_unchanged": true,
+      "direct_overlap_sample_ids": [
+        "hai-04",
+        "hai-07",
+        "hai-10"
+      ],
+      "paper_level_affected_sample_ids": [
+        "hai-01",
+        "hai-02",
+        "hai-03",
+        "hai-04",
+        "hai-05",
+        "hai-06",
+        "hai-07",
+        "hai-08",
+        "hai-09",
+        "hai-10"
+      ],
+      "formal_anchor_pages": [
+        2,
+        8,
+        12
+      ],
+      "policy": "Page 3 is a quick table page, not one of the formal 48 anchors. Entire paper conservatively excluded from claims of unseen acceptance; do not silently move or replace frozen samples.",
+      "evidence": [
+        {
+          "run": ".local-dev/translation-bench/chatgpt-production-20261014/pdf-quick-fixed",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "5c5428d82fcf9b2b72871c4f4d1e38d185e8861518878ba28cf91f4454af9341",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/01-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4ed313b947288dcb18f6742ffaef0eda51be7704389e86816cf4423b03c4a0e2",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/01-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "acb0b6d549ad5e57ae06586c73ff220f1efd31ea8a28f72070651c71db0e9e25",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "b30f92ea3fa21e987c45670249aa36bed5c5ed7fdfdb205a4927828e684d684e",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/02-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "6c472cd189aad32c2f0d5cbe0d31b07cf6c9238f8f25c7876d6f4d042f556be1",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-codex",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "9160ade0b9ebb559b8c2ccb0f083018699b93ac3c1b4349381bfbfff25f09ea0",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/direct-validation-20261014-03/03-direct",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "110edb2d414e0d1ca8af10bcd2fc2c2a639fd9842caee63fb53f752a0e304381",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-01",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "7e84b59e576190e4c85b4ef6e457f8d582095e4c189bfc5f64be8cf3501f7920",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-02",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "063b7a460ab56804d72e6104c407ca34dc2b573a07f68ffddedc383d1267e2f6",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-03",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "2a4d8b36c1ce713df1daf5bddafa17f0e321fa3b530d66bed2563852c30d84fe",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/live-20261014/pdf-quick-04",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "eff9fcea2e45eaa72a9f0318f66523dd0cc186ee62dd842c8b6b059d3de52bb2",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/translation-bench/semantic-stability-20261014/candidates-02",
+          "job_id": "main:time-services--original:0",
+          "result_sha256": "9590323c4d42f6252550cb52e6dcd0f64a51475679b01e64f157cac68c65903b",
+          "mode": "selection-diagnostic",
+          "page": 3,
+          "block": 6
+        },
+        {
+          "run": ".local-dev/translation-bench/semantic-stability-20261014/candidates-02",
+          "job_id": "main:time-services--glossary:0",
+          "result_sha256": "50b47517a2492acf6eedf01421e0b314af707e8928d23530240831e151b95e38",
+          "mode": "selection-diagnostic",
+          "page": 3,
+          "block": 6
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-2",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "1ad08136ecd8ab618c5e029e7bb9776a123c3004ac1ca3852951217344e3e893",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-1-workers-4",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4723423e8965548d0baf2f8a384ddc5515f123392bdb9508a045f51ab7677ca8",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-2-workers-2",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "7348deb45afb0c56f48fb340aa4d8cee96b312ff68facedcb2169668f23ba8eb",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-2-workers-4",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "1518d80f73dc24f4cf8fd589cb267272bcee3260f009c5c6cd2fce2a9bb1030a",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/paired-01/round-3-workers-2",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "691eec3a537990bdf7a8c69695bd71c285460c7638e7056592c769f2e6b3941b",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-concurrency-20261015/retest-round-3-workers-4-01",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "4009ad1047b9c2fca155eba5db240e3d3dacdb5fa0b9b57f11fb7f7a8fc3ccaa",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-after-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "31ea1b506819ff2ef7054b696b2cdab04cd7719a649fd7ee55497a9b870e6642",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-after-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "8507b169b7bde8288447e1927a7965ea2b596333e6fb33360a1ed4f6b7839168",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-before-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "c8e9cec842f9f543e8964c67cf8a8a7d82874fdd8a91f79293bf61b1752496be",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-1-before-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "d885fc0234b23b999912c4bdeed985de2326df1a8fe68c61142284966f8c1f33",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-after-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "f0f4dfeeb53982bdd80ba2d23838fc7019922c38eaaed43d476c08c03e200a23",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-after-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "e5fd70ca63808e4593e564332b88e577d156e3960577432b12c0a3380198f02f",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-before-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "c1537640ede839874d49288f6a89ffae2cc3d272289ebd49d7d2673c0bc6ecdb",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-2-before-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "d710e29600f273dd41e8fe230b8c63392113658c187d88d048a5a0188d882fce",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "193d69c28873037287278494b1c63cf634f6f1c5bd06560705c59cfee1a51b39",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-after-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "75c744b4e4cbca1982e7b2746946d67c7d60d2d9c88313c1dbf6a2a9117bd0be",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-cold",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "dcbdec68dbdc73a21f83b69f1c32c02fda4cf1a9e6ebf36ed2c6d64bf6f96dad",
+          "mode": "pdf-output",
+          "page": 3
+        },
+        {
+          "run": ".local-dev/chatgpt-p1-connection/paired-01/round-3-before-warm",
+          "job_id": "main:hai-3:0",
+          "result_sha256": "b456a6f1e61ef6cf531ff394e9869d770ee47e70290500df747d4a0e3aa64b6f",
+          "mode": "pdf-output",
+          "page": 3
+        }
+      ]
+    }
+  ],
+  "no_observed_exposure_holdout_papers": [
+    "dapper",
+    "egg",
+    "faiss",
+    "gaussian",
+    "rag",
+    "spectre",
+    "stable"
+  ],
+  "attempted_without_output": [
+    {
+      "run": ".local-dev/translation-bench/chatgpt-production-20261014/pdf-quick",
+      "note": "No output; not evidence of successful model exposure"
+    },
+    {
+      "run": ".local-dev/translation-bench/semantic-stability-20261014/candidates-01",
+      "note": "No output; not evidence of successful model exposure"
+    }
+  ]
+}

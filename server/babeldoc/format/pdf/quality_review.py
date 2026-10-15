@@ -6,7 +6,7 @@ import threading
 from collections import Counter
 from dataclasses import dataclass, field
 
-from babeldoc.glossary_options import glossary_entries_for_language
+from babeldoc.glossary_options import glossary_entries_for_language, contains_glossary_term
 from babeldoc.translator.validation import InvalidTranslation, clean_json, validate_text
 
 
@@ -72,8 +72,7 @@ class QualityReview:
         return " ".join(text.split()).casefold()
 
     def _terms(self, candidate):
-        source = self._term_text(candidate.source)
-        return [row for row in self.glossary if self._term_text(row["source"]) in source]
+        return [row for row in self.glossary if contains_glossary_term(row["source"], candidate.source)]
 
     def _priority(self, candidate):
         if not candidate.is_body:

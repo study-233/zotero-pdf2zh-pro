@@ -1,5 +1,6 @@
 """Provider integration tests: no installed CLI, account or model calls required."""
 import tempfile
+import asyncio
 import signal
 import threading
 import unittest
@@ -55,6 +56,99 @@ class CodexProviderTests(unittest.TestCase):
     def translator(self, api=None):
         settings = create_runtime_settings({**self.payload, "llm_api": api or self.payload["llm_api"]})
         return CodexTranslator(settings, Mock())
+
+    def test_failed_and_cancelled_requests_retain_usage_without_success(self):
+        for error in (asyncio.CancelledError(), CodexError("codex_request_failed", "failed", 502)):
+            with self.subTest(error=type(error).__name__):
+                translator = self.translator()
+                collector = TaskMetricsCollector(task_id="codex", provider="codex", model=translator.model)
+                translator.set_metrics_collector(collector)
+                def fail(*args, **options):
+                    options["on_usage"]({"prompt_tokens": 100, "completion_tokens": 50})
+                    options["on_usage"]({"prompt_tokens": 100, "completion_tokens": 50})
+                    raise error
+                self.client.translate.side_effect = fail
+                with self.assertRaises(type(error)):
+                    translator.llm_translate("source")
+                metrics = collector.snapshot()
+                self.assertEqual(metrics["tokens"]["total"], 150)
+                self.assertEqual(metrics["tokens"]["availability"], "partial")
+                self.assertEqual(metrics["requests"]["succeeded"], 0)
+                self.assertEqual(metrics["requests"]["cancelled"], int(isinstance(error, asyncio.CancelledError)))
+                self.assertEqual(metrics["requests"]["failed"], int(not isinstance(error, asyncio.CancelledError)))
+                self.assertEqual(metrics["requests"]["active"], 0)
+                self.assertFalse(translator.cache.values)
+
+    def test_fatal_error_stops_shared_task_calls_but_not_a_new_task(self):
+        for code in ("codex_quota_exhausted", "codex_not_logged_in", "codex_model_unavailable",
+                     "codex_isolation_failed", "codex_invalid_reasoning", "codex_incompatible"):
+            with self.subTest(code=code):
+                self.client.reset_mock()
+                main, terms = self.translator(), self.translator()
+                terms.request_state = main.request_state
+                self.client.translate.side_effect = CodexError(code, "fatal")
+                with self.assertRaises(CodexError):
+                    main.llm_translate("first", ignore_cache=True)
+                self.client.translate.side_effect = None
+                for engine, kind in ((main, "translation"), (terms, "translation"), (main, "review")):
+                    with self.assertRaises(CodexError) as caught:
+                        engine.llm_translate("later", ignore_cache=True, rate_limit_params={"metric_kind": kind})
+                    self.assertEqual(caught.exception.code, code)
+                self.assertEqual(self.client.translate.call_count, 1)
+                self.assertEqual(self.translator().llm_translate("new task"), "样本量有限。")
+
+    def test_nonfatal_errors_do_not_stop_later_requests(self):
+        for code in ("codex_timeout", "codex_request_failed", "codex_process_exited"):
+            with self.subTest(code=code):
+                translator = self.translator()
+                self.client.translate.side_effect = CodexError(code, "temporary")
+                with self.assertRaises(CodexError):
+                    translator.llm_translate("first")
+                self.client.translate.side_effect = None
+                self.assertEqual(translator.llm_translate("second"), "样本量有限。")
+
+    def test_codex_qps_and_pool_are_capped_before_readiness_without_raising_user_limits(self):
+        from pdf2zh_next.translator import get_term_translator
+        for requested, expected in ((10, 2), (1, 1)):
+            with self.subTest(requested=requested):
+                settings = create_runtime_settings({**self.payload, "qps": requested, "pool_size": requested,
+                                                   "no_auto_extract_glossary": False})
+                def ready(*args, **kwargs):
+                    self.assertEqual(settings.translation.qps, expected)
+                    self.assertEqual(settings.translation.pool_max_workers, expected)
+                    return {"reasoningEffort": "medium"}
+                self.client.check_ready.side_effect = ready
+                translator = get_translator(settings)
+                self.assertEqual(translator.rate_limiter.max_qps, expected)
+                settings.translation.term_qps = 1
+                settings.translation.term_pool_max_workers = 1
+                terms = get_term_translator(settings)
+                self.assertEqual(terms.rate_limiter.max_qps, 1)
+                self.assertEqual(settings.translation.term_pool_max_workers, 1)
+
+    def test_dedicated_term_translator_shares_task_stop_state(self):
+        from pdf2zh_next.high_level import create_babeldoc_config
+        settings = create_runtime_settings({**self.payload, "no_auto_extract_glossary": False})
+        settings.translation.term_qps = 1
+        with patch("pdf2zh_next.high_level.BabelDOCConfig", side_effect=lambda **kwargs: SimpleNamespace(**kwargs)):
+            config = create_babeldoc_config(settings, Path("/tmp/source.pdf"))
+        self.assertIsNot(config.translator, config.term_extraction_translator)
+        self.assertIs(config.translator.request_state, config.term_extraction_translator.request_state)
+
+    def test_selection_stream_uses_the_same_usage_and_completion_accounting(self):
+        translator = self.translator()
+        collector = TaskMetricsCollector(task_id="selection", provider="codex", model=translator.model)
+        translator.set_metrics_collector(collector)
+        def respond(*args, **options):
+            options["on_usage"]({"prompt_tokens": 100, "completion_tokens": 50})
+            options["on_text"]("译文")
+            return SimpleNamespace(text="译文", usage={"prompt_tokens": 100, "completion_tokens": 50})
+        self.client.translate.side_effect = respond
+        deltas = []
+        self.assertEqual(translator.selection_stream("source", deltas.append, threading.Event()), "译文")
+        self.assertEqual(deltas, ["译文"])
+        self.assertEqual(collector.snapshot()["tokens"]["total"], 150)
+        self.assertEqual(collector.snapshot()["requests"]["succeeded"], 1)
 
     def test_settings_preserve_none_effort_and_support_term_extraction(self):
         settings = create_runtime_settings({**self.payload, "no_auto_extract_glossary": False,

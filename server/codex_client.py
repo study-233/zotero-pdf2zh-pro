@@ -409,7 +409,7 @@ class CodexClient:
         self.proxy_mode, self.proxy_url = normalize_codex_proxy(proxy_mode, proxy_url)
         self.cli_path = resolve_codex_path(cli_path)
         self._lock = threading.RLock()
-        self._activity_lock = threading.Lock()
+        self._activity_lock = threading.Condition()
         self._slots = threading.BoundedSemaphore(2)
         self._transport = None
         self._directory = None
@@ -421,6 +421,7 @@ class CodexClient:
         self._environment = None
         self._active = 0
         self._completed = 0
+        self._recycling = False
 
     def _command(self, config):
         command = [self.cli_path, "app-server", "--listen", "stdio://"]
@@ -590,7 +591,7 @@ class CodexClient:
             finally:
                 self._lock.release()
 
-    def _interrupt(self, transport, thread_id, turn_id):
+    def _interrupt(self, transport, thread_id, turn_id, on_usage=None):
         if turn_id:
             try:
                 transport.call("turn/interrupt", {"threadId": thread_id, "turnId": turn_id}, timeout=2)
@@ -599,6 +600,8 @@ class CodexClient:
                     message = events.get(timeout=max(0.01, deadline - time.monotonic()))
                     if isinstance(message, Exception):
                         break
+                    if on_usage:
+                        on_usage(message)
                     if message.get("method") == "turn/completed" and message.get("params", {}).get("turn", {}).get("id") == turn_id:
                         return
             except Exception:
@@ -607,7 +610,8 @@ class CodexClient:
         # cancelled turn nor another ambiguous request continues in the background.
         self._discard(transport)
 
-    def translate(self, prompt, *, model, reasoning_effort=None, timeout=120, check_cancelled=None, on_text=None):
+    def translate(self, prompt, *, model, reasoning_effort=None, timeout=120, check_cancelled=None,
+                  on_text=None, on_usage=None, check_admission=None):
         deadline = time.monotonic() + timeout
 
         def check():
@@ -616,20 +620,55 @@ class CodexClient:
             if time.monotonic() >= deadline:
                 raise CodexError("codex_timeout", "Codex 翻译超时，已取消本次请求。", 504)
 
-        while not self._slots.acquire(timeout=0.1):
+        def check_pending():
             check()
+            if check_admission:
+                check_admission()
+
+        while not self._slots.acquire(timeout=0.1):
+            check_pending()
         transport = thread_id = turn_id = None
         terminal = False
-        with self._activity_lock:
-            self._active += 1
+        turn_requested = False
+        admitted = False
+        usage = {}
+
+        def collect_usage(event):
+            params = event.get("params", {})
+            if (event.get("method") != "thread/tokenUsage/updated"
+                    or params.get("threadId") != thread_id or params.get("turnId") != turn_id):
+                return
+            tokens = params.get("tokenUsage", {})
+            # One ephemeral thread per request: total covers every internal
+            # response. Older peers may only report last. Notifications replace
+            # a snapshot; they must never be added together.
+            snapshot = tokens.get("total") or tokens.get("last") or {}
+            values = {key: snapshot[source] for key, source in {
+                "prompt_tokens": "inputTokens", "completion_tokens": "outputTokens",
+                "cache_hit_tokens": "cachedInputTokens", "reasoning_tokens": "reasoningOutputTokens",
+            }.items() if type(snapshot.get(source)) is int and snapshot[source] >= 0}
+            usage.update(values)
+            if "prompt_tokens" in usage and "cache_hit_tokens" in usage:
+                usage["cache_miss_tokens"] = max(0, usage["prompt_tokens"] - usage["cache_hit_tokens"])
+            if values and on_usage:
+                on_usage(dict(usage))
+
         try:
-            check()
+            with self._activity_lock:
+                while self._recycling:
+                    self._activity_lock.wait(timeout=0.1)
+                    check_pending()
+                check_pending()
+                self._active += 1
+                admitted = True
+            check_pending()
             ready = self.check_ready(model, reasoning_effort, check_cancelled=check)
-            check()
+            check_pending()
             transport = self._ensure_started(check)
             thread_id = self._thread(transport, model, ready["reasoningEffort"], check)
             events = transport.events(thread_id)
-            check()
+            check_pending()
+            turn_requested = True
             response = transport.call("turn/start", {
                 "threadId": thread_id, "model": model,
                 "input": [{"type": "text", "text": prompt, "text_elements": []}],
@@ -638,7 +677,7 @@ class CodexClient:
                 "environments": [],
             }, timeout=max(0.01, min(20, deadline - time.monotonic())), check_cancelled=check)
             turn_id = response["turn"]["id"]
-            final_messages, usage = {}, {}
+            final_messages = {}
             phases, emitted = {}, {}
             while True:
                 check()
@@ -678,16 +717,12 @@ class CodexClient:
                 elif method == "error" and params.get("willRetry") is not True:
                     raise _error_from_rpc(params.get("error") or {})
                 elif method == "thread/tokenUsage/updated":
-                    last = params.get("tokenUsage", {}).get("last") or {}
-                    usage = {key: last[source] for key, source in {
-                        "prompt_tokens": "inputTokens", "completion_tokens": "outputTokens",
-                        "cache_hit_tokens": "cachedInputTokens", "reasoning_tokens": "reasoningOutputTokens",
-                    }.items() if isinstance(last.get(source), int)}
-                    if "prompt_tokens" in usage and "cache_hit_tokens" in usage:
-                        usage["cache_miss_tokens"] = max(0, usage["prompt_tokens"] - usage["cache_hit_tokens"])
+                    collect_usage(event)
                 elif method == "turn/completed":
                     terminal = True
                     turn = params["turn"]
+                    if turn.get("status") == "interrupted":
+                        raise CodexError("codex_cancelled", "Codex 翻译请求已取消。", 499)
                     if turn.get("status") != "completed":
                         raise _error_from_rpc(turn.get("error") or {"status": turn.get("status")})
                     # Some protocol versions carry completed items in this event.
@@ -707,8 +742,8 @@ class CodexClient:
         finally:
             try:
                 if transport and thread_id:
-                    if not terminal:
-                        self._interrupt(transport, thread_id, turn_id)
+                    if turn_requested and not terminal:
+                        self._interrupt(transport, thread_id, turn_id, collect_usage)
                     try:
                         transport.call("thread/unsubscribe", {"threadId": thread_id}, timeout=2)
                     except CodexError:
@@ -716,12 +751,21 @@ class CodexClient:
                     transport.retire(thread_id)
             finally:
                 try:
-                    with self._activity_lock:
-                        self._active -= 1
-                        self._completed += 1
-                        recycle = self._active == 0 and self._completed >= 128
-                    if recycle and transport:
-                        self._discard(transport)
+                    recycle = False
+                    if admitted:
+                        with self._activity_lock:
+                            self._active -= 1
+                            self._completed += 1
+                            recycle = self._active == 0 and self._completed >= 128 and transport is not None
+                            if recycle:
+                                self._recycling = True
+                    if recycle:
+                        try:
+                            self._discard(transport)
+                        finally:
+                            with self._activity_lock:
+                                self._recycling = False
+                                self._activity_lock.notify_all()
                 finally:
                     self._slots.release()
 

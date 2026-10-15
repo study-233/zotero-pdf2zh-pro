@@ -115,13 +115,16 @@ class SharedContextCrossSplitPart:
         self, auto_extract_enabled: bool
     ) -> list[Glossary]:
         with self._lock:
-            if auto_extract_enabled and self.auto_extracted_glossary:
-                return [self.auto_extracted_glossary]
-            else:
-                all_glossaries = list(self.user_glossaries)
-                if self.auto_extracted_glossary:
-                    all_glossaries.append(self.auto_extracted_glossary)
-                return all_glossaries
+            all_glossaries = list(self.user_glossaries)
+            if self.auto_extracted_glossary:
+                manual = {key for glossary in self.user_glossaries for key in glossary.normalized_lookup}
+                automatic = self.auto_extracted_glossary
+                entries = [entry for entry in automatic.entries
+                           if Glossary.normalize_source(entry.source) not in manual]
+                if entries:
+                    all_glossaries.append(automatic if len(entries) == len(automatic.entries)
+                                          else Glossary(automatic.name, entries))
+            return all_glossaries
 
     def add_valid_counts(self, char_count: int, token_count: int):
         """Accumulate valid character and token counts in a threadsafe way."""
@@ -343,6 +346,8 @@ class TranslationConfig:
 
         self.save_auto_extracted_glossary = save_auto_extracted_glossary
 
+        # Native ruled cells can be translated without enabling the unfinished OCR model.
+        self.translate_table_text = table_model is not None
         # force disable table translate until the new model is ready
         self.table_model = None
         self.enable_graphic_element_process = enable_graphic_element_process

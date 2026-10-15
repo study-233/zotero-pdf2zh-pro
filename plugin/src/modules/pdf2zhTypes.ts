@@ -57,6 +57,7 @@ export interface ServerHealthResponse {
         detailedTaskProgress?: boolean;
         reasoningMode?: boolean;
         codexCli?: boolean;
+        chatgptPlan?: boolean;
         codexProxy?: boolean;
         codexDiscovery?: boolean;
         glossaryEntries?: boolean;
@@ -213,14 +214,17 @@ export interface ServerTaskSnapshot extends ServerSyncMetadata {
 }
 
 export type RequestKind = "translation" | "review" | "initialization";
+export type RequestPurpose = RequestKind | "term_extraction";
 export type MetricAvailability = "unavailable" | "partial" | "complete";
 
 export interface RequestMetrics {
     attempts: number;
     succeeded: number;
+    cancelled?: number;
     failed: number;
     active: number;
     retries: number;
+    repairs?: number;
     averageLatencyMs: number | null;
     p95LatencyMs: number | null;
     statusCodes?: Record<string, number>;
@@ -251,6 +255,7 @@ export interface TaskMetrics {
     requests: RequestMetrics & {
         qps10s: number;
         byKind?: Partial<Record<RequestKind, RequestMetrics>>;
+        byPurpose?: Partial<Record<RequestPurpose, RequestMetrics>>;
     };
     localCache: { hits: number; misses: number; hitRate: number | null };
     providerCache: {
@@ -261,7 +266,18 @@ export interface TaskMetrics {
     };
     tokens: TokenMetrics & {
         byKind?: Partial<Record<RequestKind, TokenMetrics>>;
+        byPurpose?: Partial<Record<RequestPurpose, TokenMetrics>>;
     };
+    firstParagraphMs?: number | null;
+    validation?: { accepted: number; partial: number; rejected: number };
+    translationSummary?: {
+        total: number;
+        succeeded: number;
+        failed: number;
+        skipped: number;
+        pending: number;
+    } | null;
+    journal?: { enabled: boolean; errors: number };
     throughput: {
         paragraphsPerMinute: number | null;
         etaSeconds: number | null;

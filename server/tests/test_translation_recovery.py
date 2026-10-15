@@ -176,6 +176,17 @@ class RecoveryTests(unittest.TestCase):
             self.recovery_stack.callback(other.close)
             self.assertEqual(other.entries, {})
 
+    def test_first_success_observer_excludes_failed_and_pending_paragraphs(self):
+        with self.recovery_directory() as tmp:
+            paragraph, _, _, recovery, _ = self.fixtures(tmp)
+            observed = []
+            recovery.first_success_callback = lambda: observed.append(recovery.snapshot()[0]['succeeded'])
+            recovery.record(paragraph, 'failed')
+            self.assertEqual(observed, [])
+            recovery.record(paragraph, 'succeeded', translation=TARGET)
+            recovery.record(paragraph, 'succeeded', translation=TARGET)
+            self.assertEqual(observed, [1])
+
     def test_batch_fallback_keeps_source_string_and_recovers(self):
         with self.recovery_directory() as tmp:
             p, docs, cfg, recovery, single = self.fixtures(tmp)

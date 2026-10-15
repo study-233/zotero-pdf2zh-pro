@@ -9,6 +9,7 @@ from pathlib import Path
 import chardet
 import hyperscan
 import regex
+from babeldoc.glossary_options import contains_glossary_term
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +209,9 @@ class Glossary:
         def on_match(
             idx: int, _from: int, _to: int, _flags: int, _context=None
         ) -> bool | None:
-            active_entries.append(self.id_lookup[idx])
+            entry = self.id_lookup[idx]
+            if contains_glossary_term(entry[0], text):
+                active_entries.append(entry)
             return False
 
         for hs_db in self.hs_dbs:

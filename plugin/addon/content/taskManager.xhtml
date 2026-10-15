@@ -1551,6 +1551,19 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 error.hidden = true;
                 card.appendChild(error);
 
+                const reloginButton = document.createElement("button");
+                reloginButton.className = "button primary";
+                reloginButton.textContent = "重新登录";
+                reloginButton.addEventListener("click", () => {
+                    if (!view.task) return;
+                    try {
+                        api.reloginChatGPT(view.task.taskId);
+                    } catch (errorValue) {
+                        alert(String(errorValue));
+                    }
+                });
+                card.appendChild(reloginButton);
+
                 const metricsPanel = document.createElement("div");
                 metricsPanel.className = "metrics-panel";
                 metricsPanel.id = `metrics-panel-${sanitizeId(task.taskId)}`;
@@ -1714,6 +1727,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     updatedAt,
                     qualitySummary,
                     error,
+                    reloginButton,
                     metricsPanel,
                     detailValues,
                     metricEmpty,
@@ -1808,6 +1822,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const errorSummary = getErrorSummary(task);
                 setTextContent(view.error, errorSummary);
                 setNodeHidden(view.error, !errorSummary);
+                setNodeHidden(
+                    view.reloginButton,
+                    !chatgptFailure(task)?.requiresLogin,
+                );
 
                 const metrics = task.metrics;
                 if (metrics) {
@@ -2398,6 +2416,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     task.error ||
                     task.status === "failed";
                 if (!hasFailure) return "";
+                const chatgpt = chatgptFailure(task);
+                if (chatgpt) return chatgpt.message;
 
                 const reasons = new Map();
                 const addReason = (reason) => {
@@ -2449,6 +2469,40 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     .map(([reason]) => reason);
                 if (!labels.length) return "未能翻译：暂未能确定原因。";
                 return `未能翻译：${labels.slice(0, 2).join("；")}${labels.length > 2 ? "等问题" : ""}。`;
+            }
+
+            function chatgptFailure(task) {
+                const text = [
+                    task.error,
+                    ...(task.errorDiagnostics || []).map((d) => d.code),
+                    ...(task.failedParagraphs || []).map(
+                        (p) => `${p.providerCode || ""} ${p.reason || ""}`,
+                    ),
+                ].join(" ");
+                if (
+                    /chatgpt_sign_in_required|ChatGPT (?:登录已失效|授权已失效|授权无法续期)|请先登录 ChatGPT/.test(
+                        text,
+                    )
+                )
+                    return {
+                        message: "ChatGPT 登录已失效，请重新登录后重试翻译。",
+                        requiresLogin: true,
+                    };
+                if (/暂时无法续期 ChatGPT 授权/.test(text))
+                    return {
+                        message:
+                            "暂时无法续期 ChatGPT 授权，请检查网络后重试。",
+                    };
+                if (
+                    /chatgpt_usage_limit|ChatGPT 套餐或此应用的用量已达上限/.test(
+                        text,
+                    )
+                )
+                    return {
+                        message:
+                            "ChatGPT 套餐或此应用的用量已达上限，请在 ChatGPT 用量设置中查看。",
+                    };
+                return undefined;
             }
 
             function translationFailureReason(value) {

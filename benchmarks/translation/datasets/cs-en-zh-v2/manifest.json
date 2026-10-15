@@ -1,0 +1,131 @@
+{
+  "schema": 2,
+  "dataset": "cs-en-zh-v2",
+  "language": {
+    "source": "en",
+    "target": "zh-CN"
+  },
+  "status": "frozen-inputs-unscored",
+  "samples": 240,
+  "pdfs": 16,
+  "domains": [
+    "ai_nlp",
+    "vision_graphics",
+    "systems",
+    "data_retrieval",
+    "software_languages",
+    "security",
+    "hci_visualization",
+    "algorithms"
+  ],
+  "split_counts": {
+    "development": 120,
+    "holdout": 120
+  },
+  "length_counts": {
+    "short": 48,
+    "paragraph": 96,
+    "long": 72,
+    "extended": 24
+  },
+  "quick_ids": [
+    "t5-01",
+    "C1-01",
+    "C1-05",
+    "nerf-01",
+    "C2-04",
+    "C2-08",
+    "raft-01",
+    "C3-05",
+    "C3-09",
+    "duckdb-01",
+    "C4-08",
+    "C4-02",
+    "rustbelt-01",
+    "C5-09",
+    "C5-03",
+    "dp-01",
+    "C6-02",
+    "C6-06",
+    "vegalite-01",
+    "C7-03",
+    "C7-07",
+    "kll-01",
+    "C8-06",
+    "C8-10"
+  ],
+  "selection_ids": [
+    "t5-01",
+    "t5-03",
+    "t5-07",
+    "nerf-01",
+    "nerf-03",
+    "nerf-07",
+    "raft-01",
+    "raft-03",
+    "raft-07",
+    "duckdb-01",
+    "duckdb-03",
+    "duckdb-07",
+    "rustbelt-01",
+    "rustbelt-03",
+    "rustbelt-07",
+    "dp-01",
+    "dp-03",
+    "dp-07",
+    "vegalite-01",
+    "vegalite-03",
+    "vegalite-07",
+    "kll-01",
+    "kll-03",
+    "kll-07"
+  ],
+  "repeat_ids": [
+    "t5-03",
+    "rag-03",
+    "nerf-03",
+    "gaussian-03",
+    "raft-03",
+    "dapper-03",
+    "duckdb-03",
+    "faiss-03",
+    "rustbelt-03",
+    "egg-03",
+    "dp-03",
+    "spectre-03",
+    "vegalite-03",
+    "hai-03",
+    "kll-03",
+    "stable-03",
+    "C1-07",
+    "C2-07",
+    "C3-07",
+    "C4-07"
+  ],
+  "pdf_quick": [
+    {
+      "paper": "t5",
+      "page": 2,
+      "layout": "single_column"
+    },
+    {
+      "paper": "raft",
+      "page": 2,
+      "layout": "two_column"
+    },
+    {
+      "paper": "kll",
+      "page": 4,
+      "layout": "formulas"
+    },
+    {
+      "paper": "hai",
+      "page": 3,
+      "layout": "tables"
+    }
+  ],
+  "content_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+  "source_policy": "Raw PDFs and restricted text stay in the local data pack; recipes reconstruct exact content. Public paper familiarity can affect model results. Holdout is a development-use policy, not a claim of training-data exclusion.",
+  "annotation_policy": "Codex-authored challenge cases and source-anchored propositions; no independent expert validation is claimed.",
+  "extractor_version": "PyMuPDF==1.25.2"
+}

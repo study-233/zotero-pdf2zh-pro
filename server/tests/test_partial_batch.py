@@ -135,7 +135,7 @@ class PartialBatchTests(unittest.TestCase):
             self.assertEqual(second_engine.requests, [])
             self.assertEqual(restored.snapshot()[0]["succeeded"], 6)
 
-    def test_structure_errors_retry_the_batch_before_falling_back(self):
+    def test_unparseable_json_retries_but_known_missing_ids_go_directly_to_repair(self):
         for malformed in ["not json", '[{"id":0,"output":"译文"}]',
                           json.dumps([{"id": 0, "output": "译文"}] * 6)]:
             with self.subTest(malformed=malformed), ExitStack() as stack:
@@ -144,7 +144,7 @@ class PartialBatchTests(unittest.TestCase):
                     stack, directory, lambda text: malformed if text.startswith("[") else translated(text),
                 )
                 run()
-                self.assertEqual(len(engine.requests), 8)
+                self.assertEqual(len(engine.requests), 8 if malformed == "not json" else 7)
                 self.assertEqual(batch.fallback_count, 6)
                 self.assertEqual(recovery.snapshot()[0]["succeeded"], 6)
                 self.assertIn(engine.requests[0], engine.cache.values)
@@ -201,6 +201,58 @@ class PartialBatchTests(unittest.TestCase):
         with self.assertRaises(InvalidTranslation):
             validate_batch(json.dumps([{"id": 0, "output": sources[0]}]), sources, "zh-CN")
 
-    def test_duplicate_ids_are_structural_even_if_the_first_row_is_invalid(self):
+    def test_duplicate_ids_are_never_accepted_even_if_the_first_row_is_invalid(self):
+        output = '[{"id":0,"output":""},{"id":0,"output":"译文"}]'
+        result = inspect_batch(output, ["first", "second"])
+        self.assertEqual(result.valid_outputs, {})
+        self.assertEqual(result.invalid_outputs, {
+            0: "invalid_or_duplicate_paragraph_id", 1: "paragraph_count_mismatch",
+        })
         with self.assertRaisesRegex(InvalidTranslation, "invalid_or_duplicate_paragraph_id"):
-            inspect_batch('[{"id":0,"output":""},{"id":0,"output":"译文"}]', ["first", "second"])
+            validate_batch(output, ["first", "second"])
+
+    def test_missing_and_conflicting_ids_only_repair_the_affected_paragraphs(self):
+        for duplicate in (False, True):
+            with self.subTest(duplicate=duplicate), ExitStack() as stack:
+                directory = stack.enter_context(tempfile.TemporaryDirectory())
+                def respond(text):
+                    if not text.startswith("["):
+                        return translated(text)
+                    rows = [{"id": row["id"], "output": translated(row["input"])}
+                            for row in reversed(json.loads(text)) if row["id"] != 2]
+                    if duplicate:
+                        rows.append({"id": 3, "output": "另一份冲突译文。{v3}"})
+                    rows.extend([{"id": 9000, "output": "无法归属的译文"}, None])
+                    return json.dumps(rows)
+                paragraphs, recovery, engine, batch, run = self.fixture(stack, directory, respond)
+                sources = [p.unicode for p in paragraphs]
+                run()
+                repairs = {2, 3} if duplicate else {2}
+                self.assertEqual(len(engine.requests), 1 + len(repairs))
+                self.assertEqual(set(engine.requests[1:]), {sources[index] for index in repairs})
+                self.assertEqual(recovery.snapshot()[0]["succeeded"], 6)
+                saved = engine.cache.values[engine.requests[0]]
+                self.assertEqual(len(json.loads(saved)), 6)
+                self.assertTrue(inspect_batch(saved, sources, "zh-CN").complete)
+
+    def test_unassigned_rows_are_not_valid_strict_cache_contents(self):
+        output = '[{"id":0,"output":"译文"},{"id":99,"output":"多余译文"}]'
+        result = inspect_batch(output, ["source"])
+        self.assertEqual(result.valid_outputs, {0: "译文"})
+        self.assertFalse(result.complete)
+        with self.assertRaises(InvalidTranslation):
+            validate_batch(output, ["source"])
+
+    def test_missing_row_cache_reuses_valid_ids_without_another_batch_request(self):
+        sources = ["First source.", "Second source.", "Third source."]
+        partial = '[{"id":2,"output":"译文三"},{"id":"0","output":"译文一"}]'
+        engine = FixtureTranslator(lambda text: self.fail("valid cached rows must remain usable"))
+        engine.cache.set("batch", partial)
+        inspect = lambda output: inspect_batch(output, sources)
+        output = engine.llm_translate("batch", rate_limit_params={
+            "validate_output": inspect, "cache_output_if": lambda value: inspect(value).complete,
+        })
+        self.assertEqual(inspect(output).valid_outputs, {0: "译文一", 2: "译文三"})
+        self.assertEqual(set(inspect(output).invalid_outputs), {1})
+        self.assertNotIn("batch", engine.cache.values)
+        self.assertEqual(engine.requests, [])

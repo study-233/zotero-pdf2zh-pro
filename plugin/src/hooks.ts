@@ -5,7 +5,11 @@ import { PDF2zhBasicFactory, PDF2zhUIFactory } from "./modules/pdf2zh";
 import { PDF2zhTaskManager } from "./modules/pdf2zhTaskManager";
 import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
-import { registerPrefsScripts } from "./modules/preferenceScript";
+import {
+    registerPrefsScripts,
+    initializeProfileMigration,
+    openChatGPTLogin,
+} from "./modules/preferenceScript";
 import { migrateReviewPreference } from "./modules/reviewPreferences";
 import { repairAttachmentNamingPreferences } from "./modules/attachmentNamingSettings";
 import { migrateSelectionPreferences } from "./modules/selectionMigration";
@@ -28,6 +32,11 @@ async function onStartup(reason?: number) {
     await Promise.all(
         Zotero.getMainWindows().map((win) => onMainWindowLoad(win)),
     );
+    try {
+        initializeProfileMigration();
+    } catch (error) {
+        ztoolkit.log(error);
+    }
     registerSelectionTranslation();
     void PDF2zhTaskManager.start().catch((error) => ztoolkit.log(error));
     if (typeof __devRuntime__ !== "undefined" && __devRuntime__) {
@@ -83,6 +92,7 @@ async function onNotify(
 function onShortcuts(_type: string) {}
 
 function onDialogEvents(type: string) {
+    if (type === "reloginChatGPT") openChatGPTLogin();
     if (type === "translatePDF") {
         PDF2zhTaskManager.processWorker();
     }

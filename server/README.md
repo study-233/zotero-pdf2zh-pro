@@ -408,3 +408,14 @@ See the [dated audit](../docs/provider-audit-2026-10-03.md) for migration and
 
 
 Usage and merge rules: [glossary guide](../docs/glossary-downloads.md).
+
+
+## ChatGPT plan account
+
+`/health.capabilities.chatgptPlan` and `/selection-capabilities.chatgptPlan` advertise the independent `chatgpt` service. PDF, selection and live tests accept `llm_api: {model, reasoningEffort, accountId}`. Model discovery uses `POST /list-models` with this service. `accountId` is a bound account fingerprint, never a token. API keys, custom endpoints and arbitrary request parameters are rejected. This route uses the official Responses API, not Codex CLI.
+
+Account management requires a loopback peer and Host, no Origin header, and `X-PDF2ZH-Client: zotero`: `GET /chatgpt/status`, `GET /chatgpt/usage`, `POST /chatgpt/login` (`newAccount: true` to switch), `POST /chatgpt/login/cancel`, and `POST /chatgpt/logout`. Login returns a pending state; poll status to obtain a one-time local browser start URL. OAuth callbacks have their own random-port loopback listener. Credentials never appear in the JSON responses.
+
+Store credentials and the content-free usage ledger in `${PDF2ZH_DATA_DIR}/chatgpt-auth`, or set `PDF2ZH_CHATGPT_AUTH_DIR` before starting. Use one shared, private directory per authorization to serialize rotating refresh tokens. Logout attempts server-side revocation and always clears the local session; `revocationConfirmed: false` requires the user to disconnect the app in ChatGPT settings. Model lookup and cache hits do not add generation calls. Missing terminal usage remains unknown across restarts. Subscription percentage is unavailable, not zero.
+
+The account UI currently supports native local services only. Docker and remote server login are not advertised as supported; the account peer check deliberately rejects their non-loopback connections. Existing API Key deployments are unaffected. The new modules ship in the Python wheel and Docker image; the launcher and locked dependencies are unchanged. See [account and rollback details](../docs/chatgpt-account.md).

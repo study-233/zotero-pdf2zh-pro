@@ -1,0 +1,620 @@
+[
+  {
+    "id": "t5",
+    "domain": "ai_nlp",
+    "split": "development",
+    "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+    "authors": "Raffel et al. / Google",
+    "url": "https://arxiv.org/pdf/1910.10683v1",
+    "version": "1910.10683v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/t5.pdf",
+    "sha256": "b41ee513826361ff4d6076ded32e35fa6bc9dea19f6ba2b98feeb1a65c778483",
+    "pages": 52,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.168160+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 11,
+        "role": "complex_layout"
+      },
+      {
+        "page": 35,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "single_column",
+      "tables"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "rag",
+    "domain": "ai_nlp",
+    "split": "holdout",
+    "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+    "authors": "Lewis et al. / FAIR, UCL, NYU",
+    "url": "https://arxiv.org/pdf/2005.11401v1",
+    "version": "2005.11401v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/rag.pdf",
+    "sha256": "25b55fd0f7c6c91cbe2c88690a33923077103e8f563d154faa1ce11d3527e601",
+    "pages": 18,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.238802+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 11,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "single_column",
+      "tables"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "nerf",
+    "domain": "vision_graphics",
+    "split": "development",
+    "title": "NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis",
+    "authors": "Mildenhall et al. / UC Berkeley, Google, UC San Diego",
+    "url": "https://arxiv.org/pdf/2003.08934v1",
+    "version": "2003.08934v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/nerf.pdf",
+    "sha256": "fb60e4b1ebb135029764076cab8a7afe3b56302185744aa359821cfb939e60ab",
+    "pages": 21,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.311887+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 15,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "single_column",
+      "formulas"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "gaussian",
+    "domain": "vision_graphics",
+    "split": "holdout",
+    "title": "3D Gaussian Splatting for Real-Time Radiance Field Rendering",
+    "authors": "Kerbl et al. / Inria, Universite Cote d Azur, MPI, TU Wien",
+    "url": "https://arxiv.org/pdf/2308.04079v1",
+    "version": "2308.04079v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/gaussian.pdf",
+    "sha256": "f4c0c9f27e2d02b0265017f66049d471eb66cb50203bc918f51ba07d20cbbe11",
+    "pages": 14,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.404266+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 12,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "two_column"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "raft",
+    "domain": "systems",
+    "split": "development",
+    "title": "In Search of an Understandable Consensus Algorithm (Extended Version)",
+    "authors": "Ongaro and Ousterhout / Stanford",
+    "url": "https://raft.github.io/raft.pdf",
+    "version": "publisher PDF; pinned by sha256",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/raft.pdf",
+    "sha256": "5a5c679b6a7c88007faeff8c3eef19a77e9e5caa8bd7390922584fe8ecf0ce1f",
+    "pages": 18,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.499944+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 17,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "two_column"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "dapper",
+    "domain": "systems",
+    "split": "holdout",
+    "title": "Dapper, a Large-Scale Distributed Systems Tracing Infrastructure",
+    "authors": "Sigelman et al. / Google",
+    "url": "https://research.google.com/archive/papers/dapper-2010-1.pdf",
+    "version": "publisher PDF; pinned by sha256",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/dapper.pdf",
+    "sha256": "41baea09d066e0167ca0943968d44f7f07790be700440427f78c034910e5765d",
+    "pages": 14,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.556917+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 14,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "two_column",
+      "tables"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "duckdb",
+    "domain": "data_retrieval",
+    "split": "development",
+    "title": "Data Management for Data Science: Towards Embedded Analytics",
+    "authors": "Raasveldt and Muehleisen / CWI",
+    "url": "https://duckdb.org/pdf/CIDR2020-raasveldt-muehleisen-duckdb.pdf",
+    "version": "publisher PDF; pinned by sha256",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/duckdb.pdf",
+    "sha256": "51521141d0986bf823727598651562f2737146a666e4dcbb069455067bba9ed4",
+    "pages": 6,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.590572+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 4,
+        "role": "complex_layout"
+      },
+      {
+        "page": 5,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "two_column"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "faiss",
+    "domain": "data_retrieval",
+    "split": "holdout",
+    "title": "Billion-scale similarity search with GPUs",
+    "authors": "Johnson, Douze and Jegou / FAIR",
+    "url": "https://arxiv.org/pdf/1702.08734v1",
+    "version": "1702.08734v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/faiss.pdf",
+    "sha256": "89b2371b261846059d416bdf1423b15a6e3cc7d1b2d5dc2729ee5f6c3399049a",
+    "pages": 12,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.662145+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 10,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "two_column",
+      "tables"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "rustbelt",
+    "domain": "software_languages",
+    "split": "development",
+    "title": "RustBelt: Securing the Foundations of the Rust Programming Language",
+    "authors": "Jung et al. / MPI-SWS, Delft",
+    "url": "https://www.mpi-sws.org/~dreyer/papers/rustbelt/paper.pdf",
+    "version": "publisher PDF; pinned by sha256",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/rustbelt.pdf",
+    "sha256": "43f73a297da64fe1421dd0b15449bb2d538634398d0e3e71287377ad1bfdcc8c",
+    "pages": 34,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.788718+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 32,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "single_column",
+      "formulas"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "egg",
+    "domain": "software_languages",
+    "split": "holdout",
+    "title": "egg: Fast and Extensible Equality Saturation",
+    "authors": "Willsey et al. / Washington, Utah",
+    "url": "https://arxiv.org/pdf/2004.03082v1",
+    "version": "2004.03082v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/egg.pdf",
+    "sha256": "7f95f4f986ffd51d58ebe4d3f5185da839b644e5aecf9ae2257060255b8252f6",
+    "pages": 18,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.852267+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 17,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "single_column"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "dp",
+    "domain": "security",
+    "split": "development",
+    "title": "Deep Learning with Differential Privacy",
+    "authors": "Abadi et al. / Google",
+    "url": "https://arxiv.org/pdf/1607.00133v1",
+    "version": "1607.00133v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/dp.pdf",
+    "sha256": "b8bff4ae8e6e0ffa072e500a820aeddc9ed6687c1d698f1efcea54c64575ca55",
+    "pages": 17,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.919103+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 11,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "two_column",
+      "formulas"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "spectre",
+    "domain": "security",
+    "split": "holdout",
+    "title": "Spectre Attacks: Exploiting Speculative Execution",
+    "authors": "Kocher et al. / independent, Graz, Maryland, Adelaide, Google",
+    "url": "https://arxiv.org/pdf/1801.01203v1",
+    "version": "1801.01203v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/spectre.pdf",
+    "sha256": "f22748bcfddf8c507dae1b4ca7356392579527b3d38d031268e7d94b44d01699",
+    "pages": 16,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:19.988863+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 12,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "two_column"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "vegalite",
+    "domain": "hci_visualization",
+    "split": "development",
+    "title": "Vega-Lite: A Grammar of Interactive Graphics",
+    "authors": "Satyanarayan et al. / Stanford, Washington",
+    "url": "https://idl.cs.washington.edu/files/2017-VegaLite-InfoVis.pdf",
+    "version": "publisher PDF; pinned by sha256",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/vegalite.pdf",
+    "sha256": "52145eafb8847da349d13721f11f6b61237099cb92fd23dc18605a6a3335f04f",
+    "pages": 10,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:20.067472+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 10,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "two_column"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "hai",
+    "domain": "hci_visualization",
+    "split": "holdout",
+    "title": "Guidelines for Human-AI Interaction",
+    "authors": "Amershi et al. / Microsoft Research",
+    "url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2019/01/Guidelines-for-Human-AI-Interaction-camera-ready.pdf",
+    "version": "publisher PDF; pinned by sha256",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/hai.pdf",
+    "sha256": "82fff584c6b986f573608361478e93447538c6ce707e4b9b04d45d584272ea03",
+    "pages": 19,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:20.152924+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 12,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "two_column",
+      "tables"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "kll",
+    "domain": "algorithms",
+    "split": "development",
+    "title": "Almost Optimal Streaming Quantiles Algorithms (arXiv v1)",
+    "authors": "Karnin, Lang and Liberty / Yahoo Research",
+    "url": "https://arxiv.org/pdf/1603.05346v1",
+    "version": "1603.05346v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/kll.pdf",
+    "sha256": "ef6fd6784f89732c8a1694b7723f7b050d71743625544a94295659aac5af5afe",
+    "pages": 15,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:20.190797+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 14,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "single_column",
+      "formulas"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  },
+  {
+    "id": "stable",
+    "domain": "algorithms",
+    "split": "holdout",
+    "title": "Fast linear algebra is stable",
+    "authors": "Demmel, Dumitriu and Holtz / Berkeley, Washington",
+    "url": "https://arxiv.org/pdf/math/0612264v1",
+    "version": "math/0612264v1",
+    "redistribute": false,
+    "license": "Download from the original source for local evaluation; redistribution not enabled.",
+    "pdf": "pdfs/stable.pdf",
+    "sha256": "1f3b78828f65421d6ecfd60b0c4b2a946eb3fe3619fa64ea5d59221bc5e003b8",
+    "pages": 10,
+    "extractor": "PyMuPDF 1.25.2; NFKC; join lowercase line hyphens; collapse whitespace",
+    "retrieved_at": "2026-10-13T16:08:20.221035+00:00",
+    "anchors": [
+      {
+        "page": 2,
+        "role": "body"
+      },
+      {
+        "page": 8,
+        "role": "complex_layout"
+      },
+      {
+        "page": 9,
+        "role": "end_structure"
+      }
+    ],
+    "layout_tags": [
+      "single_column",
+      "formulas"
+    ],
+    "anchor_review": {
+      "reviewer": "Codex",
+      "method": "Rendered source pages; visual layout inspection",
+      "status": "checked"
+    }
+  }
+]

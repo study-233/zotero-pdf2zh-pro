@@ -1,0 +1,112 @@
+{
+  "version": "cs-en-zh-rubric-2",
+  "dimensions": {
+    "semantic_accuracy": 40,
+    "completeness": 20,
+    "terminology": 20,
+    "fluency": 10,
+    "structure_preservation": 10
+  },
+  "scale": {
+    "4": "准确完整；允许合理同义译法和等价数学表达。",
+    "3": "局部轻微问题，不改变关键关系。",
+    "2": "一处关键错误或多处局部问题，需要实质修改。",
+    "1": "核心关系错误或大量缺失。",
+    "0": "无对应内容、未翻译或不可理解。"
+  },
+  "policy": {
+    "primary_error_dimension": true,
+    "secondary_deduction_requires_distinct_explanation": true,
+    "evidence_required_below": 4,
+    "missing_review": null,
+    "failed_without_output": 0,
+    "pdf_dimensions_separate": [
+      "translation",
+      "content_completeness",
+      "layout_readability"
+    ],
+    "independence": "Record reviewer identity/version and whether independent of execution."
+  },
+  "calibration": [
+    {
+      "source": "Only committed entries are visible.",
+      "translation": "只有已提交的条目可见。",
+      "scores": {
+        "semantic_accuracy": 4,
+        "completeness": 4,
+        "terminology": 4,
+        "fluency": 4,
+        "structure_preservation": 4
+      },
+      "reason": "必要条件与可见性关系完整。"
+    },
+    {
+      "source": "Not every request succeeds.",
+      "translation": "所有请求都不会成功。",
+      "dimension": "semantic_accuracy",
+      "score": 2,
+      "severity": "major",
+      "reason": "部分否定被翻成全部否定。"
+    },
+    {
+      "source": "The threshold is at most 5 ms.",
+      "translation": "阈值小于 5 毫秒。",
+      "dimension": "semantic_accuracy",
+      "score": 2,
+      "severity": "major",
+      "reason": "丢失可等于上界的条件。"
+    },
+    {
+      "source": "The cost falls from 10 to 8, a 20% reduction.",
+      "translation": "成本从十降至八，降幅为百分之二十。",
+      "scores": {
+        "semantic_accuracy": 4,
+        "completeness": 4,
+        "terminology": 4,
+        "fluency": 4,
+        "structure_preservation": 4
+      },
+      "reason": "数字等价表达不应由字面匹配扣分。"
+    },
+    {
+      "source": "Preserve {v1} in the equation.",
+      "translation": "保留方程中的公式。",
+      "dimension": "structure_preservation",
+      "score": 2,
+      "severity": "major",
+      "reason": "占位符丢失；不能因中文通顺而判满分。"
+    },
+    {
+      "source": "The cache is invalidated after a write.",
+      "translation": "写入后清空现金。",
+      "dimension": "terminology",
+      "score": 1,
+      "severity": "major",
+      "reason": "cache 在计算机语境应为缓存，译为现金使机制不可理解。"
+    },
+    {
+      "source": "Use a lock, then release it.",
+      "translation": "使用锁。",
+      "dimension": "completeness",
+      "score": 2,
+      "severity": "major",
+      "reason": "遗漏必要的释放步骤。"
+    },
+    {
+      "source": "No guarantee is made for unseen workloads.",
+      "translation": "对未见过的负载保证达到 99% 准确率。",
+      "dimension": "semantic_accuracy",
+      "score": 0,
+      "severity": "critical",
+      "reason": "否定被翻转，且编造不存在的数值保证；合并为同一主要错误，不重复机械扣分。"
+    },
+    {
+      "source": "The index is updated before the transaction commits.",
+      "translation": "索引在事务提交前会更新。",
+      "dimension": "fluency",
+      "score": 4,
+      "severity": null,
+      "reason": "词序和表达自然，无需逐字匹配单一参考译文。"
+    }
+  ]
+}

@@ -58,6 +58,9 @@ jobs:
       - name: Test server core
         run: uv run --directory server --locked python -m unittest discover -s tests
 
+      - name: Validate translation benchmark and offline regressions
+        run: uv run --project server --locked python -m benchmarks.translation run --suite offline
+
       - name: Test isolated development manager
         run: python -m unittest discover -s scripts -p 'test_dev.py'
 
@@ -119,3 +122,8 @@ jobs:
           set -euo pipefail
           uv run --no-project --with psutil python -m unittest discover -s tests -p test_codex_discovery.py
           uv run --no-project --with psutil python -m unittest discover -s tests -p test_codex_client.py
+
+      - name: Test native ChatGPT credential lifecycle without accounts
+        working-directory: server
+        shell: bash
+        run: uv run --no-project --with httpx --with cryptography python -m unittest discover -s tests -p test_chatgpt_auth.py

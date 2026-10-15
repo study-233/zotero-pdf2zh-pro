@@ -232,3 +232,23 @@ profile-codex-source-path = PATH 中的 Codex
 profile-codex-source-standalone = 独立安装的 Codex
 profile-codex-source-homebrew = Homebrew 目录中的 Codex
 profile-codex-source-npm = npm 安装的 Codex
+
+profile-chatgpt-login = 使用 ChatGPT 登录
+profile-chatgpt-relogin = 重新登录
+profile-chatgpt-expired = ChatGPT 登录已失效，请重新登录。
+profile-chatgpt-switch = 更换账号
+profile-chatgpt-logout = 退出登录
+profile-chatgpt-refresh = 刷新状态
+profile-chatgpt-manage-usage = 管理 ChatGPT 套餐用量
+profile-chatgpt-pending = 请在浏览器完成 ChatGPT 授权，完成后此处会自动更新。
+profile-chatgpt-authorized = 已允许使用套餐
+profile-chatgpt-no-permission = 尚未允许使用套餐，请重新登录授权
+profile-chatgpt-login-failed = 登录未完成，请重试；如已取消授权，可重新登录。
+profile-chatgpt-signed-out = 尚未登录 ChatGPT
+profile-chatgpt-revocation-unknown = 已退出本机登录，但未确认远端撤销；可在 ChatGPT 设置中断开此应用。
+profile-chatgpt-sign-in-first = 请先完成 ChatGPT 登录和套餐授权。
+
+profile-chatgpt-cancel = 取消登录
+profile-codex-removed = 旧 Codex 翻译配置已删除。请在插件设置中新增「ChatGPT（使用套餐）」配置，点击「使用 ChatGPT 登录」，完成登录并测试后保存使用。
+profile-chatgpt-cancelling = 正在取消登录…
+profile-chatgpt-cancelled = 已取消登录，可重新登录。

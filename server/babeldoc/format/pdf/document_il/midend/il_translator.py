@@ -776,7 +776,7 @@ class ILTranslator:
         placeholder_id = 1
         placeholders = []
         chars = []
-        for composition in paragraph.pdf_paragraph_composition:
+        for composition in self.coalesce_styled_words(paragraph.pdf_paragraph_composition):
             if composition.pdf_line:
                 chars.extend(composition.pdf_line.pdf_character)
             elif composition.pdf_formula:
@@ -792,9 +792,11 @@ class ILTranslator:
             elif composition.pdf_character:
                 chars.append(composition.pdf_character)
             elif composition.pdf_same_style_characters:
-                if disable_rich_text_translate:
+                style_chars = composition.pdf_same_style_characters.pdf_character
+                if disable_rich_text_translate or not "".join(c.char_unicode or "" for c in style_chars).strip():
                     # 如果禁用富文本翻译，直接添加字符
-                    chars.extend(composition.pdf_same_style_characters.pdf_character)
+                    # Styled whitespace has no visible style to protect with tags.
+                    chars.extend(style_chars)
                     continue
 
                 fonta = self.font_mapper.map(
@@ -862,6 +864,41 @@ class ILTranslator:
         translate_input = self.TranslateInput(text, placeholders, paragraph.pdf_style)
         translate_input.set_original_placeholder_tokens(original_placeholder_tokens)
         return translate_input
+
+    @staticmethod
+    def coalesce_styled_words(compositions):
+        """Treat a phrase with styled words and plain spaces as one styled span."""
+        result, index = [], 0
+        while index < len(compositions):
+            composition = compositions[index]
+            styled = composition.pdf_same_style_characters
+            end = index + 1
+            if styled and any((c.char_unicode or '').strip() for c in styled.pdf_character):
+                chars = list(styled.pdf_character)
+                while end < len(compositions):
+                    following, spaces = end, []
+                    while following < len(compositions):
+                        candidate = compositions[following].pdf_same_style_characters
+                        if not candidate or any((c.char_unicode or '').strip() for c in candidate.pdf_character):
+                            break
+                        spaces.extend(candidate.pdf_character)
+                        following += 1
+                    next_style = compositions[following].pdf_same_style_characters if following < len(compositions) else None
+                    if not next_style or not is_same_style(styled.pdf_style, next_style.pdf_style):
+                        break
+                    chars.extend([*spaces, *next_style.pdf_character])
+                    end = following + 1
+                if end > index + 1:
+                    merged = copy.copy(styled)
+                    merged.pdf_character = chars
+                    boxes = [c.box for c in chars if c.box is not None]
+                    if boxes:
+                        merged.box = il_version_1.Box(min(b.x for b in boxes), min(b.y for b in boxes),
+                                                      max(b.x2 for b in boxes), max(b.y2 for b in boxes))
+                    composition = PdfParagraphComposition(pdf_same_style_characters=merged)
+            result.append(composition)
+            index = end
+        return result
 
     def process_formula(
         self,
@@ -1191,6 +1228,16 @@ class ILTranslator:
         """Post-translation processing: update paragraph with translated text."""
         self.translation_config.raise_if_cancelled()
         self.validate_paragraph_output(translate_input, translated_text)
+        for placeholder in translate_input.placeholders:
+            if isinstance(placeholder, FormulaPlaceholder):
+                original = get_char_unicode_string(placeholder.formula.pdf_character).rstrip()
+                if original.endswith((",", "，", "、")):
+                    # Citations can include their trailing comma. Keep those original
+                    # characters and remove only the duplicate generated at this boundary.
+                    translated_text = re.sub(
+                        f"(?P<token>{placeholder.regex_pattern})(?P<space>[ \\t]*)[,，、]",
+                        lambda match: match["token"] + match["space"], translated_text,
+                    )
         tracker.set_output(translated_text)
         if translated_text == translate_input:
             if llm_translate_tracker := tracker.last_llm_translate_tracker():
@@ -1450,6 +1497,8 @@ class ILTranslator:
         paragraph_token_count: int = 0,
         title_paragraph: PdfParagraph | None = None,
         local_title_paragraph: PdfParagraph | None = None,
+        parent_call=None,
+        retry_cause=None,
     ):
         """Translate a paragraph using pre and post processing functions."""
         self.translation_config.raise_if_cancelled()
@@ -1476,6 +1525,8 @@ class ILTranslator:
                     "validate_output": lambda value: self.validate_paragraph_output(translate_input, value),
                     "on_attempt": lambda: recovery.attempt([paragraph], context[0]) if recovery is not None else None,
                 }
+                if retry_cause:
+                    params.update(_metric_last_call=parent_call, metric_retry_cause=retry_cause)
                 self._ensure_translation_completion()
                 if getattr(self.translate_engine, "limits_each_attempt", False):
                     params["request_budget"] = self.request_budget([paragraph])

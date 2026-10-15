@@ -165,6 +165,7 @@ class LayoutParser:
                     page_layouts.append(page_layout)
 
                 page.page_layout = page_layouts
+                self.add_native_table_cells(page, mupdf_doc[page.page_number])
                 # self.generate_fallback_line_layout_for_page(page)
                 # self._save_debug_box_to_page(page)
                 progress.advance(1)
@@ -174,6 +175,44 @@ class LayoutParser:
                         self.generate_fallback_line_layout_for_page, page, progress
                     )
         return docs
+
+    def add_native_table_cells(self, page, source_page):
+        """Keep text from one ruled cell together instead of translating fallback lines."""
+        if not getattr(self.translation_config, "translate_table_text", False):
+            return
+        regions = [layout.box for layout in page.page_layout if layout.class_name == "table"]
+        # The IL layout coordinates use an unrotated, uncropped MediaBox.
+        if (not regions or source_page.rotation or source_page.cropbox != source_page.mediabox
+                or source_page.mediabox.x0 or source_page.mediabox.y0):
+            return
+        try:
+            tables = source_page.find_tables(strategy="lines_strict").tables
+        except Exception as error:
+            logger.warning("native table detection failed: error_type=%s", type(error).__name__)
+            return
+        height = source_page.mediabox.height
+        next_id = max((layout.id for layout in page.page_layout), default=0) + 1
+        for table in tables:
+            if table.row_count < 2 or table.col_count < 2:
+                continue
+            x0, y0, x1, y1 = table.bbox
+            box = il_version_1.Box(x0, height - y1, x1, height - y0)
+            area = (x1 - x0) * (y1 - y0)
+            if area <= 0 or not any(
+                max(0, min(box.x2, r.x2) - max(box.x, r.x))
+                * max(0, min(box.y2, r.y2) - max(box.y, r.y)) >= area * .9
+                for r in regions
+            ):
+                continue
+            for cell in table.cells:
+                if cell is None:
+                    continue
+                x0, y0, x1, y1 = cell
+                page.page_layout.append(il_version_1.PageLayout(
+                    id=next_id, box=il_version_1.Box(x0, height - y1, x1, height - y0),
+                    conf=1.0, class_name="wired_table_cell",
+                ))
+                next_id += 1
 
     def generate_fallback_line_layout_for_page(self, page: il_version_1.Page, progress):
         try:

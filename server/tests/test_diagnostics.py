@@ -7,6 +7,11 @@ from diagnostics import DiagnosticStore, SafeLogHandler, exception_frames, safe_
 from task_manager import TaskManager,TaskRecord
 
 class DiagnosticTests(unittest.TestCase):
+    def test_cancelled_request_count_survives_safe_export(self):
+        payload = {"metrics": {"requests": {"attempts": 1, "cancelled": 1,
+                   "byKind": {"translation": {"cancelled": 1}}}}}
+        self.assertEqual(safe_fields(payload), payload)
+
     def test_secrets_never_reach_disk_or_export(self):
         with tempfile.TemporaryDirectory() as temp:
             store=DiagnosticStore(Path(temp))

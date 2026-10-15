@@ -338,6 +338,7 @@ class AutomaticTermExtractor:
             output = self.translate_engine.llm_translate(
                 prompt,
                 rate_limit_params={
+                    "metric_kind": "term_extraction",
                     "paragraph_token_count": paragraph_token_count,
                     "request_json_mode": True,
                     "validate_output": self._parse_term_response,
