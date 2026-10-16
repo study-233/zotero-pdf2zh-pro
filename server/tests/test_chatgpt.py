@@ -252,31 +252,35 @@ class ChatGPTContracts(unittest.TestCase):
             with self.assertRaises(ChatGPTError): adapter.llm_translate('never send', ignore_cache=True)
             self.assertEqual(factory.translate.call_count, 2)
 
-    def test_pdf_default_four_workers_preserves_qps_and_lower_user_limits(self):
+    def test_pdf_default_24_workers_and_three_qps_preserve_lower_user_limits(self):
         client = Mock()
         client.check_ready.return_value = {'reasoningEffort':'low'}
         with patch('pdf2zh_next.translator.translator_impl.chatgpt.get_chatgpt_client', return_value=client):
-            for requested, expected in ((None,4), (50,4), (2,2), (1,1)):
-                with self.subTest(requested=requested):
-                    settings = create_runtime_settings(make_settings_payload(service='chatgpt',
-                        pool_size=requested, qps=10, no_auto_extract_glossary=False,
-                        llm_api={'model':'gpt-6-luna','reasoningEffort':'low'}))
-                    main = get_translator(settings)
-                    self.assertEqual(settings.translation.pool_max_workers, expected)
-                    self.assertEqual(main.rate_limiter.max_qps, 2)
-                    settings.translation.term_pool_max_workers = 1
-                    settings.translation.term_qps = 1
-                    terms = get_term_translator(settings)
-                    self.assertEqual(settings.translation.term_pool_max_workers, 1)
-                    self.assertEqual(terms.rate_limiter.max_qps, 1)
-                    main.configure_execution(expected, lambda: None)
-                    for _ in range(expected):
-                        self.assertTrue(main._request_slots.acquire(blocking=False))
-                    self.assertFalse(main._request_slots.acquire(blocking=False))
-                    for _ in range(expected): main._request_slots.release()
+            for requested, expected in ((None,24), (0,24), (50,24), (24,24), (8,8), (2,2), (1,1)):
+                for requested_qps, expected_qps in ((10,3), (3,3), (2,2), (1,1)):
+                    with self.subTest(requested=requested, qps=requested_qps):
+                        settings = create_runtime_settings(make_settings_payload(service='chatgpt',
+                            pool_size=requested, qps=requested_qps, no_auto_extract_glossary=False,
+                            llm_api={'model':'gpt-6-luna','reasoningEffort':'low'}))
+                        main = get_translator(settings)
+                        self.assertEqual(settings.translation.pool_max_workers, expected)
+                        self.assertEqual(main.rate_limiter.max_qps, expected_qps)
+                        terms = get_term_translator(settings)
+                        self.assertEqual(settings.translation.term_pool_max_workers, expected)
+                        self.assertEqual(terms.rate_limiter.max_qps, expected_qps)
+                        settings.translation.term_pool_max_workers = 1
+                        settings.translation.term_qps = 1
+                        terms = get_term_translator(settings)
+                        self.assertEqual(settings.translation.term_pool_max_workers, 1)
+                        self.assertEqual(terms.rate_limiter.max_qps, 1)
+                        main.configure_execution(expected, lambda: None)
+                        for _ in range(expected):
+                            self.assertTrue(main._request_slots.acquire(blocking=False))
+                        self.assertFalse(main._request_slots.acquire(blocking=False))
+                        for _ in range(expected): main._request_slots.release()
 
-    def test_four_live_requests_and_queued_cancel_reconcile_usage(self):
-        client, started, release, cancelled = Mock(), threading.Barrier(5), threading.Event(), threading.Event()
+    def test_24_live_requests_and_queued_cancel_reconcile_usage(self):
+        client, started, release, cancelled = Mock(), threading.Barrier(25), threading.Event(), threading.Event()
         def translate(prompt, **options):
             options['on_request_start']()
             started.wait(5)
@@ -286,27 +290,27 @@ class ChatGPTContracts(unittest.TestCase):
         settings = create_runtime_settings(make_settings_payload(service='chatgpt', llm_api={'model':'gpt-6-luna'}))
         with patch('pdf2zh_next.translator.translator_impl.chatgpt.get_chatgpt_client', return_value=client):
             adapter = ChatGPTTranslator(settings, None)
-        # No test override or supplied semaphore: the product default admits four.
+        # No test override or supplied semaphore: the product default admits 24.
         adapter.configure_execution(50, lambda: None)
-        collector = TaskMetricsCollector(task_id='four', provider='chatgpt', model='gpt-6-luna')
+        collector = TaskMetricsCollector(task_id='24-workers', provider='chatgpt', model='gpt-6-luna')
         adapter.set_metrics_collector(collector)
-        with ThreadPoolExecutor(max_workers=5) as workers:
-            calls = [workers.submit(adapter._request, 'source') for _ in range(4)]
+        with ThreadPoolExecutor(max_workers=25) as workers:
+            calls = [workers.submit(adapter._request, 'source') for _ in range(24)]
             try:
                 started.wait(5)
-                self.assertEqual(collector.snapshot()['requests']['active'], 4)
+                self.assertEqual(collector.snapshot()['requests']['active'], 24)
                 def check():
                     if cancelled.is_set(): raise asyncio.CancelledError()
                 queued = workers.submit(adapter._request, 'cancelled source', {'check_cancelled':check})
                 cancelled.set()
                 with self.assertRaises(asyncio.CancelledError): queued.result(timeout=2)
-                self.assertEqual(client.translate.call_count, 4)
+                self.assertEqual(client.translate.call_count, 24)
             finally:
                 release.set()
-            self.assertEqual([call.result(timeout=2) for call in calls], ['译文']*4)
+            self.assertEqual([call.result(timeout=2) for call in calls], ['译文']*24)
         stats = collector.snapshot()
-        self.assertEqual(tuple(stats['requests'][k] for k in ('attempts','succeeded','failed','active')), (4,4,0,0))
-        self.assertEqual((stats['tokens']['input'],stats['tokens']['output']), (60,24))
+        self.assertEqual(tuple(stats['requests'][k] for k in ('attempts','succeeded','failed','active')), (24,24,0,0))
+        self.assertEqual((stats['tokens']['input'],stats['tokens']['output']), (360,144))
 
 
 if __name__ == '__main__': unittest.main()

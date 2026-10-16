@@ -23,7 +23,8 @@ class ChatGPTTaskState:
 
 class ChatGPTTranslator(AccountTranslator):
     name = 'chatgpt'
-    pdf2zh_next_recommended_pool_max_workers = 4
+    pdf2zh_next_recommended_qps = 3
+    pdf2zh_next_recommended_pool_max_workers = 24
 
     def __init__(self, settings, rate_limiter):
         super().__init__(settings, rate_limiter)
