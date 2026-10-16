@@ -3,7 +3,7 @@
 这里记录 `zotero-pdf2zh-pro` 的用户可见变化。旧项目的历史仍保留在 Git 历史中，
 不作为本产品的版本序列。
 
-## v1.10.0 - 2026-10-16
+## v1.9.1 - 2026-10-16
 
 本次更新加入独立 ChatGPT 套餐登录，并改善翻译反馈、PDF 处理与 Windows 更新体验。
 
@@ -12,9 +12,9 @@
 - **提示与帮助**：统一操作反馈和批量提交结果，新增离线更新摘要与“新功能与帮助”入口；翻译结果导入成功后再合并发送完成通知。
 - **Windows 更新**：保留控制中心设置状态，改善更新进度与操作反馈，下载前核对用户确认的目标版本。
 
-插件与本地服务需分别升级至 v1.10.0。旧 Codex 配置会在本地备份后移除，请在翻译配置中重新登录 ChatGPT 并选择模型；不会自动选择其他翻译来源。v1.8.2 及更早版本的 Windows 用户，请等待翻译完成并从旧控制中心停止服务后再运行新安装器。
+插件与本地服务需分别升级至 v1.9.1。旧 Codex 配置会在本地备份后移除，请在翻译配置中重新登录 ChatGPT 并选择模型；不会自动选择其他翻译来源。v1.8.2 及更早版本的 Windows 用户，请等待翻译完成并从旧控制中心停止服务后再运行新安装器。
 
-[Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.10.0/zotero-pdf2zh-pro-windows-x64-setup.exe) · [安装指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.10.0/docs/user-guide.md) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.0...v1.10.0)
+[Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.1/zotero-pdf2zh-pro-windows-x64-setup.exe) · [安装指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.9.1/docs/user-guide.md) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.0...v1.9.1)
 
 ## v1.9.0 - 2026-10-12
 

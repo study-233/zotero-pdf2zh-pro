@@ -18,7 +18,7 @@ export interface ReleaseNoticeState {
 // Archive this entry and add an empty entry for releases with no user-facing news.
 export const releaseSummaries: ReleaseSummary[] = [
     {
-        version: "1.10.0",
+        version: "1.9.1",
         notes: [
             {
                 id: "chatgpt-login",

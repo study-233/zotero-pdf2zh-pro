@@ -1,6 +1,6 @@
 [package]
 name = "zotero-pdf2zh-pro-control"
-version = "1.10.0"
+version = "1.9.1"
 edition = "2021"
 description = "Native Windows control center for zotero-pdf2zh-pro"
 license = "AGPL-3.0-only"
