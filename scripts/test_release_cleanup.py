@@ -1,5 +1,6 @@
 """Run the real coordinator EXIT handler without any publication commands."""
 from pathlib import Path
+import json
 import shutil
 import subprocess
 import unittest
@@ -14,6 +15,21 @@ BASH = str(WINDOWS_BASH) if WINDOWS_BASH.is_file() else shutil.which("bash")
 
 @unittest.skipUnless(BASH, "Bash is required for the release coordinator")
 class ReleaseCleanupTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'), 'Node is required for workspace path conversion')
+    def test_workspace_path_survives_native_node_argument_conversion(self):
+        assignment = next(line for line in SOURCE.splitlines()
+                          if line.lstrip().startswith('WORKSPACE_RUN="$('))
+        for work in [r'D:\StudyHub\repo\.tmp\runs\download',
+                     'D:\\Study Hub\\中文\\.tmp\\runs\\download',
+                     '/tmp/study repo/runs/download']:
+            with self.subTest(work=work):
+                info = json.dumps({'work': work}, ensure_ascii=False)
+                script = f"VERIFIED_INFO='{info}'\n{assignment}\nprintf '%s' \"$WORKSPACE_RUN\"\n"
+                result = subprocess.run([BASH, '--noprofile', '--norc'],
+                                        input=script.encode('utf-8'), capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout.decode('utf-8'), work.replace('\\', '/'))
+
     def invoke(self, status=7, backup="this invocation backup", tap=0, restore_status=0, workspace=""):
         script = f'''set -euo pipefail
 TEMP_PATHS=()

@@ -103,7 +103,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path .tmp | Out-Null
           uv run --no-project python scripts/test_windows_progress.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          foreach ($test in @('test_windows_uninstall.py', 'test_windows_pe.py', 'test_windows_slint_gate.py', 'test_prepare_windows_skia_source.py')) {
+          foreach ($test in @('test_release_cleanup.py', 'test_windows_uninstall.py', 'test_windows_pe.py', 'test_windows_slint_gate.py', 'test_prepare_windows_skia_source.py')) {
             uv run --no-project python "scripts/$test"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
