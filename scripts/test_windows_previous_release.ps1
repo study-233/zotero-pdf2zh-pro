@@ -17,9 +17,11 @@ if ($Root) {
     }
 }
 . (Join-Path $PSScriptRoot 'workspace.ps1')
-$workspaceRun=New-WorkspaceRun -Name 'previous-release'
+$workspaceRun=New-WorkspaceRun -Name 'migration'
 $fixture=$workspaceRun.work
-if (-not $Root) { $Root=Join-Path $fixture 'installation 中文 with spaces' }
+# Keep the managed fixture compact: chardet's native loader still has MAX_PATH
+# limits when a repair adds another suffix to the versioned environment path.
+if (-not $Root) { $Root=Join-Path $fixture '中文 with spaces' }
 $passed=$false
 $old=Join-Path $fixture 'old'
 $new=Join-Path $fixture 'new'
