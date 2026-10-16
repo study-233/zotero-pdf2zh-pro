@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+from socketserver import TCPServer
 import tempfile
 import time
 from urllib.parse import parse_qs, urlencode, urlsplit
@@ -327,6 +328,13 @@ def login(directory=None, *, max_seconds=600, ready=None, cancelled=None, new_ac
     attempt = None
     route = '/start/' + secrets.token_urlsafe(24)
 
+    class CallbackServer(HTTPServer):
+        def server_bind(self):
+            # The callback uses a numeric loopback address; reverse DNS can block
+            # startup on macOS and is unnecessary for OAuth or Host validation.
+            TCPServer.server_bind(self)
+            self.server_name, self.server_port = self.server_address[:2]
+
     class Handler(BaseHTTPRequestHandler):
         # HTTPServer.timeout only bounds accept(), not reads on an accepted
         # socket. Browsers may preconnect without sending an HTTP request.
@@ -373,7 +381,7 @@ def login(directory=None, *, max_seconds=600, ready=None, cancelled=None, new_ac
             else:
                 self.respond(404)
 
-    server = HTTPServer(('127.0.0.1', 0), Handler)
+    server = CallbackServer(('127.0.0.1', 0), Handler)
     server.timeout = .5
     try:
         attempt = store.prepare(f'http://127.0.0.1:{server.server_port}/auth/callback', new_account=new_account)

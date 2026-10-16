@@ -1,6 +1,8 @@
 import json
 import os
 import socket
+import sys
+import traceback
 from http.server import HTTPServer
 from urllib.parse import urlsplit
 import tempfile
@@ -12,6 +14,22 @@ import httpx
 from chatgpt_auth import AUTHORITY, AuthError, AuthStore, b64, login, private_write, verify_identity
 
 class LoginCancellationTests(unittest.TestCase):
+    def test_loopback_login_startup_does_not_require_reverse_dns(self):
+        cancelled = threading.Event()
+        urls = []
+        def on_ready(url):
+            urls.append(url)
+            cancelled.set()
+        with tempfile.TemporaryDirectory() as directory, patch(
+                'socket.getfqdn', side_effect=AssertionError('loopback startup queried reverse DNS')) as lookup:
+            result = login(directory, ready=on_ready, cancelled=cancelled, max_seconds=5)
+        lookup.assert_not_called()
+        self.assertEqual(len(urls), 1)
+        callback = urlsplit(urls[0])
+        self.assertEqual(callback.hostname, '127.0.0.1')
+        self.assertGreater(callback.port, 0)
+        self.assertEqual(result['error'], 'oauth_login_cancelled')
+
     def test_browser_idle_preconnection_cannot_block_login_cancellation(self):
         accepted, ready, cancelled = threading.Event(), threading.Event(), threading.Event()
         urls, results, errors = [], [], []
@@ -34,7 +52,9 @@ class LoginCancellationTests(unittest.TestCase):
             thread.start()
             connection = None
             try:
-                self.assertTrue(ready.wait(3))
+                if not ready.wait(3):
+                    frame = sys._current_frames().get(thread.ident)
+                    self.fail("login startup timed out\n" + "".join(traceback.format_stack(frame)))
                 self.assertFalse(errors)
                 url = urlsplit(urls[0])
                 connection = socket.create_connection(('127.0.0.1', url.port), timeout=2)
