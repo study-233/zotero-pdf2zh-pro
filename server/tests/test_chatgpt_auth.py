@@ -1,6 +1,8 @@
 import json
 import os
 import socket
+import sys
+import traceback
 from http.server import HTTPServer
 from urllib.parse import urlsplit
 import tempfile
@@ -34,7 +36,9 @@ class LoginCancellationTests(unittest.TestCase):
             thread.start()
             connection = None
             try:
-                self.assertTrue(ready.wait(3))
+                if not ready.wait(3):
+                    frame = sys._current_frames().get(thread.ident)
+                    self.fail("login startup timed out\n" + "".join(traceback.format_stack(frame)))
                 self.assertFalse(errors)
                 url = urlsplit(urls[0])
                 connection = socket.create_connection(('127.0.0.1', url.port), timeout=2)
