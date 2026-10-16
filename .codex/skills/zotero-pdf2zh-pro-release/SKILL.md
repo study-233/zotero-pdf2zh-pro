@@ -25,8 +25,8 @@ description: Prepare, publish, or resume zotero-pdf2zh-pro releases across Zoter
 
 1. 确认实际仓库根目录：聊天目录可能是父仓库，源码在 `zotero-pdf2zh-pro/`。读取仓库约定，核对 origin、分支、已跟踪及未跟踪改动。
 2. 正式发布使用干净的 `main`，origin 为 `study-233/zotero-pdf2zh-pro`。存在待发布改动时先审阅和提交，不直接丢弃、stash 或漏掉新增模块、测试。检查暂存差异后再提交。
-3. 以最后已发布版本至当前改动为依据整理 CHANGELOG。不能只复制已有 Unreleased：需核对所有本次提交和相关待提交改动，避免漏记同时完成的修复。写 `## v<version> - YYYY-MM-DD`，日期按实际发布日。
-4. 写文案前读 [Release 写作规范](references/release-notes.md)。技术验证记录留在 Actions/构建记录，不堆进用户更新说明。
+3. 以最后已发布版本至当前改动为依据整理 CHANGELOG。不能只复制已有 Unreleased：需完整核对本次提交和相关待提交改动，再筛选用户关心的重点；完整核对不等于逐项写入正文。写 `## v<version> - YYYY-MM-DD`，日期按实际发布日。
+4. 写文案前读 [Release 写作规范](references/release-notes.md)。默认一屏可读：一句话概括、3–4 条重点、必要的升级提醒和底部链接；短补丁可更少，必要提醒不受篇幅限制。技术验证记录留在 Actions/构建记录。
 5. 读取当前 `scripts/release.sh` 与 `.github/workflows/{ci,build-windows-release,publish-pypi}.yml`，以现有参数和检查为准，不照抄历史对话里的临时发布命令。
 
 规范身份：PyPI/CLI 为 `zotero-pdf2zh-pro`，Zotero ID 为 `zotero-pdf2zh-pro@study-233`，Homebrew 为 `study-233/formula/zotero-pdf2zh-pro`。

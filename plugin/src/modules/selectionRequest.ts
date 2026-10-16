@@ -182,14 +182,23 @@ export function createSelectionRequest() {
                           ? "selection_http_cancelled"
                           : "selection_http_failure",
                 );
-                throw new Error(
-                    timedOut
-                        ? "翻译请求超时，请重新划选重试。"
-                        : onDelta &&
-                            error instanceof Error &&
-                            !controller.signal.aborted
-                          ? error.message
-                          : "请求未完成，请检查本地服务后重试。",
+                throw Object.assign(
+                    new Error(
+                        timedOut
+                            ? "翻译请求超时，请重新划选重试。"
+                            : onDelta &&
+                                error instanceof Error &&
+                                !controller.signal.aborted
+                              ? error.message
+                              : "请求未完成，请检查本地服务后重试。",
+                    ),
+                    {
+                        code: timedOut
+                            ? "provider_timeout"
+                            : controller.signal.aborted
+                              ? "selection_cancelled"
+                              : (error as { code?: string })?.code,
+                    },
                 );
             } finally {
                 clearTimeout(timer);

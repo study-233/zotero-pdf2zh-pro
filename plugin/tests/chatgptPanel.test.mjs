@@ -24,6 +24,7 @@ function fixture(request) {
     const panel = window.createChatGPTPanel(
         {
             message: (k) => k,
+            errorMessage: () => "notice-error-network",
             chatgptAccount: request,
             openChatGPTPage: (u) => links.push(u),
         },
@@ -135,10 +136,7 @@ test("failed cancel can be retried without leaving the buttons disabled", async 
     await tick();
     f.node("cancel").click();
     await tick();
-    assert.equal(
-        f.node("account-status").textContent,
-        "connection interrupted",
-    );
+    assert.equal(f.node("account-status").textContent, "notice-error-network");
     assert.equal(f.node("cancel").disabled, false);
     assert.equal(f.node("refresh").disabled, false);
     assert.equal(f.node("login").disabled, true);

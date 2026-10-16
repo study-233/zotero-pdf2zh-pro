@@ -25,10 +25,17 @@ export async function chatgptAccountRequest(
     } catch (error) {
         const message =
             axios.isAxiosError(error) && error.response?.data?.message;
-        throw new Error(
-            typeof message === "string"
-                ? message
-                : "无法读取 ChatGPT 登录状态，请检查本地服务。",
+        throw Object.assign(
+            new Error(
+                typeof message === "string"
+                    ? message
+                    : "无法读取 ChatGPT 登录状态，请检查本地服务。",
+            ),
+            {
+                code: axios.isAxiosError(error)
+                    ? error.response?.data?.code
+                    : undefined,
+            },
         );
     }
 }

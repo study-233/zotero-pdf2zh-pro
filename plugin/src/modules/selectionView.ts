@@ -1,3 +1,4 @@
+import { getString } from "../utils/locale";
 import { getPref, setPref } from "../utils/prefs";
 import {
     createSelectionPopup,
@@ -104,7 +105,10 @@ export function createSelectionView(
                     onSwitch: () => {
                         void switchDisplay().catch(() => {
                             onDegraded("switch_failed");
-                            popup.showNotice("切换失败，请重试。");
+                            popup.showNotice(
+                                getString("selection-view-failed"),
+                                true,
+                            );
                         });
                     },
                     onClear: close,
@@ -140,7 +144,8 @@ export function createSelectionView(
         if (closed || version !== switchVersion) return;
         if (!target) {
             onDegraded("sidebar_unavailable");
-            if (persist) popup.showNotice("当前窗口无法使用右侧窗格。");
+            if (persist)
+                popup.showNotice(getString("selection-pane-unavailable"), true);
             return; // Keep the usable floating view and the saved preference.
         }
         if (host !== target) mount(target);
@@ -201,8 +206,8 @@ export function createSelectionView(
             return Boolean(host);
         },
         close,
-        showNotice(message: string) {
-            popup.showNotice(message);
+        showNotice(message: string, failed = false) {
+            popup.showNotice(message, failed);
         },
         get result() {
             return result;

@@ -168,7 +168,7 @@ jobs:
         if: inputs.reuse_build_run_id == ''
         uses: actions/cache@v4
         with:
-          path: .tmp/windows-build-archives
+          path: .tmp/cache/windows-build-archives
           key: windows-release-slint-1.18.1-skia-153-llvm-21.1.8-archives-v2
 
       - name: Prepare static Slint renderer toolchain
@@ -176,7 +176,7 @@ jobs:
         if: inputs.reuse_build_run_id == ''
         shell: pwsh
         run: |
-          & "$env:RUNNER_TEMP/renderer-harness/prepare_windows_build_tools.ps1" -CacheRoot "$env:GITHUB_WORKSPACE/.tmp/windows-build-archives"
+          & "$env:RUNNER_TEMP/renderer-harness/prepare_windows_build_tools.ps1" -CacheRoot "$env:GITHUB_WORKSPACE/.tmp/cache/windows-build-archives"
 
       - name: Use a short Windows build path
         if: inputs.reuse_build_run_id == ''
@@ -276,7 +276,8 @@ jobs:
           subprocess.run(["git", "merge-base", "--is-ancestor", run["head_sha"], sys.argv[5]], check=True)
           paths = ["check_installed_runtime.py", "test_windows_lifecycle.ps1", "check_windows_background.py",
                    "test_windows_process_helpers.ps1", "test_windows_release_extended.ps1",
-                   "test_windows_previous_release.ps1", "test_windows_update_reuse.ps1", "test_windows_uv_progress.py"]
+                   "test_windows_previous_release.ps1", "test_windows_update_reuse.ps1", "test_windows_uv_progress.py",
+                   "workspace.py", "workspace.ps1"]
           subprocess.run(["git", "diff", "--exit-code", run["head_sha"], sys.argv[5], "--",
                           *["scripts/" + path for path in paths]], check=True)
           PY_VALIDATION
@@ -292,7 +293,7 @@ jobs:
             scripts/test_windows_lifecycle.ps1 scripts/check_windows_background.py \
             scripts/test_windows_process_helpers.ps1 scripts/test_windows_release_extended.ps1 \
             scripts/test_windows_previous_release.ps1 scripts/test_windows_update_reuse.ps1 \
-            scripts/test_windows_uv_progress.py
+            scripts/test_windows_uv_progress.py scripts/workspace.py scripts/workspace.ps1
 
       - name: Fresh installed Python 3.13 runtime and OCR
         if: env.REUSE_VALIDATION != 'true'
@@ -346,6 +347,14 @@ jobs:
             scripts/test_windows_lifecycle.ps1 scripts/test_windows_release_extended.ps1 \
             scripts/test_windows_previous_release.ps1 scripts/test_windows_update_reuse.ps1 \
             scripts/test_windows_uv_progress.py
+          # Older release commits do not yet contain the shared workspace helpers.
+          for helper in scripts/workspace.py scripts/workspace.ps1; do
+            if git cat-file -e "HEAD:$helper" 2>/dev/null; then
+              git restore --source HEAD --worktree -- "$helper"
+            else
+              rm -f -- "$helper"
+            fi
+          done
 
       - name: Verify and collect release artifacts
         shell: bash
@@ -373,15 +382,15 @@ jobs:
             dist/*.json
             ${{ env.PDF2ZH_WINDOWS_APP_ROOT }}/logs/**
             ${{ env.PDF2ZH_WINDOWS_APP_ROOT }}/last-operation-error.txt
-            .tmp/release-extended-*/**/logs/**
+            .local-dev/reports/**
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 30
 
       - name: Save prepared renderer toolchain after a later failure
         if: failure() && steps.renderer-tools.outcome == 'success' && steps.renderer-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: .tmp/windows-build-archives
+          path: .tmp/cache/windows-build-archives
           key: windows-release-slint-1.18.1-skia-153-llvm-21.1.8-archives-v2
 
       - name: Remove the isolated build drive

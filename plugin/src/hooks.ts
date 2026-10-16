@@ -4,12 +4,22 @@ import { stopDevelopmentLibrary } from "./modules/developmentLibrary";
 import { PDF2zhBasicFactory, PDF2zhUIFactory } from "./modules/pdf2zh";
 import { PDF2zhTaskManager } from "./modules/pdf2zhTaskManager";
 import { initLocale } from "./utils/locale";
+import { getPref } from "./utils/prefs";
 import { createZToolkit } from "./utils/ztoolkit";
 import {
     registerPrefsScripts,
     initializeProfileMigration,
     openChatGPTLogin,
+    openProfileManager,
 } from "./modules/preferenceScript";
+import {
+    configureNoticeActions,
+    initializeReleaseNotices,
+    registerNoticeWindow,
+    unregisterNoticeWindow,
+    stopPluginNotices,
+    openNoticeHelp,
+} from "./modules/pluginNotices";
 import { migrateReviewPreference } from "./modules/reviewPreferences";
 import { repairAttachmentNamingPreferences } from "./modules/attachmentNamingSettings";
 import { migrateSelectionPreferences } from "./modules/selectionMigration";
@@ -24,11 +34,21 @@ async function onStartup(reason?: number) {
         Zotero.unlockPromise,
         Zotero.uiReadyPromise,
     ]);
+    const existingInstall =
+        Number(getPref("selectionPreferenceVersion") || 0) > 0;
     migrateReviewPreference();
     migrateSelectionPreferences(reason);
     repairAttachmentNamingPreferences();
     initLocale();
-    PDF2zhBasicFactory.registerPrefs();
+    await PDF2zhBasicFactory.registerPrefs();
+    configureNoticeActions((action) => {
+        if (action === "profiles") openProfileManager();
+        else if (action === "tasks") PDF2zhTaskManager.openWindow();
+        else
+            PDF2zhBasicFactory.openPrefs(
+                action === "selection" ? "selection-provider" : "new_serverip",
+            );
+    });
     await Promise.all(
         Zotero.getMainWindows().map((win) => onMainWindowLoad(win)),
     );
@@ -38,6 +58,7 @@ async function onStartup(reason?: number) {
         ztoolkit.log(error);
     }
     registerSelectionTranslation();
+    initializeReleaseNotices(reason, existingInstall);
     void PDF2zhTaskManager.start().catch((error) => ztoolkit.log(error));
     if (typeof __devRuntime__ !== "undefined" && __devRuntime__) {
         const { prepareDevelopmentLibrary } =
@@ -52,6 +73,7 @@ async function onMainWindowLoad(_win: Window): Promise<void> {
         `${addon.data.config.addonRef}-addon.ftl`,
     );
     PDF2zhUIFactory.registerRightClickMenuItem();
+    registerNoticeWindow(_win);
     await new Promise((resolve) => setTimeout(resolve, 200));
 }
 
@@ -62,12 +84,14 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
 }
 
 async function onMainWindowUnload(_win: Window): Promise<void> {
+    unregisterNoticeWindow(_win);
     ztoolkit.unregisterAll();
     addon.data.dialog?.window?.close();
     PDF2zhTaskManager.closeWindow();
 }
 
 function onShutdown(): void {
+    stopPluginNotices();
     stopDevelopmentLibrary();
     cancelDictionaryDownload();
     unregisterSelectionTranslation();
@@ -92,6 +116,7 @@ async function onNotify(
 function onShortcuts(_type: string) {}
 
 function onDialogEvents(type: string) {
+    if (type === "openNoticeHelp") openNoticeHelp();
     if (type === "reloginChatGPT") openChatGPTLogin();
     if (type === "translatePDF") {
         PDF2zhTaskManager.processWorker();

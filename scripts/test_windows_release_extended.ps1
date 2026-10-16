@@ -9,12 +9,15 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 . (Join-Path $PSScriptRoot 'test_windows_process_helpers.ps1')
+. (Join-Path $PSScriptRoot 'workspace.ps1')
 $validationCommit = (& git -C $repo rev-parse HEAD)
 if (-not $SourceCommit) { $SourceCommit = $validationCommit }
 if ($SourceCommit -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected a full source commit.' }
 & git -C $repo merge-base --is-ancestor $SourceCommit $validationCommit
 if ($LASTEXITCODE -ne 0) { throw 'The source commit must be an ancestor of the validation scripts.' }
-$fixture = Join-Path $repo ('.tmp/release-extended-' + [guid]::NewGuid().ToString('N'))
+$workspaceRun = New-WorkspaceRun -Name 'release-extended'
+$fixture = $workspaceRun.work
+$passed = $false
 $registry = 'HKCU:\Software\pdf2zh-release-test-' + [guid]::NewGuid().ToString('N')
 $package = (Resolve-Path (Join-Path $repo 'dist/zotero-pdf2zh-pro-windows-x64.zip')).Path
 $wheel = (Resolve-Path (Join-Path $repo "server/dist/zotero_pdf2zh_pro-$Version-py3-none-any.whl")).Path
@@ -72,8 +75,7 @@ try {
         $arguments = @('-NoProfile','-ExecutionPolicy','Bypass','-File',
             (Join-Path $PSScriptRoot 'test_windows_previous_release.ps1'),
             '-PreviousPackage',(Join-Path $previous 'zotero-pdf2zh-pro-windows-x64.zip'),
-            '-PreviousWheel',$oldWheel,'-Package',$package,'-Wheel',$wheel,
-            '-Root',(Join-Path $fixture 'migration 中文 with spaces'))
+            '-PreviousWheel',$oldWheel,'-Package',$package,'-Wheel',$wheel)
         if ($DownloadCache) { $arguments += @('-DownloadCache', $DownloadCache) }
         & powershell @arguments
         if ($LASTEXITCODE -ne 0) { throw 'Previous-release migration validation failed.' }
@@ -84,10 +86,12 @@ try {
       wheelSha256=(Get-FileHash -LiteralPath $wheel -Algorithm SHA256).Hash.ToLowerInvariant()} |
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path $fixture 'validation.json') -Encoding utf8
     Write-Host "Extended validation passed; evidence: $fixture/validation.json"
+    $passed = $true
 } finally {
     # Also clean up failed/relocated fixtures; never match the production directory.
     Stop-IsolatedTestProcesses -Roots @($fixture)
     if ($registry -notlike 'HKCU:\Software\pdf2zh-release-test-*') { throw 'Unsafe test registry cleanup.' }
     Remove-Item -LiteralPath $registry -Recurse -Force -ErrorAction SilentlyContinue
     foreach ($name in $saved.Keys) { [Environment]::SetEnvironmentVariable($name, $saved[$name], 'Process') }
+    Complete-WorkspaceRun -Run $workspaceRun -Passed $passed
 }

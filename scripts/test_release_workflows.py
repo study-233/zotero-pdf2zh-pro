@@ -1,6 +1,7 @@
 """Exercise the actual inline guards used when reusing release packages."""
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -19,6 +20,37 @@ def inline(workflow, marker):
 
 
 class WorkflowGateTests(unittest.TestCase):
+    def test_workspace_overlay_restores_old_and_new_release_commits(self):
+        from test_release_cleanup import BASH
+        if not BASH or not shutil.which('git'):
+            self.skipTest('Bash and Git required')
+        text = (ROOT / '.github/workflows/build-windows-release.yml').read_text(encoding='utf-8')
+        step = text.split('      - name: Restore source test scripts after validation\n', 1)[1].split('\n      - name:', 1)[0]
+        script = textwrap.dedent(step.split('        run: |\n', 1)[1])
+        names = ['test_windows_lifecycle.ps1', 'test_windows_release_extended.ps1',
+                 'test_windows_previous_release.ps1', 'test_windows_update_reuse.ps1', 'test_windows_uv_progress.py']
+        for helpers_existed in (False, True):
+            with self.subTest(helpers_existed=helpers_existed), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / 'scripts').mkdir()
+                original = names + (['workspace.py', 'workspace.ps1'] if helpers_existed else [])
+                for name in original:
+                    (root / 'scripts' / name).write_text('original\n', encoding='utf-8')
+                def git(*args):
+                    return subprocess.run(['git', '-c', 'user.name=Workspace Test', '-c', 'user.email=test@example.invalid', *args],
+                                          cwd=root, capture_output=True, check=True)
+                git('init', '-q')
+                git('add', 'scripts')
+                git('commit', '-qm', 'Fixture release source')
+                for name in [*names, 'workspace.py', 'workspace.ps1']:
+                    (root / 'scripts' / name).write_text('new harness\n', encoding='utf-8')
+                result = subprocess.run([BASH, '--noprofile', '--norc'], input=script.encode(), cwd=root, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                for name in original:
+                    self.assertEqual((root / 'scripts' / name).read_text(), 'original\n')
+                self.assertEqual((root / 'scripts/workspace.py').exists(), helpers_existed)
+                self.assertEqual(git('status', '--porcelain').stdout, b'')
+
     def test_source_gate_rejects_non_main_invalid_sha_and_non_ancestor(self):
         good = ["refs/heads/main", SHA, "b" * 40]
         self.execute("build-windows-release.yml", "PY_SOURCE", [], good)

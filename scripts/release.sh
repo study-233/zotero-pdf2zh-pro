@@ -40,6 +40,13 @@ cleanup() {
             echo "Homebrew tap update was attempted; inspect its state before restoring tap history." >&2
         fi
     fi
+    if [[ -n "${WORKSPACE_RUN:-}" ]]; then
+        local validation_status=failed
+        [[ "$exit_status" -ne 0 ]] || validation_status=passed
+        if ! uv run --no-project python scripts/workspace.py finish "$WORKSPACE_RUN" --status "$validation_status"; then
+            echo "Validation workspace retained: $WORKSPACE_RUN" >&2
+        fi
+    fi
     # macOS Bash 3.2 treats an empty array as unset under `set -u`.
     for path in ${TEMP_PATHS[@]+"${TEMP_PATHS[@]}"}; do
         if [[ -n "$path" && -e "$path" ]]; then
@@ -294,7 +301,9 @@ if [[ "$PUSH" -eq 1 ]]; then
     done
     [[ -n "$BUILD_RUN" ]] || die "Windows release validation did not start"
     gh run watch "$BUILD_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
-    VERIFIED_DIR="dist/verified-$BUILD_RUN"
+    VERIFIED_INFO="$(uv run --no-project python scripts/workspace.py start verified-download --owner-pid "$$")"
+    WORKSPACE_RUN="$(printf '%s' "$VERIFIED_INFO" | node -e 'console.log(JSON.parse(require("fs").readFileSync(0,"utf8")).work.replace(/\\/g,"/"))')"
+    VERIFIED_DIR="$WORKSPACE_RUN/download"
     gh run download "$BUILD_RUN" --repo "$MAIN_REPO" \
         --name "release-$VERSION-$COMMIT" --dir "$VERIFIED_DIR"
     node - "$VERIFIED_DIR" "$VERSION" "$COMMIT" "$REPLACE_EXISTING" <<'VERIFY_BUILD'

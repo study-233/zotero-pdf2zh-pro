@@ -8,6 +8,7 @@ declare namespace _ZoteroTypes {
   interface Prefs {
     PluginPrefsMap: {
       "new_serverip": string;
+      "releaseNoticeState": string;
       "sourceLang": string;
       "targetLang": string;
       "sourceLangSelect": string;

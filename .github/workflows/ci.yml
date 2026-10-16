@@ -64,6 +64,11 @@ jobs:
       - name: Test isolated development manager
         run: python -m unittest discover -s scripts -p 'test_dev.py'
 
+      - name: Check development output layout and retention
+        run: |
+          uv run --no-project python -m unittest discover -s scripts -p 'test_workspace.py'
+          uv run --no-project python scripts/workspace.py check
+
       - name: Test release artifact guards
         run: uv run --no-project python -m unittest discover -s scripts -p 'test_release*.py'
 

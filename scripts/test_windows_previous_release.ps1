@@ -3,18 +3,24 @@
     [Parameter(Mandatory=$true)][string]$PreviousWheel,
     [Parameter(Mandatory=$true)][string]$Package,
     [Parameter(Mandatory=$true)][string]$Wheel,
-    [Parameter(Mandatory=$true)][string]$Root,
+    [string]$Root,
     [string]$DownloadCache
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $repo=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$Root=[IO.Path]::GetFullPath($Root)
 $temporaryRoot=(Join-Path $repo '.tmp')+'\'
-if (-not $Root.StartsWith($temporaryRoot,[StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $Root)) {
-    throw 'Previous-release migration requires a fresh installation under repository .tmp.'
+if ($Root) {
+    $Root=[IO.Path]::GetFullPath($Root)
+    if (-not $Root.StartsWith($temporaryRoot,[StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $Root)) {
+        throw 'Previous-release migration requires a fresh installation under repository .tmp.'
+    }
 }
-$fixture=Join-Path $repo ('.tmp/previous-release-'+[guid]::NewGuid().ToString('N'))
+. (Join-Path $PSScriptRoot 'workspace.ps1')
+$workspaceRun=New-WorkspaceRun -Name 'previous-release'
+$fixture=$workspaceRun.work
+if (-not $Root) { $Root=Join-Path $fixture 'installation 中文 with spaces' }
+$passed=$false
 $old=Join-Path $fixture 'old'
 $new=Join-Path $fixture 'new'
 $registry='HKCU:\Software\pdf2zh-previous-release-'+[guid]::NewGuid().ToString('N')
@@ -128,8 +134,10 @@ try {
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'test_windows_update_reuse.ps1') -Root $Root -Report (Join-Path $Root 'logs/reuse-report.json') -RegistryKey $registry -StartMenuDirectory $menu
     Assert-True ($LASTEXITCODE -eq 0) 'Locked dependency/cache reuse failed.'
     Write-Host 'Real v1.8.2 migration, legacy admission protection, native takeover, retained data/startup and three offline updates passed.'
+    $passed=$true
 } finally {
     Stop-IsolatedTestProcesses -Roots @($Root, $fixture)
     if ($registry -notlike 'HKCU:\Software\pdf2zh-previous-release-*') {throw 'Unsafe test registry cleanup.'}
     Remove-Item -LiteralPath $registry -Recurse -Force -ErrorAction SilentlyContinue
+    Complete-WorkspaceRun -Run $workspaceRun -Passed $passed
 }

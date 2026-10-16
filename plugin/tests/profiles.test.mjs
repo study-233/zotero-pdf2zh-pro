@@ -266,7 +266,7 @@ const compatibility = await asModule(compile("apiCompatibility"));
 globalThis.__profileTests.prepareApiForServer =
     compatibility.prepareApiForServer;
 const client = await asModule(
-    "const {axios, getPref, prepareApiForServer, assertSupportedProfile} = globalThis.__profileTests;\n" +
+    "const {axios, getPref, getString, prepareApiForServer, assertSupportedProfile} = globalThis.__profileTests;\n" +
         compile("profileApiClient").replace(/^import .*;$/gm, ""),
 );
 test("testing a draft forwards its credentials/options without changing saved selection", async () => {
@@ -274,7 +274,7 @@ test("testing a draft forwards its credentials/options without changing saved se
     prefs.set("new_serverip", "http://localhost:8890/");
     prefs.set("selectedApiKey", "a");
     const draft = { ...api("unsaved"), apiProtocol: "responses" };
-    assert.match(await client.testProfile(draft), /API 测试成功.*Responses/);
+    assert.equal(await client.testProfile(draft), "profile-tested");
     assert.equal(requests.at(-1).url, "http://localhost:8890/validate-config");
     assert.deepEqual(requests.at(-1).body.llm_api, draft);
     assert.equal(prefs.get("selectedApiKey"), "a");
@@ -381,7 +381,7 @@ test("Codex connection test checks server support and sends one explicit live te
         requests.push({ url, body, options });
         return { data: { liveTest: { ok: true } } };
     };
-    assert.match(await client.testProfile(draft), /Codex 连接测试成功/);
+    assert.equal(await client.testProfile(draft), "profile-tested");
     assert.equal(requests.length, before + 1);
     assert.equal(requests.at(-1).options.timeout, 65000);
     assert.equal(requests.at(-1).body.liveTest, true);

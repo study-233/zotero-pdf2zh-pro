@@ -7,10 +7,10 @@ const assert = require("node:assert/strict");
 const ts = require("../plugin/node_modules/typescript");
 const { chromium } = require(process.argv[2] || "playwright");
 const root = path.resolve(__dirname, "..");
-const output = path.join(root, ".local-dev/selection-ui");
+const output = require('./workspace.cjs').newReport('selection-ui');
 fs.mkdirSync(output, { recursive: true });
 const modules = {};
-for (const name of ["selectionFormatting", "selectionTranslate", "selectionDictionary", "selectionDictionaryStore", "selectionPopup", "selectionUI", "selectionAudio", "selectionOnlineDictionary", "selectionDictionaryService", "selectionStream", "selectionEvents", "selectionRequest", "selectionView", "selectionPane"]) {
+for (const name of ["selectionFormatting", "selectionTranslate", "selectionDictionary", "selectionDictionaryStore", "userNotice", "selectionPopup", "selectionUI", "selectionAudio", "selectionOnlineDictionary", "selectionDictionaryService", "selectionStream", "selectionEvents", "selectionRequest", "selectionView", "selectionPane"]) {
     modules[`./${name}`] = ts.transpileModule(fs.readFileSync(path.join(root, `plugin/src/modules/${name}.ts`), "utf8"), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText;
@@ -53,7 +53,7 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
                 "../utils/locale": {getLocaleID: id => id, getString: key => localeStrings[key] || key},
                 "./glossaryStore": { loadGlossaryEntries: () => [] },
                 "./selectionContext": { getSelectionContext: async () => "page context" },
-                "./diagnostics": { recordDiagnostic: (...args) => logs.push(args) },
+                "./diagnostics": { recordDiagnostic: (...args) => logs.push(args), maintenanceFetch: (url, options, fetch) => fetch(url, options) },
             };
             window.fetch = async (url, options) => {
                 const body = JSON.parse(options.body);
@@ -108,7 +108,13 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
         const reader = page.frameLocator("#reader");
         const card = reader.locator(".pdf2zh-selection-card");
         const select = async text => {console.log("Selection:",text);await page.evaluate(text=>trigger(text),text);await card.waitFor();};
-        const expectText = async text => {await page.waitForFunction(text=>rdoc.querySelector(".st-body")?.textContent.includes(text),text);};
+        const expectText = async text => {
+            try { await page.waitForFunction(text=>rdoc.querySelector(".st-body")?.textContent.includes(text),text); }
+            catch (error) {
+                console.error(await page.evaluate(() => ({body:rdoc.querySelector(".st-body")?.textContent, status:rdoc.querySelector(".st-status")?.textContent, requests:calls.slice(-3), diagnostics:logs.slice(-3)})), errors);
+                throw error;
+            }
+        };
         await select("distributions"); await expectText("分布");
         assert.equal(await page.evaluate(()=>calls.length),0);
         await expectText("distributions → distribution");

@@ -1,4 +1,5 @@
 pref-title = zotero-pdf2zh-pro
+pref-notice-help = 新功能与帮助
 pref-help = { $name } Build { $version } { $time }
 
 pref-config = zotero-pdf2zh-pro 配置
@@ -91,6 +92,7 @@ pref-glossary-empty = 未导入自定义术语。
 pref-glossary-imported = 已导入 { $count } 条自定义术语。
 pref-glossary-invalid-encoding = 请使用 UTF-8 CSV。原术语表已保留。
 pref-glossary-import-failed = 导入失败，原术语表已保留。
+pref-glossary-invalid-row = 第 { $line } 行格式有误。请检查列数、引号和重复译法；原表已保留。
 pref-server-checking = 正在检查本地服务…
 pref-server-unknown = 未知
 pref-server-connected = 本地服务已连接。

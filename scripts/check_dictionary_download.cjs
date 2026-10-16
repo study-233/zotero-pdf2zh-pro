@@ -7,7 +7,8 @@ const crypto = require("node:crypto");
 const assert = require("node:assert/strict");
 const ts = require("../plugin/node_modules/typescript");
 const root = path.resolve(__dirname, "..");
-const directory = path.join(root, ".local-dev/dictionary-download-smoke");
+const run = require('./workspace.cjs').newRun('dictionary-download-smoke');
+const directory = run.work;
 (async () => {
   await fsp.mkdir(directory, { recursive: true });
   const prefs = new Map();
@@ -157,7 +158,7 @@ const directory = path.join(root, ".local-dev/dictionary-download-smoke");
     ),
   );
   await fsp.writeFile(
-    path.join(directory, "result.json"),
+    path.join(run.report, "result.json"),
     JSON.stringify(result.installed, null, 2) + "\n",
   );
 })().catch((e) => {

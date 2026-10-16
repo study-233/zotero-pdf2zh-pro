@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getPref } from "../utils/prefs";
+import { getString } from "../utils/locale";
 import { prepareApiForServer } from "./apiCompatibility";
 import { assertSupportedProfile, type LLMApiData } from "./llmApiManager";
 import type {
@@ -29,6 +30,11 @@ function safeError(error: unknown, api: LLMApiData): Error {
                 ? response.data.code
                 : undefined,
         attempts: validAttempts(response?.data?.attempts),
+        diagnostics: Array.isArray(response?.data?.diagnostics)
+            ? response.data.diagnostics.map((item: { code?: string }) => ({
+                  code: item?.code,
+              }))
+            : undefined,
     });
 }
 function validAttempts(value: unknown): CodexRuntime["attempts"] {
@@ -173,22 +179,41 @@ export async function testProfile(
         const runtime = runtimeInfo(data.codexRuntime);
         if (runtime) onRuntime?.(runtime);
         if (data.liveTest?.ok !== true) {
-            throw new Error(
-                data.liveTest?.message ||
-                    data.diagnostics?.map((item) => item.message).join("；") ||
-                    "API 测试未通过。",
+            throw Object.assign(
+                new Error(
+                    data.liveTest?.message ||
+                        data.diagnostics
+                            ?.map((item) => item.message)
+                            .join("；") ||
+                        "API 测试未通过。",
+                ),
+                {
+                    diagnostics: data.diagnostics?.map(({ code }) => ({
+                        code,
+                    })),
+                },
             );
         }
-        const protocol =
-            data.resolvedProtocol === "responses"
-                ? "Responses"
-                : "Chat Completions";
-        return `${api.service === "codex" ? "Codex 连接测试成功" : api.service === "chatgpt" ? "ChatGPT 连接测试成功" : "API 测试成功"}${data.resolvedProtocol ? ` · ${protocol}` : ""}${prepared.warning ? `（${prepared.warning}）` : ""}${data.liveTest?.reasoningMessage ? ` · ${data.liveTest.reasoningMessage}` : ""}`;
+        return (
+            getString("profile-tested") +
+            (prepared.warning
+                ? ` · ${getString("notice-api-compatibility")}`
+                : "")
+        );
     } catch (error) {
         if (axios.isAxiosError(error)) throw safeError(error, api);
         const message = error instanceof Error ? error.message : "API 测试失败";
-        throw new Error(
-            api.apiKey ? message.split(api.apiKey).join("[已隐藏]") : message,
+        throw Object.assign(
+            new Error(
+                api.apiKey
+                    ? message.split(api.apiKey).join("[已隐藏]")
+                    : message,
+            ),
+            {
+                code: (error as { code?: string })?.code,
+                diagnostics: (error as { diagnostics?: { code?: string }[] })
+                    ?.diagnostics,
+            },
         );
     }
 }

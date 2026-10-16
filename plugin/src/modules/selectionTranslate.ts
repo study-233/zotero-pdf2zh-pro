@@ -4,6 +4,8 @@ import { loadGlossaryEntries } from "./glossaryStore";
 import { recordDiagnostic } from "./diagnostics";
 import { getPref, setPref } from "../utils/prefs";
 import { getString } from "../utils/locale";
+import { errorNotice } from "./userNotice";
+
 import { loadProfiles } from "./profileStore";
 import { profileLabel } from "./llmApiManager";
 import { createSelectionRequest, SelectionRequest } from "./selectionRequest";
@@ -42,6 +44,13 @@ import {
     unregisterSelectionPane,
 } from "./selectionPane";
 
+class SelectionError extends Error {}
+function selectionFailure(error: unknown): string {
+    return error instanceof SelectionError
+        ? error.message
+        : errorNotice(error, getString).text;
+}
+
 export interface MemoryResult {
     matched: boolean;
     status?: string;
@@ -68,15 +77,15 @@ export function normalizeSelection(text: string): string {
 
 function checkedResult(value: unknown, memory: boolean): MemoryResult {
     if (!value || typeof value !== "object")
-        throw new Error("本地服务返回格式不正确。");
+        throw new SelectionError(getString("selection-error-response"));
     const result = value as MemoryResult;
     if (memory && typeof result.matched !== "boolean")
-        throw new Error("本地服务返回格式不正确。");
+        throw new SelectionError(getString("selection-error-response"));
     if (
         (!memory || result.matched) &&
         (typeof result.translation !== "string" || !result.translation.trim())
     )
-        throw new Error("本地服务返回空译文，请重新划选重试。");
+        throw new SelectionError(getString("selection-error-empty"));
     return result;
 }
 
@@ -100,7 +109,7 @@ export async function lookupSelection(
         10000,
     );
     if (!response.ok)
-        throw new Error("记忆查询失败，请检查本地服务是否已升级并启动。");
+        throw new SelectionError(getString("selection-error-memory"));
     return checkedResult(response.data, true);
 }
 
@@ -152,7 +161,8 @@ export async function translateSelection(
         options.allowGenerate !== false &&
         !settings.apiConfig
     )
-        if (options.mode) throw new Error("详细释义和语境解释需要配置模型。");
+        if (options.mode)
+            throw new SelectionError(getString("selection-error-model"));
         else selectionProvider = "bing";
     if (!options.mode && selectionProvider === "profile" && !settings.apiConfig)
         selectionProvider = "bing";
@@ -187,8 +197,8 @@ export async function translateSelection(
             settings.service === "chatgpt" &&
             (capability.data as { chatgptPlan?: boolean })?.chatgptPlan !== true
         )
-            throw new Error(
-                "当前 Python 服务不支持 ChatGPT 套餐，请先升级服务端。",
+            throw new SelectionError(
+                getString("selection-error-chatgpt-upgrade"),
             );
         stream =
             wantsStream &&
@@ -201,8 +211,8 @@ export async function translateSelection(
                 (capability.data as { codexProxy?: boolean })?.codexProxy !==
                     true)
         )
-            throw new Error(
-                "当前 Python 服务不支持 Codex 代理设置，请先升级服务端。",
+            throw new SelectionError(
+                getString("selection-error-codex-upgrade"),
             );
         if (
             (options.mode ||
@@ -212,7 +222,9 @@ export async function translateSelection(
                 !(capability.data as { selectionLearning?: boolean })
                     ?.selectionLearning)
         )
-            throw new Error("请升级本地服务后使用个人词典、语境含义或重翻。");
+            throw new SelectionError(
+                getString("selection-error-learning-upgrade"),
+            );
     }
     if (stream) options.onStreamStart?.();
     const response = await request.post(
@@ -253,48 +265,39 @@ export async function translateSelection(
     );
     if (!response.ok) {
         const errors: Record<string, string> = {
-            stream_unsupported: "模型服务不支持流式，请使用普通模式重试。",
-            context_unavailable: "无法读取可靠的论文上下文，请重新划选后重试。",
-            invalid_output: "模型返回格式不正确，请重试。",
-            invalid_config: "划词翻译配置无效，请检查设置。",
-            unsupported_selection_provider:
-                "当前服务不支持此划词配置，请升级服务端并使用 OpenAI 兼容或 ChatGPT 配置。",
-            provider_timeout: "翻译请求超时，请重新划选重试。",
-            provider_error: "模型请求失败，请检查翻译配置与网络。",
-            empty_output: "翻译服务返回空内容，请重新划选重试。",
-            selection_busy: "已有翻译请求正在处理，请稍后重新划选。",
-            selection_cancelled: "翻译请求已取消。",
+            stream_unsupported: getString("selection-error-stream"),
+            context_unavailable: getString("selection-error-context"),
+            invalid_output: getString("selection-error-format"),
+            invalid_config: getString("selection-error-config"),
+            unsupported_selection_provider: getString(
+                "selection-error-provider",
+            ),
+            provider_timeout: getString("selection-error-timeout"),
+            provider_error: getString("selection-error-request"),
+            empty_output: getString("selection-error-empty-provider"),
+            selection_busy: getString("selection-error-busy"),
+            selection_cancelled: getString("selection-error-cancelled"),
             provider_quota:
                 selectionProvider === "bing"
-                    ? "免费翻译额度已用尽或服务限流，请稍后重试。未调用模型。"
-                    : "模型额度不足或服务限流，请检查账号用量后重试。",
-            codex_not_installed: "未找到 Codex CLI，请检查配置中的 CLI 路径。",
-            codex_not_logged_in: "Codex 尚未登录，请在终端运行 codex login。",
-            codex_model_unavailable:
-                "当前 Codex 账号无法使用所选模型，请检查配置。",
-            codex_quota_exhausted:
-                "Codex 额度不足，请检查账号用量或手动选择其他配置。",
-            codex_incompatible: "Codex CLI 版本不兼容，请按安装说明升级。",
+                    ? getString("selection-error-free-quota")
+                    : getString("selection-error-quota"),
+            codex_not_installed: getString("selection-error-codex-missing"),
+            codex_not_logged_in: getString("selection-error-codex-login"),
+            codex_model_unavailable: getString("selection-error-codex-model"),
+            codex_quota_exhausted: getString("selection-error-codex-quota"),
+            codex_incompatible: getString("selection-error-codex-version"),
         };
         const code = (response.data as { code?: string } | null)?.code;
+        errors.codex_auth_expired = getString("selection-error-codex-expired");
+        errors.chatgpt_usage_limit = getString("selection-error-quota");
+        errors.chatgpt_network_error = getString("notice-error-network");
         const message =
             code === "chatgpt_sign_in_required"
-                ? "ChatGPT 登录已失效，请重新登录。"
+                ? getString("selection-error-login")
                 : selectionProvider === "bing" && code === "provider_error"
-                  ? "必应暂时不可用，请稍后重试。未调用模型。"
+                  ? getString("selection-error-bing")
                   : errors[code || ""];
-        const serverMessage = (response.data as { message?: unknown } | null)
-            ?.message;
-        const codexMessage =
-            ["codex", "chatgpt"].includes(settings.service) &&
-            code !== "chatgpt_sign_in_required" &&
-            (code?.startsWith("codex_") || code?.startsWith("chatgpt_")) &&
-            typeof serverMessage === "string"
-                ? serverMessage
-                : undefined;
-        throw new Error(
-            codexMessage || message || "划词服务不可用，请检查本地服务。",
-        );
+        throw new SelectionError(message || getString("notice-error-unknown"));
     }
     if (
         options.allowGenerate === false &&
@@ -303,7 +306,15 @@ export async function translateSelection(
         return response.data as MemoryResult;
     const result = checkedResult(response.data, false);
     if (options.mode === "context" && result.contextMeaning !== undefined) {
-        result.contextMeaning = checkedContextMeaning(result.contextMeaning);
+        try {
+            result.contextMeaning = checkedContextMeaning(
+                result.contextMeaning,
+            );
+        } catch {
+            throw new SelectionError(
+                getString("selection-error-context-format"),
+            );
+        }
         result.translation = contextCopyText(result.contextMeaning);
     }
     if (
@@ -312,7 +323,7 @@ export async function translateSelection(
             !Array.isArray(result.entry.senses) ||
             !result.entry.senses.length)
     )
-        throw new Error("本地服务返回的词条格式不正确。");
+        throw new SelectionError(getString("selection-error-entry"));
     return result;
 }
 
@@ -328,7 +339,7 @@ let tabObserver: string | undefined;
 async function readerFingerprint(reader: Reader): Promise<string> {
     const attachment = reader.itemID && Zotero.Items.get(reader.itemID);
     const path = attachment && (await attachment.getFilePathAsync());
-    if (!path) throw new Error("请先下载此 PDF 附件。");
+    if (!path) throw new SelectionError(getString("selection-error-download"));
     const stat = await IOUtils.stat(path);
     const signature = `${path}:${stat.size}:${stat.lastModified}`;
     let cached = fingerprints.get(reader);
@@ -340,7 +351,7 @@ async function readerFingerprint(reader: Reader): Promise<string> {
         return await cached.value;
     } catch {
         fingerprints.delete(reader);
-        throw new Error("无法读取 PDF 文件指纹。");
+        throw new SelectionError(getString("selection-error-fingerprint"));
     }
 }
 
@@ -531,8 +542,7 @@ function createLearning(
             ).apiConfig,
         );
     } catch (error) {
-        modelError =
-            error instanceof Error ? error.message : "翻译配置无法读取。";
+        modelError = errorNotice(error, getString).text;
     }
     let personal: MemoryResult | undefined;
     let contextValue = state.context?.text || "";
@@ -555,7 +565,7 @@ function createLearning(
                 : undefined,
             error: modelAvailable
                 ? undefined
-                : modelError || "详细释义和语境解释需要配置模型。",
+                : modelError || getString("selection-error-model"),
             onAction: () => void run("context", Boolean(contextValue)),
             ...state.context,
         },
@@ -596,7 +606,7 @@ function createLearning(
                             .toLowerCase()
                             .includes(normalizeSelection(text).toLowerCase())))
             )
-                throw new Error("无法读取可靠的论文上下文，请重新划选后重试。");
+                throw new SelectionError(getString("selection-error-context"));
             return await translateSelection(
                 request,
                 fingerprint,
@@ -678,7 +688,7 @@ function createLearning(
                     origin: `${result.model || "模型"}${result.cached ? " · 本地缓存" : ""}`,
                     error:
                         result.saved === false
-                            ? "本次语境含义未能保存到本地。"
+                            ? getString("selection-error-context-save")
                             : undefined,
                 });
             } else
@@ -691,13 +701,12 @@ function createLearning(
                             : `${result.model || "模型"} · AI 译文`,
                     notice:
                         result.saved === false
-                            ? "本次译文未能保存到本地。"
+                            ? getString("selection-error-translation-save")
                             : undefined,
                 });
         } catch (error) {
             if (!current()) return;
-            const message =
-                error instanceof Error ? error.message : "请求失败，请重试。";
+            const message = selectionFailure(error);
             if (mode === "translate") state.onStreamEnd?.(message);
             if (mode === "context") view.context.error = message;
             else {
@@ -726,8 +735,7 @@ function createLearning(
         },
         disableContext() {
             view.context.actionLabel = undefined;
-            view.context.error =
-                "修订原文无法在论文语境中匹配，请重新划选后解释。";
+            view.context.error = getString("selection-error-context-edited");
             render();
         },
         get freeFallback() {
@@ -756,7 +764,7 @@ function createLearning(
                         origin: `${result.provider === "bing" ? "必应" : `${result.model || "模型"} · AI 译文`} · 本地缓存`,
                         notice:
                             result.saved === false
-                                ? "本次译文未能保存到本地。"
+                                ? getString("selection-error-translation-save")
                                 : undefined,
                     });
                     return true;
@@ -785,7 +793,7 @@ function createLearning(
                     !found &&
                     getPref("selectionAutoDictionary") !== false
                 ) {
-                    if (modelError) throw new Error(modelError);
+                    if (modelError) throw new SelectionError(modelError);
                     if (modelAvailable) {
                         refreshMode = "dictionary";
                         view.refreshLabel = "重新生成";
@@ -801,16 +809,12 @@ function createLearning(
                     return true;
                 }
             } catch (error) {
-                if (current())
-                    view.error =
-                        error instanceof Error
-                            ? error.message
-                            : "个人词典暂不可用。";
+                if (current()) view.error = selectionFailure(error);
                 if (generating && current()) {
                     view.refreshLabel = "重试";
                     popup.render({
                         kind: "error",
-                        text: "释义生成失败，请重试。",
+                        text: getString("selection-error-generation"),
                     });
                     return true;
                 }
@@ -1113,15 +1117,18 @@ async function showSelection(
                     controls!.favorite = true;
                     popup.setControls(controls!);
                     popup.showNotice(
-                        update ? "收藏快照已更新。" : "已收藏词语和论文出处。",
+                        getString(
+                            update
+                                ? "selection-favorite-updated"
+                                : "selection-favorite-saved",
+                        ),
                     );
                 }
             } catch (error) {
                 if (current())
                     popup.showNotice(
-                        error instanceof Error
-                            ? error.message
-                            : "收藏保存失败。",
+                        getString("selection-favorite-failed"),
+                        true,
                     );
             }
         };
@@ -1162,9 +1169,8 @@ async function showSelection(
             } catch (error) {
                 if (current())
                     state.popup!.showNotice(
-                        error instanceof Error
-                            ? error.message
-                            : getString("selection-favorite-failed"),
+                        getString("selection-favorite-failed"),
+                        true,
                     );
             } finally {
                 controls!.favoriteBusy = false;
@@ -1176,8 +1182,11 @@ async function showSelection(
             controls.onUpdateFavorite = () => void toggleFavorite(true);
         }
         controls.onShowFavorites = () =>
-            void openFavoritesPane(state.reader).catch((error) =>
-                state.popup?.showNotice(error.message),
+            void openFavoritesPane(state.reader).catch(() =>
+                state.popup?.showNotice(
+                    getString("selection-favorite-failed"),
+                    true,
+                ),
             );
         controls.onReloginChatGPT = () =>
             addon.hooks.onDialogEvents("reloginChatGPT");
@@ -1216,7 +1225,7 @@ async function showSelection(
                 flushTimer = undefined;
             }
             controls!.streaming = false;
-            if (error?.includes("普通模式重试"))
+            if (error === getString("selection-error-stream"))
                 controls!.onPlainRetry = () => restart(text, true, true);
             state.popup!.setControls(controls!);
             if (error && partial)
@@ -1229,7 +1238,7 @@ async function showSelection(
                 });
         };
         if (text.length > 20000)
-            throw new Error("选中文字过长，请缩小选区后重试。");
+            throw new SelectionError(getString("selection-error-length"));
         learning = createLearning(state, current, text, page);
         if (text !== state.original) {
             const context = await getSelectionContext(
@@ -1269,7 +1278,14 @@ async function showSelection(
             if (lookup.status === "error") {
                 controls.offlineFallback = true;
                 state.popup.setControls(controls);
-                throw new Error(lookup.message);
+                throw new SelectionError(
+                    getString(
+                        lookup.source === "ecdict" ||
+                            lookup.source === "collins"
+                            ? "selection-error-offline"
+                            : "selection-error-online",
+                    ),
+                );
             }
             if (lookup.status === "hit") {
                 const definition = lookup.entry;
@@ -1328,8 +1344,8 @@ async function showSelection(
                     origin: "本地术语表",
                 });
             else
-                throw new Error(
-                    "无法查询已有译文，请检查本地服务和 PDF 附件。",
+                throw new SelectionError(
+                    getString("selection-error-memory-pdf"),
                 );
             return;
         }
@@ -1382,7 +1398,7 @@ async function showSelection(
             generated.provider === "translation-memory" &&
             generated.matchType !== "exact"
         )
-            throw new Error("本地服务仍返回段落译文，请更新服务端后重试。");
+            throw new SelectionError(getString("selection-error-paragraph"));
         state.popup!.render(
             generated.provider === "translation-memory"
                 ? memoryResult(generated)
@@ -1392,7 +1408,7 @@ async function showSelection(
                       reference: paragraphReference,
                       notice:
                           generated.saved === false
-                              ? "本次译文未能保存到本地。"
+                              ? getString("selection-error-translation-save")
                               : undefined,
                       origin:
                           generated.provider === "glossary"
@@ -1412,11 +1428,9 @@ async function showSelection(
         });
         const message =
             stage === "popup"
-                ? "翻译浮窗无法打开，请重新划选重试。"
-                : error instanceof Error
-                  ? error.message
-                  : "翻译失败，请重新划选重试。";
-        if (message.includes("普通模式重试") && controls)
+                ? getString("selection-error-popup")
+                : selectionFailure(error);
+        if (message === getString("selection-error-stream") && controls)
             controls.onPlainRetry = () => restartPlain();
         function restartPlain() {
             if (!current()) return;
@@ -1433,7 +1447,7 @@ async function showSelection(
             );
         }
         try {
-            if (!state.popup?.alive) throw new Error();
+            if (!state.popup?.alive) throw new SelectionError();
             state.popup.render(
                 partial
                     ? {

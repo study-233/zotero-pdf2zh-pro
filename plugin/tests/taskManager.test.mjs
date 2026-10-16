@@ -4,6 +4,8 @@ import fs from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 import { URL } from "node:url";
+import { noticeModules } from "./noticeFixture.mjs";
+const notices = noticeModules()("./userNotice");
 
 const compile = (name) =>
     "const recordDiagnostic = () => {};\n" +
@@ -139,8 +141,11 @@ async function fixture(saved = []) {
         createTask: async () => snapshot(),
     };
     globalThis.__taskManagerTests = {
+        ...notices,
+        runNoticeAction() {},
         config: { prefsPrefix: "extensions.test", addonRef: "test" },
-        getString: (s) => s,
+        getString: (s, options) =>
+            s + (options ? JSON.stringify(options.args) : ""),
         getPref: (key) => (key === "new_serverip" ? serverUrl : false),
         resolveSelectedGlossaryPacks: async () => [],
         PDF2zhHelperFactory: {
@@ -158,10 +163,10 @@ async function fixture(saved = []) {
         },
     };
     const { PDF2zhTaskManager: manager } = await moduleFrom(
-        "const {config,getString,getPref,PDF2zhHelperFactory,ServerTaskClient,TaskEventStream,ZoteroTaskImporter,canDownloadTaskResult} = globalThis.__taskManagerTests;\n" +
+        "const {config,getString,getPref,PDF2zhHelperFactory,ServerTaskClient,TaskEventStream,ZoteroTaskImporter,canDownloadTaskResult,renderNotice,errorNotice,NoticeError,runNoticeAction} = globalThis.__taskManagerTests;\n" +
             "const resolveSelectedGlossaryPacks=(...args)=>globalThis.__taskManagerTests.resolveSelectedGlossaryPacks(...args);\n" +
             compile("pdf2zhTaskManager") +
-            `\n// instance ${sequence++}`,
+            `\n//# sourceURL=taskManager-fixture-${sequence++}.js`,
     );
     managers.push(manager);
     return { manager, prefs, writes, sources, client, imports };
@@ -1004,4 +1009,134 @@ test("diagnostic configurations persist independently and reset for a new attemp
         undefined,
     );
     assert.equal(restored.writes.at(-1)[0].requestedConfiguration.qps, 2);
+});
+
+test("submission validates before progress and retains each failed item without alerts", async () => {
+    const { manager } = await fixture();
+    const deps = globalThis.__taskManagerTests;
+    const items = [
+        { id: 1, getField: () => "one.pdf" },
+        { id: 2, getField: () => "two.pdf" },
+    ];
+    let selected = [],
+        calls = 0;
+    globalThis.ztoolkit.getGlobal = (key) => {
+        assert.equal(key, "ZoteroPane");
+        return { getSelectedItems: () => selected };
+    };
+    manager.openWindow = () => {};
+    manager.refreshTasks = async () => {};
+    deps.PDF2zhHelperFactory.getServerConfig = () => ({
+        apiConfig: {},
+        outputModes: ["dual"],
+    });
+    manager.submitTask = async (item, _config, warn) => {
+        calls++;
+        warn("raw protocol warning");
+        warn("raw protocol warning");
+        if (item.id === 2) throw new Error("secret InternalServerError");
+    };
+    await manager.processWorker();
+    assert.equal(manager.submission.notice.id, "error-select-item");
+    assert.equal(calls, 0);
+    selected = items;
+    await manager.processWorker();
+    assert.equal(manager.submitting, false);
+    assert.equal(manager.submission.notice.level, "warning");
+    assert.match(manager.submission.notice.text, /"success":1,"failed":1/);
+    assert.deepEqual(manager.submission.errors, [
+        { fileName: "two.pdf", text: "notice-error-unknown" },
+    ]);
+    assert.deepEqual(manager.submission.warnings, ["notice-api-compatibility"]);
+    deps.PDF2zhHelperFactory.getServerConfig = () => ({
+        apiConfig: {},
+        outputModes: [],
+    });
+    await manager.processWorker();
+    assert.equal(manager.submission.notice.id, "error-select-output");
+    assert.equal(manager.submission.errors.length, 0);
+    assert.equal(calls, 2);
+});
+
+test("a double submission cannot duplicate requests and an all-failed batch remains visible", async () => {
+    const { manager } = await fixture();
+    const deps = globalThis.__taskManagerTests;
+    const gate = deferred();
+    let calls = 0;
+    globalThis.ztoolkit.getGlobal = () => ({
+        getSelectedItems: () => [{ id: 1, getField: () => "paper.pdf" }],
+    });
+    deps.PDF2zhHelperFactory.getServerConfig = () => ({
+        apiConfig: {},
+        outputModes: ["dual"],
+    });
+    manager.openWindow = () => {};
+    manager.refreshTasks = async () => {};
+    manager.submitTask = async () => {
+        calls++;
+        await gate.promise;
+        throw new Error("network");
+    };
+    const first = manager.processWorker();
+    await Promise.resolve();
+    await manager.processWorker();
+    assert.equal(calls, 1);
+    gate.resolve();
+    await first;
+    assert.equal(manager.submission.notice.level, "warning");
+    assert.match(manager.submission.notice.text, /"success":0,"failed":1/);
+});
+
+test("completion notifications coalesce only imported local results and deduplicate repeated events", async (t) => {
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    const { manager } = await fixture([
+        local({
+            taskId: "a",
+            status: "completed",
+            importState: "imported",
+            importedOutputs: ["1:dual"],
+        }),
+        local({
+            taskId: "b",
+            status: "incomplete",
+            importState: "imported",
+            importedOutputs: ["1:dual"],
+        }),
+        local({ taskId: "c", status: "completed", importState: "failed" }),
+        local({
+            taskId: "remote",
+            source: "remote",
+            status: "completed",
+            importState: "imported",
+        }),
+    ]);
+    let enabled = true;
+    globalThis.__taskManagerTests.PDF2zhHelperFactory.isTrue = () => enabled;
+    const sent = [];
+    globalThis.Cc = {
+        "@mozilla.org/alerts-service;1": {
+            getService: () => ({
+                showAlertNotification: (...args) => sent.push(args),
+            }),
+        },
+    };
+    globalThis.Ci = { nsIAlertsService: {} };
+    manager.loadLocalTasks();
+    for (const id of ["a", "a", "b", "c", "remote"])
+        manager.notifyTranslationCompleted(id);
+    assert.equal(sent.length, 0);
+    t.mock.timers.tick(2000);
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0][1], "notice-imported-title");
+    assert.match(sent[0][2], /"count":2,"incomplete":1/);
+    manager.notifyTranslationCompleted("a");
+    t.mock.timers.tick(2000);
+    assert.equal(sent.length, 1);
+    enabled = false;
+    manager.tasks.get("b").importedOutputs.push("2:dual");
+    manager.notifyTranslationCompleted("b");
+    t.mock.timers.tick(2000);
+    assert.equal(sent.length, 1);
+    delete globalThis.Cc;
+    delete globalThis.Ci;
 });

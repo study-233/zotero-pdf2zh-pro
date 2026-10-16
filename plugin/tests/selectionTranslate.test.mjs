@@ -4,6 +4,7 @@ import test from "node:test";
 import { URL } from "node:url";
 import path from "node:path";
 import ts from "typescript";
+import { noticeModules } from "./noticeFixture.mjs";
 
 const formatting = {};
 const favoritesCode = ts.transpileModule(
@@ -103,6 +104,7 @@ function fixture() {
     const exports = {};
     const imports = {
         "../utils/locale": { getString: (key) => strings[key] || key },
+        "./userNotice": noticeModules()("./userNotice"),
         "./profileStore": { loadProfiles: () => [] },
         "./llmApiManager": { profileLabel: (p) => p.key },
         "./selectionAudio": { stopSelectionAudio() {} },
@@ -517,7 +519,7 @@ test("favorite actions ignore repeated clicks while writing and retain saved sta
     assert.equal(card.controls.favorite, true);
     assert.equal(card.controls.favoriteBusy, false);
     assert.equal((await f.favorites.listFavorites()).length, 1);
-    assert.equal(card.notice, "disk full");
+    assert.equal(card.notice, "收藏操作失败，请重试。");
     f.state.favoriteFail = false;
     card.controls.onFavorite();
     await f.flush();
@@ -1554,6 +1556,29 @@ test("Codex selection forwards its independent profile and exposes actionable se
         cliPath: "/opt/codex",
         reasoningEffort: "low",
     });
+});
+
+test("unknown provider errors never display response text or credentials", async () => {
+    const f = fixture();
+    f.state.provider = "profile";
+    f.state.service = "codex";
+    const request = {
+        post: async () => ({
+            ok: false,
+            data: {
+                code: "codex_unknown",
+                message: "InternalStackError api_key=private-secret",
+            },
+        }),
+    };
+    await assert.rejects(
+        f.translateSelection(request, "paper", "text", 1, "context"),
+        (error) => {
+            assert.match(error.message, /暂未确定原因/);
+            assert.doesNotMatch(error.message, /InternalStack|private-secret/);
+            return true;
+        },
+    );
 });
 
 test("only generating Codex selection opts into server cancellation", async () => {

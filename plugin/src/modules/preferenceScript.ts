@@ -1,5 +1,7 @@
 import { chatgptAccountRequest, openChatGPTPage } from "./chatgptAccount";
 import { exportDiagnostics } from "./diagnostics";
+import { errorNotice, renderNotice } from "./userNotice";
+import { openNoticeHelp, showUserNotice } from "./pluginNotices";
 import { registerAttachmentNamingPreferences } from "./attachmentNamingPreferences";
 import { registerSelectionPreferences } from "./selectionPreferences";
 import { resetSelectionTranslation } from "./selectionTranslate";
@@ -98,9 +100,12 @@ function element(id: string) {
         `zotero-prefpane-${config.addonRef}-${id}`,
     );
 }
+const statusRevisions = new WeakMap<Element, number>();
 function status(id: string, text: string) {
     const node = element(id);
     if (node) {
+        statusRevisions.set(node, (statusRevisions.get(node) || 0) + 1);
+        if (node.localName !== "button") renderNotice(node, null);
         node.removeAttribute("data-l10n-id");
         node.removeAttribute("data-l10n-args");
         node.textContent = text;
@@ -108,13 +113,25 @@ function status(id: string, text: string) {
     }
 }
 function report(error: unknown) {
-    status("apiResult", error instanceof Error ? error.message : "操作失败");
+    const node = element("apiResult");
+    if (node) showUserNotice(node, errorNotice(error, getString));
 }
 
 export async function registerPrefsScripts(window: Window) {
     stopGlossaryPackPolling();
     glossaryPackWindow = window;
     addon.data.prefs = { window, columns: [], rows: [] };
+    element("notice-help")?.addEventListener("click", openNoticeHelp);
+    element("retirement-action")?.addEventListener("click", () =>
+        openProfileManager(),
+    );
+    window.addEventListener("focus", () => {
+        if (
+            element("retirement-notice") &&
+            getPref("codexRetirementNoticePending")
+        )
+            refreshProfiles(false);
+    });
     registerAttachmentNamingPreferences(window);
     registerSelectionPreferences(window, resetSelectionTranslation);
     window.addEventListener(
@@ -215,13 +232,6 @@ export async function registerPrefsScripts(window: Window) {
 
 export function initializeProfileMigration() {
     const profiles = loadProfiles();
-    notifyCodexRetirement(() =>
-        Zotero.alert(
-            Zotero.getMainWindow(),
-            config.addonName,
-            getString("profile-codex-removed"),
-        ),
-    );
     return profiles;
 }
 
@@ -234,6 +244,32 @@ function refreshProfiles(rebuildMenu = true) {
         win.dispatchEvent(event);
     }
     const profiles = initializeProfileMigration();
+    const retirement = element("retirement-notice");
+    if (retirement) {
+        const needsRepair =
+            Boolean(getPref("codexRetirementBackup")) &&
+            (!getPref("selectedApiKey") ||
+                (Boolean(getPref("selectionApiKey")) &&
+                    !profiles.some(
+                        (p) => p.key === getPref("selectionApiKey"),
+                    )));
+        retirement.hidden =
+            !needsRepair && !getPref("codexRetirementNoticePending");
+        if (!retirement.hidden) {
+            const text = element("retirement-text");
+            if (text) text.textContent = getString("profile-codex-removed");
+            const win = retirement.ownerDocument.defaultView;
+            win?.requestAnimationFrame(() => {
+                if (
+                    retirement.isConnected &&
+                    !retirement.hidden &&
+                    retirement.ownerDocument.hasFocus() &&
+                    retirement.getClientRects().length
+                )
+                    notifyCodexRetirement(() => {});
+            });
+        }
+    }
     const select = element(
         "selectedApiKey",
     ) as unknown as XULMenuListElement | null;
@@ -271,7 +307,7 @@ export function openChatGPTLogin() {
     openProfileManager(true);
 }
 
-function openProfileManager(reloginChatGPT = false) {
+export function openProfileManager(reloginChatGPT = false) {
     if (managerWindow && !managerWindow.closed) {
         managerWindow.focus();
         if (reloginChatGPT) {
@@ -302,6 +338,9 @@ function openProfileManager(reloginChatGPT = false) {
             resolvePreset: (api: LLMApiData) => resolveProviderPreset(api)?.id,
             message: (key: string, args?: Record<string, unknown>) =>
                 getString(`profile-${key}`, { args }),
+            errorMessage: (error: unknown) =>
+                errorNotice(error, getString).text,
+            renderNotice,
             list: initializeProfileMigration,
             current: () => String(getPref("selectedApiKey") || ""),
             test: testProfile,
@@ -379,6 +418,34 @@ function localizedStatus(
 ) {
     const node = element(id);
     if (!node) return;
+    if (
+        node.getAttribute("data-l10n-id") === getLocaleID(key) &&
+        node.getAttribute("data-l10n-args") ===
+            (args ? JSON.stringify(args) : null)
+    )
+        return;
+    const revision = (statusRevisions.get(node) || 0) + 1;
+    statusRevisions.set(node, revision);
+    renderNotice(node, null);
+    const success = [
+        "pref-glossary-cleared",
+        "pref-glossary-imported",
+        "pref-pack-checked",
+    ].includes(key);
+    if (success) {
+        const doc = node.ownerDocument;
+        void doc.l10n?.formatValue(getLocaleID(key), args).then((text) => {
+            if (
+                !node.isConnected ||
+                doc !== addon.data.prefs?.window.document ||
+                statusRevisions.get(node) !== revision ||
+                !text
+            )
+                return;
+            renderNotice(node, { id, level: "success", text });
+        });
+        return;
+    }
     node.hidden = false;
     node.textContent = "";
     localizePackNode(node, key, args);
@@ -458,7 +525,7 @@ function renderGlossaryPacks() {
             } catch (error) {
                 status(
                     "glossaryPacksResult",
-                    error instanceof Error ? error.message : "",
+                    errorNotice(error, getString).text,
                 );
                 renderGlossaryPacks();
             }
@@ -620,7 +687,10 @@ async function refreshGlossaryPacks(checkUpdates = false) {
             return;
         if (checkUpdates) {
             if (error instanceof Error)
-                status("glossaryPacksResult", error.message);
+                status(
+                    "glossaryPacksResult",
+                    errorNotice(error, getString).text,
+                );
             else packStatus("pref-pack-check-failed");
         } else {
             glossaryPacksSupported = false;
@@ -660,7 +730,10 @@ async function runGlossaryPackAction(
     } catch (error) {
         if (serverSequence === serverCheckSequence) {
             if (error instanceof Error)
-                status("glossaryPacksResult", error.message);
+                status(
+                    "glossaryPacksResult",
+                    errorNotice(error, getString).text,
+                );
             else packStatus("pref-pack-action-failed");
         }
     } finally {
@@ -682,7 +755,7 @@ function refreshGlossarySummary() {
         );
         if (clear) clear.disabled = entries.length === 0;
     } catch (error) {
-        status("glossarySummary", String(error));
+        status("glossarySummary", getString("notice-glossary-unreadable"));
         if (clear) clear.disabled = false;
     }
 }
@@ -692,6 +765,7 @@ async function importGlossary(): Promise<void> {
     const clear = element("glossary-clear") as HTMLButtonElement | null;
     if (button) button.disabled = true;
     if (clear) clear.disabled = true;
+    let invalidEncoding = false;
     try {
         const path = await new ztoolkit.FilePicker(
             await preferenceText("pref-glossary-import"),
@@ -704,6 +778,7 @@ async function importGlossary(): Promise<void> {
         try {
             text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
         } catch {
+            invalidEncoding = true;
             throw new Error(
                 await preferenceText("pref-glossary-invalid-encoding"),
             );
@@ -713,8 +788,16 @@ async function importGlossary(): Promise<void> {
             count: entries.length,
         });
     } catch (error) {
-        if (error instanceof Error) status("glossaryResult", error.message);
-        else localizedStatus("glossaryResult", "pref-glossary-import-failed");
+        const line = (error as { line?: number })?.line;
+        localizedStatus(
+            "glossaryResult",
+            invalidEncoding
+                ? "pref-glossary-invalid-encoding"
+                : line
+                  ? "pref-glossary-invalid-row"
+                  : "pref-glossary-import-failed",
+            line ? { line } : undefined,
+        );
     } finally {
         if (button) button.disabled = false;
         refreshGlossarySummary();

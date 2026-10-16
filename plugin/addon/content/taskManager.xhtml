@@ -1242,6 +1242,19 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     <button id="close-btn" class="button">关闭</button>
                 </div>
             </div>
+            <div id="operation-notice" hidden="hidden" />
+            <section
+                id="submission"
+                hidden="hidden"
+                style="margin-bottom: 16px; overflow-wrap: anywhere"
+            >
+                <div id="submission-notice" />
+                <div id="submission-warnings" />
+                <details id="submission-details" hidden="hidden">
+                    <summary id="submission-summary" />
+                    <ul id="submission-errors" />
+                </details>
+            </section>
             <div class="stats">
                 <div class="stat">
                     <div class="stat-label">全部任务</div>
@@ -1315,6 +1328,50 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             let emptyStateNode = null;
             let pendingRenderTasks = null;
             let renderFrameId = null;
+            let submissionSignature;
+
+            function reportOperation(
+                error,
+                node = document.getElementById("operation-notice"),
+            ) {
+                if (!node || !api?.renderNotice) return;
+                api.renderNotice(
+                    node,
+                    error ? api.errorNotice(error) : null,
+                    api.noticeAction,
+                );
+            }
+
+            function renderSubmission() {
+                if (!api?.getSubmission) return;
+                const state = api.getSubmission();
+                const signature = JSON.stringify(state);
+                if (signature === submissionSignature) return;
+                submissionSignature = signature;
+                const section = document.getElementById("submission");
+                section.hidden = !state;
+                if (!state) return;
+                api.renderNotice(
+                    document.getElementById("submission-notice"),
+                    state.notice,
+                    api.noticeAction,
+                );
+                document.getElementById("submission-warnings").textContent =
+                    state.warnings.join(" ");
+                document.getElementById("submission-details").hidden =
+                    !state.errors.length;
+                document.getElementById("submission-summary").textContent =
+                    api.message("notice-submission-errors", {
+                        args: { count: state.errors.length },
+                    });
+                const list = document.getElementById("submission-errors");
+                list.replaceChildren();
+                for (const error of state.errors) {
+                    const li = document.createElement("li");
+                    li.textContent = `${error.fileName} — ${error.text}`;
+                    list.append(li);
+                }
+            }
 
             document.addEventListener("DOMContentLoaded", async () => {
                 api = window.arguments && window.arguments[0];
@@ -1347,11 +1404,12 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     .getElementById("clear-failed-btn")
                     .addEventListener("click", async () => {
                         try {
+                            reportOperation(null);
                             await api.clearFailedTasks();
                             render(api.getTasks());
                             void refresh();
                         } catch (error) {
-                            alert(String(error));
+                            reportOperation(error);
                         }
                     });
                 document
@@ -1377,8 +1435,12 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             async function refresh() {
                 if (!api) return;
-                await api.refreshTasks();
-                scheduleRender(api.getTasks());
+                try {
+                    await api.refreshTasks();
+                    scheduleRender(api.getTasks());
+                } catch (error) {
+                    reportOperation(error);
+                }
             }
 
             function scheduleRender(tasks) {
@@ -1393,6 +1455,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function render(tasks) {
+                renderSubmission();
                 const root = document.getElementById("task-list");
                 currentTasks = tasks || [];
                 updateConnectionStatus();
@@ -1550,16 +1613,21 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 error.className = "error";
                 error.hidden = true;
                 card.appendChild(error);
+                const actionNotice = document.createElement("div");
+                actionNotice.className = "error";
+                actionNotice.hidden = true;
+                card.appendChild(actionNotice);
 
                 const reloginButton = document.createElement("button");
                 reloginButton.className = "button primary";
                 reloginButton.textContent = "重新登录";
                 reloginButton.addEventListener("click", () => {
                     if (!view.task) return;
+                    reportOperation(null, actionNotice);
                     try {
                         api.reloginChatGPT(view.task.taskId);
                     } catch (errorValue) {
-                        alert(String(errorValue));
+                        reportOperation(errorValue, actionNotice);
                     }
                 });
                 card.appendChild(reloginButton);
@@ -1627,10 +1695,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 exportButton.textContent = "导出诊断包";
                 exportButton.addEventListener("click", async () => {
                     exportButton.disabled = true;
+                    reportOperation(null, actionNotice);
                     try {
                         await api.exportDiagnostics(view.task.taskId);
                     } catch (error) {
-                        alert(String(error));
+                        reportOperation(error, actionNotice);
                     } finally {
                         exportButton.disabled = false;
                     }
@@ -1644,13 +1713,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     if (!canCancelTask(currentTask)) return;
                     view.pendingAction = "cancel";
                     cancelButton.disabled = true;
+                    reportOperation(null, actionNotice);
                     try {
                         await api.cancelTask(currentTask.taskId);
                         view.pendingAction = null;
                         await refresh();
                     } catch (errorValue) {
                         view.pendingAction = null;
-                        alert(String(errorValue));
+                        reportOperation(errorValue, actionNotice);
                         cancelButton.disabled = false;
                     }
                 });
@@ -1663,13 +1733,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     if (!currentTask) return;
                     view.pendingAction = "retry";
                     retryButton.disabled = true;
+                    reportOperation(null, actionNotice);
                     try {
                         await api.retryTask(currentTask.taskId);
                         view.pendingAction = null;
                         render(api.getTasks());
                     } catch (errorValue) {
                         view.pendingAction = null;
-                        alert(String(errorValue));
+                        reportOperation(errorValue, actionNotice);
                         retryButton.disabled = false;
                     }
                 });
@@ -1681,6 +1752,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     if (!view.task) return;
                     view.pendingAction = "repair";
                     repairButton.disabled = true;
+                    reportOperation(null, actionNotice);
                     try {
                         await api.repairTask(view.task.taskId);
                         view.pendingAction = null;
@@ -1688,7 +1760,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     } catch (errorValue) {
                         view.pendingAction = null;
                         repairButton.disabled = false;
-                        alert(String(errorValue));
+                        reportOperation(errorValue, actionNotice);
                     }
                 });
                 footerActions.appendChild(repairButton);
@@ -1700,6 +1772,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     if (!currentTask) return;
                     view.pendingAction = "delete";
                     deleteButton.disabled = true;
+                    reportOperation(null, actionNotice);
                     try {
                         await api.deleteTask(currentTask.taskId);
                         view.pendingAction = null;
@@ -1707,7 +1780,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         void refresh();
                     } catch (errorValue) {
                         view.pendingAction = null;
-                        alert(String(errorValue));
+                        reportOperation(errorValue, actionNotice);
                         deleteButton.disabled = false;
                     }
                 });
@@ -1727,6 +1800,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     updatedAt,
                     qualitySummary,
                     error,
+                    actionNotice,
                     reloginButton,
                     metricsPanel,
                     detailValues,
@@ -2028,6 +2102,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     "retry-all-failed-btn",
                 );
                 retryButton.disabled = true;
+                reportOperation(null);
                 try {
                     if (typeof api.retryFailedTasks === "function") {
                         await api.retryFailedTasks();
@@ -2040,7 +2115,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     render(api.getTasks());
                     void refresh();
                 } catch (error) {
-                    alert(String(error));
+                    reportOperation(error);
                     render(currentTasks);
                 }
             }
@@ -2406,6 +2481,28 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function getErrorSummary(task) {
+                if (api?.errorNotice) {
+                    if (task.importState === "failed" || task.importError)
+                        return api.errorNotice({ code: "import_failed" }).text;
+                    if (
+                        task.status === "failed" ||
+                        task.error ||
+                        task.failedParagraphs?.length ||
+                        task.translationSummary?.failed
+                    ) {
+                        return api.errorNotice({
+                            message: [
+                                task.error,
+                                ...(task.failedParagraphs || []).map(
+                                    (p) =>
+                                        `${p.providerCode || ""} ${p.errorType || ""} ${p.reason || ""}`,
+                                ),
+                            ].join(" "),
+                            diagnostics: task.errorDiagnostics,
+                        }).text;
+                    }
+                    return "";
+                }
                 if (task.importState === "failed" || task.importError) {
                     return "结果导入失败，暂未能确定原因。";
                 }

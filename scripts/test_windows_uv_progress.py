@@ -9,11 +9,11 @@ import json
 import os
 from pathlib import Path
 import subprocess
-import tempfile
 import threading
 import time
 import unittest
 import zipfile
+from workspace import Workspace
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTROL = Path(os.environ.get('PDF2ZH_TEST_CONTROL', ROOT / '.tmp/slint-target/x86_64-pc-windows-msvc/release/zotero-pdf2zh-pro.exe'))
@@ -89,9 +89,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
 @unittest.skipUnless(os.name == 'nt' and CONTROL.is_file() and UV.is_file(), 'Windows candidate and uv required')
 class UvProgressTests(unittest.TestCase):
     def setUp(self):
-        (ROOT / '.tmp/uv-progress-validation').mkdir(parents=True, exist_ok=True)
-        self.directory = tempfile.TemporaryDirectory(prefix='uv 进度 中文 ', dir=ROOT / '.tmp')
-        self.root = Path(self.directory.name)
+        run = Workspace().start('uv-progress')
+        self.reports = Path(run['report'])
+        self.work_root = Path(run['work'])
+        self.root = self.work_root / 'uv 进度 中文'
+        self.addCleanup(self.finish_workspace)
+        self.root.mkdir()
         (self.root / 'updates').mkdir()
         self.environment = os.environ.copy()
         self.environment['UV_CACHE_DIR'] = str(self.root / 'cache')
@@ -115,7 +118,11 @@ class UvProgressTests(unittest.TestCase):
     def tearDown(self):
         self.server.shutdown()
         self.server.server_close()
-        self.directory.cleanup()
+
+    def finish_workspace(self):
+        result = self._outcome.result
+        failed = any(test is self for test, _ in [*result.failures, *result.errors])
+        Workspace().finish(self.work_root, 'failed' if failed else 'passed')
 
     def invoke(self, label, version='0.12.10', powershell=False, cancel=False):
         venv = self.root / label
@@ -158,7 +165,7 @@ class UvProgressTests(unittest.TestCase):
             signal.unlink(missing_ok=True)
             self.environment.pop('PDF2ZH_INSTALL_CANCEL_FILE', None)
         events = [json.loads(line[len('PDF2ZH_PROGRESS '):]) for line in result.stdout.splitlines() if line.startswith('PDF2ZH_PROGRESS ')]
-        report = ROOT / '.tmp/uv-progress-validation'
+        report = self.reports
         report.mkdir(exist_ok=True)
         (report / f'{self._testMethodName}-{label}.json').write_text(json.dumps(dict(exit=result.returncode, events=events, output=result.stdout, error=result.stderr, bytesSent=self.server.bytes_sent), ensure_ascii=False, indent=2), encoding='utf-8')
         return result, events
@@ -263,7 +270,7 @@ class UvProgressTests(unittest.TestCase):
         (self.root / 'updates/operation-progress.json').write_text(json.dumps(dict(operationId='python-test', operation='install', phase='python', status='running', startedAt=int(time.time()))), encoding='utf-8')
         result = subprocess.run([str(CONTROL), '--uv-progress', str(request)], env=self.environment, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
         events = [json.loads(line[len('PDF2ZH_PROGRESS '):]) for line in result.stdout.splitlines() if line.startswith('PDF2ZH_PROGRESS ')]
-        report = ROOT / '.tmp/uv-progress-validation/python.json'
+        report = self.reports / 'python.json'
         report.parent.mkdir(exist_ok=True)
         report.write_text(json.dumps(dict(exit=result.returncode, events=events, output=result.stdout, error=result.stderr), ensure_ascii=False, indent=2), encoding='utf-8')
         self.assertNotEqual(result.returncode, 0)

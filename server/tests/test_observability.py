@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import threading
 import unittest
 
-from observability import TaskMetricsCollector
+from observability import TaskMetricsCollector, reserve_benchmark_request
 
 
 class FakeClock:
@@ -96,6 +97,31 @@ class ObservabilityTests(unittest.TestCase):
             self.make_collector().request_started()
             with self.assertRaisesRegex(RuntimeError, 'benchmark_request_limit'):
                 self.make_collector().request_started()
+
+    def test_benchmark_budget_closes_connections_after_success_and_limit(self):
+        import tempfile
+        from unittest.mock import patch
+        connect, connections = sqlite3.connect, []
+
+        def tracked_connect(*args, **kwargs):
+            connection = connect(*args, **kwargs)
+            connections.append(connection)
+            return connection
+
+        with tempfile.TemporaryDirectory() as directory, patch.dict('os.environ', {
+                'PDF2ZH_BENCHMARK_LEDGER_DIR': directory, 'PDF2ZH_BENCHMARK_MAX_REQUESTS': '1'}):
+            try:
+                with patch('observability.sqlite3.connect', side_effect=tracked_connect):
+                    reserve_benchmark_request()
+                    with self.assertRaisesRegex(RuntimeError, 'benchmark_request_limit'):
+                        reserve_benchmark_request()
+                self.assertEqual(len(connections), 2)
+                for connection in connections:
+                    with self.assertRaises(sqlite3.ProgrammingError):
+                        connection.execute('SELECT 1')
+            finally:
+                for connection in connections:
+                    connection.close()
 
     def test_first_paragraph_latency_is_observed_once(self):
         clock = FakeClock()

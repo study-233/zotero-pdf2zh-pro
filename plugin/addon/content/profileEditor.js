@@ -4,6 +4,12 @@
 window.createProfileEditor = function (args, changed) {
     const $ = (id) => document.getElementById(id);
     const t = args.message;
+    const localError = (key) =>
+        Object.assign(new Error(t(key)), { userFacing: true });
+    const failure = (error) =>
+        error.userFacing
+            ? error.message
+            : args.errorMessage?.(error) || t("failed");
     const fields = [
         "name",
         "apiUrl",
@@ -52,8 +58,28 @@ window.createProfileEditor = function (args, changed) {
         JSON.stringify(
             fields.filter((id) => id !== "name").map((id) => $(id).value),
         );
-    function message(text = "", error = false) {
+    function message(text = "", error = false, transient = false) {
         statusText = String(text);
+        if (args.renderNotice) {
+            args.renderNotice(
+                $("status"),
+                statusText
+                    ? {
+                          id: "profile-status",
+                          level: error
+                              ? "error"
+                              : transient
+                                ? "success"
+                                : "info",
+                          text: statusText,
+                      }
+                    : null,
+            );
+            $("status").dataset.error = String(error);
+            $("status-details").hidden = true;
+            $("status-full").textContent = "";
+            return;
+        }
         const expandable = statusText.length > 160 || statusText.includes("\n");
         const firstLine = statusText.split("\n")[0];
         $("status").textContent = expandable
@@ -305,11 +331,11 @@ window.createProfileEditor = function (args, changed) {
                 throw new Error();
             return value;
         } catch {
-            throw new Error(t("json-error"));
+            throw localError("json-error");
         }
     }
     function read(requireModel = true) {
-        if (!preset) throw new Error(t("retired"));
+        if (!preset) throw localError("retired");
         const raw = values();
         const value = {
             ...base,
@@ -325,8 +351,8 @@ window.createProfileEditor = function (args, changed) {
         for (const id of ["extraData", "requestOptions"])
             value[id] = codex || chatgpt ? {} : jsonField(id);
         if (requireModel && preset.model && !value.model)
-            throw new Error(t("model-required"));
-        if (preset.key && !value.apiKey) throw new Error(t("key-required"));
+            throw localError("model-required");
+        if (preset.key && !value.apiKey) throw localError("key-required");
         if (!preset.key) value.apiKey = "";
         if (!preset.model) value.model = "";
         if (codex || chatgpt || preset.service === "deepl") value.apiUrl = "";
@@ -336,7 +362,7 @@ window.createProfileEditor = function (args, changed) {
             try {
                 url = new URL(value.apiUrl);
             } catch {
-                throw new Error(t("url-error"));
+                throw localError("url-error");
             }
             if (
                 !["http:", "https:"].includes(url.protocol) ||
@@ -345,7 +371,7 @@ window.createProfileEditor = function (args, changed) {
                 url.username ||
                 url.password
             )
-                throw new Error(t("url-error"));
+                throw localError("url-error");
         }
         if (
             !codex &&
@@ -353,7 +379,7 @@ window.createProfileEditor = function (args, changed) {
             value.reasoningMode === "off" &&
             !supportsReasoningOff()
         )
-            throw new Error(t("reasoning-error"));
+            throw localError("reasoning-error");
         if (chatgpt) {
             value.accountId = chatgptPanel
                 ? chatgptPanel.accountId()
@@ -376,13 +402,13 @@ window.createProfileEditor = function (args, changed) {
         } else if (codex) {
             delete value.accountId;
             if (!["inherit", "manual", "direct"].includes(value.proxyMode))
-                throw new Error(t("proxy-error"));
+                throw localError("proxy-error");
             if (value.proxyMode === "manual") {
                 let url;
                 try {
                     url = new URL(value.proxyUrl);
                 } catch {
-                    throw new Error(t("proxy-error"));
+                    throw localError("proxy-error");
                 }
                 if (
                     !/^https?:\/\//i.test(value.proxyUrl) ||
@@ -402,7 +428,7 @@ window.createProfileEditor = function (args, changed) {
                     url.port === "0" ||
                     /:\/?$/.test(value.proxyUrl.replace(/^https?:\/\//i, ""))
                 )
-                    throw new Error(t("proxy-error"));
+                    throw localError("proxy-error");
                 value.proxyUrl = url.origin;
             } else delete value.proxyUrl;
             const detail = modelDetails.find(
@@ -415,7 +441,7 @@ window.createProfileEditor = function (args, changed) {
                     value.reasoningEffort,
                 )
             )
-                throw new Error(t("effort-error"));
+                throw localError("effort-error");
             for (const id of [
                 "apiProtocol",
                 "reasoningMode",
@@ -481,7 +507,7 @@ window.createProfileEditor = function (args, changed) {
                 )
                     return;
                 tested = before;
-                message(result);
+                message(result, false, true);
             } else if (kind === "discover") {
                 const info = await args.discoverCodex(value, controller.signal);
                 if (
@@ -517,7 +543,7 @@ window.createProfileEditor = function (args, changed) {
             if (!window.closed && sequence === current) {
                 if (preset?.service === "codex")
                     showRuntime(undefined, error.attempts || []);
-                message(error.message || t("failed"), true);
+                message(failure(error), true);
                 if (preset?.service === "chatgpt")
                     await chatgptPanel?.refresh();
                 changed();

@@ -81,6 +81,17 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - The plugin repository is public. Keep the stable `update_url` in the XPI and publish `update.json` with every GitHub Release. Do not build or publish a friends bundle; release source is available from the matching public tag.
 - Do not update only one distribution target if the change affects all startup/install paths.
 
+## Development outputs
+
+- Follow the output layout and retention rules in [development notes](docs/development-notes.md#development-outputs).
+- Put disposable test installations and experiments in a unique managed `.tmp/runs/` directory using `scripts/workspace.py` or `scripts/workspace.ps1`; finish in `finally`, after stopping owned processes, to retain evidence and remove temporary dependencies.
+- Put generated logs, screenshots and acceptance reports in `.local-dev/reports/` using the shared workspace helper. Do not add loose files to the repository root, `.tmp/` or `.local-dev/`.
+- Preserve long-term tools, dependency/build caches, `.local-dev/runtime/`, benchmark inputs/results, archives and recovery backups. They are outside automatic cleanup. Mark a managed report/run/build with `.keep` when it must be retained long term.
+- Ordinary managed reports expire after 30 days; disposable runs abandoned for one day are eligible only when their owner has exited. Build history keeps the latest two versions plus `.keep` versions. Manual cleanup previews by default: `python scripts/workspace.py clean`; deletion requires `--apply`.
+- Use `dist/` for current release aliases and `dist/releases/<version>/` for managed build history. Never mix ad-hoc candidate directories into `dist/`.
+- Promote reusable utilities into `scripts/` and tests/fixtures into their existing source directories; keep one-off local files in an explicitly managed run or the local archive.
+- Run `python scripts/workspace.py check` and the `test_workspace.py` suite when changing output paths or lifecycle behavior.
+
 ## Documentation
 
 - Before changing the README or adding documentation, follow [README maintenance rules](docs/readme-maintenance.md). Keep the homepage concise and put detailed instructions in the user guide.

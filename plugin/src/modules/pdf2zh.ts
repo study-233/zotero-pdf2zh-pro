@@ -1,12 +1,20 @@
 import { getString } from "../utils/locale";
 
 export class PDF2zhBasicFactory {
-    static registerPrefs() {
-        Zotero.PreferencePanes.register({
+    static paneID = "pdf2zhpro-preferences";
+    static async registerPrefs() {
+        await Zotero.PreferencePanes.register({
+            id: this.paneID,
             pluginID: addon.data.config.addonID,
             src: rootURI + "content/preferences.xhtml",
             label: getString("prefs-title"),
             image: `chrome://${addon.data.config.addonRef}/content/icons/favicon.svg`,
+        });
+    }
+
+    static openPrefs(target = "new_serverip") {
+        Zotero.Utilities.Internal.openPreferences(this.paneID, {
+            scrollTo: `#zotero-prefpane-${addon.data.config.addonRef}-${target}`,
         });
     }
 }
@@ -56,6 +64,17 @@ export class PDF2zhUIFactory {
                             },
                             onCommand: () =>
                                 addon.hooks.onDialogEvents("openTaskManager"),
+                        },
+                        {
+                            menuType: "menuitem",
+                            onShowing: (_event, context) => {
+                                context.menuElem.setAttribute(
+                                    "label",
+                                    getString("notice-help-title"),
+                                );
+                            },
+                            onCommand: () =>
+                                addon.hooks.onDialogEvents("openNoticeHelp"),
                         },
                     ],
                 },

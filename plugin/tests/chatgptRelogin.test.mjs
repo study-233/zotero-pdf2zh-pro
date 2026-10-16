@@ -55,6 +55,7 @@ test("relogin opens the existing ChatGPT draft, keeps unrelated edits and never 
             presets: catalog.PROVIDER_PRESETS,
             resolvePreset: (api) => catalog.resolveProviderPreset(api)?.id,
             message: (key) => key,
+            errorMessage: () => "登录已失效",
             list: () => profiles,
             current: () => "api",
             save: () => {
@@ -125,6 +126,7 @@ test("selection auth errors and partial results offer relogin; success and netwo
             preloadSelectionAudio: () => () => {},
             playSelectionAudio() {},
         },
+        "./userNotice": load("userNotice"),
         "./selectionFormatting": load("selectionFormatting"),
         "./selectionUI": load("selectionUI"),
     };

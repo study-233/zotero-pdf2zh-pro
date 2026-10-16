@@ -56,6 +56,7 @@ function menuFixture(registerResult) {
                     ({
                         "prefs-menu-translate": "Translate PDF",
                         "prefs-menu-tasks": "Task Manager",
+                        "notice-help-title": "What is new and help",
                     })[key],
             },
         },
@@ -63,7 +64,7 @@ function menuFixture(registerResult) {
     return { factory: PDF2zhUIFactory, registrations, commands };
 }
 
-test("native item menu registers once across main-window loads and retains both actions", () => {
+test("native item menu registers once across main-window loads and retains all actions", () => {
     const { factory, registrations, commands } = menuFixture();
     factory.registerRightClickMenuItem();
     factory.registerRightClickMenuItem();
@@ -90,9 +91,51 @@ test("native item menu registers once across main-window loads and retains both 
         "zotero-pdf2zh-pro",
         "zotero-pdf2zh-pro: Translate PDF",
         "zotero-pdf2zh-pro: Task Manager",
+        "What is new and help",
     ]);
     for (const menu of submenu.menus) menu.onCommand();
-    assert.deepEqual(commands, ["translatePDF", "openTaskManager"]);
+    assert.deepEqual(commands, [
+        "translatePDF",
+        "openTaskManager",
+        "openNoticeHelp",
+    ]);
+});
+
+test("help actions register a stable preferences pane and navigate with a CSS selector", async () => {
+    const registrations = [],
+        navigations = [];
+    const { PDF2zhBasicFactory: factory } = loadModule(
+        "pdf2zh",
+        {
+            rootURI: "chrome://pdf2zhpro/",
+            addon: {
+                data: { config: { addonRef: "pdf2zhpro", addonID: "test" } },
+            },
+            Zotero: {
+                PreferencePanes: {
+                    register: async (options) => {
+                        registrations.push(options);
+                        return options.id;
+                    },
+                },
+                Utilities: {
+                    Internal: {
+                        openPreferences: (...args) => navigations.push(args),
+                    },
+                },
+            },
+        },
+        { "../utils/locale": { getString: (key) => key } },
+    );
+    await factory.registerPrefs();
+    factory.openPrefs("selection-provider");
+    assert.equal(registrations[0].id, "pdf2zhpro-preferences");
+    assert.deepEqual(navigations, [
+        [
+            registrations[0].id,
+            { scrollTo: "#zotero-prefpane-pdf2zhpro-selection-provider" },
+        ],
+    ]);
 });
 
 test("failed native registration can retry on a later main-window load", () => {

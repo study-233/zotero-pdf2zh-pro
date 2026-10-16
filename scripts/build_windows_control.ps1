@@ -7,6 +7,7 @@ param(
     [string]$TestFilter
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'workspace.ps1')
 $probeRepository = Split-Path $PSScriptRoot -Parent
 $physicalRepository = $probeRepository
 function Convert-BuildPath([string]$Path) {
@@ -51,7 +52,7 @@ if ($SkiaSourceRoot) {
 $probeNinja = Join-Path $probeVs 'Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe'
 if (Test-Path -LiteralPath $probeNinja) { $env:SKIA_NINJA_COMMAND = $probeNinja }
 $env:CARGO_BUILD_JOBS = '4'
-$probeLogs = Join-Path $probeRepository '.tmp/slint-migration'
+$probeLogs = New-WorkspaceReport -Name 'windows-build'
 New-Item -ItemType Directory -Force -Path $probeLogs | Out-Null
 $probeCommand = if ($RunTests) { 'test' } else { 'build' }
 $cargoArguments = @($probeCommand, '--release', '--locked', '--target', 'x86_64-pc-windows-msvc', '--manifest-path', (Join-Path $probeRepository $ManifestPath))

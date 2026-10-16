@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from workspace import Workspace
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--record', action='store_true')
@@ -38,7 +39,7 @@ try:
     print('bing learning: dictionary markers=', 'qdef' in html, 'captcha=', 'b_captcha' in html)
     if args.record:
         # Live HTML is a local diagnostic artifact, never loaded as executable content.
-        target = Path(__file__).resolve().parents[1] / '.local-dev/selection-ui/bing-learning.html'
+        target = Workspace().create('dictionary-smoke') / 'bing-learning.html'
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(html, encoding='utf-8')
 except Exception as error:

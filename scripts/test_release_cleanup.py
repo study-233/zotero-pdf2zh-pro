@@ -14,11 +14,12 @@ BASH = str(WINDOWS_BASH) if WINDOWS_BASH.is_file() else shutil.which("bash")
 
 @unittest.skipUnless(BASH, "Bash is required for the release coordinator")
 class ReleaseCleanupTests(unittest.TestCase):
-    def invoke(self, status=7, backup="this invocation backup", tap=0, restore_status=0):
+    def invoke(self, status=7, backup="this invocation backup", tap=0, restore_status=0, workspace=""):
         script = f'''set -euo pipefail
 TEMP_PATHS=()
 REPLACEMENT_BACKUP='{backup}'
 REPLACEMENT_TAP_PUSHED={tap}
+WORKSPACE_RUN='{workspace}'
 uv() {{ printf 'RESTORE %s\\n' "$*"; return {restore_status}; }}
 {CLEANUP}
 trap cleanup EXIT
@@ -47,6 +48,12 @@ exit {status}
         self.assertEqual(result.returncode, 7)
         self.assertIn(b"Homebrew tap update was attempted", result.stderr)
         self.assertEqual(result.stdout.count(b"RESTORE"), 1)
+
+    def test_workspace_completion_preserves_exit_status_and_failure_evidence(self):
+        for status, outcome in [(0, b'passed'), (7, b'failed')]:
+            result = self.invoke(status=status, backup='', workspace='isolated run')
+            self.assertEqual(result.returncode, status)
+            self.assertIn(b'workspace.py finish isolated run --status ' + outcome, result.stdout)
 
 
 if __name__ == "__main__":

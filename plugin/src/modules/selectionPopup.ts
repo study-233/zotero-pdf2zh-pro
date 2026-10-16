@@ -9,6 +9,7 @@ import {
     stopSelectionAudio,
 } from "./selectionAudio";
 import { getString } from "../utils/locale";
+import { renderNotice } from "./userNotice";
 import {
     createSelectionMenu,
     selectionIcon,
@@ -384,6 +385,29 @@ ${selectionMenuStyle}
     footer.className = "st-footer";
     const status = selectionElement(doc, "span");
     status.className = "st-status";
+    let baseStatus = "";
+    function setStatus(text: string) {
+        renderNotice(status, null);
+        baseStatus = text;
+        status.textContent = text;
+        status.hidden = !text;
+    }
+    function feedback(text: string, failed = false) {
+        renderNotice(
+            status,
+            {
+                id: "selection-feedback",
+                level: failed ? "error" : "success",
+                text,
+            },
+            undefined,
+            () => {
+                status.textContent = baseStatus;
+                status.hidden = !baseStatus;
+            },
+        );
+    }
+    cleanups.push(() => renderNotice(status, null));
     const content = selectionElement(doc, "div");
     const learningContent = selectionElement(doc, "div");
     const editor = selectionElement(doc, "details");
@@ -654,7 +678,7 @@ ${selectionMenuStyle}
     function appendRelogin(container: HTMLElement, message: string) {
         if (
             !controls?.onReloginChatGPT ||
-            !/ChatGPT (?:登录已失效|授权已失效|授权无法续期)|请先登录 ChatGPT/.test(
+            !/ChatGPT (?:登录已失效|授权已失效|授权无法续期)|请先登录 ChatGPT|ChatGPT sign-in has expired/.test(
                 message,
             )
         )
@@ -684,7 +708,7 @@ ${selectionMenuStyle}
                 definition.title = "选择此释义用于收藏";
                 const selectMeaning = () => {
                     controls?.onMeaning?.(sense.chinese);
-                    status.textContent = "已选定收藏释义";
+                    feedback(getString("selection-sense-selected"));
                 };
                 definition.addEventListener("click", selectMeaning);
                 definition.addEventListener("keydown", (event) => {
@@ -702,7 +726,7 @@ ${selectionMenuStyle}
     function reset() {
         clearAudio();
         content.replaceChildren();
-        status.textContent = "";
+        setStatus("");
         copyText = "";
         copy.disabled = true;
         favorite.disabled = true;
@@ -828,9 +852,9 @@ ${selectionMenuStyle}
         copy.addEventListener("click", () => {
             try {
                 Zotero.Utilities.Internal.copyTextToClipboard(copyText);
-                status.textContent = "已复制";
+                feedback(getString("selection-copy-success"));
             } catch {
-                status.textContent = "复制失败，请选择文本复制";
+                feedback(getString("selection-copy-failed"), true);
             }
         });
         reset();
@@ -1069,14 +1093,12 @@ ${selectionMenuStyle}
             node.textContent = text;
             copyText = text;
             copy.disabled = !text;
-            status.textContent = origin;
+            setStatus(origin);
             if (atBottom) body.scrollTop = body.scrollHeight;
             fit();
         },
         setLearning: renderLearning,
-        showNotice: (message: string) => {
-            status.textContent = message;
-        },
+        showNotice: feedback,
         close: () => close(),
         destroy: () => close(false),
         get alive() {
@@ -1164,7 +1186,8 @@ ${selectionMenuStyle}
                                 : undefined,
                             play,
                             (message) => {
-                                status.textContent = message || result.origin;
+                                if (message) feedback(message, true);
+                                else setStatus(result.origin);
                             },
                         ),
                     );
@@ -1269,7 +1292,7 @@ ${selectionMenuStyle}
                     senses,
                     result.usage,
                 );
-                status.textContent = result.origin;
+                setStatus(result.origin);
                 if (result.examples?.length)
                     copyText +=
                         "\n" +
@@ -1286,7 +1309,7 @@ ${selectionMenuStyle}
                     result.kind === "translation" ||
                     result.kind === "paragraph"
                 )
-                    status.textContent = result.origin;
+                    setStatus(result.origin);
                 if ("incomplete" in result && result.incomplete)
                     details(
                         "部分公式未还原",

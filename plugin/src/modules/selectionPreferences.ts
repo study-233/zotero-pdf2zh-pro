@@ -17,6 +17,7 @@ import { recordDiagnostic } from "./diagnostics";
 import { loadProfiles } from "./profileStore";
 import { profileLabel } from "./llmApiManager";
 import { clearOnlineDictionaryCache } from "./selectionOnlineDictionary";
+import { renderNotice } from "./userNotice";
 
 export function registerSelectionPreferences(
     window: Window,
@@ -188,7 +189,20 @@ export function registerSelectionPreferences(
         clearOnline.disabled = true;
         void clearOnlineDictionaryCache()
             .then(() => {
-                clearOnline.textContent = "在线词典缓存已清除";
+                if (!window.closed)
+                    renderNotice(node("selection-cache-status"), {
+                        id: "online-cache",
+                        level: "success",
+                        text: getString("selection-online-cleared"),
+                    });
+            })
+            .catch(() => {
+                if (!window.closed)
+                    renderNotice(node("selection-cache-status"), {
+                        id: "online-cache",
+                        level: "error",
+                        text: getString("selection-online-clear-failed"),
+                    });
             })
             .finally(() => {
                 clearOnline.disabled = false;
@@ -230,9 +244,19 @@ export function registerSelectionPreferences(
                     10000,
                 );
                 if (!result.ok) throw new Error();
-                status.textContent = getString("selection-cache-cleared");
+                if (!window.closed)
+                    renderNotice(status, {
+                        id: "selection-cache",
+                        level: "success",
+                        text: getString("selection-cache-cleared"),
+                    });
             } catch {
-                status.textContent = getString("selection-cache-clear-failed");
+                if (!window.closed)
+                    renderNotice(status, {
+                        id: "selection-cache",
+                        level: "error",
+                        text: getString("selection-cache-clear-failed"),
+                    });
             } finally {
                 clear.disabled = false;
             }

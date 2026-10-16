@@ -9,7 +9,7 @@ const Zip = createRequire(
 const ts = require("../plugin/node_modules/typescript");
 const { chromium } = require(process.argv[2] || "playwright");
 const root = path.resolve(__dirname, "..");
-const output = path.join(root, ".local-dev/profile-ui");
+const output = require('./workspace.cjs').newReport('profile-ui');
 const build = path.join(root, "plugin/build/addon");
 const zip = new Zip(path.join(root, "plugin/build/zotero-pdf2zh-pro.xpi"));
 const markup = zip.readAsText("content/llmApiManager.xhtml");
@@ -51,6 +51,10 @@ const code = ts.transpileModule(
 ).outputText;
 const model = {};
 new Function("exports", code)(model);
+const noticeCode = ts.transpileModule(
+  fs.readFileSync(path.join(root, "plugin/src/modules/userNotice.ts"), "utf8"),
+  { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } },
+).outputText;
 async function checkLayout(page, width, height) {
   const state = await page.evaluate(() => {
     const root = document.documentElement;
@@ -149,7 +153,9 @@ async function checkLayout(page, width, height) {
         ].map((m) => [m[1], m[2].trim()]),
       );
       await page.addInitScript(
-        ({ presets, labels }) => {
+        ({ presets, labels, noticeCode, noticeLabels }) => {
+          const notices = {};
+          new Function("exports", noticeCode)(notices);
           window.entries = [
             {
               key: "a",
@@ -207,6 +213,8 @@ async function checkLayout(page, width, height) {
           };
           window.arguments = [
             {
+              renderNotice: notices.renderNotice,
+              errorMessage: error => notices.errorNotice(error, key => noticeLabels[key]).text,
               presets,
               resolvePreset: (api) =>
                 presets.find(
@@ -269,6 +277,9 @@ async function checkLayout(page, width, height) {
         },
         {
           labels,
+          noticeCode,
+          noticeLabels: Object.fromEntries([...zip.readAsText("locale/" + language + "/pdf2zhpro-addon.ftl")
+            .matchAll(/^pdf2zhpro-([\w-]+) = (.*)$/gm)].map(m => [m[1], m[2].trim()])),
           presets: model.PROVIDER_PRESETS.map((p) => ({
             ...p,
             label: language === "en-US" ? p.labelEn || p.label : p.label,
@@ -504,7 +515,7 @@ async function checkLayout(page, width, height) {
               ),
             });
           }
-      // Advanced settings and a long error must scroll without pushing actions away.
+      // Raw server details stay out of routine feedback, including in a short window.
       await page.setViewportSize({ width: 700, height: 480 });
       await page.locator("#advanced > summary").click();
       await page.evaluate(() => {
@@ -515,12 +526,9 @@ async function checkLayout(page, width, height) {
         };
       });
       await page.click("#test");
-      assert.equal(await page.isVisible("#status-details"), true);
-      assert.equal(
-        await page.locator("#status-details").getAttribute("open"),
-        null,
-      );
-      await page.locator("#status-details > summary").click();
+      assert.equal(await page.isVisible("#status-details"), false);
+      assert.equal(await page.locator("#status").getAttribute("role"), "alert");
+      assert.ok(!(await page.locator("#status").textContent()).includes("Diagnostic detail"));
       await checkLayout(page, 700, 480);
       await page.screenshot({
         path: path.join(output, language + "-short-error.png"),

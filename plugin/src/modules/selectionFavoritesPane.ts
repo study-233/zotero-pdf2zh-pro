@@ -1,3 +1,4 @@
+import { renderNotice, errorNotice } from "./userNotice";
 import { config } from "../../package.json";
 import { getLocaleID, getString } from "../utils/locale";
 import { createSelectionMenu, selectionMenuStyle } from "./selectionUI";
@@ -59,6 +60,14 @@ function mount(body: HTMLElement, reader: Reader) {
     search.setAttribute("aria-label", search.placeholder);
     const status = selectionElement(doc, "p");
     status.setAttribute("role", "status");
+    const feedback = (key: string, args?: Record<string, unknown>) => {
+        if (status.isConnected)
+            renderNotice(status, {
+                id: "favorites",
+                level: "success",
+                text: getString(key, { args }),
+            });
+    };
     const list = selectionElement(doc, "div");
     list.className = "st-favorites-list";
     const toolbar = selectionElement(doc, "div");
@@ -69,10 +78,8 @@ function mount(body: HTMLElement, reader: Reader) {
         void Promise.resolve()
             .then(action)
             .catch((error) => {
-                status.textContent =
-                    error instanceof Error
-                        ? error.message
-                        : "操作失败，请重试。";
+                if (status.isConnected)
+                    renderNotice(status, errorNotice(error, getString));
             });
     };
     const button = (
@@ -97,7 +104,7 @@ function mount(body: HTMLElement, reader: Reader) {
                 ).open();
                 if (file) {
                     await IOUtils.writeUTF8(file, await exportFavorites(csv));
-                    status.textContent = "收藏已导出。";
+                    feedback("selection-favorites-exported");
                 }
             },
         );
@@ -112,7 +119,10 @@ function mount(body: HTMLElement, reader: Reader) {
                 const result = await importFavorites(
                     await IOUtils.readUTF8(file),
                 );
-                status.textContent = `新增 ${result.added} 条；保留本地冲突记录 ${result.conflicts} 条。`;
+                feedback("selection-favorites-imported", {
+                    count: result.added,
+                    conflicts: result.conflicts,
+                });
             }
         }),
     );
@@ -146,8 +156,8 @@ function mount(body: HTMLElement, reader: Reader) {
                 replace,
             );
             if (result === "conflict") {
-                message.textContent =
-                    "术语表已有不同译法。请选择保留原值或替换。";
+                message.textContent = getString("selection-glossary-conflict");
+                message.setAttribute("role", "alert");
                 if (!form.querySelector(".st-conflict")) {
                     const options = selectionElement(doc, "div");
                     options.className = "st-conflict";
@@ -158,8 +168,11 @@ function mount(body: HTMLElement, reader: Reader) {
                     form.append(options);
                 }
             } else {
-                status.textContent =
-                    result === "exists" ? "该术语已存在。" : "已加入术语表。";
+                feedback(
+                    result === "exists"
+                        ? "selection-glossary-exists"
+                        : "selection-glossary-added",
+                );
                 form.remove();
             }
         };
@@ -224,7 +237,12 @@ function mount(body: HTMLElement, reader: Reader) {
                 meaning,
                 details,
                 button("回到原文", async () => {
-                    status.textContent = await openFavorite(entry);
+                    const result = await openFavorite(entry);
+                    feedback(
+                        result.includes("附件已变化")
+                            ? "selection-source-changed"
+                            : "selection-source-opened",
+                    );
                 }),
                 button("复制", () => {
                     Zotero.Utilities.Internal.copyTextToClipboard(
@@ -236,7 +254,7 @@ function mount(body: HTMLElement, reader: Reader) {
                 button("加入术语表", () => glossaryForm(entry, article)),
                 button("删除收藏", async () => {
                     await deleteFavorite(entry.id);
-                    status.textContent = "收藏已删除。";
+                    feedback("selection-favorites-deleted");
                 }),
             );
             list.append(article);
@@ -247,6 +265,7 @@ function mount(body: HTMLElement, reader: Reader) {
     run(render);
     const unwatch = watchFavorites(() => run(render));
     return () => {
+        renderNotice(status, null);
         more.destroy();
         unwatch();
     };

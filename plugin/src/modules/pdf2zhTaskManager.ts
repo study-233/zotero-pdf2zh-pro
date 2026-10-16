@@ -2,6 +2,13 @@ import { exportDiagnostics, recordDiagnostic } from "./diagnostics";
 import { config } from "../../package.json";
 import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
+import {
+    errorNotice,
+    NoticeError,
+    renderNotice,
+    type UserNotice,
+} from "./userNotice";
+import { runNoticeAction } from "./pluginNotices";
 import { resolveSelectedGlossaryPacks } from "./glossaryPacks";
 import {
     PluginTask,
@@ -21,6 +28,11 @@ import {
 } from "./zoteroTaskImporter";
 
 type TaskDialogArgs = {
+    message: typeof getString;
+    errorNotice: (error: unknown) => UserNotice;
+    renderNotice: typeof renderNotice;
+    noticeAction: typeof runNoticeAction;
+    getSubmission: () => SubmissionFeedback | undefined;
     _initPromise: any;
     getTasks: () => PluginTask[];
     hasActiveTasks: () => boolean;
@@ -39,6 +51,12 @@ type TaskDialogArgs = {
         total: number;
         hasErrors: boolean;
     };
+};
+
+type SubmissionFeedback = {
+    notice: UserNotice;
+    errors: { fileName: string; text: string }[];
+    warnings: string[];
 };
 
 const ACTIVE_STATUSES: ServerTaskStatus[] = ["queued", "running", "cancelling"];
@@ -64,6 +82,9 @@ export class PDF2zhTaskManager {
 
     static stop(): void {
         this.stopped = true;
+        clearTimeout(this.completionTimer);
+        this.completionTimer = undefined;
+        this.completions.clear();
         clearTimeout(this.refreshTimer);
         this.refreshTimer = undefined;
         this.closeWindow();
@@ -187,80 +208,90 @@ export class PDF2zhTaskManager {
             PDF2zhTaskManager.notifyTranslationCompleted(taskId),
     });
 
+    private static submitting = false;
+    private static submission: SubmissionFeedback | undefined;
+    private static completions = new Map<string, PluginTask>();
+    private static notifiedImports = new Set<string>();
+    private static completionTimer: ReturnType<typeof setTimeout> | undefined;
+
     static async processWorker() {
-        this.loadLocalTasks();
-        const pane = ztoolkit.getGlobal("ZoteroPane");
-        const selectedItems = pane.getSelectedItems();
-        if (selectedItems.length === 0) {
-            ztoolkit.getGlobal("alert")("请先选择一个条目或附件。");
+        if (this.submitting) {
+            this.openWindow();
             return;
         }
-
-        const progressWindow = new ztoolkit.ProgressWindow(
-            "zotero-pdf2zh-pro 任务",
-        ).createLine({
-            text: "正在提交翻译任务...",
-            type: "default",
-            progress: 0,
-        });
-        progressWindow.show();
-
-        this.openWindow();
-
+        this.submitting = true;
+        this.loadLocalTasks();
+        const feedback: SubmissionFeedback = {
+            notice: { id: "submission", level: "info", text: "" },
+            errors: [],
+            warnings: [],
+        };
+        this.submission = feedback;
         let submitted = 0;
-        const errors: string[] = [];
-        const total = selectedItems.length;
-        let serverConfig: ServerConfig;
         try {
-            serverConfig = PDF2zhHelperFactory.getServerConfig();
-            if (!serverConfig.apiConfig)
-                throw new Error("请先在设置中选择翻译配置。");
+            const selectedItems = ztoolkit
+                .getGlobal("ZoteroPane")
+                .getSelectedItems();
+            if (!selectedItems.length) throw new NoticeError("no_selection");
+            const serverConfig = PDF2zhHelperFactory.getServerConfig();
+            if (!serverConfig.apiConfig) throw new NoticeError("no_profile");
+            if (!serverConfig.outputModes.length)
+                throw new NoticeError("no_output");
             serverConfig.glossaryPacks = await resolveSelectedGlossaryPacks(
                 serverConfig.serverUrl,
                 serverConfig.sourceLang,
                 serverConfig.targetLang,
             );
-        } catch (error) {
-            ztoolkit.getGlobal("alert")(String(error));
-            progressWindow.close();
-            return;
-        }
-
-        if (serverConfig.outputModes.length === 0) {
-            ztoolkit.getGlobal("alert")("请至少选择一种输出PDF模式。");
-            return;
-        }
-
-        for (let index = 0; index < selectedItems.length; index++) {
-            const item = selectedItems[index];
-            try {
-                await this.submitTask(item, serverConfig);
-                submitted += 1;
-            } catch (error) {
-                const message =
-                    error instanceof Error ? error.message : String(error);
-                errors.push(message);
+            this.openWindow();
+            for (let index = 0; index < selectedItems.length; index++) {
+                if (this.stopped) break;
+                feedback.notice = {
+                    id: "submission",
+                    level: "info",
+                    text: getString("notice-submitting", {
+                        args: {
+                            current: index + 1,
+                            total: selectedItems.length,
+                        },
+                    }),
+                };
+                this.notifyTaskListeners();
+                const item = selectedItems[index];
+                try {
+                    await this.submitTask(item, serverConfig, () => {
+                        const warning = getString("notice-api-compatibility");
+                        if (!feedback.warnings.includes(warning))
+                            feedback.warnings.push(warning);
+                    });
+                    submitted++;
+                } catch (error) {
+                    feedback.errors.push({
+                        fileName: String(item.getField("title") || item.id),
+                        text: errorNotice(error, getString).text,
+                    });
+                }
             }
-
-            progressWindow.changeLine({
-                text: `已提交 ${index + 1}/${total} 个任务...`,
-                type: errors.length > 0 ? "warning" : "default",
-                progress: Math.round(((index + 1) / total) * 100),
-            });
-        }
-
-        await this.refreshTasks();
-
-        progressWindow.changeLine({
-            text: `任务已提交：成功 ${submitted}，失败 ${errors.length}`,
-            type: errors.length > 0 ? "warning" : "success",
-            progress: 100,
-        });
-
-        if (errors.length > 0) {
-            ztoolkit.getGlobal("alert")(
-                `部分任务提交失败：\n${errors.slice(0, 5).join("\n")}`,
-            );
+            feedback.notice = {
+                id: "submission",
+                level:
+                    feedback.errors.length || feedback.warnings.length
+                        ? "warning"
+                        : "success",
+                text: getString("notice-submitted", {
+                    args: {
+                        success: submitted,
+                        failed: feedback.errors.length,
+                    },
+                }),
+            };
+            // A refresh failure cannot change the already accepted submission count.
+            void this.refreshTasks().catch((error) => ztoolkit.log(error));
+        } catch (error) {
+            feedback.notice = errorNotice(error, getString);
+            this.openWindow();
+        } finally {
+            this.submitting = false;
+            this.notifyTaskListeners();
         }
     }
 
@@ -272,6 +303,11 @@ export class PDF2zhTaskManager {
         }
 
         const windowArgs: TaskDialogArgs = {
+            message: getString,
+            errorNotice: (error) => errorNotice(error, getString),
+            renderNotice,
+            noticeAction: runNoticeAction,
+            getSubmission: () => this.submission,
             _initPromise: Zotero.Promise.defer(),
             getTasks: () => this.getTasks(),
             hasActiveTasks: () => this.hasActiveTasks(),
@@ -523,7 +559,11 @@ export class PDF2zhTaskManager {
         return this.eventStream.getSummary();
     }
 
-    private static async submitTask(item: Zotero.Item, config: ServerConfig) {
+    private static async submitTask(
+        item: Zotero.Item,
+        config: ServerConfig,
+        onWarning?: (message: string) => void,
+    ) {
         this.loadLocalTasks();
         const fileData = await PDF2zhHelperFactory.prepareFileData(item);
         const requestBody = PDF2zhHelperFactory.buildTaskRequestBody(
@@ -536,6 +576,7 @@ export class PDF2zhTaskManager {
         const task = await ServerTaskClient.createTask(
             config.serverUrl,
             requestBody,
+            onWarning,
         );
         if (this.canApplyResponse(config.serverUrl, generation, task)) {
             this.upsertTask(task, config.serverUrl, {
@@ -959,21 +1000,62 @@ export class PDF2zhTaskManager {
         ) {
             return;
         }
+        const identity = JSON.stringify([
+            task.taskId,
+            task.importedOutputs || [],
+            task.status,
+        ]);
+        if (this.notifiedImports.has(identity)) return;
+        this.notifiedImports.add(identity);
+        this.completions.set(taskId, task);
+        if (!this.completionTimer)
+            this.completionTimer = setTimeout(
+                () => this.flushCompletions(),
+                2000,
+            );
+    }
 
+    private static flushCompletions() {
+        this.completionTimer = undefined;
+        const tasks = [...this.completions.values()];
+        this.completions.clear();
+        if (
+            !tasks.length ||
+            this.stopped ||
+            !PDF2zhHelperFactory.isTrue(getPref("notifyOnTranslationComplete"))
+        )
+            return;
+        const task = tasks[0];
+        const incomplete = tasks.filter(
+            (t) => t.status === "incomplete",
+        ).length;
         try {
             const alertsService = Cc[
                 "@mozilla.org/alerts-service;1"
             ].getService(Ci.nsIAlertsService);
             alertsService.showAlertNotification(
                 `chrome://${config.addonRef}/content/icons/favicon.svg`,
-                task.status === "incomplete"
-                    ? "未完成 PDF 已导入"
-                    : getString("translation-complete-title"),
-                task.status === "incomplete"
-                    ? `${task.fileName}：剩余 ${(task.translationSummary?.failed || 0) + (task.translationSummary?.pending || 0)} 段，可补译`
-                    : getString("translation-complete-body", {
-                          args: { fileName: task.fileName },
-                      }),
+                tasks.length > 1
+                    ? getString("notice-imported-title")
+                    : task.status === "incomplete"
+                      ? getString("notice-incomplete-title")
+                      : getString("translation-complete-title"),
+                tasks.length > 1
+                    ? getString("notice-imported-batch", {
+                          args: { count: tasks.length, incomplete },
+                      })
+                    : task.status === "incomplete"
+                      ? getString("notice-incomplete-body", {
+                            args: {
+                                fileName: task.fileName,
+                                count:
+                                    (task.translationSummary?.failed || 0) +
+                                    (task.translationSummary?.pending || 0),
+                            },
+                        })
+                      : getString("translation-complete-body", {
+                            args: { fileName: task.fileName },
+                        }),
                 false,
                 "",
                 undefined,

@@ -16,6 +16,10 @@ window.createChatGPTPanel = function (args, changed) {
         controller?.abort();
         window.clearTimeout(timer);
     }
+    function accountStatus(text) {
+        const node = $("chatgpt-account-status");
+        if (node.textContent !== text) node.textContent = text;
+    }
     function draw(state) {
         lastState = state;
         account = state.account;
@@ -24,19 +28,21 @@ window.createChatGPTPanel = function (args, changed) {
             state.login?.status,
         );
         const expired = account?.requires_login === true;
-        $("chatgpt-account-status").textContent = cancelling
-            ? t("chatgpt-cancelling")
-            : pending
-              ? t("chatgpt-pending")
-              : expired
-                ? t("chatgpt-expired")
-                : account?.authenticated
-                  ? `${account.account_label} · ${t(account.plan_usage_authorized ? "chatgpt-authorized" : "chatgpt-no-permission")}`
-                  : state.login?.status === "failed"
-                    ? t("chatgpt-login-failed")
-                    : state.login?.status === "cancelled"
-                      ? t("chatgpt-cancelled")
-                      : t("chatgpt-signed-out");
+        accountStatus(
+            cancelling
+                ? t("chatgpt-cancelling")
+                : pending
+                  ? t("chatgpt-pending")
+                  : expired
+                    ? t("chatgpt-expired")
+                    : account?.authenticated
+                      ? `${account.account_label} · ${t(account.plan_usage_authorized ? "chatgpt-authorized" : "chatgpt-no-permission")}`
+                      : state.login?.status === "failed"
+                        ? t("chatgpt-login-failed")
+                        : state.login?.status === "cancelled"
+                          ? t("chatgpt-cancelled")
+                          : t("chatgpt-signed-out"),
+        );
         $("chatgpt-account-status").dataset.error = String(expired && !pending);
         $("chatgpt-login").textContent = t(
             expired ? "chatgpt-relogin" : "chatgpt-login",
@@ -89,13 +95,14 @@ window.createChatGPTPanel = function (args, changed) {
             else if (poll) changed();
         } catch (error) {
             if (seq === generation && active)
-                $("chatgpt-account-status").textContent = error.message;
+                accountStatus(args.errorMessage?.(error) || t("failed"));
         } finally {
             if (seq === generation) controller = undefined;
         }
     }
     async function action(kind, newAccount = false) {
         cancel();
+        accountStatus("");
         $("chatgpt-notice").textContent = "";
         const seq = generation;
         controller = new window.AbortController();
@@ -119,7 +126,7 @@ window.createChatGPTPanel = function (args, changed) {
         } catch (error) {
             if (seq === generation && active) {
                 if (lastState) draw(lastState);
-                $("chatgpt-account-status").textContent = error.message;
+                accountStatus(args.errorMessage?.(error) || t("failed"));
             }
         } finally {
             if (seq === generation) controller = undefined;
@@ -130,7 +137,10 @@ window.createChatGPTPanel = function (args, changed) {
     $("chatgpt-switch").addEventListener("click", () => action("login", true));
     $("chatgpt-cancel").addEventListener("click", () => action("login/cancel"));
     $("chatgpt-logout").addEventListener("click", () => action("logout"));
-    $("chatgpt-refresh").addEventListener("click", () => refresh());
+    $("chatgpt-refresh").addEventListener("click", () => {
+        accountStatus("");
+        void refresh();
+    });
     $("chatgpt-manage-usage").addEventListener("click", () =>
         args.openChatGPTPage("https://chatgpt.com/settings/usage"),
     );

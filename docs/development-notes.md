@@ -57,6 +57,29 @@ Dependabot 只创建安全修复 PR，按生态分组，不自动合并。配置
 安全分组必须使用 `applies-to: security-updates`。仓库设置中的安全更新开关也必须开启。
 保留 Dependency Graph、密钥扫描及推送保护；普通升级仍由维护者安排。
 
+## 插件提示与更新摘要维护
+
+普通提示使用“简短结果＋必要下一步”，中文正文通常不超过 60 字（动态名称不计），中英文同步。
+保存、复制、清除成功就地反馈约 4 秒；按钮状态已表达结果时不另加提示。进度更新同一状态，
+失败保留到重试或恢复。同一事件选择一个主要位置；轮询不重复播报，主动重试仍有反馈。
+保留真实请求、覆盖导入、删除及未保存修改等影响决策的信息，普通界面不显示堆栈或接口原文。
+
+- `plugin/src/modules/userNotice.ts` 负责严重程度、错误分类、操作入口、去重与短反馈恢复。
+  业务保留原始诊断及脱敏边界，窗口接收翻译函数和操作回调，不增加服务端接口。
+- `plugin/src/modules/releaseNotes.ts` 是随插件打包的本地摘要清单。每次版本变动新增一条版本记录，
+  最多 3 项；无重要变化时用空 `notes`。旧记录保留，条目 ID 全局唯一且发布后不复用。
+  `priority` 为 0（需调整）、1（新功能）、2（明显修复）；`message` 在中英文 `addon.ftl` 同步维护，
+  `action` 只选已有的 `profiles`、`selection`、`tasks` 入口。只描述已实现能力。
+- `pluginNotices.ts` 在迁移完成、主窗口前台实际呈现后写入 `releaseNoticeState`。
+  初装只记录版本；老用户首次接入只看当前摘要；跨版本取最多 3 项，其余从帮助窗口回看。
+  不回退已处理版本，不手工清除用户的去重记录。配置失效仍在设置中持续提示。
+
+运行 `cd plugin && pnpm build && pnpm lint:check && pnpm test`，现有 CI 会检查摘要版本、ID、条数、
+中英文资源和操作类型，以及最终 XPI 的摘要与帮助资源。浏览器验收运行
+`node scripts/check_notices_ui.cjs <playwright 模块路径>`，覆盖中英文、浅深色、窄窗口、焦点及关闭行为；
+与既有设置、配置和划词界面检查配合，报告自动保存到 `.local-dev/reports/`。
+原生启动、更新和多窗口行为使用下文的隔离开发环境核验，不修改正式 Zotero 文库。
+
 ## 产品边界
 
 `zotero-pdf2zh-pro` 包含 Zotero 插件和本地 Python 服务。插件 ID 为
@@ -146,6 +169,76 @@ Windows SDK 的资源编译器嵌入图标、版本、DPI 清单；根目录 `.c
 控制中心可见、可关闭，升级必须保留用户选择。除此以外不得创建计划任务、Windows Service
 或防火墙规则。停止、升级和卸载前必须校验 PID、命令行、可执行文件路径和健康接口归属，
 不得结束未知进程。关闭窗口隐藏到托盘，退出控制中心不停止服务。
+
+<a id="development-outputs"></a>
+
+## 开发目录与产物
+
+源码目录保持现有分工：插件在 `plugin/`，服务端在 `server/`，Windows 控制中心在
+`windows-app/`，可复用工具在 `scripts/`，测评定义和固定数据在 `benchmarks/`，文档在
+`docs/`。临时实验、日志和候选安装环境不得直接散放在仓库根目录、`.tmp/` 或 `.local-dev/`。
+
+| 内容 | 位置 | 保留方式 |
+| --- | --- | --- |
+| 每次测试的临时安装、解压和实验文件 | `.tmp/runs/<时间-名称-随机编号>/` | 完成或失败后归档证据、回收环境；进程已退出的异常遗留满 1 天后可回收 |
+| 日志、截图、验收报告 | `.local-dev/reports/<时间-名称-随机编号>/` | 普通报告保留 30 天；`.keep` 标记长期保留 |
+| 新增可复用下载缓存 | `.tmp/cache/` | 长期保留，不自动回收 |
+| 当前发布包与固定入口 | `plugin/build/`、`server/dist/`、`dist/` | 保持发布脚本约定；版本化文件按构建保留规则处理 |
+| 已收集的构建历史 | `dist/releases/<版本>/` | 保留最新两个版本及所有 `.keep` 版本 |
+| 开发 Profile、配置、文献、任务与样本 | `.local-dev/runtime/` | 长期保留，不自动回收；其中原有报告也不追溯自动删除 |
+| 测评原始输入、结果和费用记录 | `.local-dev/translation-bench/`、`benchmarks/` | 长期保留，不自动回收 |
+| 历史手工资料和恢复备份 | `.local-dev/archive/`、`.local-dev/deployments/`、`dist/replacement-backups/` | 长期保留，不自动回收 |
+
+已有工具链、编译缓存和虚拟环境含固定路径，继续保留 `.tmp/slint-toolchain/`、
+`.tmp/slint-target/`、`.tmp/website-venv/`、`.tmp/release-runtime/`、
+`.tmp/uv-profile-cache/`、`.tmp/node-compile-cache/`、`windows-app/target/`、
+`server/.venv/`、`plugin/node_modules/`、`.pnpm-store/` 和 `.local-dev/pnpm-store/`。
+这些长期目录没有自动过期规则；新建缓存使用 `.tmp/cache/`，避免新增散落的例外路径。
+
+2026-10-16 前散落的手工脚本、旧验收目录和旧构建副本已保存在
+`.local-dev/archive/layout-20261016/`，原路径与归档位置记录在其中的
+`migration-plan.json`。此前清理的证据归档位于 `.local-dev/archive/cleanup-20261016/`。
+历史归档不追溯自动清理；有价值的工具后续整理进 `scripts/`，固定测试数据整理进相应测试目录。
+
+统一入口只依赖 Python 3.12+，不启动 Zotero、不调用模型、不修改正式安装：
+
+```bash
+python scripts/workspace.py status
+python scripts/workspace.py check
+python scripts/workspace.py clean
+python scripts/workspace.py clean --apply
+```
+
+`clean` 默认列出候选和体积，只有 `--apply` 才执行。创建托管运行或报告、收集构建时也会
+执行相同的过期规则；没有后台定时任务。清理只接受指定输出目录内带有效
+`.workspace.json` 的托管条目，以及已知命名的旧版本发布文件；未知目录只提示，不自动删除。
+正在运行的条目和长期保留标记优先于天数、版本数规则。需要长期保存某次报告、临时实验或构建时，
+执行 `python scripts/workspace.py keep "对应目录"`，或在该目录创建空的 `.keep` 文件。
+`.local-dev/reports/.keep`、`dist/releases/.keep` 可以保护整个对应目录。
+
+Windows 测试使用共享入口分配独立目录，先停止本次拥有的进程，再在 `finally` 中完成回收：
+
+```powershell
+. ./scripts/workspace.ps1
+$run = New-WorkspaceRun -Name 'manual-check'
+$passed = $false
+try {
+    # 测试安装、解压及实验数据写入 $run.work；长期报告可写入 $run.report。
+    $passed = $true
+} finally {
+    Complete-WorkspaceRun -Run $run -Passed $passed
+}
+```
+
+Python 工具使用 `from workspace import Workspace` 与 `Workspace().run('操作名')`
+上下文；Node 截图验收使用 `require('./workspace.cjs').newReport('操作名')`，
+需要临时下载和安装状态的验收使用 `newRun('操作名')`，在进程退出时归档并回收。
+报告目录名称使用 UTC 时间和随机编号，避免并行运行互相覆盖。临时目录中的日志、状态记录、
+截图和相关脚本会保存为报告内的 `evidence.zip`，依赖环境不进入报告；停止进程或保存证据失败时保留原目录。
+指定外部测试根目录或输出文件属于显式保留操作，由调用者管理，不扩大自动清理范围。
+
+修改路径或清理逻辑后运行 `python -m unittest discover -s scripts -p 'test_workspace.py'`
+和 `python scripts/workspace.py check`；核心 CI 执行同一检查，防止新增散落文件和未登记的输出目录。
 
 ## 测试
 
@@ -422,5 +515,5 @@ macOS 测试时临时目录可使用 `TMPDIR=/private/tmp`，避免 `/var` 与 `
 
 开发者可选浏览器回归检查：安装 Playwright 与 Chrome 后，在仓库根目录运行
 `node scripts/check_selection_popup.cjs`；也可将 Playwright 模块路径作为第一个参数。
-此检查使用隔离的无头浏览器运行实际划选模块，以模拟资源和翻译响应覆盖自动查询、嵌套 PDF 文档点击、请求取消及初始化异常；截图输出到忽略目录 `.local-dev/selection-ui/`，不操作 Zotero 或真实模型。
+此检查使用隔离的无头浏览器运行实际划选模块，以模拟资源和翻译响应覆盖自动查询、嵌套 PDF 文档点击、请求取消及初始化异常；截图输出到忽略目录 `.local-dev/reports/` 下本次运行的独立目录，不操作 Zotero 或真实模型。
 设置页交互另可运行 `node scripts/check_settings_ui.cjs`，覆盖拖拽标题、下载状态、深浅主题和窄窗口；该检查将 XUL 控件映射为 HTML 控件。浏览器检查不能代替 Zotero 中的原生验收。

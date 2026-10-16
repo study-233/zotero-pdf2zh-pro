@@ -4,6 +4,8 @@ import fs from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 import { URL } from "node:url";
+import { noticeModules } from "./noticeFixture.mjs";
+const notices = noticeModules()("./userNotice");
 
 const compile = (name) =>
     ts
@@ -73,6 +75,12 @@ const walk = (node, id) =>
         ? node
         : node.children?.map((child) => walk(child, id)).find(Boolean);
 const document = {
+    defaultView: {
+        addEventListener() {},
+        removeEventListener() {},
+        setTimeout: (fn, ms) => globalThis.setTimeout(fn, ms).unref(),
+        clearTimeout: globalThis.clearTimeout,
+    },
     getElementById: (id) =>
         nodes.get(id.replace(`zotero-prefpane-${config.addonRef}-`, "")) ||
         [...nodes.values()].map((node) => walk(node, id)).find(Boolean),
@@ -85,6 +93,9 @@ function makeNode(tag = "div") {
     return {
         tag,
         ownerDocument: document,
+        style: {},
+        dataset: {},
+        isConnected: true,
         disabled: false,
         checked: false,
         textContent: "",
@@ -128,6 +139,8 @@ function makeNode(tag = "div") {
     };
 }
 globalThis.__glossaryUiTest = {
+    ...notices,
+    getString: (key) => key,
     config,
     version: "test",
     getPref: (key) => prefs.get(key),
@@ -187,9 +200,9 @@ globalThis.ztoolkit = {
 globalThis.IOUtils = { read: async () => bytes };
 const ui = await asModule(
     "const registerAttachmentNamingPreferences = () => {}; const registerSelectionPreferences = () => {}; const resetSelectionTranslation = () => {};\n" +
-        "const {config,version,getLocaleID,getPref,setPref,axios,loadGlossaryEntries,importGlossaryCsv,clearGlossaryEntries,listGlossaryPacks,checkGlossaryUpdates,downloadGlossaryPack,cancelGlossaryDownload,removeGlossaryPack,getSelectedGlossaryPackIds,setSelectedGlossaryPackIds,supportsGlossaryPackLanguage}=globalThis.__glossaryUiTest;\n" +
+        "const {config,version,getString,renderNotice,errorNotice,getLocaleID,getPref,setPref,axios,loadGlossaryEntries,importGlossaryCsv,clearGlossaryEntries,listGlossaryPacks,checkGlossaryUpdates,downloadGlossaryPack,cancelGlossaryDownload,removeGlossaryPack,getSelectedGlossaryPackIds,setSelectedGlossaryPackIds,supportsGlossaryPackLanguage}=globalThis.__glossaryUiTest;\n" +
         compile("preferenceScript") +
-        "\nexport {importGlossary,refreshGlossarySummary,refreshServerVersion,refreshGlossaryPacks,renderGlossaryPacks,runGlossaryPackAction};",
+        "\nexport {importGlossary,refreshGlossarySummary,refreshServerVersion,refreshGlossaryPacks,renderGlossaryPacks,runGlossaryPackAction};\n//# sourceURL=preferences-fixture.js",
 );
 
 function reset(language = "zh-CN") {
@@ -629,7 +642,7 @@ test("an update check failure keeps installed packs usable", async () => {
     await ui.refreshGlossaryPacks(true);
     assert.equal(
         node("glossaryPacksResult").textContent,
-        "Catalog unavailable",
+        "notice-error-unknown",
     );
     assert.equal(node("pack-computing").checked, true);
     assert.equal(node("pack-computing").disabled, false);

@@ -1,4 +1,6 @@
 pref-title = zotero-pdf2zh-pro
+pref-notice-help = What's new and help
+pref-glossary-invalid-row = Invalid CSV at line { $line }. Check columns, quotes and conflicting terms. The previous glossary is preserved.
 pref-help = { $name } Build { $version } { $time }
 
 pref-config = zotero-pdf2zh-pro Configuration

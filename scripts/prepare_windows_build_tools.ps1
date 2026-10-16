@@ -1,4 +1,4 @@
-param([string]$CacheRoot = (Join-Path (Split-Path $PSScriptRoot -Parent) '.tmp/windows-build-tools'))
+param([string]$CacheRoot = (Join-Path (Split-Path $PSScriptRoot -Parent) '.tmp/cache/windows-build-archives'))
 $ErrorActionPreference = 'Stop'
 $CacheRoot = [IO.Path]::GetFullPath($CacheRoot)
 New-Item -ItemType Directory -Force -Path $CacheRoot | Out-Null

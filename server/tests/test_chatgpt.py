@@ -2,6 +2,7 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json
+import os
 from pathlib import Path
 import tempfile
 import threading
@@ -176,7 +177,8 @@ class ChatGPTContracts(unittest.TestCase):
         for t in threads: t.join()
         self.assertEqual(results, ['new-access']*2); self.assertEqual(len(calls), 1)
         self.assertEqual(stores[0].read()['refresh_token'], 'new-refresh')
-        self.assertFalse((self.directory/'credentials.json').stat().st_mode & 0o077)
+        if os.name != 'nt':
+            self.assertFalse((self.directory/'credentials.json').stat().st_mode & 0o077)
         self.assertNotIn('access_token', stores[0].status())
 
     def test_logout_revoke_failure_clears_only_session_and_preserves_registration(self):

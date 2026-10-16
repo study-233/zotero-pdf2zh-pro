@@ -9,6 +9,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
+. (Join-Path $PSScriptRoot 'workspace.ps1')
 if (-not $env:PDF2ZH_WINDOWS_APP_ROOT -or -not $env:PDF2ZH_WINDOWS_REGISTRY_KEY -or -not $env:PDF2ZH_WINDOWS_START_MENU_DIR) {
     throw 'Lifecycle tests require isolated installation, registry and shortcut overrides.'
 }
@@ -28,9 +29,11 @@ if ($env:PDF2ZH_WINDOWS_REGISTRY_KEY -match '(?i)^HKCU:\\Software\\Microsoft\\' 
 # Exercise real startup and explicit updates without a scheduled cleanup racing
 # this script's immediately following install/uninstall operations.
 $env:PDF2ZH_WINDOWS_LIFECYCLE_TEST = '1'
+$workspaceRun = New-WorkspaceRun -Name 'windows-lifecycle'
+$passed = $false
 $windowsDir = Join-Path $PSScriptRoot "windows"
 if ($WindowsPackage) {
-    $windowsDir = Join-Path ([IO.Path]::GetTempPath()) ('pdf2zh-lifecycle-package-' + [guid]::NewGuid().ToString('N'))
+    $windowsDir = Join-Path $workspaceRun.work 'package'
     Expand-Archive -LiteralPath (Resolve-Path $WindowsPackage).Path -DestinationPath $windowsDir
     $GuiBinary = Join-Path $windowsDir 'zotero-pdf2zh-pro.exe'
 } elseif (-not $GuiBinary) {
@@ -519,8 +522,10 @@ Assert-True (-not (Test-Path -LiteralPath $AppRoot)) "Purge uninstall left appli
 Assert-True (-not (Get-SavedInstallRoot)) "Purge uninstall left the saved installation root behind."
 
 Write-Host "Windows GUI lifecycle checks passed."
+$passed = $true
 } finally {
     $cleanupRoots = @($initialTestRoot, $destinationRoot)
     if ($WindowsPackage) { $cleanupRoots += $windowsDir }
     Stop-IsolatedTestProcesses -Roots $cleanupRoots
+    Complete-WorkspaceRun -Run $workspaceRun -Passed $passed
 }

@@ -2,9 +2,9 @@
 const fs = require("fs"), path = require("path"), assert = require("node:assert/strict");
 const ts = require("../plugin/node_modules/typescript");
 const { chromium } = require(process.argv[2] || "playwright");
-const root = path.resolve(__dirname, ".."), output = path.join(root, ".local-dev/selection-ui");
+const root = path.resolve(__dirname, ".."), output = require('./workspace.cjs').newReport('selection-favorites');
 const modules = {};
-for (const name of ["selectionUI", "selectionFavoritesPane"])
+for (const name of ["userNotice", "selectionUI", "selectionFavoritesPane"])
     modules["./" + name] = ts.transpileModule(fs.readFileSync(path.join(root, "plugin/src/modules/" + name + ".ts"), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 fs.mkdirSync(output, { recursive: true });
 (async () => {

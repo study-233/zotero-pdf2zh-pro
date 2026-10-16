@@ -304,9 +304,14 @@
             active = undefined;
             loaded = false;
             openRecord(saved.key);
-            editor.message(t(use ? "saved-use" : "saved"));
+            editor.message(t(use ? "saved-use" : "saved"), false, true);
         } catch (error) {
-            editor.message(error.message || t("failed"), true);
+            editor.message(
+                error.userFacing
+                    ? error.message
+                    : args.errorMessage?.(error) || t("failed"),
+                true,
+            );
         }
     }
     function closeMenu(focus = true) {

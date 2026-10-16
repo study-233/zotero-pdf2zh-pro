@@ -1,5 +1,6 @@
 param([Parameter(Mandatory = $true)][string]$LlvmRoot, [string]$SkiaSourceRoot)
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'workspace.ps1')
 $probeRepository = Split-Path $PSScriptRoot -Parent
 $probeLlvm = (Resolve-Path -LiteralPath $LlvmRoot).Path
 if (-not (Test-Path -LiteralPath (Join-Path $probeLlvm 'bin/clang-cl.exe'))) { throw 'LLVM clang-cl is missing' }
@@ -28,7 +29,7 @@ if ($SkiaSourceRoot) {
 $probeNinja = Join-Path $probeVs 'Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe'
 if (Test-Path -LiteralPath $probeNinja) { $env:SKIA_NINJA_COMMAND = $probeNinja }
 $env:CARGO_BUILD_JOBS = '4'
-$probeLogs = Join-Path $probeRepository '.tmp/slint-gate'
+$probeLogs = New-WorkspaceReport -Name 'slint-probe'
 New-Item -ItemType Directory -Force -Path $probeLogs | Out-Null
 & cargo +stable-x86_64-pc-windows-msvc build --release --locked --target x86_64-pc-windows-msvc --manifest-path (Join-Path $probeRepository 'windows-app/slint-probe/Cargo.toml') 2>&1 | Tee-Object -FilePath (Join-Path $probeLogs 'build.log')
 exit $LASTEXITCODE

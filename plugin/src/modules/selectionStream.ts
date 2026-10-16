@@ -45,12 +45,15 @@ export function createSelectionStreamParser(
                     result = value;
                     done = true;
                 } else if (event === "error")
-                    throw new Error(
-                        value.code === "chatgpt_sign_in_required"
-                            ? "ChatGPT 登录已失效，请重新登录。"
-                            : typeof value.message === "string"
-                              ? value.message
-                              : "翻译未完成，请重试。",
+                    throw Object.assign(
+                        new Error(
+                            value.code === "chatgpt_sign_in_required"
+                                ? "ChatGPT 登录已失效，请重新登录。"
+                                : typeof value.message === "string"
+                                  ? value.message
+                                  : "翻译未完成，请重试。",
+                        ),
+                        { code: value.code },
                     );
             }
         },

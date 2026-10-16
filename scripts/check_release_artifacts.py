@@ -110,6 +110,8 @@ def collect(version: str, commit: str, replace_existing: str = "") -> None:
         checksums["artifacts"][artifact.name] = {"size": len(payload), "sha256": hashlib.sha256(payload).hexdigest()}
         shutil.copy2(artifact, target / artifact.name)
     (target / "checksums.json").write_text(json.dumps(checksums, indent=2) + "\n", encoding="utf-8")
+    from workspace import Workspace
+    Workspace(ROOT).snapshot(version, [*artifacts, target / 'checksums.json'])
     print(json.dumps(checksums, indent=2))
 
 

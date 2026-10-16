@@ -27,7 +27,7 @@ export class ServerTaskClient {
     static async listTasks(serverUrl: string): Promise<ServerTaskList> {
         const response = await diagnosticFetch(`${serverUrl}/tasks`);
         if (!response.ok) {
-            throw new Error(await this.readErrorMessage(response));
+            throw await this.readError(response);
         }
 
         const payload = (await response.json()) as TaskListResponse;
@@ -44,6 +44,7 @@ export class ServerTaskClient {
     static async createTask(
         serverUrl: string,
         requestBody: Record<string, unknown>,
+        onWarning?: (message: string) => void,
     ): Promise<ServerTaskSnapshot> {
         const api = requestBody.llm_api as LLMApiData | undefined;
         const needsApiCheck = Boolean(
@@ -69,8 +70,7 @@ export class ServerTaskClient {
             needsReview
         ) {
             const healthResponse = await diagnosticFetch(`${serverUrl}/health`);
-            if (!healthResponse.ok)
-                throw new Error(await this.readErrorMessage(healthResponse));
+            if (!healthResponse.ok) throw await this.readError(healthResponse);
             const health =
                 (await healthResponse.json()) as ServerHealthResponse;
             const unavailable = [];
@@ -104,9 +104,7 @@ export class ServerTaskClient {
                 );
                 requestBody = { ...requestBody, llm_api: prepared.api };
                 if (prepared.warning) {
-                    new ztoolkit.ProgressWindow("API 兼容提示")
-                        .createLine({ text: prepared.warning, type: "default" })
-                        .show();
+                    onWarning?.(prepared.warning);
                 }
             }
         }
@@ -116,7 +114,7 @@ export class ServerTaskClient {
             body: JSON.stringify(requestBody),
         });
         if (!response.ok) {
-            throw new Error(await this.readErrorMessage(response));
+            throw await this.readError(response);
         }
 
         const result = (await response.json()) as TaskCreateResponse;
@@ -156,7 +154,7 @@ export class ServerTaskClient {
             headers: { "Content-Type": "application/json" },
         });
         if (!response.ok) {
-            throw new Error(await this.readErrorMessage(response));
+            throw await this.readError(response);
         }
         const payload = (await response.json()) as Partial<ServerTaskEvent>;
         return {
@@ -176,7 +174,7 @@ export class ServerTaskClient {
             },
         );
         if (!response.ok) {
-            throw new Error(await this.readErrorMessage(response));
+            throw await this.readError(response);
         }
     }
 
@@ -189,7 +187,7 @@ export class ServerTaskClient {
             `${serverUrl}/tasks/${taskId}/result?mode=${outputMode}`,
         );
         if (!response.ok) {
-            throw new Error(await this.readErrorMessage(response));
+            throw await this.readError(response);
         }
 
         return new Uint8Array(await response.arrayBuffer());
@@ -208,28 +206,33 @@ export class ServerTaskClient {
             },
         );
         if (!response.ok) {
-            throw new Error(await this.readErrorMessage(response));
+            throw await this.readError(response);
         }
 
         const result = (await response.json()) as { task?: ServerTaskSnapshot };
         return result.task;
     }
 
-    private static async readErrorMessage(response: Response): Promise<string> {
+    private static async readError(response: Response): Promise<Error> {
         try {
             const payload = (await response.json()) as {
                 message?: string;
                 diagnostics?: DiagnosticMessage[];
                 status?: string;
+                code?: string;
             };
-            return [
+            const message = [
                 payload.message || `服务器返回错误: ${response.status}`,
                 this.formatDiagnostics(payload.diagnostics),
             ]
                 .filter(Boolean)
                 .join("\n\n");
+            return Object.assign(new Error(message), {
+                code: payload.code,
+                diagnostics: payload.diagnostics,
+            });
         } catch (_error) {
-            return `服务器返回错误: ${response.status}`;
+            return new Error(`服务器返回错误: ${response.status}`);
         }
     }
 

@@ -1,0 +1,75 @@
+.pdf2zh-update-card,
+.pdf2zh-help {
+    color-scheme: light dark;
+    color: CanvasText;
+    background: Canvas;
+    font:
+        14px/1.6 system-ui,
+        sans-serif;
+    overflow-wrap: anywhere;
+    -moz-window-dragging: no-drag;
+}
+.pdf2zh-update-card {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 2147483645;
+    box-sizing: border-box;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    padding: 16px;
+    border: 1px solid color-mix(in srgb, CanvasText 25%, Canvas);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px #0002;
+}
+.pdf2zh-update-card ul {
+    margin: 10px 0;
+    padding-inline-start: 20px;
+}
+.pdf2zh-update-card li + li {
+    margin-top: 6px;
+}
+.pdf2zh-notice-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.pdf2zh-update-card button,
+.pdf2zh-help button {
+    font: inherit;
+    color: ButtonText;
+    background: ButtonFace;
+    border: 1px solid color-mix(in srgb, CanvasText 25%, Canvas);
+    border-radius: 4px;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+.pdf2zh-update-card button:focus-visible,
+.pdf2zh-help button:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+}
+.pdf2zh-help {
+    margin: 0;
+    padding: 20px;
+}
+.pdf2zh-help h1 {
+    font-size: 20px;
+    margin: 0 0 16px;
+}
+.pdf2zh-help h2 {
+    font-size: 16px;
+    margin: 18px 0 8px;
+}
+.pdf2zh-help li {
+    margin-bottom: 10px;
+}
+.pdf2zh-help li button {
+    margin-inline-start: 8px;
+}
+.pdf2zh-help section + section {
+    border-top: 1px solid color-mix(in srgb, CanvasText 20%, Canvas);
+    margin-top: 18px;
+}

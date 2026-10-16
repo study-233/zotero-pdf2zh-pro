@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 import threading
 import time
@@ -41,7 +42,7 @@ def reserve_benchmark_request():
     directory, limit = os.environ.get('PDF2ZH_BENCHMARK_LEDGER_DIR'), os.environ.get('PDF2ZH_BENCHMARK_MAX_REQUESTS')
     if not directory or not limit:
         return
-    with sqlite3.connect(Path(directory) / 'budget.sqlite3', timeout=10) as connection:
+    with closing(sqlite3.connect(Path(directory) / 'budget.sqlite3', timeout=10)) as connection, connection:
         connection.execute('BEGIN IMMEDIATE')
         connection.execute('CREATE TABLE IF NOT EXISTS budget (id INTEGER PRIMARY KEY CHECK(id=1), calls INTEGER NOT NULL)')
         connection.execute('INSERT OR IGNORE INTO budget VALUES (1, 0)')

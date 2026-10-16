@@ -4,7 +4,7 @@ import type { GlossaryEntry } from "./pdf2zhTypes";
 type CsvRow = { fields: string[]; line: number };
 
 function csvError(line: number, message: string): Error {
-    return new Error(`CSV 第 ${line} 行：${message}`);
+    return Object.assign(new Error(`CSV 第 ${line} 行：${message}`), { line });
 }
 
 function readCsv(text: string): CsvRow[] {

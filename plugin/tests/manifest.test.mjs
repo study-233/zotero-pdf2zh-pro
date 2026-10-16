@@ -114,6 +114,41 @@ function readXpiEntry(entry) {
     return result.stdout;
 }
 
+test("final XPI includes offline update summaries, help assets and bilingual messages", () => {
+    for (const file of ["noticeHelp.xhtml", "noticeHelp.js", "notices.css"]) {
+        assert.equal(
+            readXpiEntry(`content/${file}`),
+            fs.readFileSync(
+                path.join(pluginRoot, buildDir, "addon/content", file),
+                "utf8",
+            ),
+        );
+    }
+    const script = readXpiEntry(`content/scripts/${pkg.config.addonRef}.js`);
+    assert.ok(script.includes("releaseSummaries"));
+    assert.ok(script.includes("task-feedback"));
+    for (const locale of ["zh-CN", "en-US"]) {
+        const addon = readXpiEntry(
+            `locale/${locale}/${pkg.config.addonRef}-addon.ftl`,
+        );
+        const prefs = readXpiEntry(
+            `locale/${locale}/${pkg.config.addonRef}-preferences.ftl`,
+        );
+        for (const key of [
+            "notice-help-title",
+            "notice-updated",
+            "release-chatgpt",
+            "release-selection",
+            "release-tasks",
+        ])
+            assert.ok(
+                addon.includes(`${pkg.config.addonRef}-${key} = `),
+                `${locale}: ${key}`,
+            );
+        assert.ok(prefs.includes(`${pkg.config.addonRef}-pref-notice-help`));
+    }
+});
+
 test("plugin release artifacts remain consistent", () => {
     assert.equal(pkg.name, expected.name);
     assert.equal(pkg.config.addonName, expected.name);
