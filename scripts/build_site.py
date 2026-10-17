@@ -16,6 +16,12 @@ from urllib.parse import quote, unquote, urlsplit
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markdown_it import MarkdownIt
+from pygments import highlight
+from pygments.filter import Filter
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import TextLexer, get_lexer_by_name
+from pygments.token import Name, Text
+from pygments.util import ClassNotFound
 
 from check_docs import heading_slug
 
@@ -29,6 +35,39 @@ DEFAULT_BASE = '/zotero-pdf2zh-pro/'
 GUIDE = 'docs/user-guide.md'
 ANCHOR = re.compile(r'^<a id="([\w-]+)"></a>\s*$', re.M)
 ATTRIBUTE = re.compile(r'\b(href|src)=([\"\x27])(.*?)\2')
+
+
+class ShellCommands(Filter):
+    """Give external commands and flags a role when Bash leaves them as plain text."""
+    def filter(self, lexer, stream):
+        line_start = True
+        for kind, value in stream:
+            if kind is Text:
+                if line_start and re.fullmatch(r'[A-Za-z_][\w./+-]*', value):
+                    kind = Name.Function
+                elif re.fullmatch(r'--?[A-Za-z][\w-]*', value):
+                    kind = Name.Attribute
+            yield kind, value
+            if '\n' in value:
+                line_start = not value.rsplit('\n', 1)[1].strip()
+            elif value.strip():
+                line_start = False
+
+
+def render_code_block(tokens, index, options, env):
+    token = tokens[index]
+    language = token.info.split()[0] if token.info.strip() else 'text'
+    try:
+        lexer = get_lexer_by_name(language, stripnl=False, ensurenl=False)
+        label = '纯文本' if isinstance(lexer, TextLexer) else lexer.name
+    except ClassNotFound:
+        lexer, label = TextLexer(stripnl=False, ensurenl=False), language
+    if 'bash' in lexer.aliases:
+        lexer.add_filter(ShellCommands())
+    code = highlight(token.content, lexer, HtmlFormatter(nowrap=True, classprefix='tok-'))
+    return (f'<div class="code-block"><div class="code-toolbar">'
+            f'<span class="code-language">{escape(label)}</span></div>'
+            f'<pre><code class="language-{escape(language, quote=True)}">{code}</code></pre></div>\n')
 
 
 class PlainText(HTMLParser):
@@ -61,6 +100,8 @@ class Website:
             raise ValueError('Base must be an absolute directory URL, e.g. /zotero-pdf2zh-pro/')
         self.base = base
         self.md = MarkdownIt('commonmark', {'html': True}).enable(['table', 'strikethrough'])
+        self.md.renderer.rules['fence'] = render_code_block
+        self.screenshots = json.loads((SITE / 'screenshots.json').read_text(encoding='utf-8'))
         self.env = Environment(loader=FileSystemLoader(SITE / 'templates'),
                                autoescape=select_autoescape(['html']))
         self.pages = json.loads((SITE / 'routes.json').read_text(encoding='utf-8'))
@@ -69,6 +110,8 @@ class Website:
         # Template images must be copied even when the guide no longer uses them.
         self.assets = {'assets/logo.svg', 'assets/task-manager.png',
                        'assets/guide/pdf-bilingual.png', 'assets/guide/selection-word.png'}
+        self.assets.update(self.screenshots)
+        self.assets.update(image['preview'] for image in self.screenshots.values() if 'preview' in image)
         self.search = []
         self.version = json.loads((ROOT / 'plugin/package.json').read_text(encoding='utf-8'))['version']
         sections = guide_sections((ROOT / GUIDE).read_text(encoding='utf-8'))
@@ -96,11 +139,28 @@ class Website:
                       lambda m: '> **' + labels[m[1]] + '**\n>', text, flags=re.M)
         tokens = self.md.parse(text)
         used = counts.setdefault(source, Counter())
-        toc, first = [], True
+        toc, first, intro = [], True, True
         for i, token in enumerate(tokens):
+            for child in token.children or []:
+                if child.type != 'image':
+                    continue
+                path = posixpath.normpath(posixpath.join(posixpath.dirname(source), child.attrGet('src')))
+                if image := self.screenshots.get(path):
+                    child.attrSet('width', str(image['width']))
+                    child.attrSet('height', str(image['height']))
+                    child.attrSet('loading', 'lazy')
+                    child.attrSet('decoding', 'async')
+                    if 'preview' in image:
+                        child.attrSet('srcset', f"{self.base}{image['preview']} {image['previewWidth']}w, {self.base}{path} {image['width']}w")
+                        child.attrSet('sizes', '(min-width: 1700px) 1106px, (min-width: 1440px) 946px, (min-width: 901px) 75vw, 100vw')
             if token.type in ('html_block', 'inline'):
                 for anchor in re.findall(r'<a id="([^"]+)"', token.content):
                     self.anchors[source, anchor] = route + '#' + anchor
+            if not first and intro and token.type == 'paragraph_open':
+                # Balance the opening summary separately from long reading paragraphs.
+                if PlainText.read(self.md.renderInline(tokens[i + 1].content)):
+                    token.attrSet('class', 'doc-intro')
+                    intro = False
             if token.type != 'heading_open':
                 continue
             title = tokens[i + 1].content
@@ -191,12 +251,15 @@ class Website:
             content = self.render(page['tokens'], page['source'])
             self.index_page(page, content)
             next_page = (next(p for p in self.pages if p.get('anchor') == 'installation')
-                         if page.get('anchor') in ('windows', 'macos') else
+                         if page.get('anchor') in ('windows', 'macos', 'uv', 'advanced') else
                          self.pages[i + 1] if i + 1 < len(self.pages) else None)
+            # OS installation chapters are alternatives, rather than sequential steps.
+            previous_page = (self.pages[0] if page.get('anchor') in ('windows', 'macos', 'uv', 'advanced', 'installation')
+                             else self.pages[i - 1] if i else None)
             write('guide.html', title=page['title'], route=page['route'], kind='guide',
                   description=page['title'] + '：zotero-pdf2zh-pro 图文使用教程。',
                   content=content, group=page['group'], source=page['source'], anchor=page.get('anchor'),
-                  toc=page['toc'], previous=self.pages[i - 1] if i else None,
+                  toc=page['toc'], previous=previous_page,
                   next=next_page)
         changes = self.render(self.changelog, 'CHANGELOG.md')
         changes = re.sub(r'(<h2[^>]*>v(\d+\.\d+\.\d+)[^<]*</h2>)',

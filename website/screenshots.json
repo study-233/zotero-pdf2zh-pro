@@ -1,0 +1,54 @@
+{
+  "assets/guide/reader-bilingual.webp": {
+    "width": 2500,
+    "height": 1316,
+    "preview": "assets/guide/reader-bilingual-1280.webp",
+    "previewWidth": 1280
+  },
+  "assets/guide/selection-reading.webp": {
+    "width": 1570,
+    "height": 785,
+    "preview": "assets/guide/selection-reading-1280.webp",
+    "previewWidth": 1280
+  },
+  "assets/guide/install-plugin.webp": {
+    "width": 538,
+    "height": 398
+  },
+  "assets/guide/server-connected.webp": {
+    "width": 1186,
+    "height": 1022
+  },
+  "assets/guide/api-configuration.webp": {
+    "width": 1632,
+    "height": 736
+  },
+  "assets/guide/translate-menu.webp": {
+    "width": 1800,
+    "height": 872
+  },
+  "assets/guide/translated-attachments.webp": {
+    "width": 970,
+    "height": 175
+  },
+  "assets/guide/attachment-title.webp": {
+    "width": 1186,
+    "height": 603
+  },
+  "assets/guide/task-actions.webp": {
+    "width": 1880,
+    "height": 442
+  },
+  "assets/guide/task-metrics.webp": {
+    "width": 1880,
+    "height": 790
+  },
+  "assets/guide/selection-sentence.webp": {
+    "width": 616,
+    "height": 509
+  },
+  "assets/guide/glossary-settings.webp": {
+    "width": 1186,
+    "height": 650
+  }
+}

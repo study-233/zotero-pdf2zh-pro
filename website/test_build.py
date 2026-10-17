@@ -1,4 +1,5 @@
 import hashlib
+from html.parser import HTMLParser
 import json
 import re
 from pathlib import Path
@@ -10,6 +11,25 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from build_site import BENCHMARK, DEFAULT_BASE, GUIDE, ROOT, Website, guide_sections
 from check_docs import parse_document
 from check_site import Page, check
+
+
+class CodeText(HTMLParser):
+    def __init__(self, html):
+        super().__init__(convert_charrefs=True)
+        self.in_code, self.parts = False, []
+        self.feed(html)
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'code':
+            self.in_code = True
+
+    def handle_endtag(self, tag):
+        if tag == 'code':
+            self.in_code = False
+
+    def handle_data(self, value):
+        if self.in_code:
+            self.parts.append(value)
 
 
 class WebsiteTests(unittest.TestCase):
@@ -78,8 +98,29 @@ class WebsiteTests(unittest.TestCase):
         self.assertNotIn('[!TIP]', html)
         self.assertIn('<strong>提示</strong>', html)
         macos = (self.output / 'guide/macos/index.html').read_text(encoding='utf-8')
-        self.assertIn('brew install --build-from-source', macos)
+        self.assertIn('brew install --build-from-source', ''.join(CodeText(macos).parts))
         self.assertIn('language-bash', macos)
+
+    def test_code_blocks_have_language_and_syntax_without_browser_scripts(self):
+        macos = (self.output / 'guide/macos/index.html').read_text(encoding='utf-8')
+        self.assertIn('<span class="code-language">Bash</span>', macos)
+        self.assertIn('<span class="tok-nf">brew</span>', macos)
+        self.assertIn('<span class="tok-na">--version</span>', macos)
+        api = (self.output / 'guide/api-configuration/index.html').read_text(encoding='utf-8')
+        self.assertIn('<span class="code-language">JSON</span>', api)
+        self.assertIn('<span class="tok-mi">4096</span>', api)
+
+    def test_highlighting_preserves_copyable_source_and_escapes_unknown_languages(self):
+        for language, source in [('bash', 'brew tap study-233/formula\n'),
+                                 ('json', '{"example": "<script>alert(1)</script>", "n": 42}\n'),
+                                 ('unknown-language', '<script>alert(1)</script>\n  keep spaces  \n'),
+                                 ('', 'plain text & <tags>\n')]:
+            with self.subTest(language=language):
+                html = self.site.md.render(f'```{language}\n{source}```\n')
+                self.assertEqual(''.join(CodeText(html).parts), source)
+                self.assertNotIn('<script>', html)
+        html = self.site.md.render('```<img/src=x>\ntext\n```\n')
+        self.assertNotIn('<img', html)
 
     def test_duplicate_or_unsafe_configuration_is_rejected(self):
         with self.assertRaises(ValueError):

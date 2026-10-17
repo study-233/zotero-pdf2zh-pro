@@ -37,11 +37,11 @@
 
 **全文翻译与双语阅读**
 
-![在 Zotero 中阅读翻译后的双语 PDF](assets/guide/pdf-bilingual.png)
+![在 Zotero 中阅读翻译后的双语 PDF](assets/guide/reader-bilingual.webp)
 
 **划词精读**
 
-![选中单词后自动显示释义](assets/guide/selection-word.png)
+![选中单词后自动显示释义](assets/guide/selection-reading.webp)
 
 [全文翻译教程](docs/user-guide.md#usage) · [划词精读教程](docs/user-guide.md#selection-translation)
 

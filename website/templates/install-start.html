@@ -1,0 +1,15 @@
+<div class="install-grid">
+  <article class="install-card"{% if kind == 'home' %} id="windows"{% endif %}>
+    <div><p class="eyebrow">第一步 · WINDOWS 10 / 11 · x64</p><h3>安装并启动本地服务</h3><p>双击 EXE，按向导安装。打开控制中心，等待“翻译服务已就绪”。</p></div>
+    <div><a class="button" href="{{ release }}/download/zotero-pdf2zh-pro-windows-x64-setup.exe">下载 Windows 安装包 <span aria-hidden="true">↓</span></a><a class="text-link" href="{{ base }}guide/windows/">Windows 安装教程 →</a></div>
+  </article>
+  <article class="install-card"{% if kind == 'home' %} id="macos"{% endif %}>
+    <div><p class="eyebrow">第一步 · macOS · HOMEBREW</p><h3>让本地服务在后台运行</h3><p>按教程使用 Homebrew 安装并启动，关闭终端后仍可翻译。</p></div>
+    <div><a class="button" href="{{ base }}guide/macos/">macOS 安装教程 <span aria-hidden="true">→</span></a><a class="text-link" href="{{ base }}guide/uv/">不用 Homebrew？使用 uv →</a></div>
+  </article>
+</div>
+<p class="install-alternatives">使用其他环境？<a href="{{ base }}guide/advanced/">Linux / Docker 部署 →</a></p>
+<div class="plugin-download">
+  <div><p class="eyebrow">第二步 · 所有系统通用</p><h3>把插件装入 Zotero</h3><p>本地服务就绪后，下载 XPI，在 Zotero 的“工具 → 插件”中安装。</p></div>
+  <div class="plugin-download-actions"><a class="button" href="{{ release }}/download/zotero-pdf2zh-pro.xpi">下载 Zotero 插件 .xpi <span aria-hidden="true">↓</span></a><a class="text-link" href="{{ base }}guide/installation/">插件安装与连接检查 →</a></div>
+</div>

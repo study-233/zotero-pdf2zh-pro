@@ -14,16 +14,26 @@ python3 -m unittest discover -s scripts -p 'test_check_docs.py'
 
 ### 官网开发与发布
 
-官网使用独立的轻量构建依赖，无需安装翻译服务。Python 3.12+、Node.js 22+：
+官网使用独立的轻量构建依赖，无需安装翻译服务。本地需要 Python 3.12+、uv；
+JavaScript 测试需要 Node.js 22+。在仓库根目录一键构建：
 
 ```bash
-python -m pip install -r website/requirements.txt
-python scripts/build_site.py
-python scripts/check_site.py
-python -m unittest discover -s website -p 'test_*.py'
+./scripts/build_site.sh
+```
+
+脚本固定使用 `.tmp/website-venv/`，首次运行自动创建环境，每次构建按
+`website/requirements.txt` 安装或更新依赖；uv 缓存固定在 `.tmp/cache/uv-website/`。
+无需激活虚拟环境，构建参数可直接追加，例如 `./scripts/build_site.sh --base /`。
+网站环境独立于 `.local-dev/runtime/`，避免触发 Zotero 开发环境的目录隔离检查。
+
+构建后验证与预览继续使用同一环境：
+
+```bash
+.tmp/website-venv/bin/python scripts/check_site.py
+.tmp/website-venv/bin/python -m unittest discover -s website -p 'test_*.py'
 node --test website/test_site.cjs benchmarks/translation/test_ui.cjs
-python benchmarks/translation/validate_site.py
-python scripts/serve_site.py
+.tmp/website-venv/bin/python benchmarks/translation/validate_site.py
+.tmp/website-venv/bin/python scripts/serve_site.py
 ```
 
 打开 `http://127.0.0.1:8895/zotero-pdf2zh-pro/` 预览；构建输出位于忽略的 `dist/site/`。

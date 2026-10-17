@@ -86,13 +86,19 @@
     let button = img.closest('.zoom-image');
     if (!button) {button = document.createElement('button');button.type = 'button';button.className = 'zoom-image';img.replaceWith(button);button.append(img);}
     button.setAttribute('aria-label', '放大截图：' + img.alt);
-    button.addEventListener('click', event => {event.preventDefault();imageDialog.querySelector('img').src = img.src;
+    button.addEventListener('click', event => {event.preventDefault();imageDialog.querySelector('img').src = button.href || img.src;
       imageDialog.querySelector('img').alt = img.alt;imageDialog.querySelector('p').textContent = img.alt;imageDialog.showModal();});
+  }
+  for (const table of document.querySelectorAll('.prose table')) {
+    const wrapper = document.createElement('div');wrapper.className = 'table-scroll';wrapper.tabIndex = 0;
+    wrapper.setAttribute('role', 'region');wrapper.setAttribute('aria-label', '表格内容，可横向滚动');
+    table.replaceWith(wrapper);wrapper.append(table);
   }
   for (const pre of document.querySelectorAll('.prose pre')) {
     const button = document.createElement('button');button.type = 'button';button.className = 'copy-code';button.textContent = '复制';button.setAttribute('aria-label', '复制代码');
     const message = document.createElement('span');message.className = 'sr-only';message.setAttribute('role', 'status');
-    pre.append(button, message);
+    const toolbar = pre.closest('.code-block')?.querySelector('.code-toolbar');
+    (toolbar || pre).append(button, message);
     button.addEventListener('click', async () => {
       try {await navigator.clipboard.writeText(pre.querySelector('code').textContent);button.textContent = '已复制';message.textContent = '代码已复制';}
       catch {button.textContent = '请手动复制';message.textContent = '无法访问剪贴板，已选中代码';const selection = window.getSelection(), range = document.createRange();range.selectNodeContents(pre.querySelector('code'));selection.removeAllRanges();selection.addRange(range);}

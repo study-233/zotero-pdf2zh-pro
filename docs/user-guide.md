@@ -24,21 +24,17 @@
 
 ### 需要安装哪些东西？
 
-| 组成部分 | 用途 | 获取方式 |
-| --- | --- | --- |
-| Zotero 8、9 或 10 | 管理论文和 PDF 附件 | [Zotero 官方下载](https://www.zotero.org/download/) |
-| Zotero 插件（`.xpi`） | 在 Zotero 中提供翻译设置和任务入口 | [本项目最新 Release](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest) |
-| 本地 Python 服务 | 接收 PDF，运行翻译流程并保存结果 | Windows 用控制中心；macOS 推荐 Homebrew |
-| 翻译 API 配置 | 指定提供翻译能力的接口和模型 | 从你使用的 API 服务商获取地址、API Key 和模型名 |
+- **Zotero 8、9 或 10**：用于管理与阅读论文，先从 [Zotero 官网](https://www.zotero.org/download/)安装。
+- **本地翻译服务**：Windows 使用[控制中心](#windows)，macOS 使用 [Homebrew](#macos)；Linux / Docker 用户查看[部署教程](#advanced)。服务负责处理 PDF 和生成结果。
+- **Zotero 插件（`.xpi`）**：服务就绪后，[下载插件](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)并[装入 Zotero](#installation)，获得设置和任务入口。
+- **翻译来源**：准备服务商提供的 API 地址、Key 和模型名，或使用已有的 [ChatGPT 套餐登录](#使用-chatgpt-套餐登录)。已有本地模型时也可选择 Ollama。
 
 **插件和本地服务都需要安装。** Windows 控制中心和 macOS Homebrew 会自动处理 Python 环境。
 
 ### 两种地址不要填反
 
-| 地址 | 示例 | 填在哪里 |
-| --- | --- | --- |
-| 本地服务地址 | `http://127.0.0.1:8890` | 插件设置底部的“Python服务器地址” |
-| 翻译 API 地址 | `https://api.example.com/v1`（占位示例） | “新增翻译配置”窗口中的“API 地址” |
+- **本地服务地址**：`http://127.0.0.1:8890`，填在插件设置底部的“本地服务地址”。
+- **翻译 API 地址**：由服务商提供，填在“新增翻译配置”的“API 地址”。例如 `https://api.example.com/v1`，这只是结构示例，不是可用接口。使用 ChatGPT 套餐登录时无需填写此项。
 
 工作流：`Zotero → 本地服务 → 翻译 API → 本地生成 PDF → 导入 Zotero`。
 
@@ -172,22 +168,22 @@ Windows 和 macOS 使用同一个 XPI 文件。
 
 ### 安装 XPI
 
-1. 从 [最新 Release](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest) 下载 `zotero-pdf2zh-pro.xpi`；不需要解压 XPI。
+1. [下载 Zotero 插件 .xpi](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)；不需要解压 XPI。历史版本见 [Release](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)。
 2. 打开 Zotero，进入 **“工具 → 插件”**（英文界面为 `Tools → Plugins`）。
 3. 点击右上角齿轮按钮，选择 **“Install Plugin From File…”**。部分版本显示为 `Install Add-on From File…`，均为从文件安装插件。
 4. 选择下载的 XPI，按提示完成安装并重启 Zotero。
 5. 回到插件列表，确认 `zotero-pdf2zh-pro` 已启用。
 
-![在 Zotero 插件管理器中选择 Install Plugin From File](../assets/zotero-install-addon-macos.png)
+![插件管理器的齿轮菜单：选择 Install Plugin From File 安装 XPI](../assets/guide/install-plugin.webp)
 
 ### 打开设置并检查本地服务
 
 1. Windows：进入 **“编辑 → 设置”**；macOS：进入 **“Zotero → 设置”**，也可按 `⌘,`。
 2. 在左侧选择 **“zotero-pdf2zh-pro”**。
-3. 找到下方“服务端连接”，确认 **“Python服务器地址”** 为 `http://127.0.0.1:8890`。
+3. 找到下方“服务端连接”，确认 **“本地服务地址”** 为 `http://127.0.0.1:8890`。
 4. 点击 **“检查本地服务”**，确认显示连接成功。
 
-<!-- 待补截图：![Zotero 插件设置：本地服务已连接、当前配置、语言和输出](../assets/guide/server-connected.png) -->
+![插件设置显示本地服务已连接，已选择翻译配置及中英文对照输出](../assets/guide/server-connected.webp)
 
 如果提示“本地服务无法连接”，先回到 Windows 控制中心或 macOS 服务状态检查。修改 API Key 无法修复本地服务未启动的问题。
 
@@ -198,14 +194,15 @@ Windows 和 macOS 使用同一个 XPI 文件。
 ### 新增第一个配置
 
 在插件设置顶部点击 **“添加翻译配置”**；已有配置时点击 **“管理配置 → ＋新增”**。
-在同一窗口中选择平台并填写配置，编辑与测试不再打开其他窗口。
+按你已有的条件，选择一条配置路径即可：
 
-| 分类 | 平台 |
-| --- | --- |
-| 中转平台 | OpenRouter、自定义 OpenAI 兼容 |
-| 官方接口 | ChatGPT（使用套餐）、OpenAI、DeepSeek、Gemini、阿里云百炼、SiliconFlow |
-| 本地与账号 | Ollama、Claude Code |
-| 专用翻译 | DeepL |
+- **已有 API 地址和 Key**：继续下面的[填写 API 配置](#填写-api-配置)。
+- **使用 ChatGPT 套餐**：直接查看[套餐登录步骤](#使用-chatgpt-套餐登录)，不填 API Key 或 API 地址。
+- **已有本地模型或其他接口**：查看[接口类型与模型来源](#接口类型与模型来源)，按对应平台填写。
+
+### 填写 API 配置
+
+在同一窗口中完成选择、测试和保存。第一次使用时，高级设置保持默认即可。
 
 1. 选择平台。OpenRouter 自动填写 `https://openrouter.ai/api/v1`；自定义接口填写平台提供的地址。
 2. 填写自己的 API Key。配置名称可留空，保存时使用“平台 · 模型”。
@@ -213,11 +210,22 @@ Windows 和 macOS 使用同一个 XPI 文件。
 4. 点击 **“测试”**，使用当前表单发送一条短翻译请求，可能消耗少量 API 额度。
 5. 点击 **“保存并使用”**，设为当前翻译配置；**“保存”** 只保存编辑，不切换配置。
 
+测试成功并保存后，继续[翻译第一篇 PDF](#usage)。多配置、协议和旧版迁移说明在本页后面，需要时再查看。
+
+![OpenRouter 基础配置表单：填写 API Key、模型和接口地址](../assets/guide/api-configuration.webp)
+
 预设地址显示在表单摘要中，点击“修改”可编辑。获取模型失败时仍可手填，不代表一定无法翻译。
 推理、协议、额外请求参数、CLI 路径集中在“高级设置”。
 OpenRouter 配置使用 OpenAI 兼容接口，模型名称包含平台返回的完整前缀；参考[官方模型目录文档](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties)。
 
 ### 接口类型与模型来源
+
+| 分类 | 平台 |
+| --- | --- |
+| 中转平台 | OpenRouter、自定义 OpenAI 兼容 |
+| 官方接口 | ChatGPT（使用套餐）、OpenAI、DeepSeek、Gemini、阿里云百炼、SiliconFlow |
+| 本地与账号 | Ollama、Claude Code |
+| 专用翻译 | DeepL |
 
 11 个平台入口复用 9 种底层服务。OpenRouter、自定义兼容、OpenAI、DeepSeek、Gemini、SiliconFlow 和 ChatGPT 支持获取模型列表；其他平台手填模型。
 
@@ -306,6 +314,8 @@ Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、An
 
 ## 6. 第一次翻译 PDF
 
+先用一篇篇幅较短、能够选中文字的 PDF 走通流程：**确认设置 → 右键翻译 → 打开双语附件**。附件命名和批量任务可以稍后再设置。
+
 ### 设置语言与输出
 
 回到插件设置，先确认“当前翻译配置”已经选好。
@@ -316,27 +326,6 @@ Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、An
 
 输出选项的中文名称以英译中为例；实际译文语言由“目标语言”决定。
 
-### 自定义附件标题
-
-1. 开启 **“自定义译文附件标题”**，点击“添加字段”选择论文标题、作者、年份、模型等内容。
-2. 拖动手柄调整顺序，或使用前移、后移按钮；手柄聚焦后也支持 `Alt + 方向键`。点击 × 删除字段。
-3. 用“添加文字”加入“精读版”等固定文字，选择分隔符，查看下方单语与双语标题预览。有效修改自动保存。
-
-<!-- 待补截图：![自定义附件标题：添加字段、调整顺序和即时预览](../assets/guide/attachment-title.png) -->
-
-默认组合为“论文标题 → 译文类型”，例如 `Attention Is All You Need · 双语对照`。
-
-| 规则 | 行为 |
-| --- | --- |
-| 论文标题 | 优先短标题，其次完整标题，最后原 PDF 文件名；“完整标题”字段始终使用完整题名 |
-| 字段与文字 | 同一字段只能添加一次，固定文字可添加多块；缺少的字段自动跳过 |
-| 分隔符 | 可选间隔点、短横线、下划线、空格或无，也可自定义 |
-| 删除全部内容 | 保留上次有效设置，添加内容后再保存 |
-| 关闭 / 恢复默认 | 关闭后使用输出文件名，重新开启恢复组合；“恢复默认”重置字段和分隔符 |
-| 生效范围 | 仅影响之后导入的附件标题，不修改 PDF 文件名或已有附件；模型、语言取自任务记录 |
-
-未完成状态与补译轮次会追加到标题末尾。旧模板自动转换；无法转换时按界面提示恢复默认后编辑。
-
 ### 从文库提交任务
 
 1. 在 Zotero 文库中找到论文，展开条目，确认存在 **本地 PDF 附件**；先双击原 PDF，确认能够打开。
@@ -344,11 +333,17 @@ Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、An
 3. 插件会打开任务列表并提交任务。可以查看当前阶段和总进度。
 4. 等待任务完成，确认 **“已导入”**，回到原条目下打开译文附件。
 
-<!-- 待补截图：![右键 PDF，展开插件菜单并选择翻译 PDF](../assets/guide/translate-menu.png) -->
+![右键原文 PDF，在插件子菜单中选择“翻译PDF”](../assets/guide/translate-menu.webp)
 
-<!-- 待补截图：![翻译完成后，译文附件出现在原条目下](../assets/guide/translated-attachments.png) -->
+![论文条目展开后，原文与双语对照附件位于同一条目下](../assets/guide/translated-attachments.webp)
 
-![在 Zotero 阅读器中查看双语 PDF](../assets/guide/pdf-bilingual.png)
+### 确认结果并开始阅读
+
+任务完成后，确认任务列表的导入状态为 **“已导入”**。展开原论文条目，双击新增的 **“双语对照”** 附件，就能并排阅读原文与译文。
+
+第一次使用成功后，再按需要调整下面的批量任务和附件标题。
+
+![在 Zotero 阅读器中并排查看原文、中文译文与论文图表](../assets/guide/reader-bilingual.webp)
 
 英文界面的对应入口为 `zotero-pdf2zh-pro: Translate PDF` 和 `zotero-pdf2zh-pro: Task Manager`。
 
@@ -361,7 +356,33 @@ Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、An
 
 - 翻译期间保持本地服务运行；让 Zotero 保持打开，便于跟踪任务和及时导入附件。
 - 不要只看进度是否达到 100%，还要看任务最终状态和“导入状态”。
-- PDF 导入失败时，按下一节的“重试导入”处理；仍有段落失败时，使用独立的“补译”操作。
+- PDF 导入失败时，查看[任务管理中的“重试导入”](#task-management)；仍有段落失败时，使用独立的“补译”操作。
+
+### 自定义附件标题
+
+这一步可选，不影响第一次翻译。默认组合为“论文标题 → 译文类型”，例如 `Attention Is All You Need · 双语对照`。
+
+<details>
+<summary>展开附件标题的自定义方法与命名规则</summary>
+
+1. 开启 **“自定义译文附件标题”**，点击“添加字段”选择论文标题、作者、年份、模型等内容。
+2. 拖动手柄调整顺序，或使用前移、后移按钮；手柄聚焦后也支持 `Alt + 方向键`。点击 × 删除字段。
+3. 用“添加文字”加入“精读版”等固定文字，选择分隔符，查看下方单语与双语标题预览。有效修改自动保存。
+
+![自定义附件标题：添加字段、调整顺序，并预览单语和双语附件名称](../assets/guide/attachment-title.webp)
+
+| 规则 | 行为 |
+| --- | --- |
+| 论文标题 | 优先短标题，其次完整标题，最后原 PDF 文件名；“完整标题”字段始终使用完整题名 |
+| 字段与文字 | 同一字段只能添加一次，固定文字可添加多块；缺少的字段自动跳过 |
+| 分隔符 | 可选间隔点、短横线、下划线、空格或无，也可自定义 |
+| 删除全部内容 | 保留上次有效设置，添加内容后再保存 |
+| 关闭 / 恢复默认 | 关闭后使用输出文件名，重新开启恢复组合；“恢复默认”重置字段和分隔符 |
+| 生效范围 | 仅影响之后导入的附件标题，不修改 PDF 文件名或已有附件；模型、语言取自任务记录 |
+
+未完成状态与补译轮次会追加到标题末尾。旧模板自动转换；无法转换时按界面提示恢复默认后编辑。
+
+</details>
 
 <a id="translation-options"></a>
 
@@ -393,7 +414,7 @@ Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、An
 
 右键文库条目，打开 **“zotero-pdf2zh-pro → zotero-pdf2zh-pro: 任务列表”**。
 
-<!-- 待补截图：![Zotero 翻译任务列表：任务状态、进度与操作入口](../assets/guide/task-actions.png) -->
+![已完成的翻译任务：总进度为 100%，导入状态为“已导入”，下方可查看详情或检查并补译](../assets/guide/task-actions.webp)
 
 ### 按任务状态选择操作
 
@@ -416,7 +437,7 @@ Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、An
 
 点击任务卡片的 **“请求详情”**：
 
-![任务请求详情：耗时、缓存、token 和参考文献统计](../assets/task-metrics.png)
+![展开请求详情，查看实际 QPS、耗时、缓存、token 和参考文献统计](../assets/guide/task-metrics.webp)
 
 | 指标 | 含义 |
 | --- | --- |
@@ -444,7 +465,7 @@ Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、An
 3. 单词需要译文时，切到“翻译”才发起翻译请求。同一选文在两页签间切换会保留已完成的结果；新划选会重新判断默认页签。
 4. 点击“复制”保存结果，继续划选会更新同一张卡片。
 
-![统一选文面板：词典与翻译页签、来源、发音及收藏星标](../assets/guide/selection-compact.png)
+![论文中的词典浮窗：attention 的音标、中文释义、双语例句和收藏入口](../assets/guide/selection-reading.webp)
 
 新安装默认使用**有道在线词典**；升级保留原来的选择，包括旧版默认的 ECDICT。“词典”页签下的来源栏可选择有道、必应在线词典、ECDICT 或柯林斯；与“翻译”页签的来源分别记忆。在线来源只查所选词典；离线先查本地，未命中才查询设置中的在线后备（默认有道）。网络错误与词库读取错误会显示重试入口，不自动调用模型。手工术语表命中单独标注。
 
@@ -453,6 +474,8 @@ Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、An
 #### 翻译句子与段落
 
 选中句段即可翻译。主结果只对应选文；匹配到的整段译文收在“已有段落译文”，复制主结果不会带上整段参考。
+
+![句子翻译结果：查看当前来源、AI 译文，复制结果或重新翻译](../assets/guide/selection-sentence.webp)
 
 在 **设置 → 选文翻译 → 翻译来源** 中统一选择必应、跟随全文模型或已保存的具体模型：
 

@@ -5,9 +5,16 @@
     {% for group in groups %}<div class="nav-group"><p>{{ group }}</p>{% for item in pages if item.group == group %}<a href="{{ base }}{{ item.route }}"{% if route == item.route %} aria-current="page"{% endif %}>{{ item.title }}</a>{% endfor %}</div>{% endfor %}
   </nav></details></aside>
   <article class="doc-article"><div class="doc-heading"><p class="eyebrow">使用教程 / {{ group }}</p><h1>{{ title }}</h1>{% if route == 'guide/' %}<p>按安装、配置、翻译的顺序，完成你的第一次使用。</p>{% endif %}</div>
+    {% set setup_step = {'guide/windows/': 1, 'guide/macos/': 1, 'guide/uv/': 1, 'guide/advanced/': 1, 'guide/installation/': 2, 'guide/api-configuration/': 3, 'guide/usage/': 4}.get(route, 0) %}
+    {% if setup_step or route == 'guide/' %}
+    <nav class="setup-progress" aria-label="首次使用步骤"><ol>{% for label, path in [('本地服务', '#choose-platform'), ('安装插件', 'installation/'), ('翻译来源', 'api-configuration/'), ('首次翻译', 'usage/')] %}<li><a href="{{ base }}guide/{{ path }}"{% if setup_step == loop.index %} aria-current="step"{% endif %}><span class="setup-number" aria-hidden="true">{{ loop.index }}</span><span>{{ label }}</span></a></li>{% endfor %}</ol></nav>
+    {% endif %}
+    {% if route == 'guide/' %}
+    <section class="guide-start" id="choose-platform" aria-labelledby="platform-title"><h2 id="platform-title">先选择你的操作系统</h2><p class="muted">本地服务与 Zotero 插件都需要安装。先启动服务，再安装插件。</p>{% include 'install-start.html' %}</section>
+    {% endif %}
     <div class="prose">{{ content | safe }}</div>
     <div class="doc-source"><a href="{{ repo }}/blob/main/{{ source }}{% if anchor %}#{{ anchor }}{% endif %}">在 GitHub 查看源文档 ↗</a></div>
-    <nav class="doc-pagination" aria-label="上下篇教程">{% if previous %}<a href="{{ base }}{{ previous.route }}"><small>← 上一篇</small><span>{{ previous.title }}</span></a>{% else %}<span></span>{% endif %}{% if next %}<a href="{{ base }}{{ next.route }}"><small>下一篇 →</small><span>{{ next.title }}</span></a>{% endif %}</nav>
+    <nav class="doc-pagination" aria-label="上下篇教程">{% if route == 'guide/' %}<a href="{{ base }}guide/windows/"><small>使用 Windows →</small><span>Windows 安装</span></a><a href="{{ base }}guide/macos/"><small>使用 macOS →</small><span>macOS 安装</span></a>{% else %}{% if previous %}<a href="{{ base }}{{ previous.route }}"><small>← 上一篇</small><span>{{ previous.title }}</span></a>{% else %}<span></span>{% endif %}{% if next %}<a href="{{ base }}{{ next.route }}"><small>下一篇 →</small><span>{{ next.title }}</span></a>{% endif %}{% endif %}</nav>
   </article>
   <aside class="doc-toc"><p>本页内容</p><nav aria-label="本页目录"><a href="#main-content" class="toc-start">{{ title }}</a>{% for heading in toc %}<a href="#{{ heading.id }}">{{ heading.title }}</a>{% endfor %}</nav><a class="toc-help" href="{{ base }}guide/troubleshooting/">遇到问题？查看排查指南 ↗</a></aside>
 </main>
