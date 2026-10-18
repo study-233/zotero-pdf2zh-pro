@@ -14,11 +14,13 @@
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-3776AB?logo=python&logoColor=white)](server/pyproject.toml)
 [![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/study-233/zotero-pdf2zh-pro?style=flat&logo=github&label=Stars)](https://github.com/study-233/zotero-pdf2zh-pro/stargazers)
 
 当前统一版本：<!-- release-version --> `1.9.1`
 
-[插件官网](https://study-233.github.io/zotero-pdf2zh-pro/) · [快速开始](#quick-start) · [使用指南](docs/user-guide.md) ·
-[常见问题](#troubleshooting) · [更新记录](CHANGELOG.md)
+**[快速开始](#quick-start) · [使用指南](docs/user-guide.md) · [下载最新版](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)**
+
+[插件官网](https://study-233.github.io/zotero-pdf2zh-pro/) · [常见问题](#troubleshooting) · [更新记录](CHANGELOG.md)
 
 </div>
 
@@ -26,12 +28,12 @@
 
 ## 功能亮点
 
-- **全文翻译**：右键提交单篇或批量 PDF，译文与双语附件自动导入原条目。
-- **划词精读**：选词查释义、选句看译文，按需结合论文上下文解释。
-- **失败补译**：保留已译段落，只补剩余内容，旧附件与批注继续保留。
-- **灵活选择模型**：支持 OpenAI 兼容 API、ChatGPT 套餐登录和多配置切换。
-- **术语与排版**：支持术语库、OCR、表格翻译、参考文献保护和附件标题设置。
-- **任务管理**：查看进度、请求耗时和 token，失败时可导出诊断包。
+- 📄 **全文翻译**：右键提交单篇或批量 PDF，译文与双语附件自动导入原条目。
+- 🔍 **划词精读**：选词查释义、选句看译文，按需结合论文上下文解释。
+- 🔄 **失败补译**：保留已译段落，只补剩余内容，旧附件与批注继续保留。
+- ⚙️ **灵活选择模型**：支持 OpenAI 兼容 API、ChatGPT 套餐登录和多配置切换。
+- 📚 **术语与排版**：支持术语库、OCR、表格翻译、参考文献保护和附件标题设置。
+- 📊 **任务管理**：查看进度、请求耗时和 token，失败时可导出诊断包。
 
 ## 界面预览
 
@@ -202,6 +204,20 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 欢迎提交 PR。开发前请阅读[开发维护笔记](docs/development-notes.md)，文档改动请遵循[README 维护规范](docs/readme-maintenance.md)。
 较大的行为调整建议先通过 Issue 讨论使用场景和预期结果。
+
+## Star History
+
+如果这个项目对你有帮助，欢迎点个 Star ⭐
+
+<p align="center">
+  <a href="https://www.star-history.com/?repos=study-233%2Fzotero-pdf2zh-pro&amp;type=date&amp;legend=top-left">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=study-233/zotero-pdf2zh-pro&amp;type=date&amp;theme=dark&amp;legend=top-left" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=study-233/zotero-pdf2zh-pro&amp;type=date&amp;legend=top-left" />
+      <img alt="zotero-pdf2zh-pro 的 GitHub Star 增长趋势" src="https://api.star-history.com/chart?repos=study-233/zotero-pdf2zh-pro&amp;type=date&amp;legend=top-left" width="800" />
+    </picture>
+  </a>
+</p>
 
 ## 项目来源
 
