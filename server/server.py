@@ -36,7 +36,7 @@ from pdf2zh_next_service import require_supported_service
 from pdf2zh_next_service import diagnose_service_error
 from pdf2zh_next_service import translate_pdf_with_callbacks
 from pdf2zh_next_service import validate_service_config
-from task_manager import TaskManager
+from task_manager import TaskManager, TaskStoreError, TaskPersistenceError
 from maintenance import install_routes, control_token
 from translation_memory import TranslationMemory
 from text_translation import TextTranslationService, TextTranslationError
@@ -62,6 +62,7 @@ TEXT_TRANSLATOR = None if _IS_TRANSLATION_CHILD else TextTranslationService()
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
 LOG_MAX_BYTES = 10 * 1024 * 1024
 LOG_BACKUP_COUNT = 3
+MAX_TASK_PDF_BYTES = 512 * 1024 * 1024
 
 
 class RequestValidationError(ValueError):
@@ -80,6 +81,21 @@ class PreparedTranslationRequest:
 
 def create_app() -> Flask:
     app = Flask(__name__)
+
+    @app.errorhandler(TaskStoreError)
+    def task_store_error(_error):
+        return error_response(TaskStoreError.public_message, 503,
+                              code="task_store_unavailable", taskStore=TASK_MANAGER.task_store_health())
+
+    @app.errorhandler(TaskPersistenceError)
+    def task_persistence_error(_error):
+        return error_response(TaskPersistenceError.public_message, 503,
+                              code="task_persistence_failed", taskStore=TASK_MANAGER.task_store_health())
+
+    @app.before_request
+    def protect_task_store():
+        if request.path == "/tasks" or request.path.startswith("/tasks/"):
+            TASK_MANAGER.require_task_store()
     install_routes(app, runtime_busy, lambda: TRANSLATES_DIR)
     install_chatgpt_routes(app, runtime_busy)
 
@@ -325,17 +341,48 @@ def create_app() -> Flask:
     @app.route("/tasks", methods=["GET", "POST"])
     def tasks():
         if request.method == "GET":
+            if request.args.get("view") == "dashboard":
+                try:
+                    return jsonify({"status": "ok", **TASK_MANAGER.list_tasks_page(
+                        limit=int(request.args.get("limit", 30)), cursor=request.args.get("cursor"))})
+                except ValueError as exc:
+                    return exception_response(exc, 400)
             return jsonify({"status": "ok", **TASK_MANAGER.list_tasks_snapshot()}), 200
 
-        data = request.get_json(silent=True)
+        upload = None
+        if request.mimetype == "multipart/form-data":
+            # Werkzeug spools files to disk; keep only bounded metadata in memory.
+            request.max_content_length = MAX_TASK_PDF_BYTES + 2 * 1024 * 1024
+            request.max_form_memory_size = 1024 * 1024
+            request.max_form_parts = 4
+            try:
+                metadata = request.form.get("metadata", "")
+                if len(metadata.encode("utf-8")) > 1024 * 1024:
+                    return error_response("Upload metadata is too large", 413)
+                data = json.loads(metadata)
+            except (ValueError, TypeError):
+                return error_response("Expected JSON upload metadata", 400)
+            upload = request.files.get("file")
+            if (not isinstance(data, dict) or upload is None or len(request.files.getlist("file")) != 1
+                    or len(request.files) != 1 or len(request.form) != 1
+                    or len(request.form.getlist("metadata")) != 1 or "fileContent" in data):
+                return error_response("Expected one PDF file and metadata", 400)
+        else:
+            data = request.get_json(silent=True)
         if not isinstance(data, dict):
             return error_response("Expected a JSON body", 400)
 
         task_id = uuid.uuid4().hex[:12]
         workspace_dir: Path | None = None
         try:
+            request_id = data.get("requestId")
+            dedup_scope = data.get("dedupScope", "")
+            if request_id is not None and (not isinstance(request_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", request_id)):
+                raise RequestValidationError("Invalid submission requestId")
+            if not isinstance(dedup_scope, str) or len(dedup_scope) > 256:
+                raise RequestValidationError("Invalid dedupScope")
             workspace_dir = create_workspace_dir(task_id)
-            prepared = prepare_translation_request(data, workspace_dir)
+            prepared = prepare_translation_request(data, workspace_dir, upload=upload)
             task = TASK_MANAGER.create_task(
                 task_id=task_id,
                 file_name=prepared.file_name,
@@ -343,15 +390,39 @@ def create_app() -> Flask:
                 output_modes=prepared.output_modes,
                 request_payload=prepared.request_payload,
                 workspace_dir=workspace_dir,
+                request_id=request_id,
+                dedup_scope=dedup_scope,
             )
+            if task["taskId"] != task_id:
+                remove_workspace_dir(workspace_dir)
+        except TaskStoreError as exc:
+            remove_workspace_dir(workspace_dir)
+            return task_store_error(exc)
+        except TaskPersistenceError as exc:
+            remove_workspace_dir(workspace_dir)
+            return task_persistence_error(exc)
         except RequestValidationError as exc:
             remove_workspace_dir(workspace_dir)
             return exception_response(exc, 400)
+        except ValueError as exc:
+            remove_workspace_dir(workspace_dir)
+            return exception_response(exc, 409)
         except Exception as exc:
             remove_workspace_dir(workspace_dir)
             return exception_response(exc, 500)
 
         return jsonify(task_response_payload(task)), 202
+
+    @app.post("/tasks/query")
+    def task_query():
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return error_response("Expected a JSON body", 400)
+        try:
+            return jsonify({"status": "ok", **TASK_MANAGER.list_tasks_page(
+                limit=data.get("limit", 30), cursor=data.get("cursor"), tracked=data.get("tracked"))})
+        except ValueError as exc:
+            return exception_response(exc, 400, code="invalid_task_page")
 
     @app.get("/tasks/<task_id>")
     def task_detail(task_id: str):
@@ -397,6 +468,26 @@ def create_app() -> Flask:
             return error_response("Task not found", 404)
         return jsonify(task_response_payload(task)), 202
 
+    @app.post("/tasks/<task_id>/resume")
+    def resume_task(task_id: str):
+        try:
+            task = TASK_MANAGER.resume_task(task_id)
+        except ValueError as exc:
+            return exception_response(exc, 409)
+        if task is None:
+            return error_response("Task not found", 404)
+        return jsonify(task_response_payload(task)), 202
+
+    @app.post("/tasks/<task_id>/retry-memory-sync")
+    def retry_memory_sync(task_id: str):
+        try:
+            task = TASK_MANAGER.retry_memory_sync(task_id)
+        except ValueError as exc:
+            return exception_response(exc, 409)
+        if task is None:
+            return error_response("Task not found", 404)
+        return jsonify(task_response_payload(task)), 202
+
     @app.post("/tasks/clear-failed")
     def clear_failed_tasks():
         deleted_count = TASK_MANAGER.clear_failed_tasks()
@@ -407,7 +498,7 @@ def create_app() -> Flask:
     @app.get("/tasks/events")
     def task_events():
         manager = TASK_MANAGER
-        subscription = manager.subscribe()
+        subscription = manager.subscribe(active_only=request.args.get("snapshot") == "active")
 
         @stream_with_context
         def generate():
@@ -542,8 +633,9 @@ def validate_config_request(data: dict[str, Any], *, check_cancelled=None):
 def prepare_translation_request(
     data: dict[str, Any],
     workspace_dir: Path,
+    *, upload=None,
 ) -> PreparedTranslationRequest:
-    file_bytes = decode_pdf_content(data.get("fileContent"))
+    file_bytes = decode_pdf_content(data.get("fileContent")) if upload is None else None
     file_name = sanitize_pdf_filename(data.get("fileName"))
     service = normalize_service(data.get("service"))
     output_modes = normalize_output_modes(data)
@@ -564,7 +656,17 @@ def prepare_translation_request(
     output_dir.mkdir(parents=True, exist_ok=True)
     try:
         with input_path.open("xb") as output:
-            output.write(file_bytes)
+            if upload is None:
+                output.write(file_bytes)
+            else:
+                size = 0
+                while chunk := upload.stream.read(1024 * 1024):
+                    size += len(chunk)
+                    if size > MAX_TASK_PDF_BYTES:
+                        raise RequestValidationError("PDF upload exceeds 512 MiB")
+                    output.write(chunk)
+                if not size:
+                    raise RequestValidationError("PDF upload is empty")
     except FileExistsError:
         raise RequestValidationError("PDF input file already exists") from None
 
@@ -808,20 +910,22 @@ def runtime_busy() -> bool:
 
 def build_health_payload() -> dict[str, Any]:
     workspace = build_workspace_health()
+    task_store = TASK_MANAGER.task_store_health()
     task_stats = build_task_stats()
     from flask import current_app, has_app_context
     gate = current_app.extensions.get("update_maintenance") if has_app_context() else None
     return {
-        "status": "ok" if workspace.get("writable") else "degraded",
+        "status": "ok" if workspace.get("writable") and task_store["status"] == "ok" else "degraded",
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
-        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True},
+        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True, "taskSubmissionIdempotency": True, "taskRecovery": True, "taskTiming": True, "binaryTaskUpload": True, "taskPagination": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),
         "workspace": workspace,
         "tasks": task_stats,
+        "taskStore": task_store,
         "queueBlocked": TASK_MANAGER._queue_blocked,
         "maintenance": gate.snapshot() if gate else {"held": False, "busy": runtime_busy()},
     }
@@ -857,14 +961,7 @@ def build_workspace_health() -> dict[str, Any]:
 
 
 def build_task_stats() -> dict[str, int]:
-    tasks = TASK_MANAGER.list_tasks()
-    active_statuses = {"queued", "running", "cancelling"}
-    return {
-        "total": len(tasks),
-        "active": sum(1 for task in tasks if task.get("status") in active_statuses),
-        "failed": sum(1 for task in tasks if task.get("status") == "failed"),
-        "completed": sum(1 for task in tasks if task.get("status") == "completed"),
-    }
+    return TASK_MANAGER.task_stats()
 
 
 def package_version(package_name: str) -> str | None:

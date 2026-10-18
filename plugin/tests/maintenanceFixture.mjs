@@ -17,3 +17,4 @@ new Function("require", "exports", compiled)(
     exports,
 );
 export const maintenanceFetch = exports.maintenanceFetch;
+export const diagnosticFetch = exports.diagnosticFetch;

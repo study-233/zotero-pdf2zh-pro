@@ -101,6 +101,7 @@ def install_routes(app, busy, directory):
     @app.before_request
     def admission():
         exempt = (request.path in {"/health", "/internal/maintenance"}
+                  or request.method == "POST" and request.path == "/tasks/query"
                   or request.method == "GET" and request.path.startswith("/tasks")
                   and not request.path.endswith(("/result", "/diagnostics")))
         if exempt:

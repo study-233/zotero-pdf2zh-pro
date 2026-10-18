@@ -88,6 +88,26 @@ export class ZoteroTaskImporter {
                     continue;
                 const outputKey = `${attempt}:${outputMode}`;
                 if (importedOutputs.includes(outputKey)) continue;
+                const importIdentity =
+                    await PDF2zhHelperFactory.taskOutputIdentity(
+                        task.serverUrl,
+                        task.taskId,
+                        attempt,
+                        outputMode,
+                        item,
+                    );
+                const alreadyImported =
+                    await PDF2zhHelperFactory.hasImportedTaskOutput(
+                        importIdentity,
+                    );
+                if (!isCurrent()) return;
+                if (alreadyImported) {
+                    importedOutputs.push(outputKey);
+                    this.callbacks.updateTask(taskId, {
+                        importedOutputs: [...importedOutputs],
+                    });
+                    continue;
+                }
                 const bytes = await ServerTaskClient.fetchResult(
                     task.serverUrl,
                     task.taskId,
@@ -101,6 +121,7 @@ export class ZoteroTaskImporter {
                     fileName,
                     outputMode,
                     bytes,
+                    importIdentity,
                     model: task.model || "",
                     titleSuffix:
                         task.status === "incomplete"

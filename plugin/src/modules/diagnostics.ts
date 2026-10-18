@@ -47,9 +47,16 @@ const flags = new Set([
     "queueBlocked",
     "success",
     "canRepair",
+    "canResume",
+    "complete",
     "canDownloadResult",
     "failedParagraphsTruncated",
 ]);
+for (const key of ["queueSeconds", "executionSeconds", "totalSeconds"])
+    numeric.add(key);
+for (const key of ["recoveryState", "queuedAt", "startedAt", "finishedAt"])
+    strings.add(key);
+containers.add("timing");
 
 /** Independent export boundary: exclude arbitrary server fields, bodies and messages. */
 export function safeDiagnostic(value: unknown, depth = 0): unknown {
@@ -263,8 +270,11 @@ export function recordDiagnostic(
 export async function diagnosticFetch(
     url: string,
     options?: RequestInit,
+    limits?: { totalMs: number; idleMs: number; headersMs?: number },
 ): Promise<Response> {
-    return maintenanceFetch(url, options);
+    return maintenanceFetch(url, options, (url, options) =>
+        diagnosticFetchOnce(url, options, limits),
+    );
 }
 
 export async function maintenanceFetch(
@@ -346,26 +356,89 @@ export async function maintenanceFetch(
 async function diagnosticFetchOnce(
     url: string,
     options?: RequestInit,
+    limits: { totalMs: number; idleMs: number; headersMs?: number } = {
+        totalMs: 30000,
+        idleMs: 10000,
+    },
 ): Promise<Response> {
     const controller = new AbortController();
-    const abort = () => controller.abort();
-    if (options?.signal?.aborted) controller.abort();
+    let timedOut = false;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    let rejectAbort: (reason: Error) => void;
+    const aborted = new Promise<never>((_resolve, reject) => {
+        rejectAbort = reject;
+    });
+    const abort = () => {
+        controller.abort();
+        void reader?.cancel().catch(() => {});
+        rejectAbort(
+            new DOMException(
+                timedOut ? "请求超时，请稍后重试。" : "请求已取消。",
+                timedOut ? "TimeoutError" : "AbortError",
+            ),
+        );
+    };
+    const timeout = () => {
+        timedOut = true;
+        abort();
+    };
     options?.signal?.addEventListener("abort", abort, { once: true });
-    const timer = setTimeout(() => controller.abort(), 10000);
+    const timer = setTimeout(timeout, limits.totalMs);
+    // Preserve the connection/header deadline even for a large PDF download.
+    let idleTimer = setTimeout(
+        timeout,
+        limits.headersMs ?? Math.min(10000, limits.idleMs),
+    );
     try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal,
-        });
-        recordDiagnostic("http_response", { statusCode: response.status });
-        return response;
+        if (options?.signal?.aborted) abort();
+        return await Promise.race([
+            aborted,
+            (async () => {
+                if (controller.signal.aborted) return await aborted;
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal,
+                });
+                recordDiagnostic("http_response", {
+                    statusCode: response.status,
+                });
+                if (controller.signal.aborted) {
+                    void response.body?.cancel().catch(() => {});
+                    return await aborted;
+                }
+                // Finite requests resolve only after the whole body is received.
+                // Selection SSE uses maintenanceFetch with its own streaming transport.
+                if (!response.body) return response;
+                const bodyReader = response.body.getReader();
+                reader = bodyReader;
+                const chunks: BlobPart[] = [];
+                for (;;) {
+                    clearTimeout(idleTimer);
+                    idleTimer = setTimeout(timeout, limits.idleMs);
+                    const { done, value } = await bodyReader.read();
+                    if (controller.signal.aborted) return await aborted;
+                    if (done) break;
+                    chunks.push(value as Uint8Array<ArrayBuffer>);
+                }
+                return new Response(new Blob(chunks), {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: response.headers,
+                });
+            })(),
+        ]);
     } catch (error) {
         recordDiagnostic(
-            controller.signal.aborted ? "http_timeout" : "http_failure",
+            timedOut
+                ? "http_timeout"
+                : controller.signal.aborted
+                  ? "http_cancelled"
+                  : "http_failure",
         );
         throw error;
     } finally {
         clearTimeout(timer);
+        clearTimeout(idleTimer);
         options?.signal?.removeEventListener("abort", abort);
     }
 }

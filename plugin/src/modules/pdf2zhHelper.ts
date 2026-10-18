@@ -6,6 +6,7 @@ import { getSelectedProfile } from "./profileStore";
 import { SERVICE_NAMES } from "./llmApiManager";
 import { loadGlossaryEntries } from "./glossaryStore";
 import { getString } from "../utils/locale";
+import { findTaskOutput, importTaskOutput } from "./taskOutputStore";
 import {
     DEFAULT_TITLE_TEMPLATE,
     buildTitleMetadata,
@@ -24,6 +25,7 @@ export type TaskOutputResponse = {
     outputMode: OutputMode;
     bytes: Uint8Array;
     titleSuffix?: string;
+    importIdentity?: string;
 };
 
 export class PDF2zhHelperFactory {
@@ -32,15 +34,36 @@ export class PDF2zhHelperFactory {
 
     static async prepareFileData(
         item: Zotero.Item,
-    ): Promise<{ fileName: string; base64: string }> {
+        binary = false,
+    ): Promise<{
+        fileName: string;
+        base64?: string;
+        file?: File;
+        fingerprint?: string;
+    }> {
         const filepath = await this.validatePDFAttachment(item);
         const fileName = PathUtils.filename(filepath);
+        if (binary) {
+            const file = await (
+                File as typeof File & {
+                    createFromFileName(
+                        path: string,
+                        options: FilePropertyBag,
+                    ): Promise<File>;
+                }
+            ).createFromFileName(filepath, { type: "application/pdf" });
+            const fingerprint = await IOUtils.computeHexDigest(
+                filepath,
+                "sha256",
+            );
+            return { fileName, file, fingerprint };
+        }
         const base64 = await this.readPDFAsBase64(filepath);
         return { fileName, base64 };
     }
 
     static buildTaskRequestBody(
-        fileData: { fileName: string; base64: string },
+        fileData: { fileName: string; base64?: string },
         config: ServerConfig,
     ): Record<string, unknown> {
         const llmApiConfig = config.apiConfig;
@@ -103,6 +126,7 @@ export class PDF2zhHelperFactory {
                 targetLang: config.targetLang,
                 metadata: settings?.metadata,
                 titleSuffix: response.titleSuffix,
+                importIdentity: response.importIdentity,
                 isCurrent,
             });
         } finally {
@@ -120,6 +144,35 @@ export class PDF2zhHelperFactory {
             reader.onerror = reject;
             reader.readAsDataURL(blob);
         });
+    }
+
+    static async taskOutputIdentity(
+        serverUrl: string,
+        taskId: string,
+        attempt: number,
+        outputMode: OutputMode,
+        item: Zotero.Item,
+    ): Promise<string> {
+        const hash = await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(
+                JSON.stringify([
+                    serverUrl.replace(/\/+$/, ""),
+                    taskId,
+                    attempt,
+                    outputMode,
+                    item.libraryID,
+                    item.key || item.id,
+                ]),
+            ),
+        );
+        return Array.from(new Uint8Array(hash), (byte) =>
+            byte.toString(16).padStart(2, "0"),
+        ).join("");
+    }
+
+    static async hasImportedTaskOutput(identity: string): Promise<boolean> {
+        return Boolean(await findTaskOutput(identity));
     }
 
     static async safeExists(path: string) {
@@ -209,6 +262,7 @@ export class PDF2zhHelperFactory {
         metadata?: TitleMetadata;
         isCurrent?: () => boolean;
         titleSuffix?: string;
+        importIdentity?: string;
     }) {
         const { item, filePath, options, outputMode, service } = params;
         const parentItemID = this.getParentItemID(item);
@@ -230,7 +284,7 @@ export class PDF2zhHelperFactory {
                       titleContext,
                   )
             : PathUtils.filename(filePath);
-        const attachment = await Zotero.Attachments.importFromFile({
+        const importOptions = {
             file: filePath,
             parentItemID: parentItemID == undefined ? undefined : parentItemID,
             libraryID: item.libraryID,
@@ -241,7 +295,14 @@ export class PDF2zhHelperFactory {
             title: params.titleSuffix
                 ? `${baseTitle}（${params.titleSuffix}）`
                 : baseTitle,
-        });
+        };
+        const attachment = params.importIdentity
+            ? await importTaskOutput({
+                  ...importOptions,
+                  outputKey: params.importIdentity,
+                  isCurrent: params.isCurrent || (() => true),
+              })
+            : await Zotero.Attachments.importFromFile(importOptions);
 
         if (
             options.openAfterProcess &&

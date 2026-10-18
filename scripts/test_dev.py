@@ -3,6 +3,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import socket
 import subprocess
 import sys
@@ -14,6 +15,17 @@ from dev import Development, DevError, MacOS, Windows, MODEL_KEYS, PREFIX, read_
 
 
 class DevelopmentTests(unittest.TestCase):
+    def test_macos_listener_query_distinguishes_empty_port_from_command_errors(self):
+        for code, stdout, stderr in [(0, "42\n43\n", ""), (1, "", "")]:
+            with self.subTest(code=code), patch("dev.subprocess.run", return_value=
+                    subprocess.CompletedProcess(["lsof"], code, stdout, stderr)):
+                self.assertEqual(MacOS.listeners(8891), {"42", "43"} if code == 0 else set())
+        for code, stdout, stderr in [(1, "", "permission denied"), (2, "", "invalid option")]:
+            with self.subTest(code=code), patch("dev.subprocess.run", return_value=
+                    subprocess.CompletedProcess(["lsof"], code, stdout, stderr)):
+                with self.assertRaises(subprocess.CalledProcessError):
+                    MacOS.listeners(8891)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -244,9 +256,9 @@ class DevelopmentTests(unittest.TestCase):
         with patch.object(self.dev.platform, "zotero", return_value=[good, bad]):
             self.assertEqual(self.dev.development_zotero(), [good])
 
-    def prepare_switch(self, current="formal"):
+    def prepare_switch(self, current="formal", platform=Windows):
         # Mock every OS operation: these tests must never close the user's Zotero.
-        self.dev.platform = Mock(spec=Windows)
+        self.dev.platform = Mock(spec=platform)
         self.dev.platform.owned.side_effect = lambda record: record is not None
         self.dev.platform.source_profile.return_value = self.source
         exe = self.base / "Program Files/Zotero/zotero.exe"
@@ -256,10 +268,102 @@ class DevelopmentTests(unittest.TestCase):
         formal = {"pid": 41, "started": 1, "exe": str(exe), "argv": [str(exe)]}
         development = {"pid": 42, "started": 1, "exe": str(exe), "argv": [str(exe),
                        "-profile", str(self.dev.paths()["profile"]), "--dataDir", str(self.dev.paths()["library"])]}
+        if platform is MacOS:
+            argv = {p["pid"]: {"exe": p["exe"], "argv": p["argv"]} for p in (formal, development)}
+            self.dev.platform.command_line.side_effect = lambda record: argv[record["pid"]]
+            formal, development = [{"pid": p["pid"], "started": p["started"],
+                                    "command": " ".join(p["argv"])} for p in (formal, development)]
         selected = {"formal": [formal], "dev": [development], None: []}[current]
         self.dev.platform.zotero.return_value = selected
         write_json(self.dev.state_path, {"zotero": development} if current == "dev" else {})
         return formal, development
+
+    def test_macos_switch_round_trip_and_explicit_target(self):
+        formal, development = self.prepare_switch(platform=MacOS)
+        with patch.object(self.dev, "port_free"), patch.object(self.dev, "start") as start:
+            self.dev.switch()
+            self.dev.platform.close_zotero.assert_called_once_with(formal)
+            start.assert_called_once()
+        self.dev.platform.zotero.return_value = [development]
+        write_json(self.dev.state_path, {"zotero": development})
+        with patch.object(self.dev, "stop_state") as stop, patch.object(self.dev, "launch_formal") as launch:
+            self.dev.switch("dev")
+            stop.assert_not_called()
+            launch.assert_not_called()
+            self.dev.switch()
+            stop.assert_called_once_with({"zotero": development})
+            launch.assert_called_once()
+
+    def test_macos_switch_busy_tasks_prevent_closing_formal(self):
+        self.prepare_switch(platform=MacOS)
+        write_json(self.dev.state_path, {"server": {"pid": 99}})
+        with patch.object(self.dev, "check_server"), \
+                patch.object(self.dev, "request", return_value={"tasks": [{"status": "running"}]}), \
+                patch.object(self.dev, "start") as start:
+            with self.assertRaisesRegex(DevError, "仍有开发翻译任务"):
+                self.dev.switch()
+            start.assert_not_called()
+        self.dev.platform.close_zotero.assert_not_called()
+
+    def test_macos_launch_formal_uses_original_profile_without_dev_environment(self):
+        formal, _ = self.prepare_switch(platform=MacOS)
+        process = Mock(pid=formal["pid"])
+        process.poll.return_value = None
+        with patch.dict(os.environ, {"PDF2ZH_DEV_RUNTIME": str(self.dev.runtime)}), \
+                patch("dev.subprocess.Popen", return_value=process) as launch:
+            self.dev.launch_formal()
+        self.assertEqual(launch.call_args.args[0][-2:], ["-profile", str(self.source)])
+        self.assertTrue(launch.call_args.kwargs["start_new_session"])
+        self.assertNotIn("creationflags", launch.call_args.kwargs)
+        self.assertNotIn("PDF2ZH_DEV_RUNTIME", launch.call_args.kwargs["env"])
+
+    def test_macos_argument_inspection_preserves_spaces_and_checks_identity(self):
+        adapter = MacOS()
+        psutil = Mock()
+        psutil.Process.return_value.exe.return_value = "/Applications/Zotero.app/Contents/MacOS/zotero"
+        args = ["zotero", "-profile", "/开发目录/Profile with spaces"]
+        psutil.Process.return_value.cmdline.return_value = args
+        with patch.dict(sys.modules, {"psutil": psutil}), patch.object(adapter, "owned", return_value=True):
+            self.assertEqual(adapter.command_line({"pid": 42})["argv"], args)
+        with patch.object(adapter, "owned", return_value=False):
+            with self.assertRaisesRegex(DevError, "身份已变化"):
+                adapter.command_line({"pid": 42})
+
+    def test_macos_normal_close_checks_identity_and_never_forces_exit(self):
+        adapter = MacOS()
+        with patch.object(adapter, "owned", return_value=False), patch("dev.subprocess.run") as run:
+            with self.assertRaisesRegex(DevError, "身份已变化"):
+                adapter.close_zotero({"pid": 42})
+            run.assert_not_called()
+        with patch.object(adapter, "owned", side_effect=[True, False]), \
+                patch("dev.subprocess.run", return_value=Mock(returncode=0)) as run:
+            adapter.close_zotero({"pid": 42})
+            self.assertEqual(run.call_args.args[0][0], "osascript")
+        with patch.object(adapter, "owned", return_value=True), patch("dev.time.sleep"), \
+                patch("dev.subprocess.run", return_value=Mock(returncode=0)), patch("dev.os.kill") as kill:
+            with self.assertRaisesRegex(DevError, "尚未退出"):
+                adapter.close_zotero({"pid": 42})
+            kill.assert_not_called()
+
+    @unittest.skipIf(sys.platform == "win32", "POSIX shell command")
+    def test_short_command_works_through_symlink_from_another_directory(self):
+        scripts = self.base / "中文项目 with spaces/scripts"
+        scripts.mkdir(parents=True)
+        launcher = scripts / "zotero-dev"
+        shutil.copyfile(Path(__file__).with_name("zotero-dev"), launcher)
+        launcher.chmod(0o755)
+        dev = scripts / "dev.sh"
+        dev.write_text('#!/bin/sh\nprintf "%s\\n" "$@"\nexit 7\n')
+        dev.chmod(0o755)
+        command = self.base / "zotero-dev"
+        command.symlink_to(launcher)
+        for args, expected in (([], ["switch"]), (["dev"], ["switch", "dev"]),
+                               (["formal"], ["switch", "formal"]), (["status"], ["status"]),
+                               (["restart-server"], ["restart-server"])):
+            with self.subTest(args=args):
+                result = subprocess.run([str(command), *args], cwd=self.base, capture_output=True, text=True)
+                self.assertEqual(result.stdout.splitlines(), expected)
+                self.assertEqual(result.returncode, 7)
 
     def test_switch_formal_to_dev_checks_port_before_normal_close_and_start(self):
         formal, _ = self.prepare_switch()

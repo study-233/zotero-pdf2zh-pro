@@ -36,7 +36,10 @@ function fixture() {
         window: { addEventListener() {} },
     });
     vm.runInContext(source, context);
-    vm.runInContext("api = {repairTask() {}};", context);
+    vm.runInContext(
+        "api = {repairTask() {}, resumeTask() {}, message: key => key};",
+        context,
+    );
     return context;
 }
 
@@ -62,6 +65,75 @@ const task = (changes = {}) => ({
     source: "local",
     importState: "imported",
     ...changes,
+});
+
+test("terminal tasks without results cannot wait for import or count as active", () => {
+    const ui = fixture();
+    for (const status of ["cancelled", "failed", "incomplete"]) {
+        const value = task({
+            status,
+            importState: "pending",
+            canDownloadResult: false,
+        });
+        assert.equal(ui.isActiveTask(value), false);
+        assert.equal(ui.formatImportState(value), "无");
+    }
+    assert.equal(
+        ui.formatImportState(
+            task({ status: "running", importState: "pending" }),
+        ),
+        "待译文生成",
+    );
+    assert.equal(
+        ui.isActiveTask(
+            task({ importState: "pending", canDownloadResult: true }),
+        ),
+        true,
+    );
+});
+
+test("recovered tasks expose resume independently from repair and cancellation", () => {
+    const ui = fixture();
+    const recovered = task({
+        status: "paused",
+        canResume: true,
+        canCancel: true,
+        recoveryState: "queued",
+    });
+    const view = ui.createTaskCardView(recovered);
+    assert.equal(view.status.textContent, "待恢复（尚未开始）");
+    assert.equal(view.resumeButton.hidden, false);
+    assert.equal(view.repairButton.hidden, true);
+    assert.equal(ui.canCancelTask(recovered), true);
+    assert.equal(ui.isActiveTask(recovered), false);
+    ui.updateTaskCardView(view, {
+        ...recovered,
+        status: "incomplete",
+        recoveryState: "interrupted",
+    });
+    assert.equal(view.status.textContent, "待恢复（执行中断）");
+});
+
+test("timing distinguishes server queue, execution and partial crash records", () => {
+    const ui = fixture();
+    const timed = task({
+        timing: {
+            queueSeconds: 20,
+            executionSeconds: 40,
+            totalSeconds: 60,
+            complete: true,
+        },
+    });
+    const view = ui.createTaskCardView(timed);
+    assert.match(view.timingSummary.textContent, /服务耗时.*排队.*执行/);
+    ui.updateTaskCardView(view, {
+        ...timed,
+        timing: { ...timed.timing, complete: false },
+    });
+    assert.match(view.timingSummary.textContent, /已记录耗时（部分）/);
+    ui.updateTaskCardView(view, task());
+    assert.equal(view.timingSummary.hidden, true);
+    assert.equal(view.timingSummary.textContent, "");
 });
 
 test("task cards distinguish checked conclusions, unchecked selections and uncovered body paragraphs", () => {
@@ -226,4 +298,17 @@ test("partial PDF availability and import failure are separate from repair", () 
     assert.equal(view.retryButton.textContent, "重试导入");
     assert.equal(view.retryButton.hidden, false);
     assert.equal(view.repairButton.hidden, false);
+});
+
+test("pending memory sync keeps completed PDF actions and displays a separate warning", () => {
+    const ui = fixture();
+    const value = task({
+        canDownloadResult: true,
+        translationMemorySync: "pending",
+    });
+    const view = ui.createTaskCardView(value);
+    assert.equal(view.status.textContent, "已完成");
+    assert.match(view.qualitySummary.textContent, /task-memory-sync-pending/);
+    ui.updateTaskCardView(view, { ...value, translationMemorySync: "synced" });
+    assert.equal(view.qualitySummary.hidden, true);
 });

@@ -7,6 +7,12 @@ from diagnostics import DiagnosticStore, SafeLogHandler, exception_frames, safe_
 from task_manager import TaskManager,TaskRecord
 
 class DiagnosticTests(unittest.TestCase):
+    def test_recovery_timing_is_exported_without_submission_identity(self):
+        timing = {"queuedAt": "2026-01-01T00:00:00Z", "queueSeconds": 5,
+                  "executionSeconds": 12, "totalSeconds": 17, "complete": False}
+        public = {"status": "paused", "recoveryState": "queued", "canResume": True, "timing": timing}
+        self.assertEqual(safe_fields({**public, "submission_fingerprint": "private-hash", "requestId": "private-id"}), public)
+
     def test_cancelled_request_count_survives_safe_export(self):
         payload = {"metrics": {"requests": {"attempts": 1, "cancelled": 1,
                    "byKind": {"translation": {"cancelled": 1}}}}}
@@ -187,6 +193,6 @@ class DiagnosticTests(unittest.TestCase):
             self.assertNotIn('effectiveConfiguration', repaired)
             manager._handle_progress_event('test', {'type': 'diagnostic_configuration',
                 'effectiveConfiguration': {'qps': 10}}, attempt=1)
-            self.assertNotIn('effectiveConfiguration', record.to_dict())
+            self.assertNotIn('effectiveConfiguration', manager.get_task('test'))
             history = [r for r in manager.diagnostics.export('test')['records'] if r['event'] == 'task_configuration']
             self.assertEqual(history[0]['effectiveConfiguration']['qps'], 10)

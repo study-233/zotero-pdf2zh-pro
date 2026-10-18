@@ -151,6 +151,7 @@ class TranslationResult:
     translation_summary: dict | None = None
     failed_paragraphs: list = field(default_factory=list)
     quality_summary: dict | None = None
+    translation_memory_sync: str | None = None
 
 
 @dataclass(frozen=True)
@@ -724,7 +725,7 @@ async def translate_pdf_with_callbacks(
                        else engine_settings.chatgpt_model if isinstance(engine_settings, ChatGPTSettings)
                        else engine_settings.openai_model), callback=metrics_callback,
             )
-            metrics_collector.record_stage("Queue Wait", initialization_started_at - started_at)
+            metrics_collector.record_stage("Engine Wait", initialization_started_at - started_at)
         try:
             translation_config = create_babeldoc_config(
                 settings, input_path, glossary_entries=payload.get("glossary_entries"),
@@ -906,11 +907,11 @@ async def translate_pdf_with_callbacks(
                 files = repaired_files
             summary, failed = translation_config.recovery.snapshot()
             check_cancelled()
-            if payload.get("translation_memory_path"):
-                from translation_memory import sync_recovery
-                sync_recovery(payload["translation_memory_path"], payload)
+            # The parent commits the PDF result before its background memory sync.
+            memory_sync = "pending" if payload.get("translation_memory_path") else None
+            check_cancelled()
             return TranslationResult(files=files, translation_summary=summary, failed_paragraphs=failed,
-                                     quality_summary=recovery.quality_snapshot())
+                                     quality_summary=recovery.quality_snapshot(), translation_memory_sync=memory_sync)
     except asyncio.CancelledError:
         cancel_event.set()
         if translation_config is not None:

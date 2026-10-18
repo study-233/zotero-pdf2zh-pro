@@ -6,6 +6,7 @@ import { selectionElement } from "./selectionPopup";
 import { addGlossaryEntry } from "./glossaryStore";
 import {
     listFavorites,
+    getFavoritesProtection,
     watchFavorites,
     deleteFavorite,
     openFavorite,
@@ -188,6 +189,12 @@ function mount(body: HTMLElement, reader: Reader) {
         const current = ++revision;
         const entries = await listFavorites();
         if (current !== revision || !body.isConnected) return;
+        if (getFavoritesProtection())
+            renderNotice(status, {
+                id: "favorites-protected",
+                level: "warning",
+                text: getString("notice-error-favorites-protected"),
+            });
         const attachment = reader.itemID && Zotero.Items.get(reader.itemID);
         if (!attachment) throw new Error("找不到当前 PDF 附件。");
         const library = favoriteLibrary(attachment.libraryID);

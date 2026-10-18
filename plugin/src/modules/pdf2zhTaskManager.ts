@@ -33,8 +33,17 @@ type TaskDialogArgs = {
     renderNotice: typeof renderNotice;
     noticeAction: typeof runNoticeAction;
     getSubmission: () => SubmissionFeedback | undefined;
+    getServerNotice: () => UserNotice | undefined;
     _initPromise: any;
     getTasks: () => PluginTask[];
+    getHistoryPage: () => {
+        page: number;
+        hasMore: boolean;
+        total: number;
+        loading: boolean;
+        supported: boolean;
+    };
+    changeHistoryPage: (direction: number) => Promise<void>;
     hasActiveTasks: () => boolean;
     onTasksChanged: (listener: () => void) => () => void;
     refreshTasks: () => Promise<void>;
@@ -44,6 +53,9 @@ type TaskDialogArgs = {
     repairTask: (taskId: string) => Promise<void>;
     reloginChatGPT: (taskId: string) => void;
     retryFailedTasks: () => Promise<void>;
+    resumeTasks: () => Promise<void>;
+    resumeTask: (taskId: string) => Promise<void>;
+    retryMemorySync: (taskId: string) => Promise<void>;
     deleteTask: (taskId: string) => Promise<void>;
     clearFailedTasks: () => Promise<void>;
     getEventStreamState: () => {
@@ -94,9 +106,92 @@ export class PDF2zhTaskManager {
     private static tasks = new Map<string, PluginTask>();
     private static localTasksLoaded = false;
     private static savedBindings = "";
+    private static bindingRaw: unknown;
+    private static bindingBlocked = false;
+    private static bindingNotice: UserNotice | undefined;
     private static changeSequence = 0;
     private static taskChanges = new Map<string, number>();
     private static serverSync = new Map<string, ServerSyncState>();
+    private static historyPage = 0;
+    private static paging = false;
+    private static pageError: unknown;
+    private static pages = new Map<
+        string,
+        {
+            cursors: (string | undefined)[];
+            visible: Set<string>;
+            next?: string;
+            hasMore: boolean;
+            total: number;
+        }
+    >();
+
+    static getVisibleTasks(): PluginTask[] {
+        return this.getTasks().filter((task) => {
+            const page = this.pages.get(task.serverUrl);
+            return (
+                !page ||
+                page.visible.has(task.taskId) ||
+                ACTIVE_STATUSES.includes(task.status) ||
+                task.canResume ||
+                (task.source === "local" &&
+                    canDownloadTaskResult(task) &&
+                    ["pending", "importing", "failed"].includes(
+                        task.importState,
+                    ))
+            );
+        });
+    }
+
+    static getHistoryPage() {
+        return {
+            page: this.historyPage + 1,
+            hasMore: [...this.pages.values()].some((page) => page.hasMore),
+            total: [...this.pages.values()].reduce(
+                (sum, page) => sum + page.total,
+                0,
+            ),
+            loading: this.paging,
+            supported: this.pages.size > 0,
+        };
+    }
+
+    static async changeHistoryPage(direction: number): Promise<void> {
+        if (
+            this.paging ||
+            (direction > 0
+                ? !this.getHistoryPage().hasMore
+                : this.historyPage === 0)
+        )
+            return;
+        this.paging = true;
+        this.pageError = undefined;
+        const previousIndex = this.historyPage;
+        const previousPages = new Map(
+            [...this.pages].map(([url, page]) => [
+                url,
+                { ...page, cursors: [...page.cursors] },
+            ]),
+        );
+        if (direction > 0)
+            for (const page of this.pages.values())
+                page.cursors[this.historyPage + 1] = page.next;
+        this.historyPage += direction > 0 ? 1 : -1;
+        this.notifyTaskListeners();
+        try {
+            await this.refreshTasks();
+            if (this.pageError) {
+                const error = this.pageError;
+                this.historyPage = previousIndex;
+                this.pages = previousPages;
+                await this.refreshTasks();
+                throw error;
+            }
+        } finally {
+            this.paging = false;
+            this.notifyTaskListeners();
+        }
+    }
 
     private static loadLocalTasks(): void {
         if (this.localTasksLoaded) return;
@@ -106,25 +201,123 @@ export class PDF2zhTaskManager {
                 `${config.prefsPrefix}.taskBindings`,
                 true,
             );
-            const tasks = typeof raw === "string" ? JSON.parse(raw) : [];
-            for (const task of Array.isArray(tasks) ? tasks : []) {
-                if (
-                    typeof task.taskId !== "string" ||
-                    typeof task.itemID !== "number" ||
-                    typeof task.serverUrl !== "string"
-                )
-                    continue;
+            const tasks = this.parseBindings(raw);
+            if (
+                raw === undefined &&
+                Zotero.Prefs.get(
+                    `${config.prefsPrefix}.taskBindingsBackup`,
+                    true,
+                ) !== undefined
+            )
+                throw new Error("Missing primary task bindings");
+            this.bindingRaw = raw;
+            for (const task of tasks) {
                 if (task.importState === "importing")
                     task.importState = "pending";
-                this.tasks.set(task.taskId, task);
+                this.tasks.set(task.taskId, this.normalizeImportState(task));
             }
         } catch (error) {
+            this.blockBindings();
             ztoolkit.log("读取任务附件关联失败", error);
         }
     }
 
+    private static parseBindings(raw: unknown): PluginTask[] {
+        if (raw === undefined) return [];
+        if (typeof raw !== "string") throw new Error("Invalid task bindings");
+        const tasks = JSON.parse(raw);
+        const ids = new Set<string>();
+        if (
+            !Array.isArray(tasks) ||
+            tasks.some((task) => {
+                if (
+                    !task ||
+                    typeof task !== "object" ||
+                    typeof task.taskId !== "string" ||
+                    !task.taskId ||
+                    ids.has(task.taskId) ||
+                    !Number.isSafeInteger(task.itemID) ||
+                    task.itemID <= 0 ||
+                    typeof task.serverUrl !== "string" ||
+                    !task.serverUrl ||
+                    task.source !== "local" ||
+                    ![
+                        "queued",
+                        "paused",
+                        "running",
+                        "cancelling",
+                        "cancelled",
+                        "failed",
+                        "completed",
+                        "incomplete",
+                    ].includes(task.status) ||
+                    ![
+                        "pending",
+                        "importing",
+                        "imported",
+                        "failed",
+                        "none",
+                    ].includes(task.importState) ||
+                    !Array.isArray(task.outputModes) ||
+                    task.outputModes.some(
+                        (mode: unknown) =>
+                            !["mono", "dual"].includes(mode as string),
+                    ) ||
+                    (task.importedOutputs !== undefined &&
+                        (!Array.isArray(task.importedOutputs) ||
+                            task.importedOutputs.some(
+                                (value: unknown) => typeof value !== "string",
+                            )))
+                )
+                    return true;
+                ids.add(task.taskId);
+                return false;
+            })
+        )
+            throw new Error("Invalid task binding records");
+        return tasks;
+    }
+
+    private static blockBindings(): void {
+        this.bindingBlocked = true;
+        this.bindingNotice = errorNotice(
+            new NoticeError("task_bindings_unavailable"),
+            getString,
+        );
+    }
+
+    private static normalizeImportState(task: PluginTask): PluginTask {
+        if (
+            task.importState !== "imported" &&
+            ["cancelled", "failed"].includes(task.status)
+        )
+            return { ...task, importState: "none", importError: undefined };
+        return task;
+    }
+
+    private static requireBindings(): void {
+        this.loadLocalTasks();
+        this.saveLocalTasks();
+        if (this.bindingNotice)
+            throw new NoticeError(
+                this.bindingBlocked
+                    ? "task_bindings_unavailable"
+                    : "task_bindings_write_failed",
+            );
+    }
+
     private static saveLocalTasks(): void {
-        if (!this.localTasksLoaded) return;
+        if (!this.localTasksLoaded || this.bindingBlocked) return;
+        const prefKey = `${config.prefsPrefix}.taskBindings`;
+        try {
+            if (Zotero.Prefs.get(prefKey, true) !== this.bindingRaw) {
+                this.blockBindings();
+                return;
+            }
+        } catch {
+            this.blockBindings();
+            return;
+        }
         const tasks = [...this.tasks.values()].filter(
             (task) => task.source === "local" && task.itemID,
         );
@@ -144,19 +337,33 @@ export class PDF2zhTaskManager {
                 task.qualitySummary,
                 task.canDownloadResult,
                 task.status,
+                task.recoveryState,
+                task.timing?.finishedAt,
                 task.resultFiles,
                 task.translationSummary,
+                task.translationMemorySync,
             ]),
         );
         if (signature === this.savedBindings) return;
         try {
-            Zotero.Prefs.set(
-                `${config.prefsPrefix}.taskBindings`,
-                JSON.stringify(tasks),
-                true,
-            );
+            // Retain the last known-good snapshot. Never replace it with an
+            // unreadable primary or automatically replay stale associations.
+            if (typeof this.bindingRaw === "string")
+                Zotero.Prefs.set(
+                    `${config.prefsPrefix}.taskBindingsBackup`,
+                    this.bindingRaw,
+                    true,
+                );
+            const encoded = JSON.stringify(tasks);
+            Zotero.Prefs.set(prefKey, encoded, true);
+            this.bindingRaw = encoded;
             this.savedBindings = signature;
+            this.bindingNotice = undefined;
         } catch (error) {
+            this.bindingNotice = errorNotice(
+                new NoticeError("task_bindings_write_failed"),
+                getString,
+            );
             ztoolkit.log("保存任务附件关联失败", error);
         }
     }
@@ -199,7 +406,7 @@ export class PDF2zhTaskManager {
     });
     private static importer = new ZoteroTaskImporter({
         getTask: (taskId) =>
-            PDF2zhTaskManager.stopped
+            PDF2zhTaskManager.stopped || PDF2zhTaskManager.bindingNotice
                 ? undefined
                 : PDF2zhTaskManager.tasks.get(taskId),
         updateTask: (taskId, patch) =>
@@ -210,6 +417,7 @@ export class PDF2zhTaskManager {
 
     private static submitting = false;
     private static submission: SubmissionFeedback | undefined;
+    private static taskStoreErrors = new Map<string, UserNotice>();
     private static completions = new Map<string, PluginTask>();
     private static notifiedImports = new Set<string>();
     private static completionTimer: ReturnType<typeof setTimeout> | undefined;
@@ -308,8 +516,13 @@ export class PDF2zhTaskManager {
             renderNotice,
             noticeAction: runNoticeAction,
             getSubmission: () => this.submission,
+            getServerNotice: () =>
+                this.bindingNotice ||
+                this.taskStoreErrors.values().next().value,
             _initPromise: Zotero.Promise.defer(),
-            getTasks: () => this.getTasks(),
+            getTasks: () => this.getVisibleTasks(),
+            getHistoryPage: () => this.getHistoryPage(),
+            changeHistoryPage: (direction) => this.changeHistoryPage(direction),
             hasActiveTasks: () => this.hasActiveTasks(),
             onTasksChanged: (listener: () => void) =>
                 this.onTasksChanged(listener),
@@ -334,6 +547,9 @@ export class PDF2zhTaskManager {
                 addon.hooks.onDialogEvents("reloginChatGPT");
             },
             retryFailedTasks: () => this.retryFailedTasks(),
+            resumeTasks: () => this.resumeTasks(),
+            resumeTask: (taskId: string) => this.resumeTask(taskId),
+            retryMemorySync: (taskId: string) => this.retryMemorySync(taskId),
             deleteTask: (taskId: string) => this.deleteTask(taskId),
             clearFailedTasks: () => this.clearFailedTasks(),
             getEventStreamState: () => this.getEventStreamState(),
@@ -431,6 +647,7 @@ export class PDF2zhTaskManager {
     }
 
     static async repairTask(taskId: string): Promise<void> {
+        this.requireBindings();
         const task = this.tasks.get(taskId);
         if (!task) throw new Error("任务不存在");
         if (!task.itemID) {
@@ -468,10 +685,12 @@ export class PDF2zhTaskManager {
     }
 
     static async retryTask(taskId: string): Promise<void> {
+        this.requireBindings();
         const task = this.tasks.get(taskId);
         if (!task) {
             throw new Error("任务不存在");
         }
+        if (task.canResume) return this.resumeTask(taskId);
 
         if (canDownloadTaskResult(task) && task.importState === "failed") {
             this.updateLocalTask(taskId, {
@@ -498,7 +717,7 @@ export class PDF2zhTaskManager {
     }
 
     static async retryFailedTasks(): Promise<void> {
-        const failedTasks = this.getTasks().filter(
+        const failedTasks = this.getVisibleTasks().filter(
             (task) =>
                 task.status === "failed" ||
                 task.status === "incomplete" ||
@@ -507,6 +726,48 @@ export class PDF2zhTaskManager {
         for (const task of failedTasks) {
             await this.retryTask(task.taskId);
         }
+    }
+
+    static async resumeTask(taskId: string): Promise<void> {
+        const task = this.tasks.get(taskId);
+        if (!task?.canResume) return;
+        const generation = this.syncState(task.serverUrl).generation;
+        const snapshot = await ServerTaskClient.resumeTask(
+            task.serverUrl,
+            taskId,
+        );
+        if (
+            snapshot &&
+            this.canApplyResponse(task.serverUrl, generation, snapshot)
+        )
+            this.upsertTask(snapshot, task.serverUrl);
+        this.ensureEventStreams();
+    }
+
+    static async retryMemorySync(taskId: string): Promise<void> {
+        const task = this.tasks.get(taskId);
+        if (!task) return;
+        const generation = this.syncState(task.serverUrl).generation;
+        const snapshot = await ServerTaskClient.retryMemorySync(
+            task.serverUrl,
+            taskId,
+        );
+        if (
+            snapshot &&
+            this.canApplyResponse(task.serverUrl, generation, snapshot)
+        )
+            this.upsertTask(snapshot, task.serverUrl);
+    }
+
+    static async resumeTasks(): Promise<void> {
+        const tasks = this.getTasks()
+            .filter((task) => task.canResume)
+            .sort((a, b) =>
+                (a.timing?.queuedAt || a.createdAt).localeCompare(
+                    b.timing?.queuedAt || b.createdAt,
+                ),
+            );
+        for (const task of tasks) await this.resumeTask(task.taskId);
     }
 
     static async deleteTask(taskId: string): Promise<void> {
@@ -561,41 +822,134 @@ export class PDF2zhTaskManager {
 
     private static async submitTask(
         item: Zotero.Item,
-        config: ServerConfig,
+        serverConfig: ServerConfig,
         onWarning?: (message: string) => void,
     ) {
-        this.loadLocalTasks();
-        const fileData = await PDF2zhHelperFactory.prepareFileData(item);
-        const requestBody = PDF2zhHelperFactory.buildTaskRequestBody(
-            fileData,
-            config,
-        );
-        const model = config.apiConfig?.model || "";
+        this.requireBindings();
+        const fileData = await PDF2zhHelperFactory.prepareFileData(item, true);
+        const requestBody: Record<string, unknown> =
+            PDF2zhHelperFactory.buildTaskRequestBody(fileData, serverConfig);
+        const model = serverConfig.apiConfig?.model || "";
 
-        const generation = this.syncState(config.serverUrl).generation;
-        const task = await ServerTaskClient.createTask(
-            config.serverUrl,
-            requestBody,
-            onWarning,
+        // Store only digests and random IDs, never PDFs or API credentials.
+        const prefKey = `${config.prefsPrefix}.submissionBindings`;
+        const crypto = Zotero.getMainWindow().crypto;
+        const stored = Zotero.Prefs.get(prefKey, true);
+        let bindings: {
+            version?: number;
+            clientId: string;
+            pending: Record<string, string>;
+            legacyPending?: Record<string, string>;
+        } =
+            typeof stored === "string"
+                ? JSON.parse(stored)
+                : { version: 2, clientId: crypto.randomUUID(), pending: {} };
+        if (bindings.version !== 2) {
+            bindings = {
+                ...bindings,
+                version: 2,
+                legacyPending: bindings.pending,
+                pending: {},
+            };
+            Zotero.Prefs.set(prefKey, JSON.stringify(bindings), true);
+        }
+        // Establish the installation identity before asynchronous hashing can interleave submissions.
+        if (typeof stored !== "string")
+            Zotero.Prefs.set(prefKey, JSON.stringify(bindings), true);
+        requestBody.dedupScope = `${bindings.clientId}:${item.libraryID}:${item.key || item.id}`;
+        let legacyFingerprint: string | undefined;
+        if (fileData.file && Object.keys(bindings.legacyPending || {}).length) {
+            // A pre-binary uncertain submission must retain its request ID after
+            // upgrading. Only this migration path materializes legacy base64.
+            const legacyBody = {
+                ...requestBody,
+                fileContent: await PDF2zhHelperFactory.blobToBase64(
+                    fileData.file,
+                ),
+            };
+            const legacyHash = await crypto.subtle.digest(
+                "SHA-256",
+                new TextEncoder().encode(
+                    JSON.stringify([serverConfig.serverUrl, legacyBody]),
+                ),
+            );
+            legacyFingerprint = Array.from(new Uint8Array(legacyHash), (byte) =>
+                byte.toString(16).padStart(2, "0"),
+            ).join("");
+        }
+        const hash = await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(
+                JSON.stringify([
+                    serverConfig.serverUrl,
+                    requestBody,
+                    fileData.fingerprint,
+                ]),
+            ),
         );
-        if (this.canApplyResponse(config.serverUrl, generation, task)) {
-            this.upsertTask(task, config.serverUrl, {
+        const fingerprint = Array.from(new Uint8Array(hash), (byte) =>
+            byte.toString(16).padStart(2, "0"),
+        ).join("");
+        bindings = JSON.parse(Zotero.Prefs.get(prefKey, true) as string);
+        requestBody.requestId =
+            bindings.pending[fingerprint] ||
+            (legacyFingerprint &&
+                bindings.legacyPending?.[legacyFingerprint]) ||
+            crypto.randomUUID();
+        bindings.pending[fingerprint] = requestBody.requestId as string;
+        if (legacyFingerprint && bindings.legacyPending)
+            delete bindings.legacyPending[legacyFingerprint];
+        Zotero.Prefs.set(prefKey, JSON.stringify(bindings), true);
+        const releaseSubmission = () => {
+            bindings = JSON.parse(Zotero.Prefs.get(prefKey, true) as string);
+            if (bindings.pending[fingerprint] === requestBody.requestId)
+                delete bindings.pending[fingerprint];
+            Zotero.Prefs.set(prefKey, JSON.stringify(bindings), true);
+        };
+
+        const generation = this.syncState(serverConfig.serverUrl).generation;
+        let task: ServerTaskSnapshot;
+        try {
+            task = await ServerTaskClient.createTask(
+                serverConfig.serverUrl,
+                requestBody,
+                onWarning,
+                fileData.file,
+            );
+        } catch (error) {
+            // A definitive conflict (including a deleted task) must allow a fresh manual submission.
+            if (
+                error instanceof Error &&
+                "submissionConflict" in error &&
+                error.submissionConflict
+            )
+                releaseSubmission();
+            throw error;
+        }
+        if (this.canApplyResponse(serverConfig.serverUrl, generation, task)) {
+            this.upsertTask(task, serverConfig.serverUrl, {
                 itemID: item.id,
-                sourceLang: config.sourceLang,
-                targetLang: config.targetLang,
+                sourceLang: serverConfig.sourceLang,
+                targetLang: serverConfig.targetLang,
                 model,
                 source: "local",
-                importState: "pending",
+                importState:
+                    this.tasks.get(task.taskId)?.importState === "none"
+                        ? "pending"
+                        : this.tasks.get(task.taskId)?.importState || "pending",
             });
         } else {
             // A restarted server can already have restored this submission.
             // Its old response can supply the binding, never its old state.
             const current = this.tasks.get(task.taskId);
-            if (current?.serverUrl === config.serverUrl && !current.itemID) {
+            if (
+                current?.serverUrl === serverConfig.serverUrl &&
+                !current.itemID
+            ) {
                 this.updateLocalTask(task.taskId, {
                     itemID: item.id,
-                    sourceLang: config.sourceLang,
-                    targetLang: config.targetLang,
+                    sourceLang: serverConfig.sourceLang,
+                    targetLang: serverConfig.targetLang,
                     model,
                     source: "local",
                     importState:
@@ -604,6 +958,21 @@ export class PDF2zhTaskManager {
                             : current.importState,
                 });
             }
+        }
+        // Keep uncertain submissions across plugin restarts until the attachment binding is saved.
+        this.requireBindings();
+        const saved = Zotero.Prefs.get(
+            `${config.prefsPrefix}.taskBindings`,
+            true,
+        );
+        if (
+            typeof saved === "string" &&
+            JSON.parse(saved).some(
+                (entry: PluginTask) =>
+                    entry.taskId === task.taskId && entry.itemID === item.id,
+            )
+        ) {
+            releaseSubmission();
         }
         this.ensureEventStreams();
     }
@@ -627,8 +996,54 @@ export class PDF2zhTaskManager {
             const generation = state.generation;
             let list: ServerTaskList;
             try {
-                list = await ServerTaskClient.listTasks(serverUrl);
-            } catch (_error) {
+                list = await ServerTaskClient.listTasks(serverUrl, {
+                    cursor: this.pages.get(serverUrl)?.cursors[
+                        this.historyPage
+                    ],
+                    tracked: [...this.tasks.values()]
+                        .filter(
+                            (task) =>
+                                task.serverUrl === serverUrl &&
+                                (ACTIVE_STATUSES.includes(task.status) ||
+                                    task.canResume ||
+                                    this.pages
+                                        .get(serverUrl)
+                                        ?.visible.has(task.taskId) ||
+                                    (task.source === "local" &&
+                                        [
+                                            "pending",
+                                            "importing",
+                                            "failed",
+                                        ].includes(task.importState) &&
+                                        (!state.instanceId ||
+                                            task.serverInstanceId !==
+                                                state.instanceId ||
+                                            canDownloadTaskResult(task)))),
+                        )
+                        .map((task) => task.taskId),
+                });
+            } catch (error) {
+                if (this.stopped || generation !== state.generation) continue;
+                if (
+                    (error as { code?: string })?.code ===
+                        "invalid_task_page" &&
+                    this.historyPage > 0
+                ) {
+                    this.historyPage = 0;
+                    this.pages.clear();
+                    this.refreshAgain = true;
+                } else if (this.paging) this.pageError = error;
+                if (
+                    (error as { code?: string })?.code ===
+                        "task_store_unavailable" &&
+                    !this.taskStoreErrors.has(serverUrl)
+                ) {
+                    this.taskStoreErrors.set(
+                        serverUrl,
+                        errorNotice(error, getString),
+                    );
+                    this.notifyTaskListeners();
+                }
                 continue;
             }
             if (this.stopped) return;
@@ -637,11 +1052,27 @@ export class PDF2zhTaskManager {
                 continue;
             }
             if (!this.acceptInstance(serverUrl, list)) continue;
+            if (this.taskStoreErrors.delete(serverUrl))
+                this.notifyTaskListeners();
             const versioned =
                 list.serverInstanceId !== undefined &&
                 list.revision !== undefined;
             if (versioned && list.revision! < state.watermark) continue;
             const snapshots = list.tasks;
+            if (
+                list.scope === "dashboard" &&
+                list.pagination &&
+                list.visibleTaskIds
+            ) {
+                const oldPage = this.pages.get(serverUrl);
+                this.pages.set(serverUrl, {
+                    cursors: oldPage?.cursors || [undefined],
+                    visible: new Set(list.visibleTaskIds),
+                    next: list.pagination.nextCursor || undefined,
+                    hasMore: list.pagination.hasMore,
+                    total: list.pagination.totalHistory,
+                });
+            } else this.pages.delete(serverUrl);
             const serverTaskIds = new Set(
                 snapshots.map((snapshot) => snapshot.taskId),
             );
@@ -666,6 +1097,8 @@ export class PDF2zhTaskManager {
                         ? !newerThanList
                         : before.get(task.taskId) === task;
                 if (
+                    (list.scope !== "dashboard" ||
+                        list.missingTaskIds?.includes(task.taskId)) &&
                     !serverTaskIds.has(task.taskId) &&
                     !newerThanList &&
                     canReconcile
@@ -680,6 +1113,21 @@ export class PDF2zhTaskManager {
                         state.deleted.delete(taskId);
                 }
             }
+            // Remote history can be fetched again. Keep local attachment bindings
+            // even when their history page is not loaded.
+            const page = this.pages.get(serverUrl);
+            if (page)
+                for (const task of this.tasks.values()) {
+                    if (
+                        task.serverUrl === serverUrl &&
+                        task.source !== "local" &&
+                        !page.visible.has(task.taskId) &&
+                        !ACTIVE_STATUSES.includes(task.status) &&
+                        !task.canResume
+                    )
+                        this.tasks.delete(task.taskId);
+                }
+            this.notifyTaskListeners();
         }
 
         await this.importCompletedLocalTasks();
@@ -687,7 +1135,7 @@ export class PDF2zhTaskManager {
     }
 
     private static async importCompletedLocalTasks(): Promise<void> {
-        if (this.stopped) return;
+        if (this.stopped || this.bindingNotice) return;
         for (const task of this.getTasks()) {
             if (
                 task.source === "local" &&
@@ -733,6 +1181,20 @@ export class PDF2zhTaskManager {
                         (snapshot.attempt || 1) === (existing.attempt || 1) &&
                         snapshot.updatedAt < existing.updatedAt)));
         if (stale) {
+            // Timers advance without a state revision while a task waits in the queue.
+            if (
+                fromList &&
+                sameInstance &&
+                existing &&
+                snapshot.revision === existing.revision &&
+                snapshot.timing &&
+                snapshot.timing.totalSeconds >=
+                    (existing.timing?.totalSeconds || 0)
+            ) {
+                this.updateLocalTask(snapshot.taskId, {
+                    timing: snapshot.timing,
+                });
+            }
             // The creation response may arrive after its first SSE events.
             if (overrides.itemID && existing && !existing.itemID) {
                 this.updateLocalTask(snapshot.taskId, {
@@ -796,10 +1258,15 @@ export class PDF2zhTaskManager {
             canCancel: snapshot.canCancel,
             cancelRequested: snapshot.cancelRequested,
             boundedCancellation: snapshot.boundedCancellation,
+            recoveryState: snapshot.recoveryState,
+            canResume: snapshot.canResume,
+            timing: snapshot.timing,
             metrics: snapshot.metrics,
             canRepair: snapshot.canRepair,
             canDownloadResult: snapshot.canDownloadResult,
             translationSummary: snapshot.translationSummary,
+            translationMemorySync: snapshot.translationMemorySync,
+            canRetryMemorySync: snapshot.canRetryMemorySync,
             qualitySummary: snapshot.qualitySummary,
             failedParagraphs: snapshot.failedParagraphs,
             importedOutputs: existing?.importedOutputs,
@@ -818,7 +1285,7 @@ export class PDF2zhTaskManager {
             nextTask.importError = undefined;
             nextTask.importedOutputs = [];
         }
-        this.tasks.set(snapshot.taskId, nextTask);
+        this.tasks.set(snapshot.taskId, this.normalizeImportState(nextTask));
         this.taskChanges.set(snapshot.taskId, ++this.changeSequence);
         this.notifyTasksChanged();
     }
@@ -836,10 +1303,13 @@ export class PDF2zhTaskManager {
         if (!current) {
             return;
         }
-        this.tasks.set(taskId, {
-            ...current,
-            ...patch,
-        });
+        this.tasks.set(
+            taskId,
+            this.normalizeImportState({
+                ...current,
+                ...patch,
+            }),
+        );
         this.taskChanges.set(taskId, ++this.changeSequence);
         this.notifyTasksChanged();
     }

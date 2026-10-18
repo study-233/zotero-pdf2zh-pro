@@ -95,7 +95,9 @@ export class TaskEventStream {
 
         let source: EventSource;
         try {
-            source = new EventSourceConstructor(`${serverUrl}/tasks/events`);
+            source = new EventSourceConstructor(
+                `${serverUrl}/tasks/events?snapshot=active`,
+            );
         } catch (error) {
             this.setState(serverUrl, "error");
             ztoolkit.log("创建任务进度事件连接失败", error);

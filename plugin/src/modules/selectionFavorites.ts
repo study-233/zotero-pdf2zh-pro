@@ -29,6 +29,9 @@ export type SelectionFavorite = {
 type Library = { version: 1; entries: SelectionFavorite[] };
 let loaded: Promise<Library> | undefined;
 let writes: Promise<unknown> = Promise.resolve();
+let observedPrimary: string | undefined;
+let observedBackup: string | undefined;
+let protection: "recovered" | "changed" | undefined;
 const listeners = new Set<() => void>();
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 const path = () =>
@@ -121,15 +124,33 @@ export function parseFavorites(text: string): Library {
 async function library(): Promise<Library> {
     if (!loaded)
         loaded = (async () => {
-            if (!(await IOUtils.exists(path())))
-                return { version: 1, entries: [] } as Library;
             try {
-                return parseFavorites(await IOUtils.readUTF8(path()));
+                observedPrimary = await readFile(path());
+                if (observedPrimary !== undefined) {
+                    const primary = parseFavorites(observedPrimary);
+                    try {
+                        observedBackup = await readFile(path() + ".bak");
+                        if (observedBackup !== undefined)
+                            parseFavorites(observedBackup);
+                    } catch {
+                        protection = "changed";
+                    }
+                    return primary;
+                }
+                observedBackup = await readFile(path() + ".bak");
+                if (
+                    observedPrimary === undefined &&
+                    observedBackup === undefined
+                )
+                    return { version: 1, entries: [] } as Library;
+                throw new Error("Missing primary");
             } catch {
                 try {
-                    return parseFavorites(
+                    const recovered = parseFavorites(
                         await IOUtils.readUTF8(path() + ".bak"),
                     );
+                    protection = "recovered";
+                    return recovered;
                 } catch {
                     throw new Error(
                         "收藏库和备份无法读取。原文件已保留，请从导出文件恢复。",
@@ -142,6 +163,22 @@ async function library(): Promise<Library> {
         });
     return loaded;
 }
+async function readFile(file: string): Promise<string | undefined> {
+    return (await IOUtils.exists(file)) ? IOUtils.readUTF8(file) : undefined;
+}
+export function getFavoritesProtection() {
+    return protection;
+}
+function protectionError() {
+    return Object.assign(
+        new Error(
+            "收藏库原文件异常或已被更改，已保留文件并暂停写入。请备份后恢复收藏库并重启 Zotero。",
+        ),
+        {
+            code: "favorites_protected",
+        },
+    );
+}
 export async function listFavorites() {
     return clone((await library()).entries);
 }
@@ -150,6 +187,17 @@ function mutate<T>(edit: (entries: SelectionFavorite[]) => T): Promise<T> {
         .catch(() => {})
         .then(async () => {
             const current = await library();
+            if (protection) throw protectionError();
+            try {
+                if (
+                    (await readFile(path())) !== observedPrimary ||
+                    (await readFile(path() + ".bak")) !== observedBackup
+                )
+                    throw protectionError();
+            } catch {
+                protection = "changed";
+                throw protectionError();
+            }
             const next = clone(current);
             const result = edit(next.entries);
             await IOUtils.makeDirectory(PathUtils.parent(path())!, {
@@ -159,9 +207,11 @@ function mutate<T>(edit: (entries: SelectionFavorite[]) => T): Promise<T> {
             await IOUtils.writeUTF8(path() + ".bak", JSON.stringify(current), {
                 tmpPath: path() + ".bak.tmp",
             });
+            observedBackup = JSON.stringify(current);
             await IOUtils.writeUTF8(path(), JSON.stringify(next), {
                 tmpPath: path() + ".tmp",
             });
+            observedPrimary = JSON.stringify(next);
             loaded = Promise.resolve(next);
             listeners.forEach((fn) => {
                 try {

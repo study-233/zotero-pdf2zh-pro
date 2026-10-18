@@ -4,6 +4,7 @@ import fs from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 import { URL } from "node:url";
+const { File, crypto, TextEncoder } = globalThis;
 import { noticeModules } from "./noticeFixture.mjs";
 const notices = noticeModules()("./userNotice");
 
@@ -100,9 +101,10 @@ const qualitySummary = (changes = {}) => ({
     ...changes,
 });
 
-async function fixture(saved = []) {
+async function fixture(saved = [], submissionBindings) {
     const prefs = new Map([
         ["extensions.test.taskBindings", JSON.stringify(saved)],
+        ["extensions.test.submissionBindings", submissionBindings],
     ]);
     const writes = [];
     const sources = [];
@@ -129,11 +131,15 @@ async function fixture(saved = []) {
             get: (key) => prefs.get(key),
             set: (key, value) => {
                 prefs.set(key, value);
-                writes.push(JSON.parse(value));
+                if (key === "extensions.test.taskBindings")
+                    writes.push(JSON.parse(value));
             },
         },
         Promise: { defer: () => ({}) },
-        getMainWindow: () => ({ openDialog: () => dialog }),
+        getMainWindow: () => ({
+            openDialog: () => dialog,
+            crypto: globalThis.crypto,
+        }),
     };
     globalThis.ztoolkit = { log() {} };
     const client = {
@@ -171,6 +177,199 @@ async function fixture(saved = []) {
     managers.push(manager);
     return { manager, prefs, writes, sources, client, imports };
 }
+
+test("blocked task store preserves local bindings and exposes a stable recovery notice", async () => {
+    const { manager, client } = await fixture([local()]);
+    manager.loadLocalTasks();
+    const before = JSON.stringify(manager.getTasks());
+    let notifications = 0;
+    manager.onTasksChanged(() => notifications++);
+    client.listTasks = async () => {
+        throw Object.assign(new Error("blocked"), {
+            code: "task_store_unavailable",
+        });
+    };
+    await manager.refreshTasks();
+    const once = notifications;
+    await manager.refreshTasks();
+    assert.equal(JSON.stringify(manager.getTasks()), before);
+    assert.equal(
+        manager.taskStoreErrors.get(serverUrl).text,
+        "notice-error-task-store",
+    );
+    assert.equal(
+        notifications,
+        once,
+        "repeated failures do not repeatedly announce the same error",
+    );
+    client.listTasks = async () => ({ tasks: [snapshot()] });
+    await manager.refreshTasks();
+    assert.equal(manager.taskStoreErrors.size, 0);
+    assert.equal(manager.getTasks().length, 1);
+});
+
+test("uncertain submissions retain their ID across plugin restart without storing content or credentials", async () => {
+    const first = await fixture();
+    let firstBody;
+    globalThis.__taskManagerTests.PDF2zhHelperFactory.buildTaskRequestBody =
+        () => ({
+            fileContent: "private-pdf",
+            llm_api: { apiKey: "private-key" },
+        });
+    first.client.createTask = async (_url, body) => {
+        firstBody = body;
+        throw new Error("lost response");
+    };
+    await assert.rejects(
+        first.manager.submitTask(
+            { id: 7, key: "ITEM7", libraryID: 1 },
+            { serverUrl },
+        ),
+        /lost response/,
+    );
+    const saved = first.prefs.get("extensions.test.submissionBindings");
+    assert.doesNotMatch(saved, /private-pdf|private-key/);
+    first.manager.stop();
+    const next = await fixture([], saved);
+    globalThis.__taskManagerTests.PDF2zhHelperFactory.buildTaskRequestBody =
+        () => ({
+            fileContent: "private-pdf",
+            llm_api: { apiKey: "private-key" },
+        });
+    next.client.createTask = async (_url, body) => {
+        assert.equal(body.requestId, firstBody.requestId);
+        assert.equal(body.dedupScope, firstBody.dedupScope);
+        return snapshot();
+    };
+    await next.manager.submitTask(
+        { id: 7, key: "ITEM7", libraryID: 1 },
+        { serverUrl },
+    );
+    assert.deepEqual(
+        JSON.parse(next.prefs.get("extensions.test.submissionBindings"))
+            .pending,
+        {},
+    );
+    assert.equal(next.manager.getTasks()[0].itemID, 7);
+});
+
+test("overlapping submissions share an installation identity and retain other pending IDs", async () => {
+    const { manager, client, prefs } = await fixture();
+    const bodies = [];
+    const ready = deferred();
+    const accepted = deferred();
+    client.createTask = async (_url, body) => {
+        bodies.push(body);
+        if (bodies.length === 3) ready.resolve();
+        await accepted.promise;
+        if (body.dedupScope.endsWith(":8")) throw new Error("lost response");
+        return snapshot();
+    };
+    const submissions = Promise.allSettled([
+        manager.submitTask({ id: 7 }, { serverUrl }),
+        manager.submitTask({ id: 7 }, { serverUrl }),
+        manager.submitTask({ id: 8 }, { serverUrl }),
+    ]);
+    await ready.promise;
+    const same = bodies.filter((body) => body.dedupScope.endsWith(":7"));
+    assert.equal(same[0].requestId, same[1].requestId);
+    assert.equal(
+        new Set(bodies.map((body) => body.dedupScope.split(":")[0])).size,
+        1,
+    );
+    assert.equal(
+        Object.keys(
+            JSON.parse(prefs.get("extensions.test.submissionBindings")).pending,
+        ).length,
+        2,
+    );
+    accepted.resolve();
+    const outcomes = await submissions;
+    assert.equal(outcomes.filter((row) => row.status === "rejected").length, 1);
+    assert.deepEqual(
+        Object.values(
+            JSON.parse(prefs.get("extensions.test.submissionBindings")).pending,
+        ),
+        [bodies.find((body) => body.dedupScope.endsWith(":8")).requestId],
+    );
+});
+
+test("a definitive submission conflict allows a fresh manual submission", async () => {
+    const { manager, client } = await fixture();
+    let rejectedId;
+    client.createTask = async (_url, body) => {
+        rejectedId = body.requestId;
+        throw Object.assign(new Error("original task deleted"), {
+            submissionConflict: true,
+        });
+    };
+    await assert.rejects(
+        manager.submitTask({ id: 7 }, { serverUrl }),
+        /deleted/,
+    );
+    client.createTask = async (_url, body) => {
+        assert.notEqual(body.requestId, rejectedId);
+        return snapshot();
+    };
+    await manager.submitTask({ id: 7 }, { serverUrl });
+});
+
+test("resume queue preserves enqueue order and skips user cancellations", async () => {
+    const { manager, client } = await fixture([
+        local({
+            taskId: "second",
+            createdAt: "2026-01-02",
+            status: "paused",
+            canResume: true,
+            recoveryState: "queued",
+        }),
+        local({
+            taskId: "first",
+            createdAt: "2026-01-01",
+            status: "incomplete",
+            canResume: true,
+            recoveryState: "interrupted",
+        }),
+        local({ taskId: "cancelled", status: "cancelled", canResume: false }),
+    ]);
+    manager.openWindow();
+    const calls = [];
+    client.resumeTask = async (_url, id) => {
+        calls.push(id);
+        return snapshot({
+            taskId: id,
+            status: "queued",
+            canResume: false,
+            updatedAt: "2026-01-03",
+        });
+    };
+    await manager.resumeTasks();
+    await manager.resumeTasks();
+    assert.deepEqual(calls, ["first", "second"]);
+});
+
+test("same-revision polling refreshes queue timing without rolling back task state", async () => {
+    const timing = {
+        queueSeconds: 2,
+        executionSeconds: 0,
+        totalSeconds: 2,
+        complete: true,
+    };
+    const { manager, client } = await fixture([
+        local({ ...versioned(1), status: "queued", timing }),
+    ]);
+    client.listTasks = async () =>
+        taskList(1, [
+            versioned(1, {
+                status: "queued",
+                timing: { ...timing, queueSeconds: 9, totalSeconds: 9 },
+            }),
+        ]);
+    await manager.refreshTasks();
+    assert.equal(manager.getTasks()[0].timing.queueSeconds, 9);
+    assert.equal(manager.getTasks()[0].revision, 1);
+    assert.equal(manager.getTasks()[0].itemID, 7);
+});
 
 test("silent active streams reconnect and ignore late events from the old source", async (t) => {
     t.mock.timers.enable({ apis: ["Date"], now: 0 });
@@ -1103,12 +1302,6 @@ test("completion notifications coalesce only imported local results and deduplic
             importedOutputs: ["1:dual"],
         }),
         local({ taskId: "c", status: "completed", importState: "failed" }),
-        local({
-            taskId: "remote",
-            source: "remote",
-            status: "completed",
-            importState: "imported",
-        }),
     ]);
     let enabled = true;
     globalThis.__taskManagerTests.PDF2zhHelperFactory.isTrue = () => enabled;
@@ -1122,6 +1315,15 @@ test("completion notifications coalesce only imported local results and deduplic
     };
     globalThis.Ci = { nsIAlertsService: {} };
     manager.loadLocalTasks();
+    manager.tasks.set(
+        "remote",
+        local({
+            taskId: "remote",
+            source: "remote",
+            status: "completed",
+            importState: "imported",
+        }),
+    );
     for (const id of ["a", "a", "b", "c", "remote"])
         manager.notifyTranslationCompleted(id);
     assert.equal(sent.length, 0);
@@ -1139,4 +1341,290 @@ test("completion notifications coalesce only imported local results and deduplic
     assert.equal(sent.length, 1);
     delete globalThis.Cc;
     delete globalThis.Ci;
+});
+
+const pagedList = (revision, tasks, visible, options = {}) => ({
+    ...taskList(revision, tasks),
+    scope: "dashboard",
+    visibleTaskIds: visible,
+    missingTaskIds: [],
+    pagination: {
+        nextCursor: "next",
+        hasMore: true,
+        totalHistory: 40,
+        limit: 30,
+    },
+    ...options,
+});
+
+test("history paging keeps local bindings, active work and off-page pending imports", async () => {
+    const { manager, client, imports } = await fixture([
+        local({
+            taskId: "old-imported",
+            status: "completed",
+            importState: "imported",
+        }),
+        local({ taskId: "pending-result" }),
+    ]);
+    const running = versioned(1, { taskId: "running" });
+    const first = versioned(1, { taskId: "first", status: "completed" });
+    const pending = versioned(1, {
+        taskId: "pending-result",
+        status: "completed",
+        resultFiles: { dual: "a.pdf" },
+    });
+    let tracked;
+    client.listTasks = async (_url, page) => {
+        tracked = page.tracked;
+        return page.cursor
+            ? pagedList(
+                  2,
+                  [
+                      running,
+                      versioned(1, { taskId: "second", status: "completed" }),
+                  ],
+                  ["running", "second"],
+                  {
+                      pagination: {
+                          nextCursor: "last",
+                          hasMore: false,
+                          totalHistory: 40,
+                          limit: 30,
+                      },
+                  },
+              )
+            : pagedList(1, [running, first, pending], ["running", "first"]);
+    };
+    await manager.refreshTasks();
+    assert.ok(tracked.includes("pending-result"));
+    assert.ok(
+        manager.getTasks().some((task) => task.taskId === "old-imported"),
+    );
+    assert.ok(
+        !manager
+            .getVisibleTasks()
+            .some((task) => task.taskId === "old-imported"),
+    );
+    assert.ok(imports.includes("pending-result"));
+    await manager.changeHistoryPage(1);
+    assert.equal(manager.getHistoryPage().page, 2);
+    assert.equal(manager.getHistoryPage().hasMore, false);
+    assert.ok(
+        manager.getVisibleTasks().some((task) => task.taskId === "running"),
+    );
+    assert.ok(
+        manager.getVisibleTasks().some((task) => task.taskId === "second"),
+    );
+    assert.ok(
+        !manager.getTasks().some((task) => task.taskId === "first"),
+        "remote off-page records are released",
+    );
+    assert.ok(
+        manager.getTasks().some((task) => task.taskId === "old-imported"),
+    );
+});
+
+test("only explicitly missing tracked tasks are removed by a paged snapshot", async () => {
+    const { manager, client } = await fixture([
+        local({ taskId: "kept", importState: "imported", status: "completed" }),
+        local({ taskId: "deleted" }),
+    ]);
+    client.listTasks = async () =>
+        pagedList(1, [], [], { missingTaskIds: ["deleted"] });
+    await manager.refreshTasks();
+    assert.deepEqual(
+        manager.getTasks().map((task) => task.taskId),
+        ["kept"],
+    );
+});
+
+test("failed page fetch restores the previous page and expired cursors reset to the first page", async () => {
+    const { manager, client } = await fixture();
+    client.listTasks = async (_url, page) => {
+        if (page.cursor) throw new Error("offline");
+        return pagedList(1, [versioned(1, { status: "completed" })], ["one"]);
+    };
+    await manager.refreshTasks();
+    await assert.rejects(manager.changeHistoryPage(1), /offline/);
+    assert.equal(manager.getHistoryPage().page, 1);
+    assert.equal(manager.getVisibleTasks()[0].taskId, "one");
+    client.listTasks = async (_url, page) => {
+        if (page.cursor)
+            throw Object.assign(new Error("expired"), {
+                code: "invalid_task_page",
+            });
+        return pagedList(2, [], [], {
+            pagination: {
+                nextCursor: null,
+                hasMore: false,
+                totalHistory: 0,
+                limit: 30,
+            },
+        });
+    };
+    await manager.changeHistoryPage(1);
+    assert.equal(manager.getHistoryPage().page, 1);
+    assert.equal(manager.getHistoryPage().total, 0);
+});
+
+test("upgrading an uncertain base64 submission preserves its old request identity", async () => {
+    const body = {
+        fileName: "paper.pdf",
+        fileContent: "data:application/pdf;base64,cGRm",
+        dedupScope: "install:1:item",
+    };
+    const digest = Buffer.from(
+        await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(JSON.stringify([serverUrl, body])),
+        ),
+    ).toString("hex");
+    const { manager, client, prefs } = await fixture(
+        [],
+        JSON.stringify({
+            clientId: "install",
+            pending: { [digest]: "legacy-uncertain-0001" },
+        }),
+    );
+    const helper = globalThis.__taskManagerTests.PDF2zhHelperFactory;
+    helper.prepareFileData = async () => ({
+        fileName: "paper.pdf",
+        file: new File(["pdf"], "paper.pdf"),
+        fingerprint: "new-file-hash",
+    });
+    helper.buildTaskRequestBody = () => ({
+        fileName: "paper.pdf",
+        fileContent: undefined,
+    });
+    helper.blobToBase64 = async () => body.fileContent;
+    client.createTask = async (_url, request, _warning, file) => {
+        assert.equal(request.requestId, "legacy-uncertain-0001");
+        assert.equal(request.fileContent, undefined);
+        assert.ok(file instanceof File);
+        throw new Error("still uncertain");
+    };
+    await assert.rejects(
+        manager.submitTask({ id: 7, libraryID: 1, key: "item" }, { serverUrl }),
+        /still uncertain/,
+    );
+    const saved = JSON.parse(prefs.get("extensions.test.submissionBindings"));
+    assert.equal(saved.version, 2);
+    assert.deepEqual(saved.legacyPending, {});
+    assert.deepEqual(Object.values(saved.pending), ["legacy-uncertain-0001"]);
+    assert.ok(!JSON.stringify(saved).includes("cGRm"));
+});
+
+test("damaged local bindings are never partially loaded, overwritten or submitted", async () => {
+    const invalid = [
+        '{"truncated":',
+        "{}",
+        "null",
+        "[null]",
+        JSON.stringify([local(), { taskId: "partial" }]),
+        JSON.stringify([local(), local()]),
+        JSON.stringify([local({ importedOutputs: { broken: true } })]),
+    ];
+    for (const raw of invalid) {
+        const { manager, prefs, writes, imports, client } = await fixture();
+        prefs.set("extensions.test.taskBindings", raw);
+        prefs.set(
+            "extensions.test.taskBindingsBackup",
+            JSON.stringify([local()]),
+        );
+        let submissions = 0;
+        client.createTask = async () => {
+            submissions++;
+            return snapshot();
+        };
+        manager.loadLocalTasks();
+        assert.equal(manager.tasks.size, 0);
+        manager.saveLocalTasks();
+        await manager.refreshTasks();
+        assert.equal(prefs.get("extensions.test.taskBindings"), raw);
+        assert.equal(
+            prefs.get("extensions.test.taskBindingsBackup"),
+            JSON.stringify([local()]),
+        );
+        assert.equal(writes.length, 0);
+        assert.equal(manager.bindingNotice.text, "notice-error-task-bindings");
+        await assert.rejects(manager.submitTask({ id: 7 }, { serverUrl }), {
+            code: "task_bindings_unavailable",
+        });
+        assert.equal(submissions, 0);
+        assert.equal(imports.length, 0);
+        manager.stop();
+    }
+});
+
+test("binding read failures and missing primary with a backup keep the store blocked", async () => {
+    const first = await fixture();
+    globalThis.Zotero.Prefs.get = () => {
+        throw new Error("unreadable");
+    };
+    first.manager.loadLocalTasks();
+    first.manager.saveLocalTasks();
+    assert.equal(first.writes.length, 0);
+    assert.equal(first.manager.bindingBlocked, true);
+    first.manager.stop();
+    const second = await fixture();
+    second.prefs.delete("extensions.test.taskBindings");
+    second.prefs.set(
+        "extensions.test.taskBindingsBackup",
+        JSON.stringify([local()]),
+    );
+    second.manager.loadLocalTasks();
+    second.manager.saveLocalTasks();
+    assert.equal(second.manager.bindingBlocked, true);
+    assert.equal(second.prefs.has("extensions.test.taskBindings"), false);
+});
+
+test("valid bindings back up before changes and detect external damage even with unchanged signature", async () => {
+    const { manager, prefs, writes } = await fixture([
+        local({ importState: "importing" }),
+    ]);
+    const original = prefs.get("extensions.test.taskBindings");
+    manager.loadLocalTasks();
+    assert.equal(manager.tasks.get("one").importState, "pending");
+    manager.saveLocalTasks();
+    assert.equal(prefs.get("extensions.test.taskBindingsBackup"), original);
+    const count = writes.length;
+    prefs.set("extensions.test.taskBindings", "external damage");
+    manager.saveLocalTasks();
+    assert.equal(writes.length, count);
+    assert.equal(prefs.get("extensions.test.taskBindings"), "external damage");
+    assert.equal(prefs.get("extensions.test.taskBindingsBackup"), original);
+    assert.equal(manager.bindingBlocked, true);
+});
+
+test("binding backup or primary write failure pauses imports and recovers on retry", async () => {
+    for (const suffix of ["taskBindingsBackup", "taskBindings"]) {
+        const { manager, prefs, imports } = await fixture([
+            local({ status: "completed", canDownloadResult: true }),
+        ]);
+        manager.loadLocalTasks();
+        const original = prefs.get("extensions.test.taskBindings");
+        const set = globalThis.Zotero.Prefs.set;
+        globalThis.Zotero.Prefs.set = (key, value) => {
+            if (key === "extensions.test." + suffix)
+                throw new Error("disk full");
+            set(key, value);
+        };
+        manager.saveLocalTasks();
+        assert.equal(prefs.get("extensions.test.taskBindings"), original);
+        assert.equal(
+            manager.bindingNotice.text,
+            "notice-error-task-bindings-save",
+        );
+        await manager.importCompletedLocalTasks();
+        assert.equal(imports.length, 0);
+        assert.throws(() => manager.requireBindings(), {
+            code: "task_bindings_write_failed",
+        });
+        globalThis.Zotero.Prefs.set = set;
+        manager.requireBindings();
+        assert.equal(manager.bindingNotice, undefined);
+        await manager.importCompletedLocalTasks();
+        assert.deepEqual(imports, ["one"]);
+        manager.stop();
+    }
 });

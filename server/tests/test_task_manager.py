@@ -102,7 +102,8 @@ class TaskManagerTests(unittest.TestCase):
             self.assertIsNotNone(snapshot["metrics"])
             self.assertTrue(workspace_dir.exists())
             self.assertTrue(output_dir.exists())
-            self.assertFalse(stale_output.exists())
+            self.assertTrue(stale_output.exists())
+            self.assertNotEqual(manager._tasks["task-1"].request_payload["output_dir"], str(output_dir))
             self.assertEqual(manager._tasks["task-1"].attempt, 2)
 
     def test_persistence_restores_failed_and_completed_tasks(self) -> None:

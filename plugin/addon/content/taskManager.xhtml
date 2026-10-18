@@ -1233,8 +1233,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         <span id="connection-label">事件流未知</span>
                     </div>
                     <button id="refresh-btn" class="button">刷新</button>
+                    <button id="resume-queue-btn" class="button">
+                        继续上次队列
+                    </button>
                     <button id="retry-all-failed-btn" class="button primary">
-                        重试全部失败
+                        重试本页失败
                     </button>
                     <button id="clear-failed-btn" class="button danger">
                         清理失败任务
@@ -1243,6 +1246,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 </div>
             </div>
             <div id="operation-notice" hidden="hidden" />
+            <div id="server-notice" hidden="hidden" />
             <section
                 id="submission"
                 hidden="hidden"
@@ -1257,7 +1261,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             </section>
             <div class="stats">
                 <div class="stat">
-                    <div class="stat-label">全部任务</div>
+                    <div class="stat-label">当前列表</div>
                     <div class="stat-value">
                         <span id="stat-total">0</span>
                         <span class="stat-hint">条记录</span>
@@ -1313,6 +1317,13 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     </button>
                 </div>
                 <div id="list-meta" class="list-meta">0 个任务</div>
+            </div>
+            <div id="history-pager" class="control-bar" hidden="hidden">
+                <span id="history-label"></span>
+                <div class="toolbar-actions">
+                    <button id="history-prev" class="button">上一页历史</button>
+                    <button id="history-next" class="button">下一页历史</button>
+                </div>
             </div>
             <div id="task-list" class="list"></div>
         </div>
@@ -1416,9 +1427,38 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     .getElementById("refresh-btn")
                     .addEventListener("click", () => void refresh());
                 document
+                    .getElementById("resume-queue-btn")
+                    .addEventListener("click", async (event) => {
+                        event.currentTarget.disabled = true;
+                        reportOperation(null);
+                        try {
+                            await api.resumeTasks();
+                        } catch (error) {
+                            reportOperation(error);
+                        } finally {
+                            await refresh();
+                        }
+                    });
+                document
                     .getElementById("close-btn")
                     .addEventListener("click", () => window.close());
 
+                for (const [id, direction] of [
+                    ["history-prev", -1],
+                    ["history-next", 1],
+                ]) {
+                    document
+                        .getElementById(id)
+                        .addEventListener("click", async () => {
+                            reportOperation(null);
+                            try {
+                                await api.changeHistoryPage(direction);
+                            } catch (error) {
+                                reportOperation(error);
+                            }
+                            render(api.getTasks());
+                        });
+                }
                 await refresh();
             });
 
@@ -1456,9 +1496,26 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             function render(tasks) {
                 renderSubmission();
+                if (api?.getServerNotice && api?.renderNotice)
+                    api.renderNotice(
+                        document.getElementById("server-notice"),
+                        api.getServerNotice() || null,
+                        api.noticeAction,
+                    );
                 const root = document.getElementById("task-list");
                 currentTasks = tasks || [];
                 updateConnectionStatus();
+                const history = api?.getHistoryPage?.();
+                const pager = document.getElementById("history-pager");
+                pager.hidden = !history?.supported;
+                if (history) {
+                    document.getElementById("history-label").textContent =
+                        `历史第 ${history.page} 页 · 共 ${history.total} 条 · 每个服务每页 30 条，活动及待导入任务始终显示`;
+                    document.getElementById("history-prev").disabled =
+                        history.loading || history.page <= 1;
+                    document.getElementById("history-next").disabled =
+                        history.loading || !history.hasMore;
+                }
                 renderStats(currentTasks);
                 renderFilterButtons();
 
@@ -1475,7 +1532,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const filteredTasks = currentTasks.filter(matchesCurrentFilter);
                 setTextContent(
                     document.getElementById("list-meta"),
-                    `${filteredTasks.length}/${currentTasks.length} 个任务`,
+                    `${filteredTasks.length}/${currentTasks.length} 个已显示任务`,
                 );
 
                 if (filteredTasks.length === 0) {
@@ -1603,6 +1660,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 metaRow.appendChild(updatedAt);
                 progress.appendChild(metaRow);
                 card.appendChild(progress);
+
+                const timingSummary = document.createElement("div");
+                timingSummary.className = "progress-meta";
+                timingSummary.setAttribute(
+                    "title",
+                    "服务耗时为排队与执行之和，不含停机和待恢复时间；重试或补译重新计时。异常退出前未保存的时间不估算。",
+                );
+                card.appendChild(timingSummary);
 
                 const qualitySummary = document.createElement("div");
                 qualitySummary.className = "quality-summary";
@@ -1746,6 +1811,43 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 });
                 footerActions.appendChild(retryButton);
 
+                const resumeButton = document.createElement("button");
+                resumeButton.className = "button primary";
+                resumeButton.textContent = "继续任务";
+                resumeButton.addEventListener("click", async () => {
+                    view.pendingAction = "resume";
+                    resumeButton.disabled = true;
+                    reportOperation(null, actionNotice);
+                    try {
+                        await api.resumeTask(view.task.taskId);
+                    } catch (error) {
+                        reportOperation(error, actionNotice);
+                    } finally {
+                        view.pendingAction = null;
+                        await refresh();
+                    }
+                });
+                footerActions.appendChild(resumeButton);
+
+                const memorySyncButton = document.createElement("button");
+                memorySyncButton.className = "button";
+                memorySyncButton.textContent =
+                    api.message?.("task-memory-sync-retry") || "重试记忆同步";
+                memorySyncButton.addEventListener("click", async () => {
+                    view.pendingAction = "memory-sync";
+                    memorySyncButton.disabled = true;
+                    reportOperation(null, actionNotice);
+                    try {
+                        await api.retryMemorySync(view.task.taskId);
+                    } catch (error) {
+                        reportOperation(error, actionNotice);
+                    } finally {
+                        view.pendingAction = null;
+                        await refresh();
+                    }
+                });
+                footerActions.appendChild(memorySyncButton);
+
                 const repairButton = document.createElement("button");
                 repairButton.className = "button primary";
                 repairButton.addEventListener("click", async () => {
@@ -1798,6 +1900,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     progressFill,
                     createdAt,
                     updatedAt,
+                    timingSummary,
                     qualitySummary,
                     error,
                     actionNotice,
@@ -1809,6 +1912,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     metricsToggle,
                     cancelButton,
                     retryButton,
+                    resumeButton,
+                    memorySyncButton,
                     repairButton,
                     deleteButton,
                 });
@@ -1888,8 +1993,17 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     view.updatedAt,
                     `更新于 ${formatDate(task.updatedAt)}`,
                 );
+                setTextContent(view.timingSummary, taskTimingText(task));
+                setNodeHidden(view.timingSummary, !task.timing);
 
-                const qualityText = qualitySummaryText(task);
+                const qualityText = [
+                    qualitySummaryText(task),
+                    task.translationMemorySync === "pending"
+                        ? api.message("task-memory-sync-pending")
+                        : "",
+                ]
+                    .filter(Boolean)
+                    .join(" · ");
                 setTextContent(view.qualitySummary, qualityText);
                 setNodeHidden(view.qualitySummary, !qualityText);
 
@@ -1956,6 +2070,17 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         : "重试任务",
                 );
                 setNodeHidden(view.retryButton, !canRetry(task));
+                setNodeHidden(
+                    view.resumeButton,
+                    !task.canResume || !api.resumeTask,
+                );
+                view.resumeButton.disabled = view.pendingAction === "resume";
+                setNodeHidden(
+                    view.memorySyncButton,
+                    !task.canRetryMemorySync || !api.retryMemorySync,
+                );
+                view.memorySyncButton.disabled =
+                    view.pendingAction === "memory-sync";
                 view.retryButton.disabled = view.pendingAction === "retry";
                 setTextContent(
                     view.repairButton,
@@ -1963,11 +2088,22 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 );
                 setNodeHidden(
                     view.repairButton,
-                    !task.canRepair || !api.repairTask,
+                    !task.canRepair ||
+                        !api.repairTask ||
+                        Boolean(task.canResume),
                 );
                 view.repairButton.disabled = view.pendingAction === "repair";
                 setNodeHidden(view.deleteButton, !canDelete(task));
-                view.deleteButton.disabled = view.pendingAction === "delete";
+                view.deleteButton.disabled =
+                    view.pendingAction === "delete" ||
+                    task.translationMemorySync === "pending";
+                setAttributeValue(
+                    view.deleteButton,
+                    "title",
+                    task.translationMemorySync === "pending"
+                        ? "翻译记忆同步完成后可删除任务"
+                        : "",
+                );
             }
 
             function getTaskRenderSignature(task) {
@@ -1984,6 +2120,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     task.error,
                     task.errorDiagnostics,
                     task.translationSummary,
+                    task.translationMemorySync,
                     task.qualitySummary,
                     task.failedParagraphs,
                     task.canRepair,
@@ -1995,7 +2132,18 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     task.importState,
                     task.importError,
                     task.metrics,
+                    task.recoveryState,
+                    task.canResume,
+                    task.timing,
                 ]);
+            }
+
+            function taskTimingText(task) {
+                const timing = task.timing;
+                if (!timing) return "";
+                const duration = (seconds) =>
+                    formatCompactDuration(seconds * 1000);
+                return `${timing.complete ? "服务耗时" : "已记录耗时（部分）"} ${duration(timing.totalSeconds)} · 排队 ${duration(timing.queueSeconds)} · 执行 ${duration(timing.executionSeconds)}`;
             }
 
             function setTextContent(node, value) {
@@ -2064,6 +2212,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 );
                 document.getElementById("retry-all-failed-btn").disabled =
                     stats.failed === 0 || !api;
+                document.getElementById("resume-queue-btn").disabled =
+                    !api?.resumeTasks || !tasks.some((task) => task.canResume);
             }
 
             function renderFilterButtons() {
@@ -2128,12 +2278,26 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function isActiveTask(task) {
+                if (task.canResume) return false;
                 return (
                     task.status === "queued" ||
                     task.status === "running" ||
                     task.status === "cancelling" ||
-                    task.importState === "pending" ||
-                    task.importState === "importing"
+                    (hasImportResult(task) &&
+                        (task.importState === "pending" ||
+                            task.importState === "importing"))
+                );
+            }
+
+            function hasImportResult(task) {
+                return (
+                    (task.status === "completed" &&
+                        task.canDownloadResult !== false &&
+                        !task.translationSummary?.failed &&
+                        !task.translationSummary?.pending) ||
+                    (task.status === "incomplete" &&
+                        task.canDownloadResult === true &&
+                        Object.values(task.resultFiles || {}).some(Boolean))
                 );
             }
 
@@ -2145,7 +2309,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 return (
                     task.status === "failed" ||
                     task.status === "incomplete" ||
-                    task.importState === "failed"
+                    (task.importState === "failed" && hasImportResult(task))
                 );
             }
 
@@ -2209,7 +2373,12 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function formatStatus(task) {
+                if (task.canResume)
+                    return task.recoveryState === "queued"
+                        ? "待恢复（尚未开始）"
+                        : "待恢复（执行中断）";
                 const mapping = {
+                    paused: "待恢复",
                     queued: "排队中",
                     running: "运行中",
                     cancelling: "正在终止",
@@ -2268,6 +2437,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             function formatStage(stage) {
                 const mapping = {
                     "Queue Wait": "排队中",
+                    "Engine Wait": "等待翻译引擎",
                     Initialization: "初始化中",
                     "Font Preparation": "准备字体",
                     "Check Fonts": "检查字体",
@@ -2333,6 +2503,20 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function formatImportState(task) {
+                if (
+                    ["pending", "importing", "failed"].includes(
+                        task.importState,
+                    ) &&
+                    !hasImportResult(task)
+                )
+                    return [
+                        "queued",
+                        "running",
+                        "cancelling",
+                        "paused",
+                    ].includes(task.status)
+                        ? "待译文生成"
+                        : "无";
                 const mapping = {
                     none: "无",
                     pending: "等待导入",
@@ -2482,8 +2666,18 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             function getErrorSummary(task) {
                 if (api?.errorNotice) {
-                    if (task.importState === "failed" || task.importError)
-                        return api.errorNotice({ code: "import_failed" }).text;
+                    if (task.importState === "failed" || task.importError) {
+                        const detail = api.errorNotice({
+                            message: task.importError,
+                        });
+                        return [
+                            "error-import-deleted",
+                            "error-import-file",
+                            "error-timeout",
+                        ].includes(detail.id)
+                            ? detail.text
+                            : api.errorNotice({ code: "import_failed" }).text;
+                    }
                     if (
                         task.status === "failed" ||
                         task.error ||
@@ -2640,6 +2834,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function canDelete(task) {
+                if (task.canResume) return true;
                 if (
                     task.status === "failed" ||
                     task.status === "incomplete" ||
@@ -2656,6 +2851,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             function canCancelTask(task) {
                 if (!task || !task.canCancel) return false;
+                if (task.canResume) return true;
                 return (
                     task.status === "queued" ||
                     task.status === "running" ||

@@ -10,6 +10,13 @@ if (!basicTool.getGlobal("Zotero")[config.addonInstance]) {
     defineGlobal("AbortController", () => {
         return basicTool.getGlobal("window").AbortController;
     });
+    defineGlobal("Response", () => basicTool.getGlobal("window").Response);
+    defineGlobal("File", () => basicTool.getGlobal("window").File);
+    defineGlobal("FormData", () => basicTool.getGlobal("window").FormData);
+    defineGlobal(
+        "DOMException",
+        () => basicTool.getGlobal("window").DOMException,
+    );
     _globalThis.addon = new Addon();
     defineGlobal("ztoolkit", () => {
         return _globalThis.addon.data.ztoolkit;

@@ -19,12 +19,16 @@ NUMBERS = set('attempt attempts averageLatencyMs p95LatencyMs qps10s revision st
 FLAGS = {'cancelRequested', 'stalled', 'success', 'truncated', 'queueBlocked'}
 NUMBERS.update('poolSize page skipped selected checked passed corrected unchecked notSelected requestsUsed requestLimit paragraphLimit hits misses hitRate hitTokens missTokens reasoning visibleOutputChars'.split())
 FLAGS.update({'canRepair', 'canDownloadResult', 'failedParagraphsTruncated'})
+FLAGS.update({'canResume', 'complete'})
+NUMBERS.update({'queueSeconds', 'executionSeconds', 'totalSeconds'})
 STRINGS = {
+    'translationMemorySync': {'pending', 'synced'},
     'stage': {'Queue Wait','Initialization','Check Fonts','Download Fonts','Font Preparation','Parse PDF and Create Intermediate Representation','Detect Scanned Pages','Parse Page Layout','Parse Table','Parse Paragraphs','Parse Formulas and Styles','Extract Terms','Translate Paragraphs','Typesetting','Add Fonts','Generate drawing instructions','Subset font','Save PDF','Finalize'},
     'retryReason': {'timeout','rate_limit','connection','server_error','invalid_output','other'},
     'errorType': {'ReadTimeout','ConnectTimeout','TimeoutError','APITimeoutError','RateLimitError','APIConnectionError','APIStatusError','AuthenticationError','PermissionDeniedError','NotFoundError','BadRequestError','InternalServerError','InvalidTranslation','UnprocessedParagraph','RuntimeError','ValueError','CancelledError','ConnectionError','CodexError','ChatGPTError'},
     'finishReason': {'stop','length','content_filter','tool_calls','function_call','completed','incomplete','failed','cancelled','max_output_tokens','other'},
-    'status': {'queued','running','cancelling','completed','incomplete','failed','cancelled'},
+    'status': {'queued','paused','running','cancelling','completed','incomplete','failed','cancelled'},
+    'recoveryState': {'queued', 'interrupted'},
     'operation': {'page_start','page_end','font','resources','content_stream','initialization'},
     'cancelPhase': {'requested','terminating','killing','cancelled','cleanup_failed'},
     'cancelReason': {'user','forced','shutdown'},
@@ -40,10 +44,11 @@ STRINGS = {
                      'codex_arch_mismatch','codex_version_too_old','codex_version_unrecognized','codex_cancelled'},
     'availability': {'complete','partial','unavailable'},
 }
+STRINGS['stage'].add('Engine Wait')
 IDENTIFIERS = {'taskId', 'serverInstanceId', 'errorId'}
 LABELS = {'provider', 'service', 'model', 'sourceLang', 'targetLang'}
 CONTAINERS = set('requestedConfiguration effectiveConfiguration translationSummary qualitySummary metrics requests tokens byKind translation review initialization localCache providerCache'.split())
-CONTAINERS.update({'byPurpose', 'term_extraction', 'validation'})
+CONTAINERS.update({'byPurpose', 'term_extraction', 'validation', 'timing'})
 NUMBERS.update({'accepted', 'partial', 'rejected', 'firstParagraphMs'})
 COUNT_MAPS = {'statusCodes', 'errorTypes', 'finishReasons', 'protocols'}
 
@@ -93,7 +98,7 @@ def safe_fields(data, _depth=0):
                            for row in value[:2000] if isinstance(row, dict)]
             if len(value) > 2000: result['failedParagraphsTruncated'] = True
         elif key in IDENTIFIERS and isinstance(value, str) and re.fullmatch(r'[a-zA-Z0-9-]{1,64}', value): result[key] = value
-        elif key in {'createdAt','updatedAt','lastProgressAt','heartbeatAt','lastRequestAt'} and isinstance(value,str) and re.fullmatch(r'[0-9TZ:.+\-]{10,40}',value): result[key] = value
+        elif key in {'createdAt','updatedAt','lastProgressAt','heartbeatAt','lastRequestAt','queuedAt','startedAt','finishedAt'} and isinstance(value,str) and re.fullmatch(r'[0-9TZ:.+\-]{10,40}',value): result[key] = value
     return result
 
 

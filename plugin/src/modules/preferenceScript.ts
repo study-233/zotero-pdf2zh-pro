@@ -836,7 +836,9 @@ async function refreshServerVersion() {
                 ? "pref-server-degraded"
                 : "pref-server-connected",
         );
-        if (data.status === "degraded")
+        if (data.taskStore?.status === "blocked" && data.taskStore.message)
+            status("connectionResult", data.taskStore.message);
+        else if (data.status === "degraded")
             localizedStatus("connectionResult", "pref-server-check-storage");
         else status("connectionResult", "");
         element("serverVersionCard")?.setAttribute("data-state", "ok");

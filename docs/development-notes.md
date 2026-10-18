@@ -323,6 +323,32 @@ Python 修改后，以及开发结束时分别执行：
 Zotero 即回到正式环境。若手动关闭开发 Zotero，后端可能仍在运行，用 `stop` 收尾。
 需要重新打开开发环境时，可用 `restart` 一次执行停止和启动；保留数据，有活动任务或停止失败时不会继续启动。
 
+### 任意目录一键切换
+
+初始化完成后，将 [scripts/zotero-dev](../scripts/zotero-dev) 链接到 `PATH` 中的目录。
+例如，使用 Homebrew 的 macOS 在仓库根目录执行一次：
+
+```bash
+ln -s "$PWD/scripts/zotero-dev" "$(brew --prefix)/bin/zotero-dev"
+```
+
+之后在任意目录运行，无需先进入项目文件夹：
+
+```bash
+zotero-dev                 # 正式版与开发版之间自动切换；均未运行时启动开发版
+zotero-dev dev             # 切到开发版；已经运行时不重复启动
+zotero-dev formal          # 收尾开发进程并打开原来的正式 Profile
+zotero-dev status          # 查看开发环境状态
+zotero-dev restart-server  # Python 源码修改后重启开发后端
+```
+
+`./scripts/dev.sh switch [dev|formal]` 提供同样的切换功能。切到开发版会请求已确认身份的
+正式 Zotero 正常退出；出现退出确认框时需自行处理，退出超时则停止切换。
+开发版有活动翻译任务、进程身份不符或存在其他 Profile 时，切换会停止并提示原因。
+手动关闭开发窗口后若仍有开发进程，无参数命令会收尾并回到正式版。
+两边的文献库、模型配置和任务数据保留，正式后端 8890 继续运行。
+入口通过符号链接定位项目；移动仓库后需重新创建链接。
+
 所有开发数据在 `.local-dev/runtime/`：`profile/`、`library/`、`tasks/`、`config/`、
 `cache/`、`logs/`、`samples/` 和 `backups/`。后端通过 `PDF2ZH_CONFIG_DIR` 隔离配置，
 通过 `PDF2ZH_TRANSLATION_CACHE_DIR` 分别隔离 pdf2zh-next 与 BabelDOC 翻译数据库。
@@ -348,7 +374,7 @@ uv run --directory server --locked python -m unittest discover -s tests -p 'test
 
 ### 故障恢复
 
-- 正式 Zotero 仍在运行：正常退出后重试，脚本不会替你强行关闭。
+- 正式 Zotero 仍在运行：`start` 要求先正常退出；日常可用 `zotero-dev dev` 请求正常退出并切换。
 - 8891 被占用：用 `status` 检查自己的开发进程；未知占用者由用户核实，不自动结束。
 - 后端或插件未就绪：查看 `logs/server-console.log`、`logs/server.log`、`logs/plugin.log`。
 - PID 失效或目录不匹配：停止操作并核对进程和 `environment.json`，不要删除文献库。

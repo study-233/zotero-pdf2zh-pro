@@ -256,7 +256,9 @@ class RecoveryTests(unittest.TestCase):
             self.assertTrue(old.exists())
             self.assertEqual(restored._tasks["task"].request_payload["qps"], 2)
             self.assertEqual(restored._tasks["task"].request_payload["pool_size"], 4)
-            self.assertEqual(TaskManager(root/"tasks.json").get_task("task")["status"], "incomplete")
+            queued = TaskManager(root/"tasks.json").get_task("task")
+            self.assertEqual(queued["status"], "paused")
+            self.assertEqual(queued["recoveryState"], "queued")
 
 
 if __name__ == "__main__":

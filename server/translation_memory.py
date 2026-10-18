@@ -21,8 +21,9 @@ def document_fingerprint(path: Path) -> str:
 
 
 class TranslationMemory:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, *, timeout=30):
         self.path = Path(path)
+        self.timeout = timeout
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with closing(self.connect()) as db, db:
             db.executescript("""
@@ -41,17 +42,21 @@ class TranslationMemory:
                 );
                 CREATE INDEX IF NOT EXISTS idx_memory_page ON paragraphs(document_id, target_lang, page);
                 CREATE INDEX IF NOT EXISTS idx_memory_source ON paragraphs(document_id, source_hash);
+                CREATE TABLE IF NOT EXISTS recovery_sync (
+                    source_key TEXT PRIMARY KEY, source_signature TEXT NOT NULL,
+                    checkpoint_signature TEXT NOT NULL, fingerprint TEXT NOT NULL
+                );
             """)
             if "formatting_incomplete" not in {row[1] for row in db.execute("PRAGMA table_info(paragraphs)")}:
                 db.execute("ALTER TABLE paragraphs ADD COLUMN formatting_incomplete INTEGER NOT NULL DEFAULT 0")
 
     def connect(self):
-        db = sqlite3.connect(self.path, timeout=30)
+        db = sqlite3.connect(self.path, timeout=self.timeout)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys=ON")
         return db
 
-    def upsert(self, fingerprint, entries, *, target_lang="zh-CN", filename=""):
+    def upsert(self, fingerprint, entries, *, target_lang="zh-CN", filename="", sync_marker=None):
         rows = []
         for entry in entries:
             source = entry.get("source") or ""
@@ -84,6 +89,9 @@ class TranslationMemory:
                 translation=excluded.translation, normalized_translation=excluded.normalized_translation,
                 formatting_incomplete=excluded.formatting_incomplete
             """, [(document_id, *row) for row in rows])
+            if sync_marker is not None:
+                db.execute("INSERT OR REPLACE INTO recovery_sync VALUES (?, ?, ?, ?)",
+                           (*sync_marker, fingerprint))
         return len(rows)
 
     def lookup(self, fingerprint, text, *, page=None, side="source", target_lang=None):
@@ -120,7 +128,15 @@ class TranslationMemory:
                 "fromTranslationMemory": True, "formattingIncomplete": bool(row["formatting_incomplete"])}
 
 
-def sync_recovery(memory_path, payload):
+def _file_signature(path):
+    try:
+        stat = path.stat()
+    except FileNotFoundError:
+        return None
+    return [stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns]
+
+
+def sync_recovery(memory_path, payload, *, timeout=30):
     """Read only the checkpoint; never alter its fingerprint, retries or lifetime."""
     if not payload.get("input_path"):
         return 0
@@ -128,7 +144,26 @@ def sync_recovery(memory_path, payload):
     checkpoint = input_path.parent / "paragraph-recovery.sqlite3"
     if not checkpoint.is_file() or not input_path.is_file():
         return 0
-    with closing(sqlite3.connect(checkpoint.resolve().as_uri() + "?mode=ro", uri=True)) as db:
+    memory = TranslationMemory(memory_path, timeout=timeout)
+    target_lang = payload.get("target_lang", "zh-CN").lower().replace("_", "-")
+    # Include WAL changes and source identity; never trust the main SQLite mtime alone.
+    # Keep the marker in the memory DB so deleting/rebuilding that DB triggers backfill.
+    key = json.dumps([1, str(input_path.resolve()), target_lang])
+    source_signature = json.dumps(_file_signature(input_path))
+    def checkpoint_signature():
+        return json.dumps([_file_signature(checkpoint), _file_signature(Path(str(checkpoint) + "-wal"))])
+    signature = checkpoint_signature()
+    with closing(memory.connect()) as db:
+        previous = db.execute("SELECT * FROM recovery_sync WHERE source_key=?", (key,)).fetchone()
+    if previous and previous["source_signature"] == source_signature and previous["checkpoint_signature"] == signature:
+        return 0
+    fingerprint = (previous["fingerprint"] if previous and previous["source_signature"] == source_signature
+                   else document_fingerprint(input_path))
+    with closing(sqlite3.connect(checkpoint.resolve().as_uri() + "?mode=ro", uri=True, timeout=timeout)) as db:
         entries = [json.loads(row[0]) for row in db.execute("SELECT payload FROM paragraphs")]
-    return TranslationMemory(memory_path).upsert(document_fingerprint(input_path), entries,
-        target_lang=payload.get("target_lang", "zh-CN"), filename=input_path.name)
+    source_stable = source_signature == json.dumps(_file_signature(input_path))
+    stable = signature == checkpoint_signature()
+    return memory.upsert(fingerprint, entries, target_lang=target_lang, filename=input_path.name,
+                         # If WAL creation/checkpointing overlaps the read, retry
+                         # paragraphs next time but retain the valid source hash.
+                         sync_marker=(key, source_signature, signature if stable else "") if source_stable else None)

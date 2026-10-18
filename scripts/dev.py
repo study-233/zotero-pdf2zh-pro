@@ -155,7 +155,11 @@ class MacOS:
     @staticmethod
     def listeners(port):
         result = subprocess.run(["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-t"],
-                                capture_output=True, text=True, check=True)
+                                capture_output=True, text=True)
+        # lsof returns 1 for a valid query with no matching listener.
+        if result.returncode == 1 and not result.stdout.strip() and not result.stderr.strip():
+            return set()
+        result.check_returncode()
         return set(result.stdout.split())
 
     def owned(self, record):
@@ -173,6 +177,39 @@ class MacOS:
                 return
             time.sleep(0.1)
         raise DevError("开发进程未正常退出；未强制结束，请查看日志。")
+
+    def command_line(self, record):
+        # ps flattens arguments, losing spaces in Profile paths. Read argv directly.
+        if not self.owned(record):
+            raise DevError("Zotero 进程身份已变化，请重新执行切换。")
+        try:
+            import psutil
+        except ImportError:
+            raise DevError("请使用 scripts/dev.sh switch；需先运行 init 准备独立 Python 环境。") from None
+        try:
+            process = psutil.Process(record["pid"])
+            result = {"exe": process.exe(), "argv": process.cmdline()}
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            raise DevError("无法读取 Zotero 进程参数，请检查窗口后重试切换。") from None
+        if not self.owned(record):
+            raise DevError("Zotero 进程身份已变化，请重新执行切换。")
+        return result
+
+    def close_zotero(self, record):
+        if not self.owned(record):
+            raise DevError("Zotero 进程身份已变化，请重新执行切换。")
+        try:
+            result = subprocess.run(["osascript", "-e", 'tell application id "org.zotero.zotero" to quit'],
+                                    capture_output=True, timeout=30)
+        except subprocess.TimeoutExpired:
+            raise DevError("Zotero 尚未退出；请处理退出确认框或手动退出，再重试切换。未强制结束进程。") from None
+        if result.returncode:
+            raise DevError("无法请求 Zotero 正常关闭，请手动退出后重试切换。")
+        for _ in range(300):
+            if not self.owned(record):
+                return
+            time.sleep(0.1)
+        raise DevError("Zotero 尚未退出；请处理退出确认框或手动退出，再重试切换。未强制结束进程。")
 
     @staticmethod
     def source_profile():
@@ -619,7 +656,7 @@ class Development:
             return [p for p in self.platform.zotero() if matches(p)]
         marker = "-profile " + str(self.paths()["profile"])
         return [p for p in self.platform.zotero() if marker + " " in p["command"]
-                and "--dataDir " + str(self.paths()["library"]) + " " in p["command"]]
+                and "--dataDir " + str(self.paths()["library"]) + " " in p["command"] + " "]
 
     def start(self):
         self.platform.require_closed()
@@ -706,6 +743,8 @@ class Development:
 
     def is_formal_zotero(self, process):
         config = self.config()
+        if isinstance(self.platform, MacOS):
+            process = self.platform.command_line(process)
         if not same_path(process["exe"], config["zoteroBin"]):
             return False
         profile = None
@@ -732,9 +771,11 @@ class Development:
         env = dict(os.environ)
         env.pop("PDF2ZH_DEV_RUNTIME", None)
         command = [config["zoteroBin"], "-no-remote", "-profile", config["sourceProfile"]]
+        options = ({"creationflags": subprocess.CREATE_NO_WINDOW} if isinstance(self.platform, Windows)
+                   else {"start_new_session": True})
         process = subprocess.Popen(command, cwd=Path(config["zoteroBin"]).parent, env=env,
                                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
+                                   stderr=subprocess.DEVNULL, **options)
         for _ in range(60):
             if process.poll() is not None:
                 break
@@ -745,13 +786,11 @@ class Development:
         raise DevError("尚未确认正式 Zotero 启动，请检查窗口；开发数据已保留。")
 
     def switch(self, target=None):
-        if not isinstance(self.platform, Windows):
-            raise DevError("一键切换当前仅支持 Windows；macOS 请使用 start / stop。")
         config = self.config()
         self.validate_paths(config)
         if not Path(config["zoteroBin"]).is_file() or not (Path(config["sourceProfile"]) / "prefs.js").is_file():
             raise DevError("Zotero 程序或正式 Profile 不存在，请检查 init 配置后重试。")
-        instances = [p for p in self.platform.zotero() if "-contentproc" not in p["argv"]]
+        instances = [p for p in self.platform.zotero() if "-contentproc" not in p.get("argv", ())]
         if len(instances) > 1:
             raise DevError("检测到多个 Zotero 主进程，请先手动退出多余实例再切换。")
         state = self.state()

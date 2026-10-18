@@ -96,3 +96,37 @@ class MaintenanceTests(unittest.TestCase):
             self.assertEqual(rejected.headers['X-PDF2ZH-Maintenance'],'not-accepted')
             client.delete('/internal/maintenance', headers=headers)
             self.assertEqual(client.post('/work').status_code,200)
+
+    def test_dashboard_post_polling_is_read_only_during_idle_and_maintenance(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            now = [0.0]
+            gate = MaintenanceGate(lambda: False, lambda: now[0])
+            app = Flask(__name__)
+            with patch('maintenance.MaintenanceGate', return_value=gate):
+                install_routes(app, lambda: False, lambda: Path(temporary))
+            @app.post('/tasks/query')
+            def query(): return {'tasks': []}
+            @app.post('/tasks')
+            def create(): return {'accepted': True}
+            @app.get('/tasks/one/result')
+            def result(): return Response(iter(['pdf']))
+            @app.post('/tasks/one/cancel')
+            def cancel(): return {'status': 'cancelled'}
+            client = app.test_client()
+            for second in range(5, 105, 5):
+                now[0] = second
+                self.assertEqual(client.post('/tasks/query', json={'limit': 30}).status_code, 200)
+            self.assertEqual(gate.snapshot()['idleSeconds'], 100)
+            self.assertTrue(gate.acquire(60))
+            self.assertEqual(client.post('/tasks/query', json={}).status_code, 200)
+            for path in ('/tasks', '/tasks/one/cancel', '/tasks/query/extra'):
+                response = client.post(path)
+                self.assertEqual(response.status_code, 503)
+                self.assertIs(response.json['accepted'], False)
+            self.assertEqual(client.get('/tasks/one/result').status_code, 503)
+            gate.release()
+            now[0] += 60
+            response = client.get('/tasks/one/result', buffered=False)
+            self.assertFalse(gate.acquire(0))
+            response.close()
+            self.assertEqual(gate.snapshot()['activeRequests'], 0)

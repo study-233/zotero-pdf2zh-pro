@@ -28,6 +28,28 @@ test("structured failures take priority and unknown raw text never reaches the U
         "notice-error-unknown",
     );
     assert.equal(JSON.stringify(original), before);
+    assert.equal(
+        errorNotice({ code: "task_store_unavailable" }, t).text,
+        "notice-error-task-store",
+    );
+    assert.equal(
+        errorNotice(
+            new Error(
+                "此结果已导入，但附件已删除；请先在 Zotero 中恢复该附件。",
+            ),
+            t,
+        ).text,
+        "notice-error-import-deleted",
+    );
+    assert.equal(
+        errorNotice(
+            new Error(
+                "此结果已导入，但附件文件不可用；请先恢复或同步附件文件。",
+            ),
+            t,
+        ).text,
+        "notice-error-import-file",
+    );
 });
 
 test("older service text distinguishes transient network failure from expired login", () => {

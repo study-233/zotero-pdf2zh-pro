@@ -446,3 +446,39 @@ test("visual attachment title uses task model, ignores missing fields, and remai
     });
     assert.equal(state.imports[0].title, "精读 · task-model · 双语对照");
 });
+
+test("output identity isolates server, task, attempt, mode, library and source item", async () => {
+    const identity = (overrides = {}) => {
+        const values = {
+            server: "http://localhost:8890",
+            task: "task-1",
+            attempt: 1,
+            mode: "dual",
+            item: { id: 1, libraryID: 1, key: "SOURCE1" },
+            ...overrides,
+        };
+        return PDF2zhHelperFactory.taskOutputIdentity(
+            values.server,
+            values.task,
+            values.attempt,
+            values.mode,
+            values.item,
+        );
+    };
+    const first = await identity();
+    assert.match(first, /^[a-f0-9]{64}$/);
+    assert.equal(await identity({ server: "http://localhost:8890/" }), first);
+    assert.equal(
+        await identity({ item: { id: 99, libraryID: 1, key: "SOURCE1" } }),
+        first,
+    );
+    for (const value of [
+        { server: "http://localhost:8891" },
+        { task: "task-2" },
+        { attempt: 2 },
+        { mode: "mono" },
+        { item: { libraryID: 2, key: "SOURCE1" } },
+        { item: { libraryID: 1, key: "SOURCE2" } },
+    ])
+        assert.notEqual(await identity(value), first);
+});

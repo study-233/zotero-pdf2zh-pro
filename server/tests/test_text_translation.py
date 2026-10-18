@@ -24,7 +24,7 @@ class TextTests(unittest.TestCase):
     def test_health_exposes_selection_protocol_capabilities(self):
         with patch.object(server, 'build_workspace_health', return_value={'writable': True}), \
              patch.object(server, 'build_task_stats', return_value={}), \
-             patch.object(server, 'TASK_MANAGER', SimpleNamespace(_queue_blocked=False)):
+             patch.object(server, 'TASK_MANAGER', SimpleNamespace(_queue_blocked=False, task_store_health=lambda: {'status': 'ok'})):
             capabilities = server.create_app().test_client().get('/health').json['capabilities']
         self.assertTrue(capabilities['exactSelectionTranslation'])
         self.assertTrue(capabilities['bingSelectionTranslation'])

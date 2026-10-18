@@ -187,12 +187,12 @@ class TaskSyncTests(unittest.TestCase):
         self.assertIsNone(restored._worker)
         self.assertEqual(
             {task["taskId"]: task["status"] for task in restored.list_tasks()},
-            {"first": "incomplete", "second": "incomplete", "user-cancelled": "cancelled"},
+            {"first": "incomplete", "second": "paused", "user-cancelled": "cancelled"},
         )
         for task_id in ("first", "second"):
             task = restored.get_task(task_id)
             self.assertFalse(task["cancelRequested"])
-            self.assertTrue(task["canRepair"])
+            self.assertTrue(task["canResume"])
         self.assertTrue(restored.get_task("user-cancelled")["cancelRequested"])
         with self.assertRaisesRegex(ValueError, "shutting down"):
             self.manager.repair_task("first")

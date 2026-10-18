@@ -294,6 +294,129 @@ New task metrics omit `cost`. Token and upstream cache values may be `null`, wit
 `availability` indicating `unavailable`, `partial`, or `complete`. Legacy cost
 fields are ignored when reading historical records.
 
+## Task admission, restart recovery and elapsed time
+
+`/health.capabilities` advertises `taskSubmissionIdempotency`, `taskRecovery`, and
+`taskTiming`. `POST /tasks` accepts an optional `requestId` (16–128 ASCII letters,
+digits, underscores or hyphens) and `dedupScope` (up to 256 characters). Persist
+and reuse the request ID when the submission outcome is unknown. Replays return
+the original task, including after completion or restart; reusing an ID with a
+different file/configuration returns HTTP 409. Deleted tasks retain an ID tombstone
+and also return 409. The plugin scopes content deduplication to its installation
+and Zotero attachment: a new ID with the same file/configuration reuses an active
+or recoverable task in that scope. A new ID after completion creates a new task.
+Legacy submissions without `requestId` retain the previous behavior.
+
+Task acceptance and ID mappings are persisted before execution. Redundant upload
+workspaces are removed; the original task workspace is retained. The plugin retries
+an ambiguous POST once only when the server advertises idempotency, and retains
+unresolved submission IDs across plugin restarts without storing PDFs or keys in
+that index.
+
+Task snapshots use `schemaVersion: 1` (unversioned legacy snapshots are still read).
+Invalid JSON, invalid records/indexes, unsupported versions or unreadable files block
+the task store instead of creating an empty writable queue. `/health` then reports
+`status: degraded` and `taskStore: {status: blocked, reason, backupAvailable, message}`.
+All `/tasks` endpoints return HTTP 503 with `code: task_store_unavailable`; they never
+report a damaged store as a successful empty list. Existing files changed or removed
+outside the manager are also protected from subsequent saves.
+
+The original file is preserved. Where possible, a byte-for-byte `tasks.json.recovery-*`
+copy is retained; successful saves keep the previous validated snapshot in
+`tasks.json.bak`. Backup failures prevent new admissions. Backups are not automatically
+loaded: an older snapshot may omit accepted submissions and could cause duplicate work.
+Stop the service and back up the data directory before repairing/restoring a snapshot,
+then restart and review recovered tasks before continuing them.
+
+Task mutations (`retry`, `repair`, `resume`, deletion and failed-task clearing) commit
+before publishing acceptance or cleaning files. Retry/repair use separate attempt output
+directories, preserving earlier outputs until task deletion. Write failures return HTTP 503
+with `code: task_persistence_failed`; `taskStore.writeFailed` stays true until a successful
+save. Cancellation still signals the worker if saving fails, but reports the failure;
+repeat cancellation after fixing storage to persist the stopped state. No failed save is
+reported as durable success. Read-only `POST /tasks/query` does not reset maintenance
+idle time and remains available while the maintenance gate is held.
+
+Translation-memory sync runs in a single background queue after PDF completion. Startup
+also schedules incremental backfill without delaying readiness. A failed sync keeps
+`translationMemorySync: pending` and retries after 2, 5, 15, then 60 seconds, with a
+one-second SQLite busy timeout. The task and its checkpoint remain available until sync
+completes. `POST /tasks/{taskId}/retry-memory-sync` requests an immediate retry (202;
+missing task 404; no completed result 409). It never starts translation. Successful sync
+persists `synced`; pending tasks cannot be deleted before their memory has been saved.
+
+Request, token, cache and stage totals span resumed executions of the same attempt;
+`metrics.currentExecution` retains the latest execution snapshot. Active requests, QPS
+and ETA describe that execution. Retry and repair start a fresh attempt. Latency averages
+are weighted by completed requests; P95 uses the latest 200 retained samples and remains
+unknown when older records lack enough information to combine it accurately.
+
+Finite plugin task requests retain cancellation through the complete response body:
+ordinary request/download headers have a 10-second deadline; ordinary requests have a 30-second total deadline
+and 10-second body idle deadline. PDF downloads use 10 minutes total and 30 seconds
+body idle. Task uploads allow 10 minutes for headers and total transfer, then a
+30-second response-body idle deadline. Selection streaming keeps its own transport and cancellation policy.
+
+Restart restores queued tasks as `paused` with `recoveryState: queued`, and
+interrupted execution as `incomplete` with `recoveryState: interrupted`.
+`canResume: true` enables `POST /tasks/{taskId}/resume` (202; missing task 404,
+unavailable input or blocked queue 409). Repeated resume calls do not enqueue twice.
+Restored tasks wait for the user to continue the queue, preserving the original
+configuration, attempt and paragraph checkpoints. Explicitly cancelled tasks stay
+cancelled. Legacy shutdown-interrupted tasks are recoverable too; ordinary repair
+remains a separate action with its own limits and new attempt.
+
+The optional `timing` snapshot contains `queuedAt`, `startedAt`, `finishedAt`,
+`queueSeconds`, `executionSeconds`, `totalSeconds`, and `complete`. Monotonic
+counters measure actual queue/execution time; total is their sum. Downtime and
+waiting for resume are excluded, as are upload and Zotero import. Resume accumulates
+these counters; retry/repair resets them. Runtime heartbeats checkpoint elapsed
+time at most once per five seconds. After an abrupt exit, persisted counters are
+marked partial (`complete: false`) without guessing unsaved time; old tasks have
+no timing until resumed and then remain partial. Metrics `Queue Wait` now means
+task queue time, while `Engine Wait` measures the translation engine lock.
+
+## Binary uploads, history pagination and incremental startup sync
+
+`/health.capabilities.binaryTaskUpload` advertises multipart `POST /tasks` support.
+Send one `file` part with PDF bytes and one `metadata` text part containing the
+existing JSON task options (including `fileName`, `requestId`, and `dedupScope`),
+without `fileContent`. Files are spooled by Werkzeug and copied in 1 MiB chunks;
+the PDF limit is 512 MiB and metadata is bounded to 1 MiB. Invalid or redundant
+uploads remove only their newly allocated workspace. Existing JSON/Base64 uploads
+remain supported and use the same server-side content fingerprint. The plugin
+negotiates the transport before submission, and keeps uncertain pre-upgrade
+submission IDs when migrating to binary uploads.
+
+`/health.capabilities.taskPagination` advertises `POST /tasks/query` with JSON
+`{limit: 30, cursor?: string, tracked?: string[]}`. Limits are 1–100; tracked IDs
+are limited to 10,000 per query. Read-only `GET /tasks?view=dashboard&limit=30`
+also supports `cursor`. Responses carry `scope: dashboard`, `tasks`,
+`visibleTaskIds`, `missingTaskIds`, and `pagination: {nextCursor, hasMore,
+totalHistory, limit}`, plus the existing instance/revision metadata. They contain
+all active/recoverable tasks, one history page and any requested tracked tasks.
+Only `missingTaskIds` confirms deletion of tracked records; absence from a page
+does not mean deletion. Pending local imports are reconciled even outside the
+visible history page. The plugin falls back to the full list on older servers.
+
+History sorts by `(createdAt, taskId)` descending. Cursors remain usable when the
+boundary task is deleted, and bind to the current server instance. They describe
+live pages, not a frozen database snapshot: new history appears when revisiting
+the first page. Invalid/expired cursors return 400 (`invalid_task_page` from the
+query endpoint); clients reset expired cursors after restart. Legacy `GET /tasks`
+keeps the full-snapshot contract. `/tasks/events?snapshot=active` sends only active
+and recoverable tasks initially, followed by all changes; the legacy event URL
+retains its full initial snapshot.
+
+Startup translation-memory backfill stores sync receipts in the memory SQLite DB,
+atomically with paragraph upserts. Receipt identity includes source path, target
+language and migration version. Source/checkpoint filesystem signatures include
+size, nanosecond timestamps and file identity; checkpoint signatures also include
+WAL. Unchanged sources reuse their SHA-256 and unchanged checkpoints skip paragraph
+reads. Changes observed during a read force a later retry. Rebuilding the memory
+database invalidates receipts automatically. Task checkpoints are only read; a
+failed sync does not prevent service startup and retries on the next startup.
+
 ## Translation completeness and repair
 
 Task details and SSE events expose `translationSummary`, `failedParagraphs`, and

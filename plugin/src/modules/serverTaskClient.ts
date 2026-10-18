@@ -24,8 +24,22 @@ type TaskCreateResponse = {
 };
 
 export class ServerTaskClient {
-    static async listTasks(serverUrl: string): Promise<ServerTaskList> {
-        const response = await diagnosticFetch(`${serverUrl}/tasks`);
+    static async listTasks(
+        serverUrl: string,
+        page?: { cursor?: string; tracked: string[] },
+    ): Promise<ServerTaskList> {
+        let response = await diagnosticFetch(
+            `${serverUrl}/tasks${page ? "/query" : ""}`,
+            page
+                ? {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ ...page, limit: 30 }),
+                  }
+                : undefined,
+        );
+        if (page && [404, 405].includes(response.status))
+            response = await diagnosticFetch(`${serverUrl}/tasks`);
         if (!response.ok) {
             throw await this.readError(response);
         }
@@ -34,10 +48,30 @@ export class ServerTaskClient {
         if (!Array.isArray(payload.tasks)) {
             throw new Error("服务器返回的任务列表格式不正确");
         }
+        if (
+            payload.scope === "dashboard" &&
+            (!payload.pagination ||
+                typeof payload.pagination.hasMore !== "boolean" ||
+                !Number.isInteger(payload.pagination.totalHistory) ||
+                payload.pagination.totalHistory < 0 ||
+                !(
+                    payload.pagination.nextCursor === null ||
+                    typeof payload.pagination.nextCursor === "string"
+                ) ||
+                !Array.isArray(payload.visibleTaskIds) ||
+                !payload.visibleTaskIds.every((id) => typeof id === "string") ||
+                !Array.isArray(payload.missingTaskIds) ||
+                !payload.missingTaskIds.every((id) => typeof id === "string"))
+        )
+            throw new Error("服务器返回的历史分页格式不正确");
         return {
             tasks: payload.tasks,
             serverInstanceId: payload.serverInstanceId,
             revision: payload.revision,
+            scope: payload.scope,
+            visibleTaskIds: payload.visibleTaskIds,
+            missingTaskIds: payload.missingTaskIds,
+            pagination: payload.pagination,
         };
     }
 
@@ -45,7 +79,10 @@ export class ServerTaskClient {
         serverUrl: string,
         requestBody: Record<string, unknown>,
         onWarning?: (message: string) => void,
+        file?: File,
     ): Promise<ServerTaskSnapshot> {
+        let idempotent = false;
+        let binaryUpload = false;
         const api = requestBody.llm_api as LLMApiData | undefined;
         const needsApiCheck = Boolean(
             api &&
@@ -67,12 +104,17 @@ export class ServerTaskClient {
             needsApiCheck ||
             needsGlossary ||
             needsGlossaryPacks ||
-            needsReview
+            needsReview ||
+            requestBody.requestId ||
+            file
         ) {
             const healthResponse = await diagnosticFetch(`${serverUrl}/health`);
             if (!healthResponse.ok) throw await this.readError(healthResponse);
             const health =
                 (await healthResponse.json()) as ServerHealthResponse;
+            idempotent =
+                health.capabilities?.taskSubmissionIdempotency === true;
+            binaryUpload = health.capabilities?.binaryTaskUpload === true;
             const unavailable = [];
             if (needsGlossary && health.capabilities?.glossaryEntries !== true)
                 unavailable.push("术语表");
@@ -108,20 +150,70 @@ export class ServerTaskClient {
                 }
             }
         }
-        const response = await diagnosticFetch(`${serverUrl}/tasks`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody),
-        });
-        if (!response.ok) {
-            throw await this.readError(response);
+        let body: string | FormData;
+        if (file && binaryUpload) {
+            body = new FormData();
+            body.append("metadata", JSON.stringify(requestBody));
+            body.append(
+                "file",
+                file,
+                String(requestBody.fileName || file.name),
+            );
+        } else {
+            // Only choose the legacy transport before submitting; never retry an
+            // uncertain binary acceptance using a different request identity.
+            body = JSON.stringify(
+                file
+                    ? {
+                          ...requestBody,
+                          fileContent:
+                              await PDF2zhHelperFactory.blobToBase64(file),
+                      }
+                    : requestBody,
+            );
         }
+        for (let attempt = 0; ; attempt++) {
+            let response;
+            try {
+                response = await diagnosticFetch(
+                    `${serverUrl}/tasks`,
+                    {
+                        method: "POST",
+                        ...(typeof body === "string"
+                            ? {
+                                  headers: {
+                                      "Content-Type": "application/json",
+                                  },
+                              }
+                            : {}),
+                        body,
+                    },
+                    { totalMs: 600000, idleMs: 30000, headersMs: 600000 },
+                );
+                if (response.ok) {
+                    const result =
+                        (await response.json()) as TaskCreateResponse;
+                    if (!result.task) throw new Error("服务器没有返回任务信息");
+                    return result.task;
+                }
+            } catch (error) {
+                // Only an advertised idempotent endpoint can replay an ambiguous POST.
+                if (!idempotent || !requestBody.requestId || attempt >= 1)
+                    throw error;
+                continue;
+            }
+            throw Object.assign(await this.readError(response), {
+                submissionConflict: response.status === 409,
+            });
+        }
+    }
 
-        const result = (await response.json()) as TaskCreateResponse;
-        if (!result.task) {
-            throw new Error("服务器没有返回任务信息");
-        }
-        return result.task;
+    static async resumeTask(serverUrl: string, taskId: string) {
+        return this.postTaskAction(serverUrl, taskId, "resume");
+    }
+
+    static async retryMemorySync(serverUrl: string, taskId: string) {
+        return this.postTaskAction(serverUrl, taskId, "retry-memory-sync");
     }
 
     static async cancelTask(
@@ -185,6 +277,8 @@ export class ServerTaskClient {
     ): Promise<Uint8Array> {
         const response = await diagnosticFetch(
             `${serverUrl}/tasks/${taskId}/result?mode=${outputMode}`,
+            undefined,
+            { totalMs: 600000, idleMs: 30000 },
         );
         if (!response.ok) {
             throw await this.readError(response);
@@ -196,7 +290,7 @@ export class ServerTaskClient {
     private static async postTaskAction(
         serverUrl: string,
         taskId: string,
-        action: "cancel" | "retry" | "repair",
+        action: "cancel" | "retry" | "repair" | "resume" | "retry-memory-sync",
     ): Promise<ServerTaskSnapshot | undefined> {
         const response = await diagnosticFetch(
             `${serverUrl}/tasks/${taskId}/${action}`,

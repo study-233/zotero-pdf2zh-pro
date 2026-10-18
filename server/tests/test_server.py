@@ -13,6 +13,7 @@ SERVER_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SERVER_DIR))
 
 import server as server_module
+from task_manager import TaskManager
 
 
 def build_pdf_payload() -> str:
@@ -46,6 +47,76 @@ def task_snapshot(status: str = "queued") -> dict[str, object]:
 class ServerRouteTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = server_module.create_app().test_client()
+
+    def test_corrupt_task_store_is_visible_and_never_exposed_as_an_empty_queue(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "tasks.json"
+            path.write_bytes(b"damaged task history")
+            manager = TaskManager(path)
+            with patch.object(server_module, "TASK_MANAGER", manager), patch.object(server_module, "TRANSLATES_DIR", root):
+                health = self.client.get("/health")
+                self.assertEqual(health.json["status"], "degraded")
+                self.assertEqual(health.json["taskStore"]["status"], "blocked")
+                for method, route in [("get", "/tasks"), ("get", "/tasks/events"),
+                                      ("post", "/tasks"), ("post", "/tasks/clear-failed"),
+                                      ("delete", "/tasks/old"), ("post", "/tasks/old/cancel"),
+                                      ("post", "/tasks/old/retry"), ("post", "/tasks/old/resume")]:
+                    response = getattr(self.client, method)(route)
+                    self.assertEqual(response.status_code, 503, response.json)
+                    self.assertEqual(response.json["code"], "task_store_unavailable")
+                    self.assertIn("tasks.json", response.json["message"])
+                    self.assertNotIn("tasks", response.json)
+                self.assertEqual(path.read_bytes(), b"damaged task history")
+                self.assertFalse(list(root.glob("*/paper.pdf")))
+
+    def test_idempotent_admission_cleans_duplicate_upload_and_survives_restart(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manager = TaskManager(root / "tasks.json")
+            payload = {"fileName": "paper.pdf", "fileContent": build_pdf_payload(),
+                       "outputModes": ["dual"], "service": "openai",
+                       "requestId": "request-000000001", "dedupScope": "library:item"}
+            with patch.object(server_module, "TRANSLATES_DIR", root), patch.object(server_module, "TASK_MANAGER", manager), patch.object(manager, "_start_worker_locked"):
+                try:
+                    first = self.client.post("/tasks", json=payload)
+                    self.assertEqual(first.status_code, 202, first.json)
+                    task_id = first.json["task"]["taskId"]
+                    replay = self.client.post("/tasks", json=payload)
+                    alias = self.client.post("/tasks", json={**payload, "requestId": "request-000000002"})
+                    self.assertEqual(replay.json["task"]["taskId"], task_id)
+                    self.assertEqual(alias.json["task"]["taskId"], task_id)
+                    self.assertEqual(self.client.post("/tasks", json={**payload, "targetLang": "ja"}).status_code, 409)
+                    workspaces = [path.name for path in root.iterdir() if path.is_dir() and path.name != "diagnostics"]
+                    self.assertEqual(workspaces, [task_id])
+                    self.assertTrue(Path(manager._tasks[task_id].request_payload["input_path"]).is_file())
+                    self.assertEqual(manager._pending.qsize(), 1)
+                    health = self.client.get("/health").json["capabilities"]
+                    for name in ("taskSubmissionIdempotency", "taskRecovery", "taskTiming"):
+                        self.assertTrue(health[name])
+                finally:
+                    manager.close()
+            restored = TaskManager(root / "tasks.json")
+            with patch.object(server_module, "TRANSLATES_DIR", root), patch.object(server_module, "TASK_MANAGER", restored), patch.object(restored, "_start_worker_locked"):
+                try:
+                    replay = self.client.post("/tasks", json=payload)
+                    self.assertEqual(replay.json["task"]["taskId"], task_id)
+                    self.assertTrue(replay.json["task"]["canResume"])
+                    for _ in range(2):
+                        self.assertEqual(self.client.post(f"/tasks/{task_id}/resume").status_code, 202)
+                    self.assertEqual(restored._pending.qsize(), 1)
+                finally:
+                    restored.close()
+
+    def test_resume_contract_and_submission_identity_validation(self):
+        with patch.object(server_module.TASK_MANAGER, "resume_task", return_value=None):
+            self.assertEqual(self.client.post("/tasks/missing/resume").status_code, 404)
+        with patch.object(server_module.TASK_MANAGER, "resume_task", side_effect=ValueError("missing source")):
+            self.assertEqual(self.client.post("/tasks/task-1/resume").status_code, 409)
+        for identity in ({"requestId": "short"}, {"requestId": 7}, {"dedupScope": "x" * 257}):
+            with patch.object(server_module, "create_workspace_dir") as create:
+                self.assertEqual(self.client.post("/tasks", json=identity).status_code, 400)
+                create.assert_not_called()
 
     def test_repair_contract_success_missing_and_active(self):
         with patch.object(server_module.TASK_MANAGER, "repair_task", return_value=task_snapshot()) as repair:

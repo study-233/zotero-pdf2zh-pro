@@ -289,7 +289,7 @@ class CodexProviderTests(unittest.TestCase):
             self.assertEqual(response.json["codexRuntime"]["source"], "desktop")
         with patch.object(server, "build_workspace_health", return_value={}), \
              patch.object(server, "build_task_stats", return_value={}), \
-             patch.object(server, "TASK_MANAGER", SimpleNamespace(_queue_blocked=False)):
+             patch.object(server, "TASK_MANAGER", SimpleNamespace(_queue_blocked=False, task_store_health=lambda: {"status": "ok"})):
             self.assertTrue(client.get("/health").json["capabilities"]["codexCli"])
         with self.assertRaises(ModelDiscoveryError):
             list_codex_models({"cliPath": {"bad": True}})

@@ -32,6 +32,29 @@ const module = await import(
 );
 const { safeDiagnostic, diagnosticZip, exportDiagnostics } = module;
 
+test("recovery and timing survive diagnostic export without submission identities", () => {
+    const timing = {
+        queuedAt: "2026-01-01T00:00:00Z",
+        queueSeconds: 5,
+        executionSeconds: 12,
+        totalSeconds: 17,
+        complete: false,
+    };
+    const exported = safeDiagnostic({
+        status: "paused",
+        recoveryState: "queued",
+        canResume: true,
+        timing: { ...timing, requestId: "private-id" },
+        submission_fingerprint: "private-hash",
+    });
+    assert.deepEqual(exported, {
+        status: "paused",
+        recoveryState: "queued",
+        canResume: true,
+        timing,
+    });
+});
+
 test("cancelled requests remain separate in diagnostic export and summary", () => {
     const payload = {
         metrics: {

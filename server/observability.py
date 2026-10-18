@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import copy
 import logging
 import math
 import os
@@ -113,6 +114,8 @@ class _RequestStats:
             "active": self.active, "retries": self.retries, "repairs": self.repairs,
             "averageLatencyMs": round(self.latency_total / total, 1) if total else None,
             "p95LatencyMs": round(ordered[max(math.ceil(len(ordered) * .95) - 1, 0)], 1) if ordered else None,
+            "latencyTotalMs": self.latency_total,
+            "latencySamplesMs": list(self.latencies),
             "statusCodes": dict(self.status_codes), "errorTypes": dict(self.errors),
             "finishReasons": dict(self.finishes), "protocols": dict(self.protocols),
             "visibleOutputChars": self.visible_chars if self.visible_known else None,
@@ -215,6 +218,101 @@ def empty_metrics() -> dict[str, Any]:
         "throughput": {"paragraphsPerMinute": None, "etaSeconds": None},
         "referencesSkipped": 0,
     }
+
+
+def merge_metrics(previous, current):
+    """Merge a fixed pre-run baseline with a cumulative current-run snapshot.
+
+    Repeated snapshots replace the current run instead of accumulating it twice.
+    Rates, active work and ETA belong to the current run; counters span resumes.
+    """
+    before, latest = previous or {}, current or empty_metrics()
+    result = copy.deepcopy(latest)
+
+    def optional_sum(a, b):
+        return None if a is None and b is None else (a or 0) + (b or 0)
+
+    def counts(a, b):
+        return dict(Counter(a or {}) + Counter(b or {}))
+
+    def requests(a, b):
+        a, b = a or {}, b or {}
+        value = copy.deepcopy(b)
+        for key in ('attempts', 'succeeded', 'failed', 'cancelled', 'retries', 'repairs'):
+            value[key] = a.get(key, 0) + b.get(key, 0)
+        value['active'] = b.get('active', 0)
+        for key in ('statusCodes', 'errorTypes', 'finishReasons', 'protocols', 'batchSizes'):
+            value[key] = counts(a.get(key), b.get(key))
+        value['visibleOutputChars'] = optional_sum(a.get('visibleOutputChars'), b.get('visibleOutputChars'))
+        finished = lambda row: sum(row.get(k, 0) for k in ('succeeded', 'failed', 'cancelled'))
+        old_count, new_count = finished(a), finished(b)
+        def latency_total(row):
+            if not finished(row):
+                return 0
+            if row.get('latencyTotalMs') is not None:
+                return row['latencyTotalMs']
+            average = row.get('averageLatencyMs')
+            return average * finished(row) if average is not None else None
+        totals = [latency_total(row) for row in (a, b)]
+        total_ms = sum(totals) if all(value is not None for value in totals) else None
+        value['latencyTotalMs'] = total_ms
+        value['averageLatencyMs'] = round(total_ms / (old_count + new_count), 1) if old_count + new_count and total_ms is not None else None
+        samples = [*(a.get('latencySamplesMs') or []), *(b.get('latencySamplesMs') or [])][-200:]
+        value['latencySamplesMs'] = samples
+        if not new_count:
+            value['p95LatencyMs'] = a.get('p95LatencyMs')
+        elif old_count and not a.get('latencySamplesMs') and len(samples) < 200:
+            # An old percentile cannot be combined accurately with a new one.
+            value['p95LatencyMs'] = None
+        else:
+            ordered = sorted(samples)
+            value['p95LatencyMs'] = round(ordered[max(math.ceil(len(ordered) * .95) - 1, 0)], 1) if ordered else b.get('p95LatencyMs')
+        for key in ('byKind', 'byPurpose'):
+            kinds = set(a.get(key, {})) | set(b.get(key, {}))
+            if kinds:
+                value[key] = {kind: requests(a.get(key, {}).get(kind), b.get(key, {}).get(kind)) for kind in kinds}
+        return value
+
+    def availability(a, b, key, old_calls, new_calls):
+        old, new = a.get(key, 'unavailable'), b.get(key, 'unavailable')
+        if not old_calls:
+            return new
+        if not new_calls:
+            return old
+        return old if old == new and old in {'complete', 'unavailable'} else 'partial'
+
+    def tokens(a, b, old_requests, new_requests):
+        a, b = a or {}, b or {}
+        value = {key: optional_sum(a.get(key), b.get(key)) for key in ('input', 'output', 'total', 'reasoning')}
+        for key in ('availability', 'reasoningAvailability'):
+            value[key] = availability(a, b, key, old_requests.get('attempts', 0), new_requests.get('attempts', 0))
+        for key in ('byKind', 'byPurpose'):
+            kinds = set(a.get(key, {})) | set(b.get(key, {}))
+            if kinds:
+                value[key] = {kind: tokens(a.get(key, {}).get(kind), b.get(key, {}).get(kind),
+                    old_requests.get(key, {}).get(kind, {}), new_requests.get(key, {}).get(kind, {})) for kind in kinds}
+        return value
+
+    old_requests, new_requests = before.get('requests', {}), latest.get('requests', {})
+    result['requests'] = requests(old_requests, new_requests)
+    result['requests']['qps10s'] = new_requests.get('qps10s', 0)
+    result['tokens'] = tokens(before.get('tokens'), latest.get('tokens'), old_requests, new_requests)
+    for key, fields in (('localCache', ('hits', 'misses')), ('providerCache', ('hitTokens', 'missTokens'))):
+        a, b = before.get(key, {}), latest.get(key, {})
+        values = {field: optional_sum(a.get(field), b.get(field)) for field in fields}
+        total = sum(value or 0 for value in values.values())
+        values['hitRate'] = round((values[fields[0]] or 0) / total, 4) if total else None
+        if key == 'providerCache':
+            values['availability'] = availability(a, b, 'availability', old_requests.get('attempts', 0), new_requests.get('attempts', 0))
+        result[key] = values
+    for key in ('validation', 'stageDurations'):
+        result[key] = counts(before.get(key), latest.get(key))
+    result['referencesSkipped'] = before.get('referencesSkipped', 0) + latest.get('referencesSkipped', 0)
+    result['firstParagraphMs'] = before.get('firstParagraphMs') if before.get('firstParagraphMs') is not None else latest.get('firstParagraphMs')
+    result['journal'] = {'enabled': bool(before.get('journal', {}).get('enabled') or latest.get('journal', {}).get('enabled')),
+                         'errors': before.get('journal', {}).get('errors', 0) + latest.get('journal', {}).get('errors', 0)}
+    result['currentExecution'] = copy.deepcopy(latest)
+    return result
 
 
 class TaskMetricsCollector:

@@ -40,6 +40,7 @@ fs.mkdirSync(output, { recursive: true });
                     "./glossaryStore": { addGlossaryEntry: () => "added" },
                     "./selectionFavorites": {
                         listFavorites: async () => entries,
+                        getFavoritesProtection: () => undefined,
                         watchFavorites: callback => { window.refresh = callback; return () => {}; },
                         favoriteLibrary: () => ({ type: "user" }),
                         exportFavorites: async csv => csv ? "CSV" : "JSON",

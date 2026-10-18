@@ -14,6 +14,7 @@ const state = {
     notifications: [],
     updates: [],
     outputs: [],
+    receipts: new Set(),
 };
 globalThis.Zotero = { Items: { get: () => ({ id: 1 }) } };
 globalThis.__importTest = {
@@ -26,6 +27,9 @@ globalThis.__importTest = {
         },
     },
     PDF2zhHelperFactory: {
+        taskOutputIdentity: async (server, taskId, attempt, mode, item) =>
+            JSON.stringify([server, taskId, attempt, mode, item.id]),
+        hasImportedTaskOutput: async (identity) => state.receipts.has(identity),
         getServerConfig: () => ({
             sourceLang: "fr",
             targetLang: "de",
@@ -43,6 +47,7 @@ globalThis.__importTest = {
             state.configs.push({ config, settings });
             state.imports.push(output.outputMode);
             state.outputs.push(output);
+            state.receipts.add(output.importIdentity);
             await state.onImport?.(output.outputMode);
         },
     },
@@ -74,8 +79,10 @@ function fixture(status = "completed", failed = 0) {
     state.onImport = null;
     state.notifications = [];
     state.updates = [];
+    state.receipts = new Set();
     const task = {
         taskId: "one",
+        serverUrl: "http://localhost:8890",
         fileName: "original.pdf",
         itemID: 1,
         status,
@@ -147,6 +154,24 @@ test("import retry preserves output already imported before a download failure",
     await importer.importTaskOutputs("one");
     assert.deepEqual(state.imports, ["mono", "dual"]);
     assert.equal(task.importState, "imported");
+});
+
+test("restart reconciles the committed attachment when the preference checkpoint was lost", async () => {
+    const { task, importer, replaceTask } = fixture();
+    const beforeImport = globalThis.structuredClone(task);
+    state.onImport = () => {
+        throw new Error("interrupted after database commit");
+    };
+    await importer.importTaskOutputs("one");
+    assert.equal(task.importState, "failed");
+    assert.equal(task.importedOutputs, undefined);
+    state.onImport = null;
+    replaceTask(beforeImport);
+    await importer.importTaskOutputs("one");
+    assert.equal(beforeImport.importState, "imported");
+    assert.deepEqual(state.imports, ["mono", "dual"]);
+    assert.deepEqual(state.downloads, ["mono", "dual"]);
+    assert.deepEqual(beforeImport.importedOutputs, ["2:mono", "2:dual"]);
 });
 
 for (const phase of ["download", "import"]) {

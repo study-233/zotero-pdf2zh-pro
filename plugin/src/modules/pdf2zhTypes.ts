@@ -3,6 +3,7 @@ import type { GlossaryPackReference } from "./glossaryPacks";
 export type OutputMode = "mono" | "dual";
 export type ServerTaskStatus =
     | "queued"
+    | "paused"
     | "running"
     | "cancelling"
     | "completed"
@@ -65,9 +66,20 @@ export interface ServerHealthResponse {
         semanticReview?: boolean;
         translationMemory?: boolean;
         textTranslation?: boolean;
+        taskSubmissionIdempotency?: boolean;
+        taskRecovery?: boolean;
+        taskTiming?: boolean;
+        binaryTaskUpload?: boolean;
+        taskPagination?: boolean;
     };
     pdf2zhVersion?: string;
     babeldocVersion?: string;
+    taskStore?: {
+        status: "ok" | "blocked";
+        reason?: string | null;
+        backupAvailable?: boolean;
+        message?: string;
+    };
     workspace?: {
         path?: string;
         writable?: boolean;
@@ -130,6 +142,15 @@ export interface ServerSyncMetadata {
 
 export interface ServerTaskList extends ServerSyncMetadata {
     tasks: ServerTaskSnapshot[];
+    scope?: "dashboard";
+    visibleTaskIds?: string[];
+    missingTaskIds?: string[];
+    pagination?: {
+        nextCursor: string | null;
+        hasMore: boolean;
+        totalHistory: number;
+        limit: number;
+    };
 }
 
 export interface TaskQualitySummary {
@@ -156,6 +177,17 @@ export interface DiagnosticConfiguration {
 }
 
 export interface ServerTaskSnapshot extends ServerSyncMetadata {
+    canResume?: boolean;
+    recoveryState?: "queued" | "interrupted" | null;
+    timing?: {
+        queuedAt: string;
+        startedAt: string | null;
+        finishedAt: string | null;
+        queueSeconds: number;
+        executionSeconds: number;
+        totalSeconds: number;
+        complete: boolean;
+    } | null;
     requestedConfiguration?: DiagnosticConfiguration;
     effectiveConfiguration?: DiagnosticConfiguration;
     taskId: string;
@@ -196,6 +228,8 @@ export interface ServerTaskSnapshot extends ServerSyncMetadata {
     metrics?: TaskMetrics;
     canRepair?: boolean;
     canDownloadResult?: boolean;
+    translationMemorySync?: "pending" | "synced";
+    canRetryMemorySync?: boolean;
     qualitySummary?: TaskQualitySummary | null;
     translationSummary?: {
         total: number;
