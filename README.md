@@ -16,8 +16,6 @@
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/study-233/zotero-pdf2zh-pro?style=flat&logo=github&label=Stars)](https://github.com/study-233/zotero-pdf2zh-pro/stargazers)
 
-当前统一版本：<!-- release-version --> `1.9.1`
-
 **[快速开始](#quick-start) · [使用指南](docs/user-guide.md) · [下载最新版](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)**
 
 [插件官网](https://study-233.github.io/zotero-pdf2zh-pro/) · [常见问题](#troubleshooting) · [更新记录](CHANGELOG.md)
@@ -228,3 +226,5 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 本项目采用 **AGPL-3.0-or-later**，保留上游项目与第三方组件的许可证及归属。
 详见 [LICENSE](LICENSE) 和 [第三方声明](server/THIRD_PARTY_NOTICES.md)。
+
+[release-version]: # (<!-- release-version --> `1.9.1`)
