@@ -16,9 +16,7 @@
 [![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/study-233/zotero-pdf2zh-pro?style=flat&logo=github&label=Stars)](https://github.com/study-233/zotero-pdf2zh-pro/stargazers)
 
-**[快速开始](#quick-start) · [使用指南](docs/user-guide.md) · [下载最新版](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)**
-
-[插件官网](https://study-233.github.io/zotero-pdf2zh-pro/) · [常见问题](#troubleshooting) · [更新记录](CHANGELOG.md)
+**[快速开始](#quick-start) · [使用指南](docs/user-guide.md) · [下载最新版](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)** · [插件官网](https://study-233.github.io/zotero-pdf2zh-pro/) · [常见问题](#troubleshooting) · [更新记录](CHANGELOG.md)
 
 </div>
 
