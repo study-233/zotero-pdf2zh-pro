@@ -407,7 +407,19 @@ def safe_publish(repo, tag, commit, notes, files):
     except RuntimeError as error:
         if 'HTTP 404' not in str(error):
             raise
-        command(['gh', 'release', 'create', tag, '--repo', repo, '--target', commit,
+        try:
+            existing_tag = tag_commit(repo, tag)
+        except RuntimeError as error:
+            if 'HTTP 404' not in str(error):
+                raise
+            target = ['--target', commit]
+        else:
+            if existing_tag != commit:
+                raise ValueError(f'Release tag conflicts with expected source: {tag}')
+            # The existing tag pins the source. An unnecessary historical target
+            # can require workflow permissions that GITHUB_TOKEN cannot obtain.
+            target = ['--verify-tag']
+        command(['gh', 'release', 'create', tag, '--repo', repo, *target,
                  '--title', tag, '--notes-file', str(notes), '--latest', *map(str, files)], timeout=300)
         return
     existing = {a['name']: a for a in release['assets']}

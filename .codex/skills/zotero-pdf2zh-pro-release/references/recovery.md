@@ -33,6 +33,11 @@
 
 若 GitHub Release 已存在，共享发布守卫会先核验所有同名附件，再补传缺失项；同名同摘要直接复用，冲突时停止。相同版本附件内容不同属于同版本替换，需单独处理。
 
+历史产品提交与默认分支的工作流文件不同时，创建 Release 时额外指定历史 `--target` 会触发工作流写权限检查，`GITHUB_TOKEN` 无法获得该权限。
+共享守卫会先核验已有 tag 的真实提交，再使用 `--verify-tag` 创建 Release；仅 tag 不存在时才指定精确 `--target`。
+这保留原产品提交和现有令牌权限。若 PyPI 已完成而 GitHub 创建失败，沿用原制品续接该发布阶段。
+依据：[GitHub Release API 权限与 target 语义](https://docs.github.com/en/rest/releases/releases#create-a-release)。
+
 ## 远端制品已成功，本机扩展验证未完成
 
 Windows 的 `--full-validation` 会在远端标准构建后下载最终制品并在本机验证。

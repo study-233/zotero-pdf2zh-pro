@@ -63,6 +63,37 @@ class PublicationTests(unittest.TestCase):
                 control.safe_publish('owner/repo', 'v2.0.0', SHA, self.root/'notes', self.files)
         command.assert_not_called()
 
+    def test_existing_tag_uses_verify_tag_without_an_unnecessary_target(self):
+        with patch.object(control, 'api', side_effect=RuntimeError('HTTP 404')), \
+             patch.object(control, 'tag_commit', return_value=SHA), patch.object(control, 'command') as command:
+            control.safe_publish('owner/repo','v2.0.0',SHA,self.root/'notes',self.files)
+        args=command.call_args.args[0]
+        self.assertIn('--verify-tag',args)
+        self.assertNotIn('--target',args)
+
+    def test_missing_tag_uses_the_exact_source_commit(self):
+        with patch.object(control, 'api', side_effect=RuntimeError('HTTP 404')), \
+             patch.object(control, 'tag_commit', side_effect=RuntimeError('HTTP 404')), \
+             patch.object(control, 'command') as command:
+            control.safe_publish('owner/repo','v2.0.0',SHA,self.root/'notes',self.files)
+        args=command.call_args.args[0]
+        self.assertEqual(args[args.index('--target')+1],SHA)
+
+    def test_conflicting_tag_prevents_release_creation(self):
+        with patch.object(control, 'api', side_effect=RuntimeError('HTTP 404')), \
+             patch.object(control, 'tag_commit', return_value='b'*40), patch.object(control, 'command') as command:
+            with self.assertRaisesRegex(ValueError,'tag conflicts'):
+                control.safe_publish('owner/repo','v2.0.0',SHA,self.root/'notes',self.files)
+        command.assert_not_called()
+
+    def test_tag_lookup_failure_is_not_treated_as_a_missing_tag(self):
+        with patch.object(control, 'api', side_effect=RuntimeError('HTTP 404')), \
+             patch.object(control, 'tag_commit', side_effect=RuntimeError('HTTP 503')), \
+             patch.object(control, 'command') as command:
+            with self.assertRaises(RuntimeError):
+                control.safe_publish('owner/repo','v2.0.0',SHA,self.root/'notes',self.files)
+        command.assert_not_called()
+
 
 class PolicyTests(unittest.TestCase):
     def test_pinned_wheel_cache_avoids_another_download(self):
