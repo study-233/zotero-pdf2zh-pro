@@ -80,8 +80,8 @@ def credential_lock(directory):
         os.chmod(path, 0o600)
         if os.name == 'nt':
             import msvcrt
-            if handle.tell() == 0:
-                handle.write(b'0'); handle.flush()
+            # Windows can lock beyond EOF. Writing first races with another
+            # handle that has already locked the initially empty file.
             handle.seek(0)
             msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
         else:

@@ -11,7 +11,7 @@ import threading
 import unittest
 from unittest.mock import Mock, patch
 import httpx
-from chatgpt_auth import AUTHORITY, AuthError, AuthStore, b64, login, private_write, verify_identity
+from chatgpt_auth import AUTHORITY, AuthError, AuthStore, b64, credential_lock, login, private_write, verify_identity
 
 class LoginCancellationTests(unittest.TestCase):
     def test_loopback_login_startup_does_not_require_reverse_dns(self):
@@ -72,6 +72,41 @@ class LoginCancellationTests(unittest.TestCase):
                 thread.join(3)
 
 class AuthTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == 'nt', 'Windows byte-range locks')
+    def test_empty_lock_file_contender_waits_without_writing_locked_byte(self):
+        import msvcrt
+        from pathlib import Path
+        attempted, acquired = threading.Event(), threading.Event()
+        errors = []
+        locking = msvcrt.locking
+        def observed_lock(fd, mode, size):
+            if mode == msvcrt.LK_LOCK:
+                attempted.set()
+            return locking(fd, mode, size)
+        def contend(directory):
+            try:
+                with credential_lock(directory):
+                    acquired.set()
+            except Exception as error:
+                errors.append(error)
+                attempted.set()
+        with tempfile.TemporaryDirectory() as directory:
+            with (Path(directory)/'.lock').open('a+b') as owner:
+                locking(owner.fileno(), msvcrt.LK_NBLCK, 1)
+                with patch.object(msvcrt, 'locking', side_effect=observed_lock):
+                    thread = threading.Thread(target=contend, args=(directory,))
+                    thread.start()
+                    try:
+                        self.assertTrue(attempted.wait(3), 'contender did not attempt the lock')
+                        self.assertFalse(errors)
+                        self.assertFalse(acquired.is_set())
+                    finally:
+                        locking(owner.fileno(), msvcrt.LK_UNLCK, 1)
+                        thread.join(5)
+                    self.assertFalse(thread.is_alive())
+                    self.assertFalse(errors)
+                    self.assertTrue(acquired.is_set())
+
     @classmethod
     def setUpClass(cls):
         from cryptography.hazmat.primitives.asymmetric import rsa

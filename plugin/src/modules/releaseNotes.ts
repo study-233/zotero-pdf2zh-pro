@@ -40,6 +40,29 @@ export const releaseSummaries: ReleaseSummary[] = [
             },
         ],
     },
+    {
+        version: "1.9.2",
+        notes: [
+            {
+                id: "task-recovery",
+                message: "release-task-recovery",
+                priority: 0,
+                action: "tasks",
+            },
+            {
+                id: "task-record-protection",
+                message: "release-task-record-protection",
+                priority: 1,
+                action: "tasks",
+            },
+            {
+                id: "memory-background-sync",
+                message: "release-memory-background-sync",
+                priority: 2,
+                action: "tasks",
+            },
+        ],
+    },
 ];
 
 export function compareVersions(a: string, b: string): number {
