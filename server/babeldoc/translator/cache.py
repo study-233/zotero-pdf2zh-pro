@@ -15,6 +15,7 @@ from peewee import TextField
 from peewee import fn  # For aggregation functions
 
 from babeldoc.const import CACHE_FOLDER
+from babeldoc.translator.cache_lifecycle import cache_connection
 
 logger = logging.getLogger(__name__)
 
@@ -93,15 +94,16 @@ class TranslationCache:
     # get and set operations don't need locks.
     def get(self, original_text: str) -> str | None:
         try:
-            result = _TranslationCache.get_or_none(
-                translate_engine=self.translate_engine,
-                translate_engine_params=self.translate_engine_params,
-                original_text=original_text,
-            )
-            # Trigger cache cleanup with a small probability.
-            if result and random.random() < CLEAN_PROBABILITY:  # noqa: S311
-                self._cleanup()
-            return result.translation if result else None
+            with cache_connection(_TranslationCache._meta.database):
+                result = _TranslationCache.get_or_none(
+                    translate_engine=self.translate_engine,
+                    translate_engine_params=self.translate_engine_params,
+                    original_text=original_text,
+                )
+                # Trigger cache cleanup with a small probability.
+                if result and random.random() < CLEAN_PROBABILITY:  # noqa: S311
+                    self._cleanup()
+                return result.translation if result else None
         except peewee.OperationalError as e:
             if "database is locked" in str(e):
                 logger.debug("Cache is locked")
@@ -111,15 +113,16 @@ class TranslationCache:
 
     def set(self, original_text: str, translation: str):
         try:
-            _TranslationCache.create(
-                translate_engine=self.translate_engine,
-                translate_engine_params=self.translate_engine_params,
-                original_text=original_text,
-                translation=translation,
-            )
-            # Trigger cache cleanup with a small probability.
-            if random.random() < CLEAN_PROBABILITY:  # noqa: S311
-                self._cleanup()
+            with cache_connection(_TranslationCache._meta.database):
+                _TranslationCache.create(
+                    translate_engine=self.translate_engine,
+                    translate_engine_params=self.translate_engine_params,
+                    original_text=original_text,
+                    translation=translation,
+                )
+                # Trigger cache cleanup with a small probability.
+                if random.random() < CLEAN_PROBABILITY:  # noqa: S311
+                    self._cleanup()
         except peewee.OperationalError as e:
             if "database is locked" in str(e):
                 logger.debug("Cache is locked")
@@ -162,7 +165,8 @@ def init_db(remove_exists=False):
             "busy_timeout": 1000,
         },
     )
-    db.create_tables([_TranslationCache], safe=True)
+    with db.connection_context():
+        db.create_tables([_TranslationCache], safe=True)
 
 
 def init_test_db():

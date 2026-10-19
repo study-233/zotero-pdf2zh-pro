@@ -1,6 +1,7 @@
 import copy
 import tempfile
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import patch
 
@@ -63,7 +64,7 @@ class ResumeMetricsTests(unittest.TestCase):
         self.assertIsNone(merge_metrics(previous, metrics([100]))['requests']['averageLatencyMs'])
 
     def test_repeated_snapshots_and_second_restart_never_count_a_run_twice(self):
-        with tempfile.TemporaryDirectory() as temporary:
+        with tempfile.TemporaryDirectory() as temporary, ExitStack() as cleanup:
             root = Path(temporary)
             source = root / 'paper.pdf'
             source.write_bytes(b'%PDF-1.4\n')
@@ -74,13 +75,17 @@ class ResumeMetricsTests(unittest.TestCase):
                 callbacks['metrics_callback'](current)
                 return TranslationResult(files={})
             manager = TaskManager(root / 'tasks.json', translator=translate)
+            # Close workers and drain diagnostics before removing their directory.
+            cleanup.callback(manager.diagnostics.flush, timeout=2)
+            cleanup.callback(manager.close)
             manager._tasks['one'] = TaskRecord('one', 'paper.pdf', 'openai', ['dual'],
                 {'input_path': str(source)}, root, status='queued', metrics=previous)
             manager._run_task('one')
             self.assertEqual(manager.get_task('one')['metrics']['requests']['succeeded'], 3)
             manager.close()
             restored = TaskManager(root / 'tasks.json', translator=translate)
-            self.addCleanup(restored.close)
+            cleanup.callback(restored.diagnostics.flush, timeout=2)
+            cleanup.callback(restored.close)
             record = restored._tasks['one']
             record.status = 'queued'
             restored._run_task('one')

@@ -10,6 +10,8 @@ from peewee import Model
 from peewee import SqliteDatabase
 from peewee import TextField
 
+from babeldoc.translator.cache_lifecycle import cache_connection
+
 # we don't init the database here
 db = SqliteDatabase(None)
 logger = logging.getLogger(__name__)
@@ -81,28 +83,31 @@ class TranslationCache:
     # Since peewee and the underlying sqlite are thread-safe,
     # get and set operations don't need locks.
     def get(self, original_text: str) -> str | None:
-        result = _TranslationCache.get_or_none(
-            translate_engine=self.translate_engine,
-            translate_engine_params=self.translate_engine_params,
-            original_text=original_text,
-        )
-        return result.translation if result else None
-
-    def delete(self, original_text: str):
-        (_TranslationCache.delete().where(
-            (_TranslationCache.translate_engine == self.translate_engine)
-            & (_TranslationCache.translate_engine_params == self.translate_engine_params)
-            & (_TranslationCache.original_text == original_text)
-        ).execute())
-
-    def set(self, original_text: str, translation: str):
-        try:
-            _TranslationCache.create(
+        with cache_connection(_TranslationCache._meta.database):
+            result = _TranslationCache.get_or_none(
                 translate_engine=self.translate_engine,
                 translate_engine_params=self.translate_engine_params,
                 original_text=original_text,
-                translation=translation,
             )
+            return result.translation if result else None
+
+    def delete(self, original_text: str):
+        with cache_connection(_TranslationCache._meta.database):
+            (_TranslationCache.delete().where(
+                (_TranslationCache.translate_engine == self.translate_engine)
+                & (_TranslationCache.translate_engine_params == self.translate_engine_params)
+                & (_TranslationCache.original_text == original_text)
+            ).execute())
+
+    def set(self, original_text: str, translation: str):
+        try:
+            with cache_connection(_TranslationCache._meta.database):
+                _TranslationCache.create(
+                    translate_engine=self.translate_engine,
+                    translate_engine_params=self.translate_engine_params,
+                    original_text=original_text,
+                    translation=translation,
+                )
         except Exception as e:
             logger.debug("error setting cache: error_type=%s", type(e).__name__)
 
@@ -125,7 +130,8 @@ def init_db(remove_exists=False):
             "busy_timeout": 1000,
         },
     )
-    db.create_tables([_TranslationCache], safe=True)
+    with db.connection_context():
+        db.create_tables([_TranslationCache], safe=True)
 
 
 def init_test_db():

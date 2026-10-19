@@ -5,7 +5,7 @@ import test from "node:test";
 import { URL } from "node:url";
 import ts from "typescript";
 
-const file = "/data/test/selection-favorites-v1.json";
+const file = path.join("/data", "test", "selection-favorites-v1.json");
 const entry = {
     version: 1,
     id: "one",

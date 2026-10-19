@@ -86,11 +86,21 @@ class TaskPaginationUploadTests(unittest.TestCase):
         self.assertEqual(page['pagination']['totalHistory'], 0)
 
     def upload(self, pdf=b'%PDF-binary\x00\xff', **metadata):
-        return self.client.post('/tasks', data={
+        response = self.client.post('/tasks', data={
             'metadata': json.dumps({'fileName': '论文.pdf', 'outputModes': ['dual'], 'service': 'openai',
                                     'requestId': 'binary-upload-0001', **metadata}),
             'file': (BytesIO(pdf), 'untrusted/path.pdf', 'application/pdf'),
         })
+        # The test client does not register this callback without follow_redirects.
+        response.call_on_close(response.request.input_stream.close)
+        return self.enterContext(response)
+
+    def test_upload_response_closes_large_multipart_stream(self):
+        with self.upload(b'%PDF-1.7\n' * 100000) as response:
+            self.assertEqual(response.status_code, 202)
+            stream = response.request.input_stream
+            self.assertFalse(stream.closed)
+        self.assertTrue(stream.closed)
 
     def test_binary_upload_preserves_bytes_deduplicates_and_accepts_legacy_replay(self):
         pdf = b'%PDF-1.7\n\x00\xff' * 100000

@@ -62,6 +62,7 @@ from babeldoc.pdfminer.pdfinterp import PDFResourceManager
 from babeldoc.pdfminer.pdfpage import PDFPage
 from babeldoc.pdfminer.pdfparser import PDFParser
 from babeldoc.progress_monitor import ProgressMonitor
+from babeldoc.translator.cache_lifecycle import cache_connection_scope
 from babeldoc.utils import memory
 
 logger = logging.getLogger(__name__)
@@ -629,6 +630,7 @@ def update_page_bbox(doc, page, box, key):
         doc.xref_set_key(page.xref, key, f"[{box.x0} {box.y0} {box.x1} {box.y1}]")
 
 
+@cache_connection_scope()
 def do_translate(
     pm: ProgressMonitor, translation_config: TranslationConfig
 ) -> TranslateResult:

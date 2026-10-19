@@ -77,11 +77,27 @@ class PyMuPDFCompatibilityTests(unittest.TestCase):
 
     def test_fresh_worker_import_installs_fix(self):
         result = subprocess.run(
-            [sys.executable, "-c", "import babeldoc, pymupdf; pymupdf.message('worker %s', 'ready')"],
+            [sys.executable, "-W", "error::DeprecationWarning", "-c",
+             "import babeldoc, pymupdf; pymupdf.message('worker %s', 'ready')"],
             cwd=Path(babeldoc.__file__).resolve().parents[1],
             capture_output=True, text=True, timeout=15,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn('DeprecationWarning', result.stderr)
+
+    def test_binding_warning_filter_preserves_other_warnings(self):
+        result = subprocess.run(
+            [sys.executable, "-W", "always", "-c",
+             "import babeldoc, warnings; "
+             "warnings.warn('application deprecation', DeprecationWarning); "
+             "warnings.warn('application resource leak', ResourceWarning)"],
+            cwd=Path(babeldoc.__file__).resolve().parents[1],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn('has no __module__ attribute', result.stderr)
+        self.assertIn('DeprecationWarning: application deprecation', result.stderr)
+        self.assertIn('ResourceWarning: application resource leak', result.stderr)
 
 
 class CMapCompatibilityTests(unittest.TestCase):

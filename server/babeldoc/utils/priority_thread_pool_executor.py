@@ -19,6 +19,8 @@ from concurrent.futures.thread import _WorkItem
 from heapq import heappop
 from heapq import heappush
 
+from babeldoc.translator.cache_lifecycle import cache_connection_scope
+
 logger = logging.getLogger(__name__)
 
 ########################################################################################################################
@@ -101,6 +103,7 @@ class PriorityQueue(queue.Queue):
         return None
 
 
+@cache_connection_scope()
 def _worker(executor_reference, work_queue, initializer, initargs):
     if initializer is not None:
         try:
