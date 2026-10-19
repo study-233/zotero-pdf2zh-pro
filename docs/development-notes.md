@@ -274,7 +274,7 @@ macOS 开发或本机缺少条件时，按需触发远端 Windows 验证。正�
 后者从最终 ZIP 解压，以独立工作目录、精简 PATH 验证真实窗口。生命周期验证使用
 `-WindowsPackage dist/zotero-pdf2zh-pro-windows-x64.zip`，从同一 ZIP 读取 EXE 和管理脚本。
 候选版本可以在开发分支触发只构建的 Windows 工作流，输入该分支包含的精确提交；
-默认验证启动、安装、升级、自更新、卸载及全新 Python 3.13/OCR；勾选 `full_validation` 才追加回滚、迁移及旧版升级，不重跑已通过的插件和服务端全量测试。
+默认验证启动、安装、自更新、卸载、全新 Python 3.13/OCR 和上一正式版真实升级；按变更风险自动追加回滚、迁移及历史布局验证，`full_validation` 可扩大范围。选测与恢复以 [Actions 测试规范](actions-testing.md) 为准，不重跑已通过的插件和服务端全量测试。
 Rust 单测复用 release 编译依赖，不再额外编译 debug 依赖。在新电脑上补充启动验收后发布。
 
 ## macOS 独立开发环境
@@ -485,7 +485,7 @@ scripts/release.sh <version>
 
 统一脚本同步插件、服务端、控制中心、锁文件和 Windows 脚本版本，提交并推送主仓库。
 核心 CI 通过后，Windows CI 只构建一次 XPI、PyPI 包、Windows ZIP 和源码归档，验证
-全新 Python 3.13/OCR 与安装生命周期。脚本取回完整的七项产物，校验提交、版本、大小
+全新 Python 3.13/OCR 与所选安装/升级场景。脚本取回完整的八项产品制品及验证计划，校验提交、版本、大小
 和哈希，再将同一批文件发布到 PyPI 和 GitHub；Homebrew 固定同一源提交。
 本地不重复安装前端依赖或编译 Rust，也不重复执行核心测试。仅构建调试包时可在
 Windows 运行 `scripts/release.sh <version> --no-push`。
@@ -499,8 +499,8 @@ Windows 运行 `scripts/release.sh <version> --no-push`。
 在 GitHub Actions 手动运行 `Build Windows release`，输入已提交的版本号和完整
 40 位提交 SHA。工作流执行 `scripts/release.sh <版本> --no-push`，完成后上传
 XPI、Windows ZIP、Python 包、对应源码和 `checksums.json`。
-默认验证启动、运行环境、最终 ZIP 窗口及安装升级；需要完整的插件/服务测试、OCR、
-回滚与迁移检查时勾选 `full_validation`。此步骤只构建和验证，不推送标签或发布渠道。
+默认验证启动、运行环境/OCR、最终 ZIP 窗口和上一正式版真实升级；按共享策略选择历史
+升级与回滚场景，`full_validation` 可主动扩大验证。此步骤只构建和验证，不推送标签或发布渠道。
 验证通过后按上面的发布流程使用同一提交和同一批产物，日常 CI 不执行完整 Windows 发布构建。
 
 ### 发布凭据与渠道

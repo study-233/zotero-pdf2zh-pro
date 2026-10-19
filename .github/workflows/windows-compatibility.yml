@@ -1,0 +1,62 @@
+name: Windows compatibility
+run-name: Windows compatibility${{ inputs.dispatch_id != '' && format(' [{0}]', inputs.dispatch_id) || '' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      dispatch_id:
+        description: 'Unique coordinator request ID'
+        required: false
+        type: string
+  schedule:
+    - cron: '23 19 * * 0'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: windows-compatibility
+  cancel-in-progress: false
+
+jobs:
+  compatibility:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Configure validation paths
+        shell: pwsh
+        run: '"PDF2ZH_VALIDATION_PLAN=$env:RUNNER_TEMP/compatibility-plan.json" >> $env:GITHUB_ENV'
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: '0.12.10'
+          python-version: '3.13'
+          enable-cache: true
+      - name: Resolve published candidate and compatibility baselines
+        shell: pwsh
+        run: |
+          $candidate=uv run --no-project python scripts/release_control.py published-candidate $env:PDF2ZH_VALIDATION_PLAN
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+          $identity=$candidate|ConvertFrom-Json
+          "RELEASE_VERSION=$($identity.version)" >> $env:GITHUB_ENV
+          "RELEASE_COMMIT=$($identity.commit)" >> $env:GITHUB_ENV
+      - name: Verify supported installation layouts without recompiling
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -SourceCommit $env:RELEASE_COMMIT -Plan $env:PDF2ZH_VALIDATION_PLAN -SkipLifecycle
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+      - name: Retain compatibility results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: compatibility-${{ github.run_id }}
+          path: |
+            ${{ env.PDF2ZH_VALIDATION_PLAN }}
+            .local-dev/reports/**
+          if-no-files-found: warn
+          retention-days: 90

@@ -408,6 +408,7 @@ if ($SmokeOnly) {
         Remove-Item -LiteralPath (Assert-TestPath $windowsDir) -Recurse -Force -ErrorAction SilentlyContinue
     }
     Write-Host 'Windows package installation, startup, upgrade, self-update and data preservation checks passed.'
+    $passed = $true
     return
 }
 

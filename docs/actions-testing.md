@@ -2,6 +2,9 @@
 
 [开发维护笔记](development-notes.md#测试)
 
+问题复核、设计依据和实施记录见[发布与更新验证改进计划](release-validation-plan.md)。
+选测规则与兼容基线统一维护在 [release-policy.json](../scripts/release-policy.json)。
+
 测试按风险与运行环境安排。Windows 开发优先利用本机工具链和缓存；macOS 开发或
 本机缺少 Windows 验证条件时，由 Actions 执行必要的 Windows 检查。正式安装包仍
 在远端构建一次。本机成功不能替代最终制品检查，也不应让相同测试在各阶段重复执行。
@@ -11,7 +14,7 @@
 | 检查 | 内容 | 执行位置 |
 | --- | --- | --- |
 | 核心 CI | 插件构建、lint、单测；服务端及发布守卫 | Ubuntu Actions，最多 15 分钟 |
-| Windows 快速检查 | PowerShell 5.1 语法、路径和进程归属、快捷方式、事务回滚、清理、进度、卸载及产物守卫 | Windows Actions，最多 10 分钟 |
+| Windows 快速检查 | PowerShell 5.1 语法、路径和进程归属、开发管理、快捷方式、事务回滚、清理、进度、卸载及发布守卫 | Windows Actions，最多 10 分钟 |
 | Codex 原生兼容 | 发现、启动和进程清理；不依赖真实账户 | Windows / macOS Actions，每个平台最多 10 分钟 |
 | 文档与官网 | 本地链接、版本一致性、文档测试与网站构建 | 合并工作流，验证最多 10 分钟 |
 | 安全检查 | Python、JS/TS、Actions 的 CodeQL；PR 新增依赖漏洞 | Security，CodeQL 每种语言最多 20 分钟 |
@@ -28,7 +31,8 @@
 2. Actions 对该提交构建一批正式制品。Rust 单测复用同一次 release 编译的依赖；
    不另外编译 debug 或在不同 job 重建同一安装包。
 3. 对最终制品保留必要检查：版本与来源、PE/DLL、安装器载荷和大小、启动窗口、
-   全新 Python 3.13/OCR、隔离安装与自更新、进度输出及自动更新清单。
+   全新 Python 3.13/OCR、隔离安装与自更新、进度输出及自动更新清单；另用上一正式版
+   的真实 GUI/wheel 升级到最终包，读取既有任务、词表、翻译缓存和设置。
 4. 安装、升级、迁移、回滚或依赖布局有变化时，追加相应扩展验证；普通补丁不默认
    重跑完整生命周期。Windows 开发机对下载并校验的远端最终制品在本机验证；Mac
    或本机工具链/权限不足时，将同样的验证交给远端 Windows。
@@ -37,15 +41,43 @@
 6. 所有必需验证完成后，才发布 PyPI、GitHub Release 与 Homebrew。官网和用户更新
   说明不堆放测试日志；内部记录保留提交、run、制品哈希、验证环境和结果。
 
-统一入口仍为 `bash scripts/release.sh <version>`。需要扩展验证时加
-`--full-validation`：Windows 自动下载已校验的远端最终制品并在本机验证，完成前
+统一入口为 `bash scripts/release.sh <version>`。入口按上一正式版到候选的实际差异
+自动追加安装、依赖、持久化等高风险场景，未知路径保守追加；仅本项目版本标记变化
+不触发完整验证。`--full-validation` 可主动扩大范围：Windows 下载已校验的远端最终制品并在本机验证，完成前
 不会进入 PyPI/tag 发布；macOS/Linux 自动在远端验证。Windows 本机环境确实不足时
 加 `--remote-validation`。同版本替换沿用独立的远端完整验证与备份要求。
+
+上一正式版排除草稿、预发布及本次候选；最新稳定版缺少必需附件时停止，不回退到更旧版本。
+发布开始时冻结基线提交、GitHub 附件及 PyPI wheel 摘要；旧 uv tool 基线使用原 tag 的
+`uv.lock` 导出依赖约束，并使用策略固定摘要的私有 uv，避免旧安装器的浮动下载。
+恢复时沿用同一计划。当前布局基线与上一版相同时去重。
+每周一 03:23（香港时间）的 `windows-compatibility.yml` 使用最新已发布包做代表性跨版本升级，
+复用既有制品，无需编译 GUI。该任务在工作流合入默认分支后生效，结果和日志作为 Actions 证据保留 90 天。
+手动验收可传入唯一 `dispatch_id`，按运行标题关联 run 并核对 `head_sha`，避免误用其他任务的结果。
+最近一次周期兼容任务未通过时，新发布自动扩大验证范围，重新证明这些支持路径。
+
+进度测试必须显式提供 `PDF2ZH_TEST_CONTROL`、`PDF2ZH_TEST_UV`、`PDF2ZH_TEST_PYTHON` 和
+`PDF2ZH_TEST_VERSION`；缺失或程序版本不符即失败。Slint 专项工具必须传 `--version`。
 
 本机测试失败时先区分产品故障与环境问题。产品故障不能通过切换平台、删断言或
 改为标准验证来绕过；环境问题可以交给远端验证，但“未运行”不能记为“通过”。
 
 ## 时间、复用与恢复
+
+入口打印 `.local-dev/reports/<run>/release-state.json`；恢复使用
+`bash scripts/release.sh <version> --resume <state.json>`，并保持原选项。
+记录固定产品提交、dispatch 标识、准确 run ID/attempt；成功阶段先核验再复用。
+构建后验证失败时，恢复只复用已证明构建成功的包；没有构建证据时停止，不隐式重编译。
+观察超时不会被记作远端失败，下载同时限制总时长和无进展时长。
+
+本机扩展结果保存在托管报告 `validation.json`，并写入发布记录旁的 `local-validation.json`。
+发布门槛核对计划摘要、测试脚本摘要、必需场景和 ZIP/wheel 摘要。脚本或策略变化后须生成新计划、重新验证原制品，不能沿用旧回执。
+活动发布记录带 `.keep`，不会被普通报告清理。
+构建的八项产品制品及 `checksums.json` 外，另保存绑定计划的 `validation-plan.json`；
+五项公开 Release 附件保持由现有制品检查器管理。
+
+普通续发只补缺失附件；同名同内容复用，冲突则停止并要求显式同版本替换。
+`--no-pypi` 只跳过上传，公开 wheel/sdist 仍必须齐全且与最终制品匹配。
 
 - 快速 Windows 检查目标为几分钟内完成，10 分钟为硬上限。远端发布构建当前上限
   为 90 分钟；新增耗时项目应说明覆盖的具体风险，优先加入本机或按需扩展入口。

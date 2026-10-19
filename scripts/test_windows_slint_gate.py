@@ -11,8 +11,10 @@ class GateTests(unittest.TestCase):
         with patch.object(Path, 'read_bytes', return_value=b'verified fixture'), \
              patch.object(gate, 'validate_release_pe'), \
              patch.object(gate, 'imports', return_value={'kernel32.dll'}), \
-             patch.object(gate, 'verify_installer', return_value={'size': arguments.pop('size', 30_000_000)}):
-            return gate.assess(Path('probe.exe'), Path('fixture-setup.exe'), **arguments)
+             patch.object(gate, 'verify_installer', return_value={'size': arguments.pop('size', 30_000_000)}) as verify:
+            result = gate.assess(Path('probe.exe'), Path('fixture-setup.exe'), '2.3.4', **arguments)
+            verify.assert_called_once_with(Path('fixture-setup.exe'), '2.3.4')
+            return result
 
     def test_build_success_alone_does_not_authorize_migration(self):
         result = self.assess()

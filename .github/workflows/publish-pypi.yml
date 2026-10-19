@@ -1,4 +1,5 @@
 name: Publish PyPI
+run-name: Publish ${{ inputs.tag }}${{ inputs.dispatch_id && format(' [{0}]', inputs.dispatch_id) || '' }}
 
 on:
   workflow_dispatch:
@@ -16,6 +17,14 @@ on:
         required: false
         type: boolean
         default: false
+      dispatch_id:
+        description: Unique coordinator correlation ID
+        required: false
+        type: string
+      local_validation:
+        description: Receipt for deferred Windows extended checks, bound to exact artifacts
+        required: false
+        type: string
 
 concurrency:
   group: publish-pypi-${{ inputs.tag }}
@@ -28,6 +37,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: pypi
+    env:
+      PDF2ZH_RELEASE_ROOT: ${{ github.workspace }}
     permissions:
       contents: write
       actions: read
@@ -51,6 +62,14 @@ jobs:
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v8.3.2
+
+      - name: Load shared publication coordinator from workflow revision
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release-control"
+          for name in release_control.py release_policy.py release-policy.json workspace.py; do
+            git show "$GITHUB_SHA:scripts/$name" > "$RUNNER_TEMP/release-control/$name"
+          done
 
       - name: Verify tag and versions
         env:
@@ -87,6 +106,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BUILD_RUN_ID: ${{ inputs.build_run_id }}
           RELEASE_TAG: ${{ inputs.tag }}
+          LOCAL_VALIDATION: ${{ inputs.local_validation }}
         run: |
           set -euo pipefail
           [[ "$BUILD_RUN_ID" =~ ^[0-9]+$ ]]
@@ -94,12 +114,12 @@ jobs:
           VERSION="${RELEASE_TAG#v}"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN_ID" > "$RUNNER_TEMP/build-run.json"
           python - "$RUNNER_TEMP/build-run.json" "$COMMIT" "$VERSION" <<'PY_VERIFY_RUN'
-          import json, subprocess, sys
+          import json, re, subprocess, sys
           from pathlib import Path
           run = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
           assert run["conclusion"] == "success" and run["status"] == "completed"
           assert run["path"] == ".github/workflows/build-windows-release.yml"
-          assert run["display_title"] == f"Build v{sys.argv[3]} at {sys.argv[2]}"
+          assert re.fullmatch(re.escape(f"Build v{sys.argv[3]} at {sys.argv[2]}") + r"( \[[0-9a-f]{32}\])?", run["display_title"])
           # A maintenance workflow may validate an older, unchanged release commit.
           # The source identity is also checked against the downloaded manifest below.
           subprocess.run(["git", "merge-base", "--is-ancestor", sys.argv[2], run["head_sha"]], check=True)
@@ -112,6 +132,11 @@ jobs:
           source, version, commit = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
           manifest = json.loads((source / "checksums.json").read_text())
           assert manifest["version"] == version and manifest["commit"] == commit
+          import os
+          sys.path.insert(0, str(Path(os.environ["RUNNER_TEMP"], "release-control")))
+          from release_control import verify_publication_contract
+          receipt = os.environ.get("LOCAL_VALIDATION", "").lstrip("\ufeff")
+          verify_publication_contract(source, json.loads(receipt) if receipt else None)
           target = Path("server/dist")
           target.mkdir(parents=True, exist_ok=True)
           for name in manifest["artifacts"]:
@@ -195,7 +220,6 @@ jobs:
           output.write_text(notes, encoding="utf-8")
           PY_NOTES
           source="$RUNNER_TEMP/verified-release"
-          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
-            --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/release-notes.md" --latest \
+          python "$RUNNER_TEMP/release-control/release_control.py" publish "$RELEASE_TAG" "$(git rev-parse HEAD)" "$RUNNER_TEMP/release-notes.md" --repo "$GITHUB_REPOSITORY" \
             "$source/zotero-pdf2zh-pro.xpi" "$source/update.json" \
             "$source/zotero-pdf2zh-pro-windows-x64.zip" "$source/zotero-pdf2zh-pro-windows-x64-setup.exe" "$source/windows-update.json"

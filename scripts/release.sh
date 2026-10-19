@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: scripts/release.sh <version> [--full-validation] [--remote-validation] [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
+Usage: scripts/release.sh <version> [--resume <state.json>] [--full-validation] [--remote-validation] [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
 
 Build, validate, and publish a unified zotero-pdf2zh-pro release.
 
@@ -16,6 +16,8 @@ Extended checks run locally on Windows, remotely on macOS/Linux. Use
 --remote-validation if this Windows host cannot run the extended checks.
 --replace-existing explicitly replaces clients at an existing tag, preserves the
 original PyPI files, and requires unchanged server and license inputs.
+--resume reuses the recorded workflow and artifacts; it never implicitly rebuilds.
+--no-pypi skips uploading, but distributing installers still requires matching public packages.
 EOF
 }
 
@@ -78,6 +80,7 @@ FULL_VALIDATION=false
 REMOTE_VALIDATION=false
 TAP_PATH=""
 REPLACE_EXISTING=""
+RESUME_STATE=""
 PYPI_TOKEN="${UV_PUBLISH_TOKEN:-}"
 unset UV_PUBLISH_TOKEN
 
@@ -94,6 +97,11 @@ while [[ $# -gt 0 ]]; do
         --no-release) PUBLISH_RELEASE=0 ;;
         --no-pypi) PUBLISH_PYPI=0 ;;
         --no-tap) UPDATE_TAP=0 ;;
+        --resume)
+            [[ $# -ge 2 ]] || die "--resume requires a release-state.json path"
+            RESUME_STATE="$2"
+            shift
+            ;;
         --replace-existing)
             [[ $# -ge 2 ]] || die "--replace-existing requires the expected old commit"
             REPLACE_EXISTING="$2"
@@ -260,6 +268,17 @@ elif [[ -n "$REMOTE_TAG_COMMIT" && "$REMOTE_TAG_COMMIT" != "$COMMIT" ]]; then
 fi
 
 if [[ "$PUSH" -eq 1 ]]; then
+    state_args=("$VERSION" "$COMMIT")
+    [[ -z "$RESUME_STATE" ]] || state_args+=(--resume "$RESUME_STATE")
+    RELEASE_STATE="$(uv run --no-project python scripts/release_control.py state "${state_args[@]}")"
+    echo "Release recovery record: $RELEASE_STATE" >&2
+    VALIDATION_PLAN="$(dirname "$RELEASE_STATE")/validation-plan.json"
+    VALIDATION_RECEIPT="$(dirname "$RELEASE_STATE")/local-validation.json"
+    [[ -z "$REPLACE_EXISTING" ]] || FULL_VALIDATION=true
+    plan_args=("$VERSION" "$COMMIT" "$VALIDATION_PLAN")
+    [[ "$FULL_VALIDATION" != true ]] || plan_args+=(--full)
+    uv run --no-project python scripts/release_control.py plan "${plan_args[@]}" >&2
+    FULL_VALIDATION="$(node -e 'console.log(require(process.argv[1]).fullValidation)' "$VALIDATION_PLAN")"
     git push origin main
 fi
 
@@ -278,8 +297,8 @@ if [[ "$PUSH" -eq 1 ]]; then
         sleep 2
     done
     [[ -n "$CORE_RUN" ]] || die "Core CI did not start for the release commit"
-    gh run watch "$CORE_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
-    BUILD_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    uv run --no-project python scripts/release_control.py watch "$CORE_RUN" --timeout 1200
+    uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" core --field "runId=$CORE_RUN" --field status=passed
     [[ -z "$REPLACE_EXISTING" ]] || FULL_VALIDATION=true
     # BEGIN_VALIDATION_ROUTING
     REMOTE_FULL_VALIDATION="$FULL_VALIDATION"
@@ -289,24 +308,18 @@ if [[ "$PUSH" -eq 1 ]]; then
         LOCAL_EXTENDED_VALIDATION=true
     fi
     # END_VALIDATION_ROUTING
-    gh workflow run build-windows-release.yml --repo "$MAIN_REPO" --ref main \
-        -f version="$VERSION" -f commit="$COMMIT" -f full_validation="$REMOTE_FULL_VALIDATION" \
-        -f replacement_commit="$REPLACE_EXISTING"
-    for _ in {1..40}; do
-        BUILD_RUN="$(gh run list --repo "$MAIN_REPO" --workflow build-windows-release.yml \
-            --commit "$COMMIT" --event workflow_dispatch --limit 10 \
-            --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$BUILD_STARTED\")] | first | .databaseId // empty")"
-        [[ -n "$BUILD_RUN" ]] && break
-        sleep 2
-    done
-    [[ -n "$BUILD_RUN" ]] || die "Windows release validation did not start"
-    gh run watch "$BUILD_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
+    build_args=("$RELEASE_STATE" build build-windows-release.yml
+        --field "version=$VERSION" --field "commit=$COMMIT"
+        --field "full_validation=$REMOTE_FULL_VALIDATION" --field "replacement_commit=$REPLACE_EXISTING"
+        --field "defer_extended_validation=$LOCAL_EXTENDED_VALIDATION"
+        --field "validation_plan=$(cat "$VALIDATION_PLAN")")
+    [[ -z "$RESUME_STATE" ]] || build_args+=(--retry-failed)
+    BUILD_RUN="$(uv run --no-project python scripts/release_control.py workflow "${build_args[@]}")"
     VERIFIED_INFO="$(uv run --no-project python scripts/workspace.py start verified-download --owner-pid "$$")"
     # Git Bash must not rewrite the JavaScript replacement slash as its install path.
     WORKSPACE_RUN="$(printf '%s' "$VERIFIED_INFO" | MSYS2_ARG_CONV_EXCL='*' node -e 'console.log(JSON.parse(require("fs").readFileSync(0,"utf8")).work.replace(/\\/g,"/"))')"
     VERIFIED_DIR="$WORKSPACE_RUN/download"
-    gh run download "$BUILD_RUN" --repo "$MAIN_REPO" \
-        --name "release-$VERSION-$COMMIT" --dir "$VERIFIED_DIR"
+    uv run --no-project python scripts/release_control.py download "$BUILD_RUN" "release-$VERSION-$COMMIT" "$VERIFIED_DIR"
     node - "$VERIFIED_DIR" "$VERSION" "$COMMIT" "$REPLACE_EXISTING" <<'VERIFY_BUILD'
 const fs = require("fs");
 const path = require("path");
@@ -358,10 +371,17 @@ for (const [name, destination] of Object.entries(destinations)) {
 VERIFY_BUILD
     uv run --no-project python scripts/check_release_artifacts.py "$VERSION" "$COMMIT" --collect
     if [[ "$LOCAL_EXTENDED_VALIDATION" == true ]]; then
-        extended_args=(-Version "$VERSION")
+        extended_args=(-Version "$VERSION" -Plan "$VALIDATION_PLAN" -Receipt "$VALIDATION_RECEIPT" -SkipRecentUpgrade)
         [[ -z "$REPLACE_EXISTING" ]] || extended_args+=(-SkipPreviousRelease)
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 "${extended_args[@]}"
+        if [[ -f "$VALIDATION_RECEIPT" ]] && uv run --no-project python scripts/release_control.py verify-contract "$VERIFIED_DIR" --receipt "$VALIDATION_RECEIPT"; then
+            echo 'Reusing matching local extended validation.' >&2
+        else
+            powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 "${extended_args[@]}"
+        fi
     fi
+    contract_args=("$VERIFIED_DIR")
+    [[ ! -f "$VALIDATION_RECEIPT" ]] || contract_args+=(--receipt "$VALIDATION_RECEIPT")
+    uv run --no-project python scripts/release_control.py verify-contract "${contract_args[@]}"
 fi
 
 for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$WINDOWS_UPDATE_MANIFEST" "$SOURCE_ARCHIVE"; do
@@ -370,7 +390,7 @@ done
 
 pypi_release_complete() {
     local response
-    response="$(curl -fsS "$PYPI_VERSION_URL")" || return 1
+    response="$(curl -fsS --connect-timeout 15 --max-time 45 "$PYPI_VERSION_URL")" || return 1
     printf '%s' "$response" | node -e '
 // VERIFY_PYPI
 const fs = require("fs");
@@ -432,19 +452,11 @@ elif [[ "$PUBLISH_PYPI" -eq 1 ]]; then
                 git push origin "$TAG"
                 REMOTE_TAG_COMMIT="$COMMIT"
             fi
-            PUBLISH_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            gh workflow run publish-pypi.yml --repo "$MAIN_REPO" --ref main \
-                -f tag="$TAG" -f build_run_id="$BUILD_RUN"
-            PUBLISH_RUN=""
-            for _ in {1..40}; do
-                PUBLISH_RUN="$(gh run list --repo "$MAIN_REPO" --workflow publish-pypi.yml \
-                    --commit "$COMMIT" --event workflow_dispatch --limit 10 \
-                    --json databaseId,createdAt --jq "[.[] | select(.createdAt >= \"$PUBLISH_STARTED\")] | first | .databaseId // empty")"
-                [[ -n "$PUBLISH_RUN" ]] && break
-                sleep 2
-            done
-            [[ -n "$PUBLISH_RUN" ]] || die "PyPI publication workflow did not start"
-            gh run watch "$PUBLISH_RUN" --repo "$MAIN_REPO" --exit-status --interval 15
+            LOCAL_RECEIPT_JSON=""
+            [[ ! -f "$VALIDATION_RECEIPT" ]] || LOCAL_RECEIPT_JSON="$(cat "$VALIDATION_RECEIPT")"
+            publish_args=("$RELEASE_STATE" pypi publish-pypi.yml --field "tag=$TAG" --field "build_run_id=$BUILD_RUN" --field "local_validation=$LOCAL_RECEIPT_JSON")
+            [[ -z "$RESUME_STATE" ]] || publish_args+=(--retry-failed)
+            PUBLISH_RUN="$(uv run --no-project python scripts/release_control.py workflow "${publish_args[@]}")"
         fi
     fi
     PYPI_VERIFIED=0
@@ -456,6 +468,12 @@ elif [[ "$PUBLISH_PYPI" -eq 1 ]]; then
         sleep 5
     done
     [[ "$PYPI_VERIFIED" -eq 1 ]] || die "PyPI did not expose matching verified files for $PRODUCT==$VERSION"
+    [[ "$PUSH" -ne 1 ]] || uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" pypi-visible --field status=passed
+fi
+
+# Skipping upload must never bypass the installer's public dependency gate.
+if [[ "$PUBLISH_RELEASE" -eq 1 && "$PUBLISH_PYPI" -eq 0 && -z "$REPLACE_EXISTING" ]]; then
+    pypi_release_complete || die "--no-pypi requires matching public wheel and sdist before distributing installers"
 fi
 
 if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
@@ -472,13 +490,9 @@ if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
         # This file is unique to the successful invocation above; never use a stale backup pointer.
         REPLACEMENT_BACKUP="$(cat "$REPLACEMENT_BACKUP_FILE")"
         [[ -n "$REPLACEMENT_BACKUP" ]] || die "Replacement did not record its recovery backup"
-    elif gh release view "$TAG" --repo "$MAIN_REPO" >/dev/null 2>&1; then
-        gh release upload "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$WINDOWS_UPDATE_MANIFEST" \
-            --repo "$MAIN_REPO" --clobber
     else
-        gh release create "$TAG" "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$WINDOWS_UPDATE_MANIFEST" \
-            --repo "$MAIN_REPO" --target "$COMMIT" --title "$TAG" \
-            --notes-file "$NOTES_FILE" --latest
+        uv run --no-project python scripts/release_control.py publish "$TAG" "$COMMIT" "$NOTES_FILE" \
+            "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$WINDOWS_UPDATE_MANIFEST"
     fi
 fi
 
@@ -525,11 +539,15 @@ s/version "[^"]+"/version "$ENV{VERSION}"/;
         sleep 2
     done
     [[ -n "$TAP_RUN" ]] || die "Homebrew formula checks did not start for $TAP_COMMIT"
-    gh run watch "$TAP_RUN" --repo "$TAP_REPO" --exit-status
+    uv run --no-project python scripts/release_control.py watch "$TAP_RUN" --repo "$TAP_REPO" --timeout 1200
+    uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" homebrew --field "runId=$TAP_RUN" --field "commit=$TAP_COMMIT" --field status=passed
 fi
 
 # All publication targets and checks have succeeded; retain the backup without rolling back.
 REPLACEMENT_BACKUP=""
+if [[ "$PUSH" -eq 1 ]]; then
+    uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" complete --field "githubRelease=$PUBLISH_RELEASE" --field "pypiUpload=$PUBLISH_PYPI" --field "homebrew=$UPDATE_TAP"
+fi
 echo "Released $TAG at $COMMIT"
 if [[ -n "$REPLACE_EXISTING" ]]; then
     echo "PyPI distributions preserved from $REPLACE_EXISTING; client source $COMMIT"

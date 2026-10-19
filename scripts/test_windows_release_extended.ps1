@@ -2,6 +2,10 @@
     [Parameter(Mandatory=$true)][string]$Version,
     [switch]$SkipLifecycle,
     [switch]$SkipPreviousRelease,
+    [switch]$RecentOnly,
+    [switch]$SkipRecentUpgrade,
+    [string]$Plan = $env:PDF2ZH_VALIDATION_PLAN,
+    [string]$Receipt,
     [string]$DownloadCache = $env:PDF2ZH_TEST_DOWNLOAD_CACHE,
     [string]$SourceCommit
 )
@@ -12,6 +16,7 @@ $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 . (Join-Path $PSScriptRoot 'workspace.ps1')
 $validationCommit = (& git -C $repo rev-parse HEAD)
 if (-not $SourceCommit) { $SourceCommit = $validationCommit }
+if ($env:PDF2ZH_VALIDATION_COMMIT) {$validationCommit=$env:PDF2ZH_VALIDATION_COMMIT}
 if ($SourceCommit -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected a full source commit.' }
 & git -C $repo merge-base --is-ancestor $SourceCommit $validationCommit
 if ($LASTEXITCODE -ne 0) { throw 'The source commit must be an ancestor of the validation scripts.' }
@@ -39,6 +44,19 @@ $env:PDF2ZH_WINDOWS_REGISTRY_KEY = $registry
 $env:PDF2ZH_WINDOWS_START_MENU_DIR = Join-Path $fixture 'menu'
 $env:PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE = $null
 try {
+    if (-not $Plan) {
+        $Plan=Join-Path $workspaceRun.report 'validation-plan.json'
+        $planArguments=@($Version,$SourceCommit,$Plan)
+        if (-not $RecentOnly) {$planArguments+='--full'}
+        & uv run --no-project python (Join-Path $PSScriptRoot 'release_control.py') plan @planArguments
+        if ($LASTEXITCODE -ne 0) {throw 'Cannot resolve a frozen validation plan.'}
+    }
+    $testPlan=Get-Content -Raw -Encoding utf8 -LiteralPath $Plan|ConvertFrom-Json
+    $releasePolicy=Get-Content -Raw -Encoding utf8 -LiteralPath (Join-Path $PSScriptRoot 'release-policy.json')|ConvertFrom-Json
+    if ($testPlan.version -ne $Version -or $testPlan.sourceCommit -ne $SourceCommit) {throw 'Validation plan does not match the candidate.'}
+    $harnessSha=& uv run --no-project python (Join-Path $PSScriptRoot 'release_control.py') harness-digest
+    if ($LASTEXITCODE -ne 0 -or $harnessSha -ne $testPlan.harnessSha256) {throw 'Validation scripts differ from the frozen plan.'}
+    $results=@()
     if (-not $SkipLifecycle) {
         if ($DownloadCache) {
             $cache = (Resolve-Path -LiteralPath $DownloadCache).Path
@@ -53,39 +71,40 @@ try {
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'test_windows_lifecycle.ps1') -WindowsPackage $package -PackageSource $wheel
         if ($LASTEXITCODE -ne 0) { throw 'Extended lifecycle validation failed.' }
     }
-    if (-not $SkipPreviousRelease) {
-        $previous = Join-Path $fixture 'previous-release'
-        New-Item -ItemType Directory -Force -Path $previous | Out-Null
-        $downloadArgs = 'release download v1.8.2 --repo study-233/zotero-pdf2zh-pro --pattern zotero-pdf2zh-pro-windows-x64.zip --dir "{0}"' -f $previous
-        $download = Start-Process -FilePath (Get-Command gh).Source -ArgumentList $downloadArgs -WindowStyle Hidden -PassThru
-        $null = $download.Handle
-        if (-not $download.WaitForExit(300000)) {
-            $download.Kill(); $download.WaitForExit()
-            throw 'Previous package download exceeded five minutes; retry only this validation stage.'
+    foreach ($case in $testPlan.cases) {
+        if ($RecentOnly -and $case.id -ne 'recent-upgrade') {continue}
+        if ($SkipRecentUpgrade -and $case.id -eq 'recent-upgrade') {continue}
+        if ($SkipPreviousRelease -and $case.id -eq 'legacy-upgrade') {continue}
+        $previous=Join-Path $fixture $case.baseline
+        $info=& uv run --no-project python (Join-Path $PSScriptRoot 'release_control.py') baseline $Plan $case.baseline $previous
+        if ($LASTEXITCODE -ne 0) {throw "Baseline setup failed: $($case.id) $($case.baseline)"}
+        $old=$info|ConvertFrom-Json
+        $descriptor=$releasePolicy.scenarios.PSObject.Properties|Where-Object {$_.Name -eq $case.id}
+        if (-not $descriptor) {throw "Unknown validation scenario: $($case.id)"}
+        $entry=Join-Path $repo $descriptor.Value.entry
+        $arguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File',$entry,
+            '-PreviousPackage',$old.package,'-PreviousWheel',$old.wheel,'-Package',$package,'-Wheel',$wheel)
+        if ($case.id -eq 'legacy-upgrade') {
+            $arguments+=@('-Constraints',$old.constraints)
+            if ($DownloadCache) {$arguments+=@('-DownloadCache',$DownloadCache)}
+        } else {
+            $arguments+=@('-PreviousVersion',$case.baseline,'-Version',$Version)
+            if ($DownloadCache) {$arguments+=@('-DownloadCache',$DownloadCache)}
         }
-        if ($download.ExitCode -ne 0) { throw 'Previous Windows package download failed.' }
-        $metadata = Invoke-RestMethod 'https://pypi.org/pypi/zotero-pdf2zh-pro/1.8.2/json' -TimeoutSec 30
-        $oldWheelInfo = @($metadata.urls | Where-Object {$_.filename -eq 'zotero_pdf2zh_pro-1.8.2-py3-none-any.whl'})
-        if ($oldWheelInfo.Count -ne 1) { throw 'Expected one published v1.8.2 wheel.' }
-        $oldWheel = Join-Path $previous $oldWheelInfo[0].filename
-        Invoke-WebRequest $oldWheelInfo[0].url -OutFile $oldWheel -UseBasicParsing -TimeoutSec 120
-        if ((Get-FileHash -LiteralPath $oldWheel -Algorithm SHA256).Hash -ine $oldWheelInfo[0].digests.sha256) {
-            throw 'Previous wheel checksum mismatch.'
-        }
-        $arguments = @('-NoProfile','-ExecutionPolicy','Bypass','-File',
-            (Join-Path $PSScriptRoot 'test_windows_previous_release.ps1'),
-            '-PreviousPackage',(Join-Path $previous 'zotero-pdf2zh-pro-windows-x64.zip'),
-            '-PreviousWheel',$oldWheel,'-Package',$package,'-Wheel',$wheel)
-        if ($DownloadCache) { $arguments += @('-DownloadCache', $DownloadCache) }
         & powershell @arguments
-        if ($LASTEXITCODE -ne 0) { throw 'Previous-release migration validation failed.' }
+        if ($LASTEXITCODE -ne 0) {throw "Validation failed: $($case.id) $($case.baseline) -> $Version"}
+        $results+=@{id=$case.id;baseline=$case.baseline;status='passed'}
     }
-    @{version=$Version;commit=$SourceCommit;validationCommit=$validationCommit;status='passed';
-      lifecycle=(-not $SkipLifecycle);previousRelease=(-not $SkipPreviousRelease);
+    $planSha=& uv run --no-project python (Join-Path $PSScriptRoot 'release_control.py') plan-digest $Plan
+    if ($LASTEXITCODE -ne 0) {throw 'Cannot identify the validation plan.'}
+    $result=@{version=$Version;commit=$SourceCommit;validationCommit=$validationCommit;status='passed';
+      lifecycle=(-not $SkipLifecycle);cases=$results;planSha256=$planSha;harnessSha256=$harnessSha;
       packageSha256=(Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant();
-      wheelSha256=(Get-FileHash -LiteralPath $wheel -Algorithm SHA256).Hash.ToLowerInvariant()} |
-        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $fixture 'validation.json') -Encoding utf8
-    Write-Host "Extended validation passed; evidence: $fixture/validation.json"
+      wheelSha256=(Get-FileHash -LiteralPath $wheel -Algorithm SHA256).Hash.ToLowerInvariant()}
+    $result |
+        ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $workspaceRun.report 'validation.json') -Encoding utf8
+    if ($Receipt) {$result|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $Receipt -Encoding utf8}
+    Write-Host "Selected validation passed; evidence: $($workspaceRun.report)/validation.json"
     $passed = $true
 } finally {
     # Also clean up failed/relocated fixtures; never match the production directory.

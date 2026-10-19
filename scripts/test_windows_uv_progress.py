@@ -16,9 +16,9 @@ import zipfile
 from workspace import Workspace
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTROL = Path(os.environ.get('PDF2ZH_TEST_CONTROL', ROOT / '.tmp/slint-target/x86_64-pc-windows-msvc/release/zotero-pdf2zh-pro.exe'))
-UV = Path(os.environ.get('PDF2ZH_TEST_UV', ROOT / '.local-dev/runtime/tools/uv.exe'))
-PYTHON = Path(os.environ.get('PDF2ZH_TEST_PYTHON', ROOT / '.local-dev/runtime/python/cpython-3.13.15-windows-x86_64-none/python.exe'))
+CONTROL = Path(os.environ.get('PDF2ZH_TEST_CONTROL', ''))
+UV = Path(os.environ.get('PDF2ZH_TEST_UV', ''))
+PYTHON = Path(os.environ.get('PDF2ZH_TEST_PYTHON', ''))
 for variable, path in [('PDF2ZH_TEST_CONTROL', CONTROL), ('PDF2ZH_TEST_UV', UV), ('PDF2ZH_TEST_PYTHON', PYTHON)]:
     if variable in os.environ and not path.is_file():
         raise FileNotFoundError(f'{variable}: {path}')
@@ -86,7 +86,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         pass
 
 
-@unittest.skipUnless(os.name == 'nt' and CONTROL.is_file() and UV.is_file(), 'Windows candidate and uv required')
+@unittest.skipUnless(os.name == 'nt', 'Windows ConPTY required')
 class UvProgressTests(unittest.TestCase):
     def setUp(self):
         run = Workspace().start('uv-progress')
@@ -255,16 +255,18 @@ class UvProgressTests(unittest.TestCase):
         self.assertFalse(any(f['total'] for e in events for f in e['files'] if f['id'] in unknown))
 
     def test_python_download_is_measured_before_integrity_failure(self):
+        python_version = subprocess.check_output([str(PYTHON), '-c', 'import platform;print(platform.python_version())'], text=True).strip()
+        major, minor, patch = map(int, python_version.split('.'))
         stream = io.BytesIO()
         with zipfile.ZipFile(stream, 'w') as archive:
             archive.writestr('python/progress-test.bin', os.urandom(4 * 1024 * 1024))
         self.server.payloads = {'/python.zip': stream.getvalue()}
         metadata = self.root / 'python-downloads.json'
         metadata.write_text(json.dumps({'test': dict(name='cpython', arch=dict(family='x86_64', variant=None), os='windows', libc='none',
-                major=3, minor=13, patch=15, prerelease=None, variant=None, build=None,
+                major=major, minor=minor, patch=patch, prerelease=None, variant=None, build=None,
                 url=f'http://127.0.0.1:{self.server.server_port}/python.zip', sha256='0'*64)}), encoding='utf-8')
         # Wrong digest deliberately ends before installing/executing any Python.
-        args = ['python', 'install', '3.13.15', '--no-bin', '--no-registry', '--no-config', '--python-downloads-json-url', str(metadata)]
+        args = ['python', 'install', python_version, '--no-bin', '--no-registry', '--no-config', '--python-downloads-json-url', str(metadata)]
         request = self.root / 'request.json'
         request.write_text(json.dumps(dict(executable=str(UV), arguments=args, root=str(self.root), uvVersion='0.12.10')), encoding='utf-8')
         (self.root / 'updates/operation-progress.json').write_text(json.dumps(dict(operationId='python-test', operation='install', phase='python', status='running', startedAt=int(time.time()))), encoding='utf-8')
@@ -280,4 +282,16 @@ class UvProgressTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    required = ('PDF2ZH_TEST_CONTROL', 'PDF2ZH_TEST_UV', 'PDF2ZH_TEST_PYTHON', 'PDF2ZH_TEST_VERSION')
+    missing = [name for name in required if not os.environ.get(name)]
+    if missing:
+        raise SystemExit('Explicit candidate inputs required: ' + ', '.join(missing))
+    if os.name != 'nt':
+        raise SystemExit('Release progress validation requires Windows')
+    actual = subprocess.check_output(['powershell', '-NoProfile', '-Command',
+        '[Diagnostics.FileVersionInfo]::GetVersionInfo($env:PDF2ZH_TEST_CONTROL).FileVersion'], text=True).strip()
+    if actual != os.environ['PDF2ZH_TEST_VERSION']:
+        raise SystemExit(f'Candidate version mismatch: {actual}')
+    print(json.dumps({'candidateVersion':actual,'controlSha256':hashlib.sha256(CONTROL.read_bytes()).hexdigest(),
+                      'uvSha256':hashlib.sha256(UV.read_bytes()).hexdigest()}),flush=True)
     unittest.main()

@@ -13,7 +13,7 @@ UI_CHECKS = ('chineseDisplay', 'imeCandidatePosition', 'clipboard', 'fontFallbac
              'layout100', 'layout150', 'layout200', 'trayRestore', 'noHiddenRepaint')
 
 
-def assess(binary, installer, baseline=None, candidate=None, ui=None, closed_baseline=None, closed_candidate=None):
+def assess(binary, installer, version, baseline=None, candidate=None, ui=None, closed_baseline=None, closed_candidate=None):
     data = binary.read_bytes()
     checks = {}
     try:
@@ -21,7 +21,7 @@ def assess(binary, installer, baseline=None, candidate=None, ui=None, closed_bas
         checks['systemDependencies'] = {'status': 'passed', 'imports': sorted(imports(data))}
     except (ValueError, AssertionError) as error:
         checks['systemDependencies'] = {'status': 'failed', 'reason': str(error)}
-    report = verify_installer(installer, '1.8.2')
+    report = verify_installer(installer, version)
     checks['installerBudget'] = {'status': 'passed' if report['size'] <= MAX_INSTALLER_BYTES else 'failed',
                                  'measuredBytes': report['size'], 'maximumBytes': MAX_INSTALLER_BYTES}
     if baseline and candidate:
@@ -59,6 +59,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', type=Path, required=True)
     parser.add_argument('--installer', type=Path, required=True)
+    parser.add_argument('--version', required=True, help='Expected candidate version, verified against the installer')
     parser.add_argument('--baseline', type=Path)
     parser.add_argument('--candidate', type=Path)
     parser.add_argument('--ui-results', type=Path)
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     parser.add_argument('--closed-candidate', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    result = assess(args.binary, args.installer, read_optional(args.baseline), read_optional(args.candidate), read_optional(args.ui_results), read_optional(args.closed_baseline), read_optional(args.closed_candidate))
+    result = assess(args.binary, args.installer, args.version, read_optional(args.baseline), read_optional(args.candidate), read_optional(args.ui_results), read_optional(args.closed_baseline), read_optional(args.closed_candidate))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(result, ensure_ascii=False, indent=2))

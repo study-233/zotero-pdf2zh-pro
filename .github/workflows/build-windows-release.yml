@@ -1,5 +1,5 @@
 name: Build Windows release
-run-name: Build v${{ inputs.version }} at ${{ inputs.commit }}
+run-name: Build v${{ inputs.version }} at ${{ inputs.commit }}${{ inputs.dispatch_id && format(' [{0}]', inputs.dispatch_id) || '' }}
 
 on:
   workflow_dispatch:
@@ -29,6 +29,19 @@ on:
         description: Optional failed run with passed standard checks; resume collection or retry full-validation migration
         required: false
         type: string
+      dispatch_id:
+        description: Unique coordinator correlation ID (leave empty for manual runs)
+        required: false
+        type: string
+      validation_plan:
+        description: Frozen validation plan from the coordinator (leave empty to resolve once)
+        required: false
+        type: string
+      defer_extended_validation:
+        description: Coordinator will run extended checks locally against these same artifacts
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -51,12 +64,15 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       UV_DEFAULT_INDEX: https://pypi.org/simple
       PDF2ZH_WINDOWS_PORT: "18890"
+      DISPATCH_ID: ${{ inputs.dispatch_id }}
+      PDF2ZH_VALIDATION_COMMIT: ${{ github.sha }}
     steps:
       - name: Validate inputs
         shell: pwsh
         run: |
           if ($env:GITHUB_REF -cne 'refs/heads/main') { throw 'Release builds must be dispatched from main' }
           if ($env:RELEASE_VERSION -cnotmatch '^[0-9]+\.[0-9]+\.[0-9]+$') { throw 'Expected stable semver' }
+          if ($env:DISPATCH_ID -and $env:DISPATCH_ID -cnotmatch '^[0-9a-f]{32}$') { throw 'Invalid dispatch ID' }
           if ($env:RELEASE_COMMIT -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected full lowercase commit SHA' }
           if ($env:REPLACEMENT_COMMIT -and $env:REPLACEMENT_COMMIT -cnotmatch '^[0-9a-f]{40}$') { throw 'Expected full original replacement commit SHA' }
           if ($env:REPLACEMENT_COMMIT -and '${{ inputs.full_validation }}' -ne 'true') { throw 'Same-version replacement requires full validation' }
@@ -100,6 +116,7 @@ jobs:
           # Use the trusted tool verifier even when building a historical release.
           mkdir -p "$RUNNER_TEMP/renderer-harness"
           cp scripts/prepare_windows_build_tools.ps1 scripts/prepare_windows_skia_source.py scripts/prepare_windows_skia_dependencies.py "$RUNNER_TEMP/renderer-harness/"
+          cp scripts/release_control.py scripts/release_policy.py scripts/release-policy.json scripts/workspace.py "$RUNNER_TEMP/renderer-harness/"
 
       - name: Prepare temporary local main and isolated test paths
         shell: bash
@@ -119,6 +136,7 @@ jobs:
           "TEMP=$testTemp" >> $env:GITHUB_ENV
           "TMP=$testTemp" >> $env:GITHUB_ENV
           "TMPDIR=$($testTemp.Replace('\', '/'))" >> $env:GITHUB_ENV
+          "PDF2ZH_VALIDATION_PLAN=$env:RUNNER_TEMP/validation-plan.json" >> $env:GITHUB_ENV
           "UV_TOOL_DIR=$env:RUNNER_TEMP\uv-tools" >> $env:GITHUB_ENV
           "UV_TOOL_BIN_DIR=$env:RUNNER_TEMP\uv-bin" >> $env:GITHUB_ENV
           "PDF2ZH_WINDOWS_APP_ROOT=$env:RUNNER_TEMP\zotero-pdf2zh-pro 中文 with spaces" >> $env:GITHUB_ENV
@@ -214,13 +232,15 @@ jobs:
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REUSE_RUN" > "$RUNNER_TEMP/reuse-run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REUSE_RUN/jobs?filter=latest" > "$RUNNER_TEMP/reuse-jobs.json"
-          python - "$RUNNER_TEMP/reuse-run.json" "$RUNNER_TEMP/reuse-jobs.json" "$RELEASE_COMMIT" <<'PY_RUN'
-          import json, sys
+          python - "$RUNNER_TEMP/reuse-run.json" "$RUNNER_TEMP/reuse-jobs.json" "$RELEASE_COMMIT" "$RELEASE_VERSION" <<'PY_RUN'
+          import json, re, subprocess, sys
           from pathlib import Path
           run, jobs = [json.loads(Path(p).read_text(encoding="utf-8")) for p in sys.argv[1:3]]
-          assert run["head_sha"] == sys.argv[3] and run["status"] == "completed"
+          assert run["status"] == "completed"
           assert run["path"] == ".github/workflows/build-windows-release.yml"
-          assert any(s["name"] == "Build artifacts and verify Windows startup" and s["conclusion"] == "success"
+          assert re.fullmatch(re.escape(f"Build v{sys.argv[4]} at {sys.argv[3]}") + r"( \[[0-9a-f]{32}\])?", run["display_title"])
+          subprocess.run(["git", "merge-base", "--is-ancestor", sys.argv[3], run["head_sha"]], check=True)
+          assert any(s["name"] in {"Build artifacts and verify Windows startup", "Restore packages from a completed artifact build"} and s["conclusion"] == "success"
                      for j in jobs["jobs"] for s in j.get("steps", []))
           PY_RUN
           conclusion="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REUSE_RUN" --jq '.conclusion')"
@@ -258,18 +278,19 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN" > "$RUNNER_TEMP/validation-run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN/jobs?filter=latest" > "$RUNNER_TEMP/validation-jobs.json"
           python - "$RUNNER_TEMP/validation-run.json" "$RUNNER_TEMP/validation-jobs.json" "$RELEASE_COMMIT" "$RELEASE_VERSION" "$GITHUB_SHA" "$FULL_VALIDATION" <<'PY_VALIDATION'
-          import json, subprocess, sys
+          import json, re, subprocess, sys
           from pathlib import Path
           run, jobs = [json.loads(Path(p).read_text(encoding="utf-8")) for p in sys.argv[1:3]]
           assert run["status"] == "completed" and run["conclusion"] == "failure"
           assert run["path"] == ".github/workflows/build-windows-release.yml"
-          assert run["display_title"] == f"Build v{sys.argv[4]} at {sys.argv[3]}"
+          assert re.fullmatch(re.escape(f"Build v{sys.argv[4]} at {sys.argv[3]}") + r"( \[[0-9a-f]{32}\])?", run["display_title"])
           build = [job for job in jobs["jobs"] if job["name"] == "build"]
           assert len(build) == 1
           steps = {step["name"]: step["conclusion"] for step in build[0]["steps"]}
           for name in ["Verify committed versions", "Require successful core CI for the release commit",
                        "Restore packages from a completed artifact build", "Use current test harness for reused artifacts",
                        "Fresh installed Python 3.13 runtime and OCR", "Verify installed startup and upgrade",
+                       "Prepare frozen validation plan", "Verify previous stable release upgrade",
                        "Verify real downloads and progress with the release controller"]:
               assert steps.get(name) == "success", f"Missing passed validation: {name}"
           full_validation = len(sys.argv) > 6 and sys.argv[6] == "true"
@@ -281,29 +302,41 @@ jobs:
               assert steps.get("Verify and collect release artifacts") == "failure"
           subprocess.run(["git", "merge-base", "--is-ancestor", sys.argv[3], run["head_sha"]], check=True)
           subprocess.run(["git", "merge-base", "--is-ancestor", run["head_sha"], sys.argv[5]], check=True)
-          paths = ["check_installed_runtime.py", "test_windows_lifecycle.ps1", "check_windows_background.py",
-                   "test_windows_process_helpers.ps1", "test_windows_release_extended.ps1",
-                   "test_windows_previous_release.ps1", "test_windows_update_reuse.ps1", "test_windows_uv_progress.py",
-                   "workspace.py", "workspace.ps1"]
+          import os
+          policy = json.loads(Path(os.environ["RUNNER_TEMP"], "renderer-harness/release-policy.json").read_text(encoding="utf-8"))
+          paths = policy["harnessPaths"]
           if full_validation:
               # Only the migration fixture may change; it is rerun below.
-              paths.remove("test_windows_previous_release.ps1")
+              paths.remove("scripts/test_windows_previous_release.ps1")
           subprocess.run(["git", "diff", "--exit-code", run["head_sha"], sys.argv[5], "--",
-                          *["scripts/" + path for path in paths]], check=True)
+                          *paths], check=True)
           PY_VALIDATION
           echo 'REUSE_VALIDATION=true' >> "$GITHUB_ENV"
 
       - name: Use current test harness for reused artifacts
-        if: inputs.reuse_build_run_id != '' && (env.REUSE_VALIDATION != 'true' || inputs.full_validation)
+        if: github.sha != inputs.commit || (inputs.reuse_build_run_id != '' && (env.REUSE_VALIDATION != 'true' || inputs.full_validation))
         shell: bash
         run: |
           # Only the test harness comes from this workflow's newer revision.
           # Product sources, packages and their provenance stay at RELEASE_COMMIT.
-          git restore --source "$GITHUB_SHA" --worktree -- \
-            scripts/test_windows_lifecycle.ps1 scripts/check_windows_background.py \
-            scripts/test_windows_process_helpers.ps1 scripts/test_windows_release_extended.ps1 \
-            scripts/test_windows_previous_release.ps1 scripts/test_windows_update_reuse.ps1 \
-            scripts/test_windows_uv_progress.py scripts/workspace.py scripts/workspace.ps1
+          python "$RUNNER_TEMP/renderer-harness/release_policy.py" overlay "$GITHUB_SHA"
+
+      - name: Prepare frozen validation plan
+        shell: pwsh
+        env:
+          VALIDATION_PLAN_INPUT: ${{ inputs.validation_plan }}
+        run: |
+          if ($env:VALIDATION_PLAN_INPUT) { [IO.File]::WriteAllText($env:PDF2ZH_VALIDATION_PLAN, $env:VALIDATION_PLAN_INPUT) }
+          $arguments = @($env:RELEASE_VERSION, $env:RELEASE_COMMIT, $env:PDF2ZH_VALIDATION_PLAN)
+          if ('${{ inputs.full_validation }}' -eq 'true') { $arguments += '--full' }
+          uv run --no-project python scripts/release_control.py plan @arguments
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $plan=Get-Content -Raw -Encoding utf8 -LiteralPath $env:PDF2ZH_VALIDATION_PLAN|ConvertFrom-Json
+          $runFull=$plan.fullValidation -and '${{ inputs.defer_extended_validation }}' -ne 'true'
+          if ($env:REUSE_VALIDATION -eq 'true' -and $runFull -and '${{ inputs.full_validation }}' -ne 'true') {
+            throw 'Expanded recovery requires full_validation=true with proven full-lifecycle evidence, or omit validation_run_id to rerun checks.'
+          }
+          "RUN_FULL_VALIDATION=$($runFull.ToString().ToLowerInvariant())" >> $env:GITHUB_ENV
 
       - name: Fresh installed Python 3.13 runtime and OCR
         if: env.REUSE_VALIDATION != 'true'
@@ -325,7 +358,7 @@ jobs:
         run: |
           if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'PowerShell 5.1 is required' }
           $wheel = (Resolve-Path "server/dist/zotero_pdf2zh_pro-$env:RELEASE_VERSION-py3-none-any.whl").Path
-          $smokeOnly = '${{ inputs.full_validation }}' -ne 'true'
+          $smokeOnly = $env:RUN_FULL_VALIDATION -ne 'true'
           & scripts/test_windows_lifecycle.ps1 -WindowsPackage 'dist/zotero-pdf2zh-pro-windows-x64.zip' -PackageSource $wheel -SmokeOnly:$smokeOnly
 
       - name: Verify real downloads and progress with the release controller
@@ -337,38 +370,47 @@ jobs:
           $env:PDF2ZH_TEST_CONTROL = Join-Path $progressPackage 'zotero-pdf2zh-pro.exe'
           $env:PDF2ZH_TEST_UV = (Get-Command uv).Source
           $env:PDF2ZH_TEST_PYTHON = (uv python find 3.13 | Out-String).Trim()
+          $env:PDF2ZH_TEST_VERSION = $env:RELEASE_VERSION
           uv run --no-project python scripts/test_windows_uv_progress.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Verify v1.8.2 migration and locked dependency reuse
-        if: inputs.full_validation && inputs.replacement_commit == ''
+      - name: Verify previous stable release upgrade
+        if: env.REUSE_VALIDATION != 'true'
         shell: pwsh
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -SkipLifecycle
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -Plan $env:PDF2ZH_VALIDATION_PLAN -SkipLifecycle -RecentOnly
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify v1.8.2 migration and locked dependency reuse
+        if: env.RUN_FULL_VALIDATION == 'true'
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -Plan $env:PDF2ZH_VALIDATION_PLAN -SkipLifecycle -SkipRecentUpgrade
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Restore source test scripts after validation
-        if: inputs.reuse_build_run_id != '' && (env.REUSE_VALIDATION != 'true' || inputs.full_validation)
+        if: always() && (github.sha != inputs.commit || (inputs.reuse_build_run_id != '' && (env.REUSE_VALIDATION != 'true' || inputs.full_validation)))
         shell: bash
         run: |
           # Undo only the explicitly overlaid tracked tests. Product changes
           # remain visible to the clean-source guard; packages are never rebuilt.
-          git restore --source HEAD --worktree -- \
-            scripts/test_windows_lifecycle.ps1 scripts/test_windows_release_extended.ps1 \
-            scripts/test_windows_previous_release.ps1 scripts/test_windows_update_reuse.ps1 \
-            scripts/test_windows_uv_progress.py
-          # Older release commits do not yet contain the shared workspace helpers.
-          for helper in scripts/workspace.py scripts/workspace.ps1; do
-            if git cat-file -e "HEAD:$helper" 2>/dev/null; then
-              git restore --source HEAD --worktree -- "$helper"
-            else
-              rm -f -- "$helper"
-            fi
-          done
+          python "$RUNNER_TEMP/renderer-harness/release_policy.py" restore
 
       - name: Verify and collect release artifacts
         shell: bash
         run: uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT" --collect
+
+      - name: Bind validation plan to verified artifacts
+        # The plan is bound to the verified product manifest without rebuilding packages.
+        # This also works when the product commit predates the current harness.
+        shell: pwsh
+        env:
+          PDF2ZH_RELEASE_ROOT: ${{ github.workspace }}
+        run: |
+          $arguments=@($env:PDF2ZH_VALIDATION_PLAN,'dist/release/checksums.json')
+          if ('${{ inputs.defer_extended_validation }}' -eq 'true') {$arguments+='--deferred'}
+          uv run --no-project python "$env:RUNNER_TEMP/renderer-harness/release_control.py" attach-plan @arguments
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
 
       - name: Upload verified distributions and checksums
         uses: actions/upload-artifact@v6
@@ -377,6 +419,17 @@ jobs:
           path: dist/release/*
           if-no-files-found: error
           retention-days: 30
+
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: validation-${{ inputs.version }}-${{ github.run_id }}
+          path: |
+            ${{ env.PDF2ZH_VALIDATION_PLAN }}
+            .local-dev/reports/**
+          if-no-files-found: warn
+          retention-days: 90
 
       - name: Upload build diagnostics and available artifacts on failure
         if: failure()

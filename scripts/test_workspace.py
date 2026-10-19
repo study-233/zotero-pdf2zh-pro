@@ -17,9 +17,21 @@ from workspace import MARKER, Workspace, checked, metadata, save
 class WorkspaceTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix='workspace 中文 ')
-        self.addCleanup(self.temporary.cleanup)
+        self.addCleanup(self.cleanup_temporary)
         self.root = Path(self.temporary.name).resolve()
         self.workspace = Workspace(self.root)
+
+    def cleanup_temporary(self):
+        # Windows can briefly retain a child process's working-directory handle.
+        deadline = time.monotonic() + 2
+        while True:
+            try:
+                self.temporary.cleanup()
+                return
+            except PermissionError as error:
+                if getattr(error, 'winerror', None) != 32 or time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.05)
 
     def old(self, category='report', name='old', days=31, owner=None):
         parent = {'report': self.workspace.reports, 'run': self.workspace.runs, 'build': self.workspace.builds}[category]

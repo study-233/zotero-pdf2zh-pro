@@ -1,5 +1,6 @@
 """Exercise the actual inline guards used when reusing release packages."""
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -27,28 +28,34 @@ class WorkflowGateTests(unittest.TestCase):
         text = (ROOT / '.github/workflows/build-windows-release.yml').read_text(encoding='utf-8')
         step = text.split('      - name: Restore source test scripts after validation\n', 1)[1].split('\n      - name:', 1)[0]
         script = textwrap.dedent(step.split('        run: |\n', 1)[1])
-        names = ['test_windows_lifecycle.ps1', 'test_windows_release_extended.ps1',
-                 'test_windows_previous_release.ps1', 'test_windows_update_reuse.ps1', 'test_windows_uv_progress.py']
+        import release_policy
+        names = release_policy.policy()['harnessPaths']
         for helpers_existed in (False, True):
             with self.subTest(helpers_existed=helpers_existed), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 (root / 'scripts').mkdir()
-                original = names + (['workspace.py', 'workspace.ps1'] if helpers_existed else [])
+                original = names if helpers_existed else names[:2]
                 for name in original:
-                    (root / 'scripts' / name).write_text('original\n', encoding='utf-8')
+                    (root / name).write_text('original\n', encoding='utf-8')
                 def git(*args):
                     return subprocess.run(['git', '-c', 'user.name=Workspace Test', '-c', 'user.email=test@example.invalid', *args],
                                           cwd=root, capture_output=True, check=True)
                 git('init', '-q')
                 git('add', 'scripts')
                 git('commit', '-qm', 'Fixture release source')
-                for name in [*names, 'workspace.py', 'workspace.ps1']:
-                    (root / 'scripts' / name).write_text('new harness\n', encoding='utf-8')
-                result = subprocess.run([BASH, '--noprofile', '--norc'], input=script.encode(), cwd=root, capture_output=True)
+                for name in names:
+                    (root / name).write_text('new harness\n', encoding='utf-8')
+                trusted = root / 'renderer-harness'
+                trusted.mkdir()
+                for name in ('release_policy.py', 'release-policy.json'):
+                    shutil.copyfile(ROOT/'scripts'/name, trusted/name)
+                environment = dict(os.environ, RUNNER_TEMP=str(root), PATH=str(Path(sys.executable).parent)+os.pathsep+os.environ['PATH'])
+                result = subprocess.run([BASH, '--noprofile', '--norc'], input=script.encode(), cwd=root, capture_output=True, env=environment)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 for name in original:
-                    self.assertEqual((root / 'scripts' / name).read_text(), 'original\n')
-                self.assertEqual((root / 'scripts/workspace.py').exists(), helpers_existed)
+                    self.assertEqual((root / name).read_text(), 'original\n')
+                self.assertTrue(trusted.resolve().is_relative_to(root.resolve()))
+                shutil.rmtree(trusted)
                 self.assertEqual(git('status', '--porcelain').stdout, b'')
 
     def test_source_gate_rejects_non_main_invalid_sha_and_non_ancestor(self):
@@ -89,19 +96,26 @@ class WorkflowGateTests(unittest.TestCase):
                         if command[1] == "diff":
                             raise subprocess.CalledProcessError(1, command)
                     git.side_effect = check_git
-                exec(compile(inline(workflow, marker), marker, "exec"), {})
+                trusted = Path(directory)/'renderer-harness'
+                trusted.mkdir()
+                shutil.copyfile(ROOT/'scripts/release-policy.json', trusted/'release-policy.json')
+                with patch.dict(os.environ, {'RUNNER_TEMP':directory}):
+                    exec(compile(inline(workflow, marker), marker, "exec"), {})
                 return git.call_args
 
     def test_reuse_requires_matching_completed_build_and_successful_packaging(self):
-        run = {"head_sha": SHA, "status": "completed", "path": ".github/workflows/build-windows-release.yml"}
+        run = {"head_sha": SHA, "status": "completed", "path": ".github/workflows/build-windows-release.yml", "display_title":f"Build v1.9.2 at {SHA}"}
         jobs = {"jobs": [{"steps": [{"name": "Build artifacts and verify Windows startup", "conclusion": "success"}]}]}
-        self.execute("build-windows-release.yml", "PY_RUN", [run, jobs], [SHA])
-        for field, value in [("head_sha", "b" * 40), ("status", "in_progress"), ("path", "other.yml")]:
+        self.execute("build-windows-release.yml", "PY_RUN", [run, jobs], [SHA, '1.9.2'])
+        self.execute("build-windows-release.yml", "PY_RUN", [{**run,"head_sha":"b"*40},jobs],[SHA,'1.9.2'])
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.execute("build-windows-release.yml", "PY_RUN", [{**run,"head_sha":"b"*40},jobs],[SHA,'1.9.2'],ancestor=False)
+        for field, value in [("display_title", "wrong source"), ("status", "in_progress"), ("path", "other.yml")]:
             with self.assertRaises(AssertionError):
-                self.execute("build-windows-release.yml", "PY_RUN", [{**run, field: value}, jobs], [SHA])
+                self.execute("build-windows-release.yml", "PY_RUN", [{**run, field: value}, jobs], [SHA,'1.9.2'])
         jobs["jobs"][0]["steps"][0]["conclusion"] = "failure"
         with self.assertRaises(AssertionError):
-            self.execute("build-windows-release.yml", "PY_RUN", [run, jobs], [SHA])
+            self.execute("build-windows-release.yml", "PY_RUN", [run, jobs], [SHA,'1.9.2'])
 
     def test_publication_allows_descendant_workflow_but_rejects_wrong_source_and_failed_validation(self):
         run = {"head_sha": "b" * 40, "status": "completed", "conclusion": "success",
@@ -125,6 +139,7 @@ class WorkflowGateTests(unittest.TestCase):
         run = {"status": "completed", "conclusion": "failure", "head_sha": "b" * 40,
                "path": ".github/workflows/build-windows-release.yml", "display_title": f"Build v1.9.0 at {SHA}"}
         names = ["Verify committed versions", "Require successful core CI for the release commit",
+                 "Prepare frozen validation plan", "Verify previous stable release upgrade",
                  "Restore packages from a completed artifact build", "Use current test harness for reused artifacts",
                  "Fresh installed Python 3.13 runtime and OCR", "Verify installed startup and upgrade",
                  "Verify real downloads and progress with the release controller"]
@@ -151,6 +166,7 @@ class WorkflowGateTests(unittest.TestCase):
         run = {"status": "completed", "conclusion": "failure", "head_sha": "b" * 40,
                "path": ".github/workflows/build-windows-release.yml", "display_title": f"Build v1.9.2 at {SHA}"}
         names = ["Verify committed versions", "Require successful core CI for the release commit",
+                 "Prepare frozen validation plan", "Verify previous stable release upgrade",
                  "Restore packages from a completed artifact build", "Use current test harness for reused artifacts",
                  "Fresh installed Python 3.13 runtime and OCR", "Verify installed startup and upgrade",
                  "Verify real downloads and progress with the release controller"]

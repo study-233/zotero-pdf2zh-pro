@@ -1,5 +1,6 @@
 ﻿param(
     [Parameter(Mandatory=$true)][string]$PreviousPackage,
+    [Parameter(Mandatory=$true)][string]$Constraints,
     [Parameter(Mandatory=$true)][string]$PreviousWheel,
     [Parameter(Mandatory=$true)][string]$Package,
     [Parameter(Mandatory=$true)][string]$Wheel,
@@ -23,6 +24,7 @@ $fixture=$workspaceRun.work
 # limits when a repair adds another suffix to the versioned environment path.
 if (-not $Root) { $Root=Join-Path $fixture '中文 with spaces' }
 $passed=$false
+$stage='baseline-setup'
 $old=Join-Path $fixture 'old'
 $new=Join-Path $fixture 'new'
 $registry='HKCU:\Software\pdf2zh-previous-release-'+[guid]::NewGuid().ToString('N')
@@ -85,18 +87,26 @@ try {
         Copy-Item -LiteralPath (Join-Path $cacheSource 'cache') -Destination (Join-Path $Root 'cache') -Recurse
         Copy-Item -LiteralPath (Join-Path $cacheSource 'runtime/python') -Destination (Join-Path $Root 'runtime/python') -Recurse
     }
+    # A genuine private tool avoids inheriting the outer UV_TOOL_DIR. Pin its
+    # bytes as well: the old installer's floating bootstrap changes over time.
+    $privateUv=Join-Path $Root 'runtime/uv/uv.exe'
+    & python -X utf8 (Join-Path $PSScriptRoot 'release_control.py') legacy-uv $privateUv
+    Assert-True ($LASTEXITCODE -eq 0) 'Cannot prepare the pinned private uv fixture.'
     # Recreate a supported pre-5 environment for the unchanged published wheel.
     # v1.9.0 adds this compatibility bound to its own package metadata.
-    $constraint=Join-Path $fixture 'previous-constraints.txt'
-    Set-Content -LiteralPath $constraint -Encoding ascii -Value 'bitstring==4.4.0'
+    $constraint=(Resolve-Path -LiteralPath $Constraints).Path
     $previousConstraint=$env:UV_CONSTRAINT
     try {
         $env:UV_CONSTRAINT=$constraint
-        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $old 'install.ps1') -PackageSource $PreviousWheel -GuiSource (Join-Path $old 'zotero-pdf2zh-pro.exe') -SkipUvBootstrap -NonInteractive -AllowPreparedDestination
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $old 'install.ps1') -PackageSource $PreviousWheel -GuiSource (Join-Path $old 'zotero-pdf2zh-pro.exe') -NonInteractive -AllowPreparedDestination
     } finally {$env:UV_CONSTRAINT=$previousConstraint}
     Assert-True ($LASTEXITCODE -eq 0) 'The real v1.8.2 baseline failed to install.'
     $bin=Join-Path $Root 'bin'
     $control=Join-Path $bin 'zotero-pdf2zh-pro.exe'
+    . (Join-Path $bin 'common.ps1')
+    Use-PrivateUvEnvironment
+    & (Get-ToolPythonExecutable) (Join-Path $PSScriptRoot 'release-data-fixtures.py') seed $DataDir
+    Assert-True ($LASTEXITCODE -eq 0) 'The old installed runtime could not seed its data format.'
     New-Item -ItemType Directory -Force -Path "$registry\Run" | Out-Null
     $autostart='"'+$control+'" --autostart'
     New-ItemProperty -LiteralPath "$registry\Run" -Name 'zotero-pdf2zh-pro' -Value $autostart -PropertyType String -Force | Out-Null
@@ -104,11 +114,13 @@ try {
     Set-Content -LiteralPath $settings -Encoding utf8 -Value '{"autoUpdateDisabled":true,"preservedUpgradeSetting":"keep"}'
     $oldProcess=Start-Process -FilePath $control -ArgumentList '--autostart' -WindowStyle Hidden -PassThru
     . (Join-Path $bin 'common.ps1')
+    Use-PrivateUvEnvironment
     # Health can precede the legacy launcher's final ownership check and cleanup.
     $null=Wait-TestControlStartup
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $bin 'start-server.ps1') -Quiet
     Assert-True ($LASTEXITCODE -eq 0) 'The real v1.8.2 baseline did not finish startup.'
     Wait-Version '1.8.2'
+    $stage='migration'
     $data=Join-Path $Root 'data'
     foreach ($name in @('preserved-task.txt','preserved-config.json','preserved-glossary.csv')) {
         Set-Content -LiteralPath (Join-Path $data $name) -Encoding utf8 -Value 'Existing v1.8.2 user data'
@@ -129,7 +141,7 @@ try {
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $bin 'stop-server.ps1') -Quiet
     Assert-True ($LASTEXITCODE -eq 0) 'The idle legacy service did not stop.'
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $new 'apply-update.ps1') -ParentProcessId 2147483647 -Prepared -KeepStopped
-    Assert-True ($LASTEXITCODE -eq 0) 'Prepared v1.9.0 migration failed.'
+    Assert-True ($LASTEXITCODE -eq 0) 'Prepared candidate migration failed.'
     . (Join-Path $bin 'common.ps1')
     $oldProcess.Refresh()
     Assert-True $oldProcess.HasExited 'Migration left the old control center running.'
@@ -144,9 +156,13 @@ try {
     Wait-Version $PackageVersion
     $null=Wait-TestControlStartup
     Assert-True ($null -ne (Get-ManagedControlPanelProcessId)) 'New control center did not take over.'
+    $newPython=Join-Path (Split-Path (Get-ServerExecutable)) 'python.exe'
+    & $newPython (Join-Path $PSScriptRoot 'release-data-fixtures.py') verify $DataDir
+    Assert-True ($LASTEXITCODE -eq 0) 'Migrated data cannot be read by the new installed runtime.'
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $bin 'stop-server.ps1') -Quiet
     Assert-True ($LASTEXITCODE -eq 0) 'New service did not stop.'
     Stop-ManagedControlPanel
+    $stage='offline-reuse'
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'test_windows_update_reuse.ps1') -Root $Root -Report (Join-Path $Root 'logs/reuse-report.json') -RegistryKey $registry -StartMenuDirectory $menu
     Assert-True ($LASTEXITCODE -eq 0) 'Locked dependency/cache reuse failed.'
     Write-Host 'Real v1.8.2 migration, legacy admission protection, native takeover, retained data/startup and three offline updates passed.'
@@ -155,5 +171,10 @@ try {
     Stop-IsolatedTestProcesses -Roots @($Root, $fixture)
     if ($registry -notlike 'HKCU:\Software\pdf2zh-previous-release-*') {throw 'Unsafe test registry cleanup.'}
     Remove-Item -LiteralPath $registry -Recurse -Force -ErrorAction SilentlyContinue
+    @{stage=$stage;status=$(if($passed){'passed'}else{'failed'});previousVersion='1.8.2';
+      packageSha256=(Get-FileHash -LiteralPath $Package -Algorithm SHA256).Hash.ToLowerInvariant();
+      wheelSha256=(Get-FileHash -LiteralPath $Wheel -Algorithm SHA256).Hash.ToLowerInvariant();
+      constraintsSha256=(Get-FileHash -LiteralPath $Constraints -Algorithm SHA256).Hash.ToLowerInvariant()}|ConvertTo-Json|
+        Set-Content -Encoding utf8 -LiteralPath (Join-Path $workspaceRun.report 'validation.json')
     Complete-WorkspaceRun -Run $workspaceRun -Passed $passed
 }

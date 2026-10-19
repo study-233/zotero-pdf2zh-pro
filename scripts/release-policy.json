@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "currentLayoutBaseline": "1.9.0",
+  "legacyBaseline": "1.8.2",
+  "legacyConstraints": ["bitstring==4.4.0"],
+  "legacyUv": {
+    "version": "0.12.10",
+    "sha256": "a8bf95637ba520491de06713d718a55b90f18d127980b9531fd8fc5a8e99dc1d"
+  },
+  "harnessPaths": [
+    "scripts/check_installed_runtime.py",
+    "scripts/check_windows_background.py",
+    "scripts/test_windows_process_helpers.ps1",
+    "scripts/test_windows_lifecycle.ps1",
+    "scripts/test_windows_release_extended.ps1",
+    "scripts/test_windows_previous_release.ps1",
+    "scripts/test_windows_upgrade.ps1",
+    "scripts/test_windows_uv_progress.py",
+    "scripts/test_windows_update_reuse.ps1",
+    "scripts/release_control.py",
+    "scripts/release_policy.py",
+    "scripts/release-policy.json",
+    "scripts/release-data-fixtures.py",
+    "scripts/workspace.py",
+    "scripts/workspace.ps1"
+  ],
+  "riskPaths": [
+    "scripts/windows/*", "scripts/build_windows*", "scripts/check_installed_runtime.py",
+    "windows-app/src/update.rs", "windows-app/src/lib.rs", "windows-app/src/main.rs",
+    "windows-app/src/setup.rs", "windows-app/Cargo.*", "windows-app/build.rs",
+    "server/pyproject.toml", "server/uv.lock", "server/service_launcher.py",
+    "server/maintenance.py", "server/task_manager.py", "server/translation_memory.py",
+    "server/selection_cache.py", "server/Dockerfile", "compose.yaml"
+  ],
+  "knownPaths": [
+    "*.md", "docs/*", "assets/*", "website/*", "plugin/*", "server/*", "benchmarks/*",
+    "scripts/build_site*", "scripts/dev*", "scripts/zotero-dev",
+    "scripts/test_*", "scripts/check_*", "scripts/release*", "scripts/workspace*",
+    ".github/*", ".codex/*", ".agents/*", "LICENSE*", "NOTICE*", ".gitignore"
+  ],
+  "scenarios": {
+    "standard": {"entry": "scripts/test_windows_lifecycle.ps1", "layer": "release"},
+    "progress": {"entry": "scripts/test_windows_uv_progress.py", "layer": "release"},
+    "recent-upgrade": {"entry": "scripts/test_windows_upgrade.ps1", "layer": "release"},
+    "oldest-upgrade": {"entry": "scripts/test_windows_upgrade.ps1", "layer": "compatibility"},
+    "legacy-upgrade": {"entry": "scripts/test_windows_previous_release.ps1", "layer": "compatibility"},
+    "extended": {"entry": "scripts/test_windows_lifecycle.ps1", "layer": "compatibility"}
+  }
+}

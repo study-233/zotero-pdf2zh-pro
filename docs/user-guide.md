@@ -647,7 +647,7 @@ Windows 更新先在独立目录准备，连续空闲 60 秒后静默切换。PD
 | `/health` 返回 `degraded` | 查看 `workspace` 中的写入状态和错误，检查数据目录权限与磁盘空间 |
 | 浏览器打开服务根地址返回 404 | 健康检查路径是 `/health`；不要用首页是否存在判断服务是否启动 |
 | 8890 端口已被占用 | 检查是否重复运行 Homebrew、uv 或其他服务；只停止自己确认的服务，不要直接结束未知进程 |
-| Windows 控制中心无法打开 | 旧版缺少 DLL 时下载新版完整 ZIP；运行环境准备失败时点击“重试”或“查看日志”，诊断文件为产品目录下的 `logs/webview2-setup.log` |
+| Windows 控制中心无法打开 | 缺少 DLL 时重新下载新版完整 ZIP 并完整解压；启动失败时查看产品目录下的 `logs/control-panel.log`，服务日志为 `logs/server.log` |
 | `command not found: brew` | 完成 Homebrew 安装后的 Next steps 并重新打开终端 |
 | `command not found: zotero-pdf2zh-pro` | uv 用户执行 `uv tool update-shell` 后重开终端；Homebrew 用户先确认安装命令成功 |
 | 本地检查成功，但 API 测试失败 | 本地服务和上游 API 是两条连接；检查 API 地址、Key、模型及协议 |
