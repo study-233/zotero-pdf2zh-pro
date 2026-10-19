@@ -353,6 +353,8 @@ def workflow(path, stage, name, fields, retry_failed=False):
             raise ValueError('Workflow inputs changed; refusing to reuse unrelated validation')
         if record and record.get('runId'):
             run = wait_run(REPO, record['runId'])
+            record.update(conclusion=run['conclusion'], attempt=run['run_attempt'])
+            save(path, state)
             if run['conclusion'] == 'success':
                 return record['runId']
             if not retry_failed or stage not in ('build', 'pypi'):

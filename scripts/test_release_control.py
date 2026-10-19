@@ -241,15 +241,18 @@ class RecoveryTests(unittest.TestCase):
         state = json.loads(self.state.read_text())
         state['stages']['build'] = {'workflow':'build-windows-release.yml','fields':{'version':'1.9.2'},'runId':123}
         control.save(self.state, state)
-        with patch.object(control, 'command') as command, patch.object(control, 'wait_run', return_value={'conclusion':'success'}):
+        with patch.object(control, 'command') as command, patch.object(control, 'wait_run', return_value={'conclusion':'success','run_attempt':2}):
             self.assertEqual(control.workflow(self.state,'build','build-windows-release.yml',{'version':'1.9.2'}),123)
         command.assert_not_called()
+        saved=json.loads(self.state.read_text())['stages']['build']
+        self.assertEqual(saved['conclusion'],'success')
+        self.assertEqual(saved['attempt'],2)
 
     def test_failed_build_cannot_trigger_an_unproven_rebuild(self):
         state = json.loads(self.state.read_text())
         state['stages']['build'] = {'workflow':'build-windows-release.yml','fields':{},'runId':123}
         control.save(self.state, state)
-        with patch.object(control, 'command') as command, patch.object(control, 'wait_run', return_value={'conclusion':'failure'}), \
+        with patch.object(control, 'command') as command, patch.object(control, 'wait_run', return_value={'conclusion':'failure','run_attempt':1}), \
              patch.object(control, 'api', return_value={'jobs':[]}):
             with self.assertRaisesRegex(ValueError, 'implicit rebuild'):
                 control.workflow(self.state,'build','build-windows-release.yml',{},retry_failed=True)
@@ -263,7 +266,7 @@ class RecoveryTests(unittest.TestCase):
         run={'id':124,'head_sha':SHA,'run_attempt':1,'display_title':'Publish v1.9.2 ['+'a'*32+']'}
         with patch.object(control,'command') as command,patch.object(control.uuid,'uuid4') as uuid, \
              patch.object(control,'api',return_value={'workflow_runs':[run]}), \
-             patch.object(control,'wait_run',side_effect=[{'conclusion':'failure'},dict(run,conclusion='success')]):
+             patch.object(control,'wait_run',side_effect=[{'conclusion':'failure','run_attempt':1},dict(run,conclusion='success')]):
             uuid.return_value.hex='a'*32
             self.assertEqual(control.workflow(self.state,'pypi','publish-pypi.yml',fields,retry_failed=True),124)
         self.assertIn('build_run_id=321',command.call_args.args[0])
