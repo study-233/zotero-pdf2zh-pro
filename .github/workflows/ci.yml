@@ -78,6 +78,8 @@ jobs:
   windows-native:
     runs-on: windows-latest
     timeout-minutes: 10
+    env:
+      PYTHONUTF8: '1'
     # Native compilation belongs to local development or the release build.
     steps:
       - uses: actions/checkout@v7

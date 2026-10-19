@@ -65,6 +65,7 @@ jobs:
       UV_DEFAULT_INDEX: https://pypi.org/simple
       PDF2ZH_WINDOWS_PORT: "18890"
       DISPATCH_ID: ${{ inputs.dispatch_id }}
+      PYTHONUTF8: '1'
       PDF2ZH_VALIDATION_COMMIT: ${{ github.sha }}
     steps:
       - name: Validate inputs

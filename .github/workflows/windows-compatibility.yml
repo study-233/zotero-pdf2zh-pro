@@ -25,6 +25,7 @@ jobs:
     timeout-minutes: 60
     env:
       GH_TOKEN: ${{ github.token }}
+      PYTHONUTF8: '1'
     steps:
       - name: Configure validation paths
         shell: pwsh
