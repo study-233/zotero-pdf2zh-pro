@@ -49,6 +49,15 @@ foreach ($mapping in @(
     if (-not $text.Contains('"'+$mapping[0]+'"')) {throw 'Previous startup-key fixture no longer matches v1.8.2.'}
     $text=$text.Replace('"'+$mapping[0]+'"','"'+$mapping[1]+'"')
 }
+# Keep legacy ownership checks intact while exposing their startup failure details.
+$ownershipProbe='$commandLine = Get-ProcessCommandLine -ProcessId $ProcessId'
+if (-not $text.Contains($ownershipProbe)) {throw 'Previous process ownership fixture no longer matches v1.8.2.'}
+$text=$text.Replace($ownershipProbe,($ownershipProbe+@'
+
+    Write-Host "[legacy-owner] pid=$ProcessId actual=$actualExecutable expected=$ServerExecutable"
+    Write-Host "[legacy-owner] tool-python=$(Get-ToolPythonExecutable)"
+    Write-Host "[legacy-owner] command=$commandLine"
+'@))
 Set-Content -LiteralPath $oldCommon -Value $text -Encoding utf8
 function Assert-True([bool]$Condition,[string]$Message) {if (-not $Condition) {throw $Message}}
 function Wait-Version([string]$Version) {
@@ -91,10 +100,15 @@ try {
     New-Item -ItemType Directory -Force -Path "$registry\Run" | Out-Null
     $autostart='"'+$control+'" --autostart'
     New-ItemProperty -LiteralPath "$registry\Run" -Name 'zotero-pdf2zh-pro' -Value $autostart -PropertyType String -Force | Out-Null
-    $oldProcess=Start-Process -FilePath $control -ArgumentList '--autostart' -WindowStyle Hidden -PassThru
-    Wait-Version '1.8.2'
     $settings=Join-Path $Root 'settings.json'
     Set-Content -LiteralPath $settings -Encoding utf8 -Value '{"autoUpdateDisabled":true,"preservedUpgradeSetting":"keep"}'
+    $oldProcess=Start-Process -FilePath $control -ArgumentList '--autostart' -WindowStyle Hidden -PassThru
+    . (Join-Path $bin 'common.ps1')
+    # Health can precede the legacy launcher's final ownership check and cleanup.
+    $null=Wait-TestControlStartup
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $bin 'start-server.ps1') -Quiet
+    Assert-True ($LASTEXITCODE -eq 0) 'The real v1.8.2 baseline did not finish startup.'
+    Wait-Version '1.8.2'
     $data=Join-Path $Root 'data'
     foreach ($name in @('preserved-task.txt','preserved-config.json','preserved-glossary.csv')) {
         Set-Content -LiteralPath (Join-Path $data $name) -Encoding utf8 -Value 'Existing v1.8.2 user data'

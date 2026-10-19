@@ -26,7 +26,7 @@ on:
         required: false
         type: string
       validation_run_id:
-        description: Optional run whose standard tests all passed but final collection failed; resume collection with unchanged test scripts
+        description: Optional failed run with passed standard checks; resume collection or retry full-validation migration
         required: false
         type: string
 
@@ -63,7 +63,7 @@ jobs:
           $reuse = $env:REUSE_BUILD_RUN_ID
           if ($reuse -and $reuse -cnotmatch '^[0-9]+$') { throw 'Expected numeric prior run ID' }
           $validation = $env:VALIDATION_RUN_ID
-          if ($validation -and ($validation -cnotmatch '^[0-9]+$' -or -not $reuse -or '${{ inputs.full_validation }}' -eq 'true' -or $env:REPLACEMENT_COMMIT)) { throw 'Collection recovery requires a build run and standard validation only' }
+          if ($validation -and ($validation -cnotmatch '^[0-9]+$' -or -not $reuse -or $env:REPLACEMENT_COMMIT)) { throw 'Validation recovery requires an original build run without replacement' }
           git config --global core.autocrlf false
 
       - name: Checkout trusted workflow commit
@@ -247,16 +247,17 @@ jobs:
           uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$RELEASE_VERSION"
           uv run --no-project python scripts/check_release_artifacts.py "$RELEASE_VERSION" "$RELEASE_COMMIT" --collect
 
-      - name: Verify completed standard validation before collection recovery
+      - name: Verify completed standard validation before recovery
         if: inputs.validation_run_id != ''
         shell: bash
         env:
           VALIDATION_RUN: ${{ inputs.validation_run_id }}
+          FULL_VALIDATION: ${{ inputs.full_validation }}
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN" > "$RUNNER_TEMP/validation-run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN/jobs?filter=latest" > "$RUNNER_TEMP/validation-jobs.json"
-          python - "$RUNNER_TEMP/validation-run.json" "$RUNNER_TEMP/validation-jobs.json" "$RELEASE_COMMIT" "$RELEASE_VERSION" "$GITHUB_SHA" <<'PY_VALIDATION'
+          python - "$RUNNER_TEMP/validation-run.json" "$RUNNER_TEMP/validation-jobs.json" "$RELEASE_COMMIT" "$RELEASE_VERSION" "$GITHUB_SHA" "$FULL_VALIDATION" <<'PY_VALIDATION'
           import json, subprocess, sys
           from pathlib import Path
           run, jobs = [json.loads(Path(p).read_text(encoding="utf-8")) for p in sys.argv[1:3]]
@@ -271,20 +272,29 @@ jobs:
                        "Fresh installed Python 3.13 runtime and OCR", "Verify installed startup and upgrade",
                        "Verify real downloads and progress with the release controller"]:
               assert steps.get(name) == "success", f"Missing passed validation: {name}"
-          assert steps.get("Verify and collect release artifacts") == "failure"
+          full_validation = len(sys.argv) > 6 and sys.argv[6] == "true"
+          if full_validation:
+              # This step can only have run after a full lifecycle validation.
+              assert steps.get("Verify v1.8.2 migration and locked dependency reuse") in {"success", "failure"}
+              assert steps.get("Verify and collect release artifacts") in {"failure", "skipped"}
+          else:
+              assert steps.get("Verify and collect release artifacts") == "failure"
           subprocess.run(["git", "merge-base", "--is-ancestor", sys.argv[3], run["head_sha"]], check=True)
           subprocess.run(["git", "merge-base", "--is-ancestor", run["head_sha"], sys.argv[5]], check=True)
           paths = ["check_installed_runtime.py", "test_windows_lifecycle.ps1", "check_windows_background.py",
                    "test_windows_process_helpers.ps1", "test_windows_release_extended.ps1",
                    "test_windows_previous_release.ps1", "test_windows_update_reuse.ps1", "test_windows_uv_progress.py",
                    "workspace.py", "workspace.ps1"]
+          if full_validation:
+              # Only the migration fixture may change; it is rerun below.
+              paths.remove("test_windows_previous_release.ps1")
           subprocess.run(["git", "diff", "--exit-code", run["head_sha"], sys.argv[5], "--",
                           *["scripts/" + path for path in paths]], check=True)
           PY_VALIDATION
           echo 'REUSE_VALIDATION=true' >> "$GITHUB_ENV"
 
       - name: Use current test harness for reused artifacts
-        if: inputs.reuse_build_run_id != '' && env.REUSE_VALIDATION != 'true'
+        if: inputs.reuse_build_run_id != '' && (env.REUSE_VALIDATION != 'true' || inputs.full_validation)
         shell: bash
         run: |
           # Only the test harness comes from this workflow's newer revision.
@@ -338,7 +348,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Restore source test scripts after validation
-        if: inputs.reuse_build_run_id != '' && env.REUSE_VALIDATION != 'true'
+        if: inputs.reuse_build_run_id != '' && (env.REUSE_VALIDATION != 'true' || inputs.full_validation)
         shell: bash
         run: |
           # Undo only the explicitly overlaid tracked tests. Product changes
