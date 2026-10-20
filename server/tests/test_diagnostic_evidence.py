@@ -1,5 +1,6 @@
 """Fault injection for the persisted task → execution → request → paragraph chain."""
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 import json
 from pathlib import Path
 import sqlite3
@@ -182,7 +183,7 @@ class EvidenceTests(unittest.TestCase):
         self.assertGreater(graph['omittedRequests'], 0)
         self.assertTrue(any(row.get('paragraphRef') == failed_ref for row in graph['paragraphs']))
         self.assertEqual(graph['executions'][0]['requestSummary']['attempts'], 21)
-        with sqlite3.connect(self.directory / FILENAME) as connection:
+        with closing(sqlite3.connect(self.directory / FILENAME)) as connection:
             used, count = connection.execute('SELECT SUM(bytes),COUNT(*) FROM records').fetchone()
         self.assertLessEqual(used, 6000)
         self.assertLessEqual(count, 12)
@@ -287,12 +288,13 @@ class EvidenceTests(unittest.TestCase):
 
     def test_future_store_is_preserved_and_writer_failure_is_reported(self):
         self.finish('completed')
-        with sqlite3.connect(self.directory / FILENAME) as connection:
+        # The transaction context commits; closing releases the Windows file handle.
+        with closing(sqlite3.connect(self.directory / FILENAME)) as connection, connection:
             connection.execute("UPDATE metadata SET value='2' WHERE key='version'")
         newer = EvidenceLedger(self.directory, 'task-one', 4)
         health = newer.close('failed')
         self.assertGreater(health['storageErrors'], 0)
-        with sqlite3.connect(self.directory / FILENAME) as connection:
+        with closing(sqlite3.connect(self.directory / FILENAME)) as connection:
             self.assertEqual(connection.execute("SELECT value FROM metadata WHERE key='version'").fetchone()[0], '2')
         self.assertEqual(read_evidence(self.directory, 'task-one', 4, 'failed')['evidenceStatus'], 'unavailable')
 
