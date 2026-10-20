@@ -47,6 +47,11 @@ jobs:
           python-version: "3.13"
           enable-cache: true
 
+      - name: Check shared diagnostic contract and feature coverage
+        run: |
+          uv run --no-project python scripts/generate_diagnostic_contract.py --check
+          uv run --no-project python -m unittest discover -s scripts -p 'test_diagnostic_contract.py'
+
       - name: Build and check plugin
         working-directory: plugin
         run: |
@@ -136,3 +141,7 @@ jobs:
         working-directory: server
         shell: bash
         run: uv run --no-project --with httpx --with cryptography python -m unittest discover -s tests -p test_chatgpt_auth.py
+
+      - name: Test diagnostic evidence storage and offline analysis without providers
+        working-directory: server
+        run: uv run --no-project python -m unittest discover -s tests -p test_diagnostic_evidence.py

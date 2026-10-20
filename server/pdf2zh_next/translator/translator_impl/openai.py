@@ -530,6 +530,7 @@ class OpenAITranslator(BaseTranslator):
         collector = self.metrics_collector
         params = rate_limit_params if rate_limit_params is not None else {}
         started = collector.request_started(kind=kind, operation_id=params.get('metric_operation_id'),
+            paragraph_refs=params.get('diagnostic_paragraph_refs'),
             paragraph_ids=params.get('paragraph_ids'), parent_call=params.get('_metric_last_call'),
             retry_cause=params.get('metric_retry_cause')) if collector else None
         params['_metric_last_call'] = started
@@ -578,6 +579,7 @@ class OpenAITranslator(BaseTranslator):
             if status is None and request_error is not None:
                 status = _status_code(request_error)
             request = dict(kind=kind, succeeded=succeeded, status_code=status,
+                           provider_code=getattr(request_error, 'code', None),
                            error_type=type(request_error).__name__ if request_error else None,
                            finish_reason=finish, protocol=protocol,
                            visible_chars=visible_chars, batch_size=batch_size)

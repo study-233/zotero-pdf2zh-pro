@@ -6,9 +6,10 @@ import process from "node:process";
 import { spawnSync } from "node:child_process";
 import { Buffer } from "node:buffer";
 import test from "node:test";
-import { URL } from "node:url";
+import { URL, fileURLToPath } from "node:url";
 import { TextDecoder, TextEncoder } from "node:util";
 import ts from "typescript";
+import { diagnosticContract } from "./diagnosticContractFixture.mjs";
 const compiled = ts
     .transpileModule(
         fs.readFileSync(
@@ -27,10 +28,465 @@ const module = await import(
     "data:text/javascript;base64," +
         Buffer.from(
             'const config={addonRef:"test",addonName:"test"}; const version="1.0";\n' +
+                `const diagnosticContract=${JSON.stringify(diagnosticContract)};\n` +
                 compiled,
         ).toString("base64")
 );
 const { safeDiagnostic, diagnosticZip, exportDiagnostics } = module;
+
+async function withBundle(respond, task, inspect, setup) {
+    const writes = [];
+    const original = globalThis.fetch;
+    globalThis.PathUtils = { join: (...parts) => parts.join("/") };
+    globalThis.Zotero = { DataDirectory: { dir: "/tmp" }, version: "10.0" };
+    globalThis.IOUtils = {
+        exists: async () => false,
+        read: async () => new Uint8Array(),
+        write: async (name, data) => writes.push([name, data]),
+        remove: async () => {},
+    };
+    globalThis.ztoolkit = {
+        FilePicker: class {
+            async open() {
+                return "/tmp/compat.zip";
+            }
+        },
+    };
+    globalThis.fetch = respond;
+    const directory = fs.mkdtempSync(
+        path.join(os.tmpdir(), "diagnostic-contract-"),
+    );
+    try {
+        setup?.();
+        await exportDiagnostics("http://localhost", task);
+        const zip = path.join(directory, "bundle.zip");
+        fs.writeFileSync(
+            zip,
+            writes.find(([name]) => name === "/tmp/compat.zip")[1],
+        );
+        await inspect((name) => readZip(zip, name));
+    } finally {
+        globalThis.fetch = original;
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+}
+
+test("every registered provider error and protocol survives the plugin boundary", () => {
+    for (const providerCode of Object.keys(diagnosticContract.providerErrors))
+        assert.equal(
+            safeDiagnostic({ failedParagraphs: [{ providerCode }] })
+                .failedParagraphs[0].providerCode,
+            providerCode,
+        );
+    for (const protocol of diagnosticContract.enums.protocol)
+        assert.equal(
+            safeDiagnostic({
+                protocol,
+                metrics: { requests: { protocols: { [protocol]: 1 } } },
+            }).protocol,
+            protocol,
+        );
+});
+
+test("payload cannot override the plugin collector's event or timestamp", async () => {
+    module.recordDiagnostic("http_response", {
+        event: "misleading_event",
+        time: "1999-01-01T00:00:00Z",
+    });
+    await withBundle(
+        async () => new globalThis.Response('{"schemaVersion":1}'),
+        undefined,
+        (read) => {
+            const rows = JSON.parse(read("plugin.json")).records;
+            assert.ok(
+                rows.some(
+                    (row) =>
+                        row.event === "http_response" &&
+                        row.time !== "1999-01-01T00:00:00Z",
+                ),
+            );
+            assert.ok(!rows.some((row) => row.event === "misleading_event"));
+        },
+    );
+});
+
+test("Python persistence and export retain four validation failures through the actual ZIP", async () => {
+    const produced = spawnSync(
+        process.env.PYTHON ||
+            (process.platform === "win32" ? "python" : "python3"),
+        [
+            fileURLToPath(
+                new URL(
+                    "../../server/tests/diagnostic_export_fixture.py",
+                    import.meta.url,
+                ),
+            ),
+        ],
+        { encoding: "utf8" },
+    );
+    assert.equal(produced.status, 0, produced.stderr);
+    const payload = JSON.parse(produced.stdout);
+    await withBundle(
+        async (url) => {
+            assert.ok(url.endsWith("?schemaVersions=1"));
+            return new globalThis.Response(JSON.stringify(payload));
+        },
+        { taskId: "synthetic-four-failures", attempt: 3 },
+        (read) => {
+            const task = JSON.parse(read("task.json"));
+            assert.deepEqual(
+                task.failedParagraphs.map((row) => row.validationCode),
+                [
+                    "placeholder_mismatch",
+                    "unchanged_translation",
+                    "target_language_missing",
+                    "placeholder_mismatch",
+                ],
+            );
+            assert.equal(task.failedParagraphs[0].missingPlaceholderCount, 1);
+            assert.equal(
+                JSON.parse(read("manifest.json")).sources.server.status,
+                "available",
+            );
+            assert.match(read("summary.txt"), /placeholder_mismatch=2/);
+            assert.match(read("summary.txt"), /失败=4/);
+            const graph = JSON.parse(read("evidence.json")).taskEvidence[0];
+            assert.equal(graph.evidenceStatus, "available");
+            assert.equal(graph.executions.length, 1);
+            assert.equal(graph.requests.length, 9);
+            for (const failed of task.failedParagraphs) {
+                assert.match(failed.paragraphRef, /^p-[0-9a-f]{32}$/);
+                assert.equal(failed.callRefs.length, 3);
+                for (const call of failed.callRefs)
+                    assert.ok(
+                        graph.requests.some(
+                            (request) =>
+                                request.callId === call &&
+                                request.paragraphRefs.includes(
+                                    failed.paragraphRef,
+                                ),
+                        ),
+                    );
+            }
+            const findings = JSON.parse(read("analysis.json")).findings;
+            assert.ok(
+                findings.some(
+                    (row) =>
+                        row.findingCode === "paragraph_unresolved" &&
+                        row.linkedFailures === 4,
+                ),
+            );
+            assert.ok(
+                !findings.some(
+                    (row) => row.findingCode === "provider_request_failed",
+                ),
+            );
+            assert.match(read("summary.txt"), /译文未通过校验/);
+            for (const name of [
+                "task.json",
+                "server.json",
+                "plugin.json",
+                "manifest.json",
+                "summary.txt",
+                "evidence.json",
+                "analysis.json",
+            ])
+                assert.ok(
+                    !read(name).includes("private diagnostic fixture text"),
+                );
+        },
+    );
+});
+
+test("old v1 service remains usable and missing validation evidence is explicit", async () => {
+    const payload = {
+        schemaVersion: 1,
+        tasks: [
+            {
+                taskId: "legacy",
+                status: "incomplete",
+                failedParagraphs: [
+                    { page: 1, errorType: "InvalidTranslation" },
+                ],
+            },
+        ],
+        records: [],
+    };
+    await withBundle(
+        async () => new globalThis.Response(JSON.stringify(payload)),
+        { taskId: "legacy" },
+        (read) => {
+            const manifest = JSON.parse(read("manifest.json"));
+            assert.equal(manifest.sources.server.status, "partial");
+            assert.equal(
+                manifest.sources.server.reasonCode,
+                "legacy_validation_details_missing",
+            );
+            assert.equal(manifest.sources.server.schemaRevision, undefined);
+            assert.equal(manifest.sources.evidence.status, "unavailable");
+            assert.match(read("summary.txt"), /缺少具体错误码/);
+            assert.equal(
+                JSON.parse(read("evidence.json")).taskEvidence.length,
+                0,
+            );
+            assert.equal(
+                JSON.parse(read("analysis.json")).findings[0].findingCode,
+                "evidence_unavailable",
+            );
+        },
+    );
+});
+
+test("malformed optional evidence shapes still yield a compatible diagnostic ZIP", async () => {
+    await withBundle(
+        async () =>
+            new globalThis.Response(
+                JSON.stringify({
+                    schemaVersion: 1,
+                    evidence: { taskEvidence: {} },
+                    analysis: { findings: {} },
+                }),
+            ),
+        undefined,
+        (read) => {
+            assert.deepEqual(
+                JSON.parse(read("evidence.json")).taskEvidence,
+                [],
+            );
+            assert.equal(
+                JSON.parse(read("analysis.json")).findings[0].findingCode,
+                "evidence_unavailable",
+            );
+        },
+    );
+});
+
+test("opaque links survive filtering while raw paragraph IDs and arbitrary links are rejected", () => {
+    const paragraphRef = "p-" + "a".repeat(32);
+    const callId = "c-" + "b".repeat(32) + "-2";
+    const report = { filteredFields: 0, rejectedValues: 0 };
+    const value = safeDiagnostic(
+        {
+            evidence: {
+                taskEvidence: [
+                    {
+                        taskId: "test",
+                        requests: [
+                            {
+                                callId,
+                                paragraphRefs: [
+                                    paragraphRef,
+                                    "private source hash",
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            failedParagraphs: [
+                {
+                    paragraphRef,
+                    paragraphId: "private document id",
+                    callRefs: [callId, "Bearer secret"],
+                },
+            ],
+            operationId: "private prompt",
+        },
+        0,
+        report,
+    );
+    assert.equal(value.evidence.taskEvidence[0].requests[0].callId, callId);
+    assert.deepEqual(value.failedParagraphs[0].callRefs, [callId]);
+    assert.ok(!JSON.stringify(value).includes("private"));
+    assert.ok(report.rejectedValues >= 3);
+});
+
+test("additive future revisions retain known evidence and report filtered data without values", async () => {
+    const payload = {
+        schemaVersion: 1,
+        schemaRevision: 999,
+        tasks: [
+            {
+                taskId: "newer",
+                protocol: "codex_app_server",
+                providerCode: "chatgpt_usage_limit",
+            },
+        ],
+        futureField: "private future content",
+        records: [],
+    };
+    await withBundle(
+        async () => new globalThis.Response(JSON.stringify(payload)),
+        { taskId: "newer" },
+        (read) => {
+            const manifest = JSON.parse(read("manifest.json"));
+            assert.equal(manifest.sources.server.schemaRevision, 999);
+            assert.equal(manifest.sources.server.filteredFields, 1);
+            assert.equal(
+                JSON.parse(read("task.json")).providerCode,
+                "chatgpt_usage_limit",
+            );
+            assert.ok(!read("manifest.json").includes("futureField"));
+            assert.ok(!read("server.json").includes("private future content"));
+        },
+    );
+});
+
+test("collection failures have specific reasons and still produce a readable fallback bundle", async () => {
+    const cases = [
+        [
+            "unsupported_schema",
+            async () => new globalThis.Response('{"schemaVersion":2}'),
+        ],
+        [
+            "unsupported_schema",
+            async () =>
+                new globalThis.Response("private error", { status: 406 }),
+        ],
+        [
+            "interface_unavailable",
+            async () =>
+                new globalThis.Response("private error", { status: 404 }),
+        ],
+        [
+            "http_error",
+            async () =>
+                new globalThis.Response("private error", { status: 503 }),
+        ],
+        ["invalid_payload", async () => new globalThis.Response("{")],
+        [
+            "invalid_payload",
+            async () =>
+                new globalThis.Response('{"schemaVersion":1,"tasks":{}}'),
+        ],
+        [
+            "unreachable",
+            async () => {
+                throw new TypeError("sk-private error");
+            },
+        ],
+        [
+            "size_limit",
+            async () => new globalThis.Response("x".repeat(13 * 1024 * 1024)),
+        ],
+    ];
+    for (const [code, respond] of cases) {
+        await withBundle(
+            respond,
+            { taskId: "fallback", attempt: 1 },
+            (read) => {
+                assert.equal(
+                    JSON.parse(read("manifest.json")).sources.server.reasonCode,
+                    code,
+                );
+                assert.equal(JSON.parse(read("task.json")).taskId, "fallback");
+                assert.equal(JSON.parse(read("plugin.json")).schemaVersion, 1);
+                assert.ok(!read("manifest.json").includes("private error"));
+                assert.ok(!read("summary.txt").includes("sk-private"));
+            },
+        );
+    }
+});
+
+test("network timeout and stalled disk collection are bounded and explained", async () => {
+    const nativeTimer = globalThis.setTimeout;
+    globalThis.setTimeout = (callback, delay, ...args) =>
+        nativeTimer(callback, delay === 10000 ? 1 : delay, ...args);
+    try {
+        await withBundle(
+            (_url, options) =>
+                new Promise((_resolve, reject) => {
+                    options.signal.addEventListener("abort", () =>
+                        reject(
+                            new globalThis.DOMException(
+                                "aborted",
+                                "AbortError",
+                            ),
+                        ),
+                    );
+                }),
+            { taskId: "timeout" },
+            (read) => {
+                assert.ok(
+                    ["timeout", "collection_deadline"].includes(
+                        JSON.parse(read("manifest.json")).sources.server
+                            .reasonCode,
+                    ),
+                );
+            },
+        );
+        await withBundle(
+            async () =>
+                new globalThis.Response(
+                    '{"schemaVersion":1,"tasks":[],"records":[]}',
+                ),
+            { taskId: "disk-stall" },
+            (read) => {
+                assert.equal(
+                    JSON.parse(read("manifest.json")).sources.server.reasonCode,
+                    "collection_deadline",
+                );
+            },
+            () => {
+                globalThis.IOUtils.exists = () => new Promise(() => {});
+            },
+        );
+    } finally {
+        globalThis.setTimeout = nativeTimer;
+    }
+});
+
+test("fixed validation codes survive old task reasons and new server exports", () => {
+    const safe = safeDiagnostic({
+        failedParagraphs: [
+            {
+                page: 1,
+                errorType: "InvalidTranslation",
+                reason: "placeholder_mismatch → InvalidTranslation → private text",
+            },
+            {
+                page: 6,
+                errorType: "InvalidTranslation",
+                reason: "unchanged_translation → InvalidTranslation",
+            },
+            {
+                page: 10,
+                errorType: "InvalidTranslation",
+                validationCode: "target_language_missing",
+            },
+            {
+                page: 11,
+                errorType: "InvalidTranslation",
+                reason: "private text",
+                validationCode: "sk-secret",
+            },
+            {
+                page: 12,
+                errorType: "RuntimeError",
+                reason: "placeholder_mismatch → private text",
+            },
+        ],
+    });
+    assert.deepEqual(
+        safe.failedParagraphs.map((row) => row.validationCode),
+        [
+            "placeholder_mismatch",
+            "unchanged_translation",
+            "target_language_missing",
+            undefined,
+            undefined,
+        ],
+    );
+    assert.deepEqual(safeDiagnostic(safe), safe);
+    assert.deepEqual(safeDiagnostic({ validationCode: [] }), {});
+    for (const privateValue of ["private text", "sk-secret", "reason"])
+        assert.ok(!JSON.stringify(safe).includes(privateValue));
+    const summary = module.diagnosticSummary(safe);
+    assert.match(summary, /placeholder_mismatch=1/);
+    assert.match(summary, /unchanged_translation=1/);
+    assert.match(summary, /target_language_missing=1/);
+    assert.ok(!module.diagnosticSummary({}).includes("校验失败原因"));
+});
 
 test("recovery and timing survive diagnostic export without submission identities", () => {
     const timing = {
@@ -351,6 +807,14 @@ test("online ZIP prefers server task metadata and removes duplicate client recor
                     {
                         taskId: "abc",
                         status: "incomplete",
+                        failedParagraphs: [
+                            {
+                                page: 6,
+                                errorType: "InvalidTranslation",
+                                validationCode: "placeholder_mismatch",
+                                reason: "private text",
+                            },
+                        ],
                         effectiveConfiguration: {
                             provider: "openai",
                             model: "org/runtime",
@@ -382,6 +846,17 @@ test("online ZIP prefers server task metadata and removes duplicate client recor
         const read = (name) => readZip(zip, name);
         const task = JSON.parse(read("task.json"));
         assert.equal(task.effectiveConfiguration.model, "org/runtime");
+        assert.equal(
+            task.failedParagraphs[0].validationCode,
+            "placeholder_mismatch",
+        );
+        assert.equal(
+            JSON.parse(read("server.json")).tasks[0].failedParagraphs[0]
+                .validationCode,
+            "placeholder_mismatch",
+        );
+        assert.ok(!read("task.json").includes("private text"));
+        assert.match(read("summary.txt"), /placeholder_mismatch=1/);
         assert.match(read("summary.txt"), /429=93，超时=5/);
         assert.equal(
             JSON.parse(read("plugin.json")).records.filter(

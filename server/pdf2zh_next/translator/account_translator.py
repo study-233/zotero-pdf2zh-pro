@@ -85,6 +85,7 @@ class AccountTranslator(BaseTranslator):
                         params["on_attempt"]()
                 if collector is not None:
                     started = collector.request_started(kind=kind, operation_id=params.get('metric_operation_id'),
+                        paragraph_refs=params.get('diagnostic_paragraph_refs'),
                         paragraph_ids=params.get('paragraph_ids'), parent_call=params.get('_metric_last_call'),
                         retry_cause='auth_refresh' if auth_retry else params.get('metric_retry_cause'))
                     if auth_retry:
@@ -140,6 +141,7 @@ class AccountTranslator(BaseTranslator):
                         started, kind=kind, succeeded=succeeded,
                         status_code=getattr(error, "status_code", None),
                         error_type=type(error).__name__ if error else None,
+                        provider_code=getattr(error, 'code', None),
                         finish_reason="completed" if succeeded else "cancelled" if cancelled else "failed",
                         protocol=(self.client.protocol if isinstance(getattr(self.client, 'protocol', None), str)
                                   else self.default_protocol), visible_chars=len(text) if text else None,

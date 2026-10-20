@@ -1,0 +1,13 @@
+{
+  "taskId": "synthetic-four-failures",
+  "status": "incomplete",
+  "attempt": 3,
+  "translationSummary": {"total": 575, "succeeded": 407, "failed": 4, "pending": 0, "skipped": 164},
+  "failedParagraphs": [
+    {"page": 1, "attempts": 2, "errorType": "InvalidTranslation", "reason": "placeholder_mismatch → InvalidTranslation", "missingPlaceholderCount": 1, "extraPlaceholderCount": 0},
+    {"page": 6, "attempts": 2, "errorType": "InvalidTranslation", "reason": "unchanged_translation → InvalidTranslation"},
+    {"page": 10, "attempts": 2, "errorType": "InvalidTranslation", "validationCode": "target_language_missing"},
+    {"page": 11, "attempts": 2, "errorType": "InvalidTranslation", "validationCode": "placeholder_mismatch", "reason": "private diagnostic fixture text"}
+  ],
+  "metrics": {"requests": {"attempts": 9, "succeeded": 9, "failed": 0, "statusCodes": {"200": 9}, "errorTypes": {}}}
+}

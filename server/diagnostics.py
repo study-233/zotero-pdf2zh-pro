@@ -13,44 +13,18 @@ from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+from diagnostic_contract import CONTRACT
+
+SCHEMA_VERSION = CONTRACT['schemaVersion']
+SCHEMA_REVISION = CONTRACT['schemaRevision']
 MAX_EXPORT = 10 * 1024 * 1024
-NUMBERS = set('attempt attempts averageLatencyMs p95LatencyMs qps10s revision stageCurrent stageTotal stageProgress overallProgress currentPage selectedPage completedPages totalPages fontObject fontParseCount fontCacheHits operations idleSeconds stageElapsedSeconds latencyMs statusCode batchSize visibleOutputChars input output total active retries repairs count pid cpuPercent rssBytes parentCpuPercent parentRssBytes exitCode elapsedSeconds droppedLogRecords promptTokens completionTokens totalTokens requestsUsed requestLimit succeeded failed cancelled pending translated cacheHits inFlight qps'.split())
-FLAGS = {'cancelRequested', 'stalled', 'success', 'truncated', 'queueBlocked'}
-NUMBERS.update('poolSize page skipped selected checked passed corrected unchecked notSelected requestsUsed requestLimit paragraphLimit hits misses hitRate hitTokens missTokens reasoning visibleOutputChars'.split())
-FLAGS.update({'canRepair', 'canDownloadResult', 'failedParagraphsTruncated'})
-FLAGS.update({'canResume', 'complete'})
-NUMBERS.update({'queueSeconds', 'executionSeconds', 'totalSeconds'})
-STRINGS = {
-    'translationMemorySync': {'pending', 'synced'},
-    'stage': {'Queue Wait','Initialization','Check Fonts','Download Fonts','Font Preparation','Parse PDF and Create Intermediate Representation','Detect Scanned Pages','Parse Page Layout','Parse Table','Parse Paragraphs','Parse Formulas and Styles','Extract Terms','Translate Paragraphs','Typesetting','Add Fonts','Generate drawing instructions','Subset font','Save PDF','Finalize'},
-    'retryReason': {'timeout','rate_limit','connection','server_error','invalid_output','other'},
-    'errorType': {'ReadTimeout','ConnectTimeout','TimeoutError','APITimeoutError','RateLimitError','APIConnectionError','APIStatusError','AuthenticationError','PermissionDeniedError','NotFoundError','BadRequestError','InternalServerError','InvalidTranslation','UnprocessedParagraph','RuntimeError','ValueError','CancelledError','ConnectionError','CodexError','ChatGPTError'},
-    'finishReason': {'stop','length','content_filter','tool_calls','function_call','completed','incomplete','failed','cancelled','max_output_tokens','other'},
-    'status': {'queued','paused','running','cancelling','completed','incomplete','failed','cancelled'},
-    'recoveryState': {'queued', 'interrupted'},
-    'operation': {'page_start','page_end','font','resources','content_stream','initialization'},
-    'cancelPhase': {'requested','terminating','killing','cancelled','cleanup_failed'},
-    'cancelReason': {'user','forced','shutdown'},
-    'kind': {'initialization','translation','term_extraction','review','repair'},
-    'protocol': {'chat_completions','responses','auto','codex_app_server'},
-    'providerCode': {'chatgpt_sign_in_required','chatgpt_usage_limit','chatgpt_permission_denied','chatgpt_invalid_request',
-                     'chatgpt_rate_limited','chatgpt_unavailable','chatgpt_model_unavailable','chatgpt_invalid_reasoning',
-                     'chatgpt_account_changed','chatgpt_timeout','chatgpt_network_error','chatgpt_incomplete','model_not_found','invalid_api_key','insufficient_quota','rate_limit_exceeded','permission_denied',
-                     'codex_invalid_proxy','codex_not_installed','codex_incompatible','codex_not_logged_in','codex_model_unavailable',
-                     'codex_invalid_reasoning','codex_isolation_failed','codex_timeout','codex_process_exited',
-                     'codex_protocol_error','codex_quota_exhausted','codex_request_failed',
-                     'codex_invalid_path','codex_dependency_missing','codex_start_failed','codex_permission_denied',
-                     'codex_arch_mismatch','codex_version_too_old','codex_version_unrecognized','codex_cancelled'},
-    'availability': {'complete','partial','unavailable'},
-}
-STRINGS['stage'].add('Engine Wait')
-IDENTIFIERS = {'taskId', 'serverInstanceId', 'errorId'}
-LABELS = {'provider', 'service', 'model', 'sourceLang', 'targetLang'}
-CONTAINERS = set('requestedConfiguration effectiveConfiguration translationSummary qualitySummary metrics requests tokens byKind translation review initialization localCache providerCache'.split())
-CONTAINERS.update({'byPurpose', 'term_extraction', 'validation', 'timing'})
-NUMBERS.update({'accepted', 'partial', 'rejected', 'firstParagraphMs'})
-COUNT_MAPS = {'statusCodes', 'errorTypes', 'finishReasons', 'protocols'}
+NUMBERS = set(CONTRACT['numeric'])
+FLAGS = set(CONTRACT['flags'])
+STRINGS = {key: set(values) for key, values in CONTRACT['enums'].items()}
+IDENTIFIERS = set(CONTRACT['identifiers'])
+LABELS = set(CONTRACT['labels'])
+CONTAINERS = set(CONTRACT['containers'])
+COUNT_MAPS = set(CONTRACT['countMaps'])
 
 
 def safe_label(value):
@@ -60,14 +34,16 @@ def safe_label(value):
             and not re.search(r'(?:sk-|Bearer|api[_-]?key|token=)', value, re.I))
 
 
-def safe_counts(key, values):
+def safe_counts(key, values, report=None):
     if not isinstance(values, dict): return {}
-    allowed = {'errorTypes': STRINGS['errorType'], 'finishReasons': STRINGS['finishReason'],
-               'protocols': STRINGS['protocol']}.get(key, set())
-    return {name: count for name, count in values.items()
+    enum_name = CONTRACT['countMaps'].get(key)
+    allowed = STRINGS.get(enum_name, set()) if isinstance(enum_name, str) else set()
+    result = {name: count for name, count in values.items()
             if isinstance(name, str) and (name in allowed or (key == 'statusCodes' and
                 (name == 'unknown' or re.fullmatch(r'[1-5][0-9]{2}', name))))
             and type(count) is int and count >= 0}
+    if report is not None: report['rejectedValues'] += len(values) - len(result)
+    return result
 
 
 def requested_configuration(payload):
@@ -80,7 +56,7 @@ def requested_configuration(payload):
 
 
 # Only fields listed here ever enter persistent diagnostics.
-def safe_fields(data, _depth=0):
+def safe_fields(data, _depth=0, *, report=None):
     if not isinstance(data, dict) or _depth > 8: return {}
     result = {}
     for key, value in data.items():
@@ -89,17 +65,57 @@ def safe_fields(data, _depth=0):
             if math.isfinite(value): result[key] = value
         elif key in FLAGS and isinstance(value, bool): result[key] = value
         elif key in STRINGS and isinstance(value,str) and value in STRINGS[key]: result[key] = value
+        elif key in CONTRACT['opaqueIdentifiers'] and isinstance(value, str) and re.fullmatch(CONTRACT['opaqueIdentifiers'][key], value): result[key] = value
+        elif key in CONTRACT['identifierLists'] and isinstance(value, list):
+            pattern = CONTRACT['opaqueIdentifiers'][CONTRACT['identifierLists'][key]]
+            result[key] = [item for item in value[:256] if isinstance(item, str) and re.fullmatch(pattern, item)]
+            if report is not None: report['rejectedValues'] += len(value) - len(result[key])
         elif key in LABELS and safe_label(value): result[key] = value
-        elif key in COUNT_MAPS: result[key] = safe_counts(key, value)
-        elif key in CONTAINERS and isinstance(value, dict): result[key] = safe_fields(value, _depth + 1)
+        elif key in COUNT_MAPS: result[key] = safe_counts(key, value, report)
+        elif key in CONTAINERS and isinstance(value, dict): result[key] = safe_fields(value, _depth + 1, report=report)
+        elif key in CONTAINERS and isinstance(value, list):
+            def clean(item):
+                if isinstance(item, list): return [safe_fields(row, _depth + 2, report=report) for row in item[:20000]]
+                return safe_fields(item, _depth + 1, report=report)
+            result[key] = [clean(item) for item in value[-20000:]]
         elif key == 'failedParagraphs' and isinstance(value, list):
             # No paragraph text, opaque document hashes, or free-form reason chains.
-            result[key] = [safe_fields({k: row[k] for k in ('page', 'attempts', 'errorType', 'statusCode', 'providerCode') if k in row}, _depth + 1)
-                           for row in value[:2000] if isinstance(row, dict)]
+            result[key] = []
+            for row in value[:2000]:
+                if not isinstance(row, dict):
+                    continue
+                fields = {k: row[k] for k in CONTRACT['failedParagraphFields'] if k in row}
+                if (row.get('errorType') == 'InvalidTranslation' and isinstance(row.get('reason'), str)
+                        and not (isinstance(row.get('validationCode'), str) and row['validationCode'] in STRINGS['validationCode'])):
+                    code = row['reason'].split(' → ', 1)[0]
+                    if code in STRINGS['validationCode']:
+                        fields['validationCode'] = code
+                result[key].append(safe_fields(fields, _depth + 1, report=report))
             if len(value) > 2000: result['failedParagraphsTruncated'] = True
         elif key in IDENTIFIERS and isinstance(value, str) and re.fullmatch(r'[a-zA-Z0-9-]{1,64}', value): result[key] = value
-        elif key in {'createdAt','updatedAt','lastProgressAt','heartbeatAt','lastRequestAt','queuedAt','startedAt','finishedAt'} and isinstance(value,str) and re.fullmatch(r'[0-9TZ:.+\-]{10,40}',value): result[key] = value
+        elif key in CONTRACT['timestamps'] and isinstance(value,str) and re.fullmatch(r'[0-9TZ:.+\-]{10,40}',value): result[key] = value
+        elif key in CONTRACT['strings'] and isinstance(value, str) and re.fullmatch(r'[a-zA-Z0-9_. :+\-]{1,120}', value) and not re.search(r'\b(?:sk-|Bearer|api[_-]?key|token=)', value, re.I): result[key] = value
+        elif report is not None:
+            known = (key in NUMBERS or key in FLAGS or key in STRINGS or key in LABELS or key in IDENTIFIERS
+                     or key in COUNT_MAPS or key in CONTRACT['timestamps'] or key in CONTRACT['strings']
+                     or key in CONTRACT['opaqueIdentifiers'] or key in CONTRACT['identifierLists'])
+            report['rejectedValues' if known else 'filteredFields'] += 1
     return result
+
+
+def diagnostic_capabilities():
+    return {'schemaVersions': CONTRACT['supportedSchemaVersions'],
+            'schemaRevision': SCHEMA_REVISION, 'features': CONTRACT['features']}
+
+
+def negotiate_schema(value):
+    """Absent query preserves the shipped v1 interface; additions use revisions."""
+    if value is None:
+        return SCHEMA_VERSION
+    if not re.fullmatch(r'[1-9][0-9]*(?:,[1-9][0-9]*){0,7}', value):
+        raise ValueError('invalid_schema_versions')
+    common = set(map(int, value.split(','))) & set(CONTRACT['supportedSchemaVersions'])
+    return max(common) if common else None
 
 
 def exception_frames(exc):
@@ -122,23 +138,42 @@ class DiagnosticStore:
         self.last_prune = 0.0
         self.active = set()
         self.truncated = False
+        self.dropped_records = 0
+        self.memory_evictions = 0
+        self.filtered_fields = 0
+        self.rejected_values = 0
+        self.write_failures = 0
+        self.oversized_records = 0
         self.pending = queue.Queue(maxsize=512)
         if self.root:
             threading.Thread(target=self._write_loop, daemon=True, name="diagnostic-writer").start()
 
     def record(self, event, data=None, *, frames=None):
         if not re.fullmatch(r'[a-z_]{1,48}', event): return
-        row = {'time': datetime.now(timezone.utc).isoformat(), 'event': event, **safe_fields(data or {})}
+        report = {'filteredFields': 0, 'rejectedValues': 0}
+        fields = safe_fields(data or {}, report=report)
+        row = {**fields, 'time': datetime.now(timezone.utc).isoformat(), 'event': event}
+        with self.lock:
+            self.filtered_fields += report['filteredFields']
+            self.rejected_values += report['rejectedValues']
         if frames is not None: row['frames'] = frames  # Only generated by exception_frames/thread_frames.
         encoded = json.dumps(row, ensure_ascii=False, allow_nan=False)
-        if len(encoded.encode()) > 128 * 1024: return
+        if len(encoded.encode()) > 128 * 1024:
+            with self.lock:
+                self.oversized_records += 1
+                self.truncated = True
+            return
         with self.lock:
+            if len(self.memory) == self.memory.maxlen:
+                self.memory_evictions += 1
             self.memory.append(row)
         if self.root:
             try:
                 self.pending.put_nowait((row, encoded))
             except queue.Full:
-                self.truncated = True
+                with self.lock:
+                    self.dropped_records += 1
+                    self.truncated = True
 
     def _write_loop(self):
         # Disk stalls must never hold the supervisor or task-state lock.
@@ -153,7 +188,9 @@ class DiagnosticStore:
                     self._append('service', encoded, 5 * 1024 * 1024, 2)
                 self._prune()
             except OSError:
-                self.truncated = True
+                with self.lock:
+                    self.write_failures += 1
+                    self.truncated = True
             finally:
                 self.pending.task_done()
 
@@ -190,6 +227,9 @@ class DiagnosticStore:
         with self.lock:
             memory = list(self.memory)
             truncated = self.truncated
+            collection = {'droppedRecords': self.dropped_records, 'memoryEvictions': self.memory_evictions, 'writeFailures': self.write_failures,
+                          'oversizedRecords': self.oversized_records, 'filteredFields': self.filtered_fields,
+                          'rejectedValues': self.rejected_values}
         rows, size = [], 0
         if self.root and self.root.exists():
             paths = list(self.root.glob(f'task-{task_id}-*.jsonl*' if task_id else '*.jsonl*'))
@@ -224,7 +264,7 @@ class DiagnosticStore:
             kept.append(row)
             size += length
         rows = kept
-        return {'schemaVersion': SCHEMA_VERSION, 'environment': {'python': platform.python_version(),
+        return {'schemaVersion': SCHEMA_VERSION, 'schemaRevision': SCHEMA_REVISION, 'collection': collection, 'environment': {'python': platform.python_version(),
                 'os': platform.system(), 'architecture': platform.machine()},
                 'truncated': truncated, 'records': list(reversed(rows))}
 
@@ -245,9 +285,19 @@ class SafeLogHandler(logging.Handler):
                         data['retryReason'] = ('timeout' if 'timeout' in error else 'rate_limit' if 'ratelimit' in error
                                                else 'connection' if 'connection' in error else 'other')
                     self.emit_record('request',safe_fields(data))
-            elif record.exc_info:
-                self.emit_record('exception',{},frames=exception_frames(record.exc_info[1]))
-            elif record.levelno >= logging.WARNING:
-                self.emit_record('warning',{})
+            elif record.levelno >= logging.WARNING or record.exc_info:
+                data = safe_fields(getattr(record, 'diagnostic', {}))
+                data.update(safe_fields({'file': Path(record.pathname).name,
+                                         'function': record.funcName, 'line': record.lineno}))
+                if record.exc_info:
+                    error = record.exc_info[1]
+                    data.update(safe_fields({'errorType': type(error).__name__,
+                                            'validationCode': getattr(error, 'code', None),
+                                            'providerCode': getattr(error, 'code', None)}))
+                    self.emit_record('exception', data, frames=exception_frames(error))
+                else:
+                    if not data.get('validationCode') and not data.get('providerCode'):
+                        data['collectionCode'] = 'unknown_warning'
+                    self.emit_record('warning', data)
         except Exception:
             pass

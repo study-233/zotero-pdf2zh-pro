@@ -877,6 +877,7 @@ class TaskManager:
             if task_id and task_id not in self._tasks:
                 return None
             tasks = [safe_fields(r.to_dict()) for r in self._tasks.values() if not task_id or r.task_id == task_id][-2000:]
+            workspaces = {r.task_id: r.workspace_dir for r in self._tasks.values() if not task_id or r.task_id == task_id}
             snapshot_events = self._snapshot_events.get(task_id) if task_id else next(iter(self._snapshot_events.values()), None)
         if snapshot_events:
             snapshot_events[1].clear(); snapshot_events[0].set()
@@ -884,6 +885,42 @@ class TaskManager:
         payload = self.diagnostics.export(task_id)
         payload.update(tasks=tasks, queueBlocked=self._queue_blocked,
                        limitations=["Latest stack may be unavailable while native code holds the interpreter; saved snapshots are included."])
+        from diagnostic_evidence import read_evidence, link_failures, bound_evidence, analyze
+        selected = tasks if task_id else tasks[-3:]
+        graphs = []
+        graph_budget = (2 * 1024 * 1024) // max(1, len(selected))
+        for task in selected:
+            graph = read_evidence(workspaces[task['taskId']], task['taskId'], task.get('attempt', 1),
+                                  task.get('status'), max_bytes=graph_budget)
+            health = task.get('evidenceCollection', {})
+            if health:
+                graph['evidenceCollection'] = health
+                for execution in graph['executions']:
+                    if execution.get('executionId') == health.get('executionId'):
+                        execution.update(health)
+                if any(health.get(key) for key in ('unflushedEvents', 'queueDropped', 'storageErrors')):
+                    if graph['evidenceStatus'] == 'available':
+                        graph.update(evidenceStatus='partial', evidenceCode='writer_incomplete')
+                    elif graph['evidenceStatus'] == 'missing':
+                        graph.update(evidenceStatus='unavailable', evidenceCode='writer_incomplete')
+            graphs.append(bound_evidence(link_failures(task, graph), graph_budget))
+        payload['evidence'] = {'taskEvidence': graphs, 'omittedTasks': len(tasks) - len(selected)}
+        payload['analysis'] = analyze(selected, payload['evidence'])
+        # Keep the existing response budget; evidence takes priority over the log tail.
+        records = payload.pop('records')
+        payload_size = len(json.dumps(payload, ensure_ascii=False).encode())
+        while len(tasks) > max(1, len(selected)) and payload_size > 8 * 1024 * 1024:
+            payload_size -= len(json.dumps(tasks.pop(0), ensure_ascii=False).encode()) + 2
+            payload['truncated'] = True
+        budget = max(0, 10 * 1024 * 1024 - len(json.dumps(payload, ensure_ascii=False).encode()))
+        retained = []
+        for row in reversed(records):
+            size = len(json.dumps(row, ensure_ascii=False).encode()) + 2
+            if size > budget:
+                payload['truncated'] = True
+                break
+            retained.append(row); budget -= size
+        payload['records'] = list(reversed(retained))
         return payload
 
     def _register_cancel_callback(
@@ -934,6 +971,8 @@ class TaskManager:
                     "taskId": task_id, "attempt": record.attempt, "serverInstanceId": self._server_instance_id,
                     "effectiveConfiguration": configuration,
                 })
+            if event_type == 'diagnostic_evidence':
+                record.progress_detail['evidenceCollection'] = safe_fields(event.get('evidenceCollection', {}))
             if event_type in {"progress_start", "progress_update", "progress_end"}:
                 record.stage = str(event.get("stage") or record.stage or "unknown")
                 record.stage_current = self._coerce_int(

@@ -89,7 +89,7 @@ def child_entry(payload, identity, cancel, gate, stack_request, telemetry, contr
             with progress_lock:
                 progress_sequence += 1
                 value = {**value, "progressSequence": progress_sequence}
-        if kind == 'progress' and (value.get('type') in {'progress_start','progress_end','translation_summary','diagnostic_configuration'} or value.get('operation') in {'page_start','page_end'}):
+        if kind == 'progress' and (value.get('type') in {'progress_start','progress_end','translation_summary','diagnostic_configuration','diagnostic_evidence'} or value.get('operation') in {'page_start','page_end'}):
             send_control('progress',value)
             return
         try: outgoing.put_nowait((kind,identity,value))
@@ -121,6 +121,7 @@ def child_entry(payload, identity, cancel, gate, stack_request, telemetry, contr
             truststore.inject_into_ssl()
             from pdf2zh_next_service import translate_pdf_with_callbacks
             result=asyncio.run(translate_pdf_with_callbacks(payload,identity['taskId'],cancel_event=cancel,
+                evidence_identity=identity,
                 progress_callback=lambda e:emit('progress',e),metrics_callback=lambda m:emit('metrics',m)))
         if final_metrics is not None:
             send_control('metrics', final_metrics)

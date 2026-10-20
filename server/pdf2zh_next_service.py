@@ -675,6 +675,7 @@ async def translate_pdf_with_callbacks(
     metrics_callback: MetricsCallback | None = None,
     on_config_ready: ConfigReadyCallback | None = None,
     cancel_event: threading.Event | None = None,
+    evidence_identity: dict | None = None,
 ) -> TranslationResult:
     started_at = time.monotonic()
     cancel_event = cancel_event or threading.Event()
@@ -708,6 +709,11 @@ async def translate_pdf_with_callbacks(
     heartbeat_task: asyncio.Task | None = None
     translation_config: BabelDOCConfig | None = None
     recovery = None
+    from diagnostic_evidence import EvidenceLedger
+    evidence = EvidenceLedger(input_path.parent, job_id, (evidence_identity or {}).get('attempt', 1))
+    evidence_status = 'failed'
+    from diagnostics import requested_configuration
+    evidence.execution(requestedConfiguration=requested_configuration(payload))
     translation_started = False
     finalize_started_at = None
     try:
@@ -724,8 +730,10 @@ async def translate_pdf_with_callbacks(
                 model=(engine_settings.codex_model if isinstance(engine_settings, CodexSettings)
                        else engine_settings.chatgpt_model if isinstance(engine_settings, ChatGPTSettings)
                        else engine_settings.openai_model), callback=metrics_callback,
+                evidence=evidence,
             )
             metrics_collector.record_stage("Engine Wait", initialization_started_at - started_at)
+        evidence.execution(requestTracing=metrics_collector is not None)
         try:
             translation_config = create_babeldoc_config(
                 settings, input_path, glossary_entries=payload.get("glossary_entries"),
@@ -737,9 +745,8 @@ async def translate_pdf_with_callbacks(
                 metrics_collector.record_stage("Initialization", time.monotonic() - initialization_started_at)
         translation_config.cancel_event = cancel_event
         translation_config.diagnostic_callback = progress_callback
-        if progress_callback is not None:
-            from diagnostics import safe_fields
-            progress_callback({"type": "diagnostic_configuration", "effectiveConfiguration": safe_fields({
+        from diagnostics import safe_fields
+        effective_configuration = safe_fields({
                 "provider": payload["service"],
                 "model": getattr(translation_config.translator, "model", None),
                 "protocol": getattr(translation_config.translator, "resolved_protocol", None),
@@ -747,7 +754,10 @@ async def translate_pdf_with_callbacks(
                 "poolSize": translation_config.pool_max_workers,
                 "sourceLang": getattr(translation_config, "lang_in", payload.get("source_lang")),
                 "targetLang": getattr(translation_config, "lang_out", payload.get("target_lang")),
-            })})
+            })
+        evidence.execution(effectiveConfiguration=effective_configuration)
+        if progress_callback is not None:
+            progress_callback({"type": "diagnostic_configuration", "effectiveConfiguration": effective_configuration})
         translation_config.semantic_review = bool(payload.get("semantic_review", False))
         translation_config.review_attempt = int(payload.get("review_attempt", payload.get("repair_attempt", 1)))
         translation_config.glossary_entries = payload.get("glossary_entries") or []
@@ -774,6 +784,7 @@ async def translate_pdf_with_callbacks(
         recovery = TranslationRecovery(
             input_path.parent / "paragraph-recovery.sqlite3", fingerprint.hexdigest(), progress_callback,
             first_success_callback=metrics_collector.first_paragraph_completed if metrics_collector is not None else None,
+            evidence=evidence, task_attempt=(evidence_identity or {}).get('attempt', 1),
         )
         translation_config.recovery = recovery
         if translation_config.semantic_review:
@@ -906,6 +917,7 @@ async def translate_pdf_with_callbacks(
                     repaired_files[mode] = TranslationOutputFile(mode, renamed, renamed.name)
                 files = repaired_files
             summary, failed = translation_config.recovery.snapshot()
+            evidence_status = 'incomplete' if summary['failed'] or summary['pending'] else 'completed'
             check_cancelled()
             # The parent commits the PDF result before its background memory sync.
             memory_sync = "pending" if payload.get("translation_memory_path") else None
@@ -914,6 +926,7 @@ async def translate_pdf_with_callbacks(
                                      quality_summary=recovery.quality_snapshot(), translation_memory_sync=memory_sync)
     except asyncio.CancelledError:
         cancel_event.set()
+        evidence_status = 'cancelled'
         if translation_config is not None:
             translation_config.cancel_translation()
         raise
@@ -934,8 +947,17 @@ async def translate_pdf_with_callbacks(
                         metrics_collector.set_translation_summary(recovery.snapshot()[0])
                     recovery.close()
             finally:
-                set_text_checks_skipped(previous_skip_text_checks)
-                _TEXT_CHECK_TRANSLATION_LOCK.release()
+                try:
+                    snapshot = metrics_collector.snapshot() if metrics_collector is not None else None
+                    health = evidence.close(evidence_status, recovery.snapshot()[0] if recovery is not None else None,
+                        request_summary={**snapshot['requests'], 'cacheHits': snapshot['localCache']['hits']} if snapshot is not None else None)
+                    if progress_callback is not None:
+                        progress_callback({'type': 'diagnostic_evidence', 'evidenceCollection': health})
+                except Exception:
+                    LOGGER.warning('diagnostic evidence finalization unavailable')
+                finally:
+                    set_text_checks_skipped(previous_skip_text_checks)
+                    _TEXT_CHECK_TRANSLATION_LOCK.release()
                 if metrics_collector is not None:
                     ended_at = time.monotonic()
                     metrics_collector.record_stage("Finalize", ended_at - finalize_started_at)

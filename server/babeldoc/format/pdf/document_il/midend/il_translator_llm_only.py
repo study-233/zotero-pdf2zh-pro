@@ -777,6 +777,8 @@ class ILTranslatorLLMOnly:
                     "metric_kind": "translation",
                     "batch_size": len(inputs),
                     "paragraph_ids": [item[2].debug_id for item in inputs],
+                    "diagnostic_paragraph_refs": [self.translation_config.recovery.diagnostic_ref(item[2]) for item in inputs]
+                        if getattr(self.translation_config, 'recovery', None) is not None else [],
                     "metric_call_context": call_context,
                     "check_cancelled": self.translation_config.raise_if_cancelled,
                     "request_json_mode": True,

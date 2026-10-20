@@ -1,70 +1,43 @@
 import { config, version } from "../../package.json";
+import { diagnosticContract } from "./diagnosticContract";
 
 const MAX_PACKAGE = 20 * 1024 * 1024;
 const MAX_LOG = 2 * 1024 * 1024;
-const numeric = new Set(
-    "accepted partial rejected firstParagraphMs schemaVersion averageLatencyMs p95LatencyMs qps10s stageElapsedSeconds promptTokens completionTokens totalTokens succeeded failed cancelled pending translated attempt attempts revision stageCurrent stageTotal stageProgress overallProgress currentPage selectedPage completedPages totalPages fontParseCount fontCacheHits fontObject operations idleSeconds latencyMs statusCode input output total active retries repairs count pid cpuPercent rssBytes parentCpuPercent parentRssBytes exitCode elapsedSeconds droppedLogRecords line qps poolSize page skipped selected checked passed corrected unchecked notSelected requestsUsed requestLimit paragraphLimit hits misses hitRate hitTokens missTokens reasoning visibleOutputChars".split(
-        " ",
-    ),
+const numeric = new Set<string>(diagnosticContract.numeric);
+const strings = new Set<string>(diagnosticContract.strings);
+const timestamps = new Set<string>(diagnosticContract.timestamps);
+const containers = new Set<string>(diagnosticContract.containers);
+const labels = new Set<string>(diagnosticContract.labels);
+const identifiers = new Set<string>(diagnosticContract.identifiers);
+const flags = new Set<string>(diagnosticContract.flags);
+const opaqueIdentifiers: Record<string, string> =
+    diagnosticContract.opaqueIdentifiers;
+const identifierLists: Record<string, string> =
+    diagnosticContract.identifierLists;
+const enums: Record<string, readonly string[]> = diagnosticContract.enums;
+const validationCodes = new Set<string>(enums.validationCode);
+const countMaps: Record<string, readonly string[]> = Object.fromEntries(
+    Object.entries(diagnosticContract.countMaps).map(([key, enumName]) => [
+        key,
+        typeof enumName === "string" ? enums[enumName] : ["unknown"],
+    ]),
 );
-const strings = new Set(
-    "event status operation cancelPhase cancelReason kind taskId serverInstanceId time createdAt updatedAt lastProgressAt heartbeatAt lastRequestAt importState file function stage retryReason finishReason python os architecture serviceVersion babeldocVersion pdf2zhVersion".split(
-        " ",
-    ),
-);
-const containers = new Set(
-    "tasks records frames environment progress requestedConfiguration effectiveConfiguration translationSummary qualitySummary metrics requests tokens byKind byPurpose translation review initialization term_extraction validation localCache providerCache".split(
-        " ",
-    ),
-);
-const labels = new Set(
-    "provider service model sourceLang targetLang".split(" "),
-);
-const errorTypes = new Set(
-    "ReadTimeout ConnectTimeout TimeoutError APITimeoutError RateLimitError APIConnectionError APIStatusError AuthenticationError PermissionDeniedError NotFoundError BadRequestError InternalServerError InvalidTranslation UnprocessedParagraph RuntimeError ValueError CancelledError ConnectionError CodexError ChatGPTError".split(
-        " ",
-    ),
-);
-const countMaps: Record<string, Set<string>> = {
-    statusCodes: new Set(["unknown"]),
-    errorTypes,
-    finishReasons: new Set(
-        "stop length content_filter tool_calls function_call completed incomplete failed cancelled max_output_tokens other".split(
-            " ",
-        ),
-    ),
-    protocols: new Set(["auto", "chat_completions", "responses"]),
-};
-const providerCodes = new Set(
-    "model_not_found invalid_api_key insufficient_quota rate_limit_exceeded permission_denied".split(
-        " ",
-    ),
-);
-const flags = new Set([
-    "stalled",
-    "cancelRequested",
-    "truncated",
-    "queueBlocked",
-    "success",
-    "canRepair",
-    "canResume",
-    "complete",
-    "canDownloadResult",
-    "failedParagraphsTruncated",
-]);
-for (const key of ["queueSeconds", "executionSeconds", "totalSeconds"])
-    numeric.add(key);
-for (const key of ["recoveryState", "queuedAt", "startedAt", "finishedAt"])
-    strings.add(key);
-containers.add("timing");
+export interface DiagnosticFilterReport {
+    filteredFields: number;
+    rejectedValues: number;
+}
 
 /** Independent export boundary: exclude arbitrary server fields, bodies and messages. */
-export function safeDiagnostic(value: unknown, depth = 0): unknown {
+export function safeDiagnostic(
+    value: unknown,
+    depth = 0,
+    report?: DiagnosticFilterReport,
+): unknown {
     if (depth > 10) return undefined;
     if (Array.isArray(value))
         return value
             .slice(-20000)
-            .map((item) => safeDiagnostic(item, depth + 1));
+            .map((item) => safeDiagnostic(item, depth + 1, report));
     if (!value || typeof value !== "object") return undefined;
     const out: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value)) {
@@ -76,6 +49,24 @@ export function safeDiagnostic(value: unknown, depth = 0): unknown {
             out[key] = item;
         else if (flags.has(key) && typeof item === "boolean") out[key] = item;
         else if (
+            Object.hasOwn(opaqueIdentifiers, key) &&
+            typeof item === "string" &&
+            new RegExp(`^(?:${opaqueIdentifiers[key]})$`).test(item)
+        )
+            out[key] = item;
+        else if (Object.hasOwn(identifierLists, key) && Array.isArray(item)) {
+            const pattern = new RegExp(
+                `^(?:${opaqueIdentifiers[identifierLists[key]]})$`,
+            );
+            out[key] = item
+                .slice(0, 256)
+                .filter(
+                    (entry) => typeof entry === "string" && pattern.test(entry),
+                );
+            if (report)
+                report.rejectedValues +=
+                    item.length - (out[key] as unknown[]).length;
+        } else if (
             labels.has(key) &&
             typeof item === "string" &&
             item.length <= 200 &&
@@ -86,27 +77,21 @@ export function safeDiagnostic(value: unknown, depth = 0): unknown {
         )
             out[key] = item;
         else if (
-            key === "providerCode" &&
+            Object.hasOwn(enums, key) &&
             typeof item === "string" &&
-            providerCodes.has(item)
+            enums[key].includes(item)
         )
             out[key] = item;
         else if (
-            key === "errorType" &&
+            identifiers.has(key) &&
             typeof item === "string" &&
-            errorTypes.has(item)
+            /^[a-zA-Z0-9-]{1,64}$/.test(item)
         )
             out[key] = item;
         else if (
-            key === "protocol" &&
+            timestamps.has(key) &&
             typeof item === "string" &&
-            countMaps.protocols.has(item)
-        )
-            out[key] = item;
-        else if (
-            key === "availability" &&
-            typeof item === "string" &&
-            ["complete", "partial", "unavailable"].includes(item)
+            /^[0-9TZ:.+-]{10,40}$/.test(item)
         )
             out[key] = item;
         else if (
@@ -116,36 +101,45 @@ export function safeDiagnostic(value: unknown, depth = 0): unknown {
             !Array.isArray(item)
         ) {
             out[key] = Object.fromEntries(
-                Object.entries(item).filter(
-                    ([name, count]) =>
-                        (countMaps[key].has(name) ||
+                Object.entries(item).filter(([name, count]) => {
+                    const valid =
+                        (countMaps[key].includes(name) ||
                             (key === "statusCodes" &&
                                 /^[1-5][0-9]{2}$/.test(name))) &&
                         typeof count === "number" &&
                         Number.isSafeInteger(count) &&
-                        count >= 0,
-                ),
+                        count >= 0;
+                    if (!valid && report) report.rejectedValues++;
+                    return valid;
+                }),
             );
         } else if (key === "failedParagraphs" && Array.isArray(item)) {
             out[key] = item
                 .slice(0, 2000)
                 .filter((row) => row && typeof row === "object")
-                .map((row) =>
-                    safeDiagnostic(
-                        Object.fromEntries(
-                            Object.entries(row).filter(([name]) =>
-                                [
-                                    "page",
-                                    "attempts",
-                                    "errorType",
-                                    "statusCode",
-                                    "providerCode",
-                                ].includes(name),
-                            ),
+                .map((row) => {
+                    const fields = Object.fromEntries(
+                        Object.entries(row).filter(([name]) =>
+                            (
+                                diagnosticContract.failedParagraphFields as readonly string[]
+                            ).includes(name),
                         ),
-                        depth + 1,
-                    ),
-                );
+                    );
+                    // Compatibility adapter for task checkpoints written before structured codes.
+                    if (
+                        row.errorType === "InvalidTranslation" &&
+                        typeof row.reason === "string" &&
+                        !(
+                            typeof row.validationCode === "string" &&
+                            validationCodes.has(row.validationCode)
+                        )
+                    ) {
+                        const code = row.reason.split(" → ", 1)[0];
+                        if (validationCodes.has(code))
+                            fields.validationCode = code;
+                    }
+                    return safeDiagnostic(fields, depth + 1, report);
+                });
             if (item.length > 2000) out.failedParagraphsTruncated = true;
         } else if (
             strings.has(key) &&
@@ -155,7 +149,22 @@ export function safeDiagnostic(value: unknown, depth = 0): unknown {
         )
             out[key] = item;
         else if (containers.has(key))
-            out[key] = safeDiagnostic(item, depth + 1);
+            out[key] = safeDiagnostic(item, depth + 1, report);
+        else if (report) {
+            const known =
+                numeric.has(key) ||
+                flags.has(key) ||
+                labels.has(key) ||
+                identifiers.has(key) ||
+                timestamps.has(key) ||
+                strings.has(key) ||
+                Object.hasOwn(enums, key) ||
+                Object.hasOwn(opaqueIdentifiers, key) ||
+                Object.hasOwn(identifierLists, key) ||
+                Object.hasOwn(countMaps, key);
+            if (known) report.rejectedValues++;
+            else report.filteredFields++;
+        }
     }
     return out;
 }
@@ -203,6 +212,31 @@ export function diagnosticSummary(task: Record<string, any>): string {
         lines.push(
             "任务已结束但仍未完成翻译；页面处理完成、PDF 已保存或已导入均不代表所有段落翻译成功。",
         );
+    const validationCounts = new Map<string, number>();
+    for (const row of safe.failedParagraphs || []) {
+        if (row.validationCode)
+            validationCounts.set(
+                row.validationCode,
+                (validationCounts.get(row.validationCode) || 0) + 1,
+            );
+    }
+    if (validationCounts.size)
+        lines.push(
+            "校验失败原因（已记录段落）：" +
+                [...validationCounts]
+                    .map(([code, count]) => `${code}=${count}`)
+                    .join("，"),
+        );
+    const unclassified = (safe.failedParagraphs || []).filter(
+        (row: Record<string, unknown>) =>
+            row.errorType === "InvalidTranslation" &&
+            (!row.validationCode ||
+                row.validationCode === "unknown_validation"),
+    ).length;
+    if (unclassified)
+        lines.push(
+            `其中 ${unclassified} 个校验失败段落缺少具体错误码；旧版记录或未知代码，无法从本包恢复具体原因。`,
+        );
     if (safe.failedParagraphsTruncated)
         lines.push("失败段落明细超过上限，仅保留前 2000 项；总数见段落统计。");
     return lines.join("\n") + "\n";
@@ -213,6 +247,11 @@ let pending = Promise.resolve();
 const recent: DiagnosticRow[] = [];
 let persistenceFailed = false;
 let queuedWrites = 0;
+let droppedWrites = 0;
+let writeFailures = 0;
+let memoryEvictions = 0;
+let filteredFields = 0;
+let rejectedValues = 0;
 
 function logPath(): string {
     return PathUtils.join(
@@ -232,14 +271,21 @@ export function recordDiagnostic(
                 ([key]) => key !== "metrics" && key !== "failedParagraphs",
             ),
         );
-    const row = safeDiagnostic({
-        time: new Date().toISOString(),
-        event,
-        ...fields,
-    }) as DiagnosticRow;
+    const report = { filteredFields: 0, rejectedValues: 0 };
+    const row = safeDiagnostic(
+        { ...fields, time: new Date().toISOString(), event },
+        0,
+        report,
+    ) as DiagnosticRow;
+    filteredFields += report.filteredFields;
+    rejectedValues += report.rejectedValues;
     recent.push(row);
-    if (recent.length > 1000) recent.shift();
+    if (recent.length > 1000) {
+        recent.shift();
+        memoryEvictions++;
+    }
     if (queuedWrites >= 100) {
+        droppedWrites++;
         persistenceFailed = true;
         return;
     }
@@ -260,6 +306,7 @@ export function recordDiagnostic(
             await IOUtils.write(path, merged, { tmpPath: path + ".tmp" });
         })
         .catch(() => {
+            writeFailures++;
             persistenceFailed = true;
         })
         .finally(() => {
@@ -508,23 +555,219 @@ export function diagnosticZip(files: Record<string, string>): Uint8Array {
     return result;
 }
 
+type CollectionCode = (typeof diagnosticContract.enums.collectionCode)[number];
+interface CollectionSource extends DiagnosticFilterReport {
+    status: "available" | "partial" | "unavailable";
+    reasonCode: CollectionCode;
+    statusCode?: number;
+    schemaVersion?: number;
+    schemaRevision?: number;
+}
+function collectionSource(reasonCode: CollectionCode): CollectionSource {
+    return {
+        status: reasonCode === "none" ? "available" : "unavailable",
+        reasonCode,
+        filteredFields: 0,
+        rejectedValues: 0,
+    };
+}
+const collectionMessages: Partial<Record<CollectionCode, string>> = {
+    none: "服务端诊断已采集。堆栈为最近可用快照；原生代码阻塞时可能无法取得实时堆栈。",
+    timeout: "服务端诊断采集超时；已保留插件侧记录。",
+    unreachable: "服务端诊断不可用；已保留插件侧记录。",
+    unsupported_schema:
+        "服务端诊断格式不受支持；已保留插件侧记录，请更新兼容版本。",
+    invalid_payload: "服务端诊断响应格式无效；已保留插件侧记录。",
+    size_limit: "服务端诊断响应超过容量限制；已保留插件侧记录。",
+    interface_unavailable:
+        "服务端缺少诊断接口或任务已不存在；已保留插件侧记录。",
+    http_error: "服务端诊断接口返回错误；状态码见 manifest.json。",
+    collection_deadline:
+        "采集超过 10 秒，服务端或磁盘记录未完整取得；仅包含当前插件内存快照。",
+};
+function diagnosticFiles(
+    server: Record<string, any>,
+    task: Record<string, unknown> | undefined,
+    records: unknown[],
+    truncated: boolean,
+    source: CollectionSource,
+): Record<string, string> {
+    const serverTask = (
+        server.tasks as Record<string, unknown>[] | undefined
+    )?.find((row) => row?.taskId === task?.taskId);
+    // A new attempt never inherits evidence from an older local snapshot.
+    const snapshot = serverTask
+        ? {
+              ...serverTask,
+              importState:
+                  serverTask.attempt === task?.attempt
+                      ? task?.importState
+                      : undefined,
+          }
+        : task || {};
+    const safe = safeDiagnostic(snapshot) as Record<string, any>;
+    const unclassified = (safe.failedParagraphs || []).filter(
+        (row: Record<string, unknown>) =>
+            row.errorType === "InvalidTranslation" &&
+            (!row.validationCode ||
+                row.validationCode === "unknown_validation"),
+    ).length;
+    const collected = { ...source };
+    const isRow = (row: unknown): row is Record<string, any> =>
+        !!row && typeof row === "object" && !Array.isArray(row);
+    const evidence = {
+        taskEvidence: Array.isArray(server.evidence?.taskEvidence)
+            ? server.evidence.taskEvidence.filter(isRow)
+            : [],
+        omittedTasks: server.evidence?.omittedTasks || 0,
+    };
+    const analysis = Array.isArray(server.analysis?.findings)
+        ? {
+              ...server.analysis,
+              findings: server.analysis.findings.filter(isRow),
+          }
+        : {
+              schemaVersion: diagnosticContract.schemaVersion,
+              schemaRevision: diagnosticContract.schemaRevision,
+              findings: [
+                  { findingCode: "evidence_unavailable", taskId: safe.taskId },
+              ],
+          };
+    const evidenceMessages = (analysis.findings || [])
+        .map((row: Record<string, any>) => {
+            const rule =
+                diagnosticContract.diagnosisRules[
+                    row.findingCode as keyof typeof diagnosticContract.diagnosisRules
+                ];
+            return rule
+                ? `${rule.title}${row.validationCode ? `（${row.validationCode}）` : ""}：${rule.suggestion}`
+                : "";
+        })
+        .filter(Boolean);
+    const evidenceSummary = [...new Set<string>(evidenceMessages)]
+        .slice(0, 30)
+        .join("\n");
+    // Large graphs live once in the ZIP; server.json keeps its original task/log envelope.
+    const serverSnapshot = { ...server };
+    delete serverSnapshot.evidence;
+    delete serverSnapshot.analysis;
+    if (
+        collected.status === "available" &&
+        (server.truncated || unclassified || source.rejectedValues)
+    ) {
+        collected.status = "partial";
+        if (unclassified)
+            collected.reasonCode = "legacy_validation_details_missing";
+    }
+    const manifest = {
+        schemaVersion: diagnosticContract.schemaVersion,
+        schemaRevision: diagnosticContract.schemaRevision,
+        createdAt: new Date().toISOString(),
+        exporter: { pluginVersion: version },
+        sources: {
+            evidence: {
+                status:
+                    evidence.taskEvidence.length &&
+                    evidence.taskEvidence.every(
+                        (graph: Record<string, any>) =>
+                            graph.evidenceStatus === "available",
+                    )
+                        ? "available"
+                        : evidence.taskEvidence.some(
+                                (graph: Record<string, any>) =>
+                                    ["available", "partial"].includes(
+                                        graph.evidenceStatus,
+                                    ),
+                            )
+                          ? "partial"
+                          : "unavailable",
+                evidenceCode: evidence.taskEvidence.length
+                    ? undefined
+                    : "evidence_missing",
+                taskEvidence: (evidence.taskEvidence || []).map(
+                    (graph: Record<string, any>) => ({
+                        taskId: graph.taskId,
+                        evidenceStatus: graph.evidenceStatus,
+                        evidenceCode: graph.evidenceCode,
+                        retainedRequests: graph.requests?.length || 0,
+                        retainedParagraphs: graph.paragraphs?.length || 0,
+                        omittedRequests: graph.omittedRequests || 0,
+                        omittedParagraphs: graph.omittedParagraphs || 0,
+                        omittedExecutions: graph.omittedExecutions || 0,
+                    }),
+                ),
+                omittedTasks: evidence.omittedTasks || 0,
+            },
+            server: {
+                ...collected,
+                producerVersion: server.environment?.serviceVersion,
+                truncated: server.truncated === true,
+                unclassifiedFailures: unclassified,
+                collection: server.collection,
+            },
+            plugin: {
+                status:
+                    persistenceFailed || truncated ? "partial" : "available",
+                reasonCode: persistenceFailed ? "disk_error" : "none",
+                truncated,
+                droppedWrites,
+                writeFailures,
+                memoryEvictions,
+                filteredFields,
+                rejectedValues,
+            },
+        },
+    };
+    return {
+        "manifest.json": JSON.stringify(manifest, null, 2),
+        "summary.txt": `PDF2ZH 诊断包\n生成时间：${manifest.createdAt}\n插件：${config.addonName} ${version}\nZotero：${Zotero.version}\n${collectionMessages[source.reasonCode] || source.reasonCode}\n${task ? diagnosticSummary(snapshot) : "任务配置和统计见 server.json 的 tasks。\n"}${evidenceSummary}\n任务、执行、请求与段落关联见 evidence.json；结构化分析见 analysis.json。\n${persistenceFailed ? "部分插件持久化日志不可用。\n" : ""}${truncated ? "插件记录已截断。\n" : ""}${server.truncated ? "服务日志已轮转或截断。\n" : ""}${server.queueBlocked ? "任务进程回收未确认，队列已暂停。\n" : ""}采集状态、缺失原因与过滤计数见 manifest.json。\n包含服务商、模型标识、任务参数及结构化错误代码；不包含原论文、正文、密钥、接口地址或请求响应内容。\n`,
+        "evidence.json": JSON.stringify({
+            schemaVersion: diagnosticContract.schemaVersion,
+            schemaRevision: diagnosticContract.schemaRevision,
+            ...evidence,
+        }),
+        "analysis.json": JSON.stringify(analysis, null, 2),
+        "task.json": JSON.stringify(safe, null, 2),
+        "server.json": JSON.stringify(serverSnapshot),
+        "plugin.json": JSON.stringify(
+            {
+                schemaVersion: diagnosticContract.schemaVersion,
+                schemaRevision: diagnosticContract.schemaRevision,
+                truncated,
+                records,
+            },
+            null,
+            2,
+        ),
+    };
+}
 async function collectAvailable(
     serverUrl: string,
     task?: Record<string, unknown>,
 ): Promise<Record<string, string>> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
-    let server: unknown = {},
-        availability = "服务端诊断不可用；已保留插件侧记录。";
+    let server: Record<string, any> = {};
+    let source = collectionSource("unreachable");
+    let failureCode: CollectionCode = "unreachable";
     let records: unknown[] = recent.slice();
     try {
         const endpoint = task
             ? `/tasks/${encodeURIComponent(String(task.taskId))}/diagnostics`
             : "/diagnostics";
-        const response = await fetch(serverUrl.replace(/\/$/, "") + endpoint, {
-            signal: controller.signal,
-        });
+        // Old v1 services ignore the optional query; new services select a common format.
+        const query = diagnosticContract.supportedSchemaVersions.join(",");
+        const response = await fetch(
+            serverUrl.replace(/\/$/, "") +
+                endpoint +
+                `?schemaVersions=${query}`,
+            {
+                signal: controller.signal,
+            },
+        );
+        source.statusCode = response.status;
         if (response.ok) {
+            failureCode = "invalid_payload";
             const reader = response.body?.getReader();
             if (!reader) throw new Error("Response stream unavailable");
             const parts: Uint8Array[] = [];
@@ -534,7 +777,9 @@ async function collectAvailable(
                 if (part.done) break;
                 size += part.value.length;
                 if (size > 12 * 1024 * 1024) {
+                    failureCode = "size_limit";
                     controller.abort();
+                    void reader.cancel().catch(() => {});
                     throw new Error("Size limit");
                 }
                 parts.push(part.value);
@@ -546,19 +791,56 @@ async function collectAvailable(
                 pos += part.length;
             }
             const data = JSON.parse(new TextDecoder().decode(bytes));
-            if (data.schemaVersion !== 1)
+            if (
+                !data ||
+                typeof data !== "object" ||
+                Array.isArray(data) ||
+                typeof data.schemaVersion !== "number"
+            )
+                throw new Error("Invalid diagnostic envelope");
+            if (
+                !(
+                    diagnosticContract.supportedSchemaVersions as readonly number[]
+                ).includes(data.schemaVersion)
+            ) {
+                failureCode = "unsupported_schema";
                 throw new Error("Unsupported diagnostic schema");
-            server = safeDiagnostic(data);
-            availability =
-                "服务端诊断已采集。堆栈为最近可用快照；原生代码阻塞时可能无法取得实时堆栈。";
-            if (data.truncated) availability += " 服务日志已轮转或截断。";
-            if (data.queueBlocked)
-                availability += " 任务进程回收未确认，队列已暂停。";
-        } else if (response.status === 404)
-            availability =
-                "服务端缺少诊断接口或任务已不存在；无法确认服务端具备超时回收能力，请检查服务版本。";
+            }
+            if (
+                (data.tasks !== undefined && !Array.isArray(data.tasks)) ||
+                (data.records !== undefined && !Array.isArray(data.records))
+            )
+                throw new Error("Invalid diagnostic sections");
+            const filters: DiagnosticFilterReport = {
+                filteredFields: 0,
+                rejectedValues: 0,
+            };
+            server = safeDiagnostic(data, 0, filters) as Record<string, any>;
+            source = {
+                ...collectionSource("none"),
+                ...filters,
+                statusCode: response.status,
+                schemaVersion: data.schemaVersion,
+                schemaRevision: server.schemaRevision,
+            };
+        } else {
+            source.reasonCode =
+                response.status === 406
+                    ? "unsupported_schema"
+                    : response.status === 404
+                      ? "interface_unavailable"
+                      : "http_error";
+        }
     } catch {
-        recordDiagnostic("export_partial");
+        source.reasonCode =
+            failureCode === "size_limit"
+                ? failureCode
+                : controller.signal.aborted
+                  ? "timeout"
+                  : failureCode;
+        recordDiagnostic("export_partial", {
+            collectionCode: source.reasonCode,
+        });
     } finally {
         clearTimeout(timer);
     }
@@ -597,29 +879,7 @@ async function collectAvailable(
     );
     const truncated = records.length > 5000;
     records = records.slice(-5000);
-    const serverTask = (
-        server as { tasks?: Record<string, unknown>[] }
-    ).tasks?.find((row) => row.taskId === task?.taskId);
-    // Missing fields in a new attempt must not inherit a previous attempt's evidence.
-    const snapshot = serverTask
-        ? {
-              ...serverTask,
-              importState:
-                  serverTask.attempt === task?.attempt
-                      ? task?.importState
-                      : undefined,
-          }
-        : task || {};
-    return {
-        "summary.txt": `PDF2ZH 诊断包\n生成时间：${new Date().toISOString()}\n插件：${config.addonName} ${version}\nZotero：${Zotero.version}\n${availability}\n${task ? diagnosticSummary(snapshot) : "任务配置和统计见 server.json 的 tasks。\n"}${persistenceFailed ? "部分插件持久化日志不可用。\n" : ""}${truncated ? "插件记录已截断。\n" : ""}日志受容量限制，仅保留最近记录。\n包含服务商、模型标识、任务参数及结构化错误代码；不包含原论文、正文、密钥、接口地址或请求响应内容。\n`,
-        "task.json": JSON.stringify(safeDiagnostic(snapshot), null, 2),
-        "server.json": JSON.stringify(server, null, 2),
-        "plugin.json": JSON.stringify(
-            { schemaVersion: 1, truncated, records },
-            null,
-            2,
-        ),
-    };
+    return diagnosticFiles(server, task, records, truncated, source);
 }
 
 async function collect(
@@ -633,17 +893,15 @@ async function collect(
             new Promise<Record<string, string>>((resolve) => {
                 timer = setTimeout(
                     () =>
-                        resolve({
-                            "summary.txt": `PDF2ZH 诊断包\n插件版本：${version}\n采集超过 10 秒，服务端或磁盘记录未完整取得；仅包含当前插件内存快照。\n${task ? diagnosticSummary(task) : ""}包含服务商、模型标识和任务参数；不包含正文、密钥、接口地址或请求响应内容。\n`,
-                            "task.json": JSON.stringify(
-                                safeDiagnostic(task || {}),
+                        resolve(
+                            diagnosticFiles(
+                                {},
+                                task,
+                                recent.slice(),
+                                false,
+                                collectionSource("collection_deadline"),
                             ),
-                            "server.json": "{}",
-                            "plugin.json": JSON.stringify({
-                                schemaVersion: 1,
-                                records: recent.slice(),
-                            }),
-                        }),
+                        ),
                     10000,
                 );
             }),

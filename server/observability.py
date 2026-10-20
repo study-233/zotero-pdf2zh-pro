@@ -327,6 +327,7 @@ class TaskMetricsCollector:
         callback: MetricsCallback | None = None,
         clock: Callable[[], float] = time.monotonic,
         journal: MetricsCallback | None = None,
+        evidence=None,
     ) -> None:
         self.task_id = task_id
         self.provider = provider
@@ -334,6 +335,7 @@ class TaskMetricsCollector:
         self.callback = callback
         self.clock = clock
         self.journal = journal if journal is not None else benchmark_journal(task_id)
+        self.evidence = evidence
         self._journal_errors = 0
         self._call_prefix = uuid.uuid4().hex
         self._call_sequence = 0
@@ -372,7 +374,7 @@ class TaskMetricsCollector:
                 self._journal_errors += 1
                 METRIC_LOGGER.warning("benchmark journal write failed")
 
-    def request_started(self, *, kind="translation", operation_id=None, paragraph_ids=None,
+    def request_started(self, *, kind="translation", operation_id=None, paragraph_ids=None, paragraph_refs=None,
                         parent_call=None, retry_cause=None) -> RequestHandle:
         reserve_benchmark_request()
         now = self.clock()
@@ -388,6 +390,8 @@ class TaskMetricsCollector:
             self._journal("request_started", callId=handle.call_id, purpose=handle.purpose,
                           operationId=operation_id, paragraphIds=paragraph_ids or [],
                           parentCallId=getattr(parent_call, 'call_id', None), retryCause=retry_cause)
+            if self.evidence is not None:
+                self.evidence.request_started(handle, operation_id, paragraph_refs, parent_call, retry_cause)
             self._trim_locked(now)
         self._emit_if_due()
         return handle
@@ -400,6 +404,7 @@ class TaskMetricsCollector:
         status_code: int | None = None,
         kind="translation", error_type=None, finish_reason=None, protocol=None,
         visible_chars=None, batch_size=None,
+        provider_code=None,
     ) -> None:
         now = self.clock()
         with self._lock:
@@ -415,6 +420,12 @@ class TaskMetricsCollector:
                 self._journal("request_finished", callId=started_at.call_id, purpose=kind,
                               succeeded=succeeded, cancelled=finish_reason == 'cancelled',
                               latencyMs=max((now - started_at) * 1000, 0), statusCode=status_code)
+                if self.evidence is not None:
+                    self.evidence.request_finished(started_at,
+                        requestState='succeeded' if succeeded else 'cancelled' if finish_reason == 'cancelled' else 'failed',
+                        latencyMs=max((now - started_at) * 1000, 0), statusCode=status_code,
+                        errorType=error_type, finishReason=finish_reason, protocol=protocol,
+                        visibleOutputChars=visible_chars, batchSize=batch_size, providerCode=provider_code)
         latency_ms = max((now - started_at) * 1000, 0.0)
         self._finish_request(kind=kind, latency_ms=latency_ms, succeeded=succeeded,
                              status_code=status_code, error_type=error_type, finish_reason=finish_reason,
@@ -422,11 +433,19 @@ class TaskMetricsCollector:
 
     def record_completed_request(self, *, kind, latency_ms, succeeded, status_code=None,
                                  error_type=None, finish_reason=None, protocol=None,
-                                 visible_chars=None, batch_size=None):
+                                 visible_chars=None, batch_size=None, provider_code=None):
         """Replay completed initialization without fabricating current active/QPS."""
         with self._lock:
             for stats in (self._requests, self._requests_by_kind[_kind(kind)], self._requests_by_purpose[_purpose(kind)]):
                 stats.attempts += 1
+            if self.evidence is not None:
+                self._call_sequence += 1
+                observed = RequestHandle(self.clock(), f'{self._call_prefix}:{self._call_sequence}', kind)
+                self.evidence.request_started(observed, None, [], None, None)
+                self.evidence.request_finished(observed, observedReplay=True,
+                    requestState='succeeded' if succeeded else 'failed', latencyMs=latency_ms,
+                    statusCode=status_code, errorType=error_type, finishReason=finish_reason,
+                    protocol=protocol, visibleOutputChars=visible_chars, batchSize=batch_size, providerCode=provider_code)
         self._finish_request(kind=kind, latency_ms=latency_ms, succeeded=succeeded,
                              status_code=status_code, error_type=error_type, finish_reason=finish_reason,
                              protocol=protocol, visible_chars=visible_chars, batch_size=batch_size, replay=True)
@@ -522,6 +541,9 @@ class TaskMetricsCollector:
                 self._journal("usage", callId=call.call_id, purpose=kind, complete=values['complete'],
                               input=values['prompt_tokens'], output=values['completion_tokens'],
                               cachedInput=values['cache_hit_tokens'], reasoning=values['reasoning_tokens'])
+                if self.evidence is not None:
+                    self.evidence.request_finished(call, input=values['prompt_tokens'],
+                        output=values['completion_tokens'], reasoning=values['reasoning_tokens'])
             for totals in (self._usage, self._usage_by_kind[_kind(kind)], self._usage_by_purpose[_purpose(kind)]):
                 if previous is not None:
                     old = _TokenTotals()
@@ -533,7 +555,7 @@ class TaskMetricsCollector:
                 totals.record(**values)
         self._emit_if_due()
 
-    def record_validation(self, call, status, *, accepted=None, rejected=None):
+    def record_validation(self, call, status, *, accepted=None, rejected=None, code=None, invalid_outputs=None):
         if not isinstance(call, RequestHandle) or status not in {'accepted', 'partial', 'rejected'}:
             return
         with self._lock:
@@ -543,7 +565,13 @@ class TaskMetricsCollector:
             self._validation[status] += 1
             self._journal('validation', callId=call.call_id, status=status,
                           accepted=_number(accepted), rejected=_number(rejected))
+            if self.evidence is not None:
+                self.evidence.validation(call, status, code=code, rejected=invalid_outputs)
         self._emit_if_due()
+
+    def cache_reused(self, operation_id, paragraph_refs):
+        if self.evidence is not None:
+            self.evidence.cache_reused(operation_id, paragraph_refs)
 
     def set_translation_summary(self, summary):
         with self._lock:

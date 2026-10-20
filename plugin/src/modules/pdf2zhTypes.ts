@@ -48,6 +48,11 @@ export interface DiagnosticMessage {
 }
 
 export interface ServerHealthResponse {
+    diagnostics?: {
+        schemaVersions: number[];
+        schemaRevision: number;
+        features: string[];
+    };
     status?: string;
     version?: string;
     pythonVersion?: string;
@@ -239,11 +244,18 @@ export interface ServerTaskSnapshot extends ServerSyncMetadata {
         pending: number;
     } | null;
     failedParagraphs?: {
+        paragraphRef?: string;
+        callRefs?: string[];
+        operationRefs?: string[];
+        taskAttempt?: number;
         page: number;
         paragraphId: string;
         attempts: number;
         errorType: string;
         reason: string;
+        validationCode?: string;
+        missingPlaceholderCount?: number;
+        extraPlaceholderCount?: number;
     }[];
 }
 

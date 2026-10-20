@@ -153,6 +153,8 @@ PNPM=(npx --yes pnpm@10.34.5)
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
+uv run --no-project python scripts/generate_diagnostic_contract.py --check
+
 ORIGIN_URL="$(git remote get-url origin)"
 case "$ORIGIN_URL" in
     "https://github.com/$MAIN_REPO"|"https://github.com/$MAIN_REPO.git"|"git@github.com:$MAIN_REPO"|"git@github.com:$MAIN_REPO.git") ;;

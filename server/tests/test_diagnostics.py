@@ -5,8 +5,134 @@ import unittest
 from pathlib import Path
 from diagnostics import DiagnosticStore, SafeLogHandler, exception_frames, safe_fields
 from task_manager import TaskManager,TaskRecord
+from diagnostic_contract import CONTRACT
 
 class DiagnosticTests(unittest.TestCase):
+    def test_payload_cannot_override_collector_event_or_timestamp(self):
+        store = DiagnosticStore()
+        store.record('request', {'event': 'misleading_event', 'time': '1999-01-01T00:00:00Z'})
+        row = store.export()['records'][0]
+        self.assertEqual(row['event'], 'request')
+        self.assertNotEqual(row['time'], '1999-01-01T00:00:00Z')
+
+    def test_all_registered_provider_codes_and_protocols_survive_export(self):
+        for code in CONTRACT['providerErrors']:
+            self.assertEqual(safe_fields({'failedParagraphs': [{'providerCode': code}]}),
+                             {'failedParagraphs': [{'providerCode': code}]})
+        self.assertEqual(safe_fields({'protocol': 'codex_app_server',
+            'metrics': {'requests': {'protocols': {'codex_app_server': 2}}}}),
+            {'protocol': 'codex_app_server', 'metrics': {'requests': {'protocols': {'codex_app_server': 2}}}})
+
+    def test_old_and_new_clients_negotiate_without_breaking_the_v1_endpoint(self):
+        from unittest.mock import patch
+        import server
+        manager = TaskManager()
+        manager._tasks['test'] = TaskRecord('test', 'secret.pdf', 'openai', ['dual'], {}, Path('/tmp'))
+        with patch.object(server, 'TASK_MANAGER', manager):
+            client = server.create_app().test_client()
+            for endpoint in ('/diagnostics', '/tasks/test/diagnostics'):
+                for suffix in ('', '?schemaVersions=1', '?schemaVersions=2,1'):
+                    response = client.get(endpoint + suffix)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(response.json['schemaVersion'], 1)
+                    self.assertEqual(response.json['schemaRevision'], CONTRACT['schemaRevision'])
+                self.assertEqual(client.get(endpoint + '?schemaVersions=2').status_code, 406)
+                for value in ('', 'x', '1,,2', '0', '1.0'):
+                    self.assertEqual(client.get(endpoint + '?schemaVersions=' + value).status_code, 400)
+            self.assertEqual(client.get('/health').json['diagnostics']['schemaVersions'], [1])
+
+    def test_structured_and_unknown_warnings_keep_codes_or_locations_without_messages(self):
+        store = DiagnosticStore()
+        handler = SafeLogHandler(store.record)
+        for diagnostic in ({'validationCode': 'placeholder_mismatch', 'missingPlaceholderCount': 2,
+                            'prompt': 'private text'}, {}):
+            record = logging.LogRecord('test', logging.WARNING, '/Users/private/source.py', 12,
+                                       'sk-secret private text', (), None, 'translate')
+            record.diagnostic = diagnostic
+            handler.emit(record)
+        rows = store.export()['records']
+        self.assertEqual(rows[0]['validationCode'], 'placeholder_mismatch')
+        self.assertEqual(rows[0]['missingPlaceholderCount'], 2)
+        self.assertEqual(rows[1]['collectionCode'], 'unknown_warning')
+        self.assertEqual((rows[1]['file'], rows[1]['function'], rows[1]['line']), ('source.py', 'translate', 12))
+        for secret in ('sk-secret', 'private text', '/Users/private'):
+            self.assertNotIn(secret, json.dumps(rows))
+
+    def test_native_validation_details_survive_recovery_and_task_api(self):
+        from babeldoc.translator.validation import InvalidTranslation, validate_text
+        from babeldoc.format.pdf.translation_recovery import safe_error
+        try:
+            validate_text('Result {v1}', '结果 {v2}', 'zh-CN')
+        except InvalidTranslation as error:
+            fields = safe_error(error)
+        else:
+            self.fail('Expected a placeholder mismatch')
+        self.assertEqual(fields['validationCode'], 'placeholder_mismatch')
+        self.assertEqual(fields['missingPlaceholderCount'], 1)
+        self.assertEqual(fields['extraPlaceholderCount'], 1)
+        self.assertEqual(safe_error(InvalidTranslation('private unknown error'))['validationCode'], 'unknown_validation')
+        fields['reason'] = 'unchanged_translation → stale legacy reason'
+        self.assertEqual(safe_fields({'failedParagraphs': [fields]})['failedParagraphs'][0]['validationCode'],
+                         'placeholder_mismatch')
+        from unittest.mock import patch
+        import server
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            manager = TaskManager(path / 'tasks.json')
+            record = TaskRecord('validation', 'private.pdf', 'openai', ['dual'], {}, path, status='incomplete')
+            record.failed_paragraphs = [{'page': 1, 'attempts': 2, **fields}]
+            manager._tasks['validation'] = record
+            manager._save_persistent_tasks()
+            restored = TaskManager(path / 'tasks.json')
+            with patch.object(server, 'TASK_MANAGER', restored):
+                exported = server.create_app().test_client().get('/tasks/validation/diagnostics').json
+            failed = exported['tasks'][0]['failedParagraphs'][0]
+            self.assertEqual(failed['validationCode'], 'placeholder_mismatch')
+            self.assertEqual(failed['missingPlaceholderCount'], 1)
+            self.assertNotIn('stale legacy reason', json.dumps(exported))
+
+    def test_unknown_fields_and_values_are_counted_without_exporting_their_names(self):
+        store = DiagnosticStore()
+        store.record('request', {'private_field': 'private text', 'protocol': 'private protocol',
+                                'metrics': {'requests': {'errorTypes': {'private type': 1}}}})
+        payload = store.export()
+        self.assertEqual(payload['collection']['filteredFields'], 1)
+        self.assertEqual(payload['collection']['rejectedValues'], 2)
+        self.assertNotIn('private', json.dumps(payload))
+
+    def test_overflow_is_reported_without_confusing_memory_eviction_with_disk_loss(self):
+        store = DiagnosticStore()
+        for _ in range(1001): store.record('sample')
+        collection = store.export()['collection']
+        self.assertEqual(collection['memoryEvictions'], 1)
+        self.assertEqual(collection['droppedRecords'], 0)
+        store.record('sample', {'failedParagraphs': [{'page': 1, 'errorType': 'InvalidTranslation',
+                     'validationCode': 'placeholder_mismatch', 'attempts': 2}] * 2000})
+        exported = store.export()
+        self.assertEqual(exported['collection']['oversizedRecords'], 1)
+        self.assertTrue(exported['truncated'])
+
+    def test_fixed_validation_codes_survive_without_free_form_reason_chains(self):
+        rows = [
+            {'page': 1, 'errorType': 'InvalidTranslation',
+             'reason': 'placeholder_mismatch → InvalidTranslation → private text'},
+            {'page': 6, 'errorType': 'InvalidTranslation',
+             'reason': 'unchanged_translation → InvalidTranslation'},
+            {'page': 10, 'errorType': 'InvalidTranslation',
+             'validationCode': 'target_language_missing'},
+            {'page': 11, 'errorType': 'InvalidTranslation',
+             'reason': 'private text', 'validationCode': 'sk-secret'},
+            {'page': 12, 'errorType': 'RuntimeError',
+             'reason': 'placeholder_mismatch → private text'},
+        ]
+        safe = safe_fields({'failedParagraphs': rows})
+        self.assertEqual([row.get('validationCode') for row in safe['failedParagraphs']],
+                         ['placeholder_mismatch', 'unchanged_translation', 'target_language_missing', None, None])
+        self.assertEqual(safe_fields(safe), safe)
+        for private in ('private text', 'sk-secret', 'reason'):
+            self.assertNotIn(private, json.dumps(safe))
+        self.assertEqual(safe_fields({'validationCode': []}), {})
+
     def test_recovery_timing_is_exported_without_submission_identity(self):
         timing = {"queuedAt": "2026-01-01T00:00:00Z", "queueSeconds": 5,
                   "executionSeconds": 12, "totalSeconds": 17, "complete": False}
@@ -122,7 +248,9 @@ class DiagnosticTests(unittest.TestCase):
             record.translation_summary = {'succeeded': 1, 'failed': 93, 'pending': 5, 'skipped': 10}
             record.failed_paragraphs = [{'page': 4, 'attempts': 2, 'errorType': 'RateLimitError',
                 'statusCode': 429, 'providerCode': 'insufficient_quota', 'reason': 'private text',
-                'paragraphId': 'private-hash', 'input': 'private text'}]
+                'paragraphId': 'private-hash', 'input': 'private text'},
+                {'page': 6, 'attempts': 2, 'errorType': 'InvalidTranslation',
+                 'reason': 'placeholder_mismatch → InvalidTranslation'}]
             record.metrics = {'requests': {'attempts': 100, 'succeeded': 2, 'failed': 98,
                 'statusCodes': {'429': 93, '200': 2, 'unknown': 5, 'sk-secret': 99},
                 'errorTypes': {'APITimeoutError': 5, 'RateLimitError': 93},
@@ -141,6 +269,7 @@ class DiagnosticTests(unittest.TestCase):
             self.assertEqual(task['metrics']['tokens']['total'], 509)
             self.assertEqual(task['metrics']['requests']['errorTypes']['APITimeoutError'], 5)
             self.assertEqual(task['failedParagraphs'][0]['providerCode'], 'insufficient_quota')
+            self.assertEqual(task['failedParagraphs'][1]['validationCode'], 'placeholder_mismatch')
             self.assertTrue(any(row['event'] == 'task_configuration' for row in data['records']))
             for secret in ('sk-secret', 'private.invalid', 'private text', 'private-hash', 'secret.pdf'):
                 self.assertNotIn(secret, json.dumps(data))

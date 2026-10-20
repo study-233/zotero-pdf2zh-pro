@@ -9,3 +9,6 @@ pnpm-lock.yaml
 # *.py
 # Generated compact offline dictionary (rebuild with scripts/build_selection_dictionary.py)
 addon/content/dictionaries/ecdict.json
+
+# Generated diagnostic contract (checked by its generator)
+src/modules/diagnosticContract.ts

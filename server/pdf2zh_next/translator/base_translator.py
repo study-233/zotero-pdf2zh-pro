@@ -168,6 +168,7 @@ class BaseTranslator(ABC):
                     self.translate_cache_call_count += 1
                     if self.metrics_collector is not None:
                         self.metrics_collector.local_cache_hit()
+                        self.metrics_collector.cache_reused(params['metric_operation_id'], params.get('diagnostic_paragraph_refs'))
                     return cached
         if self.metrics_collector is not None:
             self.metrics_collector.local_cache_miss()
@@ -184,9 +185,9 @@ class BaseTranslator(ABC):
                     if isinstance(context, dict):
                         context["last_call"] = params.get("_metric_last_call")
                 validation = validate(translation)
-            except InvalidTranslation:
+            except InvalidTranslation as error:
                 if self.metrics_collector is not None:
-                    self.metrics_collector.record_validation(params.get('_metric_last_call'), 'rejected')
+                    self.metrics_collector.record_validation(params.get('_metric_last_call'), 'rejected', code=error.code)
                 params['metric_retry_cause'] = 'output_validation'
                 budget = params.get("request_budget")
                 if generation or (budget is not None and (
@@ -200,7 +201,8 @@ class BaseTranslator(ABC):
                 partial = hasattr(validation, 'complete') and not validation.complete
                 self.metrics_collector.record_validation(params.get('_metric_last_call'), 'partial' if partial else 'accepted',
                     accepted=len(validation.valid_outputs) if hasattr(validation, 'valid_outputs') else None,
-                    rejected=len(validation.invalid_outputs) if hasattr(validation, 'invalid_outputs') else None)
+                    rejected=len(validation.invalid_outputs) if hasattr(validation, 'invalid_outputs') else None,
+                    invalid_outputs=validation.invalid_outputs if hasattr(validation, 'invalid_outputs') else None)
             if use_cache and not params.get("defer_cache_write", False):
                 self._commit_validated_cache(text, translation, params)
             return translation

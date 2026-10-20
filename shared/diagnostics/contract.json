@@ -1,0 +1,1320 @@
+{
+  "schemaVersion": 1,
+  "schemaRevision": 2,
+  "supportedSchemaVersions": [
+    1
+  ],
+  "features": [
+    "validation_codes",
+    "collection_status",
+    "shared_contract",
+    "structured_warnings",
+    "schema_negotiation",
+    "evidence_chain",
+    "execution_history",
+    "offline_analysis"
+  ],
+  "numeric": [
+    "accepted",
+    "active",
+    "attempt",
+    "attempts",
+    "averageLatencyMs",
+    "batchSize",
+    "cacheHits",
+    "cacheReuseCount",
+    "cancelled",
+    "checked",
+    "completedPages",
+    "completionTokens",
+    "corrected",
+    "count",
+    "cpuPercent",
+    "currentPage",
+    "droppedLogRecords",
+    "droppedRecords",
+    "elapsedSeconds",
+    "executionSeconds",
+    "exitCode",
+    "extraPlaceholderCount",
+    "failed",
+    "filteredFields",
+    "firstParagraphMs",
+    "fontCacheHits",
+    "fontObject",
+    "fontParseCount",
+    "hitRate",
+    "hitTokens",
+    "hits",
+    "idleSeconds",
+    "inFlight",
+    "input",
+    "latencyMs",
+    "line",
+    "linkedFailures",
+    "memoryEvictions",
+    "missTokens",
+    "misses",
+    "missingPlaceholderCount",
+    "notSelected",
+    "omittedExecutions",
+    "omittedFindings",
+    "omittedLinks",
+    "omittedParagraphs",
+    "omittedRequests",
+    "omittedTasks",
+    "operations",
+    "output",
+    "overallProgress",
+    "oversizedRecords",
+    "p95LatencyMs",
+    "page",
+    "paragraphLimit",
+    "parentCpuPercent",
+    "parentRssBytes",
+    "partial",
+    "passed",
+    "pending",
+    "pendingRequests",
+    "pid",
+    "poolSize",
+    "promptTokens",
+    "qps",
+    "qps10s",
+    "queueDropped",
+    "queueSeconds",
+    "reasoning",
+    "rejected",
+    "rejectedValues",
+    "repairs",
+    "requestLimit",
+    "requestsUsed",
+    "retainedParagraphs",
+    "retainedRequests",
+    "retries",
+    "revision",
+    "rssBytes",
+    "schemaRevision",
+    "schemaVersion",
+    "selected",
+    "selectedPage",
+    "skipped",
+    "stageCurrent",
+    "stageElapsedSeconds",
+    "stageProgress",
+    "stageTotal",
+    "statusCode",
+    "storageErrors",
+    "succeeded",
+    "taskAttempt",
+    "total",
+    "totalFailures",
+    "totalPages",
+    "totalSeconds",
+    "totalTokens",
+    "translated",
+    "unchecked",
+    "unclassifiedFailures",
+    "unflushedEvents",
+    "visibleOutputChars",
+    "writeFailures"
+  ],
+  "flags": [
+    "canDownloadResult",
+    "canRepair",
+    "canResume",
+    "cancelRequested",
+    "complete",
+    "failedParagraphsTruncated",
+    "observedReplay",
+    "queueBlocked",
+    "requestTracing",
+    "stalled",
+    "success",
+    "truncated"
+  ],
+  "enums": {
+    "translationMemorySync": [
+      "pending",
+      "synced"
+    ],
+    "stage": [
+      "Add Fonts",
+      "Check Fonts",
+      "Detect Scanned Pages",
+      "Download Fonts",
+      "Engine Wait",
+      "Extract Terms",
+      "Finalize",
+      "Font Preparation",
+      "Generate drawing instructions",
+      "Initialization",
+      "Parse Formulas and Styles",
+      "Parse PDF and Create Intermediate Representation",
+      "Parse Page Layout",
+      "Parse Paragraphs",
+      "Parse Table",
+      "Queue Wait",
+      "Save PDF",
+      "Subset font",
+      "Translate Paragraphs",
+      "Typesetting",
+      "load",
+      "play"
+    ],
+    "retryReason": [
+      "connection",
+      "invalid_output",
+      "other",
+      "rate_limit",
+      "server_error",
+      "timeout"
+    ],
+    "errorType": [
+      "APIConnectionError",
+      "APIStatusError",
+      "APITimeoutError",
+      "AuthenticationError",
+      "BadRequestError",
+      "CancelledError",
+      "ChatGPTError",
+      "CodexError",
+      "ConnectTimeout",
+      "ConnectionError",
+      "InternalServerError",
+      "InvalidTranslation",
+      "NotFoundError",
+      "PermissionDeniedError",
+      "RateLimitError",
+      "ReadTimeout",
+      "RuntimeError",
+      "TimeoutError",
+      "UnprocessedParagraph",
+      "ValueError"
+    ],
+    "finishReason": [
+      "cancelled",
+      "completed",
+      "content_filter",
+      "failed",
+      "function_call",
+      "incomplete",
+      "length",
+      "max_output_tokens",
+      "other",
+      "stop",
+      "tool_calls"
+    ],
+    "status": [
+      "cancelled",
+      "cancelling",
+      "completed",
+      "failed",
+      "incomplete",
+      "paused",
+      "queued",
+      "running"
+    ],
+    "recoveryState": [
+      "interrupted",
+      "queued"
+    ],
+    "operation": [
+      "content_stream",
+      "font",
+      "initialization",
+      "page_end",
+      "page_start",
+      "resources"
+    ],
+    "cancelPhase": [
+      "cancelled",
+      "cleanup_failed",
+      "killing",
+      "requested",
+      "terminating"
+    ],
+    "cancelReason": [
+      "forced",
+      "shutdown",
+      "user"
+    ],
+    "kind": [
+      "initialization",
+      "repair",
+      "review",
+      "term_extraction",
+      "translation"
+    ],
+    "protocol": [
+      "auto",
+      "chat_completions",
+      "codex_app_server",
+      "responses"
+    ],
+    "availability": [
+      "complete",
+      "partial",
+      "unavailable"
+    ],
+    "importState": [
+      "pending",
+      "importing",
+      "imported",
+      "failed",
+      "none"
+    ],
+    "collectionCode": [
+      "none",
+      "http_error",
+      "timeout",
+      "unreachable",
+      "unsupported_schema",
+      "invalid_payload",
+      "size_limit",
+      "interface_unavailable",
+      "collection_deadline",
+      "disk_error",
+      "legacy_validation_details_missing",
+      "unknown_warning"
+    ],
+    "purpose": [
+      "translation",
+      "review",
+      "initialization",
+      "term_extraction"
+    ],
+    "retryCause": [
+      "none",
+      "http_retry",
+      "auth_refresh",
+      "output_validation",
+      "batch_partial",
+      "batch_fallback",
+      "timeout",
+      "rate_limit",
+      "connection",
+      "server_error",
+      "other",
+      "provider_error"
+    ],
+    "requestState": [
+      "started",
+      "succeeded",
+      "failed",
+      "cancelled",
+      "interrupted"
+    ],
+    "validationState": [
+      "not_checked",
+      "accepted",
+      "partial",
+      "rejected"
+    ],
+    "paragraphState": [
+      "pending",
+      "succeeded",
+      "failed",
+      "skipped"
+    ],
+    "executionState": [
+      "running",
+      "completed",
+      "incomplete",
+      "failed",
+      "cancelled",
+      "interrupted"
+    ],
+    "outcomeSource": [
+      "request",
+      "cache",
+      "checkpoint",
+      "preserved",
+      "unprocessed"
+    ],
+    "evidenceStatus": [
+      "available",
+      "partial",
+      "missing",
+      "unavailable"
+    ],
+    "evidenceCode": [
+      "none",
+      "evidence_missing",
+      "invalid_evidence_store",
+      "evidence_truncated",
+      "writer_incomplete",
+      "interrupted_execution"
+    ],
+    "findingCode": [
+      "validation_failed",
+      "provider_request_failed",
+      "provider_rate_limited",
+      "interrupted_requests",
+      "evidence_incomplete",
+      "cache_reused",
+      "paragraph_unresolved",
+      "evidence_unavailable"
+    ],
+    "recordOrigin": [
+      "live",
+      "checkpoint_snapshot"
+    ]
+  },
+  "identifiers": [
+    "errorId",
+    "serverInstanceId",
+    "taskId"
+  ],
+  "labels": [
+    "model",
+    "provider",
+    "service",
+    "sourceLang",
+    "targetLang"
+  ],
+  "strings": [
+    "event",
+    "file",
+    "function",
+    "python",
+    "os",
+    "architecture",
+    "serviceVersion",
+    "babeldocVersion",
+    "pdf2zhVersion",
+    "pluginVersion"
+  ],
+  "timestamps": [
+    "time",
+    "createdAt",
+    "updatedAt",
+    "lastProgressAt",
+    "heartbeatAt",
+    "lastRequestAt",
+    "queuedAt",
+    "startedAt",
+    "finishedAt"
+  ],
+  "containers": [
+    "analysis",
+    "byKind",
+    "byPurpose",
+    "collection",
+    "effectiveConfiguration",
+    "environment",
+    "evidence",
+    "evidenceCollection",
+    "executions",
+    "findings",
+    "frames",
+    "initialization",
+    "localCache",
+    "metrics",
+    "paragraphs",
+    "progress",
+    "providerCache",
+    "qualitySummary",
+    "records",
+    "requestSummary",
+    "requestedConfiguration",
+    "requests",
+    "review",
+    "taskEvidence",
+    "tasks",
+    "term_extraction",
+    "timing",
+    "tokens",
+    "translation",
+    "translationSummary",
+    "validation",
+    "validationFailures"
+  ],
+  "countMaps": {
+    "statusCodes": [],
+    "errorTypes": "errorType",
+    "finishReasons": "finishReason",
+    "protocols": "protocol"
+  },
+  "failedParagraphFields": [
+    "page",
+    "attempts",
+    "errorType",
+    "statusCode",
+    "providerCode",
+    "validationCode",
+    "missingPlaceholderCount",
+    "extraPlaceholderCount",
+    "paragraphRef",
+    "callRefs",
+    "operationRefs",
+    "taskAttempt",
+    "omittedLinks"
+  ],
+  "validationErrors": {
+    "empty_translation": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "模型没有返回有效译文",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "invalid_response": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "模型响应结构无效",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "invalid_json": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "批量译文不是有效 JSON",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "placeholder_mismatch": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "译文占位符缺失、重复或顺序错误",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "unchanged_translation": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "需要翻译的段落仍与原文相同",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "target_language_missing": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "译文缺少目标语言内容",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "paragraph_count_mismatch": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "批量译文缺少段落",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "invalid_paragraph": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "批量译文包含无法匹配的段落",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "invalid_or_duplicate_paragraph_id": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "批量译文段落编号无效或重复",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "semantic_error_unresolved": {
+      "stage": "validation",
+      "retryable": false,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "语义审校问题尚未修复",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "invalid_review": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "审校响应无效",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "invalid_term_json": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "术语响应不是有效 JSON",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "invalid_term_structure": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "术语响应结构无效",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    },
+    "unknown_validation": {
+      "stage": "validation",
+      "retryable": false,
+      "requiredEvidence": [
+        "validationCode",
+        "page"
+      ],
+      "description": "当前诊断规范未识别该校验错误",
+      "suggestion": "检查段落校验与占位符处理；补译前确认失败原因。"
+    }
+  },
+  "providerErrors": {
+    "chatgpt_account_changed": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_incomplete": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_invalid_reasoning": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_invalid_request": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_model_unavailable": {
+      "stage": "provider",
+      "retryable": true,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_network_error": {
+      "stage": "provider",
+      "retryable": true,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_permission_denied": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_rate_limited": {
+      "stage": "provider",
+      "retryable": true,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_sign_in_required": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_timeout": {
+      "stage": "provider",
+      "retryable": true,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_unavailable": {
+      "stage": "provider",
+      "retryable": true,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "chatgpt_usage_limit": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_arch_mismatch": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_cancelled": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_dependency_missing": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_incompatible": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_invalid_path": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_invalid_proxy": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_invalid_reasoning": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_isolation_failed": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_model_unavailable": {
+      "stage": "provider",
+      "retryable": true,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_not_installed": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_not_logged_in": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_permission_denied": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_process_exited": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_protocol_error": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_quota_exhausted": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_request_failed": {
+      "stage": "provider",
+      "retryable": true,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_start_failed": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_timeout": {
+      "stage": "provider",
+      "retryable": true,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_version_too_old": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "codex_version_unrecognized": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "insufficient_quota": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "invalid_api_key": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "model_not_found": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "permission_denied": {
+      "stage": "provider",
+      "retryable": false,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    },
+    "rate_limit_exceeded": {
+      "stage": "provider",
+      "retryable": true,
+      "requiredEvidence": [
+        "providerCode",
+        "errorType"
+      ],
+      "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
+    }
+  },
+  "productCapabilities": {
+    "diagnosticsExport": {
+      "coverage": "task_events",
+      "component": "server"
+    },
+    "boundedCancellation": {
+      "coverage": "task_events",
+      "component": "server"
+    },
+    "detailedTaskProgress": {
+      "coverage": "task_events",
+      "component": "server"
+    },
+    "reasoningMode": {
+      "coverage": "request_metrics",
+      "component": "server"
+    },
+    "updateMaintenance": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "glossaryEntries": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "semanticReview": {
+      "coverage": "request_metrics",
+      "component": "server"
+    },
+    "glossaryPacks": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "translationMemory": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "textTranslation": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "exactSelectionTranslation": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "bingSelectionTranslation": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "selectionLearning": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "chatgptPlan": {
+      "coverage": "request_metrics",
+      "component": "server"
+    },
+    "codexCli": {
+      "coverage": "request_metrics",
+      "component": "server"
+    },
+    "codexProxy": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "codexDiscovery": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "taskSubmissionIdempotency": {
+      "coverage": "task_events",
+      "component": "server"
+    },
+    "taskRecovery": {
+      "coverage": "task_events",
+      "component": "server"
+    },
+    "taskTiming": {
+      "coverage": "task_events",
+      "component": "server"
+    },
+    "binaryTaskUpload": {
+      "coverage": "availability_only",
+      "component": "server"
+    },
+    "taskPagination": {
+      "coverage": "task_events",
+      "component": "server"
+    }
+  },
+  "events": {
+    "cancel_escalation": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "cancel_requested": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "dictionary_cache_write_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "dictionary_catalog_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "dictionary_download_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "dictionary_lookup_cancelled": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "dictionary_lookup_complete": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "dictionary_lookup_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "exception": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "export_complete": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "export_partial": {
+      "component": "plugin",
+      "requiredFields": [
+        "collectionCode"
+      ]
+    },
+    "http_cancelled": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "http_failure": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "http_response": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "http_timeout": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "import_state": {
+      "component": "plugin",
+      "requiredFields": [
+        "taskId",
+        "importState"
+      ]
+    },
+    "request": {
+      "component": "server",
+      "requiredFields": [
+        "kind",
+        "success"
+      ]
+    },
+    "request_error": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "request_summary": {
+      "component": "both",
+      "requiredFields": []
+    },
+    "resource_sample": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "selection_audio_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_capture_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_dictionary_import_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_http_cancelled": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_http_failure": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_http_response": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_http_timeout": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_listener_degraded": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_memory_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_orphan_cleanup_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_pane_open_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_pane_registration_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_stream_first_text": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "stack": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "stall_snapshot": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "task_configuration": {
+      "component": "both",
+      "requiredFields": [
+        "taskId"
+      ]
+    },
+    "task_state": {
+      "component": "both",
+      "requiredFields": [
+        "taskId",
+        "attempt",
+        "status"
+      ]
+    },
+    "warning": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "worker_error": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "worker_exited": {
+      "component": "server",
+      "requiredFields": []
+    },
+    "worker_started": {
+      "component": "server",
+      "requiredFields": []
+    }
+  },
+  "eventPatterns": [
+    "stream_*",
+    "selection_popup_*_degraded",
+    "selection_*_failed"
+  ],
+  "opaqueIdentifiers": {
+    "executionId": "x-[0-9a-f]{32}",
+    "callId": "c-[0-9a-f]{32}-[0-9]{1,12}",
+    "parentCallId": "c-[0-9a-f]{32}-[0-9]{1,12}",
+    "operationId": "o-[0-9a-f]{32}",
+    "paragraphRef": "p-[0-9a-f]{32}"
+  },
+  "identifierLists": {
+    "paragraphRefs": "paragraphRef",
+    "callRefs": "callId",
+    "operationRefs": "operationId"
+  },
+  "evidenceFields": {
+    "execution": [
+      "taskId",
+      "attempt",
+      "executionId",
+      "executionState",
+      "createdAt",
+      "updatedAt",
+      "requestedConfiguration",
+      "effectiveConfiguration",
+      "requestSummary",
+      "translationSummary",
+      "queueDropped",
+      "storageErrors",
+      "unflushedEvents",
+      "requestTracing"
+    ],
+    "request": [
+      "taskId",
+      "attempt",
+      "executionId",
+      "callId",
+      "operationId",
+      "parentCallId",
+      "paragraphRefs",
+      "purpose",
+      "retryCause",
+      "requestState",
+      "validationState",
+      "validationCode",
+      "createdAt",
+      "updatedAt",
+      "latencyMs",
+      "statusCode",
+      "errorType",
+      "finishReason",
+      "protocol",
+      "visibleOutputChars",
+      "batchSize",
+      "input",
+      "output",
+      "reasoning",
+      "observedReplay",
+      "validationFailures",
+      "providerCode",
+      "omittedLinks"
+    ],
+    "paragraph": [
+      "taskId",
+      "attempt",
+      "executionId",
+      "paragraphRef",
+      "page",
+      "paragraphState",
+      "outcomeSource",
+      "callRefs",
+      "operationRefs",
+      "omittedLinks",
+      "validationCode",
+      "providerCode",
+      "errorType",
+      "statusCode",
+      "missingPlaceholderCount",
+      "extraPlaceholderCount",
+      "updatedAt",
+      "recordOrigin"
+    ]
+  },
+  "diagnosisRules": {
+    "validation_failed": {
+      "title": "译文未通过校验",
+      "suggestion": "查看失败段落的校验码及关联请求；请求成功不代表译文有效。"
+    },
+    "provider_request_failed": {
+      "title": "模型请求失败",
+      "suggestion": "结合状态码、服务商错误码和重试链检查服务配置与可用性。"
+    },
+    "provider_rate_limited": {
+      "title": "模型请求受到限流",
+      "suggestion": "检查对应请求的状态码及服务商额度；429 本身不能区分频率与额度限制。"
+    },
+    "interrupted_requests": {
+      "title": "存在未确认完成的请求",
+      "suggestion": "检查取消、进程退出或服务重启记录；未确认的请求不计为已成功或已失败。"
+    },
+    "evidence_incomplete": {
+      "title": "证据链不完整",
+      "suggestion": "部分历史、写入或容量证据缺失；不要据此推断没有发生请求。"
+    },
+    "cache_reused": {
+      "title": "部分译文来自缓存或检查点",
+      "suggestion": "这些段落没有新的模型请求；检查原始执行记录可了解此前调用。"
+    },
+    "paragraph_unresolved": {
+      "title": "任务仍有未完成段落",
+      "suggestion": "查看失败段落及其关联的批量请求、单段回退和校验结果。"
+    },
+    "evidence_unavailable": {
+      "title": "当前任务没有可用的请求证据",
+      "suggestion": "旧版本不会补造历史请求；可结合现有错误码判断，后续执行会产生关联证据。"
+    }
+  }
+}

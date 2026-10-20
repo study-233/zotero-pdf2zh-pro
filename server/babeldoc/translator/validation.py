@@ -5,12 +5,19 @@ from collections import Counter
 from dataclasses import dataclass
 from babeldoc.translator.preserved_text import preserved_text_reason
 import logging
+from diagnostic_contract import CONTRACT
 
 logger = logging.getLogger(__name__)
 
 
 class InvalidTranslation(ValueError):
-    pass
+    def __init__(self, code, *, missing=0, extra=0):
+        super().__init__(code)
+        self.code = code if isinstance(code, str) and code in CONTRACT['validationErrors'] else 'unknown_validation'
+        self.diagnostic_fields = {
+            'missingPlaceholderCount': missing,
+            'extraPlaceholderCount': extra,
+        } if self.code == 'placeholder_mismatch' else {}
 
 
 def clean_json(text):
@@ -28,9 +35,12 @@ def validate_text(source, output, lang_out="", same_text_check=True):
     normalize = lambda s: re.sub(r"\s+", "", s).replace('"', "'").lower()
     tokens = lambda s: Counter(normalize(x) for x in re.findall(pattern, s, re.I))
     if tokens(source) != tokens(output):
-        logger.warning("translation placeholders differ: missing=%s extra=%s",
-                       dict(tokens(source) - tokens(output)), dict(tokens(output) - tokens(source)))
-        raise InvalidTranslation("placeholder_mismatch")
+        missing = sum((tokens(source) - tokens(output)).values())
+        extra = sum((tokens(output) - tokens(source)).values())
+        logger.warning("translation placeholders differ", extra={'diagnostic': {
+            'validationCode': 'placeholder_mismatch', 'missingPlaceholderCount': missing,
+            'extraPlaceholderCount': extra}})
+        raise InvalidTranslation("placeholder_mismatch", missing=missing, extra=extra)
     plain = lambda s: re.sub(pattern, "", s, flags=re.I).strip()
     src, dst = plain(source), plain(output)
     if src == dst and preserved_text_reason(src):

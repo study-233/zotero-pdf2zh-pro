@@ -261,6 +261,8 @@ class QualityReview:
                     self._prompt(batch), ignore_cache=True,
                     rate_limit_params={
                         "metric_kind": "review", "batch_size": len(batch),
+                        "diagnostic_paragraph_refs": [self.recovery.diagnostic_ref(item.paragraph) for item in batch]
+                            if getattr(self.recovery, 'diagnostic_ref', None) is not None else [],
                         "on_attempt": self._reserve,
                         "check_cancelled": self.check_cancelled,
                         "defer_cache_write": True,

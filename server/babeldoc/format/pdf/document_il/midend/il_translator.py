@@ -1160,6 +1160,7 @@ class ILTranslator:
                     except InvalidTranslation:
                         pass
                     else:
+                        recovery.checkpoint_reused(paragraph)
                         return None, None
         return text, translate_input
 
@@ -1521,6 +1522,7 @@ class ILTranslator:
                     "metric_kind": "translation",
                     "batch_size": 1,
                     "paragraph_ids": [paragraph.debug_id],
+                    "diagnostic_paragraph_refs": [recovery.diagnostic_ref(paragraph)] if recovery is not None else [],
                     "check_cancelled": self.translation_config.raise_if_cancelled,
                     "validate_output": lambda value: self.validate_paragraph_output(translate_input, value),
                     "on_attempt": lambda: recovery.attempt([paragraph], context[0]) if recovery is not None else None,

@@ -47,7 +47,7 @@ from codex_discovery import discovery_request, cancel_discovery
 from provider_models import ModelDiscoveryError, list_provider_models, list_codex_models
 from babeldoc.glossary_options import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
-from diagnostics import exception_frames
+from diagnostics import exception_frames, diagnostic_capabilities, negotiate_schema
 
 VERSION = "1.9.2"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
@@ -181,12 +181,18 @@ def create_app() -> Flask:
 
     @app.get("/diagnostics")
     def diagnostics():
+        failure = diagnostic_schema_error()
+        if failure is not None:
+            return failure
         payload = TASK_MANAGER.export_diagnostics()
         payload["environment"].update(serviceVersion=VERSION, babeldocVersion=package_version("babeldoc"), pdf2zhVersion=package_version("pdf2zh_next"))
         return jsonify(payload)
 
     @app.get("/tasks/<task_id>/diagnostics")
     def task_diagnostics(task_id):
+        failure = diagnostic_schema_error()
+        if failure is not None:
+            return failure
         payload = TASK_MANAGER.export_diagnostics(task_id)
         if payload is None:
             return jsonify({"status": "error", "message": "Task not found"}), 404
@@ -898,6 +904,16 @@ def error_response(message: str, status_code: int, **details):
     )
 
 
+def diagnostic_schema_error():
+    try:
+        selected = negotiate_schema(request.args.get('schemaVersions'))
+    except ValueError:
+        return jsonify({'code': 'diagnostics_invalid_schema_versions'}), 400
+    if selected is None:
+        return jsonify({'code': 'diagnostics_schema_unsupported', **diagnostic_capabilities()}), 406
+    return None
+
+
 def runtime_busy() -> bool:
     if build_task_stats().get("active", 0) or TASK_MANAGER._queue_blocked:
         return True
@@ -919,6 +935,7 @@ def build_health_payload() -> dict[str, Any]:
         "version": VERSION,
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
+        "diagnostics": diagnostic_capabilities(),
         "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "reasoningMode": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True, "taskSubmissionIdempotency": True, "taskRecovery": True, "taskTiming": True, "binaryTaskUpload": True, "taskPagination": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),

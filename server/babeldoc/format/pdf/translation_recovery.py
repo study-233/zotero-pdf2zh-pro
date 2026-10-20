@@ -4,8 +4,10 @@ import json
 import sqlite3
 import threading
 import time
+import uuid
 from collections import Counter
 from pathlib import Path
+from diagnostic_contract import CONTRACT
 
 from babeldoc.format.pdf.document_il.midend.reference_filter import find_reference_paragraph_ids
 from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
@@ -25,24 +27,18 @@ def safe_error(error):
     status = getattr(error, "status_code", None)
     code = getattr(error, "code", None)
     # Provider codes are untrusted. Only retain known machine labels.
-    if code not in {
-        "chatgpt_sign_in_required", "chatgpt_usage_limit", "chatgpt_permission_denied", "chatgpt_invalid_request",
-        "chatgpt_rate_limited", "chatgpt_unavailable", "chatgpt_model_unavailable", "chatgpt_invalid_reasoning",
-        "chatgpt_account_changed", "chatgpt_timeout", "chatgpt_network_error", "chatgpt_incomplete",
-        "model_not_found", "invalid_api_key", "insufficient_quota", "rate_limit_exceeded", "permission_denied",
-        "codex_not_installed", "codex_incompatible", "codex_not_logged_in", "codex_model_unavailable",
-        "codex_invalid_reasoning", "codex_invalid_proxy", "codex_isolation_failed", "codex_timeout", "codex_process_exited",
-        "codex_protocol_error", "codex_quota_exhausted", "codex_request_failed",
-    }:
+    if not isinstance(code, str) or code not in CONTRACT['providerErrors']:
         code = None
-    if type(error).__name__ == "InvalidTranslation" and str(error) in {
-        "empty_translation", "invalid_response", "invalid_json", "placeholder_mismatch", "unchanged_translation",
-        "target_language_missing", "paragraph_count_mismatch", "invalid_paragraph", "invalid_or_duplicate_paragraph_id",
-        "semantic_error_unresolved", "invalid_review",
-    }:
-        chain.insert(0, str(error))
+    fields = {}
+    if type(error).__name__ == "InvalidTranslation":
+        validation = getattr(error, 'code', 'unknown_validation')
+        fields['validationCode'] = validation if validation in CONTRACT['validationErrors'] else 'unknown_validation'
+        chain.insert(0, fields['validationCode'])
+        for key, value in getattr(error, 'diagnostic_fields', {}).items():
+            if key in {'missingPlaceholderCount', 'extraPlaceholderCount'} and type(value) is int and value >= 0:
+                fields[key] = value
     return {"errorType": type(error).__name__, "statusCode": status if isinstance(status, int) else None,
-            "reason": " → ".join(chain), "providerCode": code}
+            "reason": " → ".join(chain), "providerCode": code, **fields}
 
 
 class TranslationRecovery:
@@ -50,12 +46,14 @@ class TranslationRecovery:
     QUALITY_STATES = frozenset(("not_selected", "pending", "passed", "corrected", "unchecked", "failed"))
     QUALITY_REASONS = frozenset(("budget_exhausted", "provider_error", "invalid_review", "unsupported", "semantic_error_unresolved"))
 
-    def __init__(self, path, fingerprint, callback=None, *, first_success_callback=None):
+    def __init__(self, path, fingerprint, callback=None, *, first_success_callback=None, evidence=None, task_attempt=1):
         requested_path = Path(path)
         self.path = requested_path.with_suffix(".sqlite3")
         self.fingerprint = fingerprint
         self.callback = callback
         self.first_success_callback = first_success_callback
+        self.evidence = evidence
+        self.task_attempt = task_attempt
         self.lock = threading.RLock()
         self._notification_lock = threading.Lock()
         self._last_notification = float("-inf")
@@ -150,6 +148,12 @@ class TranslationRecovery:
                 if context_id is not None:
                     entry["contextId"] = context_id
                 if entry["status"] == "pending" and self.entries.get(key, {}).get("status") == "succeeded":
+                    # Upgrade old successful checkpoints without overwriting their output.
+                    retained = dict(self.entries[key])
+                    if not retained.get('paragraphRef'):
+                        retained['paragraphRef'] = entry['paragraphRef']
+                        self._upsert(key, retained)
+                        persisted[key] = retained
                     continue
                 self._upsert(key, entry)
                 persisted[key] = dict(entry)
@@ -175,10 +179,19 @@ class TranslationRecovery:
                 self._pending.discard(key)
             if entry["status"] == "failed":
                 self._failed[key] = {name: entry.get(name) for name in (
-                    "page", "paragraphId", "attempts", "errorType", "statusCode", "providerCode", "reason"
+                    "page", "paragraphId", "attempts", "errorType", "statusCode", "providerCode", "reason",
+                    "validationCode", "missingPlaceholderCount", "extraPlaceholderCount",
+                    "paragraphRef", "taskAttempt",
                 )}
             else:
                 self._failed.pop(key, None)
+        if self.evidence is not None:
+            self.evidence.paragraphs([
+                {**{name: entry[name] for name in CONTRACT['evidenceFields']['paragraph'] if name in entry},
+                 'paragraphState': entry['status'],
+                 **({'outcomeSource': 'preserved'} if entry['status'] == 'skipped' else {})}
+                for entry in changes.values() if entry.get('paragraphRef')
+            ])
         self._notification_pending = self._notification_pending or bool(changes)
         if self._summary['succeeded'] and self.first_success_callback is not None:
             callback, self.first_success_callback = self.first_success_callback, None
@@ -212,6 +225,8 @@ class TranslationRecovery:
                         reason = preserved_paragraph_reason(paragraph)
                     changes[key] = {"page": page_number + 1,
                         "paragraphId": paragraph.debug_id, "source": source,
+                        "paragraphRef": self.entries.get(key, {}).get('paragraphRef') or 'p-' + uuid.uuid4().hex,
+                        "taskAttempt": self.task_attempt,
                         "status": "skipped" if reason else "pending", "reason": reason,
                         "attempts": 0}
                     old_quality = self.entries.get(key, {}).get("quality")
@@ -223,6 +238,18 @@ class TranslationRecovery:
     def is_skipped(self, paragraph):
         with self.lock:
             return self.current.get(self.keys.get(id(paragraph)), {}).get("status") == "skipped"
+
+    def diagnostic_ref(self, paragraph):
+        with self.lock:
+            return self.current.get(self.keys.get(id(paragraph)), {}).get('paragraphRef')
+
+    def checkpoint_reused(self, paragraph):
+        if self.evidence is not None:
+            with self.lock:
+                entry = self.current.get(self.keys.get(id(paragraph)), {})
+                if entry.get('paragraphRef'):
+                    self.evidence.paragraphs([{'paragraphRef': entry['paragraphRef'], 'page': entry['page'],
+                        'paragraphState': 'succeeded', 'outcomeSource': 'checkpoint'}])
 
     def restored(self, paragraph, source):
         with self.lock:
@@ -311,7 +338,8 @@ class TranslationRecovery:
                 entry["quality"]["approval"] = self._approval_fingerprint(entry.get("input"), entry.get("translation"))
             if status == "failed":
                 # Persist the verdict and non-restorable state in the same transaction.
-                entry.update(status="failed", errorType="InvalidTranslation", reason="semantic_error_unresolved")
+                entry.update(status="failed", errorType="InvalidTranslation", reason="semantic_error_unresolved",
+                             validationCode="semantic_error_unresolved")
             self._commit({key: entry})
         self._notify()
 
@@ -358,7 +386,8 @@ class TranslationRecovery:
     def finish(self):
         with self.lock:
             self._commit({key: dict(self.current[key], status="failed",
-                                   errorType="UnprocessedParagraph", reason="paragraph_not_completed")
+                                   errorType="UnprocessedParagraph", reason="paragraph_not_completed",
+                                   outcomeSource="unprocessed")
                           for key in self._pending})
             self._notification_pending = True
         self._notify(force=True)

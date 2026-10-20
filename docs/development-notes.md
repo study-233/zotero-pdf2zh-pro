@@ -535,6 +535,10 @@ PyPI 包来源。已安装同版本的客户端需手动重装修订包：Zotero
 
 实现与验收契约见 [任务诊断与取消规格](task-diagnostics-and-cancellation.md)。TaskManager 生产路径始终使用 spawn 执行器；translator 注入只供离线单测使用。新增模块必须随 Python wheel 一并打包。低优先级诊断不与可靠控制消息共用缓冲，父进程按单调时钟监督回收。
 
+诊断定义维护在 [`shared/diagnostics/contract.json`](../shared/diagnostics/contract.json)，修改后运行 `python3 scripts/generate_diagnostic_contract.py`。新增错误、事件和服务能力时同步登记必要证据及覆盖声明，加入合成故障测试；CI 和统一发布入口会检查生成文件及 v1 兼容性，具体步骤见[新功能接入与发布检查](task-diagnostics-and-cancellation.md#新功能接入与发布检查)。
+
+模型调用与段落关联由 `server/diagnostic_evidence.py` 保存到任务工作目录，随 wheel 和 Docker 分发；本地安装不依赖共享 JSON 的源码路径。新增调用流程同时传递段落、操作和父请求上下文，验证 `test_diagnostic_evidence`、`test_diagnostic_evidence_integration` 及插件最终 ZIP 的证据。离线读取其他用户诊断包的方法见[任务、请求与段落证据链](task-diagnostics-and-cancellation.md#任务请求与段落证据链)。
+
 macOS 测试时临时目录可使用 `TMPDIR=/private/tmp`，避免 `/var` 与 `/private/var` 的路径别名影响既有路径断言。缓存隔离验证应使用 `pdf2zh_next.translator.cache.init_test_db()` 和 `clean_test_db()`，避免把测试内容写入用户翻译缓存。进程回收测试有界等待，真实永久阻塞任务仅在受控子进程中构造。
 
 ## 划词功能验收

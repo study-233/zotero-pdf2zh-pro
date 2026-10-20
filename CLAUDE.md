@@ -66,6 +66,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## Project Notes
 
+- Diagnostic fields, error codes, events and feature coverage live in `shared/diagnostics/contract.json`. Run `python3 scripts/generate_diagnostic_contract.py` after changes and commit both generated files. New features need a coverage declaration and synthetic fault/export tests; preserve the frozen v1 compatibility baseline. See `docs/task-diagnostics-and-cancellation.md` for the release checks and compatibility rules.
+
 - This repo ships the server through multiple targets: local `uv`, Docker, and Homebrew.
 - Keep the plugin and server version aligned. When bumping a release, update both `plugin/package.json` and the server version fields in `server/pyproject.toml` and `server/server.py`.
 - The server is published to PyPI as `zotero-pdf2zh-pro`; `scripts/release.sh <version>` is the unified release path for XPI, PyPI, the Windows package, a local source archive, and optional Homebrew updates.
