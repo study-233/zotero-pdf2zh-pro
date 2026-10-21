@@ -115,7 +115,7 @@ def negotiate_schema(value):
     # Bound user input before regex matching and integer conversion.
     if len(value) > 128:
         raise ValueError('invalid_schema_versions')
-    if not re.fullmatch(r'[1-9][0-9]*(?:,[1-9][0-9]*){0,7}', value):
+    if not re.fullmatch(r'\A[1-9][0-9]*(?:,[1-9][0-9]*){0,7}\Z', value):
         raise ValueError('invalid_schema_versions')
     common = set(map(int, value.split(','))) & set(CONTRACT['supportedSchemaVersions'])
     return max(common) if common else None
