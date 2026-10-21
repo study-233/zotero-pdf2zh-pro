@@ -112,6 +112,9 @@ def negotiate_schema(value):
     """Absent query preserves the shipped v1 interface; additions use revisions."""
     if value is None:
         return SCHEMA_VERSION
+    # Bound user input before regex matching and integer conversion.
+    if len(value) > 128:
+        raise ValueError('invalid_schema_versions')
     if not re.fullmatch(r'[1-9][0-9]*(?:,[1-9][0-9]*){0,7}', value):
         raise ValueError('invalid_schema_versions')
     common = set(map(int, value.split(','))) & set(CONTRACT['supportedSchemaVersions'])

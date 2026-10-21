@@ -3,7 +3,7 @@ import logging
 import tempfile
 import unittest
 from pathlib import Path
-from diagnostics import DiagnosticStore, SafeLogHandler, exception_frames, safe_fields
+from diagnostics import DiagnosticStore, SafeLogHandler, exception_frames, negotiate_schema, safe_fields
 from task_manager import TaskManager,TaskRecord
 from diagnostic_contract import CONTRACT
 
@@ -31,15 +31,28 @@ class DiagnosticTests(unittest.TestCase):
         with patch.object(server, 'TASK_MANAGER', manager):
             client = server.create_app().test_client()
             for endpoint in ('/diagnostics', '/tasks/test/diagnostics'):
-                for suffix in ('', '?schemaVersions=1', '?schemaVersions=2,1'):
+                for suffix in ('', '?schemaVersions=1', '?schemaVersions=2,1',
+                               '?schemaVersions=' + ','.join(['1'] * 8),
+                               '?schemaVersions=1,' + '9' * 126):
                     response = client.get(endpoint + suffix)
                     self.assertEqual(response.status_code, 200)
                     self.assertEqual(response.json['schemaVersion'], 1)
                     self.assertEqual(response.json['schemaRevision'], CONTRACT['schemaRevision'])
                 self.assertEqual(client.get(endpoint + '?schemaVersions=2').status_code, 406)
-                for value in ('', 'x', '1,,2', '0', '1.0'):
-                    self.assertEqual(client.get(endpoint + '?schemaVersions=' + value).status_code, 400)
+                for value in ('', 'x', '1,,2', '0', '1.0', ','.join(['1'] * 9),
+                              '9' * 129, '1,' + '9' * 127):
+                    response = client.get(endpoint + '?schemaVersions=' + value)
+                    self.assertEqual(response.status_code, 400)
+                    self.assertEqual(response.json['code'], 'diagnostics_invalid_schema_versions')
             self.assertEqual(client.get('/health').json['diagnostics']['schemaVersions'], [1])
+
+    def test_oversized_schema_versions_are_rejected_before_regex_matching(self):
+        from unittest.mock import patch
+        with patch('diagnostics.re.fullmatch', side_effect=AssertionError('Regex must not run')):
+            for value in ('1' * 129, '1' * 1000000):
+                with self.subTest(length=len(value)):
+                    with self.assertRaisesRegex(ValueError, '^invalid_schema_versions$'):
+                        negotiate_schema(value)
 
     def test_structured_and_unknown_warnings_keep_codes_or_locations_without_messages(self):
         store = DiagnosticStore()
