@@ -131,22 +131,26 @@ mod tests {
     use super::*;
     use std::{
         fs,
+        sync::atomic::{AtomicU64, Ordering},
         time::{SystemTime, UNIX_EPOCH},
     };
+
+    static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
     struct Fixture(PathBuf);
 
     impl Fixture {
         fn new() -> Self {
             let root = env::temp_dir().join(format!(
-                "pdf2zh-root-{}-{}",
+                "pdf2zh-root-{}-{}-{}",
                 std::process::id(),
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
-                    .as_nanos()
+                    .as_nanos(),
+                NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed)
             ));
-            fs::create_dir_all(&root).unwrap();
+            fs::create_dir(&root).unwrap();
             Self(root)
         }
 
