@@ -13,12 +13,19 @@ border border-radius flex-direction align-items justify-content grid-template-co
 """.split())
 DOMAIN = r"[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9-]+)+"
 EMAIL = re.compile(r"[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@" + DOMAIN)
+# Papers often list several mailbox names followed by one shared domain.
+GROUPED_EMAIL = re.compile(
+    r"\{\s*[a-zA-Z0-9.!#$%&'*+/=?^_`|~-]+"
+    r"(?:\s*[,;]\s*[a-zA-Z0-9.!#$%&'*+/=?^_`|~-]+)+\s*\}@" + DOMAIN
+)
 
 
 def preserved_text_reason(text):
     text = STRUCTURAL_TOKEN.sub("", text or "").strip()
     if not text:
         return None
+    if GROUPED_EMAIL.fullmatch(text):
+        return "email_only"
     if is_url_only_text(text) or re.fullmatch(
         r"www\.[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}(?:/[^\s<>]*)?", text
     ) or re.fullmatch(r"www [a-z0-9][a-z0-9-]* (?:com|org|net|edu|gov|io|cn)", text):

@@ -11,6 +11,7 @@
 | 项目定位、核心能力、真实预览、快速开始、文档入口 | 根目录 README |
 | 安装图文、API 配置、完整操作、参数、更新卸载、故障排查 | [使用指南](user-guide.md) |
 | 开发环境、源码部署、测试与发布 | [开发维护笔记](development-notes.md) |
+| 插件文案、术语、布局和界面验收 | [插件文案与 UI 规范](ui-guidelines.md) |
 | 服务端接口与兼容性 | [服务端说明](../server/README.md) |
 | 单项机制、验收细节和数据来源 | `docs/` 下对应专题文档 |
 | 各版本变化 | [CHANGELOG](../CHANGELOG.md) |

@@ -53,7 +53,7 @@ test("new install, legacy adoption, skipped versions and empty releases", () => 
     );
 });
 
-test("release catalog has reviewed current version, unique IDs, translations and working action types", () => {
+test("release catalog has reviewed current version, unique IDs and translations", () => {
     const catalogs = ["zh-CN", "en-US"].map((locale) =>
         Object.fromEntries(
             [
@@ -78,10 +78,6 @@ test("release catalog has reviewed current version, unique IDs, translations and
             assert.ok(!ids.has(note.id));
             ids.add(note.id);
             assert.ok([0, 1, 2].includes(note.priority));
-            assert.ok(
-                !note.action ||
-                    ["profiles", "selection", "tasks"].includes(note.action),
-            );
             for (const catalog of catalogs)
                 assert.ok(catalog[note.message], note.message);
             assert.ok(catalogs[0][note.message].length <= 60);

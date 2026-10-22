@@ -12,7 +12,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
     scrolling="true"
 >
     <head>
-        <title>zotero-pdf2zh-pro 任务列表</title>
+        <title>zotero-pdf2zh-pro</title>
         <meta charset="utf-8" />
         <style>
             :root {
@@ -49,7 +49,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 display: flex;
                 flex-direction: column;
                 gap: 10px;
-                min-width: 760px;
+                min-width: 0;
             }
 
             .toolbar {
@@ -66,11 +66,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             .title {
                 font-size: 15px;
                 font-weight: 650;
-            }
-
-            .subtitle {
-                color: #656b73;
-                font-size: 12px;
             }
 
             .toolbar-actions {
@@ -162,35 +157,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 background: var(--primary-hover);
             }
 
-            .stats {
-                display: grid;
-                grid-template-columns: repeat(4, minmax(120px, 1fr));
-                gap: 8px;
-            }
-
-            .stat {
-                min-width: 0;
-                border: 1px solid #d6d6d2;
-                border-radius: 8px;
-                background: #fbfbfa;
-                padding: 8px 10px;
-            }
-
-            .stat-label {
-                color: #656b73;
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: 0.03em;
-            }
-
-            .stat-value {
-                margin-top: 2px;
-                font-size: 18px;
-                line-height: 1.1;
-                font-weight: 700;
-                font-variant-numeric: tabular-nums;
-            }
-
             .control-bar {
                 display: flex;
                 align-items: center;
@@ -227,12 +193,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 background: #fff;
                 color: #1f2328;
                 box-shadow: 0 1px 2px rgba(27, 31, 36, 0.12);
-            }
-
-            .list-meta {
-                color: #656b73;
-                font-size: 12px;
-                white-space: nowrap;
             }
 
             .list {
@@ -422,7 +382,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     min-width: 0;
                 }
 
-                .toolbar,
                 .control-bar {
                     align-items: stretch;
                     flex-direction: column;
@@ -430,10 +389,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
                 .toolbar-actions {
                     justify-content: flex-start;
-                }
-
-                .stats {
-                    grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
 
                 .grid {
@@ -570,26 +525,19 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             .toolbar {
-                gap: 24px;
-                padding: 18px 20px;
-                background: var(--surface);
-                border-color: var(--border);
-                border-radius: 12px;
-                box-shadow: var(--shadow-1);
+                gap: 16px;
+                padding: 0;
+                background: transparent;
+                border: 0;
+                box-shadow: none;
             }
 
             .heading {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px 16px;
                 min-width: 0;
-            }
-
-            .eyebrow {
-                margin-bottom: 2px;
-                color: var(--text-tertiary);
-                font-size: 11px;
-                line-height: 14px;
-                font-weight: 600;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
             }
 
             .title {
@@ -599,23 +547,28 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 letter-spacing: -0.015em;
             }
 
-            .subtitle {
-                margin-top: 2px;
-                color: var(--text-secondary);
-                line-height: 18px;
-            }
-
             .toolbar-actions {
+                flex: 0 0 auto;
+                flex-wrap: nowrap;
                 gap: 8px;
             }
 
+            .batch-actions {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .batch-actions .danger {
+                margin-left: 6px;
+            }
+
             .connection {
-                height: 32px;
-                min-height: 32px;
-                padding: 0 10px;
-                border-color: var(--border);
-                border-radius: 16px;
-                background: var(--surface-subtle);
+                min-height: 20px;
+                padding: 0;
+                border: 0;
+                background: transparent;
                 color: var(--text-secondary);
                 font-size: 12px;
                 line-height: 18px;
@@ -694,73 +647,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 color: var(--primary-text);
             }
 
-            .stats {
-                gap: 0;
-                overflow: hidden;
-                background: var(--surface);
-                border: 1px solid var(--border);
-                border-radius: 12px;
-                box-shadow: var(--shadow-1);
-            }
-
-            .stat {
-                min-width: 0;
-                padding: 14px 16px;
-                border: 0;
-                border-radius: 0;
-                background: transparent;
-            }
-
-            .stat + .stat {
-                border-left: 1px solid var(--border);
-            }
-
-            .stat-label {
-                color: var(--text-secondary);
-                font-size: 12px;
-                line-height: 18px;
-                font-weight: 500;
-                text-transform: none;
-                letter-spacing: 0;
-            }
-
-            .stat-value {
-                margin-top: 4px;
-                font-size: 24px;
-                line-height: 30px;
-                font-weight: 600;
-            }
-
-            .stat-hint {
-                margin-left: 6px;
-                color: var(--text-tertiary);
-                font-size: 11px;
-                line-height: 14px;
-                font-weight: 400;
-            }
-
-            .stat[data-tone="active"] .stat-value {
-                color: var(--accent);
-            }
-
-            .stat[data-tone="failed"] .stat-value {
-                color: var(--error);
-            }
-
-            .stat[data-tone="completed"] .stat-value {
-                color: var(--success);
-            }
-
             .control-bar {
-                position: sticky;
-                top: 12px;
-                z-index: 10;
+                position: static;
                 gap: 12px;
-                padding: 8px;
-                background: var(--surface);
-                border-color: var(--border);
-                border-radius: 12px;
-                box-shadow: var(--shadow-2);
+                flex-wrap: wrap;
+                padding: 0;
+                background: transparent;
+                border: 0;
+                box-shadow: none;
             }
 
             .segmented {
@@ -814,11 +708,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 color: var(--primary-text);
             }
 
-            .list-meta {
-                padding: 0 8px;
-                color: var(--text-tertiary);
-            }
-
             .list {
                 gap: 8px;
             }
@@ -865,6 +754,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             .status {
+                flex: 0 0 auto;
+                max-width: 45%;
                 min-height: 24px;
                 padding: 3px 8px;
                 border: 1px solid var(--border);
@@ -873,6 +764,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 color: var(--text-secondary);
                 line-height: 16px;
                 font-weight: 500;
+                overflow-wrap: anywhere;
             }
 
             .status.running {
@@ -963,7 +855,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             .quality-summary {
-                margin-top: 12px;
+                margin: 0 16px 12px;
                 color: var(--text-secondary);
                 font-size: 12px;
                 line-height: 1.6;
@@ -972,6 +864,15 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             .metrics-panel {
                 margin: 0 16px 12px;
+            }
+
+            .review-detail {
+                margin-top: 8px;
+                color: var(--text-secondary);
+                font-size: 12px;
+                line-height: 1.6;
+                white-space: pre-line;
+                overflow-wrap: anywhere;
             }
 
             .metrics-panel[hidden] {
@@ -999,6 +900,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             .task-footer {
                 display: flex;
                 align-items: center;
+                flex-wrap: wrap;
                 gap: 12px;
                 min-height: 44px;
                 padding: 8px 12px;
@@ -1008,7 +910,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             .metric-rail {
                 display: flex;
-                flex: 1 1 auto;
+                flex: 1 1 520px;
                 align-items: center;
                 min-width: 0;
                 overflow-x: auto;
@@ -1063,6 +965,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             .footer-actions {
                 display: flex;
                 flex: 0 0 auto;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+                margin-left: auto;
+                max-width: 100%;
                 align-items: center;
                 gap: 6px;
             }
@@ -1091,6 +997,36 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 color: var(--text-tertiary);
                 font-size: 11px;
                 line-height: 16px;
+                flex-wrap: wrap;
+            }
+
+            .task-toolbar {
+                display: grid;
+                gap: 12px;
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--border);
+            }
+            .history-pager {
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                gap: 8px;
+                padding: 4px 0;
+                color: var(--text-secondary);
+                font-variant-numeric: tabular-nums;
+            }
+            .history-pager .button {
+                min-width: 28px;
+                min-height: 28px;
+                padding: 0 8px;
+                border: 0;
+                background: transparent;
+            }
+            .speed-detail {
+                margin-top: 8px;
+                color: var(--text-tertiary);
+                font-size: 12px;
+                line-height: 1.5;
             }
 
             .error {
@@ -1137,20 +1073,23 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
 
-                .stat:nth-child(3) {
-                    border-left: 0;
-                }
-
-                .stat:nth-child(n + 3) {
-                    border-top: 1px solid var(--border);
-                }
-
                 .task-metric:nth-child(odd) {
                     border-left: 0;
                 }
 
                 .task-metric:nth-child(n + 3) {
                     border-top: 1px solid var(--border);
+                }
+
+                .task-metric:last-child {
+                    grid-column: 1 / -1;
+                    display: flex;
+                    align-items: baseline;
+                    gap: 8px;
+                }
+
+                .task-metric:last-child .metric-value {
+                    margin-top: 0;
                 }
 
                 .observability-item:nth-child(odd) {
@@ -1168,22 +1107,29 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             @media (max-width: 620px) {
                 .toolbar {
-                    padding: 16px;
+                    padding: 12px;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 12px;
                 }
 
-                .toolbar-actions,
+                .heading {
+                    align-items: flex-start;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
                 .segmented {
-                    width: 100%;
+                    max-width: 100%;
+                    flex-wrap: wrap;
                 }
 
-                .button,
-                .segment {
-                    flex: 1;
+                .batch-actions {
+                    gap: 6px;
                 }
 
-                .connection {
-                    width: 100%;
-                    justify-content: center;
+                .batch-actions .danger {
+                    margin-left: 0;
                 }
 
                 .control-bar {
@@ -1207,44 +1153,108 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
                 .metric-rail {
                     width: 100%;
+                    flex-basis: auto;
                 }
 
                 .footer-actions {
                     justify-content: flex-end;
                 }
             }
+
+            @media (max-width: 420px) {
+                .segmented {
+                    display: grid;
+                    width: 100%;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
         </style>
     </head>
     <body>
         <div class="page">
-            <div class="toolbar">
-                <div class="heading">
-                    <div class="eyebrow">zotero PDF2ZH Pro</div>
-                    <div class="title">翻译任务</div>
-                    <div class="subtitle">
-                        跟踪翻译进度、服务状态与附件导入结果
-                        <br />
-                        重试和补译沿用原任务的复核设置，不受当前设置开关影响。
+            <header class="task-toolbar">
+                <div class="toolbar">
+                    <div class="heading">
+                        <div class="title" data-message="title" />
+                        <div
+                            id="connection-status"
+                            class="connection unknown"
+                            role="status"
+                        >
+                            <span class="connection-dot" aria-hidden="true" />
+                            <span id="connection-label" />
+                        </div>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button
+                            id="refresh-btn"
+                            class="button"
+                            data-message="refresh"
+                        />
+                        <button
+                            id="close-btn"
+                            class="button"
+                            data-message="close"
+                        />
                     </div>
                 </div>
-                <div class="toolbar-actions">
-                    <div id="connection-status" class="connection unknown">
-                        <span class="connection-dot"></span>
-                        <span id="connection-label">事件流未知</span>
+                <div class="control-bar">
+                    <div id="filter-control" class="segmented" role="tablist">
+                        <button
+                            class="segment active"
+                            data-filter="all"
+                            role="tab"
+                        >
+                            <span data-message="all" />
+                            <span id="filter-count-all" class="segment-count"
+                                >0</span
+                            >
+                        </button>
+                        <button class="segment" data-filter="active" role="tab">
+                            <span data-message="active" />
+                            <span id="filter-count-active" class="segment-count"
+                                >0</span
+                            >
+                        </button>
+                        <button class="segment" data-filter="failed" role="tab">
+                            <span data-message="failed" />
+                            <span id="filter-count-failed" class="segment-count"
+                                >0</span
+                            >
+                        </button>
+                        <button
+                            class="segment"
+                            data-filter="completed"
+                            role="tab"
+                        >
+                            <span data-message="completed" />
+                            <span
+                                id="filter-count-completed"
+                                class="segment-count"
+                                >0</span
+                            >
+                        </button>
                     </div>
-                    <button id="refresh-btn" class="button">刷新</button>
-                    <button id="resume-queue-btn" class="button">
-                        继续上次队列
-                    </button>
-                    <button id="retry-all-failed-btn" class="button primary">
-                        重试本页失败
-                    </button>
-                    <button id="clear-failed-btn" class="button danger">
-                        清理失败任务
-                    </button>
-                    <button id="close-btn" class="button">关闭</button>
+                    <div class="batch-actions">
+                        <button
+                            id="resume-queue-btn"
+                            class="button"
+                            data-message="resume-queue"
+                        />
+                        <button
+                            id="retry-all-failed-btn"
+                            class="button"
+                            data-message="retry-page"
+                        />
+                        <button
+                            id="clear-failed-btn"
+                            class="button danger"
+                            data-message="clear-failed"
+                            data-message-title="clear-failed-scope"
+                        />
+                    </div>
                 </div>
-            </div>
+            </header>
             <div id="operation-notice" hidden="hidden" />
             <div id="server-notice" hidden="hidden" />
             <section
@@ -1259,73 +1269,31 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     <ul id="submission-errors" />
                 </details>
             </section>
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-label">当前列表</div>
-                    <div class="stat-value">
-                        <span id="stat-total">0</span>
-                        <span class="stat-hint">条记录</span>
-                    </div>
-                </div>
-                <div class="stat" data-tone="active">
-                    <div class="stat-label">正在处理</div>
-                    <div class="stat-value">
-                        <span id="stat-running">0</span>
-                        <span class="stat-hint">运行中</span>
-                    </div>
-                </div>
-                <div class="stat" data-tone="failed">
-                    <div class="stat-label">需要处理</div>
-                    <div class="stat-value">
-                        <span id="stat-failed">0</span>
-                        <span class="stat-hint">失败任务</span>
-                    </div>
-                </div>
-                <div class="stat" data-tone="completed">
-                    <div class="stat-label">已完成</div>
-                    <div class="stat-value">
-                        <span id="stat-completed">0</span>
-                        <span class="stat-hint">含已导入</span>
-                    </div>
-                </div>
-            </div>
-            <div class="control-bar">
-                <div id="filter-control" class="segmented" role="tablist">
-                    <button class="segment active" data-filter="all" role="tab">
-                        全部
-                        <span id="filter-count-all" class="segment-count"
-                            >0</span
-                        >
-                    </button>
-                    <button class="segment" data-filter="active" role="tab">
-                        进行中
-                        <span id="filter-count-active" class="segment-count"
-                            >0</span
-                        >
-                    </button>
-                    <button class="segment" data-filter="failed" role="tab">
-                        失败
-                        <span id="filter-count-failed" class="segment-count"
-                            >0</span
-                        >
-                    </button>
-                    <button class="segment" data-filter="completed" role="tab">
-                        已完成
-                        <span id="filter-count-completed" class="segment-count"
-                            >0</span
-                        >
-                    </button>
-                </div>
-                <div id="list-meta" class="list-meta">0 个任务</div>
-            </div>
-            <div id="history-pager" class="control-bar" hidden="hidden">
-                <span id="history-label"></span>
-                <div class="toolbar-actions">
-                    <button id="history-prev" class="button">上一页历史</button>
-                    <button id="history-next" class="button">下一页历史</button>
-                </div>
-            </div>
             <div id="task-list" class="list"></div>
+            <nav
+                id="history-pager"
+                class="history-pager"
+                hidden="hidden"
+                data-message-title="history-navigation"
+            >
+                <button
+                    id="history-prev"
+                    class="button"
+                    data-message-title="previous"
+                    data-message-aria="previous"
+                >
+                    ‹
+                </button>
+                <span id="history-label" aria-live="polite"></span>
+                <button
+                    id="history-next"
+                    class="button"
+                    data-message-title="next"
+                    data-message-aria="next"
+                >
+                    ›
+                </button>
+            </nav>
         </div>
 
         <script>
@@ -1340,6 +1308,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             let pendingRenderTasks = null;
             let renderFrameId = null;
             let submissionSignature;
+
+            function t(key, args) {
+                return api.message(`task-ui-${key}`, { args });
+            }
 
             function reportOperation(
                 error,
@@ -1386,6 +1358,25 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
             document.addEventListener("DOMContentLoaded", async () => {
                 api = window.arguments && window.arguments[0];
+                if (!api) return;
+                document.title = t("window-title");
+                document.documentElement.lang = api.locale || "zh-CN";
+                document.querySelectorAll("[data-message]").forEach((node) => {
+                    node.textContent = t(node.dataset.message);
+                });
+                document
+                    .querySelectorAll("[data-message-title]")
+                    .forEach((node) => {
+                        node.title = t(node.dataset.messageTitle);
+                    });
+                document
+                    .querySelectorAll("[data-message-aria]")
+                    .forEach((node) => {
+                        node.setAttribute(
+                            "aria-label",
+                            t(node.dataset.messageAria),
+                        );
+                    });
                 if (api && api._initPromise) {
                     api._initPromise.resolve();
                 }
@@ -1507,16 +1498,20 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 updateConnectionStatus();
                 const history = api?.getHistoryPage?.();
                 const pager = document.getElementById("history-pager");
-                pager.hidden = !history?.supported;
+                pager.hidden =
+                    !history?.supported ||
+                    (!history.total && history.page <= 1);
                 if (history) {
-                    document.getElementById("history-label").textContent =
-                        `历史第 ${history.page} 页 · 共 ${history.total} 条 · 每个服务每页 30 条，活动及待导入任务始终显示`;
+                    document.getElementById("history-label").textContent = t(
+                        "history",
+                        { page: history.page, total: history.total },
+                    );
                     document.getElementById("history-prev").disabled =
                         history.loading || history.page <= 1;
                     document.getElementById("history-next").disabled =
                         history.loading || !history.hasMore;
                 }
-                renderStats(currentTasks);
+                renderFilterCounts(currentTasks);
                 renderFilterButtons();
 
                 const currentTaskIds = new Set(
@@ -1530,10 +1525,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 });
 
                 const filteredTasks = currentTasks.filter(matchesCurrentFilter);
-                setTextContent(
-                    document.getElementById("list-meta"),
-                    `${filteredTasks.length}/${currentTasks.length} 个已显示任务`,
-                );
 
                 if (filteredTasks.length === 0) {
                     if (!emptyStateNode) {
@@ -1543,8 +1534,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     setTextContent(
                         emptyStateNode,
                         currentTasks.length === 0
-                            ? "当前没有任务。"
-                            : "当前筛选条件下没有任务。",
+                            ? t("empty")
+                            : t("empty-filter"),
                     );
                     Array.from(root.children).forEach((child) => {
                         if (child !== emptyStateNode) child.remove();
@@ -1620,11 +1611,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const grid = document.createElement("div");
                 grid.className = "grid";
                 const gridValues = [
-                    "阶段",
-                    "阶段进度",
-                    "总进度",
-                    "导入状态",
-                    "尝试",
+                    t("stage"),
+                    t("stage-progress"),
+                    t("overall-progress"),
+                    t("import-state"),
+                    t("attempt"),
                 ].map((label) => {
                     const box = document.createElement("div");
                     box.className = "task-metric";
@@ -1645,7 +1636,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const progressTrack = document.createElement("div");
                 progressTrack.className = "progress-track";
                 progressTrack.setAttribute("role", "progressbar");
-                progressTrack.setAttribute("aria-label", "任务总进度");
+                progressTrack.setAttribute("aria-label", t("progress-label"));
                 progressTrack.setAttribute("aria-valuemin", "0");
                 progressTrack.setAttribute("aria-valuemax", "100");
                 const progressFill = document.createElement("div");
@@ -1660,14 +1651,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 metaRow.appendChild(updatedAt);
                 progress.appendChild(metaRow);
                 card.appendChild(progress);
-
-                const timingSummary = document.createElement("div");
-                timingSummary.className = "progress-meta";
-                timingSummary.setAttribute(
-                    "title",
-                    "服务耗时为排队与执行之和，不含停机和待恢复时间；重试或补译重新计时。异常退出前未保存的时间不估算。",
-                );
-                card.appendChild(timingSummary);
 
                 const qualitySummary = document.createElement("div");
                 qualitySummary.className = "quality-summary";
@@ -1685,7 +1668,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
                 const reloginButton = document.createElement("button");
                 reloginButton.className = "button primary";
-                reloginButton.textContent = "重新登录";
+                reloginButton.textContent = t("login");
                 reloginButton.addEventListener("click", () => {
                     if (!view.task) return;
                     reportOperation(null, actionNotice);
@@ -1704,17 +1687,27 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const detailGrid = document.createElement("div");
                 detailGrid.className = "observability-detail-grid";
                 const detailValues = [
-                    "实际 QPS（10秒）",
-                    "活跃请求",
-                    "平均耗时",
-                    "P95 耗时",
-                    "自动重试",
-                    "本地缓存命中率",
-                    "服务端缓存命中率",
-                    "Token（输入 / 输出）",
-                    "跳过参考文献段落",
+                    t("qps"),
+                    t("active-requests"),
+                    t("average-latency"),
+                    t("p95-latency"),
+                    t("retries"),
+                    t("local-cache"),
+                    t("provider-cache-rate"),
+                    t("tokens"),
+                    t("references-skipped"),
+                    t("throughput"),
+                    t("queue"),
+                    t("execution"),
                 ].map((label) => appendMetric(detailGrid, label, "-"));
                 metricsPanel.appendChild(detailGrid);
+                const speedDetail = document.createElement("div");
+                speedDetail.className = "speed-detail";
+                speedDetail.textContent = t("output-speed-help");
+                metricsPanel.appendChild(speedDetail);
+                const qualityDetail = document.createElement("div");
+                qualityDetail.className = "review-detail";
+                metricsPanel.appendChild(qualityDetail);
                 card.appendChild(metricsPanel);
 
                 const footer = document.createElement("div");
@@ -1723,16 +1716,23 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 metricRail.className = "metric-rail";
                 metricRail.tabIndex = 0;
                 metricRail.setAttribute("role", "region");
-                metricRail.setAttribute("aria-label", "请求指标摘要");
+                metricRail.setAttribute("aria-label", t("metrics-label"));
+                const timingMetric = appendSummaryMetric(
+                    metricRail,
+                    t("elapsed"),
+                    "—",
+                );
                 const metricEmpty = document.createElement("span");
                 metricEmpty.className = "metric-empty";
                 metricRail.appendChild(metricEmpty);
+                timingMetric.item.setAttribute("title", t("timing-help"));
                 const summaryMetrics = [
-                    "剩余 / 吞吐",
-                    "Token",
-                    "服务端缓存",
-                    "请求 / 重试",
-                    "平均 / P95",
+                    t("eta"),
+                    t("output-speed"),
+                    t("tokens"),
+                    t("provider-cache"),
+                    t("requests-retries"),
+                    t("latency"),
                 ].map((label) => appendSummaryMetric(metricRail, label, "-"));
                 footer.appendChild(metricRail);
 
@@ -1743,7 +1743,12 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 metricsToggle.setAttribute("aria-controls", metricsPanel.id);
                 metricsToggle.addEventListener("click", () => {
                     const currentTask = view.task;
-                    if (!currentTask?.metrics) return;
+                    if (
+                        !currentTask?.metrics &&
+                        !currentTask?.qualitySummary &&
+                        !currentTask?.timing
+                    )
+                        return;
                     const isExpanded = metricsPanel.hidden;
                     metricsPanel.hidden = !isExpanded;
                     if (isExpanded) {
@@ -1757,7 +1762,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
                 const exportButton = document.createElement("button");
                 exportButton.className = "button";
-                exportButton.textContent = "导出诊断包";
+                exportButton.textContent = t("export");
                 exportButton.addEventListener("click", async () => {
                     exportButton.disabled = true;
                     reportOperation(null, actionNotice);
@@ -1772,7 +1777,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 footerActions.appendChild(exportButton);
                 const cancelButton = document.createElement("button");
                 cancelButton.className = "button danger";
-                cancelButton.textContent = "终止任务";
+                cancelButton.textContent = t("cancel");
                 cancelButton.addEventListener("click", async () => {
                     const currentTask = view.task;
                     if (!canCancelTask(currentTask)) return;
@@ -1813,7 +1818,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
                 const resumeButton = document.createElement("button");
                 resumeButton.className = "button primary";
-                resumeButton.textContent = "继续任务";
+                resumeButton.textContent = t("resume");
                 resumeButton.addEventListener("click", async () => {
                     view.pendingAction = "resume";
                     resumeButton.disabled = true;
@@ -1831,8 +1836,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
                 const memorySyncButton = document.createElement("button");
                 memorySyncButton.className = "button";
-                memorySyncButton.textContent =
-                    api.message?.("task-memory-sync-retry") || "重试记忆同步";
+                memorySyncButton.textContent = api.message(
+                    "task-memory-sync-retry",
+                );
                 memorySyncButton.addEventListener("click", async () => {
                     view.pendingAction = "memory-sync";
                     memorySyncButton.disabled = true;
@@ -1868,7 +1874,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 footerActions.appendChild(repairButton);
                 const deleteButton = document.createElement("button");
                 deleteButton.className = "button";
-                deleteButton.textContent = "删除记录";
+                deleteButton.textContent = t("delete");
                 deleteButton.addEventListener("click", async () => {
                     const currentTask = view.task;
                     if (!currentTask) return;
@@ -1900,8 +1906,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     progressFill,
                     createdAt,
                     updatedAt,
-                    timingSummary,
+                    timingMetric,
+                    speedDetail,
                     qualitySummary,
+                    qualityDetail,
+                    detailGrid,
                     error,
                     actionNotice,
                     reloginButton,
@@ -1926,12 +1935,18 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 view.task = task;
                 setClassName(view.card, `card ${task.status}`);
                 setTextContent(view.name, task.fileName);
+                setAttributeValue(view.name, "title", task.fileName);
                 setTextContent(
                     view.meta,
-                    `${task.service} | ${task.outputModes.join(", ")} | ${task.source === "local" ? "本地提交" : "远端任务"}`,
+                    `${task.service} · ${task.outputModes.map((mode) => (["mono", "dual"].includes(mode) ? api.message(`attachment-type-${mode}`) : mode)).join(", ")} · ${task.source === "local" ? t("local") : t("remote")}`,
                 );
                 setClassName(view.status, `status ${task.status}`);
                 setTextContent(view.status, formatStatus(task));
+                setAttributeValue(
+                    view.status,
+                    "title",
+                    formatStatusDetail(task),
+                );
 
                 const overallProgress = Math.max(
                     0,
@@ -1947,23 +1962,22 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     : overallProgress;
                 const gridValues = [
                     task.queueBlocked
-                        ? "进程回收失败，队列已暂停，请恢复服务"
+                        ? t("cancel-failed")
                         : task.status === "cancelling"
                           ? {
-                                requested: "正在请求终止（最多等待 10 秒）",
-                                terminating: "正在终止任务进程",
-                                killing: "正在强制回收任务进程",
-                            }[task.cancelPhase] ||
-                            "正在终止；服务未报告限时回收能力，请检查服务版本"
+                                requested: t("cancel-requested"),
+                                terminating: t("cancel-terminating"),
+                                killing: t("cancel-killing"),
+                            }[task.cancelPhase] || t("cancel-legacy")
                           : task.status === "running" &&
                               task.currentPage &&
                               task.stage ===
                                   "Parse PDF and Create Intermediate Representation"
-                            ? `解析第 ${task.currentPage} 页`
+                            ? t("parse-page", { page: task.currentPage })
                             : formatActivityStage(task),
                     formatStageProgress(task),
                     fontAssetStage
-                        ? "字体准备完成后开始翻译"
+                        ? t("fonts-before-translation")
                         : `${Math.round(overallProgress)}%`,
                     formatImportState(task),
                     formatAttempt(task),
@@ -1979,7 +1993,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 setAttributeValue(
                     view.progressTrack,
                     "aria-label",
-                    fontAssetStage ? "字体初始化进度" : "任务总进度",
+                    fontAssetStage ? t("font-progress") : t("progress-label"),
                 );
                 const progressWidth = `${displayedProgress}%`;
                 if (view.progressFill.style.width !== progressWidth) {
@@ -1987,17 +2001,33 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 }
                 setTextContent(
                     view.createdAt,
-                    `创建于 ${formatDate(task.createdAt)}`,
+                    t("created", { date: formatDate(task.createdAt) }),
                 );
                 setTextContent(
                     view.updatedAt,
-                    `更新于 ${formatDate(task.updatedAt)}`,
+                    t("updated", { date: formatDate(task.updatedAt) }),
                 );
-                setTextContent(view.timingSummary, taskTimingText(task));
-                setNodeHidden(view.timingSummary, !task.timing);
+                setNodeHidden(view.timingMetric.item, !task.timing);
+                setTextContent(
+                    view.timingMetric.value,
+                    formatTimingDuration(task.timing?.totalSeconds),
+                );
+                setTextContent(
+                    view.timingMetric.label,
+                    task.timing?.complete === false
+                        ? t("timing-partial")
+                        : t("elapsed"),
+                );
 
                 const qualityText = [
-                    qualitySummaryText(task),
+                    task.qualitySummary
+                        ? t("review-summary", {
+                              ...task.qualitySummary,
+                              total:
+                                  task.qualitySummary.selected +
+                                  task.qualitySummary.notSelected,
+                          })
+                        : "",
                     task.translationMemorySync === "pending"
                         ? api.message("task-memory-sync-pending")
                         : "",
@@ -2006,6 +2036,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     .join(" · ");
                 setTextContent(view.qualitySummary, qualityText);
                 setNodeHidden(view.qualitySummary, !qualityText);
+                setTextContent(view.qualityDetail, qualitySummaryText(task));
+                setNodeHidden(view.qualityDetail, !task.qualitySummary);
 
                 const errorSummary = getErrorSummary(task);
                 setTextContent(view.error, errorSummary);
@@ -2016,27 +2048,31 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 );
 
                 const metrics = task.metrics;
-                if (metrics) {
-                    const detailValues = [
-                        formatDecimal(metrics.requests?.qps10s, 2),
-                        formatInteger(metrics.requests?.active || 0),
-                        formatMilliseconds(metrics.requests?.averageLatencyMs),
-                        formatMilliseconds(metrics.requests?.p95LatencyMs),
-                        formatInteger(metrics.requests?.retries || 0),
-                        formatPercent(metrics.localCache?.hitRate),
-                        formatPercent(metrics.providerCache?.hitRate),
-                        `${formatInteger(metrics.tokens?.input)} / ${formatInteger(metrics.tokens?.output)}`,
-                        formatInteger(metrics.referencesSkipped || 0),
-                    ];
-                    view.detailValues.forEach((node, index) => {
-                        setTextContent(node, detailValues[index]);
-                    });
+                const detailValues = [
+                    formatDecimal(metrics?.requests?.qps10s, 2),
+                    formatInteger(metrics?.requests?.active),
+                    formatMilliseconds(metrics?.requests?.averageLatencyMs),
+                    formatMilliseconds(metrics?.requests?.p95LatencyMs),
+                    formatInteger(metrics?.requests?.retries),
+                    formatPercent(metrics?.localCache?.hitRate),
+                    formatPercent(metrics?.providerCache?.hitRate),
+                    `${formatInteger(metrics?.tokens?.input)} / ${formatInteger(metrics?.tokens?.output)}`,
+                    formatInteger(metrics?.referencesSkipped),
+                    formatThroughput(metrics || {}),
+                    formatTimingDuration(task.timing?.queueSeconds),
+                    formatTimingDuration(task.timing?.executionSeconds),
+                ];
+                view.detailValues.forEach((node, index) => {
+                    setTextContent(node, detailValues[index]);
+                });
 
+                if (metrics) {
                     const summaryValues = [
-                        `${formatEta(metrics)} / ${formatThroughput(metrics)}`,
+                        formatEta(metrics),
+                        formatOutputSpeed(metrics),
                         `${formatCompactNumber(metrics.tokens?.input)} / ${formatCompactNumber(metrics.tokens?.output)}`,
                         formatPercent(metrics.providerCache?.hitRate),
-                        `${formatCompactNumber(metrics.requests?.attempts || 0)} / ${formatCompactNumber(metrics.requests?.retries || 0)}`,
+                        `${formatCompactNumber(metrics.requests?.attempts)} / ${formatCompactNumber(metrics.requests?.retries)}`,
                         `${formatCompactDuration(metrics.requests?.averageLatencyMs)} / ${formatCompactDuration(metrics.requests?.p95LatencyMs)}`,
                     ];
                     view.summaryMetrics.forEach((summary, index) => {
@@ -2044,30 +2080,36 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         setNodeHidden(summary.item, false);
                     });
                     setNodeHidden(view.metricEmpty, true);
-                    setNodeHidden(view.metricsToggle, false);
-                    const isExpanded = expandedMetricTaskIds.has(task.taskId);
-                    setNodeHidden(view.metricsPanel, !isExpanded);
-                    updateMetricsToggle(view.metricsToggle, isExpanded);
                 } else {
                     view.summaryMetrics.forEach((summary) => {
                         setNodeHidden(summary.item, true);
                     });
                     setTextContent(
                         view.metricEmpty,
-                        isActiveTask(task) ? "指标采集中" : "暂无请求指标",
+                        isActiveTask(task)
+                            ? t("metrics-collecting")
+                            : t("metrics-empty"),
                     );
-                    setNodeHidden(view.metricEmpty, false);
-                    setNodeHidden(view.metricsPanel, true);
-                    setNodeHidden(view.metricsToggle, true);
+                    setNodeHidden(view.metricEmpty, Boolean(task.timing));
                 }
+                const hasDetails = Boolean(
+                    metrics || task.qualitySummary || task.timing,
+                );
+                const isExpanded =
+                    hasDetails && expandedMetricTaskIds.has(task.taskId);
+                setNodeHidden(view.detailGrid, !metrics && !task.timing);
+                setNodeHidden(view.speedDetail, !metrics);
+                setNodeHidden(view.metricsToggle, !hasDetails);
+                setNodeHidden(view.metricsPanel, !isExpanded);
+                updateMetricsToggle(view.metricsToggle, isExpanded);
 
                 setNodeHidden(view.cancelButton, !canCancelTask(task));
                 view.cancelButton.disabled = view.pendingAction === "cancel";
                 setTextContent(
                     view.retryButton,
                     task.importState === "failed" && task.status !== "failed"
-                        ? "重试导入"
-                        : "重试任务",
+                        ? t("retry-import")
+                        : t("retry"),
                 );
                 setNodeHidden(view.retryButton, !canRetry(task));
                 setNodeHidden(
@@ -2084,7 +2126,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 view.retryButton.disabled = view.pendingAction === "retry";
                 setTextContent(
                     view.repairButton,
-                    task.status === "completed" ? "检查并补译" : "补译",
+                    task.status === "completed"
+                        ? t("check-repair")
+                        : t("repair"),
                 );
                 setNodeHidden(
                     view.repairButton,
@@ -2101,7 +2145,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     view.deleteButton,
                     "title",
                     task.translationMemorySync === "pending"
-                        ? "翻译记忆同步完成后可删除任务"
+                        ? t("memory-delete-wait")
                         : "",
                 );
             }
@@ -2138,12 +2182,20 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 ]);
             }
 
-            function taskTimingText(task) {
-                const timing = task.timing;
-                if (!timing) return "";
-                const duration = (seconds) =>
-                    formatCompactDuration(seconds * 1000);
-                return `${timing.complete ? "服务耗时" : "已记录耗时（部分）"} ${duration(timing.totalSeconds)} · 排队 ${duration(timing.queueSeconds)} · 执行 ${duration(timing.executionSeconds)}`;
+            function formatTimingDuration(seconds) {
+                return seconds === null || seconds === undefined
+                    ? "—"
+                    : formatCompactDuration(seconds * 1000);
+            }
+
+            function formatOutputSpeed(metrics) {
+                const value = metrics.throughput?.outputTokensPerSecond;
+                return value === null ||
+                    value === undefined ||
+                    !Number.isFinite(Number(value)) ||
+                    Number(value) < 0
+                    ? "—"
+                    : `${formatDecimal(value, 1)} tokens/s`;
             }
 
             function setTextContent(node, value) {
@@ -2171,29 +2223,12 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 }
             }
 
-            function renderStats(tasks) {
+            function renderFilterCounts(tasks) {
                 const stats = {
                     total: tasks.length,
-                    running: tasks.filter(isRunningTask).length,
                     failed: tasks.filter(isFailedTask).length,
                     completed: tasks.filter(isCompletedTask).length,
                 };
-                setTextContent(
-                    document.getElementById("stat-total"),
-                    stats.total,
-                );
-                setTextContent(
-                    document.getElementById("stat-running"),
-                    stats.running,
-                );
-                setTextContent(
-                    document.getElementById("stat-failed"),
-                    stats.failed,
-                );
-                setTextContent(
-                    document.getElementById("stat-completed"),
-                    stats.completed,
-                );
                 setTextContent(
                     document.getElementById("filter-count-all"),
                     stats.total,
@@ -2214,6 +2249,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     stats.failed === 0 || !api;
                 document.getElementById("resume-queue-btn").disabled =
                     !api?.resumeTasks || !tasks.some((task) => task.canResume);
+                document.getElementById("clear-failed-btn").disabled = !(
+                    api?.hasFailedTasks?.() ??
+                    tasks.some((task) => task.status === "failed")
+                );
             }
 
             function renderFilterButtons() {
@@ -2244,6 +2283,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const state = normalizeEventStreamState(rawState);
                 setClassName(status, `connection ${state.className}`);
                 setTextContent(label, state.label);
+                setAttributeValue(status, "title", state.detail || state.label);
             }
 
             async function retryAllFailed() {
@@ -2301,10 +2341,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 );
             }
 
-            function isRunningTask(task) {
-                return task.status === "running";
-            }
-
             function isFailedTask(task) {
                 return (
                     task.status === "failed" ||
@@ -2318,89 +2354,108 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function normalizeEventStreamState(rawState) {
-                if (rawState === null || rawState === undefined) {
+                if (rawState === null || rawState === undefined)
                     return {
                         className: "unknown",
-                        label: "事件流不可用",
+                        label: t("connection-unavailable"),
                     };
-                }
                 if (typeof rawState === "object") {
                     const total = Number(rawState.total || 0);
                     const connected = Number(rawState.connected || 0);
-                    if (total === 0) {
+                    const detail = t("connection-count", { connected, total });
+                    if (!total)
                         return {
                             className: "closed",
-                            label: "事件流未连接",
+                            label: t("connection-offline"),
+                            detail,
                         };
-                    }
-                    if (rawState.hasErrors) {
+                    if (rawState.hasErrors)
                         return {
                             className: "error",
-                            label: `事件流异常 ${connected}/${total}`,
+                            label: t("connection-error"),
+                            detail,
                         };
-                    }
-                    if (connected === total) {
+                    if (connected === total)
                         return {
                             className: "connected",
-                            label: `事件流已连接 ${connected}/${total}`,
+                            label: t("connection-connected"),
+                            detail,
                         };
-                    }
                     return {
                         className: "connecting",
-                        label: `事件流连接中 ${connected}/${total}`,
+                        label: t("connection-connecting"),
+                        detail,
                     };
                 }
-                const state = String(rawState).toLowerCase();
                 const mapping = {
-                    open: ["open", "事件流已连接"],
-                    connected: ["connected", "事件流已连接"],
-                    connecting: ["connecting", "事件流连接中"],
-                    closed: ["closed", "事件流已断开"],
-                    disconnected: ["closed", "事件流已断开"],
-                    error: ["error", "事件流异常"],
+                    open: ["connected", "connection-connected"],
+                    connected: ["connected", "connection-connected"],
+                    connecting: ["connecting", "connection-connecting"],
+                    closed: ["closed", "connection-offline"],
+                    disconnected: ["closed", "connection-offline"],
+                    error: ["error", "connection-error"],
                 };
-                const item = mapping[state];
-                if (item) {
-                    return {
-                        className: item[0],
-                        label: item[1],
-                    };
-                }
-                return {
-                    className: "unknown",
-                    label: `事件流 ${rawState}`,
-                };
+                const [className, key] = mapping[
+                    String(rawState).toLowerCase()
+                ] || ["unknown", "connection-unavailable"];
+                return { className, label: t(key) };
             }
 
             function formatStatus(task) {
+                if (task.canResume) return t("paused");
+                return t(
+                    {
+                        paused: "paused",
+                        queued: "queued",
+                        running: "running",
+                        cancelling: "cancelling",
+                        completed: "completed",
+                        incomplete: "incomplete",
+                        failed: "failed",
+                        cancelled: "cancelled",
+                    }[task.status] || "waiting",
+                );
+            }
+
+            function formatStatusDetail(task) {
                 if (task.canResume)
                     return task.recoveryState === "queued"
-                        ? "待恢复（尚未开始）"
-                        : "待恢复（执行中断）";
+                        ? t("resume-queued")
+                        : t("resume-interrupted");
                 const mapping = {
-                    paused: "待恢复",
-                    queued: "排队中",
-                    running: "运行中",
-                    cancelling: "正在终止",
-                    completed: "已完成",
+                    paused: t("paused"),
+                    queued: t("queued"),
+                    running: t("running"),
+                    cancelling: t("cancelling"),
+                    completed: t("completed"),
                     incomplete:
                         task.qualitySummary?.failed > 0
-                            ? `未完成，校对确认 ${task.qualitySummary.failed} 段有问题`
-                            : `未完成，剩余 ${(task.translationSummary?.failed || 0) + (task.translationSummary?.pending || 0) || "待检查"} 段`,
-                    failed: "失败",
-                    cancelled: "已终止",
+                            ? t("incomplete-review", {
+                                  count: task.qualitySummary.failed,
+                              })
+                            : t("incomplete-remaining", {
+                                  count:
+                                      (task.translationSummary?.failed || 0) +
+                                          (task.translationSummary?.pending ||
+                                              0) || t("unchecked"),
+                              }),
+                    failed: t("failed"),
+                    cancelled: t("cancelled"),
                 };
                 if (task.status === "running" && isFontAssetStage(task.stage)) {
-                    return "正在准备首次运行所需字体";
+                    return t("fonts-initial");
                 }
                 if (task.status === "incomplete" && task.canDownloadResult) {
                     const prefix =
                         task.importState === "imported"
-                            ? "PDF 已导入"
-                            : "PDF 已生成";
-                    return `${prefix}；${mapping.incomplete}，可补译`;
+                            ? t("pdf-imported")
+                            : t("pdf-generated");
+                    return t("incomplete-result", {
+                        result: prefix,
+                        status: mapping.incomplete,
+                    });
                 }
-                return mapping[task.status] || task.status;
+                return mapping[task.status] || t("waiting");
             }
 
             function qualitySummaryText(task) {
@@ -2408,9 +2463,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 if (!quality) return "";
                 const total = quality.selected + quality.notSelected;
                 return [
-                    `定向校对：已检查 ${quality.checked} 段（通过 ${quality.passed}、已修正 ${quality.corrected}、确认失败 ${quality.failed}）；入选但未核对 ${quality.unchecked} 段。`,
-                    `覆盖范围：已检查 ${quality.checked}/${total} 段正文，入选 ${quality.selected} 段，未入选 ${quality.notSelected} 段；本次最多 ${quality.paragraphLimit} 段，请求 ${quality.requestsUsed}/${quality.requestLimit} 次。`,
-                    "结论仅覆盖已检查段落；未核对与未入选段落没有语义结论。",
+                    t("review-results", quality),
+                    t("review-coverage", { ...quality, total }),
+                    t("review-limit"),
                 ].join("\n");
             }
 
@@ -2425,55 +2480,56 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     task.stage === "Translate Paragraphs" &&
                     activity
                 ) {
-                    if (activity.fallbackPending > 0) return "翻译中·拆段处理";
-                    if (activity.retrying > 0) return "翻译中·等待重试";
+                    if (activity.fallbackPending > 0)
+                        return t("activity-split");
+                    if (activity.retrying > 0) return t("activity-retry");
                     if (activity.oldestRequestSeconds != null)
-                        return "翻译中·等待响应";
-                    if (activity.queued > 0) return "翻译中·等待处理";
+                        return t("activity-response");
+                    if (activity.queued > 0) return t("activity-queued");
                 }
                 return formatStage(task.stage);
             }
 
             function formatStage(stage) {
                 const mapping = {
-                    "Queue Wait": "排队中",
-                    "Engine Wait": "等待翻译引擎",
-                    Initialization: "初始化中",
-                    "Font Preparation": "准备字体",
-                    "Check Fonts": "检查字体",
-                    "Download Fonts": "下载字体",
+                    "Queue Wait": t("queued"),
+                    "Engine Wait": t("engine-wait"),
+                    Initialization: t("initializing"),
+                    "Font Preparation": t("fonts-prepare"),
+                    "Check Fonts": t("fonts-check"),
+                    "Download Fonts": t("fonts-download"),
                     "Parse PDF and Create Intermediate Representation":
-                        "解析文档",
-                    DetectScannedFile: "检测扫描页",
-                    "Detect Scanned Pages": "检测扫描页",
-                    "Parse Page Layout": "识别版面",
-                    "Parse Table": "识别表格",
-                    "Parse Paragraphs": "识别段落",
-                    "Parse Formulas and Styles": "识别公式",
-                    "Automatic Term Extraction": "提取术语",
-                    "Extract Terms": "提取术语",
-                    "Translate Paragraphs": "翻译正文",
-                    "Semantic Review": "校对译文",
-                    Typesetting: "调整排版",
-                    "Document Layout": "调整排版",
-                    "Add Fonts": "嵌入字体",
-                    "Generate drawing instructions": "生成文档",
-                    "Subset font": "精简字体",
-                    "Save PDF": "保存文档",
-                    "Write PDF": "保存文档",
-                    Finalize: "收尾中",
-                    queued: "排队中",
-                    running: "处理中",
-                    cancelling: "正在终止",
-                    completed: "已完成",
-                    incomplete: "未完成",
-                    failed: "失败",
-                    cancelled: "已终止",
+                        t("parse-document"),
+                    DetectScannedFile: t("scan-detection"),
+                    "Detect Scanned Pages": t("scan-detection"),
+                    "Parse Page Layout": t("parse-layout"),
+                    "Parse Table": t("parse-tables"),
+                    "Parse Paragraphs": t("parse-paragraphs"),
+                    "Parse Formulas and Styles": t("parse-formulas"),
+                    "Automatic Term Extraction": t("extract-terms"),
+                    "Extract Terms": t("extract-terms"),
+                    "Translate Paragraphs": t("translate-body"),
+                    "Semantic Review": t("review"),
+                    Typesetting: t("typeset"),
+                    "Document Layout": t("typeset"),
+                    "Add Fonts": t("embed-fonts"),
+                    "Generate drawing instructions": t("create-document"),
+                    "Subset font": t("subset-fonts"),
+                    "Save PDF": t("save-document"),
+                    "Write PDF": t("save-document"),
+                    Finalize: t("finalize"),
+                    queued: t("queued"),
+                    running: t("processing"),
+                    cancelling: t("cancelling"),
+                    completed: t("completed"),
+                    incomplete: t("incomplete"),
+                    failed: t("failed"),
+                    cancelled: t("cancelled"),
                 };
-                if (!stage) return "等待中";
+                if (!stage) return t("waiting");
                 return Object.prototype.hasOwnProperty.call(mapping, stage)
                     ? mapping[stage]
-                    : "处理中";
+                    : t("processing");
             }
 
             function formatStageProgress(task) {
@@ -2486,10 +2542,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         "Parse PDF and Create Intermediate Representation" &&
                     task.completedPages !== undefined
                 ) {
-                    return `${progress}% · 已完成 ${task.completedPages}/${task.totalPages} 页`;
+                    return t("page-progress", {
+                        progress,
+                        current: task.completedPages,
+                        total: task.totalPages,
+                    });
                 }
                 if (task.stage === "Check Fonts") {
-                    return `${progress}% (${current}/${total} 个)`;
+                    return t("item-progress", { progress, current, total });
                 }
                 if (task.stage === "Download Fonts") {
                     return `${progress}% (${formatBytes(current)} / ${formatBytes(total)})`;
@@ -2515,21 +2575,23 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         "cancelling",
                         "paused",
                     ].includes(task.status)
-                        ? "待译文生成"
-                        : "无";
+                        ? t("await-output")
+                        : t("none");
                 const mapping = {
-                    none: "无",
-                    pending: "等待导入",
-                    importing: "导入中",
-                    imported: "已导入",
-                    failed: "导入失败",
+                    none: t("none"),
+                    pending: t("await-import"),
+                    importing: t("importing"),
+                    imported: t("imported"),
+                    failed: t("import-failed"),
                 };
-                return mapping[task.importState] || task.importState || "无";
+                return (
+                    mapping[task.importState] || task.importState || t("none")
+                );
             }
 
             function formatAttempt(task) {
                 if (task.attempt === undefined || task.attempt === null) {
-                    return "-";
+                    return "—";
                 }
                 return String(task.attempt);
             }
@@ -2564,6 +2626,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 return {
                     item,
                     value: valueEl,
+                    label: labelEl,
                 };
             }
 
@@ -2573,7 +2636,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     "aria-expanded",
                     isExpanded ? "true" : "false",
                 );
-                setTextContent(button, isExpanded ? "收起详情" : "请求详情");
+                setTextContent(
+                    button,
+                    isExpanded ? t("collapse-details") : t("details"),
+                );
             }
 
             function sanitizeId(value) {
@@ -2581,17 +2647,17 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function formatInteger(value) {
-                if (value === null || value === undefined) return "-";
+                if (value === null || value === undefined) return "—";
                 const number = Number(value);
                 return Number.isFinite(number)
-                    ? Math.round(number).toLocaleString("zh-CN")
-                    : "-";
+                    ? Math.round(number).toLocaleString(api.locale || "zh-CN")
+                    : "—";
             }
 
             function formatCompactNumber(value) {
-                if (value === null || value === undefined) return "-";
+                if (value === null || value === undefined) return "—";
                 const number = Number(value);
-                if (!Number.isFinite(number)) return "-";
+                if (!Number.isFinite(number)) return "—";
                 const absolute = Math.abs(number);
                 if (absolute >= 1000000) {
                     return `${stripTrailingZero(number / 1000000)}M`;
@@ -2607,61 +2673,69 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function formatDecimal(value, digits) {
-                if (value === null || value === undefined) return "-";
+                if (value === null || value === undefined) return "—";
                 const number = Number(value);
-                return Number.isFinite(number) ? number.toFixed(digits) : "-";
+                return Number.isFinite(number) ? number.toFixed(digits) : "—";
             }
 
             function formatPercent(value) {
-                if (value === null || value === undefined) return "-";
+                if (value === null || value === undefined) return "—";
                 const number = Number(value);
                 return Number.isFinite(number)
                     ? `${(number * 100).toFixed(1)}%`
-                    : "-";
+                    : "—";
             }
 
             function formatMilliseconds(value) {
-                if (value === null || value === undefined) return "-";
+                if (value === null || value === undefined) return "—";
                 const number = Number(value);
                 return Number.isFinite(number)
-                    ? `${Math.round(number).toLocaleString("zh-CN")} ms`
-                    : "-";
+                    ? `${Math.round(number).toLocaleString(api.locale || "zh-CN")} ms`
+                    : "—";
             }
 
             function formatCompactDuration(value) {
-                if (value === null || value === undefined) return "-";
+                if (value === null || value === undefined) return "—";
                 const milliseconds = Number(value);
-                if (!Number.isFinite(milliseconds)) return "-";
+                if (!Number.isFinite(milliseconds)) return "—";
                 if (milliseconds < 1000) {
-                    return `${Math.round(milliseconds)}ms`;
+                    return `${Math.round(milliseconds)} ms`;
                 }
                 const seconds = milliseconds / 1000;
                 if (seconds < 60) {
-                    return `${stripTrailingZero(seconds)}s`;
+                    return `${stripTrailingZero(seconds)} s`;
                 }
                 const minutes = seconds / 60;
                 if (minutes < 60) {
-                    return `${stripTrailingZero(minutes)}m`;
+                    return `${stripTrailingZero(minutes)} min`;
                 }
-                return `${stripTrailingZero(minutes / 60)}h`;
+                return `${stripTrailingZero(minutes / 60)} h`;
             }
 
             function formatThroughput(metrics) {
                 const value = metrics.throughput?.paragraphsPerMinute;
-                if (value === null || value === undefined) return "计算中";
-                return `${formatDecimal(value, 1)} 段/分钟`;
+                if (
+                    value === null ||
+                    value === undefined ||
+                    !Number.isFinite(Number(value))
+                )
+                    return "—";
+                return t("paragraphs-minute", {
+                    count: formatDecimal(value, 1),
+                });
             }
 
             function formatEta(metrics) {
                 const value = metrics.throughput?.etaSeconds;
-                if (value === null || value === undefined) return "计算中";
+                if (value === null || value === undefined) return "—";
                 const seconds = Math.max(Math.round(Number(value)), 0);
-                if (!Number.isFinite(seconds)) return "计算中";
-                if (seconds < 60) return `${seconds} 秒`;
+                if (!Number.isFinite(seconds)) return "—";
+                if (seconds < 60) return t("eta-seconds", { seconds });
                 const minutes = Math.floor(seconds / 60);
-                if (minutes < 60) return `${minutes} 分 ${seconds % 60} 秒`;
+                if (minutes < 60)
+                    return t("eta-minutes", { minutes, seconds: seconds % 60 });
                 const hours = Math.floor(minutes / 60);
-                return `${hours} 小时 ${minutes % 60} 分`;
+                return t("eta-hours", { hours, minutes: minutes % 60 });
             }
 
             function getErrorSummary(task) {
@@ -2692,13 +2766,18 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                                         `${p.providerCode || ""} ${p.errorType || ""} ${p.reason || ""}`,
                                 ),
                             ].join(" "),
-                            diagnostics: task.errorDiagnostics,
+                            diagnostics: [
+                                ...(task.errorDiagnostics || []),
+                                ...(task.failedParagraphs || []).map((p) => ({
+                                    code: p.validationCode,
+                                })),
+                            ],
                         }).text;
                     }
                     return "";
                 }
                 if (task.importState === "failed" || task.importError) {
-                    return "结果导入失败，暂未能确定原因。";
+                    return t("import-error");
                 }
                 const paragraphs = task.failedParagraphs || [];
                 const hasFailure =
@@ -2724,18 +2803,18 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 }
                 addReason(translationFailureReason(task.error || ""));
                 const diagnosticReasons = {
-                    network_tls: "翻译服务的安全证书验证失败",
-                    llm_client_restricted: "服务商不允许当前客户端调用",
-                    llm_protocol: "翻译服务不支持当前接口协议",
-                    font_asset_download: "所需字体下载失败",
-                    pdf_text_layer_cid: "PDF 文字编码无法正常识别",
-                    llm_response_shape: "翻译服务未返回完整译文",
-                    llm_model: "所选模型不可用",
-                    llm_parameters: "翻译请求参数不受支持",
-                    llm_auth: "翻译服务的密钥验证失败",
-                    llm_rate_limit: "翻译服务限制了请求，可能是频率或额度受限",
-                    output_missing: "未能生成翻译后的 PDF",
-                    invalid_page_range: "页码设置排除了全部页面",
+                    network_tls: t("error-tls"),
+                    llm_client_restricted: t("error-client"),
+                    llm_protocol: t("error-protocol"),
+                    font_asset_download: t("error-fonts"),
+                    pdf_text_layer_cid: t("error-pdf-encoding"),
+                    llm_response_shape: t("error-response"),
+                    llm_model: t("error-model"),
+                    llm_parameters: t("error-parameters"),
+                    llm_auth: t("error-auth"),
+                    llm_rate_limit: t("error-limit"),
+                    output_missing: t("error-output"),
+                    invalid_page_range: t("error-pages"),
                 };
                 for (const diagnostic of task.errorDiagnostics || []) {
                     if (diagnostic.code === "network_connectivity") {
@@ -2743,8 +2822,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                             /超时|timeout|timed out/i.test(
                                 diagnostic.message || "",
                             )
-                                ? "翻译服务响应超时"
-                                : "无法连接翻译服务",
+                                ? t("error-timeout")
+                                : t("error-network"),
                         );
                     } else if (
                         Object.prototype.hasOwnProperty.call(
@@ -2758,8 +2837,12 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const labels = Array.from(reasons)
                     .sort((a, b) => b[1] - a[1])
                     .map(([reason]) => reason);
-                if (!labels.length) return "未能翻译：暂未能确定原因。";
-                return `未能翻译：${labels.slice(0, 2).join("；")}${labels.length > 2 ? "等问题" : ""}。`;
+                if (!labels.length) return t("error-unknown");
+                return t("error-summary", {
+                    reasons:
+                        labels.slice(0, 2).join(t("error-separator")) +
+                        (labels.length > 2 ? t("error-more") : ""),
+                });
             }
 
             function chatgptFailure(task) {
@@ -2776,13 +2859,12 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     )
                 )
                     return {
-                        message: "ChatGPT 登录已失效，请重新登录后重试翻译。",
+                        message: t("login-expired"),
                         requiresLogin: true,
                     };
                 if (/暂时无法续期 ChatGPT 授权/.test(text))
                     return {
-                        message:
-                            "暂时无法续期 ChatGPT 授权，请检查网络后重试。",
+                        message: t("login-renewal"),
                     };
                 if (
                     /chatgpt_usage_limit|ChatGPT 套餐或此应用的用量已达上限/.test(
@@ -2790,42 +2872,35 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     )
                 )
                     return {
-                        message:
-                            "ChatGPT 套餐或此应用的用量已达上限，请在 ChatGPT 用量设置中查看。",
+                        message: t("usage-limit"),
                     };
                 return undefined;
             }
 
             function translationFailureReason(value) {
                 const rules = [
-                    [/insufficient_quota/i, "翻译服务额度不足"],
-                    [
-                        /AuthenticationError|invalid_api_key/i,
-                        "翻译服务的密钥验证失败",
-                    ],
+                    [/insufficient_quota/i, t("error-quota")],
+                    [/AuthenticationError|invalid_api_key/i, t("error-auth")],
                     [
                         /PermissionDeniedError|permission_denied/i,
-                        "没有调用翻译服务的权限",
+                        t("error-permission"),
                     ],
-                    [/model_not_found/i, "所选模型不可用"],
+                    [/model_not_found/i, t("error-model")],
                     [
                         /APITimeoutError|ConnectTimeout|ReadTimeout|TimeoutError|timed out/i,
-                        "翻译服务响应超时",
+                        t("error-timeout"),
                     ],
                     [
                         /APIConnectionError|ConnectError|ConnectionError/i,
-                        "无法连接翻译服务",
+                        t("error-network"),
                     ],
-                    [/InternalServerError/i, "翻译服务异常"],
-                    [
-                        /RateLimitError|rate_limit_exceeded/i,
-                        "翻译服务限制了请求，可能是频率或额度受限",
-                    ],
-                    [/semantic_error_unresolved/i, "部分译文校对未通过"],
-                    [/InvalidTranslation/i, "翻译服务返回的译文不符合要求"],
+                    [/InternalServerError/i, t("error-server")],
+                    [/RateLimitError|rate_limit_exceeded/i, t("error-limit")],
+                    [/semantic_error_unresolved/i, t("error-review")],
+                    [/InvalidTranslation/i, t("error-invalid-translation")],
                     [
                         /UnprocessedParagraph|paragraph_not_completed/i,
-                        "部分段落尚未处理完成",
+                        t("error-pending"),
                     ],
                 ];
                 return (
@@ -2872,9 +2947,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function formatDate(value) {
-                if (!value) return "-";
+                if (!value) return "—";
                 try {
-                    return new Date(value).toLocaleString();
+                    return new Date(value).toLocaleString(
+                        api.locale || "zh-CN",
+                    );
                 } catch (_error) {
                     return value;
                 }

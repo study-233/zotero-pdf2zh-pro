@@ -48,6 +48,7 @@ export async function importTaskOutput(options: {
     parentItemID?: number;
     collections?: number[];
     title: string;
+    tags?: string[];
     isCurrent: () => boolean;
 }): Promise<Zotero.Item | undefined> {
     await ensureStore();
@@ -67,6 +68,7 @@ export async function importTaskOutput(options: {
             else if (options.collections)
                 item.setCollections(options.collections);
             item.setField("title", options.title);
+            for (const tag of options.tags || []) item.addTag(tag);
             item.attachmentLinkMode =
                 Zotero.Attachments.LINK_MODE_IMPORTED_FILE;
             item.attachmentContentType = "application/pdf";

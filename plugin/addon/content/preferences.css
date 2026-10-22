@@ -1,0 +1,555 @@
+.pdf2zh-pref-pane {
+    width: 100%;
+    max-width: 860px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    color: FieldText;
+    --pref-label-width: 100px;
+}
+.pdf2zh-pref-pane [hidden] {
+    display: none !important;
+}
+.pdf2zh-pref-pane .pref-title,
+.pdf2zh-pref-pane .pref-section-title {
+    margin: 0;
+    font-weight: 600;
+}
+.pdf2zh-pref-pane .pref-title {
+    font-size: 15px;
+}
+.pdf2zh-pref-pane .pref-section-title {
+    font-size: 14px;
+}
+.pdf2zh-pref-pane .pref-header {
+    display: grid;
+    gap: 8px;
+    padding: 4px 0 16px;
+    border-bottom: 1px solid color-mix(in srgb, FieldText 14%, transparent);
+}
+.pdf2zh-pref-pane .pref-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.pdf2zh-pref-pane .help-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    min-height: 24px;
+    color: LinkText;
+    font-size: 12px;
+}
+.pdf2zh-pref-pane .version-strip {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    font-size: 12px;
+    color: color-mix(in srgb, FieldText 62%, transparent);
+}
+.pdf2zh-pref-pane .version-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+}
+.pdf2zh-pref-pane .version-value {
+    font-size: inherit;
+    font-weight: 400;
+}
+.pdf2zh-pref-pane .server-version-card[data-state="error"] .version-status {
+    color: #c23b22;
+}
+.pdf2zh-pref-pane .pref-section {
+    padding: 18px 0;
+    border-bottom: 1px solid color-mix(in srgb, FieldText 12%, transparent);
+}
+.pdf2zh-pref-pane .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.pdf2zh-pref-pane .pref-description {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: color-mix(in srgb, FieldText 64%, transparent);
+    line-height: 1.5;
+}
+.pdf2zh-pref-pane .pref-description:empty {
+    display: none;
+}
+.pdf2zh-pref-pane .form-grid,
+.pdf2zh-pref-pane .selection-service-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+    align-items: start;
+}
+.pdf2zh-pref-pane .form-grid > .form-field {
+    justify-self: stretch;
+    width: 100%;
+}
+.pdf2zh-pref-pane .form-field,
+.pdf2zh-pref-pane .toggle-field,
+.pdf2zh-pref-pane .selection-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    min-width: 0;
+    text-align: start;
+}
+.pdf2zh-pref-pane .field-label,
+.pdf2zh-pref-pane .toggle-label {
+    margin: 0;
+    font-size: 13px;
+    color: color-mix(in srgb, FieldText 72%, transparent);
+}
+.pdf2zh-pref-pane .inline-controls,
+.pdf2zh-pref-pane .llm-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+}
+.pdf2zh-pref-pane .llm-toolbar {
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+.pdf2zh-pref-pane input,
+.pdf2zh-pref-pane select,
+.pdf2zh-pref-pane button,
+.pdf2zh-pref-pane menulist {
+    font: inherit;
+    color: FieldText;
+    box-sizing: border-box;
+}
+.pdf2zh-pref-pane button {
+    min-height: 32px;
+    margin: 0;
+    padding: 4px 10px;
+}
+.pdf2zh-pref-pane input[type="text"],
+.pdf2zh-pref-pane input[type="number"] {
+    appearance: none;
+    min-width: 0;
+    height: 32px;
+    margin: 0;
+    padding: 5px 8px;
+    border: 1px solid color-mix(in srgb, FieldText 24%, transparent);
+    border-radius: 4px;
+    background: Field;
+}
+.pdf2zh-pref-pane .compact-toolbar button,
+.pdf2zh-pref-pane .glossary-pack-actions button,
+.pdf2zh-pref-pane .dictionary-download-row button {
+    min-height: 28px;
+    padding: 3px 8px;
+    font-size: 12px;
+}
+.pdf2zh-pref-pane .select-input,
+.pdf2zh-pref-pane .profile-select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 32px;
+    margin: 0;
+    text-overflow: ellipsis;
+}
+.pdf2zh-pref-pane .menulist-label-box {
+    min-width: 0;
+}
+.pdf2zh-pref-pane .code-input {
+    width: 74px;
+    min-width: 74px;
+    height: 32px;
+    margin: 0;
+    text-align: center;
+}
+.pdf2zh-pref-pane .short-input {
+    width: 100%;
+    height: 32px;
+    margin: 0;
+    text-align: start;
+}
+.pdf2zh-pref-pane .server-url-input {
+    width: 100%;
+    min-height: 32px;
+    margin: 0;
+}
+.pdf2zh-pref-pane .toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 20px;
+}
+.pdf2zh-pref-pane .toggle-row,
+.pdf2zh-pref-pane .output-choice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    min-width: 0;
+    margin: 0;
+    line-height: 1.5;
+}
+.pdf2zh-pref-pane .toggle-row > label,
+.pdf2zh-pref-pane .output-choice > label {
+    margin: 0;
+}
+.pdf2zh-pref-pane checkbox,
+.pdf2zh-pref-pane input[type="checkbox"] {
+    margin: 0;
+    padding: 0;
+    flex: 0 0 auto;
+}
+.pdf2zh-pref-pane input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+.pdf2zh-pref-pane .output-options {
+    display: grid;
+    gap: 12px;
+}
+.pdf2zh-pref-pane .settings-row {
+    display: grid;
+    grid-template-columns: var(--pref-label-width) minmax(0, 1fr);
+    column-gap: 16px;
+    align-items: start;
+}
+.pdf2zh-pref-pane .settings-row > .field-label {
+    padding-top: 7px;
+}
+.pdf2zh-pref-pane .output-option-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 20px;
+}
+.pdf2zh-pref-pane .attachment-naming {
+    margin-top: 12px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.pdf2zh-pref-pane .attachment-naming > .title-builder {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+.pdf2zh-pref-pane .attachment-naming > .pref-description {
+    grid-column: 2;
+    min-width: 0;
+}
+.pdf2zh-pref-pane .selection-controls {
+    display: grid;
+    gap: 12px;
+}
+.pdf2zh-pref-pane .connection-result {
+    margin: 12px 0 0;
+    padding: 8px 10px;
+    border: 1px solid color-mix(in srgb, FieldText 14%, transparent);
+    border-radius: 6px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    min-width: 0;
+    line-height: 1.45;
+    font: menu;
+}
+.pdf2zh-pref-pane [id$="-profileSummary"] {
+    overflow-wrap: anywhere;
+}
+.pdf2zh-pref-pane details > summary {
+    cursor: pointer;
+    margin: 0;
+    line-height: 20px;
+}
+.pdf2zh-pref-pane details[open] > summary {
+    margin-bottom: 8px;
+}
+.pdf2zh-pref-pane .pref-section[open] > summary {
+    margin-bottom: 16px;
+}
+.pdf2zh-pref-pane .advanced-translation > .toggle-grid {
+    margin-top: 16px;
+}
+.pdf2zh-pref-pane .connection-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+.pdf2zh-pref-pane .glossary-pack-list {
+    margin-top: 8px;
+}
+.pdf2zh-pref-pane .glossary-pack-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px 12px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid color-mix(in srgb, FieldText 10%, transparent);
+}
+.pdf2zh-pref-pane .glossary-pack-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: end;
+}
+.pdf2zh-pref-pane .glossary-pack-state {
+    font-size: 12px;
+    white-space: nowrap;
+    color: color-mix(in srgb, FieldText 68%, transparent);
+}
+.pdf2zh-pref-pane .glossary-pack-error {
+    grid-column: 1 / -1;
+    overflow-wrap: anywhere;
+}
+.pdf2zh-pref-pane .glossary-pack-details,
+.pdf2zh-pref-pane .pref-help-details {
+    margin-top: 12px;
+}
+.pdf2zh-pref-pane .glossary-pack-source {
+    display: grid;
+    gap: 4px;
+    margin-top: 12px;
+    overflow-wrap: anywhere;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.pdf2zh-pref-pane .glossary-pack-source .pref-description {
+    margin: 0;
+}
+.pdf2zh-pref-pane .glossary-custom-title {
+    margin: 18px 0 4px;
+    font-size: 13px;
+}
+.pdf2zh-pref-pane .review-options {
+    margin-top: 16px;
+}
+.pdf2zh-pref-pane .title-builder {
+    display: grid;
+    gap: 12px;
+    margin-top: 8px;
+}
+.pdf2zh-pref-pane .title-field-buttons,
+.pdf2zh-pref-pane .title-block-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+.pdf2zh-pref-pane .title-block-list {
+    min-height: 32px;
+}
+.pdf2zh-pref-pane .title-block {
+    display: inline-flex;
+    gap: 2px;
+    align-items: center;
+    padding: 3px;
+    border: 1px solid color-mix(in srgb, FieldText 16%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, FieldText 5%, transparent);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.pdf2zh-pref-pane .title-block > span {
+    padding: 0 6px;
+    white-space: nowrap;
+}
+.pdf2zh-pref-pane .title-block button {
+    appearance: none;
+    min-width: 24px;
+    width: 24px;
+    min-height: 24px;
+    height: 24px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
+    color: color-mix(in srgb, FieldText 70%, transparent);
+}
+.pdf2zh-pref-pane .title-block button:hover:not(:disabled) {
+    background: color-mix(in srgb, FieldText 10%, transparent);
+    color: FieldText;
+}
+.pdf2zh-pref-pane .title-block button:disabled {
+    opacity: 0.3;
+}
+.pdf2zh-pref-pane .title-block .title-block-handle {
+    cursor: grab;
+}
+.pdf2zh-pref-pane .title-block input[type="text"] {
+    width: 125px;
+    min-width: 40px;
+    min-height: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 2px 6px;
+}
+.pdf2zh-pref-pane .title-block.drop-before {
+    box-shadow: -4px 0 Highlight;
+}
+.pdf2zh-pref-pane .title-block.drop-after {
+    box-shadow: 4px 0 Highlight;
+}
+.pdf2zh-pref-pane .title-separator-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.pdf2zh-pref-pane .title-separator-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+}
+.pdf2zh-pref-pane .title-custom-separator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.pdf2zh-pref-pane .title-custom-separator label {
+    margin: 0;
+    font-size: 12px;
+    white-space: nowrap;
+    color: color-mix(in srgb, FieldText 64%, transparent);
+}
+.pdf2zh-pref-pane .title-field-buttons {
+    gap: 2px;
+}
+.pdf2zh-pref-pane .title-field-buttons button {
+    appearance: none;
+    min-height: 28px;
+    padding: 3px 8px;
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
+    font-size: 12px;
+}
+.pdf2zh-pref-pane .title-field-buttons button[aria-pressed="true"] {
+    border-color: color-mix(in srgb, FieldText 22%, transparent);
+    background: color-mix(in srgb, FieldText 10%, transparent);
+}
+.pdf2zh-pref-pane .title-separator-row input[type="text"] {
+    width: 76px;
+    min-height: 28px;
+    height: 28px;
+    margin: 0;
+    padding: 3px 6px;
+    text-align: center;
+}
+.pdf2zh-pref-pane .title-preview-box {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid color-mix(in srgb, FieldText 12%, transparent);
+}
+.pdf2zh-pref-pane .title-preview-values {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+.pdf2zh-pref-pane .title-preview-row {
+    display: grid;
+    grid-template-columns:
+        3em
+        minmax(0, 1fr);
+    gap: 8px;
+    overflow-wrap: anywhere;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.pdf2zh-pref-pane .title-preview-row > span:first-child {
+    white-space: nowrap;
+    color: color-mix(in srgb, FieldText 64%, transparent);
+}
+.pdf2zh-pref-pane .dictionary-download-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid color-mix(in srgb, FieldText 12%, transparent);
+}
+.pdf2zh-pref-pane .dictionary-details {
+    font-size: 12px;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+}
+.pdf2zh-pref-pane .dictionary-details div {
+    white-space: pre-line;
+}
+.pdf2zh-pref-pane .title-add-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+.pdf2zh-pref-pane .title-add-controls > * {
+    margin: 0;
+    min-height: 32px;
+    box-sizing: border-box;
+}
+.pdf2zh-pref-pane .title-add-controls .title-field-menu {
+    min-width: 120px;
+    max-width: 100%;
+}
+.pdf2zh-pref-pane .title-add-controls .title-reset {
+    margin-inline-start: auto;
+    border: 0;
+    background: transparent;
+    padding-inline: 0;
+    font-size: 12px;
+    color: LinkText;
+    box-shadow: none;
+}
+.pdf2zh-pref-pane .selection-settings {
+    min-width: 0;
+}
+.pdf2zh-pref-pane progress {
+    width: 100%;
+    margin-top: 8px;
+}
+.pdf2zh-pref-pane button:focus-visible,
+.pdf2zh-pref-pane input:focus-visible,
+.pdf2zh-pref-pane menulist:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+}
+@media (max-width: 620px) {
+    .pdf2zh-pref-pane .settings-row {
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 12px;
+    }
+}
+.pdf2zh-pref-pane .selection-settings .selection-advanced {
+    margin-top: 16px;
+}
+.pdf2zh-pref-pane .selection-settings .selection-advanced > summary {
+    font-size: 13px;
+}
+.pdf2zh-pref-pane .selection-advanced-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+}
+.pdf2zh-pref-pane .selection-advanced-content > * {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+.pdf2zh-pref-pane .selection-advanced-content > .selection-field {
+    grid-column: auto;
+}
+.pdf2zh-pref-pane .selection-advanced-content > .pref-description,
+.pdf2zh-pref-pane .selection-advanced-content > .llm-toolbar,
+.pdf2zh-pref-pane .selection-advanced-content > progress {
+    margin: 0;
+}

@@ -29,6 +29,7 @@ import {
 
 type TaskDialogArgs = {
     message: typeof getString;
+    locale: string;
     errorNotice: (error: unknown) => UserNotice;
     renderNotice: typeof renderNotice;
     noticeAction: typeof runNoticeAction;
@@ -45,6 +46,7 @@ type TaskDialogArgs = {
     };
     changeHistoryPage: (direction: number) => Promise<void>;
     hasActiveTasks: () => boolean;
+    hasFailedTasks: () => boolean;
     onTasksChanged: (listener: () => void) => () => void;
     refreshTasks: () => Promise<void>;
     cancelTask: (taskId: string) => Promise<void>;
@@ -512,6 +514,7 @@ export class PDF2zhTaskManager {
 
         const windowArgs: TaskDialogArgs = {
             message: getString,
+            locale: Zotero.locale,
             errorNotice: (error) => errorNotice(error, getString),
             renderNotice,
             noticeAction: runNoticeAction,
@@ -524,6 +527,8 @@ export class PDF2zhTaskManager {
             getHistoryPage: () => this.getHistoryPage(),
             changeHistoryPage: (direction) => this.changeHistoryPage(direction),
             hasActiveTasks: () => this.hasActiveTasks(),
+            hasFailedTasks: () =>
+                this.getTasks().some((task) => task.status === "failed"),
             onTasksChanged: (listener: () => void) =>
                 this.onTasksChanged(listener),
             refreshTasks: () => this.refreshTasks(),

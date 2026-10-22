@@ -24,7 +24,7 @@ export type TaskOutputResponse = {
     fileName: string;
     outputMode: OutputMode;
     bytes: Uint8Array;
-    titleSuffix?: string;
+    incomplete?: boolean;
     importIdentity?: string;
 };
 
@@ -125,7 +125,7 @@ export class PDF2zhHelperFactory {
                 sourceLang: config.sourceLang,
                 targetLang: config.targetLang,
                 metadata: settings?.metadata,
-                titleSuffix: response.titleSuffix,
+                incomplete: response.incomplete,
                 importIdentity: response.importIdentity,
                 isCurrent,
             });
@@ -229,6 +229,7 @@ export class PDF2zhHelperFactory {
                 getPref("attachmentTitleTemplate")?.toString() ||
                 DEFAULT_TITLE_TEMPLATE,
             openAfterProcess: this.isTrue(getPref("openAfterTranslate")),
+            addTranslatedTag: this.isTrue(getPref("addTranslatedTag")),
         };
     }
 
@@ -261,7 +262,7 @@ export class PDF2zhHelperFactory {
         targetLang?: string;
         metadata?: TitleMetadata;
         isCurrent?: () => boolean;
-        titleSuffix?: string;
+        incomplete?: boolean;
         importIdentity?: string;
     }) {
         const { item, filePath, options, outputMode, service } = params;
@@ -292,17 +293,25 @@ export class PDF2zhHelperFactory {
                 parentItemID == undefined
                     ? this.getCollections(item)
                     : undefined,
-            title: params.titleSuffix
-                ? `${baseTitle}（${params.titleSuffix}）`
+            title: params.incomplete
+                ? `${baseTitle}（${getString("attachment-status-incomplete")}）`
                 : baseTitle,
         };
+        const tags =
+            options.addTranslatedTag && !params.incomplete ? ["已翻译"] : [];
         const attachment = params.importIdentity
             ? await importTaskOutput({
                   ...importOptions,
+                  tags,
                   outputKey: params.importIdentity,
                   isCurrent: params.isCurrent || (() => true),
               })
             : await Zotero.Attachments.importFromFile(importOptions);
+
+        if (!params.importIdentity && attachment && tags.length) {
+            for (const tag of tags) attachment.addTag(tag);
+            await attachment.saveTx();
+        }
 
         if (
             options.openAfterProcess &&

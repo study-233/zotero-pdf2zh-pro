@@ -4,12 +4,21 @@
     <head>
         <meta charset="UTF-8" />
         <title>zotero-pdf2zh-pro</title>
-        <link rel="stylesheet" href="notices.css" />
-        <script src="noticeHelp.js" />
+        <link rel="stylesheet" href="notices.css?v=__profileUIBuild__" />
+        <script src="noticeHelp.js?v=__profileUIBuild__" />
     </head>
     <body class="pdf2zh-help">
-        <h1 id="title" />
-        <section id="updates" />
-        <section id="help" />
+        <main>
+            <h1 id="title" />
+            <section id="updates" aria-labelledby="updates-title" />
+            <section id="help" aria-labelledby="help-title" />
+            <footer>
+                <details id="history" hidden="hidden">
+                    <summary id="history-title" />
+                    <div id="history-releases" />
+                </details>
+                <nav id="documents" />
+            </footer>
+        </main>
     </body>
 </html>

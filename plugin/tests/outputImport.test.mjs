@@ -58,13 +58,22 @@ globalThis.Zotero = {
         importFromFile: async ({ file, parentItemID, title }) => {
             await state.onImport?.(file, parentItemID);
             assert.ok(state.files.has(file));
-            state.imports.push({
+            const imported = {
+                tags: [],
+                saved: false,
                 file,
                 itemID: parentItemID,
                 title,
                 bytes: [...state.files.get(file)],
-            });
-            return { id: parentItemID + 100 };
+            };
+            state.imports.push(imported);
+            return {
+                id: parentItemID + 100,
+                addTag: (tag) => imported.tags.push(tag),
+                saveTx: async () => {
+                    imported.saved = true;
+                },
+            };
         },
     },
     Reader: { open: (id) => state.opened.push(id) },
@@ -72,7 +81,16 @@ globalThis.Zotero = {
 globalThis.__outputImportTest = {
     ...naming,
     ...layoutExports,
-    getString: (key) => (key.endsWith("mono") ? "译文" : "双语对照"),
+    getString: (key) =>
+        key === "attachment-status-incomplete"
+            ? "待补译"
+            : key.endsWith("mono")
+              ? "译文"
+              : "双语对照",
+    importTaskOutput: async (options) => {
+        state.receiptOptions.push(options);
+        return { id: 101 };
+    },
     getPref: (key) =>
         key === "openAfterTranslate"
             ? state.openAfterProcess
@@ -119,7 +137,7 @@ const compiled = ts.transpileModule(source, {
 }).outputText;
 const { PDF2zhHelperFactory } = await import(
     `data:text/javascript;base64,${Buffer.from(
-        "const {getPref,getString,DEFAULT_TITLE_TEMPLATE,buildTitleMetadata,renderAttachmentTitle,parseTitleLayout,renderTitleLayout,repairAttachmentNamingPreferences} = globalThis.__outputImportTest;\n" +
+        "const {getPref,getString,DEFAULT_TITLE_TEMPLATE,buildTitleMetadata,renderAttachmentTitle,parseTitleLayout,renderTitleLayout,repairAttachmentNamingPreferences,importTaskOutput} = globalThis.__outputImportTest;\n" +
             compiled,
     ).toString("base64")}`
 );
@@ -132,6 +150,7 @@ function reset() {
         files: new Map(),
         removals: [],
         imports: [],
+        receiptOptions: [],
         opened: [],
         openAfterProcess: false,
         onWrite: null,
@@ -159,13 +178,18 @@ function deferred() {
     return { promise, resolve };
 }
 
-function importOutput(itemID, content, isCurrent = () => true, titleSuffix) {
+function importOutput(
+    itemID,
+    content,
+    isCurrent = () => true,
+    incomplete = false,
+) {
     return PDF2zhHelperFactory.handleOutputResponse(
         {
             fileName: "paper.zh-CN.dual.pdf",
             outputMode: "dual",
             bytes: new Uint8Array([content]),
-            titleSuffix,
+            incomplete,
         },
         {
             id: itemID,
@@ -279,11 +303,11 @@ test("invalidated task during attachment import does not open the reader", async
 
 test("partial and repaired imports retain distinct titles even with renaming disabled", async () => {
     reset();
-    await importOutput(1, 11, () => true, "未完成·剩余 6 段·第 1 次");
-    await importOutput(1, 22, () => true, "完整·第 2 次");
+    await importOutput(1, 11, () => true, true);
+    await importOutput(1, 22, () => true, false);
     assert.equal(state.imports.length, 2);
-    assert.match(state.imports[0].title, /未完成·剩余 6 段·第 1 次/);
-    assert.match(state.imports[1].title, /完整·第 2 次/);
+    assert.match(state.imports[0].title, /（待补译）$/);
+    assert.match(state.imports[1].title, /^paper\.zh-CN\.dual\.pdf$/);
     assert.deepEqual(
         state.imports.map((i) => i.bytes),
         [[11], [22]],
@@ -327,7 +351,7 @@ test("title metadata uses the parent, while standalone attachments use the sourc
     );
 });
 
-test("custom naming changes only imported titles and preserves both output status suffixes", async () => {
+test("custom naming changes only imported titles and preserves repair markers for both output modes", async () => {
     reset();
     const item = { id: 1, libraryID: 1, isAttachment: () => false };
     const settings = {
@@ -349,7 +373,7 @@ test("custom naming changes only imported titles and preserves both output statu
                 fileName: `unchanged.${outputMode}.pdf`,
                 outputMode,
                 bytes: new Uint8Array([1]),
-                titleSuffix: "未完成·剩余 6 段·第 1 次",
+                incomplete: true,
             },
             item,
             { service: "openai", sourceLang: "en", targetLang: "zh-CN" },
@@ -359,11 +383,11 @@ test("custom naming changes only imported titles and preserves both output statu
     }
     assert.equal(
         state.imports[0].title,
-        "Writer 2024 · Paper · zh-CN · 译文（未完成·剩余 6 段·第 1 次）",
+        "Writer 2024 · Paper · zh-CN · 译文（待补译）",
     );
     assert.equal(
         state.imports[1].title,
-        "Writer 2024 · Paper · zh-CN · 双语对照（未完成·剩余 6 段·第 1 次）",
+        "Writer 2024 · Paper · zh-CN · 双语对照（待补译）",
     );
     assert.equal(
         path.posix.basename(state.imports[0].file),
@@ -392,7 +416,7 @@ test("imported attachment titles use output model, never the current profile mod
                 outputMode: "dual",
                 model,
                 bytes: new Uint8Array([1]),
-                titleSuffix: "完整·第 2 次",
+                incomplete: false,
             },
             { id: 1, libraryID: 1, isAttachment: () => false },
             {
@@ -405,10 +429,7 @@ test("imported attachment titles use output model, never the current profile mod
     }
     assert.deepEqual(
         state.imports.map(({ title }) => title),
-        [
-            "Paper original-model 双语对照（完整·第 2 次）",
-            "Paper 双语对照（完整·第 2 次）",
-        ],
+        ["Paper original-model 双语对照", "Paper 双语对照"],
     );
     assert.ok(
         state.imports.every(
@@ -481,4 +502,59 @@ test("output identity isolates server, task, attempt, mode, library and source i
         { item: { libraryID: 1, key: "SOURCE2" } },
     ])
         assert.notEqual(await identity(value), first);
+});
+
+test("translation tag is opt-in and applies only to complete attachments", async () => {
+    for (const enabled of [false, true]) {
+        for (const incomplete of [false, true]) {
+            reset();
+            state.prefs.addTranslatedTag = enabled;
+            await importOutput(1, 11, () => true, incomplete);
+            const imported = state.imports[0];
+            assert.deepEqual(
+                imported.tags,
+                enabled && !incomplete ? ["已翻译"] : [],
+            );
+            assert.equal(imported.saved, enabled && !incomplete);
+            assert.equal(imported.itemID, 1);
+            assert.equal(imported.title.endsWith("（待补译）"), incomplete);
+        }
+    }
+});
+
+test("durable imports receive tags with the attachment and use captured settings", async () => {
+    for (const incomplete of [false, true]) {
+        reset();
+        state.prefs.addTranslatedTag = true;
+        const options = PDF2zhHelperFactory.getPDFOptions();
+        state.prefs.addTranslatedTag = false;
+        for (const outputMode of ["mono", "dual"]) {
+            await PDF2zhHelperFactory.handleOutputResponse(
+                {
+                    fileName: `paper.${outputMode}.pdf`,
+                    outputMode,
+                    incomplete,
+                    bytes: new Uint8Array([1]),
+                    importIdentity: outputMode,
+                },
+                { id: 1, libraryID: 1, isAttachment: () => false },
+                { service: "openai" },
+                () => true,
+                {
+                    options,
+                    metadata: {
+                        title: "Paper",
+                        fullTitle: "Paper",
+                        author: "",
+                        year: "",
+                    },
+                },
+            );
+        }
+        assert.equal(state.receiptOptions.length, 2);
+        for (const imported of state.receiptOptions) {
+            assert.deepEqual(imported.tags, incomplete ? [] : ["已翻译"]);
+            assert.equal(imported.title.endsWith("（待补译）"), incomplete);
+        }
+    }
 });

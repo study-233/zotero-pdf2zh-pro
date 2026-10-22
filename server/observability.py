@@ -215,7 +215,7 @@ def empty_metrics() -> dict[str, Any]:
         "tokens": {**_TokenTotals().snapshot(),
                    "byKind": {kind: _TokenTotals().snapshot() for kind in REQUEST_KINDS}},
         "stageDurations": {},
-        "throughput": {"paragraphsPerMinute": None, "etaSeconds": None},
+        "throughput": {"paragraphsPerMinute": None, "etaSeconds": None, "outputTokensPerSecond": None},
         "referencesSkipped": 0,
     }
 
@@ -358,6 +358,8 @@ class TaskMetricsCollector:
         self._stage_durations = Counter()
         self._progress_samples: deque[tuple[float, float]] = deque()
         self._paragraph_samples: deque[tuple[float, int]] = deque()
+        self._output_samples: deque[tuple[float, int]] = deque()
+        self._output_started_at: float | None = None
         self._last_translation_current: int | None = None
         self._references_skipped = 0
         self._activity = Counter(queued=0, retrying=0, fallbackPending=0)
@@ -379,6 +381,8 @@ class TaskMetricsCollector:
         reserve_benchmark_request()
         now = self.clock()
         with self._lock:
+            if self._output_started_at is None:
+                self._output_started_at = now
             self._call_sequence += 1
             handle = RequestHandle(now, f"{self._call_prefix}:{self._call_sequence}", _purpose(kind))
             for stats in (self._requests, self._requests_by_kind[_kind(kind)], self._requests_by_purpose[_purpose(kind)]):
@@ -544,6 +548,12 @@ class TaskMetricsCollector:
                 if self.evidence is not None:
                     self.evidence.request_finished(call, input=values['prompt_tokens'],
                         output=values['completion_tokens'], reasoning=values['reasoning_tokens'])
+            if values['completion_tokens'] is not None:
+                now = self.clock()
+                if self._output_started_at is None:
+                    self._output_started_at = self._started_at
+                delta = values['completion_tokens'] - ((previous or {}).get('completion_tokens') or 0)
+                self._output_samples.append((now, delta))
             for totals in (self._usage, self._usage_by_kind[_kind(kind)], self._usage_by_purpose[_purpose(kind)]):
                 if previous is not None:
                     old = _TokenTotals()
@@ -683,6 +693,7 @@ class TaskMetricsCollector:
                     round(throughput, 1) if throughput is not None else None
                 ),
                 "etaSeconds": round(eta) if eta is not None else None,
+                "outputTokensPerSecond": self._output_rate_locked(now),
             }
             metrics["referencesSkipped"] = self._references_skipped
             metrics["activity"] = {
@@ -698,6 +709,16 @@ class TaskMetricsCollector:
 
     def emit_heartbeat(self) -> None:
         self._emit(force=False)
+
+    def _output_rate_locked(self, now: float) -> float | None:
+        # Aggregate reported output across concurrent calls; cumulative usage is
+        # reduced to deltas in record_usage. This is not model decoding speed.
+        if self._output_started_at is None or self._usage.availability('output') != 'complete':
+            return None
+        seconds = min(now - self._output_started_at, 30.0)
+        if seconds < 1.0:
+            return None
+        return round(sum(value for _, value in self._output_samples) / seconds, 1)
 
     def _eta_locked(self, now: float) -> float | None:
         if self._last_paragraph_completed is not None and now - self._last_paragraph_completed >= 30:
@@ -723,6 +744,8 @@ class TaskMetricsCollector:
             self._attempt_starts.popleft()
         while self._progress_samples and now - self._progress_samples[0][0] > 30:
             self._progress_samples.popleft()
+        while self._output_samples and now - self._output_samples[0][0] >= 30:
+            self._output_samples.popleft()
         while self._paragraph_samples and now - self._paragraph_samples[0][0] > 30:
             self._paragraph_samples.popleft()
 

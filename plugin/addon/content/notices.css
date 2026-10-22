@@ -36,8 +36,7 @@
     gap: 8px;
     flex-wrap: wrap;
 }
-.pdf2zh-update-card button,
-.pdf2zh-help button {
+.pdf2zh-update-card button {
     font: inherit;
     color: ButtonText;
     background: ButtonFace;
@@ -47,29 +46,94 @@
     cursor: pointer;
 }
 .pdf2zh-update-card button:focus-visible,
-.pdf2zh-help button:focus-visible {
+.pdf2zh-help a:focus-visible,
+.pdf2zh-help summary:focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 2px;
 }
 .pdf2zh-help {
     margin: 0;
-    padding: 20px;
+    padding: 20px 24px;
+    font-size: 13px;
+    line-height: 20px;
+}
+.pdf2zh-help main {
+    max-width: 760px;
+    margin: 0 auto;
+}
+.pdf2zh-help [hidden] {
+    display: none !important;
 }
 .pdf2zh-help h1 {
     font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
     margin: 0 0 16px;
 }
-.pdf2zh-help h2 {
-    font-size: 16px;
-    margin: 18px 0 8px;
+.pdf2zh-help h2,
+.pdf2zh-help h3 {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    margin: 0;
 }
-.pdf2zh-help li {
-    margin-bottom: 10px;
+.pdf2zh-help p {
+    margin: 8px 0 0;
 }
-.pdf2zh-help li button {
-    margin-inline-start: 8px;
+.pdf2zh-help .release-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
 }
-.pdf2zh-help section + section {
-    border-top: 1px solid color-mix(in srgb, CanvasText 20%, Canvas);
+.pdf2zh-help .release-heading span,
+.pdf2zh-help .help-topics p {
+    color: color-mix(in srgb, CanvasText 68%, Canvas);
+    font-size: 12px;
+}
+.pdf2zh-help .release-notes {
+    display: grid;
+    gap: 6px;
+    margin: 10px 0 0;
+    padding-inline-start: 18px;
+}
+.pdf2zh-help .help-topics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 24px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+}
+.pdf2zh-help .help-topics p {
+    margin-top: 4px;
+}
+.pdf2zh-help a {
+    color: LinkText;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.pdf2zh-help a:hover {
+    text-decoration-thickness: 2px;
+}
+.pdf2zh-help section + section,
+.pdf2zh-help footer {
+    border-top: 1px solid color-mix(in srgb, CanvasText 14%, Canvas);
     margin-top: 18px;
+    padding-top: 16px;
+}
+.pdf2zh-help summary {
+    cursor: pointer;
+}
+.pdf2zh-help #history-releases article {
+    margin-top: 12px;
+}
+.pdf2zh-help #documents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-top: 14px;
+    font-size: 12px;
+}
+.pdf2zh-help #history[hidden] + #documents {
+    margin-top: 0;
 }

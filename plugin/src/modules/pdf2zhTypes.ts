@@ -138,6 +138,7 @@ export interface PDFOperationOptions {
     titleTemplate: string;
     titleLayout?: import("./attachmentTitleLayout").TitleLayout;
     openAfterProcess: boolean;
+    addTranslatedTag: boolean;
 }
 
 export interface ServerSyncMetadata {
@@ -326,6 +327,7 @@ export interface TaskMetrics {
     journal?: { enabled: boolean; errors: number };
     throughput: {
         paragraphsPerMinute: number | null;
+        outputTokensPerSecond?: number | null;
         etaSeconds: number | null;
     };
     referencesSkipped: number;

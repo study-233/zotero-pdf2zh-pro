@@ -20,6 +20,58 @@ class FakeClock:
 
 
 class ObservabilityTests(unittest.TestCase):
+    def test_output_speed_counts_cumulative_deltas_across_concurrent_calls(self):
+        clock = FakeClock()
+        collector = self.make_collector(clock)
+        first = collector.request_started()
+        second = collector.request_started()
+        def usage(call, output):
+            collector.record_usage(prompt_tokens=100, completion_tokens=output,
+                                   cache_hit_tokens=None, cache_miss_tokens=None, call=call)
+        self.assertIsNone(collector.snapshot()['throughput']['outputTokensPerSecond'])
+        clock.advance(10)
+        usage(first, 100)
+        usage(second, 200)
+        usage(first, 100)  # repeated notification
+        usage(second, 50)  # stale cumulative notification
+        self.assertEqual(collector.snapshot()['throughput']['outputTokensPerSecond'], 30)
+        clock.advance(10)
+        usage(first, 200)
+        self.assertEqual(collector.snapshot()['throughput']['outputTokensPerSecond'], 20)
+        clock.advance(20)  # samples at t=10 leave the rolling window
+        self.assertEqual(collector.snapshot()['throughput']['outputTokensPerSecond'], 3.3)
+        clock.advance(10)
+        self.assertEqual(collector.snapshot()['throughput']['outputTokensPerSecond'], 0)
+
+    def test_output_speed_waits_for_known_usage_and_ignores_setup_time(self):
+        clock = FakeClock()
+        collector = self.make_collector(clock)
+        clock.advance(60)
+        call = collector.request_started()
+        collector.record_usage(prompt_tokens=100, completion_tokens=100,
+                               cache_hit_tokens=None, cache_miss_tokens=None, call=call)
+        self.assertIsNone(collector.snapshot()['throughput']['outputTokensPerSecond'])
+        clock.advance(10)
+        self.assertEqual(collector.snapshot()['throughput']['outputTokensPerSecond'], 10)
+        failed = collector.request_started()
+        collector.request_finished(failed, succeeded=False)
+        self.assertIsNone(collector.snapshot()['throughput']['outputTokensPerSecond'])
+        collector.record_usage(prompt_tokens=None, completion_tokens=0,
+                               cache_hit_tokens=None, cache_miss_tokens=None, call=failed)
+        self.assertEqual(collector.snapshot()['throughput']['outputTokensPerSecond'], 10)
+
+    def test_output_speed_resume_uses_current_run_and_diagnostic_export_preserves_it(self):
+        from observability import empty_metrics, merge_metrics
+        from diagnostics import DiagnosticStore
+        previous, current = empty_metrics(), empty_metrics()
+        previous['throughput']['outputTokensPerSecond'] = 999
+        current['throughput']['outputTokensPerSecond'] = 12.3
+        self.assertEqual(merge_metrics(previous, current)['throughput']['outputTokensPerSecond'], 12.3)
+        self.assertIsNone(merge_metrics(previous, empty_metrics())['throughput']['outputTokensPerSecond'])
+        store = DiagnosticStore()
+        store.record('request', {'metrics': {'throughput': {'outputTokensPerSecond': 12.3}}})
+        self.assertEqual(store.export()['records'][0]['metrics']['throughput']['outputTokensPerSecond'], 12.3)
+
     def test_call_ids_distinguish_concurrent_starts_at_same_clock_tick(self):
         collector = self.make_collector()
         first, second = collector.request_started(), collector.request_started(kind='term_extraction')

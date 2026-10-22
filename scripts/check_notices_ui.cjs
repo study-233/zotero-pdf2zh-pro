@@ -7,7 +7,9 @@ const ts = require("../plugin/node_modules/typescript");
 const { chromium } = require(process.argv[2] || "playwright");
 const root = path.resolve(__dirname, "..");
 const report = require("./workspace.cjs").newReport("notices-ui");
-const build = path.join(root, "plugin/build/addon");
+const build = process.env.PDF2ZH_DEV_RUNTIME
+    ? path.join(process.env.PDF2ZH_DEV_RUNTIME, "plugin-build/addon")
+    : path.join(root, "plugin/build/addon");
 const pkg = require("../plugin/package.json");
 const modules = {};
 for (const name of ["userNotice", "releaseNotes", "pluginNotices"]) {
@@ -24,8 +26,8 @@ const locales = Object.fromEntries(["zh-CN", "en-US"].map(locale => [locale, Obj
     const browser = await chromium.launch({headless: true, channel: "chrome"});
     let checks = 0;
     try {
-        for (const locale of Object.keys(locales)) for (const theme of ["light", "dark"]) for (const width of [360, 900]) {
-            const page = await browser.newPage({viewport: {width, height: 720}, colorScheme: theme});
+        for (const locale of Object.keys(locales)) for (const theme of ["light", "dark"]) for (const width of [620, 960]) {
+            const page = await browser.newPage({viewport: {width, height: 560}, colorScheme: theme});
             const errors = [];
             page.on("pageerror", error => errors.push(error.message));
             await page.route("**/*", route => {
@@ -62,21 +64,26 @@ const locales = Object.fromEntries(["zh-CN", "en-US"].map(locale => [locale, Obj
                 window.noticeRender = load("./userNotice").renderNotice;
                 window.arguments = [{
                     message: t,
+                    version: pkg.version,
                     releases: load("./releaseNotes").releaseSummaries,
-                    action: action => window.noticeActions.push(action),
-                    guide: anchor => window.noticeLinks.push(anchor),
-                    changelog: () => window.noticeLinks.push("changelog"),
+                    guideUrl: "https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md",
+                    changelogUrl: "https://github.com/study-233/zotero-pdf2zh-pro/blob/main/CHANGELOG.md",
+                    openLink: url => window.noticeLinks.push(url),
                 }];
             }, {modules, pkg, strings: locales[locale]});
             await page.goto("http://notice.test/noticeHelp.xhtml");
-            await page.waitForSelector("#help button");
+            await page.waitForSelector("#help a");
             assert.equal(await page.locator("#updates li").count(), 3);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-            await page.locator("#updates li button").first().click();
-            assert.deepEqual(await page.evaluate(() => window.noticeActions), ["profiles"]);
+            assert.equal(await page.locator(".pdf2zh-help button").count(), 0);
+            await page.locator("#help a").first().click();
+            assert.deepEqual(await page.evaluate(() => window.noticeLinks), ["https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#usage"]);
             await page.screenshot({path: path.join(report, `${locale}-${theme}-${width}-help.png`), fullPage: true});
+            await page.locator("#history summary").click();
+            assert.equal(await page.locator("#history").getAttribute("open"), "");
+            await page.screenshot({path: path.join(report, `${locale}-${theme}-${width}-history.png`), fullPage: true});
             await page.evaluate(() => {
-                const button = document.querySelector("#help button");
+                const button = document.querySelector("#help a");
                 button.focus();
                 window.focusBeforeNotice = button;
                 window.noticeAPI.registerNoticeWindow(window);
@@ -98,7 +105,7 @@ const locales = Object.fromEntries(["zh-CN", "en-US"].map(locale => [locale, Obj
             checks++;
             await page.close();
         }
-        fs.writeFileSync(path.join(report, "result.json"), JSON.stringify({passed: true, combinations: checks, scope: "packaged help, update card, localization, themes, narrow layout, focus, dismissal and actions"}, null, 2));
+        fs.writeFileSync(path.join(report, "result.json"), JSON.stringify({passed: true, combinations: checks, scope: "packaged help, update card, localization, themes, desktop layout, history, focus, dismissal and links"}, null, 2));
         console.log(`Passed ${checks} notice UI combinations.`);
     } finally { await browser.close(); }
 })().catch(error => {console.error(error); process.exitCode = 1;});

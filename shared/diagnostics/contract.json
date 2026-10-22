@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaRevision": 2,
+  "schemaRevision": 3,
   "supportedSchemaVersions": [
     1
   ],
@@ -65,6 +65,7 @@
     "omittedTasks",
     "operations",
     "output",
+    "outputTokensPerSecond",
     "overallProgress",
     "oversizedRecords",
     "p95LatencyMs",
@@ -423,6 +424,7 @@
     "taskEvidence",
     "tasks",
     "term_extraction",
+    "throughput",
     "timing",
     "tokens",
     "translation",
@@ -1015,6 +1017,10 @@
     },
     "taskPagination": {
       "coverage": "task_events",
+      "component": "server"
+    },
+    "tokenOutputSpeed": {
+      "coverage": "request_metrics",
       "component": "server"
     }
   },

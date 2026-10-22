@@ -123,12 +123,7 @@ export class ZoteroTaskImporter {
                     bytes,
                     importIdentity,
                     model: task.model || "",
-                    titleSuffix:
-                        task.status === "incomplete"
-                            ? `未完成·剩余 ${(task.translationSummary?.failed || 0) + (task.translationSummary?.pending || 0)} 段·第 ${attempt} 次`
-                            : attempt > 1
-                              ? `完整·第 ${attempt} 次`
-                              : undefined,
+                    incomplete: task.status === "incomplete",
                 };
                 await PDF2zhHelperFactory.handleOutputResponse(
                     output,

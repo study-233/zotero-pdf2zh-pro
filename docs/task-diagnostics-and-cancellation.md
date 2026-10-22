@@ -79,6 +79,7 @@
 [`compatibility-v1.json`](../shared/diagnostics/compatibility-v1.json) 固定保护，不修改这份基线来绕过兼容检查。
 
 - `schemaVersion` 表示结构兼容性，目前仍为 1；`schemaRevision` 表示同一结构的可选扩展，独立于插件和服务版本。同一主版本的更新修订保留已知字段，过滤未知字段并记录数量，不导出未知字段名称或值。
+- `schemaRevision=3` 增加可选指标 `throughput.outputTokensPerSecond`，通过 `tokenOutputSpeed` 声明覆盖。该值按本轮执行最近 30 秒回报的输出 Token 增量计算，合计并发请求；未知或不完整用量为 `null`。继续任务重新统计窗口，旧任务不补造速度。完整计量规则见[文案与 UI 规范](ui-guidelines.md#数字时间与指标)。
 - `GET /health` 的 `diagnostics` 声明 `schemaVersions`、`schemaRevision` 和实际支持的诊断特性。诊断接口接受可选查询 `schemaVersions=2,1`，选择双方都支持的最高主版本。无参数维持原 v1 行为；无共同版本返回 406，参数无效返回 400。
 - 新插件请求 `schemaVersions=1`；旧服务会忽略这个可选参数，仍能采集。新服务继续返回 v1，旧插件可读取原字段；旧插件未登记的新字段仍可能被其旧白名单过滤，完整证据需要两端更新。
 - 校验异常在产生时携带 `validationCode`，占位符问题可附缺失/额外数量；旧检查点仍可从原因链首项提取已登记代码。已有结构化代码优先于旧原因字符串。未知校验错误记为 `unknown_validation`，不把异常原文当作错误码。

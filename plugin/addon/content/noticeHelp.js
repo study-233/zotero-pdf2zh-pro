@@ -9,49 +9,71 @@ window.addEventListener("DOMContentLoaded", () => {
         if (text) node.textContent = text;
         return node;
     };
-    const button = (label, action) => {
-        const node = create("button", t(label));
-        node.addEventListener("click", action);
+    const link = (label, url) => {
+        const node = create("a", t(label));
+        node.href = url;
+        node.addEventListener("click", (event) => {
+            event.preventDefault();
+            api.openLink(node.href);
+        });
         return node;
+    };
+    const notes = (release) => {
+        if (!release?.notes.length) return create("p", t("notice-no-news"));
+        const list = create("ul");
+        list.className = "release-notes";
+        for (const note of release.notes)
+            list.append(create("li", t(note.message)));
+        return list;
     };
     document.title = t("notice-help-title");
     document.getElementById("title").textContent = document.title;
     const updates = document.getElementById("updates");
-    for (const release of api.releases) {
-        updates.append(create("h2", `v${release.version}`));
-        const list = create("ul");
-        for (const note of release.notes) {
-            const item = create("li", t(note.message));
-            if (note.action)
-                item.append(
-                    button(`notice-action-${note.action}`, () =>
-                        api.action(note.action),
-                    ),
-                );
-            list.append(item);
-        }
-        updates.append(
-            release.notes.length ? list : create("p", t("notice-no-news")),
-        );
-    }
-    updates.append(button("notice-changelog", api.changelog));
+    const heading = create("div");
+    heading.className = "release-heading";
+    const title = create("h2", t("notice-updates-heading"));
+    title.id = "updates-title";
+    heading.append(title, create("span", `v${api.version}`));
+    updates.append(
+        heading,
+        notes(api.releases.find((release) => release.version === api.version)),
+    );
     const help = document.getElementById("help");
-    help.append(create("h2", t("notice-help-heading")));
+    const helpTitle = create("h2", t("notice-help-heading"));
+    helpTitle.id = "help-title";
+    help.append(helpTitle);
     const list = create("ul");
-    for (const [key, anchor, action] of [
-        ["pdf", "usage", "tasks"],
-        ["selection", "selection-translation", "selection"],
-        ["profiles", "api-configuration", "profiles"],
-        ["troubleshooting", "troubleshooting", "connection"],
+    list.className = "help-topics";
+    for (const [key, anchor] of [
+        ["pdf", "usage"],
+        ["selection", "selection-translation"],
+        ["profiles", "api-configuration"],
+        ["troubleshooting", "troubleshooting"],
     ]) {
-        const item = create("li", t(`notice-help-${key}`));
+        const item = create("li");
         item.append(
-            button(`notice-action-${action}`, () => api.action(action)),
+            link(`notice-help-${key}-title`, `${api.guideUrl}#${anchor}`),
+            create("p", t(`notice-help-${key}`)),
         );
-        item.append(button("notice-guide", () => api.guide(anchor)));
         list.append(item);
     }
     help.append(list);
+    const history = document.getElementById("history");
+    document.getElementById("history-title").textContent = t("notice-history");
+    for (const release of api.releases.filter(
+        (release) => release.version !== api.version,
+    )) {
+        const article = create("article");
+        article.append(create("h3", `v${release.version}`), notes(release));
+        document.getElementById("history-releases").append(article);
+        history.hidden = false;
+    }
+    const documents = document.getElementById("documents");
+    documents.setAttribute("aria-label", t("notice-documents"));
+    documents.append(
+        link("notice-guide", api.guideUrl),
+        link("notice-changelog", api.changelogUrl),
+    );
     window.addEventListener("keydown", (event) => {
         if (event.key === "Escape") window.close();
     });

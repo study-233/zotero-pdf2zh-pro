@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import { URL } from "node:url";
+import { taskWindowMessage } from "./helpers/taskWindowLocale.mjs";
 
 const source = fs
     .readFileSync(
@@ -33,11 +34,12 @@ function fixture() {
         },
     });
     const context = vm.createContext({
+        message: taskWindowMessage(),
         document: { addEventListener() {}, createElement: node },
         window: { addEventListener() {} },
     });
     vm.runInContext(source, context);
-    vm.runInContext("api = {repairTask() {}};", context);
+    vm.runInContext("api = {repairTask() {}, message};", context);
     return context;
 }
 
@@ -77,7 +79,7 @@ test("failure summary contains no details control or technical records and prese
     const view = ui.createTaskCardView(initial);
     assert.equal(
         view.error.textContent,
-        "未能翻译：无法连接翻译服务；翻译服务异常。",
+        "翻译失败：无法连接翻译服务；翻译服务异常。",
     );
     assert.equal(view.error.hidden, false);
     assert.equal(view.error.tagName, "div");
@@ -103,7 +105,7 @@ test("refresh updates the reason and completed repair removes the notice", () =>
         updatedAt: "2026-09-29T12:00:00Z",
     });
     assert.equal(view.error, notice);
-    assert.equal(view.error.textContent, "未能翻译：翻译服务异常。");
+    assert.equal(view.error.textContent, "翻译失败：翻译服务异常。");
     ui.updateTaskCardView(view, task({ status: "completed" }));
     assert.equal(view.error.hidden, true);
     assert.equal(view.error.textContent, "");
@@ -111,7 +113,7 @@ test("refresh updates the reason and completed repair removes the notice", () =>
     assert.equal(view.error.hidden, false);
     assert.equal(
         view.error.textContent,
-        "未能翻译：无法连接翻译服务；翻译服务异常。",
+        "翻译失败：无法连接翻译服务；翻译服务异常。",
     );
 });
 
@@ -119,11 +121,11 @@ test("task and import failures show only a short message", () => {
     const ui = fixture();
     assert.equal(
         ui.getErrorSummary(task({ error: "UnknownProviderFailure" })),
-        "未能翻译：暂未能确定原因。",
+        "翻译失败，原因未知。",
     );
     assert.equal(
         ui.getErrorSummary(task({ status: "failed" })),
-        "未能翻译：暂未能确定原因。",
+        "翻译失败，原因未知。",
     );
     const view = ui.createTaskCardView(
         task({
@@ -133,7 +135,7 @@ test("task and import failures show only a short message", () => {
             failedParagraphs: paragraphs,
         }),
     );
-    assert.equal(view.error.textContent, "结果导入失败，暂未能确定原因。");
+    assert.equal(view.error.textContent, "译文导入失败，原因未知。");
     assert.doesNotMatch(
         visibleText(view.card),
         /Import failure details|Translation failure details|paragraph-/,
@@ -150,7 +152,7 @@ test("summary supports old services and omits diagnostic-only noise", () => {
                 failedParagraphs: paragraphs,
             }),
         ),
-        "未能翻译：无法连接翻译服务；翻译服务异常。",
+        "翻译失败：无法连接翻译服务；翻译服务异常。",
     );
     const view = ui.createTaskCardView(
         task({
@@ -169,23 +171,23 @@ test("common failure causes use plain Chinese and specific causes override wrapp
         ["InternalServerError → HTTPStatusError", "翻译服务异常"],
         ["AuthenticationError", "翻译服务的密钥验证失败"],
         ["PermissionDeniedError", "没有调用翻译服务的权限"],
-        ["RateLimitError", "翻译服务限制了请求，可能是频率或额度受限"],
+        ["RateLimitError", "翻译请求受限，请检查频率或额度"],
         ["insufficient_quota RateLimitError", "翻译服务额度不足"],
         ["InvalidTranslation semantic_error_unresolved", "部分译文校对未通过"],
         ["InvalidTranslation", "翻译服务返回的译文不符合要求"],
     ]) {
         assert.equal(
             ui.getErrorSummary(task({ error })),
-            `未能翻译：${reason}。`,
+            `翻译失败：${reason}。`,
         );
     }
     assert.equal(
         ui.getErrorSummary(task({ error: "OSError: unknown" })),
-        "未能翻译：暂未能确定原因。",
+        "翻译失败，原因未知。",
     );
     assert.equal(
         ui.getErrorSummary(task({ error: "HTTPStatusError" })),
-        "未能翻译：暂未能确定原因。",
+        "翻译失败，原因未知。",
     );
 });
 
@@ -208,7 +210,7 @@ test("structured diagnostics clarify failures without showing raw messages", () 
                     errorDiagnostics: [{ code, message }],
                 }),
             ),
-            `未能翻译：${reason}。`,
+            `翻译失败：${reason}。`,
         );
     }
     const result = ui.getErrorSummary(
@@ -220,7 +222,7 @@ test("structured diagnostics clarify failures without showing raw messages", () 
             ],
         }),
     );
-    assert.equal(result, "未能翻译：无法连接翻译服务；翻译服务异常等问题。");
+    assert.equal(result, "翻译失败：无法连接翻译服务；翻译服务异常等问题。");
 });
 
 test("ChatGPT failures show actionable reasons and relogin only for invalid authorization", () => {
@@ -236,7 +238,7 @@ test("ChatGPT failures show actionable reasons and relogin only for invalid auth
         );
         assert.equal(
             view.error.textContent,
-            "ChatGPT 登录已失效，请重新登录后重试翻译。",
+            "ChatGPT 登录已失效，请重新登录。",
         );
         assert.equal(view.reloginButton.hidden, false);
         assert.equal(view.reloginButton.textContent, "重新登录");
@@ -250,7 +252,12 @@ test("ChatGPT failures show actionable reasons and relogin only for invalid auth
         const view = ui.createTaskCardView(
             task({ service: "chatgpt", status: "failed", error: message }),
         );
-        assert.equal(view.error.textContent, message);
+        assert.equal(
+            view.error.textContent,
+            message.includes("套餐")
+                ? "ChatGPT 用量已达上限，请查看账户用量。"
+                : "ChatGPT 授权续期失败，请检查网络后重试。",
+        );
         assert.equal(view.reloginButton.hidden, true);
     }
 });

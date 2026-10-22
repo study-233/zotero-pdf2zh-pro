@@ -96,6 +96,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## Documentation
 
+- Before editing plugin copy or UI, follow [plugin copy and UI guidelines](docs/ui-guidelines.md).
+  Keep Chinese and English resources aligned; retain task metric scrolling with hidden scrollbars.
+  Verify the real development Zotero and record theme, language, width and state coverage.
+
 - Before changing the README or adding documentation, follow [README maintenance rules](docs/readme-maintenance.md). Keep the homepage concise and put detailed instructions in the user guide.
 - Preserve the release version marker, existing public anchors, upstream attribution, and any in-progress documentation edits.
 - Run `python3 scripts/check_docs.py` and `python3 -m unittest discover -s scripts -p 'test_check_docs.py'` for documentation changes. Preview the affected Markdown and check new external links manually.

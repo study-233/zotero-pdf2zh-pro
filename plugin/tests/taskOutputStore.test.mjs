@@ -31,6 +31,7 @@ function fixture(t) {
         removed: [],
         indexed: [],
         failReceipt: false,
+        failTag: false,
         afterCommit: false,
         onCopy: null,
         sequence: 0,
@@ -76,12 +77,17 @@ function fixture(t) {
                 assert.equal(kind, "attachment");
                 this.id = ++state.sequence;
                 this.key = `KEY${this.id}`;
+                this.tags = new Set();
             }
             setField(key, value) {
                 this[key] = value;
             }
             setCollections(collections) {
                 this.collections = collections;
+            }
+            addTag(tag) {
+                if (state.failTag) throw new Error("tag write failed");
+                this.tags.add(tag);
             }
             async save() {
                 state.items.set(this.key, this);
@@ -260,4 +266,34 @@ test("distinct outputs remain distinct and standalone collections survive", asyn
     assert.equal(first.parentID, undefined);
     assert.notEqual(first.key, second.key);
     assert.equal(state.items.size, 2);
+});
+
+test("tag and attachment commit together and retries preserve user tags", async (t) => {
+    const { state, options, importTaskOutput } = fixture(t);
+    const tagged = { ...options, tags: ["已翻译"] };
+    const [first, second] = await Promise.all([
+        importTaskOutput(tagged),
+        importTaskOutput(tagged),
+    ]);
+    assert.equal(first.key, second.key);
+    assert.deepEqual([...first.tags], ["已翻译"]);
+    first.addTag("在读");
+    await loadStore().importTaskOutput({ ...options, tags: [] });
+    assert.equal(state.items.size, 1);
+    assert.deepEqual([...first.tags], ["已翻译", "在读"]);
+});
+
+test("tag failure leaves no attachment or receipt and can retry", async (t) => {
+    const { state, options, importTaskOutput } = fixture(t);
+    state.failTag = true;
+    await assert.rejects(
+        importTaskOutput({ ...options, tags: ["已翻译"] }),
+        /tag write failed/,
+    );
+    assert.equal(state.items.size, 0);
+    assert.equal(state.receipts.size, 0);
+    state.failTag = false;
+    const item = await importTaskOutput({ ...options, tags: ["已翻译"] });
+    assert.deepEqual([...item.tags], ["已翻译"]);
+    assert.equal(state.receipts.size, 1);
 });

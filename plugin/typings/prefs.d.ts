@@ -23,6 +23,7 @@ declare namespace _ZoteroTypes {
       "rename": boolean;
       "attachmentTitleTemplate": string;
       "openAfterTranslate": boolean;
+      "addTranslatedTag": boolean;
       "notifyOnTranslationComplete": boolean;
       "fontFamily": string;
       "ocr": boolean;

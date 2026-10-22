@@ -61,6 +61,9 @@ export function errorNotice(error: unknown, t: NoticeTranslator): UserNotice {
         output_missing: ["output"],
         invalid_page_range: ["pages", "connection"],
         import_failed: ["import"],
+        unchanged_translation: ["unchanged-translation"],
+        target_language_missing: ["translation-language"],
+        placeholder_mismatch: ["translation-placeholders"],
     };
     let match = codes.map((code) => code && known[code]).find(Boolean) as
         [string, NoticeAction?] | undefined;
@@ -110,6 +113,10 @@ export function errorNotice(error: unknown, t: NoticeTranslator): UserNotice {
                 "network",
             ],
             [/模型.*不可用|model_not_found/i, "model", "profiles"],
+            [/unchanged_translation/i, "unchanged-translation"],
+            [/target_language_missing/i, "translation-language"],
+            [/placeholder_mismatch/i, "translation-placeholders"],
+            [/InvalidTranslation/i, "translation-validation"],
             [/没有.*PDF|未找到.*PDF|不是.*PDF/i, "pdf"],
         ];
         const rule = rules.find(([pattern]) => pattern.test(text));

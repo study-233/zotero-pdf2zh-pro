@@ -35,7 +35,11 @@ globalThis.__importTest = {
             targetLang: "de",
             apiConfig: { model: "different-current-model" },
         }),
-        getPDFOptions: () => ({ rename: true, titleTemplate: state.template }),
+        getPDFOptions: () => ({
+            rename: true,
+            titleTemplate: state.template,
+            addTranslatedTag: state.addTranslatedTag,
+        }),
         getTitleMetadata: (_item, fileName) => ({ title: fileName }),
         handleOutputResponse: async (
             output,
@@ -72,6 +76,7 @@ function fixture(status = "completed", failed = 0) {
     state.downloads = [];
     state.configs = [];
     state.template = "{title} · {type}";
+    state.addTranslatedTag = false;
     state.outputs = [];
     state.imports = [];
     state.failMode = null;
@@ -235,7 +240,7 @@ test("available incomplete PDFs import once with a warning, including only exist
     ]);
     assert.deepEqual(state.downloads, ["dual"]);
     assert.deepEqual(state.imports, ["dual"]);
-    assert.equal(state.outputs[0].titleSuffix, "未完成·剩余 6 段·第 2 次");
+    assert.equal(state.outputs[0].incomplete, true);
     assert.equal(task.status, "incomplete");
     assert.equal(task.importState, "imported");
     task.status = "completed";
@@ -243,7 +248,7 @@ test("available incomplete PDFs import once with a warning, including only exist
     task.attempt = 3;
     task.importState = "pending";
     await importer.importTaskOutputs("one");
-    assert.equal(state.outputs[1].titleSuffix, "完整·第 3 次");
+    assert.equal(state.outputs[1].incomplete, false);
     assert.deepEqual(state.imports, ["dual", "mono", "dual"]);
 });
 
@@ -260,13 +265,15 @@ test("partial download failure can retry import without translation", async () =
     assert.deepEqual(state.imports, ["mono", "dual"]);
 });
 
-test("an import snapshots naming settings once and uses task languages instead of current preferences", async () => {
+test("an import snapshots naming and tag settings once and uses task languages instead of current preferences", async () => {
     const { task, importer } = fixture();
     task.sourceLang = "en";
     task.targetLang = "ja";
     task.model = "original-model";
+    state.addTranslatedTag = true;
     state.onDownload = () => {
         state.template = "Changed";
+        state.addTranslatedTag = false;
     };
     await importer.importTaskOutputs("one");
     assert.equal(state.configs.length, 2);
@@ -279,6 +286,7 @@ test("an import snapshots naming settings once and uses task languages instead o
         assert.equal(config.sourceLang, "en");
         assert.equal(config.targetLang, "ja");
         assert.equal(settings.options.titleTemplate, "{title} · {type}");
+        assert.equal(settings.options.addTranslatedTag, true);
         assert.equal(settings.metadata.title, "original.pdf");
     }
 });

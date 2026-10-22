@@ -18,6 +18,7 @@ pref("__prefsPrefix__.poolSize", 50);
 pref("__prefsPrefix__.rename", true);
 pref("__prefsPrefix__.attachmentTitleTemplate", "{title} \u00B7 {type}");
 pref("__prefsPrefix__.openAfterTranslate", false);
+pref("__prefsPrefix__.addTranslatedTag", false);
 pref("__prefsPrefix__.notifyOnTranslationComplete", true);
 
 pref("__prefsPrefix__.fontFamily", "auto");

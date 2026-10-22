@@ -294,7 +294,7 @@ function refreshProfiles(rebuildMenu = true) {
     status(
         "profileSummary",
         api
-            ? `${label}${api.model ? ` · ${api.model}` : ""} · ${!preset ? getString("profile-retired-short") : getString(api.needsTest === false ? "profile-tested" : "profile-untested")}`
+            ? `${label} · ${!preset ? getString("profile-retired-short") : getString(api.needsTest === false ? "profile-tested" : "profile-untested")}`
             : getString("profile-empty-hint"),
     );
     status(

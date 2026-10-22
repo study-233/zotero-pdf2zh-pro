@@ -1,9 +1,7 @@
-export type ReleaseAction = "profiles" | "selection" | "tasks";
 export interface ReleaseNote {
     id: string;
     message: string;
     priority: number;
-    action?: ReleaseAction;
 }
 export interface ReleaseSummary {
     version: string;
@@ -24,19 +22,16 @@ export const releaseSummaries: ReleaseSummary[] = [
                 id: "chatgpt-login",
                 message: "release-chatgpt",
                 priority: 0,
-                action: "profiles",
             },
             {
                 id: "selection-tabs",
                 message: "release-selection",
                 priority: 1,
-                action: "selection",
             },
             {
                 id: "task-feedback",
                 message: "release-tasks",
                 priority: 2,
-                action: "tasks",
             },
         ],
     },
@@ -47,19 +42,16 @@ export const releaseSummaries: ReleaseSummary[] = [
                 id: "task-recovery",
                 message: "release-task-recovery",
                 priority: 0,
-                action: "tasks",
             },
             {
                 id: "task-record-protection",
                 message: "release-task-record-protection",
                 priority: 1,
-                action: "tasks",
             },
             {
                 id: "memory-background-sync",
                 message: "release-memory-background-sync",
                 priority: 2,
-                action: "tasks",
             },
         ],
     },

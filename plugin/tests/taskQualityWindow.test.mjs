@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import { URL } from "node:url";
+import { taskWindowMessage } from "./helpers/taskWindowLocale.mjs";
 
 const source = fs
     .readFileSync(
@@ -32,12 +33,13 @@ function fixture() {
         },
     });
     const context = vm.createContext({
+        message: taskWindowMessage(),
         document: { addEventListener() {}, createElement: node },
         window: { addEventListener() {} },
     });
     vm.runInContext(source, context);
     vm.runInContext(
-        "api = {repairTask() {}, resumeTask() {}, message: key => key};",
+        "api = {repairTask() {}, resumeTask() {}, message};",
         context,
     );
     return context;
@@ -101,7 +103,7 @@ test("recovered tasks expose resume independently from repair and cancellation",
         recoveryState: "queued",
     });
     const view = ui.createTaskCardView(recovered);
-    assert.equal(view.status.textContent, "待恢复（尚未开始）");
+    assert.equal(view.status.textContent, "待恢复");
     assert.equal(view.resumeButton.hidden, false);
     assert.equal(view.repairButton.hidden, true);
     assert.equal(ui.canCancelTask(recovered), true);
@@ -111,7 +113,7 @@ test("recovered tasks expose resume independently from repair and cancellation",
         status: "incomplete",
         recoveryState: "interrupted",
     });
-    assert.equal(view.status.textContent, "待恢复（执行中断）");
+    assert.equal(view.status.textContent, "待恢复");
 });
 
 test("timing distinguishes server queue, execution and partial crash records", () => {
@@ -125,15 +127,16 @@ test("timing distinguishes server queue, execution and partial crash records", (
         },
     });
     const view = ui.createTaskCardView(timed);
-    assert.match(view.timingSummary.textContent, /服务耗时.*排队.*执行/);
+    assert.equal(view.timingMetric.value.textContent, "1 min");
+    assert.equal(view.detailValues[10].textContent, "20 s");
+    assert.equal(view.detailValues[11].textContent, "40 s");
     ui.updateTaskCardView(view, {
         ...timed,
         timing: { ...timed.timing, complete: false },
     });
-    assert.match(view.timingSummary.textContent, /已记录耗时（部分）/);
+    assert.match(view.timingMetric.label.textContent, /耗时（部分）/);
     ui.updateTaskCardView(view, task());
-    assert.equal(view.timingSummary.hidden, true);
-    assert.equal(view.timingSummary.textContent, "");
+    assert.equal(view.timingMetric.item.hidden, true);
 });
 
 test("task cards distinguish checked conclusions, unchecked selections and uncovered body paragraphs", () => {
@@ -142,7 +145,7 @@ test("task cards distinguish checked conclusions, unchecked selections and uncov
         task({ qualitySummary: qualitySummary() }),
     );
     assert.equal(view.qualitySummary.hidden, false);
-    const text = view.qualitySummary.textContent;
+    const text = view.qualityDetail.textContent;
     assert.match(text, /已检查 6 段.*通过 4、已修正 1、确认失败 1/);
     assert.match(text, /入选但未核对 4 段/);
     assert.match(text, /已检查 6\/40 段正文，入选 10 段，未入选 30 段/);
@@ -177,8 +180,8 @@ test("unknown review results keep completed PDF status without claiming semantic
         }),
     );
     assert.equal(view.status.textContent, "已完成");
-    assert.match(view.qualitySummary.textContent, /入选但未核对 10 段/);
-    assert.match(view.qualitySummary.textContent, /已检查 0\/40 段正文/);
+    assert.match(view.qualityDetail.textContent, /入选但未核对 10 段/);
+    assert.match(view.qualityDetail.textContent, /已检查 0\/40 段正文/);
     assert.doesNotMatch(
         view.qualitySummary.textContent,
         /全部正确|全部通过|全文通过/,
@@ -187,7 +190,7 @@ test("unknown review results keep completed PDF status without claiming semantic
         view,
         task({ status: "incomplete", qualitySummary: qualitySummary() }),
     );
-    assert.equal(view.status.textContent, "未完成，校对确认 1 段有问题");
+    assert.equal(view.status.textContent, "未完成");
 });
 
 test("quality-only updates invalidate the task card render signature", () => {
@@ -206,7 +209,7 @@ test("quality-only updates invalidate the task card render signature", () => {
     );
     const view = ui.createTaskCardView(initial);
     ui.updateTaskCardView(view, updated);
-    assert.match(view.qualitySummary.textContent, /已检查 7 段.*已修正 2/);
+    assert.match(view.qualityDetail.textContent, /已检查 7 段.*已修正 2/);
 });
 
 test("unknown token counts remain unknown in task metric details", () => {
@@ -218,8 +221,8 @@ test("unknown token counts remain unknown in task metric details", () => {
             },
         }),
     );
-    assert.equal(view.detailValues[7].textContent, "- / -");
-    assert.equal(ui.formatInteger(undefined), "-");
+    assert.equal(view.detailValues[7].textContent, "— / —");
+    assert.equal(ui.formatInteger(undefined), "—");
     assert.equal(ui.formatInteger(0), "0");
 });
 
@@ -250,7 +253,7 @@ test("metric details separate initialization and review without adding their tot
             },
         }),
     );
-    assert.equal(view.summaryMetrics[3].value.textContent, "20 / 1");
+    assert.equal(view.summaryMetrics[4].value.textContent, "20 / 1");
     assert.equal(view.detailValues[7].textContent, "1,000 / 400");
     assert.equal(view.metricNote, undefined);
     assert.doesNotMatch(
@@ -264,18 +267,18 @@ test("missing metric values remain unknown and activity uses one concise stage l
     const view = ui.createTaskCardView(
         task({ metrics: { tokens: { input: null, output: null } } }),
     );
-    assert.equal(view.detailValues[7].textContent, "- / -");
+    assert.equal(view.detailValues[7].textContent, "— / —");
     assert.equal(view.metricNote, undefined);
     const running = task({
         status: "running",
         stage: "Translate Paragraphs",
         metrics: { activity: { oldestRequestSeconds: 15 } },
     });
-    assert.equal(ui.formatActivityStage(running), "翻译中·等待响应");
+    assert.equal(ui.formatActivityStage(running), "翻译中 · 等待响应");
     running.metrics.activity.retrying = 1;
-    assert.equal(ui.formatActivityStage(running), "翻译中·等待重试");
+    assert.equal(ui.formatActivityStage(running), "翻译中 · 等待重试");
     running.metrics.activity.fallbackPending = 1;
-    assert.equal(ui.formatActivityStage(running), "翻译中·拆段处理");
+    assert.equal(ui.formatActivityStage(running), "翻译中 · 拆段处理");
     delete running.metrics.activity;
     assert.equal(
         ui.formatActivityStage(running),
@@ -292,9 +295,12 @@ test("partial PDF availability and import failure are separate from repair", () 
         translationSummary: { failed: 4, pending: 2 },
     });
     const view = ui.createTaskCardView(partial);
-    assert.match(view.status.textContent, /PDF 已导入.*剩余 6 段.*可补译/);
+    assert.match(
+        view.status.getAttribute("title"),
+        /PDF 已导入.*剩余 6 段.*可补译/,
+    );
     ui.updateTaskCardView(view, { ...partial, importState: "failed" });
-    assert.match(view.status.textContent, /PDF 已生成/);
+    assert.match(view.status.getAttribute("title"), /PDF 已生成/);
     assert.equal(view.retryButton.textContent, "重试导入");
     assert.equal(view.retryButton.hidden, false);
     assert.equal(view.repairButton.hidden, false);

@@ -893,3 +893,10 @@ test("online ZIP prefers server task metadata and removes duplicate client recor
         fs.rmSync(temp, { recursive: true, force: true });
     }
 });
+
+test("output speed remains available in sanitized diagnostic exports", () => {
+    const payload = {
+        metrics: { throughput: { outputTokensPerSecond: 12.3 } },
+    };
+    assert.deepEqual(safeDiagnostic(payload), payload);
+});

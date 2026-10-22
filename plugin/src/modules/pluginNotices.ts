@@ -201,19 +201,16 @@ export function openNoticeHelp() {
             "chrome,centerscreen,resizable,dialog=no,width=620,height=560",
             {
                 message: getString,
+                version,
                 releases: releaseSummaries
                     .filter((r) => compareVersions(r.version, version) <= 0)
                     .slice()
                     .sort((a, b) => compareVersions(b.version, a.version)),
-                action: runNoticeAction,
-                guide: (anchor: string) =>
-                    Zotero.launchURL(
-                        `https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#${anchor}`,
-                    ),
-                changelog: () =>
-                    Zotero.launchURL(
-                        "https://github.com/study-233/zotero-pdf2zh-pro/blob/main/CHANGELOG.md",
-                    ),
+                guideUrl:
+                    "https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md",
+                changelogUrl:
+                    "https://github.com/study-233/zotero-pdf2zh-pro/blob/main/CHANGELOG.md",
+                openLink: (url: string) => Zotero.launchURL(url),
             },
         ) || undefined;
 }

@@ -15,7 +15,7 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 DOCUMENTS = (
     'README.md', 'docs/user-guide.md', 'docs/readme-maintenance.md',
-    'docs/development-notes.md', 'CLAUDE.md',
+    'docs/development-notes.md', 'docs/ui-guidelines.md', 'CLAUDE.md',
 )
 PUBLIC_ANCHORS = frozenset('''features quick-start windows macos installation
 api-configuration usage translation-options task-management maintenance

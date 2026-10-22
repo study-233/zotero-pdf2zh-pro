@@ -23,6 +23,47 @@ SOURCES = [
 
 
 class PreservedTextTests(unittest.TestCase):
+    def test_shared_domain_email_groups_are_preserved_but_mixed_prose_is_not(self):
+        sources = [
+            '{alpha, beta-one, gamma-two, delta}@example.com',
+            '{ alpha ; beta }@lab.example.org',
+            "<style id='1'>{alpha, beta}@example.com</style>",
+        ]
+        for source in sources:
+            with self.subTest(source=source):
+                self.assertEqual(preserved_text_reason(source), 'email_only')
+                validate_text(source, source, 'zh-CN')
+                with self.assertRaises(InvalidTranslation):
+                    validate_text(source, '', 'zh-CN')
+        with self.assertRaises(InvalidTranslation) as error:
+            validate_text(sources[2], sources[0], 'zh-CN')
+        self.assertEqual(error.exception.code, 'placeholder_mismatch')
+        for source in [
+            'Please contact {alpha, beta}@example.com for more information.',
+            '{alpha, beta}@example.com provides more information.',
+            '{please contact, beta}@example.com',
+            '{alpha,}@example.com', '{,beta}@example.com',
+            '{alpha, beta}@', '{alpha, beta}@example.com/instructions',
+        ]:
+            with self.subTest(source=source):
+                self.assertIsNone(preserved_text_reason(source))
+
+    def test_repair_reclassifies_grouped_email_and_keeps_successful_checkpoints(self):
+        with ExitStack() as stack:
+            tmp = stack.enter_context(tempfile.TemporaryDirectory())
+            ps, recovery, engine, batch, run = batch_fixtures.PartialBatchTests().fixture(stack, tmp, Mock())
+            ps[0].unicode = '{alpha, beta-one, gamma-two, delta}@example.com'
+            recovery.fail(ps[0], InvalidTranslation('unchanged_translation'))
+            for p in ps[1:]:
+                recovery.record(p, 'succeeded', input=p.unicode, translation=batch_fixtures.translated(p.unicode))
+            run()
+            self.assertEqual(engine.requests, [])
+            summary, failed = recovery.snapshot()
+            self.assertEqual(summary, dict(total=6, succeeded=5, skipped=1, failed=0, pending=0))
+            self.assertEqual(failed, [])
+            self.assertEqual(ps[0].unicode, '{alpha, beta-one, gamma-two, delta}@example.com')
+            self.assertEqual(recovery.current[recovery.keys[id(ps[0])]]['reason'], 'email_only')
+
     def test_actual_sources_and_mixed_prose(self):
         for source in SOURCES:
             self.assertIsNotNone(preserved_text_reason(source))
