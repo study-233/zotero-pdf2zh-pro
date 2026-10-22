@@ -47,7 +47,12 @@ async function fixture(locale, tasks = []) {
             window.arguments = [api];
         },
     });
-    await new Promise((resolve) => dom.window.setTimeout(resolve, 40));
+    await new Promise((resolve) =>
+        dom.window.addEventListener("DOMContentLoaded", resolve, {
+            once: true,
+        }),
+    );
+    await new Promise((resolve) => dom.window.requestAnimationFrame(resolve));
     return { dom, document: dom.window.document, calls, update: changed };
 }
 
@@ -127,7 +132,9 @@ for (const locale of ["zh-CN", "en-US"]) {
                 /2\/10/,
             );
             update();
-            await new Promise((resolve) => dom.window.setTimeout(resolve, 25));
+            await new Promise((resolve) =>
+                dom.window.requestAnimationFrame(resolve),
+            );
             assert.equal(toggle.getAttribute("aria-expanded"), "true");
             toggle.click();
             assert.equal(document.querySelector(".metrics-panel").hidden, true);
