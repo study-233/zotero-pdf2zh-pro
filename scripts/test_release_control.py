@@ -184,6 +184,7 @@ class PolicyTests(unittest.TestCase):
             plan = self.frozen_plan()
             plan['fullValidation'] = True
             plan['cases'].append({'id':'legacy-upgrade','baseline':'1.8.2'})
+            plan['cases'].append({'id':'oldest-upgrade','baseline':'1.9.0'})
             control.save(root/'validation-plan.json', plan)
             manifest = {'version':'1.9.2','commit':SHA,'validationPlanSha256':control.plan_digest(plan),
                         'deferredExtendedValidation':True, 'artifacts':{
@@ -191,13 +192,22 @@ class PolicyTests(unittest.TestCase):
                             'zotero_pdf2zh_pro-1.9.2-py3-none-any.whl':{'sha256':'f'*64}}}
             control.save(root/'checksums.json',manifest)
             receipt = {'status':'passed','commit':SHA,'planSha256':control.plan_digest(plan),'lifecycle':True,
-                       'cases':[{'id':'legacy-upgrade','baseline':'1.8.2','status':'passed'}],
+                       'cases':[{'id':'legacy-upgrade','baseline':'1.8.2','status':'passed'},
+                                {'id':'oldest-upgrade','baseline':'1.9.0','status':'passed'}],
                        'packageSha256':'e'*64,'wheelSha256':'f'*64,'harnessSha256':'9'*64}
             with patch.object(control,'validate_plan'):
                 control.verify_publication_contract(root,receipt)
                 for change in ({'cases':[]},{'lifecycle':False},{'packageSha256':'0'*64},{'planSha256':'0'*64},{'harnessSha256':'0'*64}):
                     with self.assertRaises(ValueError):
                         control.verify_publication_contract(root,dict(receipt,**change))
+                waiver = {'id':'legacy-upgrade','baseline':'1.8.2','reason':'Explicit user request'}
+                waived_receipt = dict(receipt, cases=[receipt['cases'][1]], waivedCases=[waiver])
+                control.verify_publication_contract(root,waived_receipt)
+                for change in ({'cases':[]},{'lifecycle':False},{'packageSha256':'0'*64},
+                               {'waivedCases':[dict(waiver,reason='')]},
+                               {'waivedCases':[dict(waiver,id='oldest-upgrade',baseline='1.9.0')]}):
+                    with self.assertRaises(ValueError):
+                        control.verify_publication_contract(root,dict(waived_receipt,**change))
 
     def test_patch_uses_recent_upgrade_and_risky_change_adds_representatives(self):
         normal = policy.select(['server/chatgpt_client.py'], '1.9.1', '1.9.2')

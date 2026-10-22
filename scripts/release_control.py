@@ -468,10 +468,17 @@ def verify_publication_contract(source, local_receipt=None):
         receipt = local_receipt or {}
         expected = {(case['id'], case['baseline']) for case in plan['cases'] if case['id'] != 'recent-upgrade'}
         actual = {(case['id'], case['baseline']) for case in receipt.get('cases', []) if case['status'] == 'passed'}
+        waived = set()
+        for case in receipt.get('waivedCases', []):
+            identity = (case.get('id'), case.get('baseline'))
+            if (identity != ('legacy-upgrade', policy()['legacyBaseline']) or identity not in expected
+                    or not isinstance(case.get('reason'), str) or not case['reason'].strip()):
+                raise ValueError('Only an explicitly requested legacy upgrade waiver is permitted')
+            waived.add(identity)
         if (receipt.get('status') != 'passed' or receipt.get('commit') != plan['sourceCommit']
                 or receipt.get('planSha256') != plan_digest(plan) or not receipt.get('lifecycle')
                 or receipt.get('harnessSha256') != plan.get('harnessSha256')
-                or not expected.issubset(actual)):
+                or not expected.issubset(actual | waived)):
             raise ValueError('Required local extended validation is incomplete')
         for key, name in [('packageSha256', PACKAGE), ('wheelSha256', f'zotero_pdf2zh_pro-{plan["version"]}-py3-none-any.whl')]:
             if receipt.get(key) != manifest['artifacts'][name]['sha256']:
