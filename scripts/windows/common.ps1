@@ -28,7 +28,7 @@ function Test-PreparationOnlyRoot {
     return $true
 }
 
-$PackageVersion = "1.9.2" # release-version
+$PackageVersion = "1.9.3" # release-version
 $ProductName = "zotero-pdf2zh-pro"
 if (-not $env:PDF2ZH_WINDOWS_APP_ROOT -and (Split-Path $PSScriptRoot -Leaf) -ieq 'bin') {
     $candidateRoot = Split-Path $PSScriptRoot -Parent

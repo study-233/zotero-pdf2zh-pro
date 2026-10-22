@@ -55,6 +55,26 @@ export const releaseSummaries: ReleaseSummary[] = [
             },
         ],
     },
+    {
+        version: "1.9.3",
+        notes: [
+            {
+                id: "task-settings-layout",
+                message: "release-task-settings-layout",
+                priority: 0,
+            },
+            {
+                id: "translated-attachment-tag",
+                message: "release-translated-attachment-tag",
+                priority: 1,
+            },
+            {
+                id: "diagnostic-request-evidence",
+                message: "release-diagnostic-request-evidence",
+                priority: 2,
+            },
+        ],
+    },
 ];
 
 export function compareVersions(a: string, b: string): number {
