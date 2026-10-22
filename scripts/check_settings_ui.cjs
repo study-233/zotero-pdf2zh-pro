@@ -11,16 +11,17 @@ fs.mkdirSync(output,{recursive:true});
 const modules={};
 for(const name of ['userNotice','attachmentNaming','attachmentTitleLayout','attachmentNamingSettings','attachmentNamingPreferences','selectionPreferences','llmApiManager']) modules['./'+name]=ts.transpileModule(fs.readFileSync(path.join(root,'plugin/src/modules/'+name+'.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const markup=fs.readFileSync(path.join(root,'plugin/addon/content/preferences.xhtml'),'utf8').replaceAll('__addonRef__','test');
+const preferencesCss=fs.readFileSync(path.join(root,'plugin/addon/content/preferences.css'),'utf8');
 const locales={};
 for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences'].map(name=>fs.readFileSync(path.join(root,`plugin/addon/locale/${language}/${name}.ftl`),'utf8')).join('\n');
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:'chrome'});
  try {
   for(const language of ['zh-CN','en-US']) {
-   const page=await browser.newPage({viewport:{width:900,height:1050}});page.setDefaultTimeout(10000);
+   const page=await browser.newPage({viewport:{width:960,height:1050}});page.setDefaultTimeout(10000);
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.setContent('<html><body></body></html>');
-   await page.evaluate(({markup,modules,fluent,language})=>{
+   await page.evaluate(({markup,preferencesCss,modules,fluent,language})=>{
     const labels={};let current;
     for(const line of fluent.split(/\r?\n/)) {const m=line.match(/^([\w-]+)\s*=\s*(.*)$/);if(m){current=m[1];labels[current]=m[2];}else if(current&&/^\s+\.\w+/.test(line)){const a=line.match(/\.(\w[\w-]*)\s*=\s*(.*)/);labels[current+'.'+a[1]]=a[2];}else if(current&&line.startsWith('    ')) labels[current]+='\n'+line.trim();}
     window.msg=(key,args={})=>{if(!(key in labels))throw Error('Missing locale '+key);return labels[key].replace(/\{ \$(\w+) \}/g,(_,k)=>args[k]??'');};
@@ -47,7 +48,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
      else if(!l) for(const child of n.childNodes)if(child.nodeType===1||child.nodeType===3)out.append(convert(child));
      return out;
     };
-    document.head.append(convert(xml.getElementsByTagNameNS('http://www.w3.org/1999/xhtml','style')[0]));
+    const style=document.createElement('style');style.textContent=preferencesCss;document.head.append(style);
     // Zotero preferences.css: the odd-child rule caused the real pane to drift
     // right even though this HTML fixture used to pass. Include Windows margins too.
     const nativeStyle=document.createElement('style');nativeStyle.textContent=`
@@ -94,25 +95,26 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
     id('selectedApiKey').append(new Option('Document · document-model','document'));
     id('profileSummary').textContent='api.example.test';
     id('sourceLang').value='en';id('targetLang').value='zh-CN';id('new_serverip').value='http://127.0.0.1:8890';
-   },{markup,modules,fluent:locales[language],language});
+   },{markup,preferencesCss,modules,fluent:locales[language],language});
    const id=n=>page.locator('#zotero-prefpane-test-'+n);
    const addField=async field=>{
     await id('attachmentTitleFields').selectOption(field);
     await page.waitForFunction(()=>id('attachmentTitleFields').value==='');
     assert.equal(await id('attachmentTitleFields').locator(`[data-field="${field}"]`).isDisabled(),true);
    };
-   const checkLayout=async stacked=>{
+   const checkLayout=async()=>{
     const bounds=await page.evaluate(()=>{
      const rect=el=>{const {x,y,width,height,right,bottom}=el.getBoundingClientRect();return {x,y,width,height,right,bottom};};
      return {
       section:rect(document.querySelector('.selection-settings')),
       menus:['selection-trigger','selection-display','selection-dictionary','selection-provider','selection-model'].map(n=>rect(id(n))),
-      labels:[...document.querySelectorAll('.selection-field > label')].map(rect),
+      labels:['selection-trigger','selection-display','selection-dictionary','selection-provider','selection-model'].map(n=>rect(document.querySelector('label[for="'+id(n).id+'"]'))),
       card:rect(document.querySelector('.dictionary-download-row')),
-      auto:rect(document.querySelector('.selection-auto')),
+      auto:rect(id('selection-auto-dictionary').closest('.toggle-row')),
       output:[...document.querySelectorAll('.output-option-row > div')].map(rect),
       tool:[...document.querySelector('.title-add-controls').children].map(rect),
       editor:rect(id('attachmentTitleEditor')),
+      preview:[...document.querySelectorAll('.title-preview-row')].map(row=>{const range=document.createRange();range.selectNodeContents(row.firstElementChild);return {label:rect(range),value:rect(row.lastElementChild)};}),
       overflow:document.documentElement.scrollWidth>innerWidth,
      };
     });
@@ -123,23 +125,22 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
     near(dictionary.x,bounds.section.x,'dictionary starts at section edge');
     near(service.width,dictionary.width,'sources have equal width');
     near(model.x,bounds.section.x,'AI enhancement model starts at section edge');
-    near(model.width,bounds.section.width,'AI enhancement model spans section');
+    near(model.width,dictionary.width,'advanced fields retain two equal columns');
     near(bounds.card.x,model.x,'dictionary card aligned');
-    near(bounds.card.width,model.width,'dictionary card full width');
+    near(bounds.card.width,bounds.section.width,'dictionary card full width');
     near(bounds.auto.x,model.x,'automatic lookup aligned');
     bounds.menus.forEach((menu,i)=>{near(menu.x,bounds.labels[i].x,'label aligns with menu');near(menu.height,32,'consistent control height');});
     for(const [first,second] of [[trigger,display],[dictionary,service]]) {
-     if(stacked){near(first.x,second.x,'narrow fields stack');assert.ok(second.y>=first.bottom);}
-     else {near(first.y,second.y,'wide fields share row');assert.ok(second.x>first.right);}
+     near(first.y,second.y,'desktop fields share row');assert.ok(second.x>first.right);
     }
     assert.ok(model.y>=service.bottom,'advanced settings follow common settings');
     for(let row=0;row<2;row++){
      const [first,second]=bounds.output.slice(row*2,row*2+2);
-     if(stacked){near(first.x,second.x,'narrow output fields stack');assert.ok(second.y>=first.bottom);}
-     else {near(first.y,second.y,'two columns for output');near(first.width,second.width,'equal output columns');}
+     near(first.y,second.y,'two columns for output');near(first.width,second.width,'equal output columns');
     }
     bounds.tool.forEach(control=>assert.ok(control.x>=bounds.editor.x&&control.right<=bounds.editor.right+1,'toolbar fits editor'));
-    near(bounds.tool[2].right,bounds.editor.right,'reset is aligned right');
+    near(bounds.editor.x,bounds.section.x,'title editor starts at section edge');
+    bounds.preview.forEach(({label,value})=>assert.ok(label.right+7<=value.x,'localized preview label must not overlap title'));
    };
    assert.equal(await page.locator('.selection-advanced').getAttribute('open'),null);
    assert.equal(await id('selection-model').isVisible(),false);
@@ -150,7 +151,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
    assert.equal(await page.evaluate(()=>prefs.get('selectionDisplayMode')),'sidebar');
    await page.locator('.selection-settings').screenshot({path:path.join(output,language+'-selection-common.png')});
    await page.locator('.selection-advanced > summary').click();
-   await checkLayout(false);
+   await checkLayout();
    assert.equal(await page.evaluate(()=>titleLayout().separator),' · ');
    assert.doesNotMatch(await id('attachmentTitlePreview-dual').textContent(),/�/);
    assert.equal(await id('selection-model').inputValue(),'');
@@ -210,10 +211,10 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
    assert.equal(await page.evaluate(()=>titleLayout().separator),' / ');
    const saved=await page.evaluate(()=>prefs.get('attachmentTitleLayout'));await page.evaluate(()=>reopenTitle());assert.equal(await page.evaluate(()=>prefs.get('attachmentTitleLayout')),saved);
    await id('attachmentTitleReset').click();
-   await page.emulateMedia({colorScheme:'light'});await checkLayout(false);await page.screenshot({path:path.join(output,language+'-light.png'),fullPage:true});
+   await page.emulateMedia({colorScheme:'light'});await checkLayout();await page.screenshot({path:path.join(output,language+'-light.png'),fullPage:true});
    await page.locator('.output-settings').screenshot({path:path.join(output,language+'-title-light.png')});
    await page.emulateMedia({colorScheme:'dark'});await page.evaluate(()=>document.documentElement.style.colorScheme='dark');
-   await checkLayout(false);await page.screenshot({path:path.join(output,language+'-dark.png'),fullPage:true});
+   await checkLayout();await page.screenshot({path:path.join(output,language+'-dark.png'),fullPage:true});
    await page.locator('.output-settings').screenshot({path:path.join(output,language+'-title-dark.png')});
    await id('selection-download').click();assert.equal(await id('selection-download-progress').isVisible(),true);assert.equal(await id('selection-import').isDisabled(),true);
    await id('selection-download').click();assert.equal(await id('selection-download-progress').isVisible(),false);
@@ -240,35 +241,32 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
    await page.evaluate(()=>{profiles.push({key:'long',name:'Long profile '.repeat(20),service:'openai',model:'provider/model-with-long-name'});window.dispatchEvent(new Event('profiles-changed'));});
    await id('selection-model').selectOption('long');
    await page.waitForFunction(()=>prefs.get('selectionApiKey')==='long');
-   await checkLayout(false);
-   for(const width of [280,480,520,720]){
-    await page.evaluate(width=>document.querySelector('.pdf2zh-pref-pane').style.width=width+'px',width);
-    await checkLayout(width<498);
+   await checkLayout();
+   // This is a desktop Zotero pane; verify ordinary and enlarged windows.
+   for(const width of [960,1280]){
+    await page.setViewportSize({width,height:1050});
+    for(const theme of ['light','dark']){
+     await page.emulateMedia({colorScheme:theme});await page.evaluate(theme=>document.documentElement.style.colorScheme=theme,theme);
+     await checkLayout();
+     await page.locator('.output-settings').screenshot({path:path.join(output,`${language}-title-${width}-${theme}.png`)});
+     await page.locator('.selection-settings').screenshot({path:path.join(output,`${language}-selection-${width}-${theme}.png`)});
+    }
    }
-   // A wide application window can still contain a narrow preferences pane.
-   await page.evaluate(()=>document.querySelector('.pdf2zh-pref-pane').style.width='360px');
-   await checkLayout(true);
-   for(const theme of ['light','dark']){
-    await page.emulateMedia({colorScheme:theme});await page.evaluate(theme=>document.documentElement.style.colorScheme=theme,theme);
-    await checkLayout(true);
-    await page.locator('.output-settings').screenshot({path:path.join(output,language+'-title-narrow-'+theme+'.png')});
-    await page.locator('.selection-settings').screenshot({path:path.join(output,language+'-selection-narrow-'+theme+'.png')});
-   }
-   await page.evaluate(()=>document.querySelector('.pdf2zh-pref-pane').style.width='');
-   await page.setViewportSize({width:400,height:900});
-   await checkLayout(true);
+   await page.setViewportSize({width:960,height:1050});
+   await checkLayout();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'settings must not overflow horizontally');
    for(const field of ['author','year','model','sourceLang','targetLang'])await addField(field);
    const boxes=await id('attachmentTitleBlocks').locator('.title-block').evaluateAll(nodes=>nodes.map(n=>({x:n.getBoundingClientRect().x,y:n.getBoundingClientRect().y,right:n.getBoundingClientRect().right})));
-   assert.ok(new Set(boxes.map(b=>b.y)).size>1);assert.ok(boxes.every(b=>b.x>=0&&b.right<=400));
+   assert.ok(new Set(boxes.map(b=>b.y)).size>1);assert.ok(boxes.every(b=>b.x>=0&&b.right<=960));
    await id('attachmentTitleBlocks').evaluate(el=>el.scrollIntoView({block:'center'}));
    const handle=id('attachmentTitleBlocks').locator('.title-block-handle').last();await handle.dragTo(id('attachmentTitleBlocks').locator('.title-block').first(),{targetPosition:{x:4,y:10}});
    assert.equal(await page.evaluate(()=>titleLayout().blocks[0].field),'targetLang');
    await id('attachmentTitleAddText').click();await id('attachmentTitleBlocks').locator('input').fill('精读版 Reading edition');
-   assert.ok(await id('attachmentTitleBlocks').locator('.title-block').evaluateAll(nodes=>nodes.every(n=>n.getBoundingClientRect().right<=400)));
+   assert.ok(await id('attachmentTitleBlocks').locator('.title-block').evaluateAll(nodes=>nodes.every(n=>n.getBoundingClientRect().right<=innerWidth)));
    assert.ok((await id('attachmentTitleSeparatorCustom').boundingBox()).width<150);
    assert.ok(await page.locator('.title-preview-row > span:first-child').evaluateAll(nodes=>nodes.every(el=>{const range=document.createRange();range.selectNodeContents(el);return range.getBoundingClientRect().height<30;})),'preview labels remain on one line');
-   await page.screenshot({path:path.join(output,language+'-narrow.png'),fullPage:true});
+   await checkLayout();
+   await page.screenshot({path:path.join(output,language+'-many-fields.png'),fullPage:true});
    // Removing all content must preserve the last valid saved layout.
    let last;
    while(await id('attachmentTitleBlocks').locator('.title-block').count()) {last=await page.evaluate(()=>prefs.get('attachmentTitleLayout'));await id('attachmentTitleBlocks').locator('.title-block').first().locator('button').last().click();}

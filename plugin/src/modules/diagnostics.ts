@@ -244,6 +244,7 @@ export function diagnosticSummary(task: Record<string, any>): string {
 
 type DiagnosticRow = Record<string, unknown>;
 let pending = Promise.resolve();
+let stopped = false;
 const recent: DiagnosticRow[] = [];
 let persistenceFailed = false;
 let queuedWrites = 0;
@@ -264,6 +265,7 @@ export function recordDiagnostic(
     event: string,
     fields: Record<string, unknown> = {},
 ): void {
+    if (stopped) return;
     // Detailed outcomes belong to task.json; repeating them per progress event fills the log.
     if (event === "task_state")
         fields = Object.fromEntries(
@@ -312,6 +314,12 @@ export function recordDiagnostic(
         .finally(() => {
             queuedWrites--;
         });
+}
+
+/** Drain the old instance before its sandbox is unloaded or a new writer starts. */
+export async function stopDiagnostics(): Promise<void> {
+    stopped = true;
+    await pending;
 }
 
 export async function diagnosticFetch(
@@ -844,27 +852,32 @@ async function collectAvailable(
     } finally {
         clearTimeout(timer);
     }
-    try {
-        const path = logPath();
-        for (const candidate of [path + ".1", path]) {
-            if (await IOUtils.exists(candidate)) {
-                const bytes = await IOUtils.read(candidate, {
-                    maxBytes: MAX_LOG,
-                });
-                for (const line of new TextDecoder()
-                    .decode(bytes)
-                    .split("\n")) {
-                    try {
-                        records.push(safeDiagnostic(JSON.parse(line)));
-                    } catch {
-                        /* Incomplete line */
+    // Serialize the disk snapshot with writes/rotation, including writes queued
+    // while the server response was being collected.
+    pending = pending.then(async () => {
+        try {
+            const path = logPath();
+            for (const candidate of [path + ".1", path]) {
+                if (await IOUtils.exists(candidate)) {
+                    const bytes = await IOUtils.read(candidate, {
+                        maxBytes: MAX_LOG,
+                    });
+                    for (const line of new TextDecoder()
+                        .decode(bytes)
+                        .split("\n")) {
+                        try {
+                            records.push(safeDiagnostic(JSON.parse(line)));
+                        } catch {
+                            /* Incomplete line */
+                        }
                     }
                 }
             }
+        } catch {
+            persistenceFailed = true;
         }
-    } catch {
-        persistenceFailed = true;
-    }
+    });
+    await pending;
     if (task)
         records = records.filter(
             (row: any) => !row?.taskId || row.taskId === task.taskId,

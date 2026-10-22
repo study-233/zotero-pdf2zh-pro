@@ -1,5 +1,6 @@
 import { cancelDictionaryDownload } from "./modules/selectionDictionaryDownload";
 import { stopDevelopmentLibrary } from "./modules/developmentLibrary";
+import { stopDiagnostics } from "./modules/diagnostics";
 // lifecycle hooks
 import { PDF2zhBasicFactory, PDF2zhUIFactory } from "./modules/pdf2zh";
 import { PDF2zhTaskManager } from "./modules/pdf2zhTaskManager";
@@ -90,7 +91,7 @@ async function onMainWindowUnload(_win: Window): Promise<void> {
     PDF2zhTaskManager.closeWindow();
 }
 
-function onShutdown(): void {
+async function onShutdown(): Promise<void> {
     stopPluginNotices();
     stopDevelopmentLibrary();
     cancelDictionaryDownload();
@@ -99,6 +100,7 @@ function onShutdown(): void {
     ztoolkit.unregisterAll();
     addon.data.dialog?.window?.close();
     PDF2zhTaskManager.closeWindow();
+    await stopDiagnostics();
     addon.data.alive = false;
     // @ts-ignore - Plugin instance is not typed
     delete Zotero[addon.data.config.addonInstance];

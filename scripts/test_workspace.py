@@ -234,6 +234,7 @@ class WorkspaceTests(unittest.TestCase):
             shutil.copy2(source / name, scripts / name)
         check = scripts / 'exercise.ps1'
         check.write_text("""$ErrorActionPreference='Stop'
+$OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 . (Join-Path $PSScriptRoot 'workspace.ps1')
 $run=New-WorkspaceRun -Name 'powershell-check'
 Set-Content -LiteralPath (Join-Path $run.work 'validation.json') -Value '{"passed":true}'
@@ -241,7 +242,7 @@ Complete-WorkspaceRun -Run $run -Passed $true
 if (Test-Path -LiteralPath $run.work) {throw 'Temporary environment survived completion.'}
 if (-not (Test-Path -LiteralPath (Join-Path $run.report 'evidence.zip'))) {throw 'Evidence was lost.'}
 """, encoding='utf-8')
-        result = subprocess.run([shutil.which('pwsh') or shutil.which('powershell'), '-NoProfile', '-File', str(check)], capture_output=True, text=True)
+        result = subprocess.run([shutil.which('pwsh') or shutil.which('powershell'), '-NoProfile', '-File', str(check)], capture_output=True, encoding='utf-8', errors='replace')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js required')

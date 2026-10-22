@@ -64,8 +64,9 @@ class DevelopmentTests(unittest.TestCase):
         if sys.platform != "win32":
             self.assertEqual(target.stat().st_mode & 0o777, 0o600)
         else:
-            acl = subprocess.run(["icacls", str(target)], capture_output=True, text=True, check=True).stdout
-            self.assertNotIn("(I)", acl)  # No inherited broad access to credentials.
+            # icacls uses the local Windows code page even in Python UTF-8 mode.
+            acl = subprocess.run(["icacls", str(target)], capture_output=True, check=True).stdout
+            self.assertNotIn(b"(I)", acl)  # No inherited broad access to credentials.
         self.assertTrue(list(self.dev.paths()["backups"].glob("*.js")))
         user = read_prefs(target.with_name("user.js"))
         self.assertEqual(user[PREFIX + "new_serverip"], self.dev.url)

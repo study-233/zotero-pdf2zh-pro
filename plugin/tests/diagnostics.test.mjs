@@ -6,6 +6,7 @@ import process from "node:process";
 import { spawnSync } from "node:child_process";
 import { Buffer } from "node:buffer";
 import test from "node:test";
+import vm from "node:vm";
 import { URL, fileURLToPath } from "node:url";
 import { TextDecoder, TextEncoder } from "node:util";
 import ts from "typescript";
@@ -24,17 +25,21 @@ const compiled = ts
         },
     )
     .outputText.replace(/^import .*;$/gm, "");
-const module = await import(
-    "data:text/javascript;base64," +
-        Buffer.from(
-            'const config={addonRef:"test",addonName:"test"}; const version="1.0";\n' +
-                `const diagnosticContract=${JSON.stringify(diagnosticContract)};\n` +
-                compiled,
-        ).toString("base64")
-);
+let instance = 0;
+const loadModule = () =>
+    import(
+        "data:text/javascript;base64," +
+            Buffer.from(
+                'const config={addonRef:"test",addonName:"test"}; const version="1.0";\n' +
+                    `const diagnosticContract=${JSON.stringify(diagnosticContract)};\n` +
+                    compiled,
+            ).toString("base64") +
+            `#${instance++}`
+    );
+const module = await loadModule();
 const { safeDiagnostic, diagnosticZip, exportDiagnostics } = module;
 
-async function withBundle(respond, task, inspect, setup) {
+async function withBundle(respond, task, inspect, setup, collector = module) {
     const writes = [];
     const original = globalThis.fetch;
     globalThis.PathUtils = { join: (...parts) => parts.join("/") };
@@ -58,7 +63,7 @@ async function withBundle(respond, task, inspect, setup) {
     );
     try {
         setup?.();
-        await exportDiagnostics("http://localhost", task);
+        await collector.exportDiagnostics("http://localhost", task);
         const zip = path.join(directory, "bundle.zip");
         fs.writeFileSync(
             zip,
@@ -430,10 +435,185 @@ test("network timeout and stalled disk collection are bounded and explained", as
             () => {
                 globalThis.IOUtils.exists = () => new Promise(() => {});
             },
+            await loadModule(),
         );
     } finally {
         globalThis.setTimeout = nativeTimer;
     }
+});
+
+test("shutdown drains queued diagnostics and ignores late callbacks before reload", async () => {
+    const old = await loadModule();
+    const files = new Map();
+    let release;
+    let started;
+    const entered = new Promise((resolve) => {
+        started = resolve;
+    });
+    const gate = new Promise((resolve) => {
+        release = resolve;
+    });
+    globalThis.PathUtils = { join: (...parts) => parts.join("/") };
+    globalThis.Zotero = { DataDirectory: { dir: "/tmp" } };
+    globalThis.IOUtils = {
+        exists: async (name) => files.has(name),
+        read: async (name) => files.get(name),
+        write: async (name, data) => {
+            started();
+            await gate;
+            files.set(name, data);
+        },
+    };
+    old.recordDiagnostic("http_response", { statusCode: 200 });
+    old.recordDiagnostic("http_response", { statusCode: 201 });
+    await entered;
+    let stopped = false;
+    const shutdown = old.stopDiagnostics().then(() => {
+        stopped = true;
+    });
+    old.recordDiagnostic("http_response", { statusCode: 418 });
+    await Promise.resolve();
+    assert.equal(stopped, false, "must not unload an active writer");
+    release();
+    await shutdown;
+    const next = await loadModule();
+    next.recordDiagnostic("http_response", { statusCode: 202 });
+    await next.stopDiagnostics();
+    assert.deepEqual(
+        new TextDecoder()
+            .decode(files.get("/tmp/test-diagnostics.jsonl"))
+            .trim()
+            .split("\n")
+            .map((line) => JSON.parse(line).statusCode),
+        [200, 201, 202],
+    );
+});
+
+test("bootstrap waits for addon shutdown before unloading its sandbox", async () => {
+    let release;
+    const gate = new Promise((resolve) => {
+        release = resolve;
+    });
+    const calls = [];
+    const context = vm.createContext({
+        APP_SHUTDOWN: 2,
+        Zotero: { __addonInstance__: { hooks: { onShutdown: () => gate } } },
+        Cc: {
+            "@mozilla.org/intl/stringbundle;1": {
+                getService: () => ({ flushBundles() {} }),
+            },
+        },
+        Components: { interfaces: { nsIStringBundleService: {} } },
+        Cu: { unload: () => calls.push("unload") },
+    });
+    vm.runInContext(
+        fs.readFileSync(
+            new URL("../addon/bootstrap.js", import.meta.url),
+            "utf8",
+        ),
+        context,
+    );
+    const shutdown = context.shutdown({ rootURI: "file:///test/" }, 4);
+    await Promise.resolve();
+    assert.deepEqual(calls, []);
+    release();
+    await shutdown;
+    assert.deepEqual(calls, ["unload"]);
+});
+
+test("export waits for log rotation and retains the disk-only evidence", async () => {
+    const collector = await loadModule();
+    const log = "/tmp/test-diagnostics.jsonl";
+    const previous =
+        JSON.stringify({ event: "http_response", statusCode: 203 }) + "\n";
+    const files = new Map([
+        [log, new TextEncoder().encode(previous.padEnd(2 * 1024 * 1024, " "))],
+    ]);
+    let release;
+    let rotating;
+    const entered = new Promise((resolve) => {
+        rotating = resolve;
+    });
+    const gate = new Promise((resolve) => {
+        release = resolve;
+    });
+    let exported = false;
+    const exporting = withBundle(
+        async () => {
+            await entered;
+            return new globalThis.Response('{"schemaVersion":1}');
+        },
+        undefined,
+        (read) => {
+            const manifest = JSON.parse(read("manifest.json")).sources.plugin;
+            assert.equal(manifest.reasonCode, "none");
+            assert.equal(manifest.writeFailures, 0);
+            const rows = JSON.parse(read("plugin.json")).records;
+            assert.ok(rows.some((row) => row.statusCode === 203));
+            assert.ok(rows.some((row) => row.statusCode === 204));
+            exported = true;
+        },
+        () => {
+            const saveZip = globalThis.IOUtils.write;
+            globalThis.IOUtils.exists = async (name) => files.has(name);
+            globalThis.IOUtils.read = async (name) => {
+                assert.ok(files.has(name), "read must not race rotation");
+                return files.get(name);
+            };
+            globalThis.IOUtils.move = async (from, to) => {
+                const data = files.get(from);
+                files.delete(from);
+                rotating();
+                await gate;
+                files.set(to, data);
+            };
+            globalThis.IOUtils.write = async (name, data) => {
+                if (name === log) files.set(name, data);
+                else await saveZip(name, data);
+            };
+            collector.recordDiagnostic("http_response", { statusCode: 204 });
+        },
+        collector,
+    );
+    await entered;
+    // Let collection reach its disk snapshot while the rotation is suspended.
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 30));
+    assert.equal(exported, false);
+    release();
+    await exporting;
+    await collector.stopDiagnostics();
+});
+
+test("a failed diagnostic write stays explicit and does not poison later writes", async () => {
+    const collector = await loadModule();
+    let attempts = 0;
+    await withBundle(
+        async () => new globalThis.Response('{"schemaVersion":1}'),
+        undefined,
+        (read) => {
+            const source = JSON.parse(read("manifest.json")).sources.plugin;
+            assert.equal(source.status, "partial");
+            assert.equal(source.reasonCode, "disk_error");
+            assert.equal(source.writeFailures, 1);
+            assert.equal(attempts, 2);
+            assert.match(read("summary.txt"), /部分插件持久化日志不可用/);
+            assert.ok(!read("plugin.json").includes("sk-private"));
+            assert.equal(JSON.parse(read("plugin.json")).records.length, 2);
+        },
+        () => {
+            const saveZip = globalThis.IOUtils.write;
+            globalThis.IOUtils.write = async (name, data) => {
+                if (name.endsWith(".jsonl")) {
+                    if (++attempts === 1)
+                        throw new Error("sk-private /personal/path");
+                } else await saveZip(name, data);
+            };
+            collector.recordDiagnostic("http_response", { statusCode: 200 });
+            collector.recordDiagnostic("http_response", { statusCode: 201 });
+        },
+        collector,
+    );
+    await collector.stopDiagnostics();
 });
 
 test("fixed validation codes survive old task reasons and new server exports", () => {
