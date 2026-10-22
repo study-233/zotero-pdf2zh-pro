@@ -86,16 +86,19 @@ class BackgroundMemoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             manager = TaskManager(root / 'tasks.json')
-            self.addCleanup(manager.close)
-            manager._tasks['one'] = TaskRecord('one', 'paper.pdf', 'openai', ['dual'], {}, root,
-                status='completed', progress_detail={'translationMemorySync': 'synced'})
-            with patch.object(manager, '_schedule_memory_sync') as queue:
-                self.assertEqual(manager.retry_memory_sync('one')['translationMemorySync'], 'pending')
-                queue.assert_called_once_with('one')
-            with self.assertRaises(ValueError):
-                manager.delete_task('one')
-            self.assertEqual(json.loads((root / 'tasks.json').read_text())['tasks'][0]['progress_detail']['translationMemorySync'], 'pending')
-            manager._tasks['one'].status = 'failed'
-            with self.assertRaises(ValueError):
-                manager.retry_memory_sync('one')
-            self.assertIsNone(manager.retry_memory_sync('missing'))
+            try:
+                manager._tasks['one'] = TaskRecord('one', 'paper.pdf', 'openai', ['dual'], {}, root,
+                    status='completed', progress_detail={'translationMemorySync': 'synced'})
+                with patch.object(manager, '_schedule_memory_sync') as queue:
+                    self.assertEqual(manager.retry_memory_sync('one')['translationMemorySync'], 'pending')
+                    queue.assert_called_once_with('one')
+                with self.assertRaises(ValueError):
+                    manager.delete_task('one')
+                self.assertEqual(json.loads((root / 'tasks.json').read_text())['tasks'][0]['progress_detail']['translationMemorySync'], 'pending')
+                manager._tasks['one'].status = 'failed'
+                with self.assertRaises(ValueError):
+                    manager.retry_memory_sync('one')
+                self.assertIsNone(manager.retry_memory_sync('missing'))
+            finally:
+                manager.close()
+                self.assertTrue(manager.diagnostics.flush(timeout=3))
