@@ -1,4 +1,37 @@
 (() => {
+  function bindTabs(selector, select) {
+    const tabs = [...document.querySelectorAll(selector)];
+    tabs.forEach((button, index) => {
+      button.addEventListener('click', () => select(button));
+      button.addEventListener('keydown', event => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 :
+          (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        select(tabs[next]);
+        tabs[next].focus();
+      });
+    });
+  }
+  function activate(button, selector) {
+    for (const tab of document.querySelectorAll(selector)) {
+      const active = tab === button;
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+      document.getElementById(tab.getAttribute('aria-controls')).hidden = !active;
+    }
+  }
+  function selectDataset() {
+    const history = ['#history', '#results', '#method', '#compare'].includes(location.hash);
+    activate(document.getElementById(history ? 'dataset-history' : 'dataset-current'), '[data-benchmark-set]');
+  }
+  bindTabs('[data-benchmark-set]', button => {
+    location.hash = button.dataset.benchmarkSet;
+    selectDataset();
+  });
+  window.addEventListener('hashchange', selectDataset);
+  selectDataset();
+  bindTabs('[data-current-view]', button => activate(button, '[data-current-view]'));
   const table = document.getElementById('model-comparison');
   if (!table) return;
   for (const button of table.querySelectorAll('[data-model-sort]')) {

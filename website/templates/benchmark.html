@@ -1,12 +1,22 @@
 {% extends 'base.html' %}
-{% block scripts %}<script src="{{ asset('site/benchmark.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ asset('pdf-viewer.js') }}" defer></script><script src="{{ asset('app.js') }}" defer></script><script src="{{ asset('site/benchmark.js') }}" defer></script>{% endblock %}
 {% block main %}
-<main id="main-content" class="benchmark-main current-benchmark">
-  <section class="hero"><h1>翻译模型对比</h1><p class="stats">7 个模型 · 每模型 240 条 · {{ benchmark.date }}</p></section>
-  <section id="results" class="panel" aria-label="七模型测评结果">
+<main id="main-content" class="benchmark-main">
+  <section class="hero"><h1>翻译模型对比</h1></section>
+  <div class="benchmark-switch" role="tablist" aria-label="测评版本">
+    <button id="dataset-current" role="tab" aria-selected="true" aria-controls="current-benchmark" data-benchmark-set="current">新版测评</button>
+    <button id="dataset-history" role="tab" aria-selected="false" aria-controls="history-benchmark" data-benchmark-set="history" tabindex="-1">历史测评</button>
+  </div>
+  <div id="current-benchmark" class="current-benchmark" role="tabpanel" aria-labelledby="dataset-current">
+  <p class="stats">7 个模型 · 每模型 240 条 · {{ benchmark.date }}</p>
+  <section id="current-results" class="panel" aria-label="七模型测评结果">
+    <div class="panel-tabs" role="tablist" aria-label="新版测评视图">
+      <button id="current-tab-table" role="tab" aria-selected="true" aria-controls="current-view-table" data-current-view="table"><span class="icon icon-table" aria-hidden="true"></span>模型对比</button>
+      <button id="current-tab-chart" role="tab" aria-selected="false" aria-controls="current-view-chart" data-current-view="chart" tabindex="-1"><span class="icon icon-chart" aria-hidden="true"></span>质量与速度</button>
+    </div>
     <div class="benchmark-tools"><span>计算机论文英译中</span><div><a href="data/comparison.csv" download>下载 CSV</a><a href="data/summary.json" download>JSON</a></div></div>
-    <div class="view">
-      <div id="compare" class="table-wrap" role="region" aria-label="模型对比表，可横向滚动" tabindex="0">
+    <div id="current-view-table" class="view" role="tabpanel" aria-labelledby="current-tab-table">
+      <div class="table-wrap" role="region" aria-label="模型对比表，可横向滚动" tabindex="0">
         <table id="model-comparison" class="main-table">
           <thead><tr>
             {% for key, label in [('name','模型'),('quality','质量 / 100'),('successes','成功请求'),('p50','P50 / s'),('p95','P95 / s'),('cost','已记录金额 / USD')] %}
@@ -21,10 +31,36 @@
           {% endfor %}</tbody>
         </table>
       </div>
-      <p class="table-footnote" id="method">无输出计 0 分；耗时取成功请求。Luna 初评与复核、Codex 终审，非独立评阅。</p>
+      <p class="table-footnote">无输出计 0 分；耗时取成功请求。Luna 初评与复核、Codex 终审，非独立评阅。</p>
       <p class="table-footnote">金额按可记录 Token 计价，含预检和复测。时段账户增量 {{ '%.6f'|format(benchmark.accounting.observed_usage_credits) }} credits（含评审、校准）。</p>
+    </div>
+    <div id="current-view-chart" class="view" role="tabpanel" aria-labelledby="current-tab-chart" hidden>
+      <p class="note">越靠左越快，越靠上质量越高。</p>
+      <div class="chart-panel current-chart-panel">
+        <div class="current-chart-scroll" role="region" tabindex="0" aria-label="质量与速度图，可横向滚动">
+        <svg viewBox="0 0 600 340" role="img" aria-labelledby="current-chart-title current-chart-desc">
+          <title id="current-chart-title">七模型质量与 P50 响应耗时</title><desc id="current-chart-desc">完整数值见模型对比表；圆点序号对应图例。</desc>
+          {% for y in [90,92,94,96,98,100] %}<line x1="48" y1="{{ 280-(y-90)*24 }}" x2="565" y2="{{ 280-(y-90)*24 }}" stroke="var(--line)"/><text x="36" y="{{ 285-(y-90)*24 }}" text-anchor="end">{{ y }}</text>{% endfor %}
+          {% for x in [0,5,10,15,20,25,30] %}<text x="{{ 48+x*17 }}" y="308" text-anchor="middle">{{ x }}</text>{% endfor %}
+          <text x="565" y="334" text-anchor="end">P50 耗时 / s →</text>
+          {% for m in benchmark.models %}<g tabindex="0" aria-label="{{ m.name }}：质量 {{ '%.2f'|format(m.quality) }}，P50 {{ '%.2f'|format(m.p50) }} 秒">
+            <title>{{ m.name }} · {{ '%.2f'|format(m.quality) }} 分 · {{ '%.2f'|format(m.p50) }} s</title>
+            <circle cx="{{ 48+m.p50*17 }}" cy="{{ 280-(m.quality-90)*24 }}" r="7" fill="var(--accent)"/>
+            <text x="{{ 61+m.p50*17 }}" y="{{ 284-(m.quality-90)*24 }}">{{ loop.index }}</text>
+          </g>{% endfor %}
+        </svg>
+        </div>
+        <ol class="current-chart-key">{% for m in benchmark.models %}<li>{{ m.name }}</li>{% endfor %}</ol>
+      </div>
     </div>
   </section>
   <p id="model-sort-status" class="sr-only" role="status"></p>
+  </div>
+  <div id="history-benchmark" role="tabpanel" aria-labelledby="dataset-history" hidden>
+    <nav class="benchmark-nav" aria-label="历史测评内容"><a href="#results" data-page="results" aria-current="page">数据探索</a><a href="#method" data-page="method">方法与来源</a></nav>
+    {{ history|safe }}
+    <span id="updated" hidden></span>
+  </div>
+  {{ dialogs|safe }}
 </main>
 {% endblock %}

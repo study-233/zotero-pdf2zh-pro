@@ -76,10 +76,13 @@ class WebsiteTests(unittest.TestCase):
 
     def test_theme_and_benchmark_scripts_are_shared_from_project_root(self):
         html = (self.output / 'benchmark/index.html').read_text(encoding='utf-8')
-        for script in ('ui.js', 'site/benchmark.js', 'site/site.js'):
+        for script in ('ui.js', 'pdf-viewer.js', 'app.js', 'site/benchmark.js', 'site/site.js'):
             self.assertRegex(html, f'src="{re.escape(DEFAULT_BASE + script)}\\?v=[0-9a-f]{{12}}"')
         self.assertIn('href="data/comparison.csv"', html)
         self.assertIn('id="model-comparison"', html)
+        for element in ('dataset-current', 'dataset-history', 'current-view-chart', 'chart', 'rows', 'model-dialog', 'pdf-reader'):
+            self.assertIn(f'id="{element}"', html)
+        self.assertIn('href="' + DEFAULT_BASE + 'results.csv"', html)
         self.assertFalse((self.output / 'benchmark/v2/index.html').exists())
         with (self.output / 'benchmark/data/comparison.csv').open(encoding='utf-8-sig', newline='') as stream:
             rows = list(csv.DictReader(stream))

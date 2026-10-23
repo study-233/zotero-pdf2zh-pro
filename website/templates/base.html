@@ -8,7 +8,7 @@
   <link rel="canonical" href="{{ origin }}{{ base }}{{ route }}">
   <link rel="icon" href="{{ base }}assets/logo.svg" type="image/svg+xml">
   <script src="{{ asset('ui.js') }}"></script>
-  {% if kind == 'benchmark' %}<link rel="stylesheet" href="{{ asset('style.css') }}">{% endif %}
+  {% if kind == 'benchmark' %}<link rel="stylesheet" href="{{ asset('style.css') }}"><link rel="stylesheet" href="{{ asset('pdf-viewer.css') }}">{% endif %}
   <link rel="stylesheet" href="{{ asset('site/site.css') }}">
   <script src="{{ asset('site/site.js') }}" defer></script>
   {% block scripts %}{% endblock %}
