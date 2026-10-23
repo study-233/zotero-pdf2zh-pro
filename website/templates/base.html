@@ -8,7 +8,7 @@
   <link rel="canonical" href="{{ origin }}{{ base }}{{ route }}">
   <link rel="icon" href="{{ base }}assets/logo.svg" type="image/svg+xml">
   <script src="{{ asset('ui.js') }}"></script>
-  {% if kind == 'benchmark' %}<link rel="stylesheet" href="{{ asset('style.css') }}"><link rel="stylesheet" href="{{ asset('pdf-viewer.css') }}">{% endif %}
+  {% if kind == 'benchmark' %}<link rel="stylesheet" href="{{ asset('style.css') }}">{% endif %}
   <link rel="stylesheet" href="{{ asset('site/site.css') }}">
   <script src="{{ asset('site/site.js') }}" defer></script>
   {% block scripts %}{% endblock %}
@@ -20,7 +20,7 @@
       <a class="site-brand" href="{{ base }}"><img src="{{ base }}assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
       <nav class="site-nav" aria-label="主导航">
         {% for label, path, active in [('首页', '', 'home'), ('使用教程', 'guide/', 'guide'), ('模型评测', 'benchmark/', 'benchmark'), ('更新记录', 'changelog/', 'changelog')] %}
-        <a href="{{ base }}{{ path }}"{% if kind == active or (kind == 'benchmark-v2' and active == 'benchmark') %} aria-current="page"{% endif %}>{{ label }}</a>
+        <a href="{{ base }}{{ path }}"{% if kind == active %} aria-current="page"{% endif %}>{{ label }}</a>
         {% endfor %}
       </nav>
       <div class="site-actions">
@@ -34,7 +34,7 @@
   <footer class="site-footer" id="community">
     <div><a class="footer-brand" href="{{ base }}">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
     <div class="footer-links"><a href="{{ base }}guide/troubleshooting/">常见问题</a><a href="{{ repo }}/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="{{ repo }}/blob/main/docs/development-notes.md">参与贡献</a><a href="{{ repo }}/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="{{ repo }}/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
-    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。{% if kind == 'benchmark' %} <span id="updated"></span>{% endif %}</p>
+    <p class="attribution">基于 <a href="https://github.com/NightWatcher314/zotero-pdf2zh-next">zotero-pdf2zh-next</a> v5.3.0 继续开发，源自 <a href="https://github.com/guaguastandup/zotero-pdf2zh">zotero-pdf2zh</a>。感谢上游维护者及所有贡献者。</p>
   </footer>
   <dialog id="site-search" class="search-dialog" aria-labelledby="search-title">
     <div class="dialog-heading"><h2 id="search-title">搜索教程</h2><button class="site-icon-button" data-close-dialog aria-label="关闭搜索">×</button></div>

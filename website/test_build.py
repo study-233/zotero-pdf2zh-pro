@@ -1,4 +1,5 @@
 import hashlib
+import csv
 from html.parser import HTMLParser
 import json
 import re
@@ -75,10 +76,18 @@ class WebsiteTests(unittest.TestCase):
 
     def test_theme_and_benchmark_scripts_are_shared_from_project_root(self):
         html = (self.output / 'benchmark/index.html').read_text(encoding='utf-8')
-        for script in ('ui.js', 'app.js', 'pdf-viewer.js', 'site/site.js'):
+        for script in ('ui.js', 'site/benchmark.js', 'site/site.js'):
             self.assertRegex(html, f'src="{re.escape(DEFAULT_BASE + script)}\\?v=[0-9a-f]{{12}}"')
-        self.assertIn(f'href="{DEFAULT_BASE}results.csv"', html)
-        self.assertIn('id="pdf-reader"', html)
+        self.assertIn('href="data/comparison.csv"', html)
+        self.assertIn('id="model-comparison"', html)
+        self.assertFalse((self.output / 'benchmark/v2/index.html').exists())
+        with (self.output / 'benchmark/data/comparison.csv').open(encoding='utf-8-sig', newline='') as stream:
+            rows = list(csv.DictReader(stream))
+        self.assertEqual(len(rows), 7)
+        self.assertEqual(rows[0]['model'], 'GLM-5.3 Flash')
+        self.assertEqual(rows[0]['successful_requests'], '240')
+        for row in rows:
+            self.assertEqual(row['samples'], '240')
 
     def test_source_links_are_mapped_or_sent_to_github(self):
         self.assertEqual(self.site.destination('../README.md#community', GUIDE), DEFAULT_BASE + '#community')

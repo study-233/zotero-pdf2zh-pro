@@ -42,8 +42,9 @@ node --test website/test_site.cjs benchmarks/translation/test_ui.cjs
 
 公开评测基线来自 `codex/translation-benchmark` 的 `ec8001d`，与迁移前线上 Pages 分支的
 `0c371cf` 对应。只纳入网页、已公开数据/PDF、依赖许可证及静态验证，不纳入服务端实验改动。
-`benchmarks/translation/site/` 继续维护评测资源；原 JSON、CSV 与 PDF 根路径保持不变，
-官网将评测界面包装到 `/benchmark/`。测试快照与当前插件版本分别标示，不改写历史测试口径。
+`benchmarks/translation/site/` 保留历史评测资源，原 JSON、CSV 与 PDF 根路径保持不变。
+`/benchmark/` 展示当前七模型 240 条结果，数据维护在 `benchmarks/translation/publications/2026-10-23-v2/`。
+测试快照与当前插件版本分别标示，不改写历史测试口径。
 
 唯一官网发布入口为 `.github/workflows/website.yml`：PR 验证并保存 7 天预览产物，
 main 验证通过后使用官方 Pages artifact 直接部署。仓库 Pages 来源设为 GitHub Actions，

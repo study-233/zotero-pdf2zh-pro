@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+import csv
 from html import escape, unescape
 from html.parser import HTMLParser
 import hashlib
@@ -244,10 +245,10 @@ class Website:
             path.write_text(self.env.get_template(template).render(**self.context(**values)), encoding='utf-8')
             urls.append(ORIGIN + self.base + route)
 
-        benchmark = json.loads((BENCHMARK / 'results.json').read_text(encoding='utf-8'))
+        benchmark = json.loads((PUBLICATION / 'summary.json').read_text(encoding='utf-8'))
         write('home.html', title='在 Zotero 中读懂整篇论文', route='', kind='home',
               description='zotero-pdf2zh-pro 官方网站：整篇论文翻译、双语 PDF、划词精读，安装与使用图文教程。',
-              models=len(benchmark['models']), papers=len(benchmark['papers']))
+              models=len(benchmark['models']), papers=benchmark['method']['papers'])
         for i, page in enumerate(self.pages):
             content = self.render(page['tokens'], page['source'])
             self.index_page(page, content)
@@ -267,22 +268,15 @@ class Website:
                          lambda m: m[1] + f'<a class="release-download" href="{REPO}/releases/tag/v{m[2]}">下载此版本 ↗</a>', changes)
         write('changelog.html', title='更新记录', route='changelog/', kind='changelog', content=changes,
               description='zotero-pdf2zh-pro 的版本变化、下载入口与更新方法。')
-        original = (BENCHMARK / 'index.html').read_text(encoding='utf-8')
-        content = re.search(r'<main>(.*?)</main>', original, re.S)[1]
-        dialogs = re.search(r'(<dialog\b.*?</dialog>)', original, re.S)[1]
-        # Asset links in the original benchmark are relative to the historical root.
-        def benchmark_link(m):
-            url = m[3]
-            return m[0] if url.startswith(('#', 'https:', 'http:')) else m[1] + '="' + self.base + url + '"'
-        content = ATTRIBUTE.sub(benchmark_link, content)
+        shutil.copytree(PUBLICATION, output / 'benchmark/data', dirs_exist_ok=True)
+        with (output / 'benchmark/data/comparison.csv').open('w', encoding='utf-8-sig', newline='') as stream:
+            writer = csv.writer(stream, lineterminator='\n')
+            writer.writerow(['model', 'quality', 'successful_requests', 'samples', 'p50_seconds', 'p95_seconds', 'recorded_usage_usd'])
+            for model in benchmark['models']:
+                writer.writerow([model[k] for k in ('name', 'quality', 'successes', 'samples', 'p50', 'p95', 'known_token_priced_usd')])
         write('benchmark.html', title='翻译模型实测', route='benchmark/', kind='benchmark',
-              description='真实 PDF 翻译的质量、费用和耗时对比，附双语 PDF 与匿名评审记录。',
-              content=content, dialogs=dialogs)
-        current = json.loads((PUBLICATION / 'summary.json').read_text(encoding='utf-8'))
-        shutil.copytree(PUBLICATION, output / 'benchmark/v2/data', dirs_exist_ok=True)
-        write('benchmark-v2.html', title='七模型英译中测评 · 240 条', route='benchmark/v2/', kind='benchmark-v2',
               description='同一套 240 条计算机论文英译中样本，比较七个模型的质量、速度、调用成功率与已记录用量金额。',
-              benchmark=current)
+              benchmark=benchmark)
         for asset in self.assets:
             target = output / asset
             target.parent.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,30 @@
 {% extends 'base.html' %}
-{% block scripts %}<script src="{{ asset('pdf-viewer.js') }}" defer></script><script src="{{ asset('app.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ asset('site/benchmark.js') }}" defer></script>{% endblock %}
 {% block main %}
-<main id="main-content" class="benchmark-main"><p class="usage-note"><a class="button" href="{{ base }}benchmark/v2/">查看新版：七模型 × 240 条英译中测评 →</a></p><nav class="benchmark-nav" aria-label="评测内容"><a href="#results" data-page="results" aria-current="page">数据探索</a><a href="#method" data-page="method">方法与来源</a></nav>{{ content | safe }}</main>
-{{ dialogs | safe }}
-<noscript><p class="usage-note">交互评测需要 JavaScript。也可直接下载 <a href="{{ base }}results.json">JSON</a> 或 <a href="{{ base }}results.csv">CSV</a> 查看公开数据。</p></noscript>
+<main id="main-content" class="benchmark-main current-benchmark">
+  <section class="hero"><h1>翻译模型对比</h1><p class="stats">7 个模型 · 每模型 240 条 · {{ benchmark.date }}</p></section>
+  <section id="results" class="panel" aria-label="七模型测评结果">
+    <div class="benchmark-tools"><span>计算机论文英译中</span><div><a href="data/comparison.csv" download>下载 CSV</a><a href="data/summary.json" download>JSON</a></div></div>
+    <div class="view">
+      <div id="compare" class="table-wrap" role="region" aria-label="模型对比表，可横向滚动" tabindex="0">
+        <table id="model-comparison" class="main-table">
+          <thead><tr>
+            {% for key, label in [('name','模型'),('quality','质量 / 100'),('successes','成功请求'),('p50','P50 / s'),('p95','P95 / s'),('cost','已记录金额 / USD')] %}
+            <th scope="col"{% if key == 'quality' %} aria-sort="descending"{% endif %}><button data-model-sort="{{ key }}">{{ label }} <span aria-hidden="true">↕</span></button></th>
+            {% endfor %}
+          </tr></thead>
+          <tbody>{% for m in benchmark.models %}
+            <tr data-name="{{ m.name }}" data-quality="{{ m.quality }}" data-successes="{{ m.successes }}" data-p50="{{ m.p50 }}" data-p95="{{ m.p95 }}" data-cost="{{ m.known_token_priced_usd }}">
+              <th scope="row">{{ m.name }}</th><td class="score">{{ '%.2f'|format(m.quality) }}</td><td>{{ m.successes }} / 240</td>
+              <td>{{ '%.2f'|format(m.p50) }}</td><td>{{ '%.2f'|format(m.p95) }}</td><td>${{ '%.5f'|format(m.known_token_priced_usd) }}</td>
+            </tr>
+          {% endfor %}</tbody>
+        </table>
+      </div>
+      <p class="table-footnote" id="method">无输出计 0 分；耗时取成功请求。Luna 初评与复核、Codex 终审，非独立评阅。</p>
+      <p class="table-footnote">金额按可记录 Token 计价，含预检和复测。时段账户增量 {{ '%.6f'|format(benchmark.accounting.observed_usage_credits) }} credits（含评审、校准）。</p>
+    </div>
+  </section>
+  <p id="model-sort-status" class="sr-only" role="status"></p>
+</main>
 {% endblock %}

@@ -11,7 +11,7 @@
 
 七个模型已完成每模型 240 条正式样本，以及 3 条预检和 40 次复测：GPT-6 Luna、
 Claude Haiku 5.5、DeepSeek V4.1 Flash、Qwen 3.7 Flash、GLM-5.3 Flash、MiMo V2.6 Flash、
-MiniMax M3.1 Flash。可在[新版对比网页](https://study-233.github.io/zotero-pdf2zh-pro/benchmark/v2/)
+MiniMax M3.1 Flash。可在[模型测评页](https://study-233.github.io/zotero-pdf2zh-pro/benchmark/)
 比较全量质量、成功输出质量、调用成功率、P50/P95 耗时和已记录用量金额；
 [公开数据与证据哈希](../benchmarks/translation/publications/2026-10-23-v2/summary.json)保留核对口径。
 
