@@ -20,7 +20,7 @@
       <a class="site-brand" href="{{ base }}"><img src="{{ base }}assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
       <nav class="site-nav" aria-label="主导航">
         {% for label, path, active in [('首页', '', 'home'), ('使用教程', 'guide/', 'guide'), ('模型评测', 'benchmark/', 'benchmark'), ('更新记录', 'changelog/', 'changelog')] %}
-        <a href="{{ base }}{{ path }}"{% if kind == active %} aria-current="page"{% endif %}>{{ label }}</a>
+        <a href="{{ base }}{{ path }}"{% if kind == active or (kind == 'benchmark-v2' and active == 'benchmark') %} aria-current="page"{% endif %}>{{ label }}</a>
         {% endfor %}
       </nav>
       <div class="site-actions">

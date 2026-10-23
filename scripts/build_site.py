@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / 'website'
 OUTPUT = ROOT / 'dist/site'
 BENCHMARK = ROOT / 'benchmarks/translation/site'
+PUBLICATION = ROOT / 'benchmarks/translation/publications/2026-10-23-v2'
 REPO = 'https://github.com/study-233/zotero-pdf2zh-pro'
 ORIGIN = 'https://study-233.github.io'
 DEFAULT_BASE = '/zotero-pdf2zh-pro/'
@@ -277,6 +278,11 @@ class Website:
         write('benchmark.html', title='翻译模型实测', route='benchmark/', kind='benchmark',
               description='真实 PDF 翻译的质量、费用和耗时对比，附双语 PDF 与匿名评审记录。',
               content=content, dialogs=dialogs)
+        current = json.loads((PUBLICATION / 'summary.json').read_text(encoding='utf-8'))
+        shutil.copytree(PUBLICATION, output / 'benchmark/v2/data', dirs_exist_ok=True)
+        write('benchmark-v2.html', title='七模型英译中测评 · 240 条', route='benchmark/v2/', kind='benchmark-v2',
+              description='同一套 240 条计算机论文英译中样本，比较七个模型的质量、速度、调用成功率与费用回执。',
+              benchmark=current)
         for asset in self.assets:
             target = output / asset
             target.parent.mkdir(parents=True, exist_ok=True)

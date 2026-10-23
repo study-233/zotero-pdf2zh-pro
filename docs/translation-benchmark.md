@@ -7,6 +7,19 @@
 或生成报告都不会建立一个新的模型成绩基准。当前标注由 Codex 整理并锚定原文证据，不能称为
 独立专家标注或独立盲评。
 
+## 2026-10-23 七模型结果
+
+七个模型已完成每模型 240 条正式样本，以及 3 条预检和 40 次复测：GPT-6 Luna、
+Claude Haiku 5.5、DeepSeek V4.1 Flash、Qwen 3.7 Flash、GLM-5.3 Flash、MiMo V2.6 Flash、
+MiniMax M3.1 Flash。可在[新版对比网页](https://study-233.github.io/zotero-pdf2zh-pro/benchmark/v2/)
+比较全量质量、成功输出质量、调用成功率、P50/P95 耗时和费用回执覆盖率；
+[公开数据与证据哈希](../benchmarks/translation/publications/2026-10-23-v2/summary.json)保留核对口径。
+
+整轮账户扣点汇总已与五分钟账目对上，费用包含翻译、评审和校准。中断调用缺少最终回执，
+逐模型实际账单仍未核实；美元 Token 计价与套餐加权 credits 分开展示，不能把缺失回执计为免费。
+统一 Luna 初评、复核与 Codex 终审属于非独立工程评阅；两批运行时间不同，保留集已有暴露，
+未宣称独立专家盲评或晋升新的默认基线。
+
 ## 环境与数据
 
 在仓库根目录执行以下命令。统一入口是 `python -m benchmarks.translation`；下文使用

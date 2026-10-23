@@ -5,6 +5,7 @@
 # 冻结评测数据按原始字节校验，Windows 检出也必须保留 LF。
 /benchmarks/translation/datasets/** text=auto eol=lf
 /benchmarks/translation/maintenance/** text=auto eol=lf
+/benchmarks/translation/publications/** text=auto eol=lf
 /server/babeldoc/**            linguist-vendored whitespace=-trailing-space
 /server/pdf2zh_next/**         linguist-vendored whitespace=-trailing-space
 /server/rapidocr_onnxruntime/** linguist-vendored whitespace=-trailing-space

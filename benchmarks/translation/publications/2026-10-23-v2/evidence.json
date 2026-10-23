@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "public_files": {
+    "account-ledger.csv": "78c1427b6a7b1b7f902492a9e8ddc583242b27db825a8bfff497e61e375b9d72",
+    "calls.csv": "3d5d4b5ade08f6e161e0d7fec95d0a0df34a22eb968e169d4536af88adbf8ed6",
+    "summary.json": "3d23135dca1d6a37635389daa803afa47450dc40a73dd3a87a74cbfcd3f041e7"
+  },
+  "input_hashes": {
+    "combined_summary": "13db7d6433b025b31b07d84179d92a10187ec1d583160b78ec687e9821ac4cac",
+    "combined_fees": "481bedde627a15b2c1de758d66a7c4d18437a3b13cbc9d8b682f5e084a9fb5e1",
+    "account_ledger": "6abb2720645174e7554a02530ca610d1ab6a00a3f6de0a465afcd8dc372a72a4",
+    "original_closeout_verification": "eac45723178017df2062ca1314b2128a2272d43d637f8dea6d1b5c46f15404bb"
+  },
+  "privacy": "Only aggregates and redacted usage metadata are published. Original paper content, translations, API credentials, account identifiers, and monthly balances remain local.",
+  "financial_limits": "Observed total credits verified against both month snapshots and time-bucket sums. No claim of verified individual or per-model cash billing."
+}
