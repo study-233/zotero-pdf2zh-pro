@@ -10,3 +10,4 @@
 /server/pdf2zh_next/**         linguist-vendored whitespace=-trailing-space
 /server/rapidocr_onnxruntime/** linguist-vendored whitespace=-trailing-space
 /benchmarks/translation/site/vendor/** linguist-vendored whitespace=-trailing-space
+/website/static/vendor/**      text=auto eol=lf linguist-vendored whitespace=-trailing-space

@@ -1,6 +1,7 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const {searchEntries, legacyTarget} = require('./static/site.js');
+const {speedFrontier} = require('./static/benchmark.js');
 
 const records = [
   {title:'Windows 安装', section:'服务启动', text:'配置 API 之前先启动本地服务。', url:'/project/guide/windows/#start'},
@@ -22,4 +23,14 @@ test('legacy benchmark anchors preserve the GitHub Pages project base', () => {
   }
   assert.equal(legacyTarget('/zotero-pdf2zh-pro/', '#quick-start'), null);
   assert.equal(legacyTarget('/zotero-pdf2zh-pro/', ''), null);
+});
+test('speed frontier requires both quality and latency, with at least one strict improvement', () => {
+  const fast = {id:'fast', p50:3, quality:97, cost:.2};
+  const high = {id:'high', p50:4, quality:99, cost:.5};
+  const tied = {id:'tied', p50:4, quality:99, cost:.01};
+  const rows = [fast, high, tied, {id:'slower', p50:5, quality:98, cost:0},
+    {id:'worse', p50:3, quality:96}, {id:'same-score', p50:7, quality:99}];
+  assert.deepEqual(speedFrontier(rows).map(m => m.id), ['fast','high','tied']);
+  assert.deepEqual(speedFrontier([]), []);
+  assert.deepEqual(speedFrontier([fast]), [fast]);
 });

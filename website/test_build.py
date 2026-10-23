@@ -76,11 +76,11 @@ class WebsiteTests(unittest.TestCase):
 
     def test_theme_and_benchmark_scripts_are_shared_from_project_root(self):
         html = (self.output / 'benchmark/index.html').read_text(encoding='utf-8')
-        for script in ('ui.js', 'site/benchmark.js', 'site/site.js'):
+        for script in ('ui.js', 'site/benchmark.js', 'site/site.js', 'site/vendor/plotly/plotly-gl3d-4.1.2.min.js'):
             self.assertRegex(html, f'src="{re.escape(DEFAULT_BASE + script)}\\?v=[0-9a-f]{{12}}"')
         self.assertIn('href="data/comparison.csv"', html)
         self.assertIn('id="model-comparison"', html)
-        for element in ('results', 'compare', 'method', 'current-view-chart'):
+        for element in ('results', 'compare', 'method', 'benchmark-chart', 'tab-speed', 'tab-cost', 'tab-value'):
             self.assertIn(f'id="{element}"', html)
         for removed in ('history-benchmark', 'data-benchmark-set', 'pdf-viewer.js', 'app.js'):
             self.assertNotIn(removed, html)
@@ -92,6 +92,11 @@ class WebsiteTests(unittest.TestCase):
         self.assertEqual(rows[0]['successful_requests'], '240')
         for row in rows:
             self.assertEqual(row['samples'], '240')
+        vendor = ROOT / 'website/static/vendor/plotly'
+        manifest = json.loads((vendor / 'source.json').read_text(encoding='utf-8'))
+        self.assertEqual(manifest['license'], 'MIT')
+        for name, record in manifest['files'].items():
+            self.assertEqual(hashlib.sha256((vendor / name).read_bytes()).hexdigest(), record['sha256'])
 
     def test_source_links_are_mapped_or_sent_to_github(self):
         self.assertEqual(self.site.destination('../README.md#community', GUIDE), DEFAULT_BASE + '#community')

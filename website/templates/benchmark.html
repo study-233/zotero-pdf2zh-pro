@@ -1,54 +1,63 @@
 {% extends 'base.html' %}
-{% block scripts %}<script src="{{ asset('site/benchmark.js') }}" defer></script>{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="{{ asset('site/benchmark.css') }}">
+<script src="{{ asset('site/vendor/plotly/plotly-gl3d-4.1.2.min.js') }}" defer></script>
+<script src="{{ asset('site/benchmark.js') }}" defer></script>
+{% endblock %}
 {% block main %}
-<main id="main-content" class="benchmark-main current-benchmark">
-  <section class="hero"><h1>翻译模型对比</h1></section>
-  <p class="stats">7 个模型 · 每模型 240 条 · {{ benchmark.date }}</p>
-  <section id="results" class="panel" aria-label="七模型测评结果">
-    <div class="panel-tabs" role="tablist" aria-label="测评视图">
-      <button id="current-tab-table" role="tab" aria-selected="true" aria-controls="current-view-table" data-current-view="table"><span class="icon icon-table" aria-hidden="true"></span>模型对比</button>
-      <button id="current-tab-chart" role="tab" aria-selected="false" aria-controls="current-view-chart" data-current-view="chart" tabindex="-1"><span class="icon icon-chart" aria-hidden="true"></span>质量与速度</button>
-    </div>
-    <div class="benchmark-tools"><span>计算机论文英译中</span><div><a href="data/comparison.csv" download>下载 CSV</a><a href="data/summary.json" download>JSON</a></div></div>
-    <div id="current-view-table" class="view" role="tabpanel" aria-labelledby="current-tab-table">
-      <div id="compare" class="table-wrap" role="region" aria-label="模型对比表，可横向滚动" tabindex="0">
-        <table id="model-comparison" class="main-table">
-          <thead><tr>
-            {% for key, label in [('name','模型'),('quality','质量 / 100'),('successes','成功请求'),('p50','P50 / s'),('p95','P95 / s'),('cost','已记录金额 / USD')] %}
-            <th scope="col"{% if key == 'quality' %} aria-sort="descending"{% endif %}><button data-model-sort="{{ key }}">{{ label }} <span aria-hidden="true">↕</span></button></th>
-            {% endfor %}
-          </tr></thead>
-          <tbody>{% for m in benchmark.models %}
-            <tr data-name="{{ m.name }}" data-quality="{{ m.quality }}" data-successes="{{ m.successes }}" data-p50="{{ m.p50 }}" data-p95="{{ m.p95 }}" data-cost="{{ m.known_token_priced_usd }}">
-              <th scope="row">{{ m.name }}</th><td class="score">{{ '%.2f'|format(m.quality) }}</td><td>{{ m.successes }} / 240</td>
-              <td>{{ '%.2f'|format(m.p50) }}</td><td>{{ '%.2f'|format(m.p95) }}</td><td>${{ '%.5f'|format(m.known_token_priced_usd) }}</td>
-            </tr>
-          {% endfor %}</tbody>
-        </table>
+<main id="main-content" class="benchmark-main benchmark-explorer">
+  <header class="benchmark-heading"><h1>翻译模型对比</h1><p>7 个模型 <span>·</span> 每模型 240 条 <span>·</span> {{ benchmark.date }}</p></header>
+  <section id="results" class="explorer" aria-label="模型测评图表">
+    <div class="explorer-toolbar">
+      <div class="chart-tabs" role="tablist" aria-label="图表指标">
+        <button id="tab-speed" type="button" role="tab" data-chart-mode="speed" aria-selected="true" aria-controls="chart-panel">质量 × 速度</button>
+        <button id="tab-cost" type="button" role="tab" data-chart-mode="cost" aria-selected="false" aria-controls="chart-panel" tabindex="-1">质量 × 费用</button>
+        <button id="tab-value" type="button" role="tab" data-chart-mode="value" aria-selected="false" aria-controls="chart-panel" tabindex="-1"><svg class="cube-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 9 5v10l-9 5-9-5V7Zm0 10 9-5M12 12 3 7m9 5v10"/></svg>三维性价比</button>
       </div>
-      <p class="table-footnote" id="method">无输出计 0 分；耗时取成功请求。Luna 初评与复核、Codex 终审，非独立评阅。</p>
-      <p class="table-footnote">金额按可记录 Token 计价，含预检和复测。时段账户增量 {{ '%.6f'|format(benchmark.accounting.observed_usage_credits) }} credits（含评审、校准）。</p>
-    </div>
-    <div id="current-view-chart" class="view" role="tabpanel" aria-labelledby="current-tab-chart" hidden>
-      <p class="note">越靠左越快，越靠上质量越高。</p>
-      <div class="chart-panel current-chart-panel">
-        <div class="current-chart-scroll" role="region" tabindex="0" aria-label="质量与速度图，可横向滚动">
-        <svg viewBox="0 0 600 340" role="img" aria-labelledby="current-chart-title current-chart-desc">
-          <title id="current-chart-title">七模型质量与 P50 响应耗时</title><desc id="current-chart-desc">完整数值见模型对比表；圆点序号对应图例。</desc>
-          {% for y in [90,92,94,96,98,100] %}<line x1="48" y1="{{ 280-(y-90)*24 }}" x2="565" y2="{{ 280-(y-90)*24 }}" stroke="var(--line)"/><text x="36" y="{{ 285-(y-90)*24 }}" text-anchor="end">{{ y }}</text>{% endfor %}
-          {% for x in [0,5,10,15,20,25,30] %}<text x="{{ 48+x*17 }}" y="308" text-anchor="middle">{{ x }}</text>{% endfor %}
-          <text x="565" y="334" text-anchor="end">P50 耗时 / s →</text>
-          {% for m in benchmark.models %}<g tabindex="0" aria-label="{{ m.name }}：质量 {{ '%.2f'|format(m.quality) }}，P50 {{ '%.2f'|format(m.p50) }} 秒">
-            <title>{{ m.name }} · {{ '%.2f'|format(m.quality) }} 分 · {{ '%.2f'|format(m.p50) }} s</title>
-            <circle cx="{{ 48+m.p50*17 }}" cy="{{ 280-(m.quality-90)*24 }}" r="7" fill="var(--accent)"/>
-            <text x="{{ 61+m.p50*17 }}" y="{{ 284-(m.quality-90)*24 }}">{{ loop.index }}</text>
-          </g>{% endfor %}
-        </svg>
-        </div>
-        <ol class="current-chart-key">{% for m in benchmark.models %}<li>{{ m.name }}</li>{% endfor %}</ol>
+      <div class="chart-actions" role="group" aria-label="图表操作">
+        <button id="frontier-toggle" type="button" aria-pressed="true" title="仅按本轮质量与 P50 耗时计算"><span class="frontier-icon" aria-hidden="true"></span>前沿线</button>
+        <button id="rotate-left" type="button" class="chart-icon-button" aria-label="向左旋转三维图" title="向左旋转" hidden>↶</button>
+        <button id="rotate-right" type="button" class="chart-icon-button" aria-label="向右旋转三维图" title="向右旋转" hidden>↷</button>
+        <button id="chart-zoom-in" type="button" class="chart-icon-button" aria-label="放大图表" title="放大">＋</button>
+        <button id="chart-zoom-out" type="button" class="chart-icon-button" aria-label="缩小图表" title="缩小">−</button>
+        <button id="chart-reset" type="button" title="恢复默认视角">重置</button>
       </div>
+    </div>
+    <div class="model-legend" role="group" aria-label="选择参与对比的模型">
+      {% for m in benchmark.models %}<button type="button" data-model-toggle="{{ m.id }}" aria-pressed="true" style="--model-color:var(--model-{{ loop.index0 }})"><span class="model-dot" aria-hidden="true"></span>{{ m.name }}</button>{% endfor %}
+      <button id="models-all" type="button" class="models-all">全部 <span id="visible-model-count">7 / 7</span></button>
+    </div>
+    <div id="chart-panel" role="tabpanel" aria-labelledby="tab-speed">
+      <div class="chart-context"><span id="chart-metric">翻译质量 / 100</span><span id="chart-gesture">拖动平移 · 滚轮缩放</span></div>
+      <div id="benchmark-chart" tabindex="0" role="region" aria-label="模型质量与速度交互图，可使用加减键缩放" aria-describedby="chart-instruction"><p class="chart-loading">图表加载中…</p></div>
+      <p id="chart-instruction" class="sr-only">上方可切换指标和选择模型。三维图支持方向键旋转，加减键缩放，Escape 关闭悬浮提示。详细数值见下方表格。</p>
+      <div id="chart-selection" class="chart-selection" aria-live="polite"><span class="selection-placeholder">悬停或点选模型，查看完整数据</span></div>
+      <p id="chart-error" class="chart-error" role="status" hidden></p>
     </div>
   </section>
+  <section id="compare" class="benchmark-data" aria-labelledby="data-title">
+    <div class="data-heading"><h2 id="data-title">测评数据</h2><div><a href="data/comparison.csv" download>下载 CSV <span aria-hidden="true">↗</span></a><a href="data/summary.json" download>JSON <span aria-hidden="true">↗</span></a></div></div>
+    <div class="data-table-wrap" role="region" aria-label="模型对比表，可横向滚动" tabindex="0">
+      <table id="model-comparison"><caption class="sr-only">七模型在相同 240 条英译中样本上的质量、成功率、速度和已记录金额</caption>
+        <thead><tr>{% for key, label in [('name','模型'),('quality','质量 / 100'),('successes','成功请求'),('p50','P50 / s'),('p95','P95 / s'),('cost','已记录金额 / USD')] %}
+          <th scope="col"{% if key == 'quality' %} aria-sort="descending"{% endif %}><button type="button" data-model-sort="{{ key }}">{{ label }} <span aria-hidden="true">↕</span></button></th>
+        {% endfor %}</tr></thead>
+        <tbody>{% for m in benchmark.models %}
+          <tr data-id="{{ m.id }}" data-name="{{ m.name }}" data-quality="{{ m.quality }}" data-successes="{{ m.successes }}" data-samples="{{ m.samples }}" data-p50="{{ m.p50 }}" data-p95="{{ m.p95 }}" data-cost="{{ m.known_token_priced_usd }}" data-color="{{ loop.index0 }}" style="--model-color:var(--model-{{ loop.index0 }})">
+            <th scope="row"><button type="button" data-model-select="{{ m.id }}"><span class="model-dot" aria-hidden="true"></span>{{ m.name }}</button></th>
+            <td class="quality-cell">{{ '%.2f'|format(m.quality) }}</td><td>{{ m.successes }} <span>/ {{ m.samples }}</span></td><td>{{ '%.2f'|format(m.p50) }}</td><td>{{ '%.2f'|format(m.p95) }}</td><td>${{ '%.5f'|format(m.known_token_priced_usd) }}</td>
+          </tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+    <p id="table-empty" class="table-empty" hidden>选择模型后查看对比数据</p>
+  </section>
+  <details id="method" class="benchmark-method"><summary>测评口径与来源</summary><div>
+    <p>计算机论文英译中，每模型 240 条。无输出计 0 分；耗时取成功请求。Luna 初评与复核、Codex 终审，非独立评阅。</p>
+    <p>金额按可记录 Token 计价，含预检和复测。时段账户增量 {{ '%.6f'|format(benchmark.accounting.observed_usage_credits) }} credits（含评审、校准）。</p>
+    <p>前沿线仅描述本轮质量与 P50 耗时的观测结果。<a href="data/evidence.json">数据校验</a> · 图表使用 <a href="{{ base }}site/vendor/plotly/LICENSE">Plotly.js · MIT</a></p>
+  </div></details>
   <p id="model-sort-status" class="sr-only" role="status"></p>
+  <noscript><p>交互图表需要 JavaScript；完整测评数据可在上表查看或下载。</p></noscript>
 </main>
 {% endblock %}

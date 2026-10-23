@@ -1,0 +1,17 @@
+{
+  "package": "plotly.js-gl3d-dist-min",
+  "version": "4.1.2",
+  "license": "MIT",
+  "files": {
+    "plotly-gl3d-4.1.2.min.js": {
+      "source": "https://cdn.plot.ly/plotly-gl3d-4.1.2.min.js",
+      "sha256": "6e6a2839437ffefa07b1ed727acd89b79019471588af1f558fc5d82c252e4795",
+      "bytes": 1758434
+    },
+    "LICENSE": {
+      "source": "https://raw.githubusercontent.com/plotly/plotly.js/v4.1.2/LICENSE",
+      "sha256": "8c45d9eaf50c2f72dd9c7ab9ef440788ba58a3538484b5c51c1f17d5128752e7",
+      "bytes": 1086
+    }
+  }
+}
