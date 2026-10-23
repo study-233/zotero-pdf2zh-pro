@@ -281,7 +281,7 @@ class Website:
         current = json.loads((PUBLICATION / 'summary.json').read_text(encoding='utf-8'))
         shutil.copytree(PUBLICATION, output / 'benchmark/v2/data', dirs_exist_ok=True)
         write('benchmark-v2.html', title='七模型英译中测评 · 240 条', route='benchmark/v2/', kind='benchmark-v2',
-              description='同一套 240 条计算机论文英译中样本，比较七个模型的质量、速度、调用成功率与费用回执。',
+              description='同一套 240 条计算机论文英译中样本，比较七个模型的质量、速度、调用成功率与已记录用量金额。',
               benchmark=current)
         for asset in self.assets:
             target = output / asset

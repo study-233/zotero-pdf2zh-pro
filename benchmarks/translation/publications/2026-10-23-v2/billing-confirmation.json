@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "source_sha256": "4e4357fda4093154decf948b4993908d844e90733fcce12577c08ed8db2be7eb",
+  "exported_at": "2026-10-23T11:01:35.105Z",
+  "checked_entries": 100,
+  "generation_receipts_confirmed": 99,
+  "additional_recorded_entries": 1,
+  "checked_server_usage_usd": 0.17873725,
+  "observation_start": "2026-10-23T09:00:47.943Z",
+  "observation_end": "2026-10-23T09:37:52.748Z",
+  "matching": {
+    "model_and_token_counts": 99,
+    "validated_tokenizer": "o200k_base",
+    "tokenizer_version": "0.12.0",
+    "validated_message_overhead": 6,
+    "tokenizer_validation_requests": 99,
+    "additional_unique_input_match": 1
+  },
+  "additional_entry": {
+    "batch": "20261023-four-models-full-02",
+    "model": "gpt-6-luna",
+    "job": "grade-0135",
+    "server_created_at": "2026-10-23T09:03:39.830Z",
+    "input_tokens": 9192,
+    "output_tokens": 1229,
+    "cache_write_input_tokens": 9189,
+    "server_usage_usd": 0.001763425,
+    "generation_receipt_sha256": "167ca7b75361e625ce0cc55d56a98e47b40579a2dad5c711f80a02c34b2ffe80",
+    "billing_record_sha256": "687d31f7c88c6d8701af904ba7792d9d640c30537def644b4b314e5d4d3d1707"
+  },
+  "aggregate_checks": {
+    "matched_five_minute_buckets": 7,
+    "count_and_both_token_totals": true,
+    "model_credit_multiplier": 3.5,
+    "maximum_credit_residual": 5.551115123125783e-17
+  },
+  "units": "Server model-usage amounts in USD; weighted plan credits are a separate unit. Subscription cash spending is not allocated to calls."
+}
