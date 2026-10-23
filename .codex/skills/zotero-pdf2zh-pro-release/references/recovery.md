@@ -28,7 +28,7 @@
      -f tag="$TAG" -f build_run_id="$BUILD_RUN" -f publish_github=true
    ```
 
-4. 等待该次发布 run：它应复用制品、发布/检查 PyPI，然后创建 GitHub Release。不要为图方便省略 `build_run_id` 重新打包；PyPI 仅发布模式保留 `publish_github=false`。
+4. 等待该次发布 run：它应复用制品、发布/检查 PyPI，然后创建 GitHub Release。`build_run_id` 为必填，PyPI 仅发布模式也必须提供，并保留 `publish_github=false`。
 5. 更新 Homebrew 并等待对应提交检查，核对所有渠道。不要在缺少本地制品时声称已做本地哈希复核。
 
 若 GitHub Release 已存在，共享发布守卫会先核验所有同名附件，再补传缺失项；同名同摘要直接复用，冲突时停止。相同版本附件内容不同属于同版本替换，需单独处理。
@@ -40,11 +40,12 @@
 
 ## 远端制品已成功，本机扩展验证未完成
 
-Windows 的 `--full-validation` 会在远端标准构建后下载最终制品并在本机验证。
+Windows 的扩展选测会在远端完成所选生命周期后，下载最终制品并在本机补历史升级。
 这一步中断不代表远端构建失败，也未授权跳过扩展验证。用原恢复记录运行 `--resume`；
 入口重新核验远端事实与制品摘要，并复用相符的本机回执。需要单独执行时，对
 `test_windows_release_extended.ps1` 传入 `-Plan <冻结计划>`、`-SourceCommit <产品提交>`
-和 `-Receipt <发布记录旁的 local-validation.json>`。日志保存在 `.local-dev/reports/`。
+和 `-Receipt <发布记录旁的 local-validation.json> -SkipLifecycle -SkipRecentUpgrade`。
+这两个跳过参数对应远端已通过的场景；单独做完整验收时不使用。日志保存在 `.local-dev/reports/`。
 云端发布要求本机扩展时必须传 `local_validation` 回执；仅构建成功不足以跳过该检查。
 
 若只修复了验收脚本，保留原制品与源提交；本机加 `-SourceCommit <原制品提交>`，
@@ -60,11 +61,13 @@ Windows 的 `--full-validation` 会在远端标准构建后下载最终制品并
 
 复用制品时仍须完成所选验证，不能用旧的成功打包结果替代后续检查。若失败要求修改产品源码或打包内容，应新建提交并重新构建，不绕过版本/来源检查。
 
-若标准验证全部成功、仅最后 `Verify and collect release artifacts` 失败，可在复用原
-`reuse_build_run_id` 时另外传 `validation_run_id=<已通过测试的 run>`，只续做归档。
-工作流必须核对源提交、先前每项验证成功、提交祖先关系及验收脚本未改变；扩展恢复仅允许
-变更历史夹具并重测迁移，不适用于同版本替换。验收覆盖和恢复共用策略中的文件集合，须在归档前恢复为源提交版本，
-保留产品改动检查，不能关闭干净源码守卫。
+若标准验证及 `Record passed standard validation` 均成功，后续历史升级或归档失败，
+可在复用原 `reuse_build_run_id` 时另传 `validation_run_id=<已通过标准测试的 run>`。
+工作流从该 run 下载标准回执，核对 run/attempt、八项制品哈希、冻结计划、源提交及验收代码；
+全部匹配后才跳过标准验证，继续所选历史升级和归档，不适用于同版本替换。
+旧构建没有回执，或测试脚本、工作流、策略、基线变化时，省略 `validation_run_id`，
+生成新计划并对原制品重跑所选检查；不能将旧结果套到新构建或新计划上。
+验收脚本仍须在归档前恢复为源提交版本，保留产品改动与干净源码守卫。
 
 ## PyPI 延迟和部分成功
 

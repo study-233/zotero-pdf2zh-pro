@@ -5,12 +5,12 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing release tag to build and publish
+        description: Existing release tag whose verified packages will be published
         required: true
         type: string
       build_run_id:
-        description: Optional successful Windows build run; publish its verified packages without rebuilding
-        required: false
+        description: Successful Windows validation run whose exact verified packages will be published
+        required: true
         type: string
       publish_github:
         description: Publish the verified Windows build as the latest GitHub release after PyPI succeeds
@@ -46,13 +46,12 @@ jobs:
     steps:
       - name: Validate publication inputs
         env:
-          PUBLISH_GITHUB: ${{ inputs.publish_github }}
           BUILD_RUN_ID: ${{ inputs.build_run_id }}
         run: |
-          if [[ "$PUBLISH_GITHUB" == true && -z "$BUILD_RUN_ID" ]]; then
-            echo 'GitHub publication requires a verified build run.' >&2
-            exit 1
-          fi
+          python - "$BUILD_RUN_ID" <<'PY_INPUT'
+          import re, sys
+          assert re.fullmatch(r"[1-9][0-9]*", sys.argv[1]), "Every publication requires a verified build run"
+          PY_INPUT
 
       - name: Checkout tag
         uses: actions/checkout@v7
@@ -101,7 +100,6 @@ jobs:
           PY
 
       - name: Download verified packages
-        if: inputs.build_run_id != ''
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_RUN_ID: ${{ inputs.build_run_id }}
@@ -156,10 +154,6 @@ jobs:
           with zipfile.ZipFile(source / "zotero-pdf2zh-pro-windows-x64.zip") as archive:
               validate_release_pe(archive.read("zotero-pdf2zh-pro.exe"))
           PY_VERIFY_FILES
-
-      - name: Build package
-        if: inputs.build_run_id == ''
-        run: uv build server --out-dir server/dist --clear --no-sources
 
       - name: Validate package
         env:

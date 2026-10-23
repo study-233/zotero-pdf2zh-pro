@@ -220,7 +220,7 @@ def compatibility_result():
 
 def validate_plan(plan):
     """Recompute required coverage without changing an already frozen previous release."""
-    if plan['schemaVersion'] != 1 or version(plan['previousVersion']) >= version(plan['version']):
+    if plan['schemaVersion'] != 2 or version(plan['previousVersion']) >= version(plan['version']):
         raise ValueError('Invalid validation plan versions')
     if not re.fullmatch('[0-9a-f]{64}',plan.get('harnessSha256','')):
         raise ValueError('Validation plan has no fixed test harness identity')
@@ -243,7 +243,7 @@ def validate_plan(plan):
     previous = plan['baselines'][plan['previousVersion']]
     required = select(changed_paths(ROOT, previous['commit'], plan['sourceCommit']),
                       plan['previousVersion'], plan['version'], full=plan['fullValidation'])
-    if plan['cases'] != required['cases'] or plan['fullValidation'] != required['fullValidation']:
+    if any(plan.get(key) != required[key] for key in ('cases', 'fullValidation', 'extendedValidation', 'lifecycle')):
         raise ValueError('Validation plan omits required upgrade coverage')
     if set(plan['baselines']) != {case['baseline'] for case in required['cases']}:
         raise ValueError('Validation plan baselines do not match its cases')
@@ -365,6 +365,13 @@ def workflow(path, stage, name, fields, retry_failed=False):
                            and s['conclusion'] == 'success' for j in jobs['jobs'] for s in j.get('steps', [])):
                     raise ValueError('Failed run has no proven artifact build; refusing an implicit rebuild')
                 fields = dict(fields, reuse_build_run_id=record['fields'].get('reuse_build_run_id') or str(record['runId']))
+                passed = {s['name'] for j in jobs['jobs'] if j.get('name') == 'build'
+                          for s in j.get('steps', []) if s['conclusion'] == 'success'}
+                if not fields.get('replacement_commit') and 'Upload validation evidence' in passed:
+                    if 'Record passed standard validation' in passed:
+                        fields['validation_run_id'] = str(record['runId'])
+                    elif 'Bind recovered validation to exact packages and plan' in passed and record['fields'].get('validation_run_id'):
+                        fields['validation_run_id'] = record['fields']['validation_run_id']
             elif not fields.get('build_run_id'):
                 raise ValueError('PyPI recovery requires the same verified artifact build')
             state.setdefault('previousAttempts', []).append(record)
@@ -445,15 +452,68 @@ def plan_digest(plan):
     return hashlib.sha256(json.dumps(plan, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
-def attach_plan(plan_path, manifest_path, deferred=False):
+def product_paths(value):
+    version(value)
+    product = 'zotero-pdf2zh-pro'
+    return [f'plugin/build/{product}.xpi', 'plugin/build/update.json',
+            f'dist/{PACKAGE}', f'dist/{product}-windows-x64-setup.exe', 'dist/windows-update.json',
+            f'dist/{product}-{value}-source.zip',
+            f'server/dist/zotero_pdf2zh_pro-{value}-py3-none-any.whl',
+            f'server/dist/zotero_pdf2zh_pro-{value}.tar.gz']
+
+
+def product_identity(value):
+    return {Path(name).name: {'size': (ROOT/name).stat().st_size, 'sha256': digest(ROOT/name)}
+            for name in product_paths(value)}
+
+
+def verify_standard_receipt(receipt, plan, artifacts):
+    """A passed step/commit alone cannot identify the bytes or coverage it validated."""
+    if (receipt.get('schemaVersion') != 1 or receipt.get('status') != 'passed'
+            or receipt.get('plan') != plan or receipt.get('planSha256') != plan_digest(plan)
+            or receipt.get('lifecycle') != plan['lifecycle']
+            or not re.fullmatch(r'[1-9][0-9]*', str(receipt.get('runId', '')))
+            or not isinstance(receipt.get('runAttempt'), int) or receipt['runAttempt'] < 1):
+        raise ValueError('Standard validation plan or run identity mismatch; rerun selected checks')
+    expected_names = {Path(name).name for name in product_paths(plan['version'])}
+    if set(artifacts) != expected_names or receipt.get('artifacts') != artifacts:
+        raise ValueError('Standard validation used different artifacts')
+    for item in artifacts.values():
+        if item['size'] <= 0 or not re.fullmatch('[0-9a-f]{64}', item['sha256']):
+            raise ValueError('Invalid validated artifact identity')
+
+
+def record_standard_validation(plan_path, output):
+    plan = json.loads(Path(plan_path).read_text(encoding='utf-8-sig'))
+    receipt = {'schemaVersion': 1, 'status': 'passed', 'plan': plan, 'planSha256': plan_digest(plan),
+               'lifecycle': plan['lifecycle'], 'runId': os.environ['GITHUB_RUN_ID'],
+               'runAttempt': int(os.environ['GITHUB_RUN_ATTEMPT']), 'artifacts': product_identity(plan['version'])}
+    verify_standard_receipt(receipt, plan, receipt['artifacts'])
+    save(Path(output), receipt)
+
+
+def recover_standard_validation(plan_path, receipt_path, output):
+    plan = json.loads(Path(plan_path).read_text(encoding='utf-8-sig'))
+    receipt = json.loads(Path(receipt_path).read_text(encoding='utf-8-sig'))
+    verify_standard_receipt(receipt, plan, product_identity(plan['version']))
+    save(Path(output), receipt)
+
+
+def attach_plan(plan_path, manifest_path, deferred=False, standard_receipt=None):
     plan = json.loads(Path(plan_path).read_text(encoding='utf-8'))
     manifest_path = Path(manifest_path)
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     if plan['version'] != manifest['version'] or plan['sourceCommit'] != manifest['commit']:
         raise ValueError('Validation plan belongs to different artifacts')
-    manifest.update(validationPlanSha256=plan_digest(plan), deferredExtendedValidation=deferred)
+    if not standard_receipt:
+        raise ValueError('A passed standard validation receipt is required')
+    receipt = json.loads(Path(standard_receipt).read_text(encoding='utf-8-sig'))
+    verify_standard_receipt(receipt, plan, manifest['artifacts'])
+    manifest.update(validationPlanSha256=plan_digest(plan), deferredExtendedValidation=deferred,
+                    standardValidationSha256=plan_digest(receipt))
     save(manifest_path, manifest)
     save(manifest_path.parent/'validation-plan.json', plan)
+    save(manifest_path.parent/'standard-validation.json', receipt)
 
 
 def verify_publication_contract(source, local_receipt=None):
@@ -464,7 +524,14 @@ def verify_publication_contract(source, local_receipt=None):
             or manifest['version'] != plan['version']):
         raise ValueError('Missing/mismatched validation contract; revalidate existing artifacts')
     validate_plan(plan)
-    if manifest.get('deferredExtendedValidation') and plan['fullValidation']:
+    receipt_path = source/'standard-validation.json'
+    if not receipt_path.is_file():
+        raise ValueError('Missing standard validation receipt; revalidate existing artifacts')
+    standard = json.loads(receipt_path.read_text(encoding='utf-8-sig'))
+    if manifest.get('standardValidationSha256') != plan_digest(standard):
+        raise ValueError('Standard validation receipt digest mismatch')
+    verify_standard_receipt(standard, plan, manifest['artifacts'])
+    if manifest.get('deferredExtendedValidation') and len(plan['cases']) > 1:
         receipt = local_receipt or {}
         expected = {(case['id'], case['baseline']) for case in plan['cases'] if case['id'] != 'recent-upgrade'}
         actual = {(case['id'], case['baseline']) for case in receipt.get('cases', []) if case['status'] == 'passed'}
@@ -476,7 +543,7 @@ def verify_publication_contract(source, local_receipt=None):
                 raise ValueError('Only an explicitly requested legacy upgrade waiver is permitted')
             waived.add(identity)
         if (receipt.get('status') != 'passed' or receipt.get('commit') != plan['sourceCommit']
-                or receipt.get('planSha256') != plan_digest(plan) or not receipt.get('lifecycle')
+                or receipt.get('planSha256') != plan_digest(plan)
                 or receipt.get('harnessSha256') != plan.get('harnessSha256')
                 or not expected.issubset(actual | waived)):
             raise ValueError('Required local extended validation is incomplete')
@@ -508,6 +575,11 @@ def main():
     baseline.add_argument('plan', type=Path); baseline.add_argument('version'); baseline.add_argument('directory', type=Path)
     attach = sub.add_parser('attach-plan')
     attach.add_argument('plan', type=Path); attach.add_argument('manifest', type=Path); attach.add_argument('--deferred', action='store_true')
+    attach.add_argument('--standard-receipt', type=Path, required=True)
+    validation = sub.add_parser('record-validation')
+    validation.add_argument('plan', type=Path); validation.add_argument('output', type=Path)
+    recovery = sub.add_parser('recover-validation')
+    recovery.add_argument('plan', type=Path); recovery.add_argument('receipt', type=Path); recovery.add_argument('output', type=Path)
     plan_hash = sub.add_parser('plan-digest'); plan_hash.add_argument('plan', type=Path)
     sub.add_parser('harness-digest')
     legacy_tool=sub.add_parser('legacy-uv'); legacy_tool.add_argument('destination',type=Path)
@@ -549,7 +621,11 @@ def main():
     elif args.action == 'baseline':
         print(json.dumps(fetch_baseline(json.loads(args.plan.read_text(encoding='utf-8')), args.version, args.directory)))
     elif args.action == 'attach-plan':
-        attach_plan(args.plan, args.manifest, args.deferred)
+        attach_plan(args.plan, args.manifest, args.deferred, args.standard_receipt)
+    elif args.action == 'record-validation':
+        record_standard_validation(args.plan, args.output)
+    elif args.action == 'recover-validation':
+        recover_standard_validation(args.plan, args.receipt, args.output)
     elif args.action == 'plan-digest':
         print(plan_digest(json.loads(args.plan.read_text(encoding='utf-8'))))
     elif args.action == 'harness-digest':

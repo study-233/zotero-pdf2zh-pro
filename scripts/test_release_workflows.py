@@ -142,14 +142,15 @@ class WorkflowGateTests(unittest.TestCase):
                  "Prepare frozen validation plan", "Verify previous stable release upgrade",
                  "Restore packages from a completed artifact build", "Use current test harness for reused artifacts",
                  "Fresh installed Python 3.13 runtime and OCR", "Verify installed startup and upgrade",
-                 "Verify real downloads and progress with the release controller"]
+                 "Verify real downloads and progress with the release controller", "Record passed standard validation"]
         steps = [{"name": name, "conclusion": "success"} for name in names]
         steps.append({"name": "Verify and collect release artifacts", "conclusion": "failure"})
         jobs = {"jobs": [{"name": "build", "steps": steps}]}
         args = [SHA, "1.9.0", "c" * 40]
         call = self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args)
         self.assertEqual(call.args[0][:5], ["git", "diff", "--exit-code", "b" * 40, "c" * 40])
-        for step in steps[:-1]:
+        for step in [s for s in steps[:-1] if s['name'] not in {
+                'Restore packages from a completed artifact build', 'Use current test harness for reused artifacts'}]:
             step["conclusion"] = "failure"
             with self.assertRaises(AssertionError):
                 self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args)
@@ -162,32 +163,33 @@ class WorkflowGateTests(unittest.TestCase):
         with self.assertRaises(subprocess.CalledProcessError):
             self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args, harness_changed=True)
 
-    def test_migration_retry_reuses_full_lifecycle_but_reruns_changed_fixture(self):
+    def test_migration_retry_requires_receipt_and_unchanged_validation_code(self):
         run = {"status": "completed", "conclusion": "failure", "head_sha": "b" * 40,
                "path": ".github/workflows/build-windows-release.yml", "display_title": f"Build v1.9.2 at {SHA}"}
         names = ["Verify committed versions", "Require successful core CI for the release commit",
                  "Prepare frozen validation plan", "Verify previous stable release upgrade",
                  "Restore packages from a completed artifact build", "Use current test harness for reused artifacts",
                  "Fresh installed Python 3.13 runtime and OCR", "Verify installed startup and upgrade",
-                 "Verify real downloads and progress with the release controller"]
+                 "Verify real downloads and progress with the release controller", "Record passed standard validation"]
         steps = [{"name": name, "conclusion": "success"} for name in names]
-        migration = {"name": "Verify v1.8.2 migration and locked dependency reuse", "conclusion": "failure"}
+        migration = {"name": "Verify selected historical upgrades", "conclusion": "failure"}
         steps += [migration, {"name": "Verify and collect release artifacts", "conclusion": "skipped"}]
         jobs = {"jobs": [{"name": "build", "steps": steps}]}
         args = [SHA, "1.9.2", "c" * 40, "true"]
         call = self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args)
-        self.assertNotIn("scripts/test_windows_previous_release.ps1", call.args[0])
+        self.assertIn("scripts/test_windows_previous_release.ps1", call.args[0])
+        self.assertIn(".github/workflows/build-windows-release.yml", call.args[0])
         self.assertIn("scripts/test_windows_lifecycle.ps1", call.args[0])
         self.assertIn("scripts/test_windows_process_helpers.ps1", call.args[0])
         with self.assertRaises(subprocess.CalledProcessError):
             self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args, harness_changed=True)
-        migration["conclusion"] = "skipped"
+        # Changed coverage is checked against the receipt, not a full-validation boolean.
+        self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args[:-1])
+        steps[len(names)-1]['conclusion'] = 'skipped'
         with self.assertRaises(AssertionError):
             self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args)
-        migration["conclusion"] = "failure"
-        with self.assertRaises(AssertionError):
-            self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args[:-1])
-        steps[5]["conclusion"] = "failure"
+        steps[len(names)-1]['conclusion'] = 'success'
+        steps[6]["conclusion"] = "failure"
         with self.assertRaises(AssertionError):
             self.execute("build-windows-release.yml", "PY_VALIDATION", [run, jobs], args)
 

@@ -13,8 +13,9 @@ BASH = str(GIT_BASH) if GIT_BASH.is_file() else shutil.which('bash')
 
 @unittest.skipUnless(BASH, 'Bash is required for the release coordinator')
 class ValidationRoutingTests(unittest.TestCase):
-    def route(self, platform, full=True, force_remote=False, replacement=''):
+    def route(self, platform, full=True, force_remote=False, replacement='', extended=None):
         environment = dict(os.environ, OS=platform, FULL_VALIDATION=str(full).lower(),
+                           EXTENDED_VALIDATION=str(full if extended is None else extended).lower(),
                            REMOTE_VALIDATION=str(force_remote).lower(), REPLACE_EXISTING=replacement)
         result = subprocess.run([BASH, '-c', ROUTING +
                                  '\nprintf "%s %s" "$REMOTE_FULL_VALIDATION" "$LOCAL_EXTENDED_VALIDATION"'],
@@ -22,7 +23,11 @@ class ValidationRoutingTests(unittest.TestCase):
         return result.stdout
 
     def test_windows_prefers_local_extended_validation(self):
-        self.assertEqual(self.route('Windows_NT'), 'false true')
+        self.assertEqual(self.route('Windows_NT'), 'true true')
+
+    def test_data_changes_defer_only_historical_upgrades_without_forcing_full_lifecycle(self):
+        self.assertEqual(self.route('Windows_NT', full=False, extended=True), 'false true')
+        self.assertEqual(self.route('Darwin', full=False, extended=True), 'false false')
 
     def test_other_hosts_and_windows_fallback_use_remote_validation(self):
         self.assertEqual(self.route('Darwin'), 'true false')
@@ -34,6 +39,14 @@ class ValidationRoutingTests(unittest.TestCase):
 
     def test_replacement_keeps_the_required_remote_full_validation(self):
         self.assertEqual(self.route('Windows_NT', replacement='a' * 40), 'true false')
+
+    def test_local_upgrade_invocation_skips_both_completed_standard_phases(self):
+        arguments=next(line.strip() for line in SOURCE.splitlines() if line.strip().startswith('extended_args=('))
+        result=subprocess.run([BASH,'-c',arguments+'\nprintf "%s\\n" "${extended_args[@]}"'],
+                              env=dict(os.environ,VERSION='1.9.3',VALIDATION_PLAN='plan.json',VALIDATION_RECEIPT='receipt.json'),
+                              capture_output=True,text=True,check=True)
+        self.assertIn('-SkipLifecycle',result.stdout.splitlines())
+        self.assertIn('-SkipRecentUpgrade',result.stdout.splitlines())
 
 
 if __name__ == '__main__':

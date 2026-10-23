@@ -188,22 +188,26 @@ class PolicyTests(unittest.TestCase):
             control.save(root/'validation-plan.json', plan)
             manifest = {'version':'1.9.2','commit':SHA,'validationPlanSha256':control.plan_digest(plan),
                         'deferredExtendedValidation':True, 'artifacts':{
-                            control.PACKAGE:{'sha256':'e'*64},
-                            'zotero_pdf2zh_pro-1.9.2-py3-none-any.whl':{'sha256':'f'*64}}}
+                            Path(name).name:{'size':1,'sha256':'e'*64} for name in control.product_paths('1.9.2')}}
+            manifest['artifacts']['zotero_pdf2zh_pro-1.9.2-py3-none-any.whl']['sha256']='f'*64
+            standard={'schemaVersion':1,'status':'passed','plan':plan,'planSha256':control.plan_digest(plan),
+                      'lifecycle':plan['lifecycle'],'runId':'123','runAttempt':1,'artifacts':manifest['artifacts']}
+            manifest['standardValidationSha256']=control.plan_digest(standard)
+            control.save(root/'standard-validation.json',standard)
             control.save(root/'checksums.json',manifest)
-            receipt = {'status':'passed','commit':SHA,'planSha256':control.plan_digest(plan),'lifecycle':True,
+            receipt = {'status':'passed','commit':SHA,'planSha256':control.plan_digest(plan),'lifecycle':False,
                        'cases':[{'id':'legacy-upgrade','baseline':'1.8.2','status':'passed'},
                                 {'id':'oldest-upgrade','baseline':'1.9.0','status':'passed'}],
                        'packageSha256':'e'*64,'wheelSha256':'f'*64,'harnessSha256':'9'*64}
             with patch.object(control,'validate_plan'):
                 control.verify_publication_contract(root,receipt)
-                for change in ({'cases':[]},{'lifecycle':False},{'packageSha256':'0'*64},{'planSha256':'0'*64},{'harnessSha256':'0'*64}):
+                for change in ({'cases':[]},{'packageSha256':'0'*64},{'planSha256':'0'*64},{'harnessSha256':'0'*64}):
                     with self.assertRaises(ValueError):
                         control.verify_publication_contract(root,dict(receipt,**change))
                 waiver = {'id':'legacy-upgrade','baseline':'1.8.2','reason':'Explicit user request'}
                 waived_receipt = dict(receipt, cases=[receipt['cases'][1]], waivedCases=[waiver])
                 control.verify_publication_contract(root,waived_receipt)
-                for change in ({'cases':[]},{'lifecycle':False},{'packageSha256':'0'*64},
+                for change in ({'cases':[]},{'packageSha256':'0'*64},
                                {'waivedCases':[dict(waiver,reason='')]},
                                {'waivedCases':[dict(waiver,id='oldest-upgrade',baseline='1.9.0')]}):
                     with self.assertRaises(ValueError):
@@ -214,12 +218,14 @@ class PolicyTests(unittest.TestCase):
         self.assertFalse(normal['fullValidation'])
         self.assertEqual(normal['cases'], [{'id': 'recent-upgrade', 'baseline': '1.9.1'}])
         risky = policy.select(['scripts/windows/runtime.ps1'], '1.9.1', '1.9.2')
-        self.assertTrue(risky['fullValidation'])
+        self.assertTrue(risky['extendedValidation'])
+        self.assertFalse(risky['fullValidation'])
+        self.assertEqual(risky['lifecycle'], 'extended')
         self.assertEqual({c['baseline'] for c in risky['cases']}, {'1.9.1', '1.9.0', '1.8.2'})
 
     def test_unknown_changes_are_conservative_and_duplicate_baselines_are_removed(self):
         plan = policy.select(['a-new-platform/installer'], '1.9.0', '1.9.2')
-        self.assertTrue(plan['fullValidation'])
+        self.assertTrue(plan['extendedValidation'])
         self.assertEqual(sum(c['baseline'] == '1.9.0' for c in plan['cases']), 1)
 
     def test_latest_incomplete_release_cannot_silently_fall_back(self):
@@ -312,6 +318,27 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(control.workflow(self.state,'pypi','publish-pypi.yml',fields,retry_failed=True),124)
         self.assertIn('build_run_id=321',command.call_args.args[0])
         self.assertNotIn('build-windows-release.yml',command.call_args.args[0])
+
+    def test_resume_reuses_standard_tests_only_after_a_receipt_was_uploaded(self):
+        fields={'version':'1.9.2','commit':SHA}
+        for receipt_passed, uploaded in [(True,True),(False,True),(True,False)]:
+            with self.subTest(receipt=receipt_passed,uploaded=uploaded):
+                state=json.loads(self.state.read_text())
+                state['stages']['build']={'workflow':'build-windows-release.yml','fields':fields,'runId':123}
+                control.save(self.state,state)
+                jobs={'jobs':[{'name':'build','steps':[
+                    {'name':'Build artifacts and verify Windows startup','conclusion':'success'},
+                    {'name':'Record passed standard validation','conclusion':'success' if receipt_passed else 'skipped'},
+                    {'name':'Upload validation evidence','conclusion':'success' if uploaded else 'failure'}]}]}
+                run={'id':124,'head_sha':SHA,'run_attempt':1,'display_title':'Build ['+'a'*32+']'}
+                with patch.object(control,'command') as command,patch.object(control.uuid,'uuid4') as uuid, \
+                     patch.object(control,'api',side_effect=[jobs,{'workflow_runs':[run]}]), \
+                     patch.object(control,'wait_run',side_effect=[{'conclusion':'failure','run_attempt':1},dict(run,conclusion='success')]):
+                    uuid.return_value.hex='a'*32
+                    control.workflow(self.state,'build','build-windows-release.yml',fields,retry_failed=True)
+                args=command.call_args.args[0]
+                self.assertIn('reuse_build_run_id=123',args)
+                self.assertEqual('validation_run_id=123' in args,receipt_passed and uploaded)
 
     def test_download_inactivity_kills_only_the_owned_child(self):
         with patch.object(control.subprocess,'Popen') as start, patch.object(control.time,'sleep'), \

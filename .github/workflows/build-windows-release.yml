@@ -26,7 +26,7 @@ on:
         required: false
         type: string
       validation_run_id:
-        description: Optional failed run with passed standard checks; resume collection or retry full-validation migration
+        description: Failed run with a passed standard receipt for these exact packages and frozen plan
         required: false
         type: string
       dispatch_id:
@@ -38,7 +38,7 @@ on:
         required: false
         type: string
       defer_extended_validation:
-        description: Coordinator will run extended checks locally against these same artifacts
+        description: Coordinator will run additional historical upgrades locally; selected lifecycle checks still run here
         required: false
         type: boolean
         default: false
@@ -138,6 +138,7 @@ jobs:
           "TMP=$testTemp" >> $env:GITHUB_ENV
           "TMPDIR=$($testTemp.Replace('\', '/'))" >> $env:GITHUB_ENV
           "PDF2ZH_VALIDATION_PLAN=$env:RUNNER_TEMP/validation-plan.json" >> $env:GITHUB_ENV
+          "PDF2ZH_STANDARD_RECEIPT=$env:RUNNER_TEMP/standard-validation.json" >> $env:GITHUB_ENV
           "UV_TOOL_DIR=$env:RUNNER_TEMP\uv-tools" >> $env:GITHUB_ENV
           "UV_TOOL_BIN_DIR=$env:RUNNER_TEMP\uv-bin" >> $env:GITHUB_ENV
           "PDF2ZH_WINDOWS_APP_ROOT=$env:RUNNER_TEMP\zotero-pdf2zh-pro 中文 with spaces" >> $env:GITHUB_ENV
@@ -273,12 +274,11 @@ jobs:
         shell: bash
         env:
           VALIDATION_RUN: ${{ inputs.validation_run_id }}
-          FULL_VALIDATION: ${{ inputs.full_validation }}
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN" > "$RUNNER_TEMP/validation-run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN/jobs?filter=latest" > "$RUNNER_TEMP/validation-jobs.json"
-          python - "$RUNNER_TEMP/validation-run.json" "$RUNNER_TEMP/validation-jobs.json" "$RELEASE_COMMIT" "$RELEASE_VERSION" "$GITHUB_SHA" "$FULL_VALIDATION" <<'PY_VALIDATION'
+          python - "$RUNNER_TEMP/validation-run.json" "$RUNNER_TEMP/validation-jobs.json" "$RELEASE_COMMIT" "$RELEASE_VERSION" "$GITHUB_SHA" <<'PY_VALIDATION'
           import json, re, subprocess, sys
           from pathlib import Path
           run, jobs = [json.loads(Path(p).read_text(encoding="utf-8")) for p in sys.argv[1:3]]
@@ -289,33 +289,35 @@ jobs:
           assert len(build) == 1
           steps = {step["name"]: step["conclusion"] for step in build[0]["steps"]}
           for name in ["Verify committed versions", "Require successful core CI for the release commit",
-                       "Restore packages from a completed artifact build", "Use current test harness for reused artifacts",
                        "Fresh installed Python 3.13 runtime and OCR", "Verify installed startup and upgrade",
                        "Prepare frozen validation plan", "Verify previous stable release upgrade",
-                       "Verify real downloads and progress with the release controller"]:
+                       "Verify real downloads and progress with the release controller", "Record passed standard validation"]:
               assert steps.get(name) == "success", f"Missing passed validation: {name}"
-          full_validation = len(sys.argv) > 6 and sys.argv[6] == "true"
-          if full_validation:
-              # This step can only have run after a full lifecycle validation.
-              assert steps.get("Verify v1.8.2 migration and locked dependency reuse") in {"success", "failure"}
-              assert steps.get("Verify and collect release artifacts") in {"failure", "skipped"}
-          else:
-              assert steps.get("Verify and collect release artifacts") == "failure"
           subprocess.run(["git", "merge-base", "--is-ancestor", sys.argv[3], run["head_sha"]], check=True)
           subprocess.run(["git", "merge-base", "--is-ancestor", run["head_sha"], sys.argv[5]], check=True)
           import os
           policy = json.loads(Path(os.environ["RUNNER_TEMP"], "renderer-harness/release-policy.json").read_text(encoding="utf-8"))
           paths = policy["harnessPaths"]
-          if full_validation:
-              # Only the migration fixture may change; it is rerun below.
-              paths.remove("scripts/test_windows_previous_release.ps1")
           subprocess.run(["git", "diff", "--exit-code", run["head_sha"], sys.argv[5], "--",
-                          *paths], check=True)
+                          *paths, ".github/workflows/build-windows-release.yml"], check=True)
           PY_VALIDATION
-          echo 'REUSE_VALIDATION=true' >> "$GITHUB_ENV"
+          gh run download "$VALIDATION_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name "validation-$RELEASE_VERSION-$VALIDATION_RUN" --dir "$RUNNER_TEMP/recovered-validation"
+          python - "$RUNNER_TEMP/recovered-validation" "$RUNNER_TEMP/validation-run.json" <<'PY_RECEIPT'
+          import json, os, sys
+          from pathlib import Path
+          matches = list(Path(sys.argv[1]).rglob("standard-validation.json"))
+          assert len(matches) == 1, "Missing or ambiguous passed-validation receipt; rerun checks"
+          receipt = json.loads(matches[0].read_text(encoding="utf-8-sig"))
+          run = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+          assert str(receipt["runId"]) == str(run["id"]) and receipt["runAttempt"] == run["run_attempt"], "Wrong validation attempt"
+          Path(os.environ["RUNNER_TEMP"], "previous-standard-validation.json").write_text(json.dumps(receipt), encoding="utf-8")
+          # Freeze the same baseline identities on recovery, before applying any explicit plan input.
+          Path(os.environ["PDF2ZH_VALIDATION_PLAN"]).write_text(json.dumps(receipt["plan"]), encoding="utf-8")
+          PY_RECEIPT
 
       - name: Use current test harness for reused artifacts
-        if: github.sha != inputs.commit || (inputs.reuse_build_run_id != '' && (env.REUSE_VALIDATION != 'true' || inputs.full_validation))
+        if: github.sha != inputs.commit || inputs.reuse_build_run_id != ''
         shell: bash
         run: |
           # Only the test harness comes from this workflow's newer revision.
@@ -333,11 +335,16 @@ jobs:
           uv run --no-project python scripts/release_control.py plan @arguments
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $plan=Get-Content -Raw -Encoding utf8 -LiteralPath $env:PDF2ZH_VALIDATION_PLAN|ConvertFrom-Json
-          $runFull=$plan.fullValidation -and '${{ inputs.defer_extended_validation }}' -ne 'true'
-          if ($env:REUSE_VALIDATION -eq 'true' -and $runFull -and '${{ inputs.full_validation }}' -ne 'true') {
-            throw 'Expanded recovery requires full_validation=true with proven full-lifecycle evidence, or omit validation_run_id to rerun checks.'
-          }
-          "RUN_FULL_VALIDATION=$($runFull.ToString().ToLowerInvariant())" >> $env:GITHUB_ENV
+          $runUpgrades=@($plan.cases | Where-Object {$_.id -ne 'recent-upgrade'}).Count -gt 0 -and '${{ inputs.defer_extended_validation }}' -ne 'true'
+          "RUN_UPGRADE_VALIDATION=$($runUpgrades.ToString().ToLowerInvariant())" >> $env:GITHUB_ENV
+
+      - name: Bind recovered validation to exact packages and plan
+        if: inputs.validation_run_id != ''
+        shell: pwsh
+        run: |
+          uv run --no-project python scripts/release_control.py recover-validation $env:PDF2ZH_VALIDATION_PLAN "$env:RUNNER_TEMP/previous-standard-validation.json" $env:PDF2ZH_STANDARD_RECEIPT
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+          'REUSE_VALIDATION=true' >> $env:GITHUB_ENV
 
       - name: Fresh installed Python 3.13 runtime and OCR
         if: env.REUSE_VALIDATION != 'true'
@@ -359,8 +366,10 @@ jobs:
         run: |
           if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'PowerShell 5.1 is required' }
           $wheel = (Resolve-Path "server/dist/zotero_pdf2zh_pro-$env:RELEASE_VERSION-py3-none-any.whl").Path
-          $smokeOnly = $env:RUN_FULL_VALIDATION -ne 'true'
+          $plan=Get-Content -Raw -Encoding utf8 -LiteralPath $env:PDF2ZH_VALIDATION_PLAN|ConvertFrom-Json
+          $smokeOnly = $plan.lifecycle -eq 'standard'
           & scripts/test_windows_lifecycle.ps1 -WindowsPackage 'dist/zotero-pdf2zh-pro-windows-x64.zip' -PackageSource $wheel -SmokeOnly:$smokeOnly
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
 
       - name: Verify real downloads and progress with the release controller
         if: env.REUSE_VALIDATION != 'true'
@@ -382,15 +391,22 @@ jobs:
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -Plan $env:PDF2ZH_VALIDATION_PLAN -SkipLifecycle -RecentOnly
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Verify v1.8.2 migration and locked dependency reuse
-        if: env.RUN_FULL_VALIDATION == 'true'
+      - name: Record passed standard validation
+        if: env.REUSE_VALIDATION != 'true'
+        shell: pwsh
+        run: |
+          uv run --no-project python scripts/release_control.py record-validation $env:PDF2ZH_VALIDATION_PLAN $env:PDF2ZH_STANDARD_RECEIPT
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+
+      - name: Verify selected historical upgrades
+        if: env.RUN_UPGRADE_VALIDATION == 'true'
         shell: pwsh
         run: |
           powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -Plan $env:PDF2ZH_VALIDATION_PLAN -SkipLifecycle -SkipRecentUpgrade
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Restore source test scripts after validation
-        if: always() && (github.sha != inputs.commit || (inputs.reuse_build_run_id != '' && (env.REUSE_VALIDATION != 'true' || inputs.full_validation)))
+        if: always() && (github.sha != inputs.commit || inputs.reuse_build_run_id != '')
         shell: bash
         run: |
           # Undo only the explicitly overlaid tracked tests. Product changes
@@ -408,7 +424,7 @@ jobs:
         env:
           PDF2ZH_RELEASE_ROOT: ${{ github.workspace }}
         run: |
-          $arguments=@($env:PDF2ZH_VALIDATION_PLAN,'dist/release/checksums.json')
+          $arguments=@($env:PDF2ZH_VALIDATION_PLAN,'dist/release/checksums.json','--standard-receipt',$env:PDF2ZH_STANDARD_RECEIPT)
           if ('${{ inputs.defer_extended_validation }}' -eq 'true') {$arguments+='--deferred'}
           uv run --no-project python "$env:RUNNER_TEMP/renderer-harness/release_control.py" attach-plan @arguments
           if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
@@ -428,6 +444,7 @@ jobs:
           name: validation-${{ inputs.version }}-${{ github.run_id }}
           path: |
             ${{ env.PDF2ZH_VALIDATION_PLAN }}
+            ${{ env.PDF2ZH_STANDARD_RECEIPT }}
             .local-dev/reports/**
           if-no-files-found: warn
           retention-days: 90

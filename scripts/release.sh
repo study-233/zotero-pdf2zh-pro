@@ -281,12 +281,13 @@ if [[ "$PUSH" -eq 1 ]]; then
     [[ "$FULL_VALIDATION" != true ]] || plan_args+=(--full)
     uv run --no-project python scripts/release_control.py plan "${plan_args[@]}" >&2
     FULL_VALIDATION="$(node -e 'console.log(require(process.argv[1]).fullValidation)' "$VALIDATION_PLAN")"
+    EXTENDED_VALIDATION="$(node -e 'console.log(require(process.argv[1]).cases.length > 1)' "$VALIDATION_PLAN")"
     git push origin main
 fi
 
 # A publication reuses core CI and packages from the standard Windows check.
 # Runtime/OCR and lifecycle checks run once against those packages in CI.
-# Extended rollback/relocation checks remain available by manual dispatch.
+# Selected rollback/reinstall/relocation checks share that one lifecycle run.
 # The workflow's --no-push build does not enter this block recursively.
 BUILD_RUN=""
 if [[ "$PUSH" -eq 1 ]]; then
@@ -305,8 +306,7 @@ if [[ "$PUSH" -eq 1 ]]; then
     # BEGIN_VALIDATION_ROUTING
     REMOTE_FULL_VALIDATION="$FULL_VALIDATION"
     LOCAL_EXTENDED_VALIDATION=false
-    if [[ "$FULL_VALIDATION" == true && "${OS:-}" == Windows_NT && "$REMOTE_VALIDATION" == false && -z "$REPLACE_EXISTING" ]]; then
-        REMOTE_FULL_VALIDATION=false
+    if [[ "$EXTENDED_VALIDATION" == true && "${OS:-}" == Windows_NT && "$REMOTE_VALIDATION" == false && -z "$REPLACE_EXISTING" ]]; then
         LOCAL_EXTENDED_VALIDATION=true
     fi
     # END_VALIDATION_ROUTING
@@ -373,7 +373,7 @@ for (const [name, destination] of Object.entries(destinations)) {
 VERIFY_BUILD
     uv run --no-project python scripts/check_release_artifacts.py "$VERSION" "$COMMIT" --collect
     if [[ "$LOCAL_EXTENDED_VALIDATION" == true ]]; then
-        extended_args=(-Version "$VERSION" -Plan "$VALIDATION_PLAN" -Receipt "$VALIDATION_RECEIPT" -SkipRecentUpgrade)
+        extended_args=(-Version "$VERSION" -Plan "$VALIDATION_PLAN" -Receipt "$VALIDATION_RECEIPT" -SkipLifecycle -SkipRecentUpgrade)
         [[ -z "$REPLACE_EXISTING" ]] || extended_args+=(-SkipPreviousRelease)
         if [[ -f "$VALIDATION_RECEIPT" ]] && uv run --no-project python scripts/release_control.py verify-contract "$VERIFIED_DIR" --receipt "$VALIDATION_RECEIPT"; then
             echo 'Reusing matching local extended validation.' >&2

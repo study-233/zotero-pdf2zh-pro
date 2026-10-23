@@ -49,22 +49,27 @@ def previous_release(releases, candidate):
 
 def select(changes, previous, candidate, full=False, compatibility=False):
     rules = policy()
-    risky = [p for p in changes if any(fnmatch.fnmatchcase(p, pat) for pat in rules['riskPaths'])]
+    groups = {name: group for name, group in rules['riskGroups'].items()
+              if any(fnmatch.fnmatchcase(p, pat) for p in changes for pat in group['paths'])}
+    risky = [p for p in changes if any(fnmatch.fnmatchcase(p, pat)
+                                     for group in groups.values() for pat in group['paths'])]
     unknown = [p for p in changes if not any(fnmatch.fnmatchcase(p, pat) for pat in rules['knownPaths'])
                and p not in risky]
-    extended = bool(full or compatibility or risky or unknown)
+    exhaustive = bool(full or compatibility)
+    selected = rules['riskGroups'] if exhaustive or unknown else groups
+    lifecycle = 'extended' if any(g['lifecycle'] == 'extended' for g in selected.values()) else 'standard'
+    upgrades = {case for group in selected.values() for case in group['upgrades']}
     cases = [{'id': 'recent-upgrade', 'baseline': previous}]
-    if extended:
-        oldest = rules['currentLayoutBaseline']
-        if version(oldest) < version(candidate) and oldest != previous:
-            cases.append({'id': 'oldest-upgrade', 'baseline': oldest})
-        if version(rules['legacyBaseline']) < version(candidate):
-            cases.append({'id': 'legacy-upgrade', 'baseline': rules['legacyBaseline']})
-    return {'schemaVersion': 1, 'version': candidate, 'previousVersion': previous,
+    for case, baseline in [('oldest-upgrade', rules['currentLayoutBaseline']),
+                           ('legacy-upgrade', rules['legacyBaseline'])]:
+        if case in upgrades and version(baseline) < version(candidate) and baseline != previous:
+            cases.append({'id': case, 'baseline': baseline})
+    return {'schemaVersion': 2, 'version': candidate, 'previousVersion': previous,
             'policySha256': policy_digest(),
-            'fullValidation': extended, 'riskPaths': risky, 'unknownPaths': unknown,
+            'fullValidation': exhaustive, 'extendedValidation': lifecycle == 'extended' or len(cases) > 1,
+            'lifecycle': lifecycle, 'riskGroups': list(groups), 'riskPaths': risky, 'unknownPaths': unknown,
             'reason': 'explicit compatibility/full request' if full or compatibility else
-                      'installation, data, packaging or unclassified changes' if extended else 'ordinary release',
+                      'unclassified changes' if unknown else ', '.join(groups) if groups else 'ordinary release',
             'cases': cases}
 
 
@@ -74,6 +79,7 @@ def changed_paths(root, old, new):
     names = git('diff', '--name-only', old, new).splitlines()
     # Ignore only this project's release markers, never dependency versions.
     markers = {
+        'server/server.py': r'(?m)^(VERSION = ")[^"]+("\s*)$',
         'scripts/windows/common.ps1': r'(?m)(\$PackageVersion = ")[^"]+(" # release-version)',
         'server/pyproject.toml': r'(?m)^(version = ")[^"]+("\s*)$',
         'server/uv.lock': r'(\[\[package\]\]\nname = "zotero-pdf2zh-pro"\nversion = ")[^"]+(")',

@@ -68,7 +68,10 @@ try {
             Copy-Item -LiteralPath (Join-Path $cache 'runtime/python') -Destination (Join-Path $env:PDF2ZH_WINDOWS_APP_ROOT 'runtime/python') -Recurse
             $env:PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE = '1'
         }
-        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'test_windows_lifecycle.ps1') -WindowsPackage $package -PackageSource $wheel
+        $lifecycleArguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File',
+            (Join-Path $PSScriptRoot 'test_windows_lifecycle.ps1'),'-WindowsPackage',$package,'-PackageSource',$wheel)
+        if ($testPlan.lifecycle -eq 'standard') {$lifecycleArguments+='-SmokeOnly'}
+        & powershell @lifecycleArguments
         if ($LASTEXITCODE -ne 0) { throw 'Extended lifecycle validation failed.' }
     }
     foreach ($case in $testPlan.cases) {
@@ -79,12 +82,14 @@ try {
         $info=& uv run --no-project python (Join-Path $PSScriptRoot 'release_control.py') baseline $Plan $case.baseline $previous
         if ($LASTEXITCODE -ne 0) {throw "Baseline setup failed: $($case.id) $($case.baseline)"}
         $old=$info|ConvertFrom-Json
-        $descriptor=$releasePolicy.scenarios.PSObject.Properties|Where-Object {$_.Name -eq $case.id}
+        $legacy=$case.baseline -eq $releasePolicy.legacyBaseline
+        $scenario=if ($legacy) {'legacy-upgrade'} else {$case.id}
+        $descriptor=$releasePolicy.scenarios.PSObject.Properties|Where-Object {$_.Name -eq $scenario}
         if (-not $descriptor) {throw "Unknown validation scenario: $($case.id)"}
         $entry=Join-Path $repo $descriptor.Value.entry
         $arguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File',$entry,
             '-PreviousPackage',$old.package,'-PreviousWheel',$old.wheel,'-Package',$package,'-Wheel',$wheel)
-        if ($case.id -eq 'legacy-upgrade') {
+        if ($legacy) {
             $arguments+=@('-Constraints',$old.constraints)
             if ($DownloadCache) {$arguments+=@('-DownloadCache',$DownloadCache)}
         } else {

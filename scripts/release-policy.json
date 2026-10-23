@@ -24,16 +24,32 @@
     "scripts/workspace.py",
     "scripts/workspace.ps1"
   ],
-  "riskPaths": [
-    "scripts/windows/*", "scripts/build_windows*", "scripts/check_installed_runtime.py",
-    "windows-app/src/update.rs", "windows-app/src/lib.rs", "windows-app/src/main.rs",
-    "windows-app/src/setup.rs", "windows-app/Cargo.*", "windows-app/build.rs",
-    "server/pyproject.toml", "server/uv.lock", "server/service_launcher.py",
-    "server/maintenance.py", "server/task_manager.py", "server/translation_memory.py",
-    "server/selection_cache.py", "server/Dockerfile", "compose.yaml"
-  ],
+  "riskGroups": {
+    "installation": {
+      "paths": ["scripts/windows/*", "scripts/build_windows*", "scripts/check_installed_runtime.py",
+        "windows-app/src/update.rs", "windows-app/src/lib.rs", "windows-app/src/main.rs",
+        "windows-app/src/setup.rs", "windows-app/Cargo.*", "windows-app/build.rs",
+        "server/service_launcher.py", "server/maintenance.py"],
+      "lifecycle": "extended", "upgrades": ["oldest-upgrade", "legacy-upgrade"]
+    },
+    "dependencies": {
+      "paths": ["server/pyproject.toml", "server/uv.lock"],
+      "lifecycle": "standard", "upgrades": ["oldest-upgrade", "legacy-upgrade"]
+    },
+    "data": {
+      "paths": ["server/task_manager.py", "server/task_runtime.py", "server/translation_memory.py",
+        "server/selection_cache.py", "server/glossary_manager.py", "server/chatgpt_auth.py",
+        "server/chatgpt_usage.py", "server/server.py", "server/babeldoc/format/pdf/translation_recovery.py"],
+      "lifecycle": "standard", "upgrades": ["oldest-upgrade", "legacy-upgrade"]
+    }
+  },
   "knownPaths": [
-    "*.md", "docs/*", "assets/*", "website/*", "plugin/*", "server/*", "benchmarks/*",
+    "*.md", "docs/*", "assets/*", "website/*", "plugin/*", "benchmarks/*",
+    "server/tests/*", "server/Dockerfile", "compose.yaml",
+    "server/chatgpt_client.py", "server/chatgpt_routes.py", "server/codex_client.py",
+    "server/codex_discovery.py", "server/provider_models.py", "server/text_translation.py",
+    "server/glossary_catalog.py", "server/diagnostic_contract.py", "server/diagnostic_evidence.py",
+    "server/diagnostics.py", "server/observability.py", "server/pdf2zh_next_service.py",
     "scripts/build_site*", "scripts/dev*", "scripts/zotero-dev",
     "scripts/test_*", "scripts/check_*", "scripts/release*", "scripts/workspace*",
     ".github/*", ".codex/*", ".agents/*", "LICENSE*", "NOTICE*", ".gitignore"
