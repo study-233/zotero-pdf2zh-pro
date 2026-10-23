@@ -69,6 +69,16 @@ for (const locale of ["zh-CN", "en-US"]) {
         const close = dom.window.close.bind(dom.window);
         try {
             assert.equal(doc.querySelectorAll("#updates li").length, 3);
+            const current = releases.find(
+                (entry) => entry.version === pkg.version,
+            );
+            const messages = dom.window.arguments[0].message;
+            assert.deepEqual(
+                [...doc.querySelectorAll("#updates li")].map(
+                    (item) => item.textContent,
+                ),
+                current.notes.map((note) => messages(note.message)),
+            );
             assert.ok(
                 doc.querySelector("#updates").textContent.includes(pkg.version),
             );

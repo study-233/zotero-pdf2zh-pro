@@ -1,6 +1,7 @@
 export interface ReleaseNote {
     id: string;
     message: string;
+    cardMessage?: string;
     priority: number;
 }
 export interface ReleaseSummary {
@@ -61,16 +62,19 @@ export const releaseSummaries: ReleaseSummary[] = [
             {
                 id: "task-settings-layout",
                 message: "release-task-settings-layout",
+                cardMessage: "release-card-task-settings-layout",
                 priority: 0,
             },
             {
                 id: "translated-attachment-tag",
                 message: "release-translated-attachment-tag",
+                cardMessage: "release-card-translated-attachment-tag",
                 priority: 1,
             },
             {
                 id: "diagnostic-request-evidence",
                 message: "release-diagnostic-request-evidence",
+                cardMessage: "release-card-diagnostic-request-evidence",
                 priority: 2,
             },
         ],

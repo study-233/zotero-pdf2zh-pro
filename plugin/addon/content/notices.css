@@ -20,30 +20,72 @@
     max-height: calc(100vh - 32px);
     overflow: auto;
     padding: 16px;
-    border: 1px solid color-mix(in srgb, CanvasText 25%, Canvas);
+    font-size: 13px;
+    line-height: 20px;
+    border: 1px solid color-mix(in srgb, CanvasText 14%, Canvas);
     border-radius: 8px;
     box-shadow: 0 4px 20px #0002;
 }
+.pdf2zh-update-card #pdf2zh-update-name {
+    margin: 0 0 4px;
+    color: color-mix(in srgb, CanvasText 68%, Canvas);
+    font-size: 12px;
+    line-height: 18px;
+}
+.pdf2zh-update-card h2 {
+    margin: 0;
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+}
 .pdf2zh-update-card ul {
-    margin: 10px 0;
-    padding-inline-start: 20px;
+    margin: 12px 0 0;
+    padding-inline-start: 18px;
+    color: color-mix(in srgb, CanvasText 82%, Canvas);
 }
 .pdf2zh-update-card li + li {
     margin-top: 6px;
 }
-.pdf2zh-notice-actions {
+.pdf2zh-update-card .pdf2zh-notice-actions {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
     flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid color-mix(in srgb, CanvasText 10%, Canvas);
 }
 .pdf2zh-update-card button {
+    box-sizing: border-box;
+    min-height: 28px;
+    margin: 0;
     font: inherit;
-    color: ButtonText;
-    background: ButtonFace;
-    border: 1px solid color-mix(in srgb, CanvasText 25%, Canvas);
+    color: CanvasText;
+    background: color-mix(in srgb, CanvasText 6%, Canvas);
+    border: 1px solid color-mix(in srgb, CanvasText 18%, Canvas);
     border-radius: 4px;
-    padding: 4px 10px;
+    padding: 3px 10px;
     cursor: pointer;
+}
+.pdf2zh-update-card button:hover {
+    background: color-mix(in srgb, CanvasText 10%, Canvas);
+}
+.pdf2zh-update-card button:active {
+    background: color-mix(in srgb, CanvasText 14%, Canvas);
+}
+.pdf2zh-update-card .pdf2zh-update-details {
+    padding-inline: 0;
+    color: LinkText;
+    background: transparent;
+    border-color: transparent;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.pdf2zh-update-card .pdf2zh-update-details:hover,
+.pdf2zh-update-card .pdf2zh-update-details:active {
+    background: transparent;
+    text-decoration-thickness: 2px;
 }
 .pdf2zh-update-card button:focus-visible,
 .pdf2zh-help a:focus-visible,

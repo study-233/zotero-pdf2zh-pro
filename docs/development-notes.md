@@ -78,6 +78,7 @@ Dependabot 只创建安全修复 PR，按生态分组，不自动合并。配置
 - `plugin/src/modules/releaseNotes.ts` 是随插件打包的本地摘要清单。每次版本变动新增一条版本记录，
   最多 3 项；无重要变化时用空 `notes`。旧记录保留，条目 ID 全局唯一且发布后不复用。
   `priority` 为 0（需调整）、1（新功能）、2（明显修复）；`message` 在中英文 `addon.ftl` 同步维护。
+  可选的 `cardMessage` 指向卡片短摘要的本地化键；省略时卡片使用 `message`，帮助窗口始终使用完整 `message`。
   摘要只描述已实现能力，不绑定操作按钮；帮助主题直接链接到使用指南的对应章节。
 - `pluginNotices.ts` 在迁移完成、主窗口前台实际呈现后写入 `releaseNoticeState`。
   初装只记录版本；老用户首次接入只看当前摘要；跨版本取最多 3 项，其余从帮助窗口回看。

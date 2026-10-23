@@ -78,9 +78,12 @@ test("release catalog has reviewed current version, unique IDs and translations"
             assert.ok(!ids.has(note.id));
             ids.add(note.id);
             assert.ok([0, 1, 2].includes(note.priority));
-            for (const catalog of catalogs)
-                assert.ok(catalog[note.message], note.message);
-            assert.ok(catalogs[0][note.message].length <= 60);
+            for (const key of [note.message, note.cardMessage].filter(
+                Boolean,
+            )) {
+                for (const catalog of catalogs) assert.ok(catalog[key], key);
+                assert.ok(catalogs[0][key].length <= 60);
+            }
         }
     }
     const keys = Object.keys(catalogs[0]).filter(
@@ -98,6 +101,7 @@ function fixture(raw) {
     );
     const frames = [];
     const doms = [];
+    const dialogs = [];
     let foreground;
     const load = noticeModules(
         {
@@ -120,6 +124,10 @@ function fixture(raw) {
         });
         doms.push(dom);
         const win = dom.window;
+        win.openDialog = (...args) => {
+            dialogs.push(args);
+            return { close() {}, focus() {} };
+        };
         win.document.hasFocus = () => foreground === win;
         win.requestAnimationFrame = (fn) => frames.push(fn);
         win.HTMLElement.prototype.getClientRects = () => [{}];
@@ -128,6 +136,7 @@ function fixture(raw) {
     return {
         api,
         prefs,
+        dialogs,
         window,
         focus(win) {
             foreground = win;
@@ -142,6 +151,70 @@ function fixture(raw) {
         },
     };
 }
+
+test("card uses short copy, names the plugin and opens full update details", () => {
+    const f = fixture({ version: "1.9.2", shown: [] });
+    try {
+        const win = f.window();
+        f.api.registerNoticeWindow(win);
+        f.focus(win);
+        f.api.initializeReleaseNotices(1);
+        f.paint();
+        const card = win.document.querySelector(".pdf2zh-update-card");
+        const labels = card.getAttribute("aria-labelledby").split(" ");
+        assert.deepEqual(
+            labels.map((id) => win.document.getElementById(id).textContent),
+            [pkg.config.addonName, "notice-updated"],
+        );
+        const current = release.releaseSummaries.at(-1);
+        assert.deepEqual(
+            [...card.querySelectorAll("li")].map((item) => item.textContent),
+            current.notes.map((note) => note.cardMessage),
+        );
+        card.querySelector(".pdf2zh-update-details").click();
+        assert.equal(win.document.querySelector(".pdf2zh-update-card"), null);
+        assert.equal(f.dialogs.length, 1);
+        assert.match(f.dialogs[0][0], /noticeHelp.xhtml$/);
+        assert.deepEqual(f.dialogs[0][3].releases[0], current);
+        f.focus(win);
+        assert.equal(win.document.querySelector(".pdf2zh-update-card"), null);
+    } finally {
+        f.close();
+    }
+});
+
+test("skipped versions retain full-copy fallback and Escape dismisses the card", () => {
+    const state = { version: "1.9.1", shown: [] };
+    const f = fixture(state);
+    try {
+        const win = f.window();
+        f.api.registerNoticeWindow(win);
+        f.focus(win);
+        f.api.initializeReleaseNotices(1);
+        f.paint();
+        const notes = pending(
+            release.releaseSummaries,
+            pkg.version,
+            state,
+            false,
+        );
+        assert.ok(notes.some((note) => note.cardMessage));
+        assert.ok(notes.some((note) => !note.cardMessage));
+        const card = win.document.querySelector(".pdf2zh-update-card");
+        assert.deepEqual(
+            [...card.querySelectorAll("li")].map((item) => item.textContent),
+            notes.map((note) => note.cardMessage ?? note.message),
+        );
+        card.querySelector("button").dispatchEvent(
+            new win.KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+        );
+        assert.equal(win.document.querySelector(".pdf2zh-update-card"), null);
+        f.focus(win);
+        assert.equal(win.document.querySelector(".pdf2zh-update-card"), null);
+    } finally {
+        f.close();
+    }
+});
 
 test("background startup waits; one foreground window renders without stealing focus", () => {
     const f = fixture();

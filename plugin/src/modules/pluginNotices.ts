@@ -81,20 +81,28 @@ function showPending(win: Window) {
     panel.className = "pdf2zh-update-card";
     panel.setAttribute("role", "region");
     panel.setAttribute(
-        "aria-label",
+        "aria-labelledby",
+        "pdf2zh-update-name pdf2zh-update-title",
+    );
+    const name = html(doc, "p", config.addonName);
+    name.id = "pdf2zh-update-name";
+    const title = html(
+        doc,
+        "h2",
         getString("notice-updated", { args: { version } }),
     );
-    panel.append(
-        style(doc),
-        html(doc, "strong", getString("notice-updated", { args: { version } })),
-    );
+    title.id = "pdf2zh-update-title";
+    panel.append(style(doc), name, title);
     const list = html(doc, "ul");
     for (const note of pending)
-        list.append(html(doc, "li", getString(note.message)));
+        list.append(
+            html(doc, "li", getString(note.cardMessage ?? note.message)),
+        );
     panel.append(list);
     const actions = html(doc, "div");
     actions.className = "pdf2zh-notice-actions";
     const view = html(doc, "button", getString("notice-view-updates"));
+    view.className = "pdf2zh-update-details";
     view.addEventListener("click", () => {
         openNoticeHelp();
         panel.remove();
