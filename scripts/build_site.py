@@ -274,15 +274,9 @@ class Website:
             writer.writerow(['model', 'quality', 'successful_requests', 'samples', 'p50_seconds', 'p95_seconds', 'recorded_usage_usd'])
             for model in benchmark['models']:
                 writer.writerow([model[k] for k in ('name', 'quality', 'successes', 'samples', 'p50', 'p95', 'known_token_priced_usd')])
-        original = (BENCHMARK / 'index.html').read_text(encoding='utf-8')
-        history = re.search(r'<main>(.*?)</main>', original, re.S)[1]
-        history = re.sub(r'<section class="hero">.*?</section>', '<p id="stats" class="stats"></p>', history, flags=re.S)
-        history = ATTRIBUTE.sub(lambda m: m[0] if m[3].startswith(('#', 'https:', 'http:'))
-                                else m[1] + '="' + self.base + m[3] + '"', history)
-        dialogs = re.search(r'(<dialog\b.*?</dialog>)', original, re.S)[1]
         write('benchmark.html', title='翻译模型实测', route='benchmark/', kind='benchmark',
               description='同一套 240 条计算机论文英译中样本，比较七个模型的质量、速度、调用成功率与已记录用量金额。',
-              benchmark=benchmark, history=history, dialogs=dialogs)
+              benchmark=benchmark)
         for asset in self.assets:
             target = output / asset
             target.parent.mkdir(parents=True, exist_ok=True)

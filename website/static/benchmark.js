@@ -21,16 +21,6 @@
       document.getElementById(tab.getAttribute('aria-controls')).hidden = !active;
     }
   }
-  function selectDataset() {
-    const history = ['#history', '#results', '#method', '#compare'].includes(location.hash);
-    activate(document.getElementById(history ? 'dataset-history' : 'dataset-current'), '[data-benchmark-set]');
-  }
-  bindTabs('[data-benchmark-set]', button => {
-    location.hash = button.dataset.benchmarkSet;
-    selectDataset();
-  });
-  window.addEventListener('hashchange', selectDataset);
-  selectDataset();
   bindTabs('[data-current-view]', button => activate(button, '[data-current-view]'));
   const table = document.getElementById('model-comparison');
   if (!table) return;
