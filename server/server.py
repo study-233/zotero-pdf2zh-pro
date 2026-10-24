@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from runtime_storage import configure_startup_storage, default_data_directory
+
+if __name__ == "__main__":
+    configure_startup_storage(__file__)
+
 import argparse
 import asyncio
 import base64
@@ -51,7 +56,7 @@ from diagnostics import exception_frames, diagnostic_capabilities, negotiate_sch
 
 VERSION = "1.9.3"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
-DEFAULT_TRANSLATES_DIR = Path(__file__).resolve().parent / "translates"
+DEFAULT_TRANSLATES_DIR = default_data_directory(__file__)
 TRANSLATES_DIR = Path(
     os.getenv("PDF2ZH_DATA_DIR", str(DEFAULT_TRANSLATES_DIR))
 ).expanduser().resolve()
@@ -1049,7 +1054,7 @@ def configure_logging(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run the zotero-pdf2zh-pro server")
+    parser = argparse.ArgumentParser(description="Run the zotero-pdf2zh-pro server", allow_abbrev=False)
     parser.add_argument(
         "--host",
         default=os.getenv("PDF2ZH_HOST", "127.0.0.1"),

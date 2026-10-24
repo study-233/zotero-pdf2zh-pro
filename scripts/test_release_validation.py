@@ -128,7 +128,7 @@ class ScopedSelectionTests(unittest.TestCase):
 
     def test_installation_unknown_paths_and_explicit_full_keep_reinstallation_and_migration(self):
         for path in ['scripts/windows/install.ps1','scripts/windows/relocate.ps1',
-                     'server/new_data_migration.py','server/babeldoc/new_store.py']:
+                     'server/runtime_storage.py','server/new_data_migration.py','server/babeldoc/new_store.py']:
             with self.subTest(path=path):
                 plan = self.select(path)
                 self.assertEqual(plan['lifecycle'], 'extended')

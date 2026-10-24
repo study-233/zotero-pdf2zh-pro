@@ -20,6 +20,7 @@ import truststore
 import task_manager
 import glossary_manager
 import glossary_catalog
+import runtime_storage
 import maintenance
 from bitstring import BitStream
 
@@ -92,6 +93,8 @@ def main() -> None:
         raise RuntimeError("Task manager runtime is incomplete")
     if not callable(glossary_manager.GlossaryManager) or len(glossary_catalog.GLOSSARY_CATALOG["packs"]) != 5:
         raise RuntimeError("Downloadable glossary runtime is incomplete")
+    if not callable(runtime_storage.prepare_data_directory):
+        raise RuntimeError("Persistent runtime storage is missing")
 
     health = server.build_health_payload()
     if not callable(maintenance.MaintenanceGate) or health.get("capabilities", {}).get("updateMaintenance") is not True:

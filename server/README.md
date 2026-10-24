@@ -447,9 +447,24 @@ free space, versions, and task counts. Inspect that path before backing up data
 or uninstalling; its location depends on the installation method.
 
 The corresponding environment variables are `PDF2ZH_HOST`, `PDF2ZH_PORT`,
-`PDF2ZH_LOG_LEVEL`, `PDF2ZH_DATA_DIR`, and `PDF2ZH_LOG_FILE`. By default, task data
-is stored in `translates` alongside the installed server module. The optional
-log file rotates at 10 MiB with three backups.
+`PDF2ZH_LOG_LEVEL`, `PDF2ZH_DATA_DIR`, and `PDF2ZH_LOG_FILE`. `--data-dir` takes
+precedence over `PDF2ZH_DATA_DIR`; explicit paths never import another installation's data.
+Homebrew defaults to `<brew-prefix>/var/zotero-pdf2zh-pro`. Python/uv packages use
+`%LOCALAPPDATA%/zotero-pdf2zh-pro/data` on Windows,
+`~/Library/Application Support/zotero-pdf2zh-pro` on macOS, and
+`${XDG_DATA_HOME:-~/.local/share}/zotero-pdf2zh-pro` on Linux. Source checkouts and
+Docker retain their existing `translates` directory; the Windows installer passes
+its persistent `<install-root>/data` explicitly.
+
+On first startup with an empty default destination, surviving legacy data beside
+the installed module (or in an older Homebrew keg) is copied and verified before
+the new directory becomes visible. Task input/output paths are rebased; originals
+remain in the old directory and task-store backups in `migration-backup`. Migration
+errors or multiple legacy datasets stop startup rather than choosing an empty or
+ambiguous store. Stop the old service before migration. An existing nonempty
+destination is never overwritten. Data already removed with an old installation
+requires a backup or a fresh glossary download. See [glossary storage](../docs/glossary-downloads.md).
+The optional log file rotates at 10 MiB with three backups.
 
 For the Windows and macOS installation walkthrough, see the [main tutorial](../README.md).
 

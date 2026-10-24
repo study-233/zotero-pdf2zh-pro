@@ -29,7 +29,17 @@
 
 - Windows 安装器沿用安装根目录下的 `data/`，迁移数据目录时词库一起迁移。
 - Docker Compose 沿用 `/app/server/translates` 的数据卷，无需额外挂载。
-- Python / Homebrew 沿用服务端 CLI 的数据目录选项。需要自行指定持久化位置时设置 `PDF2ZH_DATA_DIR`，或启动时传入 `--data-dir`。默认位置仍为已安装服务模块旁的 `translates/`；备份应以实际 `workspace.path` 为准。
+- Homebrew 默认使用 `<Homebrew前缀>/var/zotero-pdf2zh-pro/`，升级或清理旧版本不会删除此目录。
+- Python / uv 安装默认使用系统用户数据目录：Windows 为 `%LOCALAPPDATA%/zotero-pdf2zh-pro/data/`，macOS 为 `~/Library/Application Support/zotero-pdf2zh-pro/`，Linux 为 `${XDG_DATA_HOME:-~/.local/share}/zotero-pdf2zh-pro/`。源码运行仍使用 `server/translates/`。
+- 设置 `PDF2ZH_DATA_DIR` 或 `--data-dir` 时始终使用指定目录，不自动迁移其他安装的数据；开发环境和 Windows 控制中心继续使用各自的固定目录。备份以实际 `workspace.path` 为准。
+
+### 升级后显示“未下载”
+
+旧版 Python / Homebrew 服务曾把词库保存在安装环境内的 `translates/`。替换 Python 环境或清理旧版 Homebrew 时，服务可能找不到原来的下载，而 Zotero 的勾选项仍然存在。
+
+首次启动修复后的服务时，若固定目录尚无数据，会复制仍存在的旧数据，校验完整性并更新任务内的文件路径。旧目录保留；原始任务记录另外保存在新目录的 `migration-backup/`。迁移出错时停止启动，原数据不会被空库覆盖；请先停止旧服务，并检查磁盘空间、权限和任务文件。如果发现多个有数据的旧版本目录，会提示先备份并合并，避免自动选错数据。固定目录已有数据后不再导入旧目录，已主动移除的词库也不会被恢复。
+
+旧版本目录已经被清理、且没有备份时，需要重新下载一次；之后数据保存在固定目录中。更新前可先备份 `/health` 中的 `workspace.path`。
 
 更新会保留旧版供已经开始提交的批次使用；移除会删除此词库的所有安装版本。已经创建的翻译任务保存了独立词条快照，重试、补译不依赖公共词库。清理任务不会删除公共词库。
 

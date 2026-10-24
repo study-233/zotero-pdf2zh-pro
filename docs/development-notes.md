@@ -464,6 +464,12 @@ Windows 自动检查使用独立解释器，避免 `uv run` 默认选择其他�
 
 ## macOS 本机源码部署
 
+数据目录升级回归可运行 `uv run --project server --locked python scripts/check_storage_upgrade.py --download`。
+脚本在托管临时目录启动独立 HTTP 服务，下载公开词库，模拟两次 Homebrew 版本替换和旧目录清理，
+核对词库、任务文件、设置与翻译记忆；不修改正式安装。可用 `--wheel <本地构建的whl>` 验证打包结果，
+省略 `--download` 时仅使用离线合成词库。报告保存在 `.local-dev/reports/`。
+Windows 原生升级测试也通过 `release-data-fixtures.py` 验证已下载词库能被识别并用于任务。
+
 以下流程会替换本机正式安装，独立开发请使用上面的 `dev.sh`。
 
 `scripts/local-deploy.sh` 用于把当前工作树部署到本机 Zotero Profile 和 Homebrew

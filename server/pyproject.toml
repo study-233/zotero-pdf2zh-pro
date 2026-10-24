@@ -72,7 +72,7 @@ Repository = "https://github.com/study-233/zotero-pdf2zh-pro"
 Issues = "https://github.com/study-233/zotero-pdf2zh-pro/issues"
 
 [tool.setuptools]
-py-modules = ["service_launcher", "diagnostic_contract", "diagnostic_evidence", "diagnostics", "task_runtime", "server", "task_manager", "pdf2zh_next_service", "observability", "provider_models", "codex_client", "codex_discovery", "chatgpt_auth", "chatgpt_client", "chatgpt_usage", "chatgpt_routes", "glossary_manager", "glossary_catalog", "translation_memory", "text_translation", "selection_cache", "maintenance"]
+py-modules = ["service_launcher", "runtime_storage", "diagnostic_contract", "diagnostic_evidence", "diagnostics", "task_runtime", "server", "task_manager", "pdf2zh_next_service", "observability", "provider_models", "codex_client", "codex_discovery", "chatgpt_auth", "chatgpt_client", "chatgpt_usage", "chatgpt_routes", "glossary_manager", "glossary_catalog", "translation_memory", "text_translation", "selection_cache", "maintenance"]
 
 [tool.setuptools.packages.find]
 where = ["."]

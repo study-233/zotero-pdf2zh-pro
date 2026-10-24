@@ -29,7 +29,7 @@
       "paths": ["scripts/windows/*", "scripts/build_windows*", "scripts/check_installed_runtime.py",
         "windows-app/src/update.rs", "windows-app/src/lib.rs", "windows-app/src/main.rs",
         "windows-app/src/setup.rs", "windows-app/Cargo.*", "windows-app/build.rs",
-        "server/service_launcher.py", "server/maintenance.py"],
+        "server/service_launcher.py", "server/runtime_storage.py", "server/maintenance.py"],
       "lifecycle": "extended", "upgrades": ["oldest-upgrade", "legacy-upgrade"]
     },
     "dependencies": {

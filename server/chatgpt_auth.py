@@ -18,6 +18,7 @@ import tempfile
 import time
 from urllib.parse import parse_qs, urlencode, urlsplit
 import uuid
+from runtime_storage import default_data_directory
 
 
 AUTHORITY = 'https://auth.openai.com'
@@ -28,7 +29,7 @@ SCOPE = 'openid profile email offline_access resource.invoke chatgpt.tokens.use.
 def auth_directory(directory=None):
     return Path(directory if directory is not None else os.getenv(
         'PDF2ZH_CHATGPT_AUTH_DIR', str(Path(os.getenv('PDF2ZH_DATA_DIR',
-        str(Path(__file__).parent / 'translates'))) / 'chatgpt-auth'))).expanduser().resolve()
+        str(default_data_directory(__file__)))) / 'chatgpt-auth'))).expanduser().resolve()
 
 
 DEFAULT_AUTH = auth_directory()

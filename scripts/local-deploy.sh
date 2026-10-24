@@ -308,9 +308,30 @@ BREW_SERVICE="zotero-pdf2zh-pro"
 BREW_PREFIX="$(brew --prefix "$BREW_SERVICE")"
 BREW_PYTHON="$BREW_PREFIX/libexec/venv/bin/python"
 [[ -x "$BREW_PYTHON" ]] || die "Homebrew service Python is missing: $BREW_PYTHON"
-SITE_PACKAGES="$($BREW_PYTHON -c 'import site; print(site.getsitepackages()[0])')"
-TASK_STORE="$SITE_PACKAGES/translates/tasks.json"
 SERVER_URL="http://127.0.0.1:8890"
+TASK_STORE="$($BREW_PYTHON - "$SERVER_URL" <<'PY'
+import importlib.util
+import json
+import os
+from pathlib import Path
+import sys
+import urllib.request
+
+try:
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(sys.argv[1] + '/health', timeout=5) as response:
+        root = Path(json.load(response)['workspace']['path'])
+except OSError:
+    module = Path(importlib.util.find_spec('server').origin)
+    if importlib.util.find_spec('runtime_storage') is not None:
+        from runtime_storage import default_data_directory
+        default = default_data_directory(module)
+    else:
+        default = module.parent / 'translates'
+    root = Path(os.environ.get('PDF2ZH_DATA_DIR') or default).expanduser().resolve()
+print(root / 'tasks.json')
+PY
+)"
 
 ADDON_ID="zotero-pdf2zh-pro@study-233"
 ZOTERO_ROOT="$HOME/Library/Application Support/Zotero"
@@ -457,12 +478,7 @@ log "installing the current server wheel"
 install_wheel "$NEW_WHEEL"
 verify_installed_service
 
-if [[ "$FIRST_DEPLOY" == "1" ]]; then
-    log "starting the Homebrew task store with an empty history"
-    write_empty_task_store
-elif [[ -f "$OLD_TASK_STORE" ]]; then
-    cp -p "$OLD_TASK_STORE" "$TASK_STORE"
-fi
+# Startup migrates legacy data atomically. Never reset history during deployment.
 
 log "installing the production XPI"
 atomic_install_xpi "$DEPLOY_DIR/new/zotero-pdf2zh-pro.xpi"
