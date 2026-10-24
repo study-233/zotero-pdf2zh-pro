@@ -58,7 +58,13 @@ def estimate_cost(row, rates):
     if cached is None and rates['cached_input'] != rates['input']:
         return None
     cached = min(used['input'], cached or 0)
-    return ((used['input'] - cached) * rates['input'] + cached * rates['cached_input'] + used['output'] * rates['output']) / 1_000_000
+    created = used.get('cache_write_input', 0)
+    if created is None or created and type(rates.get('cache_write')) not in (int, float):
+        return None
+    if created < 0 or cached + created > used['input']:
+        return None
+    return ((used['input'] - cached - created) * rates['input'] + cached * rates['cached_input']
+            + created * rates.get('cache_write', 0) + used['output'] * rates['output']) / 1_000_000
 
 
 def preflight(data, config, suite, candidates=None):

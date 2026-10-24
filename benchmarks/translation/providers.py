@@ -89,7 +89,7 @@ def validate_config(config):
         endpoint = urlsplit(config.get('base_url', ''))
         if endpoint.scheme not in {'http', 'https'} or not endpoint.hostname or endpoint.username or endpoint.password or endpoint.query or endpoint.fragment:
             raise ValueError('base_url must be an HTTP(S) endpoint without credentials/query/fragment')
-        if config.get('protocol', 'chat_completions') not in {'chat_completions', 'responses', 'completions'}:
+        if config.get('protocol', 'chat_completions') not in {'chat_completions', 'responses', 'completions', 'anthropic_messages'}:
             raise ValueError('Choose an explicit protocol; protocol fallback is disabled')
     if config['provider'] == 'chatgpt' and not config.get('auth_directory'):
         raise ValueError('ChatGPT plan requires its own auth_directory')
@@ -219,9 +219,10 @@ class OpenAIProvider:
     def generate(self, prompt, timeout):
         protocol = self.config.get('protocol', 'chat_completions')
         stream = self.config.get('stream', True)
-        endpoint = {'responses': 'responses', 'completions': 'completions', 'chat_completions': 'chat/completions'}[protocol]
+        anthropic = protocol == 'anthropic_messages'
+        endpoint = {'responses': 'responses', 'completions': 'completions', 'chat_completions': 'chat/completions', 'anthropic_messages': 'messages'}[protocol]
         body = {'model': self.model, 'stream': stream}
-        body[{'responses': 'input', 'completions': 'prompt', 'chat_completions': 'messages'}[protocol]] = prompt if protocol == 'completions' else [{'role': 'user', 'content': prompt}]
+        body[{'responses': 'input', 'completions': 'prompt', 'chat_completions': 'messages', 'anthropic_messages': 'messages'}[protocol]] = prompt if protocol == 'completions' else [{'role': 'user', 'content': prompt}]
         params = self.config.get('parameters', {'temperature': 0, 'max_tokens': 4096})
         if set(params) - {'temperature', 'max_tokens', 'seed', 'reasoning_effort', 'top_p'}:
             raise ValueError('Unsupported or reserved model parameter')
@@ -234,13 +235,38 @@ class OpenAIProvider:
             body['stream_options'] = {'include_usage': True}
         secret = os.environ.get(self.config.get('api_key_env', ''), '')
         headers = {'Authorization': 'Bearer ' + secret} if secret else {}
+        if anthropic:
+            headers['anthropic-version'] = '2023-06-01'
         started, chunks, first, raw_usage, finish = time.monotonic(), [], [], {}, None
+        message_stopped, response_id, response_model, request_id = False, None, None, None
         status, error = 'ok', None
         def consume(event):
-            nonlocal raw_usage, finish
+            nonlocal raw_usage, finish, message_stopped, response_id, response_model
             if event.get('error') or event.get('type') in {'error', 'response.failed', 'response.incomplete'}:
                 raise ValueError('provider_event_error')
+            if anthropic:
+                message = event.get('message', event) if event.get('type') == 'message_start' or not stream else {}
+                response_id = message.get('id', response_id)
+                response_model = message.get('model', response_model)
+                raw_usage.update(message.get('usage') or {})
+                if event.get('type') == 'message_delta':
+                    raw_usage.update(event.get('usage') or {})
+                    finish = (event.get('delta') or {}).get('stop_reason') or finish
+                delta = ''
+                if event.get('type') == 'content_block_delta' and event.get('delta', {}).get('type') == 'text_delta':
+                    delta = event['delta']['text']
+                if not stream:
+                    delta = ''.join(c.get('text', '') for c in message.get('content', []) if c.get('type') == 'text')
+                    finish = message.get('stop_reason')
+                message_stopped = message_stopped or event.get('type') == 'message_stop' or not stream
+                if delta:
+                    if not first:
+                        first.append(time.monotonic() - started)
+                    chunks.append(delta)
+                return
             response = event.get('response', event)
+            response_id = response.get('id', response_id)
+            response_model = response.get('model', response_model)
             if response.get('usage'):
                 raw_usage = response['usage']  # cumulative snapshots replace, never add
             if protocol == 'responses':
@@ -260,6 +286,7 @@ class OpenAIProvider:
                 chunks.append(delta)
         try:
             with self.client.stream('POST', self.config['base_url'].rstrip('/') + '/' + endpoint, json=body, headers=headers, timeout=timeout) as response:
+                request_id = response.headers.get('x-request-id') or response.headers.get('request-id')
                 if response.status_code >= 400:
                     status, error = 'error', {'type': 'HTTPError', 'status_code': response.status_code}
                 elif not stream:
@@ -272,11 +299,21 @@ class OpenAIProvider:
                             value = line[5:].strip()
                             if value and value != '[DONE]':
                                 consume(json.loads(value))
-            if status == 'ok' and (finish not in {'stop', 'completed'} or not ''.join(chunks).strip()):
+            finished = finish in {'end_turn', 'stop_sequence'} and message_stopped if anthropic else finish in {'stop', 'completed'}
+            if status == 'ok' and (not finished or not ''.join(chunks).strip()):
                 status, error = 'error', {'type': 'IncompleteOutput'}
         except Exception as exc:
             status, error = 'error', {'type': type(exc).__name__}
-        return {'status': status, 'translation': ''.join(chunks), 'usage': usage(raw_usage), 'error': error,
+        normalized_usage = usage(raw_usage)
+        if anthropic:
+            cached, created = raw_usage.get('cache_read_input_tokens'), raw_usage.get('cache_creation_input_tokens')
+            if all(type(n) is int and n >= 0 for n in (normalized_usage['input'], cached, created)):
+                normalized_usage['input'] += cached + created
+            elif cached is not None or created is not None:
+                normalized_usage['availability'] = 'partial'
+            normalized_usage.update(cached_input=cached, cache_write_input=created)
+        return {'status': status, 'translation': ''.join(chunks), 'usage': normalized_usage, 'error': error,
+                'raw_usage': raw_usage, 'request_id': request_id, 'response_id': response_id, 'response_model': response_model,
                 'finish_reason': finish, 'elapsed_seconds': time.monotonic() - started,
                 'ttft_seconds': first[0] if stream and first else None,
                 'actual_configuration': {'requested_model': self.model, 'protocol': protocol, 'parameters': params}}

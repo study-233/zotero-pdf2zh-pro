@@ -125,6 +125,34 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual(request[0]['prompt'], 'same instruction')
         self.assertEqual(result['translation'], '输出')
 
+    def test_anthropic_stream_merges_cumulative_usage_and_counts_cache_tokens(self):
+        events = [
+            {'type': 'message_start', 'message': {'id': 'msg-test', 'model': 'actual-model', 'usage': {
+                'input_tokens': 10, 'output_tokens': 1, 'cache_read_input_tokens': 20, 'cache_creation_input_tokens': 5}}},
+            {'type': 'content_block_delta', 'delta': {'type': 'thinking_delta', 'thinking': 'hidden'}},
+            {'type': 'content_block_delta', 'delta': {'type': 'text_delta', 'text': '译文'}},
+            {'type': 'message_delta', 'delta': {'stop_reason': 'end_turn'}, 'usage': {'output_tokens': 3}},
+            {'type': 'message_delta', 'delta': {}, 'usage': {'output_tokens': 3}},
+            {'type': 'message_stop'},
+        ]
+        result, requests = self.invoke(''.join('data: '+json.dumps(e)+'\n\n' for e in events).encode(), protocol='anthropic_messages')
+        self.assertEqual((result['status'], result['translation']), ('ok', '译文'))
+        self.assertEqual((result['usage']['input'], result['usage']['output'], result['usage']['cached_input'], result['usage']['cache_write_input']), (35, 3, 20, 5))
+        self.assertEqual((result['response_id'], result['response_model']), ('msg-test', 'actual-model'))
+        self.assertNotIn('stream_options', requests[0])
+        rates = {'input': 1, 'output': 2, 'cached_input': .1, 'cache_write': 1.25}
+        self.assertAlmostEqual(runner.estimate_cost(result, rates), 24.25 / 1_000_000)
+        self.assertIsNone(runner.estimate_cost(result, {k: v for k, v in rates.items() if k != 'cache_write'}))
+
+    def test_anthropic_stream_requires_message_stop_even_after_end_turn(self):
+        events = [
+            {'type': 'content_block_delta', 'delta': {'type': 'text_delta', 'text': '部分译文'}},
+            {'type': 'message_delta', 'delta': {'stop_reason': 'end_turn'}, 'usage': {'output_tokens': 3}},
+        ]
+        result, _ = self.invoke(''.join('data: '+json.dumps(e)+'\n\n' for e in events).encode(), protocol='anthropic_messages')
+        self.assertEqual((result['status'], result['translation']), ('error', '部分译文'))
+        self.assertEqual(result['usage']['output'], 3)
+
     def test_plain_credentials_and_endpoint_credentials_are_rejected(self):
         config = {'provider': 'openai', 'model': 'x', 'base_url': 'https://test.invalid/v1', 'limits': {'max_requests': 1, 'max_seconds': 1}}
         for extra in ({'api_key': 'secret'}, {'base_url': 'https://u:p@test.invalid/v1'}, {'base_url': 'https://test.invalid/v1?key=secret'}):
