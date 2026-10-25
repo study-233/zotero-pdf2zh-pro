@@ -388,7 +388,7 @@ jobs:
         if: env.REUSE_VALIDATION != 'true'
         shell: pwsh
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -Plan $env:PDF2ZH_VALIDATION_PLAN -SkipLifecycle -RecentOnly
+          python scripts/windows_powershell.py scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -Plan $env:PDF2ZH_VALIDATION_PLAN -SkipLifecycle -RecentOnly
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Record passed standard validation
@@ -402,7 +402,7 @@ jobs:
         if: env.RUN_UPGRADE_VALIDATION == 'true'
         shell: pwsh
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -Plan $env:PDF2ZH_VALIDATION_PLAN -SkipLifecycle -SkipRecentUpgrade
+          python scripts/windows_powershell.py scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -Plan $env:PDF2ZH_VALIDATION_PLAN -SkipLifecycle -SkipRecentUpgrade
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Restore source test scripts after validation

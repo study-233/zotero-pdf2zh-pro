@@ -164,6 +164,9 @@ esac
 [[ "$(git branch --show-current)" == "main" ]] || die "release must run from main"
 git diff --quiet || die "tracked worktree changes exist; commit or stash them first"
 git diff --cached --quiet || die "staged changes exist; commit or unstage them first"
+if [[ "${OS:-}" == Windows_NT ]]; then
+    uv run --no-project python scripts/windows_powershell.py --preflight-only
+fi
 
 if [[ -n "$REPLACE_EXISTING" ]]; then
     uv run --no-project python scripts/release_replacement.py prepare "$VERSION" "$REPLACE_EXISTING"
@@ -231,8 +234,8 @@ CI=true "${PNPM[@]}" --dir plugin install --frozen-lockfile
 rm -rf -- plugin/build
 "${PNPM[@]}" --dir plugin build
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build_windows_control.ps1
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build_windows_control.ps1 -RunTests
+uv run --no-project python scripts/windows_powershell.py scripts/build_windows_control.ps1
+uv run --no-project python scripts/windows_powershell.py scripts/build_windows_control.ps1 -RunTests
 
 uv run --no-project python scripts/build_windows_package.py --version "$VERSION"
 uv run --no-project python scripts/build_windows_installer.py --version "$VERSION"
@@ -240,7 +243,7 @@ uv run --no-project python scripts/test_windows_installer.py
 uv run --no-project python scripts/build_windows_update_manifest.py \
     --version "$VERSION" --package "$WINDOWS_PACKAGE" --output "$WINDOWS_UPDATE_MANIFEST"
 uv run --no-project python scripts/test_windows_update_manifest.py
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_package.ps1 -Package "$WINDOWS_PACKAGE"
+uv run --no-project python scripts/windows_powershell.py scripts/test_windows_package.ps1 -Package "$WINDOWS_PACKAGE"
 fi
 
 git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock \
@@ -378,7 +381,7 @@ VERIFY_BUILD
         if [[ -f "$VALIDATION_RECEIPT" ]] && uv run --no-project python scripts/release_control.py verify-contract "$VERIFIED_DIR" --receipt "$VALIDATION_RECEIPT"; then
             echo 'Reusing matching local extended validation.' >&2
         else
-            powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 "${extended_args[@]}"
+            uv run --no-project python scripts/windows_powershell.py scripts/test_windows_release_extended.ps1 "${extended_args[@]}"
         fi
     fi
     contract_args=("$VERIFIED_DIR")

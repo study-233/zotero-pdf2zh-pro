@@ -24,6 +24,7 @@ $fixture=$workspaceRun.work
 # limits when a repair adds another suffix to the versioned environment path.
 if (-not $Root) { $Root=Join-Path $fixture '中文 with spaces' }
 $passed=$false
+$testFailure=$null
 $stage='baseline-setup'
 $old=Join-Path $fixture 'old'
 $new=Join-Path $fixture 'new'
@@ -167,14 +168,9 @@ try {
     Assert-True ($LASTEXITCODE -eq 0) 'Locked dependency/cache reuse failed.'
     Write-Host 'Real v1.8.2 migration, legacy admission protection, native takeover, retained data/startup and three offline updates passed.'
     $passed=$true
-} finally {
-    Stop-IsolatedTestProcesses -Roots @($Root, $fixture)
-    if ($registry -notlike 'HKCU:\Software\pdf2zh-previous-release-*') {throw 'Unsafe test registry cleanup.'}
-    Remove-Item -LiteralPath $registry -Recurse -Force -ErrorAction SilentlyContinue
-    @{stage=$stage;status=$(if($passed){'passed'}else{'failed'});previousVersion='1.8.2';
-      packageSha256=(Get-FileHash -LiteralPath $Package -Algorithm SHA256).Hash.ToLowerInvariant();
-      wheelSha256=(Get-FileHash -LiteralPath $Wheel -Algorithm SHA256).Hash.ToLowerInvariant();
-      constraintsSha256=(Get-FileHash -LiteralPath $Constraints -Algorithm SHA256).Hash.ToLowerInvariant()}|ConvertTo-Json|
-        Set-Content -Encoding utf8 -LiteralPath (Join-Path $workspaceRun.report 'validation.json')
-    Complete-WorkspaceRun -Run $workspaceRun -Passed $passed
+} catch { $testFailure=$_; throw } finally {
+    $result=@{stage=$stage;status=$(if($passed){'passed'}else{'failed'});previousVersion='1.8.2';
+      packageSha256=(Get-TestFileSha256 $Package);wheelSha256=(Get-TestFileSha256 $Wheel);
+      constraintsSha256=(Get-TestFileSha256 $Constraints)}
+    Complete-IsolatedUpgrade -Run $workspaceRun -Roots @($Root,$fixture) -Registry $registry -Result $result -Failure $testFailure
 }

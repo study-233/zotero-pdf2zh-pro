@@ -22,7 +22,8 @@
     "scripts/release-policy.json",
     "scripts/release-data-fixtures.py",
     "scripts/workspace.py",
-    "scripts/workspace.ps1"
+    "scripts/workspace.ps1",
+    "scripts/windows_powershell.py"
   ],
   "riskGroups": {
     "installation": {

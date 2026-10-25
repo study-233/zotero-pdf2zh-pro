@@ -1,4 +1,35 @@
 # Shared by real-package tests; never select a process by its name alone.
+function Get-TestFileSha256 {
+    param([string]$Path)
+    $stream=[IO.File]::OpenRead($Path)
+    $algorithm=[Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
+    finally { $algorithm.Dispose(); $stream.Dispose() }
+}
+
+function Complete-IsolatedUpgrade {
+    param($Run, [string[]]$Roots, [string]$Registry, [hashtable]$Result, $Failure)
+    if ($Failure) { $Result.failure=$Failure.ToString(); $Result.stack=$Failure.ScriptStackTrace }
+    $cleanupFailure=$null
+    try {
+        Stop-IsolatedTestProcesses -Roots $Roots
+        if ($Registry -notmatch '^HKCU:\\Software\\pdf2zh-(stable-upgrade|previous-release)-[a-f0-9]{32}$') {
+            throw 'Unsafe upgrade-test registry cleanup.'
+        }
+        Remove-Item -LiteralPath $Registry -Recurse -Force -ErrorAction SilentlyContinue
+    } catch { $cleanupFailure=$_; $Result.status='failed'; $Result.cleanupFailure=$_.ToString() }
+    try {
+        $Result|ConvertTo-Json -Depth 6|Set-Content -Encoding utf8 -LiteralPath (Join-Path $Run.report 'validation.json')
+    } catch {
+        if (-not $Failure) { throw }
+        Write-Warning "Cannot write upgrade receipt: $_"
+    }
+    if ($cleanupFailure) {
+        Write-Warning "Test workspace retained: $cleanupFailure"
+        if (-not $Failure) { throw $cleanupFailure }
+    } else { Complete-WorkspaceRun -Run $Run -Passed ($Result.status -eq 'passed') }
+}
+
 function Stop-IsolatedTestProcesses {
     param([Parameter(Mandatory=$true)][AllowEmptyString()][string[]]$Roots)
     $allowed = @((Join-Path ([IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))) '.tmp'), [IO.Path]::GetTempPath())

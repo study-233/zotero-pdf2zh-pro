@@ -94,15 +94,15 @@ jobs:
       - name: Windows script and transaction checks
         shell: pwsh
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check_windows_scripts.ps1
+          python scripts/windows_powershell.py scripts/check_windows_scripts.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_shortcuts.ps1
+          python scripts/windows_powershell.py scripts/test_windows_shortcuts.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_runtime.ps1
+          python scripts/windows_powershell.py scripts/test_windows_runtime.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_cleanup.ps1
+          python scripts/windows_powershell.py scripts/test_windows_cleanup.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_build_tools.ps1
+          python scripts/windows_powershell.py scripts/test_windows_build_tools.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Windows progress, uninstall and artifact guard tests
         shell: pwsh
@@ -112,7 +112,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           uv run --no-project python -m unittest discover -s scripts -p 'test_dev.py'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          foreach ($test in @('test_release_cleanup.py', 'test_release_control.py', 'test_release_validation.py', 'test_release_validation_routing.py', 'test_windows_uninstall.py', 'test_windows_pe.py', 'test_windows_slint_gate.py', 'test_prepare_windows_skia_source.py')) {
+          foreach ($test in @('test_windows_powershell.py', 'test_release_cleanup.py', 'test_release_control.py', 'test_release_validation.py', 'test_release_validation_routing.py', 'test_windows_uninstall.py', 'test_windows_pe.py', 'test_windows_slint_gate.py', 'test_prepare_windows_skia_source.py')) {
             uv run --no-project python "scripts/$test"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }

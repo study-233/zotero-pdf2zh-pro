@@ -22,6 +22,7 @@ foreach ($name in @('PDF2ZH_WINDOWS_APP_ROOT','PDF2ZH_WINDOWS_PORT','PDF2ZH_WIND
     $saved[$name]=[Environment]::GetEnvironmentVariable($name,'Process')
 }
 $passed=$false
+$testFailure=$null
 $stage='baseline-setup'
 try {
     $old=Join-Path $run.work 'old';$new=Join-Path $run.work 'new'
@@ -92,14 +93,9 @@ try {
     $transaction=Get-Content -Raw -Encoding utf8 -LiteralPath (Join-Path $root 'updates/transaction.json')|ConvertFrom-Json
     Assert-True ($transaction.phase -eq 'committed' -and $transaction.oldVersion -eq $PreviousVersion -and $transaction.newVersion -eq $Version) 'The cross-version transaction was not committed.'
     $passed=$true
-} finally {
-    Stop-IsolatedTestProcesses -Roots @($run.work)
-    if ($registry -notlike 'HKCU:\Software\pdf2zh-stable-upgrade-*') {throw 'Unsafe test registry cleanup.'}
-    Remove-Item -LiteralPath $registry -Recurse -Force -ErrorAction SilentlyContinue
+} catch { $testFailure=$_; throw } finally {
     foreach ($name in $saved.Keys) {[Environment]::SetEnvironmentVariable($name,$saved[$name],'Process')}
-    @{previousVersion=$PreviousVersion;version=$Version;stage=$stage;status=$(if($passed){'passed'}else{'failed'});
-      packageSha256=(Get-FileHash -LiteralPath $Package -Algorithm SHA256).Hash.ToLowerInvariant();
-      wheelSha256=(Get-FileHash -LiteralPath $Wheel -Algorithm SHA256).Hash.ToLowerInvariant()}|ConvertTo-Json|
-        Set-Content -Encoding utf8 -LiteralPath (Join-Path $run.report 'validation.json')
-    Complete-WorkspaceRun -Run $run -Passed $passed
+    $result=@{previousVersion=$PreviousVersion;version=$Version;stage=$stage;status=$(if($passed){'passed'}else{'failed'});
+      packageSha256=(Get-TestFileSha256 $Package);wheelSha256=(Get-TestFileSha256 $Wheel)}
+    Complete-IsolatedUpgrade -Run $run -Roots @($run.work) -Registry $registry -Result $result -Failure $testFailure
 }

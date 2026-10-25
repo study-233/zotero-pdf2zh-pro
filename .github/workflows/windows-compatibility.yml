@@ -49,7 +49,7 @@ jobs:
       - name: Verify supported installation layouts without recompiling
         shell: pwsh
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -SourceCommit $env:RELEASE_COMMIT -Plan $env:PDF2ZH_VALIDATION_PLAN
+          python scripts/windows_powershell.py scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -SourceCommit $env:RELEASE_COMMIT -Plan $env:PDF2ZH_VALIDATION_PLAN
           if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
       - name: Retain compatibility results
         if: always()
