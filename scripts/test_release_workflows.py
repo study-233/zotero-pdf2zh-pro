@@ -21,6 +21,34 @@ def inline(workflow, marker):
 
 
 class WorkflowGateTests(unittest.TestCase):
+    def test_publication_restore_rejects_changed_assets_and_unverified_visibility(self):
+        import hashlib
+        from pypi_publication import expected_files
+        for mutation in ('none', 'asset', 'manifest', 'receipt'):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                state = root/'publication-state'; assets = root/'verified-release'
+                state.mkdir(); assets.mkdir()
+                names = ['zotero_pdf2zh_pro-1.9.4-py3-none-any.whl', 'zotero_pdf2zh_pro-1.9.4.tar.gz', 'addon.xpi']
+                identities = {}
+                for name in names:
+                    payload = name.encode()
+                    (assets/name).write_bytes(payload)
+                    identities[name] = {'size':len(payload),'sha256':hashlib.sha256(payload).hexdigest()}
+                manifest = {'version':'1.9.4','commit':SHA,'artifacts':identities}
+                for path in (state, assets):
+                    (path/'checksums.json').write_text(json.dumps(manifest))
+                receipt = {'status':'passed','version':'1.9.4','commit':SHA,'artifacts':expected_files(manifest)}
+                if mutation == 'receipt': receipt['status'] = 'pending'
+                (state/'pypi-public.json').write_text(json.dumps(receipt))
+                if mutation == 'asset': (assets/names[2]).write_bytes(b'changed')
+                if mutation == 'manifest': (assets/'checksums.json').write_text('{}')
+                with patch.dict(os.environ, RUNNER_TEMP=directory, SOURCE_COMMIT=SHA):
+                    code = compile(inline('publish-pypi.yml','PY_RESTORE'),'restore','exec')
+                    if mutation == 'none': exec(code, {})
+                    else:
+                        with self.assertRaises(AssertionError): exec(code, {})
+
     def test_workspace_overlay_restores_old_and_new_release_commits(self):
         from test_release_cleanup import BASH
         if not BASH or not shutil.which('git'):

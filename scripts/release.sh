@@ -140,7 +140,6 @@ TAG="v$VERSION"
 MAIN_REPO="study-233/zotero-pdf2zh-pro"
 TAP_REPO="study-233/homebrew-formula"
 TAP_URL="https://github.com/study-233/homebrew-formula.git"
-PYPI_VERSION_URL="https://pypi.org/pypi/$PRODUCT/$VERSION/json"
 PYPI_CHECK_URL="https://pypi.org/simple/$PRODUCT/"
 WINDOWS_PACKAGE="dist/$PRODUCT-windows-x64.zip"
 WINDOWS_INSTALLER="dist/$PRODUCT-windows-x64-setup.exe"
@@ -394,33 +393,7 @@ for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER
 done
 
 pypi_release_complete() {
-    local response
-    response="$(curl -fsS --connect-timeout 15 --max-time 45 "$PYPI_VERSION_URL")" || return 1
-    printf '%s' "$response" | node -e '
-// VERIFY_PYPI
-const fs = require("fs");
-const crypto = require("crypto");
-const path = require("path");
-const version = process.argv[1];
-try {
-  const data = JSON.parse(fs.readFileSync(0, "utf8"));
-  if (!Array.isArray(data.urls)) throw new Error("Invalid PyPI file listing");
-  let missing = false;
-  for (const name of [`zotero_pdf2zh_pro-${version}-py3-none-any.whl`, `zotero_pdf2zh_pro-${version}.tar.gz`]) {
-    const files = data.urls.filter((item) => item.filename === name);
-    if (!files.length) { missing = true; continue; }
-    const payload = fs.readFileSync(path.join("server/dist", name));
-    const sha256 = crypto.createHash("sha256").update(payload).digest("hex");
-    if (files.length !== 1 || files[0].size !== payload.length || files[0].digests?.sha256 !== sha256)
-      throw new Error(`PyPI content mismatch: ${name}`);
-  }
-  process.exitCode = missing ? 1 : 0;
-} catch (error) {
-  console.error(error.message);
-  process.exitCode = 2;
-}
-// END_VERIFY_PYPI
-' "$VERSION"
+    uv run --no-project python scripts/pypi_publication.py dist/release/checksums.json --timeout 0
 }
 
 sha256_file() {
@@ -459,20 +432,13 @@ elif [[ "$PUBLISH_PYPI" -eq 1 ]]; then
             fi
             LOCAL_RECEIPT_JSON=""
             [[ ! -f "$VALIDATION_RECEIPT" ]] || LOCAL_RECEIPT_JSON="$(cat "$VALIDATION_RECEIPT")"
-            publish_args=("$RELEASE_STATE" pypi publish-pypi.yml --field "tag=$TAG" --field "build_run_id=$BUILD_RUN" --field "local_validation=$LOCAL_RECEIPT_JSON")
+            publish_args=("$RELEASE_STATE" pypi publish-pypi.yml --field "tag=$TAG" --field "build_run_id=$BUILD_RUN" --field "local_validation=$LOCAL_RECEIPT_JSON" --field "publish_github=$([[ "$PUBLISH_RELEASE" -eq 1 ]] && echo true || echo false)" --field "visibility_timeout=${PDF2ZH_PYPI_WAIT_SECONDS:-600}")
             [[ -z "$RESUME_STATE" ]] || publish_args+=(--retry-failed)
             PUBLISH_RUN="$(uv run --no-project python scripts/release_control.py workflow "${publish_args[@]}")"
         fi
     fi
-    PYPI_VERIFIED=0
-    for _ in {1..60}; do
-        PYPI_STATUS=0
-        pypi_release_complete || PYPI_STATUS=$?
-        [[ "$PYPI_STATUS" -ne 2 ]] || die "Public PyPI files do not match verified artifacts; publication stopped"
-        if [[ "$PYPI_STATUS" -eq 0 ]]; then PYPI_VERIFIED=1; break; fi
-        sleep 5
-    done
-    [[ "$PYPI_VERIFIED" -eq 1 ]] || die "PyPI did not expose matching verified files for $PRODUCT==$VERSION"
+    uv run --no-project python scripts/pypi_publication.py dist/release/checksums.json \
+        --timeout "${PDF2ZH_PYPI_WAIT_SECONDS:-600}" --receipt "$(dirname "$RELEASE_STATE")/pypi-public.json"
     [[ "$PUSH" -ne 1 ]] || uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" pypi-visible --field status=passed
 fi
 

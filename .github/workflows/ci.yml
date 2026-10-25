@@ -75,7 +75,9 @@ jobs:
           uv run --no-project python scripts/workspace.py check
 
       - name: Test release artifact guards
-        run: uv run --no-project python -m unittest discover -s scripts -p 'test_release*.py'
+        run: |
+          uv run --no-project python -m unittest discover -s scripts -p 'test_release*.py'
+          uv run --no-project python -m unittest discover -s scripts -p 'test_pypi_publication.py'
 
       - name: Test glossary source snapshot guards
         run: uv run --no-project python -m unittest discover -s scripts -p 'test_glossary_data.py'

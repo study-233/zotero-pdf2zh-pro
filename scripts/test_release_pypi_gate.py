@@ -1,53 +1,35 @@
-"""Exercise the actual public PyPI content guard before installer publication."""
-import hashlib
-import json
+"""The installer gate uses the shared exact-file PyPI verifier."""
 from pathlib import Path
-import subprocess
-import tempfile
 import unittest
-
-
-SOURCE = Path(__file__).with_name("release.sh").read_text(encoding="utf-8")
-SCRIPT = SOURCE.split("// VERIFY_PYPI\n", 1)[1].split("// END_VERIFY_PYPI", 1)[0]
-VERSION = "1.7.0"
+import test_pypi_publication as fixtures
+import pypi_publication as gate
 
 
 class PublicPyPIGateTests(unittest.TestCase):
-    def run_gate(self, change=None):
-        with tempfile.TemporaryDirectory(prefix="release-pypi-gate-") as directory:
-            root = Path(directory)
-            artifacts = root / "server/dist"
-            artifacts.mkdir(parents=True)
-            files = []
-            for name in [f"zotero_pdf2zh_pro-{VERSION}-py3-none-any.whl",
-                         f"zotero_pdf2zh_pro-{VERSION}.tar.gz"]:
-                payload = name.encode()
-                (artifacts / name).write_bytes(payload)
-                files.append({"filename": name, "size": len(payload),
-                              "digests": {"sha256": hashlib.sha256(payload).hexdigest()}})
-            if change:
-                change(files)
-            return subprocess.run(["node", "-e", SCRIPT, VERSION], cwd=root,
-                                  input=json.dumps({"urls": files}), text=True,
-                                  capture_output=True)
+    def test_partial_release_does_not_hide_a_conflicting_file(self):
+        fixture = fixtures.PublicationTests()
+        fixture.setUp()
+        data, _ = fixture.fetch('json', 10)
+        data['urls'].pop(0)
+        data['urls'][0]['digests']['sha256'] = '0'*64
+        with self.assertRaises(gate.PublicationConflict):
+            gate.inspect_files(data['urls'], gate.expected_files(fixture.manifest))
 
-    def test_existing_release_requires_both_matching_verified_files(self):
-        self.assertEqual(self.run_gate().returncode, 0)
-        self.assertEqual(self.run_gate(lambda files: files.pop()).returncode, 1)
-
-    def test_same_filename_with_wrong_hash_or_size_is_a_fatal_conflict(self):
-        for change in [lambda files: files[0]["digests"].update(sha256="0" * 64),
-                       lambda files: files[1].update(size=1)]:
-            result = self.run_gate(change)
-            self.assertEqual(result.returncode, 2)
-            self.assertIn("PyPI content mismatch", result.stderr)
-
-    def test_partial_release_does_not_hide_a_conflicting_existing_file(self):
-        def change(files):
-            files.pop(0)
-            files[0]["digests"]["sha256"] = "0" * 64
-        self.assertEqual(self.run_gate(change).returncode, 2)
+    def test_local_and_cloud_use_shared_checker_and_separate_visibility_job(self):
+        root = Path(__file__).resolve().parents[1]
+        shell = (root/'scripts/release.sh').read_text()
+        workflow = (root/'.github/workflows/publish-pypi.yml').read_text()
+        self.assertIn('scripts/pypi_publication.py dist/release/checksums.json --timeout 0', shell)
+        self.assertIn('scripts/pypi_publication.py', workflow)
+        visibility = workflow.split('  verify-public:', 1)[1].split('  github-release:', 1)[0]
+        self.assertIn('needs: publish', visibility)
+        self.assertNotIn('uv publish', visibility)
+        self.assertNotIn('id-token: write', visibility)
+        github = workflow.split('  github-release:', 1)[1]
+        self.assertIn('needs: [publish, verify-public]', github)
+        self.assertNotIn('id-token: write', github)
+        self.assertEqual(workflow.count('id-token: write'), 1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

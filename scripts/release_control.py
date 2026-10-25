@@ -359,6 +359,27 @@ def workflow(path, stage, name, fields, retry_failed=False):
                 return record['runId']
             if not retry_failed or stage not in ('build', 'pypi'):
                 raise ValueError(f'Workflow failed: {record["runId"]}; inspect the failed stage before retrying')
+            if stage == 'pypi':
+                if not fields.get('build_run_id'):
+                    raise ValueError('PyPI recovery requires the same verified artifact build')
+                if not record.get('retryAfterAttempt'):
+                    record['retryAfterAttempt'] = run['run_attempt']
+                    save(path, state)  # An uncertain rerun response must not submit another rerun.
+                    command(['gh', 'run', 'rerun', str(record['runId']), '--failed', '--repo', REPO])
+                deadline = time.monotonic() + 120
+                while time.monotonic() < deadline:
+                    current = api(f'repos/{REPO}/actions/runs/{record["runId"]}')
+                    if current['run_attempt'] > record['retryAfterAttempt']:
+                        record.pop('retryAfterAttempt')
+                        save(path, state)
+                        retried = wait_run(REPO, record['runId'])
+                        record.update(conclusion=retried['conclusion'], attempt=retried['run_attempt'])
+                        save(path, state)
+                        if retried['conclusion'] != 'success':
+                            raise ValueError(f'Publication retry failed: {record["runId"]}; inspect its failed job')
+                        return record['runId']
+                    time.sleep(2)
+                raise TimeoutError('Publication rerun outcome unknown; resume the same run and state')
             if stage == 'build':
                 jobs = api(f'repos/{REPO}/actions/runs/{record["runId"]}/jobs?filter=latest&per_page=100')
                 if not any(s['name'] in ('Build artifacts and verify Windows startup', 'Restore packages from a completed artifact build')

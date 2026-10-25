@@ -25,6 +25,11 @@ on:
         description: Receipt for deferred Windows extended checks, bound to exact artifacts
         required: false
         type: string
+      visibility_timeout:
+        description: Maximum wall-clock seconds to wait for public indexes (0-1800)
+        required: false
+        type: number
+        default: 600
 
 concurrency:
   group: publish-pypi-${{ inputs.tag }}
@@ -36,11 +41,14 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      commit: ${{ steps.identity.outputs.commit }}
     environment: pypi
     env:
       PDF2ZH_RELEASE_ROOT: ${{ github.workspace }}
     permissions:
-      contents: write
+      contents: read
       actions: read
       id-token: write
     steps:
@@ -71,12 +79,14 @@ jobs:
           done
 
       - name: Verify tag and versions
+        id: identity
         env:
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
           [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]
           test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           python - "$RELEASE_TAG" <<'PY'
           import json
           import re
@@ -167,36 +177,94 @@ jobs:
           --check-url https://pypi.org/simple/zotero-pdf2zh-pro/
           server/dist/*
 
-      - name: Verify public PyPI files before distributing installers
+      - name: Save verified upload state for independent visibility recovery
+        run: |
+          mkdir -p "$RUNNER_TEMP/publication-state"
+          cp "$RUNNER_TEMP/verified-release/checksums.json" "$RUNNER_TEMP/publication-state/checksums.json"
+          cp "$RUNNER_TEMP/build-run.json" "$RUNNER_TEMP/publication-state/build-run.json"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: publication-state-${{ github.run_id }}
+          path: ${{ runner.temp }}/publication-state/
+          overwrite: true
+          retention-days: 90
+
+  verify-public:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Await JSON and installation indexes using verified upload state
         env:
+          GH_TOKEN: ${{ github.token }}
+          VISIBILITY_TIMEOUT: ${{ inputs.visibility_timeout }}
+        run: |
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "publication-state-$GITHUB_RUN_ID" --dir "$RUNNER_TEMP/publication-state"
+          python scripts/pypi_publication.py "$RUNNER_TEMP/publication-state/checksums.json" --timeout "$VISIBILITY_TIMEOUT" --receipt "$RUNNER_TEMP/publication-state/pypi-public.json"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: pypi-visibility-${{ github.run_id }}
+          path: ${{ runner.temp }}/publication-state/pypi-public.json
+          overwrite: true
+          retention-days: 90
+
+  github-release:
+    if: inputs.publish_github
+    needs: [publish, verify-public]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PDF2ZH_RELEASE_ROOT: ${{ github.workspace }}
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag }}
+      - name: Load shared publication coordinator from workflow revision
+        run: |
+          mkdir -p "$RUNNER_TEMP/release-control"
+          for name in release_control.py release_policy.py release-policy.json workspace.py; do
+            git show "$GITHUB_SHA:scripts/$name" > "$RUNNER_TEMP/release-control/$name"
+          done
+      - name: Restore exact previously verified assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          SOURCE_COMMIT: ${{ needs.publish.outputs.commit }}
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          python - "$RELEASE_TAG" <<'PY_PYPI'
-          import hashlib, json, sys, time
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_COMMIT"
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "publication-state-$GITHUB_RUN_ID" --dir "$RUNNER_TEMP/publication-state"
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "pypi-visibility-$GITHUB_RUN_ID" --dir "$RUNNER_TEMP/publication-state"
+          gh run download "$BUILD_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-${RELEASE_TAG#v}-$SOURCE_COMMIT" --dir "$RUNNER_TEMP/verified-release"
+          python - <<'PY_RESTORE'
+          import hashlib, json, os
           from pathlib import Path
-          from urllib.request import urlopen
-          from urllib.error import HTTPError, URLError
-          version = sys.argv[1].removeprefix("v")
-          expected = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in Path("server/dist").iterdir() if p.is_file()}
-          for attempt in range(30):
-              try:
-                  with urlopen(f"https://pypi.org/pypi/zotero-pdf2zh-pro/{version}/json", timeout=10) as response:
-                      published = {p["filename"]: p["digests"]["sha256"] for p in json.load(response)["urls"]}
-                  for name, digest in expected.items():
-                      if name in published and published[name] != digest:
-                          raise RuntimeError(f"PyPI content mismatch: {name}")
-                  if all(published.get(name) == digest for name, digest in expected.items()):
-                      print("Public PyPI wheel and sdist hashes match verified packages")
-                      break
-              except (HTTPError, URLError):
-                  pass
-              time.sleep(2)
-          else:
-              raise RuntimeError("Public PyPI files not yet verified; GitHub publication withheld")
-          PY_PYPI
+          root = Path(os.environ['RUNNER_TEMP'])
+          trusted = json.loads((root/'publication-state/checksums.json').read_text())
+          actual = json.loads((root/'verified-release/checksums.json').read_text())
+          assert trusted == actual
+          assert actual['commit'] == os.environ['SOURCE_COMMIT']
+          receipt = json.loads((root/'publication-state/pypi-public.json').read_text())
+          assert receipt['status'] == 'passed' and receipt['commit'] == actual['commit'] and receipt['version'] == actual['version']
+          assert receipt['artifacts'] == {n: actual['artifacts'][n] for n in receipt['artifacts']}
+          assert set(receipt['artifacts']) == {f'zotero_pdf2zh_pro-{actual["version"]}-py3-none-any.whl', f'zotero_pdf2zh_pro-{actual["version"]}.tar.gz'}
+          for name, expected in actual['artifacts'].items():
+              assert Path(name).name == name
+              payload = (root/'verified-release'/name).read_bytes()
+              assert len(payload) == expected['size'] and hashlib.sha256(payload).hexdigest() == expected['sha256']
+          PY_RESTORE
 
       - name: Publish verified GitHub release
-        if: inputs.publish_github
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}

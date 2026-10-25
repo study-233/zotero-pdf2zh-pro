@@ -310,13 +310,13 @@ class RecoveryTests(unittest.TestCase):
         state=json.loads(self.state.read_text())
         state['stages']['pypi']={'workflow':'publish-pypi.yml','fields':fields,'runId':123}
         control.save(self.state,state)
-        run={'id':124,'head_sha':SHA,'run_attempt':1,'display_title':'Publish v1.9.2 ['+'a'*32+']'}
+        run={'id':123,'head_sha':SHA,'run_attempt':2,'display_title':'Publish v1.9.2 ['+'a'*32+']'}
         with patch.object(control,'command') as command,patch.object(control.uuid,'uuid4') as uuid, \
-             patch.object(control,'api',return_value={'workflow_runs':[run]}), \
+             patch.object(control,'api',return_value=run), \
              patch.object(control,'wait_run',side_effect=[{'conclusion':'failure','run_attempt':1},dict(run,conclusion='success')]):
             uuid.return_value.hex='a'*32
-            self.assertEqual(control.workflow(self.state,'pypi','publish-pypi.yml',fields,retry_failed=True),124)
-        self.assertIn('build_run_id=321',command.call_args.args[0])
+            self.assertEqual(control.workflow(self.state,'pypi','publish-pypi.yml',fields,retry_failed=True),123)
+        self.assertEqual(command.call_args.args[0],['gh','run','rerun','123','--failed','--repo',control.REPO])
         self.assertNotIn('build-windows-release.yml',command.call_args.args[0])
 
     def test_resume_reuses_standard_tests_only_after_a_receipt_was_uploaded(self):
