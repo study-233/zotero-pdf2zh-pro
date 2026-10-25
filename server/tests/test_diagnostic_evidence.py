@@ -28,9 +28,16 @@ class EvidenceTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.directory = Path(self.temp.name)
         self.ledger = EvidenceLedger(self.directory, 'task-one', 3)
-        self.addCleanup(self.ledger.close, 'failed')
+        self.addCleanup(self.close_fixture_ledger)
         self.collector = TaskMetricsCollector(task_id='task-one', provider='openai', model='test-model',
                                               clock=lambda: 100, evidence=self.ledger)
+
+    def close_fixture_ledger(self):
+        # Product close() has a short latency budget and can leave its worker
+        # finishing SQLite shutdown. A fixture must join before deleting files.
+        self.ledger.close('failed')
+        self.ledger._thread.join(timeout=5)
+        self.assertFalse(self.ledger._thread.is_alive(), 'Fixture evidence writer did not stop')
 
     def finish(self, status='incomplete', **kwargs):
         self.ledger.close(status, **kwargs)
