@@ -37,8 +37,8 @@ release-diagnostic-request-evidence = 升级本地服务后，诊断包可关联
 release-card-task-settings-layout = 任务与设置布局更清晰
 release-card-translated-attachment-tag = 可手动开启完整译文标签
 release-card-diagnostic-request-evidence = 诊断包关联请求与失败段落
-release-service-upgrade-data-protection = 升级本地服务后，术语表、任务与翻译记忆保存在独立目录，避免随服务环境替换而丢失。
-release-card-service-upgrade-data-protection = 服务升级保留术语表与任务数据
+release-service-upgrade-data-protection = Homebrew 升级前备份，用 HOMEBREW_NO_INSTALL_CLEANUP=1 保留旧目录，迁移后再清理。
+release-card-service-upgrade-data-protection = 升级保留术语表；Homebrew 请停用自动清理
 notice-error-select-item = 请先选择 PDF 或文献条目。
 notice-error-select-profile = 未选择可用的翻译配置。请添加或重新选择。
 notice-error-select-output = 请选择至少一种 PDF 输出格式。

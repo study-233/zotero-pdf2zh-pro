@@ -37,8 +37,8 @@ release-diagnostic-request-evidence = After updating the local service, diagnost
 release-card-task-settings-layout = Clearer layouts in Tasks and Settings
 release-card-translated-attachment-tag = Optional tags for complete translations
 release-card-diagnostic-request-evidence = Diagnostics link requests to failed paragraphs
-release-service-upgrade-data-protection = Update the local service to keep glossaries, tasks and translation memory in a separate directory that survives service environment upgrades.
-release-card-service-upgrade-data-protection = Service upgrades preserve glossaries and task data
+release-service-upgrade-data-protection = Homebrew users: back up data before upgrading, use HOMEBREW_NO_INSTALL_CLEANUP=1 to retain old directories, and clean old versions only after migration.
+release-card-service-upgrade-data-protection = Upgrades preserve glossaries; disable Homebrew cleanup
 notice-error-select-item = Select a PDF or library item first.
 notice-error-select-profile = No usable translation profile is selected. Add or select a profile.
 notice-error-select-output = Select at least one PDF output format.

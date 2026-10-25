@@ -5,13 +5,17 @@
 
 ## v1.9.4 - 2026-10-25
 
+**Homebrew 升级前请注意**
+
+从 v1.9.3 及更早版本升级时，先停止旧服务并备份数据，再用 `HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade zotero-pdf2zh-pro` 保留旧目录。启动新服务并确认旧数据可用后再清理旧版本；提示多个旧数据目录时，请先备份并合并。详细步骤见[更新指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.9.4/docs/user-guide.md#maintenance)。
+
 本次更新保护服务升级后的本地数据，并改善更新提示与官网测评对比。
 
 - **升级数据保护**：修复 Homebrew 和直接安装 Python 服务后，升级可能导致已下载术语表、任务记录与译文、翻译记忆及登录状态不可用的问题；数据改存独立目录，并在首次启动时迁移旧数据。
 - **更新提示**：精简插件更新卡片，突出版本与简短摘要，完整说明可从详情查看。
 - **翻译测评**：官网更新七模型、240 条计算机论文英译中测评，支持交互图表和三维对比，集中查看质量、耗时与费用。
 
-插件与本地服务需分别升级。Homebrew 及直接安装 Python 服务的用户，请先停止旧服务，再升级并启动新服务，确认数据可用后再清理旧环境；如提示存在多个旧数据目录，请先备份并合并数据后重启。
+插件与本地服务需分别升级；直接安装 Python 服务时，也请先停止旧服务并备份数据。
 
 [Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.4/zotero-pdf2zh-pro-windows-x64-setup.exe) · [安装指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.9.4/docs/user-guide.md) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.3...v1.9.4)
 

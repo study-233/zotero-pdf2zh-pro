@@ -611,14 +611,20 @@ AI 释义标注模型来源，保存到个人词典后可跨论文、跨模型�
 | macOS Homebrew | 按下方命令更新并重启服务 |
 | uv | 停止前台服务，执行 `uv tool upgrade zotero-pdf2zh-pro`，再运行 `zotero-pdf2zh-pro` |
 
-Homebrew 更新：
+Homebrew 更新前先等待翻译结束，并通过 `/health` 的 `workspace.path` 确认和备份数据目录。
+从旧存储布局首次升级时，必须保留旧版本目录，供新服务迁移任务、译文、词表和翻译记忆。
+[Homebrew 默认会在升级后自动清理旧版本](https://docs.brew.sh/FAQ)；以下命令仅对本次升级停用自动清理：
 
 ```bash
+brew services stop zotero-pdf2zh-pro
 brew update
-brew upgrade zotero-pdf2zh-pro
-brew services restart zotero-pdf2zh-pro
+HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade zotero-pdf2zh-pro
+brew services start zotero-pdf2zh-pro
 curl -fsS http://127.0.0.1:8890/health
 ```
+
+确认健康检查中的 `workspace.path` 为 `$(brew --prefix)/var/zotero-pdf2zh-pro`，并核对旧任务、译文和术语表均可用后，再按需运行 `brew cleanup zotero-pdf2zh-pro`。
+若新服务提示发现多个旧数据目录，请保持服务停止，先备份并合并数据，再重新启动；迁移完成前不要清理旧版本。
 
 Windows 更新先在独立目录准备，连续空闲 60 秒后静默切换。PDF 任务、划词流式请求和词库下载期间不切换；维护期尚未接收的请求由新版插件等待重试。
 任务、结果、配置和自启选择会保留；新版健康检查失败或更新中断时使用本地旧环境回退。旧控制中心需通过安装 EXE 手动升级一次：先等全部任务和划词请求结束，通过旧控制中心停止服务，再运行新版安装器。

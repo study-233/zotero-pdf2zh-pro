@@ -86,7 +86,7 @@ export const releaseSummaries: ReleaseSummary[] = [
                 id: "service-upgrade-data-protection",
                 message: "release-service-upgrade-data-protection",
                 cardMessage: "release-card-service-upgrade-data-protection",
-                priority: 2,
+                priority: 0,
             },
         ],
     },
