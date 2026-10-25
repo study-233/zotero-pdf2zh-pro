@@ -10,6 +10,7 @@ import re
 import shutil
 import stat
 import sys
+import threading
 import time
 import uuid
 import zipfile
@@ -77,7 +78,14 @@ def alive(pid):
 def save(path, data):
     temporary = path.with_suffix('.writing')
     temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    temporary.replace(path)
+    for attempt in range(5):
+        try:
+            temporary.replace(path)
+            break
+        except PermissionError as error:
+            if getattr(error, 'winerror', None) not in (5, 32) or attempt == 4:
+                raise
+            time.sleep(0.05 * (attempt + 1))
 
 
 def metadata(path, category):
@@ -107,7 +115,7 @@ def kept(path, parent):
     return False
 
 
-def files(path):
+def files(path, exclude=()):
     """Enumerate without traversing symbolic links or Windows junctions."""
     pending = [path]
     while pending:
@@ -116,25 +124,15 @@ def files(path):
             if linked(entry):
                 continue
             if entry.is_dir():
-                pending.append(entry)
+                if entry.name not in exclude:
+                    pending.append(entry)
             elif entry.is_file():
                 yield entry
 
 
 def remove(path, parent):
     path = checked(path, parent)
-    # Remove reparse points themselves before the recursive operation.
-    pending = [path]
-    while pending:
-        current = pending.pop()
-        for entry in current.iterdir():
-            if linked(entry):
-                if entry.is_junction():
-                    entry.rmdir()
-                else:
-                    entry.unlink()
-            elif entry.is_dir():
-                pending.append(entry)
+    # Python >=3.12 rmtree does not traverse child symlinks or Windows junctions.
 
     def writable(function, name, error):
         if not isinstance(error[1], PermissionError):
@@ -143,6 +141,23 @@ def remove(path, parent):
         function(name)
 
     shutil.rmtree(path, onerror=writable)
+
+
+@contextmanager
+def progress(phase, path):
+    stopped = threading.Event()
+    started = time.monotonic()
+    def report():
+        while not stopped.wait(15):
+            print(f'{phase}: {path}; elapsed {time.monotonic()-started:.0f}s', file=sys.stderr, flush=True)
+    worker = threading.Thread(target=report, daemon=True)
+    print(f'{phase}: {path}', file=sys.stderr, flush=True)
+    worker.start()
+    try:
+        yield
+    finally:
+        stopped.set()
+        worker.join()
 
 
 def version_key(value):
@@ -268,8 +283,8 @@ class Workspace:
             return str(work)
         report = checked(self.root / data['report'], self.reports)
         metadata(report, 'report')
-        with zipfile.ZipFile(report / 'evidence.zip', 'w', compression=zipfile.ZIP_DEFLATED) as archive:
-            for file in files(work):
+        with progress('Archiving validation evidence', work), zipfile.ZipFile(report / 'evidence.zip', 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            for file in files(work, DEPENDENCIES):
                 relative = file.relative_to(work)
                 if (file.name != MARKER and not set(relative.parts[:-1]).intersection(DEPENDENCIES)
                         and file.suffix.lower() in EVIDENCE):
@@ -280,7 +295,16 @@ class Workspace:
         summary = metadata(report, 'report')
         summary.update(status=status, owner_pid=None, finished=time.time())
         save(report / MARKER, summary)
-        remove(work, self.runs)
+        summary['cleanupStatus'] = 'running'
+        save(report / MARKER, summary)
+        try:
+            with progress('Removing isolated test environment', work):
+                remove(work, self.runs)
+            summary['cleanupStatus'] = 'complete'
+        except OSError as error:
+            summary.update(cleanupStatus='pending', cleanupPath=str(work), cleanupError=str(error))
+            print(f'Temporary environment retained for cleanup: {work}: {error}', file=sys.stderr, flush=True)
+        save(report / MARKER, summary)
         return str(report)
 
     @contextmanager

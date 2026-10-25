@@ -8,6 +8,12 @@ on:
         description: 'Unique coordinator request ID'
         required: false
         type: string
+      scope:
+        description: Recent stable upgrade only, or the rolling compatibility window
+        required: false
+        type: choice
+        options: [compatibility, recent-upgrade]
+        default: compatibility
   schedule:
     - cron: '23 19 * * 0'
 
@@ -40,17 +46,35 @@ jobs:
           enable-cache: true
       - name: Resolve published candidate and compatibility baselines
         shell: pwsh
+        env:
+          VALIDATION_SCOPE: ${{ inputs.scope || 'compatibility' }}
         run: |
-          $candidate=uv run --no-project python scripts/release_control.py published-candidate $env:PDF2ZH_VALIDATION_PLAN
+          $arguments=@('run','--no-project','python','scripts/release_control.py','published-candidate',$env:PDF2ZH_VALIDATION_PLAN)
+          if ($env:VALIDATION_SCOPE -eq 'recent-upgrade') {$arguments+='--recent-only'}
+          $candidate=uv @arguments
           if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
           $identity=$candidate|ConvertFrom-Json
           "RELEASE_VERSION=$($identity.version)" >> $env:GITHUB_ENV
           "RELEASE_COMMIT=$($identity.commit)" >> $env:GITHUB_ENV
       - name: Verify supported installation layouts without recompiling
         shell: pwsh
+        env:
+          VALIDATION_SCOPE: ${{ inputs.scope || 'compatibility' }}
         run: |
-          python scripts/windows_powershell.py scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -SourceCommit $env:RELEASE_COMMIT -Plan $env:PDF2ZH_VALIDATION_PLAN
+          $arguments=@('scripts/windows_powershell.py','scripts/test_windows_release_extended.ps1','-Version',$env:RELEASE_VERSION,'-SourceCommit',$env:RELEASE_COMMIT,'-Plan',$env:PDF2ZH_VALIDATION_PLAN,'-Receipt',"$env:RUNNER_TEMP/compatibility-receipt.json")
+          if ($env:VALIDATION_SCOPE -eq 'recent-upgrade') {$arguments+=@('-SkipLifecycle','-RecentOnly')}
+          python @arguments
           if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+      - name: Verify completed upgrade case is reused
+        if: inputs.scope == 'recent-upgrade'
+        shell: pwsh
+        run: |
+          $receipt="$env:RUNNER_TEMP/compatibility-receipt.json"
+          $before=Get-Content -Raw $receipt|ConvertFrom-Json
+          python scripts/windows_powershell.py scripts/test_windows_release_extended.ps1 -Version $env:RELEASE_VERSION -SourceCommit $env:RELEASE_COMMIT -Plan $env:PDF2ZH_VALIDATION_PLAN -Receipt $receipt -SkipLifecycle -RecentOnly
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+          $after=Get-Content -Raw $receipt|ConvertFrom-Json
+          if ($before.cases[0].receipt.evidence -ne $after.cases[0].receipt.evidence) {throw 'A passed upgrade case was executed again.'}
       - name: Retain compatibility results
         if: always()
         uses: actions/upload-artifact@v6
@@ -58,6 +82,7 @@ jobs:
           name: compatibility-${{ github.run_id }}
           path: |
             ${{ env.PDF2ZH_VALIDATION_PLAN }}
+            ${{ runner.temp }}/compatibility-receipt.json*
             .local-dev/reports/**
           if-no-files-found: warn
           retention-days: 90

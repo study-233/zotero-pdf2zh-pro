@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 import re
 import ssl
+import subprocess
 import sys
 import time
 from urllib.error import HTTPError, URLError
@@ -74,7 +75,36 @@ def inspect_files(rows, expected, simple=False):
     return missing
 
 
-def wait_for_publication(manifest, timeout=600, fetcher=fetch, clock=time.monotonic, sleep=time.sleep, log=print):
+def bounded_fetch(url, timeout):
+    # A socket timeout does not bound DNS or a slow streaming response. An owned
+    # worker gives each HTTP observation a real wall-clock limit on both hosts.
+    try:
+        result = subprocess.run([sys.executable, str(Path(__file__).resolve()), '--request', url, str(timeout)],
+                                capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as error:
+        raise Pending(f'{url}: request exceeded {timeout:.1f}s') from error
+    if result.returncode:
+        raise ValueError(f'PyPI request worker failed: {result.stderr.strip()}')
+    response = json.loads(result.stdout)
+    if response['status'] == 'pending':
+        raise Pending(response['error'], response.get('retryAfter', 0))
+    if response['status'] != 'passed':
+        raise ValueError(response['error'])
+    return response['data'], response['headers']
+
+
+def request_worker(url, timeout):
+    try:
+        data, headers = fetch(url, timeout)
+        response = {'status': 'passed', 'data': data, 'headers': headers}
+    except Pending as error:
+        response = {'status': 'pending', 'error': str(error), 'retryAfter': error.retry_after}
+    except (ValueError, OSError) as error:
+        response = {'status': 'failed', 'error': str(error)}
+    print(json.dumps(response))
+
+
+def wait_for_publication(manifest, timeout=600, fetcher=bounded_fetch, clock=time.monotonic, sleep=time.sleep, log=print):
     expected = expected_files(manifest)
     if not math.isfinite(timeout) or timeout < 0:
         raise ValueError('Timeout must be nonnegative')
@@ -143,7 +173,10 @@ def main():
 
 if __name__ == '__main__':
     try:
-        main()
+        if len(sys.argv) == 4 and sys.argv[1] == '--request':
+            request_worker(sys.argv[2], float(sys.argv[3]))
+        else:
+            main()
     except Pending as error:
         print(str(error), file=sys.stderr)
         sys.exit(1)

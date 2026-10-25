@@ -8,7 +8,7 @@ function Get-TestFileSha256 {
 }
 
 function Complete-IsolatedUpgrade {
-    param($Run, [string[]]$Roots, [string]$Registry, [hashtable]$Result, $Failure)
+    param($Run, [string[]]$Roots, [string]$Registry, [hashtable]$Result, $Failure, [string]$Receipt)
     if ($Failure) { $Result.failure=$Failure.ToString(); $Result.stack=$Failure.ScriptStackTrace }
     $cleanupFailure=$null
     try {
@@ -19,7 +19,9 @@ function Complete-IsolatedUpgrade {
         Remove-Item -LiteralPath $Registry -Recurse -Force -ErrorAction SilentlyContinue
     } catch { $cleanupFailure=$_; $Result.status='failed'; $Result.cleanupFailure=$_.ToString() }
     try {
-        $Result|ConvertTo-Json -Depth 6|Set-Content -Encoding utf8 -LiteralPath (Join-Path $Run.report 'validation.json')
+        $Result.evidence=Join-Path $Run.report 'validation.json'
+        $Result|ConvertTo-Json -Depth 6|Set-Content -Encoding utf8 -LiteralPath $Result.evidence
+        if ($Receipt) {$Result|ConvertTo-Json -Depth 6|Set-Content -Encoding utf8 -LiteralPath $Receipt}
     } catch {
         if (-not $Failure) { throw }
         Write-Warning "Cannot write upgrade receipt: $_"

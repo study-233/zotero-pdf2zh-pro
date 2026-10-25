@@ -51,15 +51,15 @@ description: Prepare, publish, or resume zotero-pdf2zh-pro releases across Zoter
 `--no-push` **不是 dry-run 或“只提交”模式**：它在 Windows 本地构建制品，并可能产生版本提交。只提交推送的请求应单独更新版本文件、运行相关检查、commit/push。
 
 - 核心 CI 验证插件、服务端、Windows PowerShell/事务/进程/进度等快速检查、两平台 Codex 兼容及发布守卫。日常 CI 不编译 Slint/Skia；不能将其成功当作原生构建或安装验收。成功证据必须对应实际发布提交，修复后只重跑受影响检查。
-- Windows 标准流程复用核心 CI，构建一批制品，Rust 单测共用该次 release 编译。保留最终 EXE/DLL、安装器载荷和大小、窗口启动、全新 Python 3.13/OCR、安装和自更新检查；选中的生命周期在 Actions 执行一次，本机只补历史升级，不重复整套安装流程。
-- 发布入口按共享策略自动选测，上一正式版升级为基线；数据或依赖改动追加历史兼容，安装和目录布局改动保留重装、迁移与回滚。普通补丁不枚举所有旧版，新增未分类服务端模块保守扩大验证。验证层级与证据路径以 [Actions 测试规范](../../../docs/actions-testing.md) 为准；`--full-validation` 只扩大范围，本机条件不足时加 `--remote-validation`，不能借此绕过产品失败。
-- 发布前核验冻结计划、所需场景及最终制品摘要。复用测试结果须匹配八项制品哈希、完整计划、验收代码和原 run/attempt，不能只凭同一提交或步骤成功状态。缺少新标准回执时复用原包补验，不伪造回执。测试须隔离并清理进程；失败时保留恢复记录，从对应阶段继续。
+- Windows 标准流程复用核心 CI，构建一批制品，Rust 单测共用该次 release 编译。保留最终 EXE/DLL、安装器载荷和大小、窗口启动、全新 Python 3.13/OCR、安装和自更新检查；选中的生命周期在 Actions 执行一次，本机只补显式选择的兼容升级，不重复整套安装流程。
+- 发布入口按共享策略自动选测，上一正式版升级为基线；数据或依赖改动保留数据格式回归，安装和目录布局改动追加重装、迁移与回滚，不因此追加旧版本。周期回归最多覆盖含目标版的最近三个版本，旧布局仅在 `--baseline <version>` 明确指定时运行。普通补丁不枚举所有旧版，新增未分类服务端模块保守扩大验证。验证层级与证据路径以 [Actions 测试规范](../../../docs/actions-testing.md) 为准；`--full-validation` 扩大生命周期，保持所选版本范围，本机条件不足时加 `--remote-validation`，不能借此绕过产品失败。
+- 发布前核验冻结计划、所需场景及最终制品摘要。复用测试结果须匹配八项制品哈希、完整计划、验收代码和原 run/attempt，不能只凭同一提交或步骤成功状态。缺少新标准回执时复用原包补验，不伪造回执。单个升级场景在归档前落盘，恢复逐项核验计划、源提交、验收脚本和前后制品摘要。Windows 子进程统一使用 windows_powershell.py，禁止继承 PowerShell 7 的模块路径。测试须隔离并清理进程；失败时保留原始错误和恢复记录，从对应阶段继续。
 - 入口或模块布局变更时，核对 CLI 元数据、打包模块、安装验收和对应分发目标。制品身份、大小、哈希与更新清单由现有守卫核验；不重复叠加人工下载全检。
 - 本地检查挂起或环境缺失时，区分“未完成”与“通过”，记录具体原因；在同一提交的相应 CI 通过后才能替代该检查。macOS 临时目录别名导致断言差异时先确认原因，可用解析后的临时目录复测，不删断言掩盖问题。
 
 发布顺序：**核心 CI → Windows 已验证制品 → PyPI 公开包可用 → GitHub Release/更新清单 → Homebrew**。
 
-PyPI 使用现有 Trusted Publishing：仓库 `study-233/zotero-pdf2zh-pro`、workflow `publish-pypi.yml`、environment `pypi`；`id-token: write` 仅在发布 job。所有发布入口（包括仅 PyPI）必须传成功验证的 `build_run_id`，复用原包，不临时重打包发布。Windows 安装器依赖精确 PyPI 版本，公开 wheel/sdist 尚未验证可用时不能先分发安装器。
+PyPI 使用现有 Trusted Publishing：仓库 `study-233/zotero-pdf2zh-pro`、workflow `publish-pypi.yml`、environment `pypi`；`id-token: write` 仅在发布 job。所有发布入口（包括仅 PyPI）必须传成功验证的 `build_run_id`，复用原包，不临时重打包发布。Windows 安装器依赖精确 PyPI 版本，公开 wheel/sdist 尚未在 JSON 与安装索引核验匹配时不能先分发安装器。上传与公开核验为独立 job；共享等待默认 600 秒，超时保留 pending 回执，从原 run 的失败 job 恢复，不能重新上传或重建来处理索引延迟。
 
 GitHub 正式附件共五个：`zotero-pdf2zh-pro.xpi`、`update.json`、`zotero-pdf2zh-pro-windows-x64-setup.exe`、`zotero-pdf2zh-pro-windows-x64.zip`、`windows-update.json`。安装 EXE 用于首次安装或手动升级，ZIP 用于自动更新。保留稳定更新地址。源码以匹配的公开 tag 为准；对应源码包及 `checksums.json` 保留在构建记录。不要创建 friends bundle，或在正文链接未实际上传的校验/源码附件。
 

@@ -23,6 +23,9 @@ if ($LASTEXITCODE -ne 0) { throw 'The source commit must be an ancestor of the v
 $workspaceRun = New-WorkspaceRun -Name 'release-extended'
 $fixture = $workspaceRun.work
 $passed = $false
+$testFailure=$null
+$result=$null
+$results=@()
 $registry = 'HKCU:\Software\pdf2zh-release-test-' + [guid]::NewGuid().ToString('N')
 $package = (Resolve-Path (Join-Path $repo 'dist/zotero-pdf2zh-pro-windows-x64.zip')).Path
 $wheel = (Resolve-Path (Join-Path $repo "server/dist/zotero_pdf2zh_pro-$Version-py3-none-any.whl")).Path
@@ -43,6 +46,11 @@ $env:PDF2ZH_WINDOWS_PORT = '18890'
 $env:PDF2ZH_WINDOWS_REGISTRY_KEY = $registry
 $env:PDF2ZH_WINDOWS_START_MENU_DIR = Join-Path $fixture 'menu'
 $env:PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE = $null
+function Save-SelectedValidation {
+    $result.cases=@($results)
+    $result|ConvertTo-Json -Depth 12|Set-Content -Encoding utf8 -LiteralPath (Join-Path $workspaceRun.report 'validation.json')
+    if ($Receipt) {$result|ConvertTo-Json -Depth 12|Set-Content -Encoding utf8 -LiteralPath $Receipt}
+}
 try {
     if (-not $Plan) {
         $Plan=Join-Path $workspaceRun.report 'validation-plan.json'
@@ -56,7 +64,14 @@ try {
     if ($testPlan.version -ne $Version -or $testPlan.sourceCommit -ne $SourceCommit) {throw 'Validation plan does not match the candidate.'}
     $harnessSha=& uv run --no-project python (Join-Path $PSScriptRoot 'release_control.py') harness-digest
     if ($LASTEXITCODE -ne 0 -or $harnessSha -ne $testPlan.harnessSha256) {throw 'Validation scripts differ from the frozen plan.'}
-    $results=@()
+    $planSha=& uv run --no-project python (Join-Path $PSScriptRoot 'release_control.py') plan-digest $Plan
+    if ($LASTEXITCODE -ne 0) {throw 'Cannot identify the validation plan.'}
+    $caseDirectory=if ($Receipt) {$Receipt+'.cases'} else {Join-Path $workspaceRun.report 'cases'}
+    New-Item -ItemType Directory -Force -Path $caseDirectory|Out-Null
+    $result=@{schemaVersion=2;version=$Version;commit=$SourceCommit;validationCommit=$validationCommit;status='running';
+      lifecycle=(-not $SkipLifecycle);cases=@();planSha256=$planSha;harnessSha256=$harnessSha;
+      packageSha256=(Get-TestFileSha256 $package);wheelSha256=(Get-TestFileSha256 $wheel)}
+    Save-SelectedValidation
     if (-not $SkipLifecycle) {
         if ($DownloadCache) {
             $cache = (Resolve-Path -LiteralPath $DownloadCache).Path
@@ -78,6 +93,19 @@ try {
         if ($RecentOnly -and $case.id -ne 'recent-upgrade') {continue}
         if ($SkipRecentUpgrade -and $case.id -eq 'recent-upgrade') {continue}
         if ($SkipPreviousRelease -and $case.id -eq 'legacy-upgrade') {continue}
+        $caseReceipt=Join-Path $caseDirectory ($case.id+'-'+$case.baseline+'.json')
+        $verification=@('run','--no-project','python',(Join-Path $PSScriptRoot 'release_control.py'),'verify-case',
+          $Plan,$case.id,$case.baseline,$caseReceipt,$package,$wheel)
+        if (Test-Path -LiteralPath $caseReceipt) {
+            $cached=& uv @verification
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Reusing passed case $($case.id): $($case.baseline) -> $Version"
+                $results+=@{id=$case.id;baseline=$case.baseline;status='passed';receipt=($cached|ConvertFrom-Json)}
+                Save-SelectedValidation
+                continue
+            }
+        }
+        Write-Host "Starting case $($case.id): $($case.baseline) -> $Version; receipt=$caseReceipt"
         $previous=Join-Path $fixture $case.baseline
         $info=& uv run --no-project python (Join-Path $PSScriptRoot 'release_control.py') baseline $Plan $case.baseline $previous
         if ($LASTEXITCODE -ne 0) {throw "Baseline setup failed: $($case.id) $($case.baseline)"}
@@ -88,7 +116,8 @@ try {
         if (-not $descriptor) {throw "Unknown validation scenario: $($case.id)"}
         $entry=Join-Path $repo $descriptor.Value.entry
         $arguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File',$entry,
-            '-PreviousPackage',$old.package,'-PreviousWheel',$old.wheel,'-Package',$package,'-Wheel',$wheel)
+            '-PreviousPackage',$old.package,'-PreviousWheel',$old.wheel,'-Package',$package,'-Wheel',$wheel,
+            '-Receipt',$caseReceipt,'-PlanSha256',$planSha,'-HarnessSha256',$harnessSha,'-SourceCommit',$SourceCommit)
         if ($legacy) {
             $arguments+=@('-Constraints',$old.constraints)
             if ($DownloadCache) {$arguments+=@('-DownloadCache',$DownloadCache)}
@@ -96,26 +125,33 @@ try {
             $arguments+=@('-PreviousVersion',$case.baseline,'-Version',$Version)
             if ($DownloadCache) {$arguments+=@('-DownloadCache',$DownloadCache)}
         }
-        & powershell @arguments
+        & (Join-Path $PSHOME 'powershell.exe') @arguments
         if ($LASTEXITCODE -ne 0) {throw "Validation failed: $($case.id) $($case.baseline) -> $Version"}
-        $results+=@{id=$case.id;baseline=$case.baseline;status='passed'}
+        $verified=& uv @verification
+        if ($LASTEXITCODE -ne 0) {throw 'Completed upgrade receipt did not match its frozen identity.'}
+        $results+=@{id=$case.id;baseline=$case.baseline;status='passed';receipt=($verified|ConvertFrom-Json)}
+        Save-SelectedValidation
     }
-    $planSha=& uv run --no-project python (Join-Path $PSScriptRoot 'release_control.py') plan-digest $Plan
-    if ($LASTEXITCODE -ne 0) {throw 'Cannot identify the validation plan.'}
-    $result=@{version=$Version;commit=$SourceCommit;validationCommit=$validationCommit;status='passed';
-      lifecycle=(-not $SkipLifecycle);cases=$results;planSha256=$planSha;harnessSha256=$harnessSha;
-      packageSha256=(Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant();
-      wheelSha256=(Get-FileHash -LiteralPath $wheel -Algorithm SHA256).Hash.ToLowerInvariant()}
-    $result |
-        ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $workspaceRun.report 'validation.json') -Encoding utf8
-    if ($Receipt) {$result|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $Receipt -Encoding utf8}
+    $result.status='passed'
+    Save-SelectedValidation
     Write-Host "Selected validation passed; evidence: $($workspaceRun.report)/validation.json"
     $passed = $true
+} catch {
+    $testFailure=$_
+    if ($result) {
+        $result.status='failed'; $result.failure=$_.ToString()
+        try {Save-SelectedValidation} catch {Write-Warning "Cannot save failed validation: $_"}
+    }
+    throw
 } finally {
     # Also clean up failed/relocated fixtures; never match the production directory.
-    Stop-IsolatedTestProcesses -Roots @($fixture)
-    if ($registry -notlike 'HKCU:\Software\pdf2zh-release-test-*') { throw 'Unsafe test registry cleanup.' }
-    Remove-Item -LiteralPath $registry -Recurse -Force -ErrorAction SilentlyContinue
+    $cleanupFailure=$null
+    try {
+        Stop-IsolatedTestProcesses -Roots @($fixture)
+        if ($registry -notlike 'HKCU:\Software\pdf2zh-release-test-*') { throw 'Unsafe test registry cleanup.' }
+        Remove-Item -LiteralPath $registry -Recurse -Force -ErrorAction SilentlyContinue
+    } catch {$cleanupFailure=$_;Write-Warning "Test workspace retained: $_"}
     foreach ($name in $saved.Keys) { [Environment]::SetEnvironmentVariable($name, $saved[$name], 'Process') }
-    Complete-WorkspaceRun -Run $workspaceRun -Passed $passed
+    if (-not $cleanupFailure) {Complete-WorkspaceRun -Run $workspaceRun -Passed $passed}
+    elseif (-not $testFailure) {throw $cleanupFailure}
 }

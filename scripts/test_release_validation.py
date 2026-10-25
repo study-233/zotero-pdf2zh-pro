@@ -123,7 +123,7 @@ class ScopedSelectionTests(unittest.TestCase):
                 plan = self.select(path)
                 self.assertEqual(plan['lifecycle'], 'standard')
                 self.assertEqual({c['id'] for c in plan['cases']},
-                                 {'recent-upgrade','oldest-upgrade','legacy-upgrade'})
+                                 {'recent-upgrade'})
                 self.assertFalse(plan['fullValidation'])
 
     def test_installation_unknown_paths_and_explicit_full_keep_reinstallation_and_migration(self):
@@ -132,7 +132,7 @@ class ScopedSelectionTests(unittest.TestCase):
             with self.subTest(path=path):
                 plan = self.select(path)
                 self.assertEqual(plan['lifecycle'], 'extended')
-                self.assertEqual(len(plan['cases']), 3)
+                self.assertEqual(plan['cases'], [{'id':'recent-upgrade','baseline':'1.9.2'}])
         for flags in ({'full':True}, {'compatibility':True}):
             plan = self.select(**flags)
             self.assertEqual(plan['lifecycle'], 'extended')
@@ -141,7 +141,7 @@ class ScopedSelectionTests(unittest.TestCase):
     def test_combined_risks_union_coverage_and_deduplicate_baselines(self):
         plan = self.select('server/task_manager.py','scripts/windows/install.ps1','server/uv.lock')
         self.assertEqual(plan['lifecycle'], 'extended')
-        self.assertEqual(len(plan['cases']), 3)
+        self.assertEqual(plan['cases'], [{'id':'recent-upgrade','baseline':'1.9.2'}])
         for previous in ['1.9.0','1.8.2']:
             plan = policy.select([], previous, '1.9.3', full=True)
             self.assertEqual(sum(c['baseline'] == previous for c in plan['cases']), 1)
@@ -190,7 +190,7 @@ class WindowsSchedulingTests(unittest.TestCase):
                     prepare=prepare.replace('${{ inputs.full_validation }}','false').replace('${{ inputs.defer_extended_validation }}',deferred)
                     result=self.run_step(root,"function uv { $global:LASTEXITCODE=0 };\n"+prepare,plan)
                     self.assertEqual(result.returncode,0,result.stderr)
-                    self.assertIn('RUN_UPGRADE_VALIDATION='+str(deferred != 'true').lower(),(root/'env').read_text())
+                    self.assertIn('RUN_UPGRADE_VALIDATION=false',(root/'env').read_text())
                     (root/'scripts').mkdir()
                     (root/'scripts/test_windows_lifecycle.ps1').write_text(
                         'param($WindowsPackage,$PackageSource,[switch]$SmokeOnly)\n'

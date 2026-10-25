@@ -184,7 +184,9 @@ class PolicyTests(unittest.TestCase):
             plan = self.frozen_plan()
             plan['fullValidation'] = True
             plan['cases'].append({'id':'legacy-upgrade','baseline':'1.8.2'})
-            plan['cases'].append({'id':'oldest-upgrade','baseline':'1.9.0'})
+            plan['cases'].append({'id':'compatibility-upgrade','baseline':'1.9.0'})
+            for value in ['1.8.2','1.9.0']:
+                plan['baselines'][value] = dict(plan['baselines']['1.9.1'], version=value)
             control.save(root/'validation-plan.json', plan)
             manifest = {'version':'1.9.2','commit':SHA,'validationPlanSha256':control.plan_digest(plan),
                         'deferredExtendedValidation':True, 'artifacts':{
@@ -197,8 +199,13 @@ class PolicyTests(unittest.TestCase):
             control.save(root/'checksums.json',manifest)
             receipt = {'status':'passed','commit':SHA,'planSha256':control.plan_digest(plan),'lifecycle':False,
                        'cases':[{'id':'legacy-upgrade','baseline':'1.8.2','status':'passed'},
-                                {'id':'oldest-upgrade','baseline':'1.9.0','status':'passed'}],
+                                {'id':'compatibility-upgrade','baseline':'1.9.0','status':'passed'}],
                        'packageSha256':'e'*64,'wheelSha256':'f'*64,'harnessSha256':'9'*64}
+            for case in receipt['cases']:
+                case['receipt']={'status':'passed','version':'1.9.2','previousVersion':case['baseline'],
+                    'commit':SHA,'planSha256':control.plan_digest(plan),'harnessSha256':'9'*64,
+                    'packageSha256':'e'*64,'wheelSha256':'f'*64,
+                    'previousPackageSha256':'c'*64,'previousWheelSha256':'d'*64}
             with patch.object(control,'validate_plan'):
                 control.verify_publication_contract(root,receipt)
                 for change in ({'cases':[]},{'packageSha256':'0'*64},{'planSha256':'0'*64},{'harnessSha256':'0'*64}):
@@ -221,7 +228,7 @@ class PolicyTests(unittest.TestCase):
         self.assertTrue(risky['extendedValidation'])
         self.assertFalse(risky['fullValidation'])
         self.assertEqual(risky['lifecycle'], 'extended')
-        self.assertEqual({c['baseline'] for c in risky['cases']}, {'1.9.1', '1.9.0', '1.8.2'})
+        self.assertEqual(risky['cases'], [{'id':'recent-upgrade','baseline':'1.9.1'}])
 
     def test_unknown_changes_are_conservative_and_duplicate_baselines_are_removed(self):
         plan = policy.select(['a-new-platform/installer'], '1.9.0', '1.9.2')

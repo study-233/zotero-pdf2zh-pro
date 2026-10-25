@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "currentLayoutBaseline": "1.9.0",
+  "schemaVersion": 2,
+  "baselineWindow": 3,
   "legacyBaseline": "1.8.2",
   "legacyConstraints": ["bitstring==4.4.0"],
   "legacyUv": {
@@ -31,17 +31,17 @@
         "windows-app/src/update.rs", "windows-app/src/lib.rs", "windows-app/src/main.rs",
         "windows-app/src/setup.rs", "windows-app/Cargo.*", "windows-app/build.rs",
         "server/service_launcher.py", "server/runtime_storage.py", "server/maintenance.py"],
-      "lifecycle": "extended", "upgrades": ["oldest-upgrade", "legacy-upgrade"]
+      "lifecycle": "extended"
     },
     "dependencies": {
       "paths": ["server/pyproject.toml", "server/uv.lock"],
-      "lifecycle": "standard", "upgrades": ["oldest-upgrade", "legacy-upgrade"]
+      "lifecycle": "standard"
     },
     "data": {
       "paths": ["server/task_manager.py", "server/task_runtime.py", "server/translation_memory.py",
         "server/selection_cache.py", "server/glossary_manager.py", "server/chatgpt_auth.py",
         "server/chatgpt_usage.py", "server/server.py", "server/babeldoc/format/pdf/translation_recovery.py"],
-      "lifecycle": "standard", "upgrades": ["oldest-upgrade", "legacy-upgrade"]
+      "lifecycle": "standard"
     }
   },
   "knownPaths": [
@@ -53,13 +53,14 @@
     "server/diagnostics.py", "server/observability.py", "server/pdf2zh_next_service.py",
     "scripts/build_site*", "scripts/dev*", "scripts/zotero-dev",
     "scripts/test_*", "scripts/check_*", "scripts/release*", "scripts/workspace*",
+    ".gitattributes", "scripts/local-deploy.sh", "scripts/windows_powershell.py", "scripts/pypi_publication.py",
     ".github/*", ".codex/*", ".agents/*", "LICENSE*", "NOTICE*", ".gitignore"
   ],
   "scenarios": {
     "standard": {"entry": "scripts/test_windows_lifecycle.ps1", "layer": "release"},
     "progress": {"entry": "scripts/test_windows_uv_progress.py", "layer": "release"},
     "recent-upgrade": {"entry": "scripts/test_windows_upgrade.ps1", "layer": "release"},
-    "oldest-upgrade": {"entry": "scripts/test_windows_upgrade.ps1", "layer": "compatibility"},
+    "compatibility-upgrade": {"entry": "scripts/test_windows_upgrade.ps1", "layer": "compatibility"},
     "legacy-upgrade": {"entry": "scripts/test_windows_previous_release.ps1", "layer": "compatibility"},
     "extended": {"entry": "scripts/test_windows_lifecycle.ps1", "layer": "compatibility"}
   }

@@ -12,7 +12,7 @@ POLICY_PATH = Path(__file__).with_name('release-policy.json')
 
 def policy():
     data = json.loads(POLICY_PATH.read_text(encoding='utf-8'))
-    if data['schemaVersion'] != 1:
+    if data['schemaVersion'] != 2:
         raise ValueError('Unsupported release policy')
     return data
 
@@ -47,7 +47,7 @@ def previous_release(releases, candidate):
     return result
 
 
-def select(changes, previous, candidate, full=False, compatibility=False):
+def select(changes, previous, candidate, full=False, compatibility=False, recent=None, explicit=None):
     rules = policy()
     groups = {name: group for name, group in rules['riskGroups'].items()
               if any(fnmatch.fnmatchcase(p, pat) for p in changes for pat in group['paths'])}
@@ -58,13 +58,23 @@ def select(changes, previous, candidate, full=False, compatibility=False):
     exhaustive = bool(full or compatibility)
     selected = rules['riskGroups'] if exhaustive or unknown else groups
     lifecycle = 'extended' if any(g['lifecycle'] == 'extended' for g in selected.values()) else 'standard'
-    upgrades = {case for group in selected.values() for case in group['upgrades']}
     cases = [{'id': 'recent-upgrade', 'baseline': previous}]
-    for case, baseline in [('oldest-upgrade', rules['currentLayoutBaseline']),
-                           ('legacy-upgrade', rules['legacyBaseline'])]:
-        if case in upgrades and version(baseline) < version(candidate) and baseline != previous:
+    recent = list(recent or [previous])
+    if (not recent or recent[0] != previous or len(recent) > rules['baselineWindow'] - 1
+            or recent != sorted(set(recent), key=version, reverse=True)
+            or any(version(v) >= version(candidate) for v in recent)):
+        raise ValueError('Invalid frozen recent-release window')
+    requested = list(dict.fromkeys(value.removeprefix('v') for value in explicit or []))
+    baselines = list(dict.fromkeys((recent if compatibility else [previous]) + requested))
+    for baseline in baselines:
+        if version(baseline) >= version(candidate):
+            raise ValueError('An upgrade baseline must precede the candidate')
+        if baseline != previous:
+            case = 'legacy-upgrade' if baseline == rules['legacyBaseline'] else 'compatibility-upgrade'
             cases.append({'id': case, 'baseline': baseline})
-    return {'schemaVersion': 2, 'version': candidate, 'previousVersion': previous,
+    return {'schemaVersion': 3, 'version': candidate, 'previousVersion': previous,
+            'baselineMode': 'compatibility' if compatibility else 'release',
+            'recentVersions': recent, 'requestedBaselines': requested,
             'policySha256': policy_digest(),
             'fullValidation': exhaustive, 'extendedValidation': lifecycle == 'extended' or len(cases) > 1,
             'lifecycle': lifecycle, 'riskGroups': list(groups), 'riskPaths': risky, 'unknownPaths': unknown,

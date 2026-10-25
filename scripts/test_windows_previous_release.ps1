@@ -5,7 +5,8 @@
     [Parameter(Mandatory=$true)][string]$Package,
     [Parameter(Mandatory=$true)][string]$Wheel,
     [string]$Root,
-    [string]$DownloadCache
+    [string]$DownloadCache,
+    [string]$Receipt, [string]$PlanSha256, [string]$HarnessSha256, [string]$SourceCommit
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
@@ -172,5 +173,9 @@ try {
     $result=@{stage=$stage;status=$(if($passed){'passed'}else{'failed'});previousVersion='1.8.2';
       packageSha256=(Get-TestFileSha256 $Package);wheelSha256=(Get-TestFileSha256 $Wheel);
       constraintsSha256=(Get-TestFileSha256 $Constraints)}
-    Complete-IsolatedUpgrade -Run $workspaceRun -Roots @($Root,$fixture) -Registry $registry -Result $result -Failure $testFailure
+    $result.commit=$SourceCommit; $result.planSha256=$PlanSha256; $result.harnessSha256=$HarnessSha256
+    $result.previousPackageSha256=Get-TestFileSha256 $PreviousPackage
+    $result.previousWheelSha256=Get-TestFileSha256 $PreviousWheel
+    $result.version=$PackageVersion
+    Complete-IsolatedUpgrade -Run $workspaceRun -Roots @($Root,$fixture) -Registry $registry -Result $result -Failure $testFailure -Receipt $Receipt
 }

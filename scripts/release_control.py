@@ -94,6 +94,46 @@ def cached_asset(repo, asset, expected=None):
         return target
 
 
+def download_artifact(run_id, name, destination):
+    """Actions artifact IDs are immutable; cache only a verified archive by that ID."""
+    import zipfile
+    artifacts = api(f'repos/{REPO}/actions/runs/{run_id}/artifacts?per_page=100')['artifacts']
+    matches = [a for a in artifacts if a['name'] == name and not a['expired']]
+    if len(matches) != 1:
+        raise ValueError('Missing/ambiguous unexpired artifact')
+    artifact = matches[0]
+    identifier = int(artifact['id'])
+    cache = ROOT/'.tmp/cache/release-artifacts'
+    archive = cache/f'{identifier}.zip'
+    metadata_path = cache/f'{identifier}.json'
+    recorded = json.loads(metadata_path.read_text()) if metadata_path.is_file() else {}
+    official = artifact.get('digest') or ''
+    expected = official.removeprefix('sha256:') if official.startswith('sha256:') else recorded.get('sha256')
+    if not archive.is_file() or not expected or digest(archive) != expected:
+        with Workspace(ROOT).run('artifact-download') as (work, report):
+            temporary = work/'artifact.zip'
+            download(['gh', 'api', f'repos/{REPO}/actions/artifacts/{identifier}/zip'], temporary)
+            actual = digest(temporary)
+            if official and official != 'sha256:'+actual:
+                raise ValueError('Actions artifact archive digest mismatch')
+            if not zipfile.is_zipfile(temporary):
+                raise ValueError('Invalid Actions artifact archive')
+            cache.mkdir(parents=True, exist_ok=True)
+            os.replace(temporary, archive)
+            save(metadata_path, {'id': identifier, 'runId': str(run_id), 'name': name, 'sha256': actual})
+            save(report/'download.json', {'artifactId': identifier, 'sha256': actual})
+    else:
+        print(f'Reusing verified artifact archive {identifier} from run {run_id}', file=sys.stderr, flush=True)
+    destination = Path(destination)
+    destination.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(archive) as zipped:
+        for entry in zipped.infolist():
+            if (not (destination/entry.filename).resolve().is_relative_to(destination.resolve())
+                    or (entry.external_attr >> 16) & 0o170000 == 0o120000):
+                raise ValueError('Artifact archive escapes destination or contains symbolic links')
+        zipped.extractall(destination)
+
+
 def tag_commit(repo, tag):
     obj = api(f'repos/{repo}/git/ref/tags/{tag}')['object']
     for _ in range(10):
@@ -174,8 +214,9 @@ def legacy_uv(destination):
         raise ValueError('Historical uv binary identity mismatch')
 
 
-def make_plan(value, commit, output, full=False, compatibility=False):
+def make_plan(value, commit, output, full=False, compatibility=False, explicit=None):
     version(value)
+    explicit = list(dict.fromkeys(item.removeprefix('v') for item in explicit or []))
     if not re.fullmatch('[0-9a-f]{40}',commit):
         raise ValueError('Validation plan requires the full product commit')
     output = Path(output)
@@ -187,17 +228,27 @@ def make_plan(value, commit, output, full=False, compatibility=False):
             raise ValueError('Validation policy changed; create a new reviewed plan')
         if (full or compatibility) and not plan['fullValidation']:
             raise ValueError('Existing plan omits requested compatibility checks')
+        if compatibility and plan.get('baselineMode') != 'compatibility':
+            raise ValueError('Existing plan omits the rolling compatibility window')
+        if explicit and plan.get('requestedBaselines') != list(dict.fromkeys(explicit)):
+            raise ValueError('Existing plan has different explicitly requested baselines')
         validate_plan(plan)
         if plan.get('harnessSha256') != harness_digest(ROOT):
             raise ValueError('Validation harness changed; create a new plan and revalidate existing artifacts')
         return plan
     pages = json.loads(command(['gh', 'api', '--paginate', '--slurp', f'repos/{REPO}/releases?per_page=100']))
-    previous = previous_release([r for page in pages for r in page], value)
+    releases = [r for page in pages for r in page]
+    previous = previous_release(releases, value)
+    recent = sorted({r['tag_name'].removeprefix('v') for r in releases
+                     if not r['draft'] and not r['prerelease']
+                     and re.fullmatch(r'v\d+\.\d+\.\d+', r['tag_name'])
+                     and version(r['tag_name']) < version(value)}, key=version, reverse=True)[:policy()['baselineWindow']-1]
     old = tag_commit(REPO, previous['tag_name'])
     changes = changed_paths(ROOT, old, commit)
     recent_compatibility = compatibility_result()
     retry_compatibility = bool(recent_compatibility and recent_compatibility['conclusion'] != 'success')
-    plan = select(changes, previous['tag_name'].removeprefix('v'), value, full, compatibility or retry_compatibility)
+    plan = select(changes, previous['tag_name'].removeprefix('v'), value, full, compatibility or retry_compatibility,
+                  recent=recent, explicit=explicit)
     plan['compatibilityRun'] = recent_compatibility
     baselines = {case['baseline'] for case in plan['cases']}
     plan.update(sourceCommit=commit, harnessSha256=harness_digest(ROOT), baselines={})
@@ -220,7 +271,7 @@ def compatibility_result():
 
 def validate_plan(plan):
     """Recompute required coverage without changing an already frozen previous release."""
-    if plan['schemaVersion'] != 2 or version(plan['previousVersion']) >= version(plan['version']):
+    if plan['schemaVersion'] != 3 or version(plan['previousVersion']) >= version(plan['version']):
         raise ValueError('Invalid validation plan versions')
     if not re.fullmatch('[0-9a-f]{64}',plan.get('harnessSha256','')):
         raise ValueError('Validation plan has no fixed test harness identity')
@@ -242,7 +293,9 @@ def validate_plan(plan):
                 raise ValueError('Historical dependency constraints changed')
     previous = plan['baselines'][plan['previousVersion']]
     required = select(changed_paths(ROOT, previous['commit'], plan['sourceCommit']),
-                      plan['previousVersion'], plan['version'], full=plan['fullValidation'])
+                      plan['previousVersion'], plan['version'], full=plan['fullValidation'],
+                      compatibility=plan.get('baselineMode') == 'compatibility',
+                      recent=plan.get('recentVersions'), explicit=plan.get('requestedBaselines'))
     if any(plan.get(key) != required[key] for key in ('cases', 'fullValidation', 'extendedValidation', 'lifecycle')):
         raise ValueError('Validation plan omits required upgrade coverage')
     if set(plan['baselines']) != {case['baseline'] for case in required['cases']}:
@@ -571,7 +624,23 @@ def verify_publication_contract(source, local_receipt=None):
         for key, name in [('packageSha256', PACKAGE), ('wheelSha256', f'zotero_pdf2zh_pro-{plan["version"]}-py3-none-any.whl')]:
             if receipt.get(key) != manifest['artifacts'][name]['sha256']:
                 raise ValueError('Local validation used different artifacts')
+        for case in receipt.get('cases', []):
+            verify_case_receipt(plan, case['id'], case['baseline'], case.get('receipt', {}), manifest['artifacts'])
     return plan
+
+
+def verify_case_receipt(plan, scenario, baseline, receipt, artifacts):
+    if {'id': scenario, 'baseline': baseline} not in plan['cases']:
+        raise ValueError('Case was not selected by the frozen plan')
+    old = plan['baselines'][baseline]
+    expected = {'status': 'passed', 'version': plan['version'], 'previousVersion': baseline,
+                'commit': plan['sourceCommit'], 'planSha256': plan_digest(plan), 'harnessSha256': plan['harnessSha256'],
+                'packageSha256': artifacts[PACKAGE]['sha256'],
+                'wheelSha256': artifacts[f'zotero_pdf2zh_pro-{plan["version"]}-py3-none-any.whl']['sha256'],
+                'previousPackageSha256': old['package']['sha256'], 'previousWheelSha256': old['wheel']['sha256']}
+    if any(receipt.get(key) != value for key, value in expected.items()):
+        raise ValueError('Case receipt does not match the plan, baseline, harness or final artifacts')
+    return receipt
 
 
 def main():
@@ -592,6 +661,7 @@ def main():
     plan = sub.add_parser('plan')
     plan.add_argument('version'); plan.add_argument('commit'); plan.add_argument('output', type=Path)
     plan.add_argument('--full', action='store_true'); plan.add_argument('--compatibility', action='store_true')
+    plan.add_argument('--baseline', action='append', default=[])
     baseline = sub.add_parser('baseline')
     baseline.add_argument('plan', type=Path); baseline.add_argument('version'); baseline.add_argument('directory', type=Path)
     attach = sub.add_parser('attach-plan')
@@ -606,8 +676,13 @@ def main():
     legacy_tool=sub.add_parser('legacy-uv'); legacy_tool.add_argument('destination',type=Path)
     candidate = sub.add_parser('published-candidate')
     candidate.add_argument('plan', type=Path)
+    candidate.add_argument('--recent-only', action='store_true')
+    candidate.add_argument('--baseline', action='append', default=[])
     contract = sub.add_parser('verify-contract')
     contract.add_argument('directory', type=Path); contract.add_argument('--receipt', type=Path)
+    case = sub.add_parser('verify-case')
+    case.add_argument('plan', type=Path); case.add_argument('scenario'); case.add_argument('baseline')
+    case.add_argument('receipt', type=Path); case.add_argument('package', type=Path); case.add_argument('wheel', type=Path)
     publish = sub.add_parser('publish')
     publish.add_argument('tag'); publish.add_argument('commit'); publish.add_argument('notes', type=Path)
     publish.add_argument('files', nargs='+', type=Path); publish.add_argument('--repo', default=REPO)
@@ -622,23 +697,9 @@ def main():
         if wait_run(args.repo, args.run, args.timeout)['conclusion'] != 'success':
             raise ValueError(f'Run {args.run} failed')
     elif args.action == 'download':
-        args.directory.mkdir(parents=True, exist_ok=True)
-        # Download the named archive as a bounded byte stream, then extract locally.
-        artifacts = api(f'repos/{REPO}/actions/runs/{args.run}/artifacts?per_page=100')['artifacts']
-        matches = [a for a in artifacts if a['name'] == args.name and not a['expired']]
-        if len(matches) != 1:
-            raise ValueError('Missing/ambiguous unexpired artifact')
-        with Workspace(ROOT).run('artifact-download') as (work, _):
-            archive = work / 'artifact.zip'
-            download(['gh', 'api', f'repos/{REPO}/actions/artifacts/{matches[0]["id"]}/zip'], archive)
-            import zipfile
-            with zipfile.ZipFile(archive) as zipped:
-                for name in zipped.namelist():
-                    if not (args.directory / name).resolve().is_relative_to(args.directory.resolve()):
-                        raise ValueError('Artifact archive escapes destination')
-                zipped.extractall(args.directory)
+        download_artifact(args.run, args.name, args.directory)
     elif args.action == 'plan':
-        print(json.dumps(make_plan(args.version, args.commit, args.output, args.full, args.compatibility)))
+        print(json.dumps(make_plan(args.version, args.commit, args.output, args.full, args.compatibility, args.baseline)))
     elif args.action == 'baseline':
         print(json.dumps(fetch_baseline(json.loads(args.plan.read_text(encoding='utf-8')), args.version, args.directory)))
     elif args.action == 'attach-plan':
@@ -655,6 +716,14 @@ def main():
         legacy_uv(args.destination)
     elif args.action == 'verify-contract':
         verify_publication_contract(args.directory, json.loads(args.receipt.read_text(encoding='utf-8-sig')) if args.receipt else None)
+    elif args.action == 'verify-case':
+        plan = json.loads(args.plan.read_text(encoding='utf-8-sig'))
+        if plan['harnessSha256'] != harness_digest(ROOT):
+            raise ValueError('Case validation harness changed')
+        artifacts = {PACKAGE: {'sha256': digest(args.package)},
+                     f'zotero_pdf2zh_pro-{plan["version"]}-py3-none-any.whl': {'sha256': digest(args.wheel)}}
+        print(json.dumps(verify_case_receipt(plan, args.scenario, args.baseline,
+              json.loads(args.receipt.read_text(encoding='utf-8-sig')), artifacts)))
     elif args.action == 'published-candidate':
         pages = json.loads(command(['gh','api','--paginate','--slurp',f'repos/{REPO}/releases?per_page=100']))
         releases = [r for page in pages for r in page if not r['draft'] and not r['prerelease']
@@ -662,7 +731,7 @@ def main():
         latest = max(releases, key=lambda r: version(r['tag_name']))
         value = latest['tag_name'].removeprefix('v')
         baseline = freeze_baseline(REPO,value,latest)
-        make_plan(value,baseline['commit'],args.plan,compatibility=True)
+        make_plan(value,baseline['commit'],args.plan,compatibility=not args.recent_only,explicit=args.baseline)
         with Workspace(ROOT).run('compatibility-candidate') as (work,_):
             candidate_files = fetch_baseline({'baselines':{value:baseline}},value,work)
             for source, destination in [(candidate_files['package'],ROOT/'dist'/PACKAGE),

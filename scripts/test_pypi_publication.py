@@ -1,5 +1,6 @@
 from io import BytesIO
 import unittest
+import subprocess
 from urllib.error import HTTPError
 from unittest.mock import patch
 
@@ -83,6 +84,11 @@ class PublicationTests(unittest.TestCase):
         for code in (401, 403):
             with patch.object(gate, 'urlopen', side_effect=HTTPError('url', code, 'error', {}, BytesIO())):
                 with self.assertRaises(ValueError): gate.fetch('https://pypi.org/test', 1)
+
+    def test_request_worker_enforces_elapsed_limit_even_if_network_stalls(self):
+        with patch.object(gate.subprocess,'run',side_effect=subprocess.TimeoutExpired('request',3)) as run:
+            with self.assertRaises(gate.Pending): gate.bounded_fetch('https://pypi.org/test',3)
+            self.assertEqual(run.call_args.kwargs['timeout'],3)
 
 
 if __name__ == '__main__':

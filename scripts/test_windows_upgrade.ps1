@@ -5,7 +5,8 @@
     [Parameter(Mandatory=$true)][string]$Package,
     [Parameter(Mandatory=$true)][string]$Wheel,
     [Parameter(Mandatory=$true)][string]$Version,
-    [string]$DownloadCache
+    [string]$DownloadCache,
+    [string]$Receipt, [string]$PlanSha256, [string]$HarnessSha256, [string]$SourceCommit
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
@@ -97,5 +98,8 @@ try {
     foreach ($name in $saved.Keys) {[Environment]::SetEnvironmentVariable($name,$saved[$name],'Process')}
     $result=@{previousVersion=$PreviousVersion;version=$Version;stage=$stage;status=$(if($passed){'passed'}else{'failed'});
       packageSha256=(Get-TestFileSha256 $Package);wheelSha256=(Get-TestFileSha256 $Wheel)}
-    Complete-IsolatedUpgrade -Run $run -Roots @($run.work) -Registry $registry -Result $result -Failure $testFailure
+    $result.commit=$SourceCommit; $result.planSha256=$PlanSha256; $result.harnessSha256=$HarnessSha256
+    $result.previousPackageSha256=Get-TestFileSha256 $PreviousPackage
+    $result.previousWheelSha256=Get-TestFileSha256 $PreviousWheel
+    Complete-IsolatedUpgrade -Run $run -Roots @($run.work) -Registry $registry -Result $result -Failure $testFailure -Receipt $Receipt
 }
