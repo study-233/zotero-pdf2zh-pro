@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 import sys
 import tempfile
+import time
 
 PRODUCT = "zotero-pdf2zh-pro"
 
@@ -140,6 +141,17 @@ def _rebase_tasks(staging: Path, source: Path, target: Path):
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def _publish_migration(staging: Path, target: Path):
+    # Windows access/sharing conflicts can briefly prevent an atomic directory rename.
+    for attempt in range(5):
+        try:
+            return staging.rename(target)
+        except PermissionError as error:
+            if getattr(error, "winerror", None) not in (5, 32) or attempt == 4:
+                raise
+            time.sleep(0.1 * (attempt + 1))
+
+
 def prepare_data_directory(module_file: str | Path, requested: str | Path | None = None) -> Path:
     explicit = requested or os.environ.get("PDF2ZH_DATA_DIR")
     if explicit:
@@ -170,7 +182,7 @@ def prepare_data_directory(module_file: str | Path, requested: str | Path | None
             _rebase_tasks(staging, source, target)
             if target.exists():
                 target.rmdir()  # Only an empty destination may be replaced.
-            staging.rename(target)
+            _publish_migration(staging, target)
         except Exception as error:
             raise RuntimeError(f"Data migration failed; original data is preserved at {source}. "
                                "Stop the old service and check disk space, permissions and task files before retrying.") from error

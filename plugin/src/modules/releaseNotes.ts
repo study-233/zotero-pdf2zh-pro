@@ -79,6 +79,17 @@ export const releaseSummaries: ReleaseSummary[] = [
             },
         ],
     },
+    {
+        version: "1.9.4",
+        notes: [
+            {
+                id: "service-upgrade-data-protection",
+                message: "release-service-upgrade-data-protection",
+                cardMessage: "release-card-service-upgrade-data-protection",
+                priority: 2,
+            },
+        ],
+    },
 ];
 
 export function compareVersions(a: string, b: string): number {

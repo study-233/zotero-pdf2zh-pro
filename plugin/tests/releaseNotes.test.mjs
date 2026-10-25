@@ -153,7 +153,10 @@ function fixture(raw) {
 }
 
 test("card uses short copy, names the plugin and opens full update details", () => {
-    const f = fixture({ version: "1.9.2", shown: [] });
+    const f = fixture({
+        version: release.releaseSummaries.at(-2).version,
+        shown: [],
+    });
     try {
         const win = f.window();
         f.api.registerNoticeWindow(win);

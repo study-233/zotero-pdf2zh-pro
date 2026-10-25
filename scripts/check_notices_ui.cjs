@@ -73,7 +73,11 @@ const locales = Object.fromEntries(["zh-CN", "en-US"].map(locale => [locale, Obj
             }, {modules, pkg, strings: locales[locale]});
             await page.goto("http://notice.test/noticeHelp.xhtml");
             await page.waitForSelector("#help a");
-            assert.equal(await page.locator("#updates li").count(), 3);
+            const currentNoteCount = await page.evaluate(() => {
+                const {releases, version} = window.arguments[0];
+                return releases.find(release => release.version === version).notes.length;
+            });
+            assert.equal(await page.locator("#updates li").count(), currentNoteCount);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
             assert.equal(await page.locator(".pdf2zh-help button").count(), 0);
             await page.locator("#help a").first().click();

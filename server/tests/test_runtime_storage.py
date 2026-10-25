@@ -171,6 +171,51 @@ class RuntimeStorageTests(unittest.TestCase):
         self.assertEqual(list(target.parent.glob("*.migration-*")), [])
         self.assert_pack(storage.prepare_data_directory(module), metadata)
 
+    def test_transient_windows_rename_conflicts_retry_without_losing_data(self):
+        rename = Path.rename
+        for code in (5, 32):
+            with self.subTest(winerror=code):
+                module = self.module(f"locked-{code}/Cellar/{storage.PRODUCT}/1.9.3/libexec/venv/lib/python3.13/site-packages")
+                legacy, metadata = self.seed(module)
+                before = storage._manifest(legacy)
+                error = PermissionError("temporary Windows conflict")
+                error.winerror = code
+                attempts = []
+
+                def busy_once(source, target):
+                    attempts.append(source)
+                    if len(attempts) == 1:
+                        raise error
+                    return rename(source, target)
+
+                with patch.object(Path, "rename", autospec=True, side_effect=busy_once), \
+                        patch.object(storage.time, "sleep") as sleep:
+                    target = storage.prepare_data_directory(module)
+                self.assertEqual(len(attempts), 2)
+                sleep.assert_called_once_with(0.1)
+                self.assert_pack(target, metadata)
+                self.assertEqual(storage._manifest(legacy), before)
+
+    def test_persistent_rename_failure_keeps_original_data_and_bounds_retries(self):
+        for code in (5, None):
+            with self.subTest(winerror=code):
+                module = self.module(f"denied-{code}/Cellar/{storage.PRODUCT}/1.9.3/libexec/venv/lib/python3.13/site-packages")
+                legacy, _ = self.seed(module)
+                before = storage._manifest(legacy)
+                target = storage.default_data_directory(module)
+                error = PermissionError("permanent access denial")
+                if code is not None:
+                    error.winerror = code
+                with patch.object(Path, "rename", side_effect=error) as rename, \
+                        patch.object(storage.time, "sleep") as sleep:
+                    with self.assertRaisesRegex(RuntimeError, "original data is preserved"):
+                        storage.prepare_data_directory(module)
+                self.assertEqual(rename.call_count, 5 if code is not None else 1)
+                self.assertEqual(sleep.call_count, 4 if code is not None else 0)
+                self.assertFalse(target.exists())
+                self.assertEqual(storage._manifest(legacy), before)
+                self.assertEqual(list(target.parent.glob("*.migration-*")), [])
+
     def test_malformed_tasks_are_preserved_and_reported(self):
         module = self.brew("1.9.3")
         legacy, _ = self.seed(module)

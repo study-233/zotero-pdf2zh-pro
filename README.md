@@ -225,4 +225,4 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 本项目采用 **AGPL-3.0-or-later**，保留上游项目与第三方组件的许可证及归属。
 详见 [LICENSE](LICENSE) 和 [第三方声明](server/THIRD_PARTY_NOTICES.md)。
 
-[release-version]: # (<!-- release-version --> `1.9.3`)
+[release-version]: # (<!-- release-version --> `1.9.4`)

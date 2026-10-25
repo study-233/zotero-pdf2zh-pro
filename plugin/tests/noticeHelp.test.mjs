@@ -68,9 +68,12 @@ for (const locale of ["zh-CN", "en-US"]) {
         const { dom, doc, opened } = await fixture(locale);
         const close = dom.window.close.bind(dom.window);
         try {
-            assert.equal(doc.querySelectorAll("#updates li").length, 3);
             const current = releases.find(
                 (entry) => entry.version === pkg.version,
+            );
+            assert.equal(
+                doc.querySelectorAll("#updates li").length,
+                current.notes.length,
             );
             const messages = dom.window.arguments[0].message;
             assert.deepEqual(
