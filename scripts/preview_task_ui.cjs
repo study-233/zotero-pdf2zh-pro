@@ -7,6 +7,17 @@ const root = path.resolve(__dirname, "..");
 const report = require("./workspace.cjs").newReport("task-ui");
 const port = Number(process.argv[2] || 8892);
 
+function previewScenario(value) {
+    switch (value) {
+        case "empty": return "empty";
+        case "missing": return "missing";
+        case "review": return "review";
+        case "mixed": return "mixed";
+        case "history": return "history";
+        default: return "active";
+    }
+}
+
 function preview(locale, scenario) {
     const messages = Object.fromEntries(
         [...fs.readFileSync(path.join(root, `plugin/addon/locale/${locale}/addon.ftl`), "utf8")
@@ -89,7 +100,7 @@ const server = http.createServer((request, response) => {
     if (url.pathname === "/favicon.ico") { response.writeHead(204); return response.end(); }
     if (url.pathname !== "/task.xhtml") { response.writeHead(404); return response.end(); }
     const locale = url.searchParams.get("locale") === "en-US" ? "en-US" : "zh-CN";
-    const data = preview(locale, url.searchParams.get("scenario") || "active");
+    const data = preview(locale, previewScenario(url.searchParams.get("scenario")));
     const theme = url.searchParams.get("theme") === "light" ? "not all" : "all";
     const script = `<script><![CDATA[(${bootstrap.toString()})(${JSON.stringify(data)});]]></script>`;
     const markup = fs.readFileSync(path.join(root, "plugin/addon/content/taskManager.xhtml"), "utf8")
@@ -99,6 +110,6 @@ const server = http.createServer((request, response) => {
     response.writeHead(200, { "Content-Type": "application/xhtml+xml; charset=utf-8", "Cache-Control": "no-store" });
     response.end(markup);
 });
-server.listen(port, "127.0.0.1", () => console.log(`Offline task preview: http://127.0.0.1:${port}/task.xhtml`));
+server.listen(port, "127.0.0.1", () => console.log(`Offline task preview: http://127.0.0.1:${server.address().port}/task.xhtml`));
 for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => server.close(() => process.exit(0)));
 server.on("error", error => { console.error(error); process.exitCode = 1; });
