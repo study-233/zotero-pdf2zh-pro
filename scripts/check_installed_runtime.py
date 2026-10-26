@@ -41,7 +41,8 @@ FORBIDDEN_DISTRIBUTIONS = {
     "uvicorn",
 }
 
-SECURITY_MINIMUMS = {"pypdf": "6.19.0", "urllib3": "2.8.0",
+SECURITY_MINIMUMS = {"pypdf": "6.21.2", "pillow": "13.0.0",
+                     "filelock": "4.2.1", "certifi": "2026.10.19", "urllib3": "2.8.0",
                      "fsspec": "2026.6.0", "werkzeug": "3.1.9"}
 
 

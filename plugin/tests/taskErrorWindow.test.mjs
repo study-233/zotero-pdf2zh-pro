@@ -1,16 +1,10 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
-import { URL } from "node:url";
 import { taskWindowMessage } from "./helpers/taskWindowLocale.mjs";
+import { taskWindowScript } from "./helpers/taskWindowScript.mjs";
 
-const source = fs
-    .readFileSync(
-        new URL("../addon/content/taskManager.xhtml", import.meta.url),
-        "utf8",
-    )
-    .match(/<script>([\s\S]*?)<\/script>/)[1];
+const source = taskWindowScript();
 
 function fixture() {
     const node = (tagName) => ({

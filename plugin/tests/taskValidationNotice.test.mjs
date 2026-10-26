@@ -4,14 +4,10 @@ import test from "node:test";
 import { URL } from "node:url";
 import vm from "node:vm";
 import { noticeModules } from "./noticeFixture.mjs";
+import { taskWindowScript } from "./helpers/taskWindowScript.mjs";
 
 const { errorNotice } = noticeModules()("./userNotice");
-const script = fs
-    .readFileSync(
-        new URL("../addon/content/taskManager.xhtml", import.meta.url),
-        "utf8",
-    )
-    .match(/<script>([\s\S]*?)<\/script>/)[1];
+const script = taskWindowScript();
 
 for (const locale of ["zh-CN", "en-US"]) {
     test(`${locale}: real task error mapping explains validation failures and clears after repair`, () => {
