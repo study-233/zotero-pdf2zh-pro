@@ -3,12 +3,22 @@
 这里记录 `zotero-pdf2zh-pro` 的用户可见变化。旧项目的历史仍保留在 Git 历史中，
 不作为本产品的版本序列。
 
-## 未发布
+## v1.9.5 - 2026-10-27
 
-- **统一翻译默认值**：新配置优先使用 Responses，不支持时回退 Chat；默认请求 low，支持时可关闭推理。按渠道适配推理参数，保留旧配置并提供“应用推荐设置”。需同时更新插件与本地服务。
+**Homebrew 升级前请注意**
 
-- **小米 MiMo**：新增官方 API 配置入口，支持获取文本模型列表、全文与划词翻译、流式输出及关闭推理；可修改为 Token Plan 专用地址。需同时更新插件与本地服务。
-- **智谱 GLM**：恢复官方 API 配置与旧配置支持，支持手填 GLM 模型、全文与划词翻译、流式输出及兼容模型的关闭推理选项；GLM-5.3 系列保留强制思考。需同时更新插件与本地服务。
+从 v1.9.3 及更早版本升级时，先停止旧服务并备份数据，再用 `HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade zotero-pdf2zh-pro` 保留旧目录。确认新服务与旧数据正常后再清理；多个旧数据目录的处理见[更新指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.9.5/docs/user-guide.md#maintenance)。
+
+本次更新统一翻译配置默认值，补充模型支持与测评结果。
+
+- **翻译设置**：新配置优先使用 Responses，不支持时回退 Chat，并默认请求低推理 low，支持的模型可关闭推理；旧配置保留原设置，可手动“应用推荐设置”。
+- **模型支持**：新增小米 MiMo 官方 API 入口，恢复智谱 GLM 配置与旧配置支持，均支持全文与划词翻译；GLM-5.3 系列仍须开启推理。
+- **翻译测评**：官网统一展示模型与接口的质量、耗时和费用，支持交互筛选、对比与查看评测依据。
+- **安全更新**：更新 PDF、图像与网络相关依赖，合入已知漏洞修复。
+
+插件与本地服务需分别升级至 v1.9.5，才能使用完整的新配置与模型支持；更新插件不会自动升级服务。
+
+[Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.5/zotero-pdf2zh-pro-windows-x64-setup.exe) · [安装指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.9.5/docs/user-guide.md) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.4...v1.9.5)
 
 ## v1.9.4 - 2026-10-25
 

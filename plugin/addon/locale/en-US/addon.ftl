@@ -39,6 +39,12 @@ release-card-translated-attachment-tag = Optional tags for complete translations
 release-card-diagnostic-request-evidence = Diagnostics link requests to failed paragraphs
 release-service-upgrade-data-protection = Homebrew users: back up data before upgrading, use HOMEBREW_NO_INSTALL_CLEANUP=1 to retain old directories, and clean old versions only after migration.
 release-card-service-upgrade-data-protection = Upgrades preserve glossaries; disable Homebrew cleanup
+release-recommended-translation-defaults = After updating the local service, new profiles prefer Responses and low reasoning; existing profiles can apply the recommended settings manually.
+release-card-recommended-translation-defaults = New profiles prefer Responses and low reasoning
+release-mimo-glm-providers = After updating the local service, use the official Xiaomi MiMo API and Zhipu GLM for PDF and selection translation.
+release-card-mimo-glm-providers = Xiaomi MiMo added; Zhipu GLM restored
+release-unified-translation-benchmark = The website compares models and API endpoints by translation quality, time and cost.
+release-card-unified-translation-benchmark = Unified translation benchmark comparisons
 notice-error-select-item = Select a PDF or library item first.
 notice-error-select-profile = No usable translation profile is selected. Add or select a profile.
 notice-error-select-output = Select at least one PDF output format.

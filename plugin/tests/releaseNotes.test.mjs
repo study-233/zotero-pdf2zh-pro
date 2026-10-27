@@ -95,7 +95,7 @@ test("release catalog has reviewed current version, unique IDs and translations"
     for (const key of keys) assert.ok(catalogs[1][key], `English: ${key}`);
 });
 
-function fixture(raw) {
+function fixture(raw, catalog = release.releaseSummaries) {
     const prefs = new Map(
         raw ? [["releaseNoticeState", JSON.stringify(raw)]] : [],
     );
@@ -106,6 +106,7 @@ function fixture(raw) {
     const load = noticeModules(
         {
             "../../package.json": pkg,
+            "./releaseNotes": { ...release, releaseSummaries: catalog },
             "../utils/prefs": {
                 getPref: (key) => prefs.get(key),
                 setPref: (key, value) => prefs.set(key, value),
@@ -188,19 +189,31 @@ test("card uses short copy, names the plugin and opens full update details", () 
 
 test("skipped versions retain full-copy fallback and Escape dismisses the card", () => {
     const state = { version: "1.9.1", shown: [] };
-    const f = fixture(state);
+    const catalog = [
+        {
+            version: "1.9.2",
+            notes: [{ id: "full-copy", message: "full-message", priority: 0 }],
+        },
+        {
+            version: pkg.version,
+            notes: [
+                {
+                    id: "short-copy",
+                    message: "detail-message",
+                    cardMessage: "short-message",
+                    priority: 1,
+                },
+            ],
+        },
+    ];
+    const f = fixture(state, catalog);
     try {
         const win = f.window();
         f.api.registerNoticeWindow(win);
         f.focus(win);
         f.api.initializeReleaseNotices(1);
         f.paint();
-        const notes = pending(
-            release.releaseSummaries,
-            pkg.version,
-            state,
-            false,
-        );
+        const notes = pending(catalog, pkg.version, state, false);
         assert.ok(notes.some((note) => note.cardMessage));
         assert.ok(notes.some((note) => !note.cardMessage));
         const card = win.document.querySelector(".pdf2zh-update-card");

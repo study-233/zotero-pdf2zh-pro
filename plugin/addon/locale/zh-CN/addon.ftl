@@ -39,6 +39,12 @@ release-card-translated-attachment-tag = 可手动开启完整译文标签
 release-card-diagnostic-request-evidence = 诊断包关联请求与失败段落
 release-service-upgrade-data-protection = Homebrew 升级前备份，用 HOMEBREW_NO_INSTALL_CLEANUP=1 保留旧目录，迁移后再清理。
 release-card-service-upgrade-data-protection = 升级保留术语表；Homebrew 请停用自动清理
+release-recommended-translation-defaults = 升级本地服务后，新配置优先 Responses 与低推理 low；旧配置可手动应用推荐设置。
+release-card-recommended-translation-defaults = 新配置优先 Responses 与低推理 low
+release-mimo-glm-providers = 升级本地服务后，可使用小米 MiMo 官方接口与智谱 GLM 进行全文和划词翻译。
+release-card-mimo-glm-providers = 新增小米 MiMo，恢复智谱 GLM
+release-unified-translation-benchmark = 官网测评统一展示模型与接口对比，可查看翻译质量、耗时和费用。
+release-card-unified-translation-benchmark = 官网新增统一翻译测评对比
 notice-error-select-item = 请先选择 PDF 或文献条目。
 notice-error-select-profile = 未选择可用的翻译配置。请添加或重新选择。
 notice-error-select-output = 请选择至少一种 PDF 输出格式。

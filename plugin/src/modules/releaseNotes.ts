@@ -90,6 +90,29 @@ export const releaseSummaries: ReleaseSummary[] = [
             },
         ],
     },
+    {
+        version: "1.9.5",
+        notes: [
+            {
+                id: "recommended-translation-defaults",
+                message: "release-recommended-translation-defaults",
+                cardMessage: "release-card-recommended-translation-defaults",
+                priority: 0,
+            },
+            {
+                id: "mimo-glm-providers",
+                message: "release-mimo-glm-providers",
+                cardMessage: "release-card-mimo-glm-providers",
+                priority: 1,
+            },
+            {
+                id: "unified-translation-benchmark",
+                message: "release-unified-translation-benchmark",
+                cardMessage: "release-card-unified-translation-benchmark",
+                priority: 2,
+            },
+        ],
+    },
 ];
 
 export function compareVersions(a: string, b: string): number {
