@@ -5,10 +5,6 @@
 
 ## v1.9.5 - 2026-10-27
 
-**Homebrew 升级前请注意**
-
-从 v1.9.3 及更早版本升级时，先停止旧服务并备份数据，再用 `HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade zotero-pdf2zh-pro` 保留旧目录。确认新服务与旧数据正常后再清理；多个旧数据目录的处理见[更新指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.9.5/docs/user-guide.md#maintenance)。
-
 本次更新统一翻译配置默认值，补充模型支持与测评结果。
 
 - **翻译设置**：新配置优先使用 Responses，不支持时回退 Chat，并默认请求低推理 low，支持的模型可关闭推理；旧配置保留原设置，可手动“应用推荐设置”。
