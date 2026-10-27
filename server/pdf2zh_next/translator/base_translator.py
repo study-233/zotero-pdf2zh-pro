@@ -172,6 +172,8 @@ class BaseTranslator(ABC):
                     return cached
         if self.metrics_collector is not None:
             self.metrics_collector.local_cache_miss()
+        request_text = text
+        decode = None
         for generation in range(2):
             if not getattr(self, "limits_each_attempt", False):
                 self.rate_limiter.wait(params)
@@ -179,11 +181,13 @@ class BaseTranslator(ABC):
                     params["on_attempt"]()
             try:
                 try:
-                    translation = method(text, params)
+                    translation = method(request_text, params)
                 finally:
                     context = params.get("metric_call_context")
                     if isinstance(context, dict):
                         context["last_call"] = params.get("_metric_last_call")
+                if decode is not None:
+                    translation = decode(translation)
                 validation = validate(translation)
             except InvalidTranslation as error:
                 if self.metrics_collector is not None:
@@ -194,6 +198,11 @@ class BaseTranslator(ABC):
                     params.get("batch_size", 1) > 1 or not budget.available()
                 )):
                     raise
+                prepare_retry = params.get("prepare_validation_retry")
+                retry = prepare_retry(error) if prepare_retry is not None else None
+                if retry is not None:
+                    request_text, decode = retry
+                    params["request_json_mode"] = True
                 if self.metrics_collector is not None:
                     self.metrics_collector.retry_scheduled(kind=params.get("metric_kind", "translation"))
                 continue

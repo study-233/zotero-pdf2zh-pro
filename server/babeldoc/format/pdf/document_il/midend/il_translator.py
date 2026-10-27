@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from babeldoc.translator.request_budget import ParagraphRequestBudget
 
-from babeldoc.translator.validation import validate_text, InvalidTranslation
+from babeldoc.translator.validation import validate_text, InvalidTranslation, canonicalize_placeholders
 from babeldoc.translator.literal_tags import LiteralTags
+from babeldoc.translator.placeholder_repair import PlaceholderRepair
 
 import copy
 import json
@@ -979,7 +980,7 @@ class ILTranslator:
                 placeholder_map[placeholder.left_placeholder] = placeholder
         all_match = True
         for pattern in patterns:
-            if not re.search(pattern, output, flags=re.IGNORECASE):
+            if not re.search(pattern, output, flags=re.IGNORECASE | re.DOTALL):
                 all_match = False
                 break
         if all_match:
@@ -1029,7 +1030,7 @@ class ILTranslator:
 
         # 找到所有匹配
         last_end = 0
-        for match in re.finditer(combined_pattern, output, flags=re.IGNORECASE):
+        for match in re.finditer(combined_pattern, output, flags=re.IGNORECASE | re.DOTALL):
             # 处理匹配之前的普通文本
             if match.start() > last_end:
                 text = output[last_end : match.start()]
@@ -1077,7 +1078,7 @@ class ILTranslator:
                 text = re.match(
                     f"^{placeholder.left_regex_pattern}(.*){placeholder.right_regex_pattern}$",
                     matched_text,
-                    re.IGNORECASE,
+                    re.IGNORECASE | re.DOTALL,
                 ).group(1)
 
                 if isinstance(
@@ -1229,6 +1230,7 @@ class ILTranslator:
         """Post-translation processing: update paragraph with translated text."""
         self.translation_config.raise_if_cancelled()
         self.validate_paragraph_output(translate_input, translated_text)
+        translated_text = canonicalize_placeholders(translate_input.unicode, translated_text)
         for placeholder in translate_input.placeholders:
             if isinstance(placeholder, FormulaPlaceholder):
                 original = get_char_unicode_string(placeholder.formula.pdf_character).rstrip()
@@ -1543,6 +1545,17 @@ class ILTranslator:
                         translate_input,
                     )
                     context[0] = llm_prompt
+                    def prepare_retry(error):
+                        if error.code != "placeholder_mismatch":
+                            return None
+                        repair = PlaceholderRepair(
+                            text, llm_prompt, self.translate_engine.lang_out,
+                            not self.translation_config.disable_same_text_fallback,
+                        )
+                        context[0] = repair.prompt
+                        llm_translate_tracker.set_input(repair.prompt)
+                        return repair.prompt, repair.restore
+                    params["prepare_validation_retry"] = prepare_retry
                     llm_translate_tracker.set_input(llm_prompt)
                     translated_text = self.translate_engine.llm_translate(
                         llm_prompt,
