@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "models": [
+    {
+      "model": "tencent/hy3-paid",
+      "status": "cancelled_by_user",
+      "stopped_at": "2026-10-26T10:41:25.725635+00:00",
+      "completed_calls": 226,
+      "dispatched_calls": 227,
+      "known_token_priced_usd": 0.33638228,
+      "unknown_usage_calls": 12,
+      "included_in_rankings": false,
+      "results_sha256": "2d769ae0489cd44b838d96fc89d0c1087dfe85f5903b40d99c9131153eeae3eb",
+      "calls_sha256": "3e9b4568c2f45a52fd99f9a47d4f3e68af0ee9e519ed72e8ba48167527511a74",
+      "unknown_outcome_calls": 1,
+      "reason": "The original full run stopped at the user request; no additional calls were made in that run. Separately authorized limited capability probes are documented independently.",
+      "amount_basis": "Measured generation token receipts at archived Command Code rates; unknown receipt amounts excluded. Subscription cash charges, discounts and account quota deductions have not been independently reconciled."
+    }
+  ]
+}

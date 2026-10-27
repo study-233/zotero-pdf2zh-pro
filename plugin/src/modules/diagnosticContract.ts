@@ -362,6 +362,18 @@ export const diagnosticContract = {
             "live",
             "checkpoint_snapshot"
         ],
+        "reasoningSetting": [
+            "default",
+            "low",
+            "off",
+            "enabled",
+            "requested_low"
+        ],
+        "reasoningRequested": [
+            "default",
+            "low",
+            "off"
+        ],
         "validationCode": [
             "empty_translation",
             "invalid_json",
@@ -1003,6 +1015,14 @@ export const diagnosticContract = {
             "coverage": "request_metrics",
             "component": "server"
         },
+        "mimoApi": {
+            "coverage": "request_metrics",
+            "component": "server"
+        },
+        "zhipuApi": {
+            "coverage": "request_metrics",
+            "component": "server"
+        },
         "updateMaintenance": {
             "coverage": "availability_only",
             "component": "server"
@@ -1076,6 +1096,14 @@ export const diagnosticContract = {
             "component": "server"
         },
         "tokenOutputSpeed": {
+            "coverage": "request_metrics",
+            "component": "server"
+        },
+        "reasoningLow": {
+            "coverage": "request_metrics",
+            "component": "server"
+        },
+        "responsesFirst": {
             "coverage": "request_metrics",
             "component": "server"
         }
@@ -1322,7 +1350,9 @@ export const diagnosticContract = {
             "observedReplay",
             "validationFailures",
             "providerCode",
-            "omittedLinks"
+            "omittedLinks",
+            "reasoningSetting",
+            "reasoningRequested"
         ],
         "paragraph": [
             "taskId",

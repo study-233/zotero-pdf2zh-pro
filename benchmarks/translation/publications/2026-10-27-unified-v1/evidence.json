@@ -1,0 +1,17 @@
+{
+  "inputs": {
+    "benchmarks/translation/publications/2026-10-26-unified-v1/summary.json": "ec8592110f299dcc41e761866f100eac5e8198a99e3cd10335a81cdf42c151d2",
+    "benchmarks/translation/publications/2026-10-26-unified-v1/evidence.json": "089f8b2706bc31c63ec2b721002db9891aea2ad5aba57dd5341f4b4a9b9b325c",
+    "benchmarks/translation/publications/2026-10-27-interface-formal-v1/summary.json": "ba18e54f4364242090df8cc532c981ca823e67b27326512cb13457a051b690c8",
+    "benchmarks/translation/publications/2026-10-27-interface-formal-v1/evidence.json": "c05906b4e19005b157b8eb0d2e87acc183690c943c222c3b3039bf4ce4406bfc"
+  },
+  "files": {
+    "summary.json": "0c17fb90ecc4f8641d1b0e19091c6df7bf52658e12738947f63cee7e91696848",
+    "sample-scores.csv": "a675610948da6af6b822fe949093daf1838ffccc661a7ce74b6e82b14ee1ed79",
+    "calls.csv": "c4b3294494feb25833e446f2b3a2fc73ddb9d5820fdc5e4d6b92afdb730de6f6",
+    "comparison.csv": "49ad4ac256700598760a650e611627d497ce2788b3404edf5bda9634b10c5b9b",
+    "sample-scores.json": "7aadd0baa0b7985148b80b4b35440d0601ef2d3df4c75f6dfd50f02f46105973"
+  },
+  "old_records_preserved": 16,
+  "privacy": "No account identity, credentials, absolute machine paths or full paper/translation texts."
+}

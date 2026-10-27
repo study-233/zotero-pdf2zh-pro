@@ -7,7 +7,7 @@ export function prepareApiForServer<
         LLMApiData,
         "apiUrl" | "apiProtocol" | "requestOptions" | "reasoningMode"
     > &
-        Partial<Pick<LLMApiData, "service" | "proxyMode">>,
+        Partial<Pick<LLMApiData, "service" | "proxyMode" | "reasoningEffort">>,
 >(
     api: T,
     supportedProtocols?: string[],
@@ -15,7 +15,13 @@ export function prepareApiForServer<
     supportsCodexCli?: boolean,
     supportsCodexProxy?: boolean,
     supportsChatGPTPlan?: boolean,
+    supportsReasoningLow?: boolean,
 ): { api: T; warning?: string } {
+    if (
+        (api.reasoningMode === "low" || api.reasoningEffort === "auto") &&
+        supportsReasoningLow !== true
+    )
+        throw new Error("当前 Python 服务不支持默认 low，请先升级服务端。");
     if (api.service === "chatgpt") {
         if (supportsChatGPTPlan !== true)
             throw new Error(

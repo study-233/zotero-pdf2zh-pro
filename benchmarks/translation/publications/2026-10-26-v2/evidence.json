@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "public_files": {
+    "summary.json": "a0f297a37d1836c844a5c9d89d8611a654f11f28440dc885586f84ea8315097a",
+    "new-model-review-summary.json": "123ddecc1f68922ea19bd571918453cd3be301c0b6a367b16b82a0e389c95c71",
+    "new-model-quality-scores.csv": "2b7f65813deb45fb181951249e0edfd4f1ed60dc15651be7b55bb9b7e67834f3",
+    "model-configurations.json": "e678ac03ecaaf18223df633c85c5677ef8178795e2a1190d0926f9611046989f",
+    "new-model-usage.json": "7da37b355d5b46e547e357460067733cceea14b7fc2f4077b715548563f9570c",
+    "account-ledger.csv": "78c1427b6a7b1b7f902492a9e8ddc583242b27db825a8bfff497e61e375b9d72",
+    "billing-confirmation.json": "80ff85ae295747ac43f5203f7a1a5bf1a872e2ac240d692ad62134e24870507b",
+    "calls.csv": "800ac91d67cfc2398fe91317599eaf056cb17632e5e264b0c2d54c2c1d716276",
+    "chatgpt-usage.json": "f4b4bd9678bdd2fc96bb2a4b3f3f3e2a958bf248d6d8c655d5cfcd7093ec5db9",
+    "quality-scores.csv": "5b179f3393df255b631d9f4e7210bc1e3759c9d89d27ab96e7f36074b3e0f041",
+    "cancelled-models.json": "3cff9c233bf580756bc915ca26e1ea3a53e9485a6008abf527b7872b99b2a2b0"
+  },
+  "input_hashes": {
+    "previous_publication_evidence": "e05c756bf858c3f8acde4701a494d81fb883f82218d53ee0504b1241a5ef3830",
+    "previous_publication_summary": "6b6f7aca48878c72167b8b51a96ca27a4bb8f4737d1a5c29df7cf07879dd0c78",
+    "provider_model_catalog": "444f64eb7ac25bacc6eebd1c20beb13384d16acefe5cddc52157d86d65c9b132",
+    "review_script": "454136caf660a156622844a654fd9b6c78e7e38ef5f5936652a0619054191f49",
+    "qwen_results": "24ea76e38b0eff28c4b73fc72ce07e94e38f1a455f7768c62b7af78630088dd0",
+    "qwen_manifest": "4ec19f058ae75a4aff8929c324d9b5454f4dcfb97a132046db6cc2f3c224fc37",
+    "qwen_reviews": "c140e4a700025d83bebf6ff5768b29b7f3adb67624de2dfe9fd38efbed7046a3",
+    "qwen_audit": "33516c907b29adc4c3eee28b7c9e97336e424316afee439105cedefaef1f69d3",
+    "qwen_initial_review": "2b13ba385b2c20dc31f1955ac2a0e4e68d77eac073ad6b6a43d43dd9e0df3391",
+    "qwen_second_pass_review": "23519bfc265978b5d87f2f89ec8fbdf219c29ba39925e4ce75be7f5a8d4d4d38",
+    "qwen_review_calls": "9ab0dffe24a59a5adadddeea5117b55bf08ea1675bb865f34187cfd655e6d73e",
+    "mimo_results": "78d8d354133fc5e601cf8d94c7a9db45295eb54b457b56ff2689b2ef8396c265",
+    "mimo_manifest": "e511b3c256c0585edd8d7cb4d4c2a7e7728f6e1877bdd7445425a287a27f4344",
+    "mimo_reviews": "a2aadd1b129cba321abef08632d90d489c69760c13383e40a0881b798a9197c3",
+    "mimo_audit": "1cc2691ab873b6a760c98b182835623f1432bc490147f73b28051dbc8291604a",
+    "mimo_initial_review": "0c03c234711b1f3073bd77a12c2fba0a006bbfebea7711b5120b12739a335574",
+    "mimo_second_pass_review": "09d1af7958b070ebfaa8c9cc202fca8ed69b60cfb062ca7c77751f342b591c53",
+    "mimo_review_calls": "9b6b2746850c845bd5409302c486357e26b11c3687452cd0f4a0c63b96fc29dd",
+    "hy3_cancellation": "ecd618ceb8bbaa216dd2f75ec9c27ccd1720b77c22d32aee73645932e690e089"
+  },
+  "privacy": "Only aggregate metrics and redacted per-call/per-output metadata are exported. Paper text, translations and credentials remain private.",
+  "financial_limits": "Measured generation token receipts at archived Command Code rates; unknown receipt amounts excluded. Subscription cash charges, discounts and account quota deductions have not been independently reconciled."
+}

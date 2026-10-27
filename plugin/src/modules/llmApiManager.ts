@@ -13,7 +13,7 @@ export interface LLMApiData {
     needsTest?: boolean;
     extraData?: Record<string, unknown>;
     apiProtocol?: ApiProtocol;
-    reasoningMode?: "default" | "off";
+    reasoningMode?: "default" | "low" | "off";
     requestOptions?: Record<string, unknown>;
     cliPath?: string;
     reasoningEffort?: string;
@@ -94,6 +94,29 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
         discovery: true,
     },
     {
+        id: "mimo",
+        service: "mimo",
+        group: "official",
+        label: "小米 MiMo",
+        labelEn: "Xiaomi MiMo",
+        url: "https://api.xiaomimimo.com/v1",
+        key: true,
+        model: true,
+        protocol: true,
+        discovery: true,
+    },
+    {
+        id: "zhipu",
+        service: "zhipu",
+        group: "official",
+        label: "智谱 GLM",
+        labelEn: "Zhipu GLM",
+        url: "https://open.bigmodel.cn/api/paas/v4",
+        key: true,
+        model: true,
+        protocol: true,
+    },
+    {
         id: "gemini",
         service: "gemini",
         group: "official",
@@ -122,6 +145,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
         url: "https://api.siliconflow.cn/v1",
         key: true,
         model: true,
+        protocol: true,
         discovery: true,
     },
     {
@@ -165,7 +189,6 @@ export const SERVICE_NAMES: Record<string, string> = Object.fromEntries(
     ),
 );
 export const RETIRED_SERVICES = [
-    "zhipu",
     "grok",
     "groq",
     "modelscope",
@@ -211,6 +234,8 @@ export const emptyLLMApi: LLMApiData = {
     apiUrl: "",
     model: "",
     apiProtocol: "auto",
+    reasoningMode: "low",
+    reasoningEffort: "auto",
     requestOptions: {},
     extraData: {},
 };
@@ -274,6 +299,8 @@ export function migrateProfiles(legacy: LLMApiData[], service: string) {
             service: normalized,
             name: SERVICE_NAMES[normalized] || normalized,
             apiProtocol: "chat_completions",
+            reasoningMode: "default",
+            reasoningEffort: "",
         });
         return { profiles, selectedApiKey: "legacy-default" };
     }

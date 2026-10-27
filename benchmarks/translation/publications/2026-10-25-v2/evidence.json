@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "public_files": {
+    "account-ledger.csv": "78c1427b6a7b1b7f902492a9e8ddc583242b27db825a8bfff497e61e375b9d72",
+    "billing-confirmation.json": "80ff85ae295747ac43f5203f7a1a5bf1a872e2ac240d692ad62134e24870507b",
+    "calls.csv": "76c3790a8e53d3b4c7a07cc4ee55f71274c7e0e59f2e1cdc06394f207521e3ac",
+    "chatgpt-usage.json": "f4b4bd9678bdd2fc96bb2a4b3f3f3e2a958bf248d6d8c655d5cfcd7093ec5db9",
+    "quality-scores.csv": "5b179f3393df255b631d9f4e7210bc1e3759c9d89d27ab96e7f36074b3e0f041",
+    "summary.json": "6b6f7aca48878c72167b8b51a96ca27a4bb8f4737d1a5c29df7cf07879dd0c78"
+  },
+  "input_hashes": {
+    "original_publication_evidence": "e725b1e4c814ce08ac55b996292dad794750e79ffdc515027da017bb00e75329",
+    "chatgpt_formal_results": "55145b1f7ed6bad034dd70bf9db739c012f9c9f51e1dacf3cd3354e8ad47151f",
+    "chatgpt_run_manifest": "0f0587d95ba9e63a630e6f0405c893ac45874f6c3be333e382b473475aaf06b8",
+    "chatgpt_quick_results": "a290ab1902b8e6af7f4875df8ef186db398c96956b72b5d2b430ecffcaef4260",
+    "chatgpt_formal_reviews": "88deba9ae590a5742282586b0a67fe150a73b71f0c7ffa578685e0760abbeb76",
+    "chatgpt_audit": "2b9d2c57f97cc6d5626d590279f7edfd2d6bd077e18f6109c774cd6a2ec299d0",
+    "chatgpt_review_calls": "b2e2346cf397041e0d85911711de22a435be24516cd3d968168815d7eb9f059b",
+    "chatgpt_review_script": "664a99daccf3b0563f752db0adfea1208c6710a62d8a4621d7f86fc969b71f52",
+    "engineering_changes": "a081e976deea45e210cefc8a6f4e427b15e3688d283b416cff0ca8576bd2ae9f",
+    "engineering_style_findings": "ad49d6ae678c4af88bb458bfa5a80bb1497e7dcf7d9cd394892cd9746419bb06",
+    "review_protocol_correction": "09dc2ee1b6d2459809968a42feaab057320ccd033ddfc3d977d1cb66ddc75291",
+    "discarded_review_script": "e96c857c0b820e015fdd34c3871b8d74184ea4e5166080d99e1ba6b7c115d69c"
+  },
+  "privacy": "Only aggregates and redacted call/review metadata are exported. Paper content, translations, authorization records, account identifiers and local paths remain private.",
+  "financial_limits": "Original seven amounts are recorded token-priced USD. ChatGPT uses a labeled Standard API equivalent estimate from measured tokens for comparison; subscription cash charges and quota percentage remain unknown."
+}

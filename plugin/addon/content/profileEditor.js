@@ -129,23 +129,54 @@ window.createProfileEditor = function (args, changed) {
         $("model").setAttribute("aria-expanded", String(!!matches.length));
     }
     function supportsReasoningOff() {
-        const model = $("model").value.toLowerCase().trim();
+        const detail = modelDetails.find(
+            (entry) => entry.id === $("model").value.trim(),
+        );
+        if (typeof detail?.supportsReasoningOff === "boolean")
+            return detail.supportsReasoningOff;
+        const model = $("model").value.toLowerCase().trim().split("/").pop();
+        if (model === "gpt-6-luna") return true;
         return (
-            ["openai", "deepseek"].includes(preset?.service) &&
-            (/^gpt-5\.(1|2|4|5)(-\d{4}-\d{2}-\d{2})?$/.test(model) ||
+            (["openai", "zhipu"].includes(preset?.service) &&
                 [
-                    "deepseek-v4-flash",
-                    "deepseek-v4-pro",
-                    "deepseek-flash",
-                ].includes(model))
+                    "glm-5.2",
+                    "glm-5.1",
+                    "glm-5",
+                    "glm-5-turbo",
+                    "glm-4.7",
+                    "glm-4.6",
+                    "glm-4.5",
+                    "glm-4.5-air",
+                ].includes(model)) ||
+            (["openai", "mimo"].includes(preset?.service) &&
+                [
+                    "mimo-v2.6-flash",
+                    "mimo-v2.6-pro",
+                    "mimo-v2.6-pro-ultraspeed",
+                ].includes(model)) ||
+            (["openai", "deepseek"].includes(preset?.service) &&
+                (/^gpt-5\.(1|2|4|5)(-\d{4}-\d{2}-\d{2})?$/.test(model) ||
+                    [
+                        "deepseek-v4.1-flash",
+                        "deepseek-v4-flash",
+                        "deepseek-v4-pro",
+                        "deepseek-flash",
+                    ].includes(model)))
         );
     }
     function updateReasoning() {
+        const reasoningRequired =
+            ["openai", "zhipu"].includes(preset?.service) &&
+            /^glm-5\.3(?:-flash(?:x(?:-legal)?)?)?$/.test(
+                $("model").value.toLowerCase().trim(),
+            );
         $("reasoning-off").disabled = !supportsReasoningOff();
         $("reasoning-hint").textContent = t(
-            supportsReasoningOff()
-                ? "reasoning-supported"
-                : "reasoning-unsupported",
+            reasoningRequired
+                ? "reasoning-required"
+                : supportsReasoningOff()
+                  ? "reasoning-supported"
+                  : "reasoning-unsupported",
         );
         const selected = $("reasoningEffort").value;
         const detail = modelDetails.find(
@@ -154,21 +185,26 @@ window.createProfileEditor = function (args, changed) {
         const efforts =
             detail?.supportedReasoningEfforts || (selected ? [selected] : []);
         $("reasoningEffort").replaceChildren();
-        for (const effort of ["", ...efforts]) {
+        for (const effort of [
+            "auto",
+            "",
+            ...efforts.filter((v) => v !== "auto"),
+        ]) {
             const option = document.createElementNS(
                 "http://www.w3.org/1999/xhtml",
                 "option",
             );
             option.value = effort;
             option.textContent =
-                effort ||
+                (effort === "auto" ? t("reasoning-low") : effort) ||
                 t("model-default") +
                     (detail?.defaultReasoningEffort
                         ? " · " + detail.defaultReasoningEffort
                         : "");
             $("reasoningEffort").append(option);
         }
-        $("reasoningEffort").value = efforts.includes(selected) ? selected : "";
+        $("reasoningEffort").value =
+            selected === "auto" || efforts.includes(selected) ? selected : "";
         $("codex-proxy-url-field").hidden =
             preset?.service !== "codex" || $("proxyMode").value !== "manual";
     }
@@ -178,7 +214,8 @@ window.createProfileEditor = function (args, changed) {
             tested = "";
             message(t("untested"));
         }
-        if (id === "model") $("reasoningEffort").value = "";
+        if (id === "model" && $("reasoningEffort").value !== "auto")
+            $("reasoningEffort").value = base.key ? "" : "auto";
         if (
             ["apiUrl", "apiKey", "cliPath", "proxyMode", "proxyUrl"].includes(
                 id,
@@ -201,7 +238,9 @@ window.createProfileEditor = function (args, changed) {
         );
         const source = state.values || base;
         for (const id of fields) {
-            let value = source[id];
+            let value =
+                source[id] ??
+                (id === "reasoningEffort" && !base.key ? "auto" : undefined);
             if (
                 !state.values &&
                 id === "cliPath" &&
@@ -226,8 +265,9 @@ window.createProfileEditor = function (args, changed) {
             $(id).value =
                 value ??
                 ({
-                    apiProtocol: "chat_completions",
-                    reasoningMode: "default",
+                    apiProtocol: base.key ? "chat_completions" : "auto",
+                    reasoningMode: base.key ? "default" : "low",
+                    reasoningEffort: base.key ? "" : "auto",
                     proxyMode: "inherit",
                 }[id] ||
                     "");
@@ -265,7 +305,9 @@ window.createProfileEditor = function (args, changed) {
         $("reasoning-mode-field").hidden =
             codex ||
             chatgpt ||
-            (!preset?.protocol && source.reasoningMode !== "off");
+            (!preset?.protocol &&
+                !["ollama", "claudecode"].includes(preset?.service) &&
+                source.reasoningMode !== "off");
         $("request-options-field").hidden =
             codex ||
             chatgpt ||
@@ -436,6 +478,7 @@ window.createProfileEditor = function (args, changed) {
             );
             if (
                 value.reasoningEffort &&
+                value.reasoningEffort !== "auto" &&
                 detail &&
                 !detail.supportedReasoningEfforts.includes(
                     value.reasoningEffort,
@@ -460,6 +503,14 @@ window.createProfileEditor = function (args, changed) {
                 "proxyUrl",
             ])
                 delete value[id];
+            if (preset.service === "deepl") {
+                for (const id of [
+                    "apiProtocol",
+                    "reasoningMode",
+                    "requestOptions",
+                ])
+                    delete value[id];
+            }
         }
         if (!value.name)
             value.name =
@@ -498,6 +549,21 @@ window.createProfileEditor = function (args, changed) {
                             fingerprint() === before
                         )
                             showRuntime(info);
+                    },
+                    (detail) => {
+                        if (
+                            !window.closed &&
+                            sequence === current &&
+                            fingerprint() === before
+                        ) {
+                            modelDetails = [
+                                ...modelDetails.filter(
+                                    (m) => m.id !== detail.id,
+                                ),
+                                detail,
+                            ];
+                            updateReasoning();
+                        }
                     },
                 );
                 if (
@@ -614,6 +680,12 @@ window.createProfileEditor = function (args, changed) {
     $("codex-detect").addEventListener("click", () => perform("discover"));
     $("test").addEventListener("click", () => perform("test"));
     $("get-models").addEventListener("click", () => perform("models"));
+    $("apply-recommended").addEventListener("click", () => {
+        $("apiProtocol").value = "auto";
+        $("reasoningMode").value = "low";
+        $("reasoningEffort").value = "auto";
+        onChange("reasoningMode");
+    });
     return {
         load,
         snapshot,

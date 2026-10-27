@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "date": "2026-10-26",
+  "batch": "20261026-three-models-full-01",
+  "models": {
+    "Qwen/Qwen3.8-Flash": {
+      "translation_calls": 283,
+      "known_token_priced_usd": 0.22751427999999999,
+      "unknown_usage_calls": 13,
+      "tokens": {
+        "input": 83980,
+        "output": 455484,
+        "cached_input": 0,
+        "reasoning": 400435
+      },
+      "prices_per_million": {
+        "input": 0.16,
+        "output": 0.47,
+        "cached_input": 0.016,
+        "source": "https://commandcode.ai/models",
+        "as_of": "2026-10-26"
+      },
+      "stages": {
+        "precheck": {
+          "calls": 3,
+          "statuses": {
+            "ok": 3
+          },
+          "priced_usage_calls": 3,
+          "known_token_priced_usd": 0.00035569,
+          "tokens": {
+            "input": 346,
+            "output": 639,
+            "cached_input": 0,
+            "reasoning": 578
+          }
+        },
+        "main": {
+          "calls": 240,
+          "statuses": {
+            "ok": 229,
+            "error": 11
+          },
+          "priced_usage_calls": 229,
+          "known_token_priced_usd": 0.1935971,
+          "tokens": {
+            "input": 70978,
+            "output": 387746,
+            "cached_input": 0,
+            "reasoning": 341115
+          }
+        },
+        "repeat": {
+          "calls": 40,
+          "statuses": {
+            "ok": 38,
+            "error": 2
+          },
+          "priced_usage_calls": 38,
+          "known_token_priced_usd": 0.03356149,
+          "tokens": {
+            "input": 12656,
+            "output": 67099,
+            "cached_input": 0,
+            "reasoning": 58742
+          }
+        }
+      },
+      "review_calls": 124,
+      "response_model_ids": [
+        "Qwen/Qwen3.8-Flash",
+        "qwen3.8-flash"
+      ]
+    },
+    "xiaomi/mimo-v2.6-pro": {
+      "translation_calls": 283,
+      "known_token_priced_usd": 0.1061806356,
+      "unknown_usage_calls": 0,
+      "tokens": {
+        "input": 79090,
+        "output": 82946,
+        "cached_input": 896,
+        "reasoning": 15130
+      },
+      "prices_per_million": {
+        "input": 0.435,
+        "output": 0.87,
+        "cached_input": 0.0036,
+        "source": "https://commandcode.ai/models",
+        "as_of": "2026-10-26"
+      },
+      "stages": {
+        "precheck": {
+          "calls": 3,
+          "statuses": {
+            "ok": 3
+          },
+          "priced_usage_calls": 3,
+          "known_token_priced_usd": 0.00021706499999999998,
+          "tokens": {
+            "input": 193,
+            "output": 153,
+            "cached_input": 0,
+            "reasoning": 91
+          }
+        },
+        "main": {
+          "calls": 240,
+          "statuses": {
+            "ok": 240
+          },
+          "priced_usage_calls": 240,
+          "known_token_priced_usd": 0.0902313606,
+          "tokens": {
+            "input": 66613,
+            "output": 70852,
+            "cached_input": 896,
+            "reasoning": 13600
+          }
+        },
+        "repeat": {
+          "calls": 40,
+          "statuses": {
+            "ok": 40
+          },
+          "priced_usage_calls": 40,
+          "known_token_priced_usd": 0.01573221,
+          "tokens": {
+            "input": 12284,
+            "output": 11941,
+            "cached_input": 0,
+            "reasoning": 1439
+          }
+        }
+      },
+      "review_calls": 129,
+      "response_model_ids": [
+        "xiaomi/mimo-v2.6-pro"
+      ]
+    }
+  },
+  "cash_usd": null,
+  "amount_basis": "Measured generation token receipts at archived Command Code rates; unknown receipt amounts excluded. Subscription cash charges, discounts and account quota deductions have not been independently reconciled.",
+  "prices_source": "https://commandcode.ai/models",
+  "prices_as_of": "2026-10-26",
+  "reasoning_included_in_output": true,
+  "translation_call_scope": "3 prechecks + 240 main + 40 repeats per model; reviews excluded",
+  "cancelled_models": [
+    {
+      "model": "tencent/hy3-paid",
+      "status": "cancelled_by_user",
+      "stopped_at": "2026-10-26T10:41:25.725635+00:00",
+      "completed_calls": 226,
+      "dispatched_calls": 227,
+      "known_token_priced_usd": 0.33638228,
+      "unknown_usage_calls": 12,
+      "included_in_rankings": false,
+      "results_sha256": "2d769ae0489cd44b838d96fc89d0c1087dfe85f5903b40d99c9131153eeae3eb",
+      "calls_sha256": "3e9b4568c2f45a52fd99f9a47d4f3e68af0ee9e519ed72e8ba48167527511a74",
+      "unknown_outcome_calls": 1,
+      "reason": "The original full run stopped at the user request; no additional calls were made in that run. Separately authorized limited capability probes are documented independently.",
+      "amount_basis": "Measured generation token receipts at archived Command Code rates; unknown receipt amounts excluded. Subscription cash charges, discounts and account quota deductions have not been independently reconciled."
+    }
+  ]
+}

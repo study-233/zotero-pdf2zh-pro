@@ -274,7 +274,7 @@ test("testing a draft forwards its credentials/options without changing saved se
     prefs.set("new_serverip", "http://localhost:8890/");
     prefs.set("selectedApiKey", "a");
     const draft = { ...api("unsaved"), apiProtocol: "responses" };
-    assert.equal(await client.testProfile(draft), "profile-tested");
+    assert.equal(await client.testProfile(draft), "profile-tested · Responses");
     assert.equal(requests.at(-1).url, "http://localhost:8890/validate-config");
     assert.deepEqual(requests.at(-1).body.llm_api, draft);
     assert.equal(prefs.get("selectedApiKey"), "a");
@@ -403,8 +403,8 @@ test("invalid Codex model capabilities are rejected before the editor uses them"
     );
 });
 
-test("catalog has 10 services and excludes retired services", () => {
-    assert.equal(Object.keys(model.SERVICE_NAMES).length, 10);
+test("catalog has 12 services and excludes retired services", () => {
+    assert.equal(Object.keys(model.SERVICE_NAMES).length, 12);
     assert.equal(model.SERVICE_NAMES.siliconflow, "SiliconFlow");
     for (const service of [
         "openaicompatible",
@@ -413,6 +413,25 @@ test("catalog has 10 services and excludes retired services", () => {
         "siliconflowfree",
     ])
         assert.equal(model.SERVICE_NAMES[service], undefined);
+});
+
+test("restored Zhipu profiles retain their identity, credentials and references", () => {
+    prefs.clear();
+    const saved = {
+        ...api("zhipu-old", "zhipu"),
+        extraData: { zhipu_enable_json_mode: true },
+        needsTest: true,
+    };
+    prefs.set("profileSchemaVersion", 4);
+    prefs.set("llmApis", JSON.stringify([saved]));
+    prefs.set("selectedApiKey", saved.key);
+    prefs.set("selectionApiKey", saved.key);
+    assert.deepEqual(store.loadProfiles(), [saved]);
+    assert.equal(store.getSelectedProfile().key, saved.key);
+    assert.equal(prefs.get("selectionApiKey"), saved.key);
+    assert.equal(model.resolveProviderPreset(saved).id, "zhipu");
+    assert.doesNotThrow(() => model.assertSupportedProfile(saved));
+    assert.equal(helper.getServerConfig().apiConfig.apiKey, saved.apiKey);
 });
 
 test("v1 migration removes retired rows and backup credentials without changing retained profiles", () => {
@@ -446,7 +465,7 @@ test("v1 migration removes retired rows and backup credentials without changing 
             }),
         );
         assert.deepEqual(store.loadProfiles(), [
-            keep,
+            { ...keep, providerPreset: "zhipu" },
             { ...rows[4], providerPreset: "gemini" },
         ]);
         assert.equal(prefs.get("profileSchemaVersion"), 4);
@@ -832,4 +851,41 @@ test("new catalog offers ChatGPT and hides Codex", () => {
     const available = model.PROVIDER_PRESETS.filter((p) => !p.legacy);
     assert.ok(available.some((p) => p.service === "chatgpt"));
     assert.ok(!available.some((p) => p.service === "codex"));
+});
+
+test("new low and native automatic effort require a compatible server", () => {
+    const low = {
+        ...api("new-low"),
+        reasoningMode: "low",
+        apiProtocol: "auto",
+    };
+    assert.throws(
+        () => compatibility.prepareApiForServer(low, ["responses"], true),
+        /升级/,
+    );
+    assert.deepEqual(
+        compatibility.prepareApiForServer(
+            low,
+            ["responses"],
+            true,
+            false,
+            false,
+            false,
+            true,
+        ).api,
+        low,
+    );
+    const account = { ...api("account", "chatgpt"), reasoningEffort: "auto" };
+    assert.throws(
+        () =>
+            compatibility.prepareApiForServer(
+                account,
+                ["responses"],
+                true,
+                false,
+                false,
+                true,
+            ),
+        /升级/,
+    );
 });

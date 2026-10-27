@@ -26,9 +26,25 @@ class ClaudeCodeTranslator(BaseTranslator):
         super().__init__(settings, rate_limiter)
         self.claude_code_path = settings.translate_engine_settings.claude_code_path
         self.claude_code_model = settings.translate_engine_settings.claude_code_model
+        self.model = self.claude_code_model
+        self.effort_args = []
+        mode = settings.translate_engine_settings.claude_code_reasoning_mode
+        self.reasoning_mode = mode
+        if mode == "off":
+            raise ValueError("Claude Code 接入尚不支持关闭推理快捷设置")
+        if mode == "low":
+            help_result = subprocess.run([self.claude_code_path, "--help"], capture_output=True, text=True, timeout=5)
+            if help_result.returncode == 0 and "--effort" in help_result.stdout:
+                self.effort_args = ["--effort", "low"]
+        self.add_cache_impact_parameters("reasoning_effort", self.effort_args)
         self.add_cache_impact_parameters("model", self.claude_code_model)
         self.add_cache_impact_parameters("prompt", self.prompt(""))
         self._test_claude_code()
+
+    def reasoning_status(self):
+        return {"requested": self.reasoning_mode, "effective": "low" if self.effort_args else "default",
+                "protocolFallback": False, "modelDetail": {"id": self.model,
+                    "supportedReasoningEfforts": ["low"] if self.effort_args else [], "supportsReasoningOff": False}}
 
     def _test_claude_code(self):
         try:
@@ -59,6 +75,7 @@ class ClaudeCodeTranslator(BaseTranslator):
 
         cmd = [
             self.claude_code_path,
+            *self.effort_args,
             "-p",
             "--model",
             self.claude_code_model,

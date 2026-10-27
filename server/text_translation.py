@@ -503,9 +503,9 @@ class TextTranslationService:
                 from observability import TaskMetricsCollector
                 translator.set_metrics_collector(TaskMetricsCollector(
                     task_id='selection-' + uuid.uuid4().hex, provider=service, model=translator.model))
-            # Resolve auto protocol only on an actual cache miss. Fixed protocols
-            # do not spend a second request on a health-check translation.
-            if is_codex or translator.resolved_protocol is None:
+            # Resolve protocol and automatic low only on an actual cache miss.
+            # Legacy fixed/default profiles retain their single-request path.
+            if is_codex or translator.resolved_protocol is None or getattr(translator, 'reasoning_mode', 'default') == 'low':
                 translator.health_check()
             check_deadline()
             mode = data.get('mode', 'translate')

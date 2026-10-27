@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "reviewer": "GPT-6 Luna low via Command Code; Codex engineering adjudication",
+  "independent": false,
+  "models": {
+    "Qwen/Qwen3.8-Flash": {
+      "reviewed_outputs": 229,
+      "initial_items": 229,
+      "second_pass_items": 229,
+      "audit_samples": 49,
+      "serious_outputs": 4,
+      "engineering_adjudication_sha256": "8e84b1af61587a1a3eeaff7677adbcac6e7b2fdea86a42dff5eb3f286a0f6d97",
+      "review_sha256": "7fb699a1176f314035327beb7fb2bc35d00254afe325c32b4372512be80d3e17",
+      "audit_sha256": "33516c907b29adc4c3eee28b7c9e97336e424316afee439105cedefaef1f69d3"
+    },
+    "xiaomi/mimo-v2.6-pro": {
+      "reviewed_outputs": 240,
+      "initial_items": 240,
+      "second_pass_items": 240,
+      "audit_samples": 52,
+      "serious_outputs": 5,
+      "engineering_adjudication_sha256": "461969bd43726a26b316dce91978e7384faa65aa0c7d356c91246ed21e054439",
+      "review_sha256": "bda303454cae12accc49f5ad5a23c858db6400cea1db12ce6887c3b6829777c9",
+      "audit_sha256": "1cc2691ab873b6a760c98b182835623f1432bc490147f73b28051dbc8291604a"
+    }
+  }
+}

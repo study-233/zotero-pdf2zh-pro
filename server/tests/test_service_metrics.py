@@ -13,7 +13,7 @@ import pdf2zh_next_service as service
 from babeldoc.format.pdf.translation_recovery import TranslationRecovery
 from observability import TaskMetricsCollector
 from test_observability import FakeClock
-from test_openai_protocol import chat
+from test_openai_protocol import chat, response
 from test_pdf2zh_next_service import make_settings_payload
 
 
@@ -59,7 +59,7 @@ class ServiceMetricsTests(unittest.TestCase):
 
         def handler(request):
             requests.append(request)
-            return httpx.Response(200, json=chat("你好"))
+            return httpx.Response(200, json=response("你好"))
 
         self.client(handler)
 

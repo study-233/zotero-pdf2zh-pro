@@ -13,12 +13,24 @@ class AccountTranslator(BaseTranslator):
 
     def health_check(self):
         """Check login/configuration without spending a translation request."""
+        if not hasattr(self, '_requested_reasoning_effort'):
+            self._requested_reasoning_effort = self.reasoning_effort
         readiness = self.client.check_ready(self.model, self.reasoning_effort,
                                             check_cancelled=self.check_cancelled)
+        self._model_detail = readiness.get('modelDetail')
         if readiness.get("reasoningEffort"):
             self.reasoning_effort = readiness["reasoningEffort"]
             self.add_cache_impact_parameters("reasoning_effort", self.reasoning_effort)
         return readiness
+
+    def reasoning_status(self):
+        requested = getattr(self, '_requested_reasoning_effort', self.reasoning_effort)
+        result = {'requested': 'low' if requested in ('auto', 'low') else 'off' if requested == 'none' else 'default',
+                  'effective': 'low' if self.reasoning_effort == 'low' else 'off' if self.reasoning_effort == 'none' else 'default',
+                  'effort': self.reasoning_effort, 'protocolFallback': False}
+        if isinstance(getattr(self, '_model_detail', None), dict):
+            result['modelDetail'] = self._model_detail
+        return result
 
     def configure_execution(self, concurrency, check_cancelled, slots=None):
         self._request_slots = slots or threading.BoundedSemaphore(
@@ -145,6 +157,8 @@ class AccountTranslator(BaseTranslator):
                         finish_reason="completed" if succeeded else "cancelled" if cancelled else "failed",
                         protocol=(self.client.protocol if isinstance(getattr(self.client, 'protocol', None), str)
                                   else self.default_protocol), visible_chars=len(text) if text else None,
+                        reasoning_setting=self.reasoning_status()['effective'],
+                        reasoning_requested=self.reasoning_status()['requested'],
                         batch_size=params.get("batch_size"),
                     )
         finally:

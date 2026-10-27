@@ -283,12 +283,12 @@ def create_app() -> Flask:
                 details, runtime = list_codex_models(data, include_runtime=True)
                 return jsonify({"status": "ok", "models": [model["id"] for model in details],
                                 "modelDetails": details, "codexRuntime": runtime}), 200
-            models = list_provider_models(data)
+            models = list_provider_models(data, include_details=True)
         except ChatGPTError as exc:
             return exception_response(exc, exc.status_code, code=exc.code)
         except ModelDiscoveryError as exc:
             return exception_response(exc, exc.status, **({"code": exc.code, "attempts": exc.attempts or []} if exc.code else {}))
-        return jsonify({"status": "ok", "models": models}), 200
+        return jsonify({"status": "ok", **(models if isinstance(models, dict) else {"models": models})}), 200
 
     @app.post("/translate")
     def translate():
@@ -941,8 +941,8 @@ def build_health_payload() -> dict[str, Any]:
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
         "diagnostics": diagnostic_capabilities(),
-        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True,
-            "tokenOutputSpeed": True, "reasoningMode": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True, "taskSubmissionIdempotency": True, "taskRecovery": True, "taskTiming": True, "binaryTaskUpload": True, "taskPagination": True},
+        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "mimoApi": True, "zhipuApi": True,
+            "tokenOutputSpeed": True, "reasoningMode": True, "reasoningLow": True, "responsesFirst": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True, "taskSubmissionIdempotency": True, "taskRecovery": True, "taskTiming": True, "binaryTaskUpload": True, "taskPagination": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_next"),
         "babeldocVersion": package_version("babeldoc"),

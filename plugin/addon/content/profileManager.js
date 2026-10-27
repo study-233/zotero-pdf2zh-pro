@@ -281,7 +281,9 @@
                             apiUrl: preset.url || "",
                             apiKey: "",
                             model: "",
-                            apiProtocol: "chat_completions",
+                            apiProtocol: "auto",
+                            reasoningMode: "low",
+                            reasoningEffort: "auto",
                             needsTest: true,
                         },
                     });

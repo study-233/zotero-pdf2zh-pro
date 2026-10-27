@@ -1,0 +1,28 @@
+{
+  "registered_at": "2026-10-26T20:48:14.566227+00:00",
+  "reason": "Literal URL rule includes trailing English punctuation; equivalent Chinese punctuation is allowed by the unchanged rubric. Missing required override metadata halted initial review.",
+  "scope": "URL punctuation override metadata plus explicit Chinese omission-category name canonicalization; no numerical score, severity, explanation, source_quote, target_quote, notes, outbound prompt/rubric/model/effort changes.",
+  "recovery_selection": "For incomplete batches, select the earliest chronologically generated existing response passing the unchanged substantive validator after this deterministic metadata normalization. All other calls remain in receipts. No accepted batch is replaced.",
+  "archive": "review/schema-repair-history/v1-before-url-override-metadata",
+  "original_review_script_sha256": "5d5e363c9ac22c13ad95d534211252732ba64bb6c6b47c3cd9b1c833b950c5aa",
+  "original_method_sha256": "eaa4d24d54aa4324d4e8f4a85dcc78ee7f4fdcfcf3fc8f7f8ccb7bbc9be4617a",
+  "revisions": [
+    {
+      "revision": "v3",
+      "registered_at": "2026-10-26T21:05:33.516244+00:00",
+      "scope": "Canonicalize only explicit Chinese omission-category aliases to omission when target_quote is empty. Preserve scores, severity, explanation and both evidence strings. The unchanged validator must still accept all evidence and deductions.",
+      "aliases": [
+        "大段遗漏",
+        "大段内容遗漏",
+        "内容遗漏",
+        "漏译",
+        "遗漏",
+        "公式与段落结构遗漏",
+        "公式条件遗漏",
+        "数值条件遗漏",
+        "数值遗漏"
+      ],
+      "archive": "review/schema-repair-history/v2-before-omission-category-aliases"
+    }
+  ]
+}

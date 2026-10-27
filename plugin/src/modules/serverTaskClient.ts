@@ -89,6 +89,7 @@ export class ServerTaskClient {
             (api.service === "codex" ||
                 api.service === "chatgpt" ||
                 api.reasoningMode === "off" ||
+                api.reasoningMode === "low" ||
                 api.apiProtocol === "auto" ||
                 api.apiProtocol === "responses" ||
                 Object.keys(api.requestOptions || {}).length),
@@ -143,6 +144,7 @@ export class ServerTaskClient {
                     health.capabilities?.codexCli,
                     health.capabilities?.codexProxy,
                     health.capabilities?.chatgptPlan,
+                    health.capabilities?.reasoningLow,
                 );
                 requestBody = { ...requestBody, llm_api: prepared.api };
                 if (prepared.warning) {

@@ -24,7 +24,7 @@ from pdf2zh_next.high_level import BabelDOCConfig
 from pdf2zh_next.high_level import babeldoc_translate, create_babeldoc_config
 from pdf2zh_next.translator import get_translator
 from observability import TaskMetricsCollector
-from pdf2zh_next.config.translate_engine_model import CodexSettings, ChatGPTSettings, OpenAISettings
+from pdf2zh_next.config.translate_engine_model import CodexSettings, ChatGPTSettings, OpenAISettings, SiliconFlowSettings
 from pdf2zh_next.translator.openai_protocol import (
     normalize_endpoint, parse_request_options, protocol_rejection_message,
 )
@@ -61,6 +61,16 @@ SERVICE_FIELD_MAP = {
     "deepseek": {
         "model": "deepseek_model",
         "apiKey": "deepseek_api_key",
+    },
+    "mimo": {
+        "model": "mimo_model",
+        "apiKey": "mimo_api_key",
+        "apiUrl": "mimo_base_url",
+    },
+    "zhipu": {
+        "model": "zhipu_model",
+        "apiKey": "zhipu_api_key",
+        "apiUrl": "zhipu_base_url",
     },
     "ollama": {
         "model": "ollama_model",
@@ -308,7 +318,7 @@ def require_supported_service(service: Any) -> str:
     if not isinstance(service, str):
         raise ValueError("请选择支持的接口类型。")
     normalized = service.strip().lower().replace("-", "").replace("_", "")
-    if normalized in {"openaicompatible", "tencentmechinetranslation", "dify", "siliconflowfree", "zhipu", "grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm"}:
+    if normalized in {"openaicompatible", "tencentmechinetranslation", "dify", "siliconflowfree", "grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm"}:
         raise ValueError("此接口类型已移除，请重新选择并配置受支持的接口。")
     if normalized not in SERVICE_FIELD_MAP:
         raise ValueError("未知的接口类型，请重新选择受支持的接口。")
@@ -411,18 +421,43 @@ def create_runtime_settings(payload: dict[str, Any]):
     settings.validate_settings()
     engine = settings.translate_engine_settings
     llm_api = payload.get("llm_api") or {}
+    mode = llm_api.get("reasoningMode", "default")
+    if mode not in {"default", "low", "off"}:
+        raise ValueError("推理模式必须为 default、low 或 off")
+    if isinstance(engine, SiliconFlowSettings):
+        options = {}
+        if engine.siliconflow_send_enable_thinking_param:
+            options["enable_thinking"] = engine.siliconflow_enable_thinking
+        engine = OpenAISettings(openai_model=engine.siliconflow_model,
+            openai_api_key=engine.siliconflow_api_key, openai_base_url=engine.siliconflow_base_url,
+            openai_temperature="0", openai_send_temprature=True,
+            openai_enable_json_mode=engine.siliconflow_enable_json_mode,
+            openai_request_options=json.dumps(options))
+        settings.translate_engine_settings = engine
     if isinstance(engine, OpenAISettings):
         # Presets may transform to OpenAISettings with a hard-coded URL.
         # Apply the explicit endpoint and protocol after that transformation.
         if llm_api.get("apiUrl"):
             engine.openai_base_url = str(llm_api["apiUrl"]).strip()
-        engine.openai_reasoning_mode = llm_api.get("reasoningMode", "default")
+        engine.openai_reasoning_mode = mode
         engine.openai_api_protocol = llm_api.get("apiProtocol", engine.openai_api_protocol)
         if "requestOptions" in llm_api:
-            engine.openai_request_options = json.dumps(parse_request_options(llm_api["requestOptions"]))
+            engine.openai_request_options = json.dumps({**parse_request_options(engine.openai_request_options),
+                                                       **parse_request_options(llm_api["requestOptions"])})
         normalize_endpoint(engine.openai_base_url, engine.openai_api_protocol)
         parse_request_options(engine.openai_request_options)
-    elif llm_api.get("apiProtocol") == "responses" or llm_api.get("requestOptions") or llm_api.get("reasoningMode", "default") != "default":
+    elif payload["service"] == "ollama":
+        engine.ollama_reasoning_mode = mode
+    elif payload["service"] in {"codex", "chatgpt"}:
+        if mode == "off":
+            if llm_api.get("reasoningEffort") not in (None, "", "none"):
+                raise ValueError("关闭推理与所选推理档位冲突")
+            setattr(engine, payload["service"] + "_reasoning_effort", "none")
+        if mode == "low" and not llm_api.get("reasoningEffort"):
+            setattr(engine, payload["service"] + "_reasoning_effort", "auto")
+    elif payload["service"] == "claudecode":
+        engine.claude_code_reasoning_mode = mode
+    elif llm_api.get("apiProtocol") == "responses" or llm_api.get("requestOptions") or mode != "default":
         raise ValueError("此服务类型不支持双协议参数，请使用 OpenAI 兼容服务")
     return settings
 
@@ -1100,6 +1135,9 @@ def validate_service_config(payload: dict[str, Any], job_id: str, *, check_cance
                     else "本次测试报告推理 Token 为 0"
                 )
             if live_test.get("ok"):
+                status_info = getattr(translator, "reasoning_status", None)
+                if callable(status_info):
+                    live_test["reasoning"] = status_info()
                 diagnostics.append(
                     DiagnosticMessage(
                         code="live_test_ok",

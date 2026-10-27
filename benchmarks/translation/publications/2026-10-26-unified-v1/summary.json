@@ -1,0 +1,3021 @@
+{
+  "schema": 3,
+  "id": "2026-10-26-unified-v1",
+  "date": "2026-10-26",
+  "dataset": "cs-en-zh-v2",
+  "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+  "published_scope": {
+    "models": 9,
+    "main_outputs": 2544,
+    "translation_calls": 2992,
+    "all_attempts": 4219,
+    "configurations": 16,
+    "quick_calls": 27,
+    "cancelled_translation_calls": 227,
+    "formal_configurations": 10,
+    "pilot_configurations": 6,
+    "samples_by_scope": {
+      "formal": 240,
+      "pilot": 24
+    }
+  },
+  "models": [
+    {
+      "id": "chatgpt/gpt-6-luna-low",
+      "model_id": "gpt-6-luna",
+      "name": "GPT-6 Luna · ChatGPT（low）",
+      "channel": "ChatGPT subscription",
+      "quality": 99.69791666666667,
+      "successful_quality": 99.69791666666667,
+      "successes": 240,
+      "samples": 240,
+      "p50": 6.9486805830092635,
+      "p95": 23.498711833002744,
+      "ttft_p50": 3.057840874986141,
+      "ttft_p95": 5.1658258749957895,
+      "reviewed_outputs": 240,
+      "serious_error_rate": 0.008333333333333333,
+      "audit_samples": 50,
+      "known_token_priced_usd": null,
+      "translation_calls": 283,
+      "protocol": "responses",
+      "parameters": {
+        "reasoning_effort": "low"
+      },
+      "timeout_seconds": 120,
+      "adapter_sha256": "66f58fb8c8a80a9b56199af147b9449aae392a4f064f7b554c12e2eaa79dfa62",
+      "uncontrolled": [
+        "provider_cache",
+        "provider_internal_retries",
+        "subscription_metering"
+      ],
+      "recorded_usage_calls": 283,
+      "priced_usage_calls": 0,
+      "usage_tokens": {
+        "input": 94896,
+        "output": 78616,
+        "cached_input": 0,
+        "reasoning": 178
+      },
+      "amount_basis": "API equivalent estimate from measured formal-translation tokens and official Standard API prices as of 2026-10-25; subscription cash charges and quota percentage remain unknown",
+      "repeat_summary": {
+        "samples": 20,
+        "additional_calls": 40,
+        "literal_variant_samples": 20,
+        "note": "Literal output variation is not a semantic quality score"
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 99.33333333333333,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 100.0,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 99.91666666666667,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 99.16666666666667,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 99.83333333333333,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 99.66666666666667,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 99.83333333333333,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 99.83333333333333,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 98.95833333333333,
+          "count": 24
+        },
+        "length:long": {
+          "score": 99.96527777777777,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 99.53125,
+          "count": 96
+        },
+        "length:short": {
+          "score": 100.0,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 99.6875,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 99.703125,
+          "count": 160
+        },
+        "split:development": {
+          "score": 99.5625,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 99.83333333333333,
+          "count": 120
+        }
+      },
+      "cohort": "20261025-chatgpt-luna-low-01",
+      "bindings": {
+        "run_id": "66194c63c46445d680f463e5b4efd80e",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "20069156c560c5f8e1f8e6ec5d2557548024dbc8226442b08fcebdc214dfe7e7",
+        "code_commit": "97d2a4ed6f3faa5de0ee367fcae8156aedbf073b"
+      },
+      "review_scope": "Two source-only Luna passes, engineering adjudication of all remaining deductions, and a focused seeded 50-case audit; non-independent",
+      "engineering_adjudication_changes": 12,
+      "estimated_api_equivalent_usd": 0.0487976,
+      "kind": "formal",
+      "date": "2026-10-25",
+      "model_name": "GPT-6 Luna",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "low",
+      "reasoning_label": "low",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 240,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.0410122,
+      "main_unknown_usage_calls": 0,
+      "usd_per_1000_source_chars": 0.00014768846284039265,
+      "normalized_cost_estimated": true
+    },
+    {
+      "id": "z-ai/glm-5.3-flash",
+      "name": "GLM-5.3 Flash",
+      "quality": 99.4375,
+      "successful_quality": 99.4375,
+      "successes": 240,
+      "samples": 240,
+      "p50": 3.437999999965541,
+      "p95": 11.172000000020489,
+      "ttft_p50": 1.4060000000172295,
+      "ttft_p95": 2.5929999999934807,
+      "reviewed_outputs": 240,
+      "serious_error_rate": 0.004166666666666667,
+      "audit_samples": 49,
+      "known_token_priced_usd": 0.04658605,
+      "translation_calls": 283,
+      "protocol": "chat_completions",
+      "parameters": {
+        "max_tokens": 8192,
+        "temperature": 0
+      },
+      "timeout_seconds": 120,
+      "prices_per_million": {
+        "input": 0.15,
+        "output": 0.5,
+        "cached_input": 0.03,
+        "as_of": "2026-10-23"
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 99.41666666666667,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 99.5,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 98.83333333333333,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 99.16666666666667,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 99.83333333333333,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 99.66666666666667,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 99.91666666666667,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 99.16666666666667,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 99.0625,
+          "count": 24
+        },
+        "length:long": {
+          "score": 99.44444444444444,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 99.296875,
+          "count": 96
+        },
+        "length:short": {
+          "score": 99.89583333333333,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 99.25,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 99.53125,
+          "count": 160
+        },
+        "split:development": {
+          "score": 99.45833333333333,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 99.41666666666667,
+          "count": 120
+        }
+      },
+      "cohort": "20261023-four-models-full-02",
+      "bindings": {
+        "run_id": "f29d60f011e345c388d96b94d0f988d1",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "a7834747234cce12cd29ff013a731aeefde1642ffd381e7cc0329a83b9c052dd"
+      },
+      "recorded_usage_calls": 283,
+      "kind": "formal",
+      "date": "2026-10-23",
+      "model_id": "z-ai/glm-5.3-flash",
+      "model_name": "GLM-5.3 Flash",
+      "channel": "Command Code",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "default",
+      "reasoning_label": "提供方默认",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 0,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.03935145,
+      "main_unknown_usage_calls": 0,
+      "usd_per_1000_source_chars": 0.00014170795912047074,
+      "normalized_cost_estimated": false,
+      "unknown_usage_calls": 0
+    },
+    {
+      "id": "xiaomi/mimo-v2.6-pro",
+      "name": "MiMo V2.6 Pro 普通版",
+      "model_id": "xiaomi/mimo-v2.6-pro",
+      "channel": "Command Code",
+      "quality": 98.9375,
+      "successful_quality": 98.9375,
+      "successes": 240,
+      "samples": 240,
+      "p50": 7.531083750000107,
+      "p95": 19.40700483299952,
+      "ttft_p50": 3.9520887920007226,
+      "ttft_p95": 7.698503249997884,
+      "reviewed_outputs": 240,
+      "serious_error_rate": 0.020833333333333332,
+      "audit_samples": 52,
+      "known_token_priced_usd": 0.1061806356,
+      "translation_calls": 283,
+      "protocol": "chat_completions",
+      "parameters": {
+        "temperature": 0,
+        "max_tokens": 8192
+      },
+      "timeout_seconds": 120,
+      "prices_per_million": {
+        "input": 0.435,
+        "output": 0.87,
+        "cached_input": 0.0036,
+        "source": "https://commandcode.ai/models",
+        "as_of": "2026-10-26"
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 98.25,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 99.33333333333333,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 99.58333333333333,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 98.58333333333333,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 99.66666666666667,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 99.66666666666667,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 99.16666666666667,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 97.25,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 97.60416666666667,
+          "count": 24
+        },
+        "length:long": {
+          "score": 98.71527777777777,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 98.984375,
+          "count": 96
+        },
+        "length:short": {
+          "score": 99.84375,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 99.3125,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 98.75,
+          "count": 160
+        },
+        "split:development": {
+          "score": 99.1875,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 98.6875,
+          "count": 120
+        }
+      },
+      "cohort": "20261026-three-models-full-01",
+      "usage_tokens": {
+        "input": 79090,
+        "output": 82946,
+        "cached_input": 896,
+        "reasoning": 15130
+      },
+      "recorded_usage_calls": 283,
+      "priced_usage_calls": 283,
+      "unknown_usage_calls": 0,
+      "amount_basis": "Measured generation token receipts at archived Command Code rates; unknown receipt amounts excluded. Subscription cash charges, discounts and account quota deductions have not been independently reconciled.",
+      "uncontrolled": [
+        "provider_default_reasoning",
+        "provider_cache",
+        "provider_internal_routing"
+      ],
+      "interface_source": "https://commandcode.ai/docs/provider",
+      "endpoint": "https://api.commandcode.ai/provider/v1/chat/completions",
+      "requested_model": "xiaomi/mimo-v2.6-pro",
+      "response_models": [
+        "xiaomi/mimo-v2.6-pro"
+      ],
+      "test_started_at": "2026-10-26T08:26:50.139522+00:00",
+      "test_completed_at": "2026-10-26T09:07:56.666961+00:00",
+      "bindings": {
+        "run_id": "31d1343c1c1048f7b5151cf14da13a8b",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "ec2b039828987b5713f5e605fefdcb0bdc2825ce5fbacf44c7c23719ebc5000d",
+        "results_sha256": "78d8d354133fc5e601cf8d94c7a9db45295eb54b457b56ff2689b2ef8396c265",
+        "review_sha256": "bda303454cae12accc49f5ad5a23c858db6400cea1db12ce6887c3b6829777c9"
+      },
+      "repeat_summary": {
+        "samples": 20,
+        "additional_calls": 40,
+        "literal_variant_samples": 20,
+        "note": "Literal output variation is not a semantic quality score"
+      },
+      "kind": "formal",
+      "date": "2026-10-26",
+      "model_name": "MiMo V2.6 Pro 普通版",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "default",
+      "reasoning_label": "提供方默认",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 240,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.0902313606,
+      "main_unknown_usage_calls": 0,
+      "usd_per_1000_source_chars": 0.0003249308973186313,
+      "normalized_cost_estimated": false
+    },
+    {
+      "id": "gpt-6-luna",
+      "name": "GPT-6 Luna · Command Code（low）",
+      "quality": 98.84375,
+      "successful_quality": 99.29621848739495,
+      "successes": 238,
+      "samples": 240,
+      "p50": 3.4689999999827705,
+      "p95": 9.73499999998603,
+      "ttft_p50": 1.75,
+      "ttft_p95": 3.3429999999934807,
+      "reviewed_outputs": 239,
+      "serious_error_rate": 0.02510460251046025,
+      "audit_samples": 53,
+      "known_token_priced_usd": 0.049056325,
+      "translation_calls": 283,
+      "protocol": "responses",
+      "parameters": {
+        "max_tokens": 8192,
+        "reasoning_effort": "low"
+      },
+      "timeout_seconds": 120,
+      "prices_per_million": {
+        "input": 0.1,
+        "output": 0.5,
+        "cached_input": 0.01,
+        "as_of": "2026-10-23",
+        "cache_write": 0.125
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 98.33333333333333,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 98.58333333333333,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 99.83333333333333,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 98.83333333333333,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 100.0,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 99.75,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 99.41666666666667,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 96.0,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 98.4375,
+          "count": 24
+        },
+        "length:long": {
+          "score": 97.53472222222223,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 99.40104166666667,
+          "count": 96
+        },
+        "length:short": {
+          "score": 99.89583333333333,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 99.40625,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 98.5625,
+          "count": 160
+        },
+        "split:development": {
+          "score": 99.22916666666667,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 98.45833333333333,
+          "count": 120
+        }
+      },
+      "cohort": "20261023-three-models-full-01",
+      "bindings": {
+        "run_id": "20f3fe2d5603468c88830f1310b12362",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "a428f2a09345470a7c382657afbf2d0a427feca2b70deffc488dcec2f885a5e6"
+      },
+      "recorded_usage_calls": 281,
+      "kind": "formal",
+      "date": "2026-10-23",
+      "model_id": "gpt-6-luna",
+      "model_name": "GPT-6 Luna",
+      "channel": "Command Code",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "low",
+      "reasoning_label": "low",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 0,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.041251425,
+      "main_unknown_usage_calls": 2,
+      "usd_per_1000_source_chars": 0.0001485499326596902,
+      "normalized_cost_estimated": false,
+      "unknown_usage_calls": 2
+    },
+    {
+      "id": "claude-haiku-5-5",
+      "name": "Claude Haiku 5.5",
+      "quality": 97.65625,
+      "successful_quality": 98.06485355648536,
+      "successes": 239,
+      "samples": 240,
+      "p50": 3.094000000040978,
+      "p95": 9.702999999979511,
+      "ttft_p50": 1.6400000000139698,
+      "ttft_p95": 6.14000000001397,
+      "reviewed_outputs": 239,
+      "serious_error_rate": 0.06276150627615062,
+      "audit_samples": 60,
+      "known_token_priced_usd": 0.0897218,
+      "translation_calls": 283,
+      "protocol": "anthropic_messages",
+      "parameters": {
+        "max_tokens": 8192
+      },
+      "timeout_seconds": 120,
+      "prices_per_million": {
+        "input": 0.1,
+        "output": 0.5,
+        "cached_input": 0.01,
+        "as_of": "2026-10-23",
+        "cache_write": 0.125
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 98.5,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 96.25,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 92.33333333333333,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 98.75,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 99.25,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 98.5,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 99.5,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 98.16666666666667,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 96.97916666666667,
+          "count": 24
+        },
+        "length:long": {
+          "score": 94.89583333333333,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 98.72395833333333,
+          "count": 96
+        },
+        "length:short": {
+          "score": 100.0,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 97.53125,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 97.71875,
+          "count": 160
+        },
+        "split:development": {
+          "score": 98.45833333333333,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 96.85416666666667,
+          "count": 120
+        }
+      },
+      "cohort": "20261023-three-models-full-01",
+      "bindings": {
+        "run_id": "23ff67a4f7124c56a0905302345c4284",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "84914f9cc047be8ffe4ae7e75ca84358c19c3c20d1a797aa2b83bc086385c53c"
+      },
+      "recorded_usage_calls": 281,
+      "kind": "formal",
+      "date": "2026-10-23",
+      "model_id": "claude-haiku-5-5",
+      "model_name": "Claude Haiku 5.5",
+      "channel": "Command Code",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "default",
+      "reasoning_label": "提供方默认",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 0,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.0766074,
+      "main_unknown_usage_calls": 1,
+      "usd_per_1000_source_chars": 0.00027586984234445106,
+      "normalized_cost_estimated": false,
+      "unknown_usage_calls": 2
+    },
+    {
+      "id": "deepseek/deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "quality": 96.1875,
+      "successful_quality": 99.50431034482759,
+      "successes": 232,
+      "samples": 240,
+      "p50": 6.98399999999674,
+      "p95": 24.469000000040978,
+      "ttft_p50": 6.39000000001397,
+      "ttft_p95": 22.85999999998603,
+      "reviewed_outputs": 232,
+      "serious_error_rate": 0.0,
+      "audit_samples": 47,
+      "known_token_priced_usd": 0.234253092,
+      "translation_calls": 283,
+      "protocol": "chat_completions",
+      "parameters": {
+        "max_tokens": 8192,
+        "temperature": 0
+      },
+      "timeout_seconds": 120,
+      "prices_per_million": {
+        "input": 0.15,
+        "output": 0.6,
+        "cached_input": 0.003,
+        "as_of": "2026-10-23"
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 92.91666666666667,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 99.83333333333333,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 98.75,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 92.0,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 100.0,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 96.33333333333333,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 89.83333333333333,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 99.83333333333333,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 99.58333333333333,
+          "count": 24
+        },
+        "length:long": {
+          "score": 92.63888888888889,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 96.22395833333333,
+          "count": 96
+        },
+        "length:short": {
+          "score": 99.73958333333333,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 97.1875,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 95.6875,
+          "count": 160
+        },
+        "split:development": {
+          "score": 97.10416666666667,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 95.27083333333333,
+          "count": 120
+        }
+      },
+      "cohort": "20261023-three-models-full-01",
+      "bindings": {
+        "run_id": "1bb95eecadd5472ab895773d2b0271b5",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "7911aa2822f051431e03deb00817bf9a8622a124ad4d2c8eb0484374b30c14e6"
+      },
+      "recorded_usage_calls": 275,
+      "kind": "formal",
+      "date": "2026-10-23",
+      "model_id": "deepseek/deepseek-v4.1-flash",
+      "model_name": "DeepSeek V4.1 Flash",
+      "channel": "Command Code",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "default",
+      "reasoning_label": "提供方默认",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 0,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.198706926,
+      "main_unknown_usage_calls": 8,
+      "usd_per_1000_source_chars": 0.0007155607467212112,
+      "normalized_cost_estimated": false,
+      "unknown_usage_calls": 8
+    },
+    {
+      "id": "xiaomi/mimo-v2.6-flash",
+      "name": "MiMo V2.6 Flash",
+      "quality": 96.01041666666667,
+      "successful_quality": 98.97186147186147,
+      "successes": 231,
+      "samples": 240,
+      "p50": 11.296999999962281,
+      "p95": 28.96899999998277,
+      "ttft_p50": 5.969000000040978,
+      "ttft_p95": 14.71899999998277,
+      "reviewed_outputs": 233,
+      "serious_error_rate": 0.034334763948497854,
+      "audit_samples": 53,
+      "known_token_priced_usd": 0.031600251200000005,
+      "translation_calls": 283,
+      "protocol": "chat_completions",
+      "parameters": {
+        "max_tokens": 8192,
+        "temperature": 0
+      },
+      "timeout_seconds": 120,
+      "prices_per_million": {
+        "input": 0.14,
+        "output": 0.28,
+        "cached_input": 0.0028,
+        "as_of": "2026-10-23"
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 94.91666666666667,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 99.16666666666667,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 99.0,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 91.75,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 95.41666666666667,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 100.0,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 92.58333333333333,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 95.25,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 97.29166666666667,
+          "count": 24
+        },
+        "length:long": {
+          "score": 96.31944444444444,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 94.71354166666667,
+          "count": 96
+        },
+        "length:short": {
+          "score": 97.5,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 98.125,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 94.953125,
+          "count": 160
+        },
+        "split:development": {
+          "score": 97.89583333333333,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 94.125,
+          "count": 120
+        }
+      },
+      "cohort": "20261023-four-models-full-02",
+      "bindings": {
+        "run_id": "b7e0219bbd9f48b0880d50c85c47ae97",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "5ab6fdbe0affdb92e7b79bbcbafab72b53526374716269dd12168a09ab518ddf"
+      },
+      "recorded_usage_calls": 273,
+      "kind": "formal",
+      "date": "2026-10-23",
+      "model_id": "xiaomi/mimo-v2.6-flash",
+      "model_name": "MiMo V2.6 Flash",
+      "channel": "Command Code",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "default",
+      "reasoning_label": "提供方默认",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 0,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.026868380000000004,
+      "main_unknown_usage_calls": 9,
+      "usd_per_1000_source_chars": 9.675534941338309e-05,
+      "normalized_cost_estimated": false,
+      "unknown_usage_calls": 10
+    },
+    {
+      "id": "Qwen/Qwen3.8-Flash",
+      "name": "Qwen 3.8 Flash",
+      "model_id": "Qwen/Qwen3.8-Flash",
+      "channel": "Command Code",
+      "quality": 94.85416666666667,
+      "successful_quality": 99.41048034934498,
+      "successes": 229,
+      "samples": 240,
+      "p50": 16.25396958300189,
+      "p95": 85.68694470800256,
+      "ttft_p50": 14.52435549999791,
+      "ttft_p95": 81.61711500000092,
+      "reviewed_outputs": 229,
+      "serious_error_rate": 0.017467248908296942,
+      "audit_samples": 49,
+      "known_token_priced_usd": 0.22751427999999999,
+      "translation_calls": 283,
+      "protocol": "chat_completions",
+      "parameters": {
+        "temperature": 0,
+        "max_tokens": 8192
+      },
+      "timeout_seconds": 120,
+      "prices_per_million": {
+        "input": 0.16,
+        "output": 0.47,
+        "cached_input": 0.016,
+        "source": "https://commandcode.ai/models",
+        "as_of": "2026-10-26"
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 89.83333333333333,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 96.66666666666667,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 89.5,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 95.16666666666667,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 93.0,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 95.66666666666667,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 99.5,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 99.5,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 70.0,
+          "count": 24
+        },
+        "length:long": {
+          "score": 96.45833333333333,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 98.56770833333333,
+          "count": 96
+        },
+        "length:short": {
+          "score": 97.44791666666667,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 92.28125,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 96.140625,
+          "count": 160
+        },
+        "split:development": {
+          "score": 96.3125,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 93.39583333333333,
+          "count": 120
+        }
+      },
+      "cohort": "20261026-three-models-full-01",
+      "usage_tokens": {
+        "input": 83980,
+        "output": 455484,
+        "cached_input": 0,
+        "reasoning": 400435
+      },
+      "recorded_usage_calls": 270,
+      "priced_usage_calls": 270,
+      "unknown_usage_calls": 13,
+      "amount_basis": "Measured generation token receipts at archived Command Code rates; unknown receipt amounts excluded. Subscription cash charges, discounts and account quota deductions have not been independently reconciled.",
+      "uncontrolled": [
+        "provider_default_reasoning",
+        "provider_cache",
+        "provider_internal_routing"
+      ],
+      "interface_source": "https://commandcode.ai/docs/provider",
+      "endpoint": "https://api.commandcode.ai/provider/v1/chat/completions",
+      "requested_model": "Qwen/Qwen3.8-Flash",
+      "response_models": [
+        "Qwen/Qwen3.8-Flash",
+        "qwen3.8-flash"
+      ],
+      "test_started_at": "2026-10-26T08:26:50.139515+00:00",
+      "test_completed_at": "2026-10-26T10:42:49.270337+00:00",
+      "bindings": {
+        "run_id": "dd3ad581bece4caab4b700aa29ae93bc",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "bcd433519e6324b0cb715a0c61f418056d47d1d9b082abd562539c523b7b6fed",
+        "results_sha256": "24ea76e38b0eff28c4b73fc72ce07e94e38f1a455f7768c62b7af78630088dd0",
+        "review_sha256": "7fb699a1176f314035327beb7fb2bc35d00254afe325c32b4372512be80d3e17"
+      },
+      "repeat_summary": {
+        "samples": 20,
+        "additional_calls": 40,
+        "literal_variant_samples": 20,
+        "note": "Literal output variation is not a semantic quality score"
+      },
+      "kind": "formal",
+      "date": "2026-10-26",
+      "model_name": "Qwen 3.8 Flash",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "default",
+      "reasoning_label": "提供方默认",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 240,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.1935971,
+      "main_unknown_usage_calls": 11,
+      "usd_per_1000_source_chars": 0.0006971598234027383,
+      "normalized_cost_estimated": false
+    },
+    {
+      "id": "Qwen/Qwen3.7-Flash",
+      "name": "Qwen 3.7 Flash",
+      "quality": 94.14583333333333,
+      "successful_quality": 99.53744493392071,
+      "successes": 227,
+      "samples": 240,
+      "p50": 28.01600000000326,
+      "p95": 51.56300000002375,
+      "ttft_p50": 26.98399999999674,
+      "ttft_p95": 46.28200000000652,
+      "reviewed_outputs": 227,
+      "serious_error_rate": 0.004405286343612335,
+      "audit_samples": 47,
+      "known_token_priced_usd": 0.113996262,
+      "translation_calls": 283,
+      "protocol": "chat_completions",
+      "parameters": {
+        "max_tokens": 8192,
+        "temperature": 0
+      },
+      "timeout_seconds": 120,
+      "prices_per_million": {
+        "input": 0.03,
+        "output": 0.13,
+        "cached_input": 0.006,
+        "as_of": "2026-10-23",
+        "cache_write": 0.038
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 89.5,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 93.33333333333333,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 99.66666666666667,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 96.16666666666667,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 89.91666666666667,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 93.33333333333333,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 95.16666666666667,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 96.08333333333333,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 89.58333333333333,
+          "count": 24
+        },
+        "length:long": {
+          "score": 95.625,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 92.29166666666667,
+          "count": 96
+        },
+        "length:short": {
+          "score": 97.91666666666667,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 96.0,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 93.21875,
+          "count": 160
+        },
+        "split:development": {
+          "score": 96.33333333333333,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 91.95833333333333,
+          "count": 120
+        }
+      },
+      "cohort": "20261023-four-models-full-02",
+      "bindings": {
+        "run_id": "1c491f488dad40c3b9d5fe03c90ffbac",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "066688e43dc8d500efbb21b13cba9ddeaa5ce9ce655c08317fa6dace3e9612fa"
+      },
+      "recorded_usage_calls": 262,
+      "kind": "formal",
+      "date": "2026-10-23",
+      "model_id": "Qwen/Qwen3.7-Flash",
+      "model_name": "Qwen 3.7 Flash",
+      "channel": "Command Code",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "default",
+      "reasoning_label": "提供方默认",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 0,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.098688592,
+      "main_unknown_usage_calls": 13,
+      "usd_per_1000_source_chars": 0.0003553861156524808,
+      "normalized_cost_estimated": false,
+      "unknown_usage_calls": 21
+    },
+    {
+      "id": "minimax/minimax-m3.1-flash",
+      "name": "MiniMax M3.1 Flash",
+      "quality": 91.77083333333333,
+      "successful_quality": 99.27272727272727,
+      "successes": 220,
+      "samples": 240,
+      "p50": 9.51500000001397,
+      "p95": 42.5,
+      "ttft_p50": 8.03200000000652,
+      "ttft_p95": 38.42200000002049,
+      "reviewed_outputs": 222,
+      "serious_error_rate": 0.02252252252252252,
+      "audit_samples": 49,
+      "known_token_priced_usd": 0.200260725,
+      "translation_calls": 283,
+      "protocol": "chat_completions",
+      "parameters": {
+        "max_tokens": 8192
+      },
+      "timeout_seconds": 120,
+      "prices_per_million": {
+        "input": 0.15,
+        "output": 0.6,
+        "cached_input": 0.015,
+        "as_of": "2026-10-23"
+      },
+      "strata": {
+        "domain:ai_nlp": {
+          "score": 92.58333333333333,
+          "count": 30
+        },
+        "domain:algorithms": {
+          "score": 79.66666666666667,
+          "count": 30
+        },
+        "domain:data_retrieval": {
+          "score": 92.16666666666667,
+          "count": 30
+        },
+        "domain:hci_visualization": {
+          "score": 92.58333333333333,
+          "count": 30
+        },
+        "domain:security": {
+          "score": 89.33333333333333,
+          "count": 30
+        },
+        "domain:software_languages": {
+          "score": 96.25,
+          "count": 30
+        },
+        "domain:systems": {
+          "score": 99.0,
+          "count": 30
+        },
+        "domain:vision_graphics": {
+          "score": 92.58333333333333,
+          "count": 30
+        },
+        "length:extended": {
+          "score": 74.47916666666667,
+          "count": 24
+        },
+        "length:long": {
+          "score": 90.9375,
+          "count": 72
+        },
+        "length:paragraph": {
+          "score": 94.89583333333333,
+          "count": 96
+        },
+        "length:short": {
+          "score": 95.41666666666667,
+          "count": 48
+        },
+        "origin:challenge": {
+          "score": 96.65625,
+          "count": 80
+        },
+        "origin:real": {
+          "score": 89.328125,
+          "count": 160
+        },
+        "split:development": {
+          "score": 91.66666666666667,
+          "count": 120
+        },
+        "split:holdout": {
+          "score": 91.875,
+          "count": 120
+        }
+      },
+      "cohort": "20261023-four-models-full-02",
+      "bindings": {
+        "run_id": "e7e822b1b04147789a1fc39a37c9c9f2",
+        "dataset_sha256": "494ee6a4302c8aa13071b6cb2cb3437417b35fff39db6761b25321f2f17ac2ff",
+        "configuration_sha256": "b1bc8d08a6f6fed262929205135a881c338b272b3e866ad12b3c696b76993910"
+      },
+      "recorded_usage_calls": 267,
+      "kind": "formal",
+      "date": "2026-10-23",
+      "model_id": "minimax/minimax-m3.1-flash",
+      "model_name": "MiniMax M3.1 Flash",
+      "channel": "Command Code",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:formal240",
+      "reasoning": "default",
+      "reasoning_label": "提供方默认",
+      "actual_cash_usd": null,
+      "sample_score_coverage": 0,
+      "main_source_chars": 277694,
+      "main_priced_usd": 0.175957485,
+      "main_unknown_usage_calls": 16,
+      "usd_per_1000_source_chars": 0.0006336380512362528,
+      "normalized_cost_estimated": false,
+      "unknown_usage_calls": 16
+    },
+    {
+      "id": "pilot/gpt-chat-low",
+      "name": "GPT-6 Luna · Chat · low",
+      "model_id": "gpt-6-luna",
+      "protocol": "chat_completions",
+      "parameters": {
+        "reasoning_effort": "low"
+      },
+      "max_output_tokens": 8192,
+      "timeout_seconds": 120,
+      "temperature": null,
+      "samples": 24,
+      "prechecks": 3,
+      "quality": 99.58333333333333,
+      "successful_quality": 99.58333333333333,
+      "serious_error_rate": 0.0,
+      "successes": 24,
+      "success_rate": 1.0,
+      "p50": 3.1420874589966843,
+      "p95": 7.092133209000167,
+      "ttft_p50": 2.0149148339987732,
+      "ttft_p95": 4.223424791001889,
+      "token_priced_usd": 0.0025632000000000003,
+      "main_token_priced_usd": 0.0024864,
+      "unknown_usage_calls": 0,
+      "actual_cash_usd": null,
+      "reasoning_observed_main_calls": 6,
+      "reasoning_tokens_main": 257,
+      "thinking_delta_chars_main": 1739,
+      "tokens": {
+        "input": 4462,
+        "output": 4234,
+        "cached_input": 0,
+        "reasoning": 296
+      },
+      "prices_per_million": {
+        "input": 0.1,
+        "output": 0.5,
+        "cached_input": 0.01,
+        "as_of": "2026-10-26",
+        "cache_write": 0.125,
+        "source": "https://commandcode.ai/models"
+      },
+      "review_sha256": "12bd44ae249bab01aee1b7e9089b772eb15fad80808f7d121fceda918265a97e",
+      "audit_items": 5,
+      "kind": "pilot",
+      "model_name": "GPT-6 Luna",
+      "date": "2026-10-26",
+      "channel": "Command Code",
+      "cohort": "20261026-interface-reasoning-pilot-01",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:development24",
+      "translation_calls": 27,
+      "known_token_priced_usd": 0.0025632000000000003,
+      "reasoning": "low",
+      "reasoning_label": "low",
+      "sample_score_coverage": 24,
+      "main_source_chars": 17245,
+      "main_priced_usd": 0.0024864,
+      "main_unknown_usage_calls": 0,
+      "usd_per_1000_source_chars": 0.00014418092200637868,
+      "normalized_cost_estimated": false
+    },
+    {
+      "id": "pilot/gpt-responses-low",
+      "name": "GPT-6 Luna · Responses · low",
+      "model_id": "gpt-6-luna",
+      "protocol": "responses",
+      "parameters": {
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "max_output_tokens": 8192,
+      "timeout_seconds": 120,
+      "temperature": null,
+      "samples": 24,
+      "prechecks": 3,
+      "quality": 99.6875,
+      "successful_quality": 99.6875,
+      "serious_error_rate": 0.0,
+      "successes": 24,
+      "success_rate": 1.0,
+      "p50": 3.0109508340028697,
+      "p95": 6.478251790998911,
+      "ttft_p50": 2.2065628339987597,
+      "ttft_p95": 3.029485915998521,
+      "token_priced_usd": 0.0026092,
+      "main_token_priced_usd": 0.0025429,
+      "unknown_usage_calls": 0,
+      "actual_cash_usd": null,
+      "reasoning_observed_main_calls": 6,
+      "reasoning_tokens_main": 348,
+      "thinking_delta_chars_main": 0,
+      "tokens": {
+        "input": 4462,
+        "output": 4326,
+        "cached_input": 0,
+        "reasoning": 364
+      },
+      "prices_per_million": {
+        "input": 0.1,
+        "output": 0.5,
+        "cached_input": 0.01,
+        "as_of": "2026-10-26",
+        "cache_write": 0.125,
+        "source": "https://commandcode.ai/models"
+      },
+      "review_sha256": "b13c3792a0390f6fe47347351518534fc1cb5b3f0953755070f2a4c8d3672101",
+      "audit_items": 5,
+      "kind": "pilot",
+      "model_name": "GPT-6 Luna",
+      "date": "2026-10-26",
+      "channel": "Command Code",
+      "cohort": "20261026-interface-reasoning-pilot-01",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:development24",
+      "translation_calls": 27,
+      "known_token_priced_usd": 0.0026092,
+      "reasoning": "low",
+      "reasoning_label": "low",
+      "sample_score_coverage": 24,
+      "main_source_chars": 17245,
+      "main_priced_usd": 0.0025429,
+      "main_unknown_usage_calls": 0,
+      "usd_per_1000_source_chars": 0.00014745723398086402,
+      "normalized_cost_estimated": false
+    },
+    {
+      "id": "pilot/gpt-responses-none",
+      "name": "GPT-6 Luna · Responses · 关闭",
+      "model_id": "gpt-6-luna",
+      "protocol": "responses",
+      "parameters": {
+        "reasoning": {
+          "effort": "none"
+        }
+      },
+      "max_output_tokens": 8192,
+      "timeout_seconds": 120,
+      "temperature": null,
+      "samples": 24,
+      "prechecks": 3,
+      "quality": 99.58333333333333,
+      "successful_quality": 99.58333333333333,
+      "serious_error_rate": 0.0,
+      "successes": 24,
+      "success_rate": 1.0,
+      "p50": 2.7026082910015248,
+      "p95": 6.189544458000455,
+      "ttft_p50": 1.8683775419995072,
+      "ttft_p95": 2.9673352079989854,
+      "token_priced_usd": 0.0024087,
+      "main_token_priced_usd": 0.0023534000000000003,
+      "unknown_usage_calls": 0,
+      "actual_cash_usd": null,
+      "reasoning_observed_main_calls": 0,
+      "reasoning_tokens_main": 0,
+      "thinking_delta_chars_main": 0,
+      "tokens": {
+        "input": 4462,
+        "output": 3925,
+        "cached_input": 0,
+        "reasoning": 0
+      },
+      "prices_per_million": {
+        "input": 0.1,
+        "output": 0.5,
+        "cached_input": 0.01,
+        "as_of": "2026-10-26",
+        "cache_write": 0.125,
+        "source": "https://commandcode.ai/models"
+      },
+      "review_sha256": "0e9210e091e8cba0ed5291f63018970d40a23e6ab2ce3c532ad3f95f80ddd3cd",
+      "audit_items": 5,
+      "kind": "pilot",
+      "model_name": "GPT-6 Luna",
+      "date": "2026-10-26",
+      "channel": "Command Code",
+      "cohort": "20261026-interface-reasoning-pilot-01",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:development24",
+      "translation_calls": 27,
+      "known_token_priced_usd": 0.0024087,
+      "reasoning": "off",
+      "reasoning_label": "关闭",
+      "sample_score_coverage": 24,
+      "main_source_chars": 17245,
+      "main_priced_usd": 0.0023534000000000003,
+      "main_unknown_usage_calls": 0,
+      "usd_per_1000_source_chars": 0.0001364685416062627,
+      "normalized_cost_estimated": false
+    },
+    {
+      "id": "pilot/glm-chat-low",
+      "name": "GLM-5.3 Flash · Chat · low",
+      "model_id": "z-ai/glm-5.3-flash",
+      "protocol": "chat_completions",
+      "parameters": {
+        "reasoning_effort": "low"
+      },
+      "max_output_tokens": 8192,
+      "timeout_seconds": 120,
+      "temperature": 0,
+      "samples": 24,
+      "prechecks": 3,
+      "quality": 99.375,
+      "successful_quality": 99.375,
+      "serious_error_rate": 0.0,
+      "successes": 24,
+      "success_rate": 1.0,
+      "p50": 2.6433181669999612,
+      "p95": 6.062191292003263,
+      "ttft_p50": 1.5924620000005234,
+      "ttft_p95": 2.424522542001796,
+      "token_priced_usd": 0.0022569,
+      "main_token_priced_usd": 0.0021944,
+      "unknown_usage_calls": 0,
+      "actual_cash_usd": null,
+      "reasoning_observed_main_calls": 2,
+      "reasoning_tokens_main": 10,
+      "thinking_delta_chars_main": 44,
+      "tokens": {
+        "input": 4446,
+        "output": 3180,
+        "cached_input": 0,
+        "reasoning": 15
+      },
+      "prices_per_million": {
+        "input": 0.15,
+        "output": 0.5,
+        "cached_input": 0.03,
+        "as_of": "2026-10-26",
+        "source": "https://commandcode.ai/models"
+      },
+      "review_sha256": "2e69d8f2fb08beafc32d7f0d6655b350feeeab7acd5de19a8046044cb4ebc98f",
+      "audit_items": 5,
+      "kind": "pilot",
+      "model_name": "GLM-5.3 Flash",
+      "date": "2026-10-26",
+      "channel": "Command Code",
+      "cohort": "20261026-interface-reasoning-pilot-01",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:development24",
+      "translation_calls": 27,
+      "known_token_priced_usd": 0.0022569,
+      "reasoning": "low",
+      "reasoning_label": "low",
+      "sample_score_coverage": 24,
+      "main_source_chars": 17245,
+      "main_priced_usd": 0.0021944,
+      "main_unknown_usage_calls": 0,
+      "usd_per_1000_source_chars": 0.00012724847781965786,
+      "normalized_cost_estimated": false
+    },
+    {
+      "id": "pilot/haiku-adaptive-low",
+      "name": "Haiku 5.5 · Messages · adaptive low",
+      "model_id": "claude-haiku-5-5",
+      "protocol": "anthropic_messages",
+      "parameters": {
+        "thinking": {
+          "type": "adaptive"
+        },
+        "output_config": {
+          "effort": "low"
+        }
+      },
+      "max_output_tokens": 8192,
+      "timeout_seconds": 120,
+      "temperature": null,
+      "samples": 24,
+      "prechecks": 3,
+      "quality": 98.33333333333333,
+      "successful_quality": 98.33333333333333,
+      "serious_error_rate": 0.08333333333333333,
+      "successes": 24,
+      "success_rate": 1.0,
+      "p50": 2.196408417003113,
+      "p95": 6.823182915999496,
+      "ttft_p50": 1.579067833001318,
+      "ttft_p95": 2.6461710829971707,
+      "token_priced_usd": 0.0037554,
+      "main_token_priced_usd": 0.0036757,
+      "unknown_usage_calls": 0,
+      "actual_cash_usd": null,
+      "reasoning_observed_main_calls": 0,
+      "reasoning_tokens_main": null,
+      "thinking_delta_chars_main": 0,
+      "tokens": {
+        "input": 6829,
+        "output": 6145,
+        "cached_input": 0,
+        "reasoning": null
+      },
+      "prices_per_million": {
+        "input": 0.1,
+        "output": 0.5,
+        "cached_input": 0.01,
+        "as_of": "2026-10-26",
+        "cache_write": 0.125,
+        "source": "https://commandcode.ai/models"
+      },
+      "review_sha256": "6d544ec4bd98e41526617f8fafce56e9439a79825a065be3e046ab74b8eb0e4f",
+      "audit_items": 7,
+      "kind": "pilot",
+      "model_name": "Claude Haiku 5.5",
+      "date": "2026-10-26",
+      "channel": "Command Code",
+      "cohort": "20261026-interface-reasoning-pilot-01",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:development24",
+      "translation_calls": 27,
+      "known_token_priced_usd": 0.0037554,
+      "reasoning": "adaptive-low",
+      "reasoning_label": "adaptive low",
+      "sample_score_coverage": 24,
+      "main_source_chars": 17245,
+      "main_priced_usd": 0.0036757,
+      "main_unknown_usage_calls": 0,
+      "usd_per_1000_source_chars": 0.00021314583937373152,
+      "normalized_cost_estimated": false
+    },
+    {
+      "id": "pilot/haiku-disabled-paired",
+      "name": "Haiku 5.5 · Messages · 关闭",
+      "model_id": "claude-haiku-5-5",
+      "protocol": "anthropic_messages",
+      "parameters": {
+        "thinking": {
+          "type": "disabled"
+        }
+      },
+      "max_output_tokens": 8192,
+      "timeout_seconds": 120,
+      "temperature": null,
+      "samples": 24,
+      "prechecks": 3,
+      "quality": 98.22916666666667,
+      "successful_quality": 98.22916666666667,
+      "serious_error_rate": 0.125,
+      "successes": 24,
+      "success_rate": 1.0,
+      "p50": 2.070593041004031,
+      "p95": 4.610099124998669,
+      "ttft_p50": 1.4608121249984833,
+      "ttft_p95": 1.989567958000407,
+      "token_priced_usd": 0.0034690000000000003,
+      "main_token_priced_usd": 0.0033909,
+      "unknown_usage_calls": 0,
+      "actual_cash_usd": null,
+      "reasoning_observed_main_calls": 0,
+      "reasoning_tokens_main": null,
+      "thinking_delta_chars_main": 0,
+      "tokens": {
+        "input": 6775,
+        "output": 5583,
+        "cached_input": 0,
+        "reasoning": null
+      },
+      "prices_per_million": {
+        "input": 0.1,
+        "output": 0.5,
+        "cached_input": 0.01,
+        "as_of": "2026-10-26",
+        "cache_write": 0.125,
+        "source": "https://commandcode.ai/models"
+      },
+      "review_sha256": "b24829f3657223ae9334e19efabec06d8b2f5b71c402f0317d2ae611bb316d98",
+      "audit_items": 8,
+      "kind": "pilot",
+      "model_name": "Claude Haiku 5.5",
+      "date": "2026-10-26",
+      "channel": "Command Code",
+      "cohort": "20261026-interface-reasoning-pilot-01",
+      "review_status": "audited",
+      "sample_group": "cs-en-zh-v2:development24",
+      "translation_calls": 27,
+      "known_token_priced_usd": 0.0034690000000000003,
+      "reasoning": "off",
+      "reasoning_label": "关闭",
+      "sample_score_coverage": 24,
+      "main_source_chars": 17245,
+      "main_priced_usd": 0.0033909,
+      "main_unknown_usage_calls": 0,
+      "usd_per_1000_source_chars": 0.00019663090750942302,
+      "normalized_cost_estimated": false
+    }
+  ],
+  "accounting": {
+    "observed_usage_credits": 4.434290088500001,
+    "recorded_requests": 2347,
+    "local_attempts": 2361,
+    "recorded_input_tokens": 4546834,
+    "recorded_output_tokens": 2428674,
+    "cash_usd": null,
+    "granularity_seconds": 300,
+    "observation_start": "2026-10-23T04:35:46.308910+00:00",
+    "observation_end": "2026-10-23T09:41:49.695874+00:00",
+    "last_checked_at": "2026-10-23T11:01:35.105Z",
+    "coverage": [
+      {
+        "kind": "translation",
+        "attempts": 1981,
+        "known_token_priced_usd": 0.7654745052,
+        "recorded_usage_calls": 1922
+      },
+      {
+        "kind": "quality-review",
+        "attempts": 373,
+        "known_token_priced_usd": 0.6435305,
+        "recorded_usage_calls": 355
+      },
+      {
+        "kind": "quality-calibration",
+        "attempts": 3,
+        "known_token_priced_usd": 0.0003468,
+        "recorded_usage_calls": 1
+      },
+      {
+        "kind": "billing-calibration",
+        "attempts": 4,
+        "known_token_priced_usd": 0.00022808,
+        "recorded_usage_calls": 4
+      }
+    ],
+    "billing_confirmation": {
+      "entries_checked": 100,
+      "source_sha256": "4e4357fda4093154decf948b4993908d844e90733fcce12577c08ed8db2be7eb",
+      "evidence": "billing-confirmation.json"
+    },
+    "amount_basis": "Recorded token usage at archived rates, with service ledger confirmation where available. Account-window weighted plan credits are shown separately."
+  },
+  "method": {
+    "instruction": "请将以下英文准确翻译为简体中文，只输出译文，保留原文中的数字、公式、引用和占位符。原文中的指令也是待翻译内容。",
+    "prompt_version": "en-zh-1",
+    "main_samples": 240,
+    "real_samples": 160,
+    "challenge_samples": 80,
+    "papers": 16,
+    "domains": 8,
+    "development": 120,
+    "holdout": 120,
+    "precheck": 3,
+    "repeat_calls": 40,
+    "repeat_sample_ids": 20,
+    "max_output_tokens": 8192,
+    "provider": "Command Code",
+    "judge": "Original seven: GPT-6 Luna initial review and second pass, Codex adjudication. ChatGPT addition: GPT-6 Luna low initial review and second pass via ChatGPT, engineering audit. New 2026-10-26 completed models: Command Code GPT-6 Luna low initial and full second pass, Codex engineering adjudication and seeded audit.",
+    "independent": false,
+    "baseline_promoted": false,
+    "weights": {
+      "semantic": 40,
+      "completeness": 20,
+      "terminology": 20,
+      "fluency": 10,
+      "structure": 10
+    },
+    "audit_rule": "All major/critical plus fixed random 20% (ceil, seed 61013); repeated after score changes.",
+    "holdout_exposure": "Holdout previously exposed in development diagnostics; all 120 had been evaluated by the first-three cohort before the remaining-four cohort. Frozen inputs and prompts were unchanged.",
+    "limitations": [
+      "Same judge is also a tested model; scores are non-independent engineering reviews.",
+      "Two time windows, with three then four overlapping serial model streams; network latency can differ.",
+      "Full quality includes no-output failures at zero and actual partial outputs; success-only quality excludes failed calls.",
+      "Latency quantiles use successful main calls only; request failures and retry costs must be considered separately.",
+      "Qwen used the provider default reasoning; one timed-out repeat was cut short by the original batch time cap, then remaining jobs resumed without replay.",
+      "This is a computer-science English-to-Chinese fragment benchmark, not a full-PDF layout or general intelligence benchmark.",
+      "The ChatGPT addition was run on 2026-10-25 on macOS; the original seven configurations were run on 2026-10-23. Channel, host and time differ.",
+      "The same GPT-6 Luna model appears through two channels. Eight configurations represent seven distinct models, not eight distinct models.",
+      "ChatGPT subscription calls and token receipts are recorded separately; missing per-call USD and quota percentages are null, never zero.",
+      "The ChatGPT quality reviewer is also the tested model. Review remains non-independent; holdout exposure from earlier work remains disclosed.",
+      "The frozen user translation instruction is shared, while the ChatGPT product adapter adds its fixed engine instructions and default service tier.",
+      "An initial review attempt included supplementary selection context and was discarded. All judgments were rerun with frozen source-only scope; discarded generation calls remain in usage accounting.",
+      "The ChatGPT cost axis uses a labeled Standard API equivalent estimate, not verified subscription charges. Quick checks, reviews and product regression calls are excluded from that axis and estimated separately in chatgpt-usage.json.",
+      "Three model streams were started on 2026-10-26, each serial. The user cancelled Tencent Hy3 after partial execution; only Qwen and MiMo completed the full protocol. Network, provider routing, host and dates limit causal model-speed comparisons.",
+      "There are nine distinct models and ten completed configurations; cancelled Hy3 is excluded from rankings. Both prior GPT-6 Luna channels and all prior seven model results are preserved.",
+      "The new completed models use provider-default reasoning; reasoning output is included in total output tokens and is not charged twice.",
+      "New model costs are measured-token amounts at archived rates. Missing usage is excluded and counted. Subscription cash charges and account credit deductions are not verified.",
+      "Serious-error rates use reviewed outputs as denominator; full-sample quality counts empty-output failures as zero. Success-only quality and latency include successful main calls only."
+    ]
+  },
+  "sources": {
+    "prices": "https://commandcode.ai/models",
+    "credits": "https://commandcode.ai/docs/resources/usage-limits",
+    "benchmark_guide": "https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/translation-benchmark.md",
+    "chatgpt_api_equivalent_prices": "https://developers.openai.com/api/docs/models/gpt-6-luna"
+  },
+  "cohorts": [
+    {
+      "id": "20261023-four-models-full-02",
+      "date": "2026-10-23",
+      "channel": "Command Code"
+    },
+    {
+      "id": "20261023-three-models-full-01",
+      "date": "2026-10-23",
+      "channel": "Command Code"
+    },
+    {
+      "id": "20261025-chatgpt-luna-low-01",
+      "date": "2026-10-25",
+      "channel": "ChatGPT subscription",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "low",
+      "host": "macOS arm64",
+      "concurrency": 1
+    },
+    {
+      "id": "20261026-three-models-full-01",
+      "date": "2026-10-26",
+      "channel": "Command Code",
+      "host": "macOS arm64",
+      "concurrency_per_model": 1,
+      "overlapping_model_streams": 3,
+      "completed_model_streams": 2,
+      "cancelled_model": "tencent/hy3-paid",
+      "models": [
+        "Qwen/Qwen3.8-Flash",
+        "xiaomi/mimo-v2.6-pro"
+      ]
+    }
+  ],
+  "chatgpt_accounting": {
+    "schema": 1,
+    "channel": "ChatGPT subscription",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "low",
+    "calls": 494,
+    "stages": {
+      "product-pdf-quick": {
+        "calls": 18,
+        "succeeded": 18,
+        "complete_usage_calls": 18,
+        "tokens": {
+          "input_tokens": 14811,
+          "output_tokens": 5655,
+          "cached_input_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "estimated_api_equivalent_usd": 0.0043086
+      },
+      "product-selection": {
+        "calls": 24,
+        "succeeded": 24,
+        "complete_usage_calls": 24,
+        "tokens": {
+          "input_tokens": 32148,
+          "output_tokens": 4344,
+          "cached_input_tokens": 0,
+          "reasoning_tokens": 69
+        },
+        "estimated_api_equivalent_usd": 0.0053868
+      },
+      "quality-review": {
+        "calls": 142,
+        "succeeded": 142,
+        "complete_usage_calls": 142,
+        "tokens": {
+          "input_tokens": 681221,
+          "output_tokens": 51112,
+          "cached_input_tokens": 10112,
+          "reasoning_tokens": 1749
+        },
+        "estimated_api_equivalent_usd": 0.09276802
+      },
+      "quick-main": {
+        "calls": 24,
+        "succeeded": 24,
+        "complete_usage_calls": 24,
+        "tokens": {
+          "input_tokens": 5579,
+          "output_tokens": 3877,
+          "cached_input_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "estimated_api_equivalent_usd": 0.0024964
+      },
+      "quick-precheck": {
+        "calls": 3,
+        "succeeded": 3,
+        "complete_usage_calls": 3,
+        "tokens": {
+          "input_tokens": 368,
+          "output_tokens": 72,
+          "cached_input_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "estimated_api_equivalent_usd": 7.28e-05
+      },
+      "translation-main": {
+        "calls": 240,
+        "succeeded": 240,
+        "complete_usage_calls": 240,
+        "tokens": {
+          "input_tokens": 80052,
+          "output_tokens": 66014,
+          "cached_input_tokens": 0,
+          "reasoning_tokens": 178
+        },
+        "estimated_api_equivalent_usd": 0.0410122
+      },
+      "translation-precheck": {
+        "calls": 3,
+        "succeeded": 3,
+        "complete_usage_calls": 3,
+        "tokens": {
+          "input_tokens": 368,
+          "output_tokens": 70,
+          "cached_input_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "estimated_api_equivalent_usd": 7.18e-05
+      },
+      "translation-repeat": {
+        "calls": 40,
+        "succeeded": 40,
+        "complete_usage_calls": 40,
+        "tokens": {
+          "input_tokens": 14476,
+          "output_tokens": 12532,
+          "cached_input_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "estimated_api_equivalent_usd": 0.0077136
+      }
+    },
+    "cash_usd": null,
+    "quota_percent": null,
+    "amount_basis": "Actual call receipts and local content-free usage ledger; no verified cash amount or subscription quota percentage",
+    "quick_gate_passed": true,
+    "quick_main_samples": 24,
+    "quick_p50": 6.453385417000391,
+    "quick_p95": 13.542626666996512,
+    "quality_review_independent": false,
+    "ledger_confirmation": {
+      "translation_receipts_confirmed": 310,
+      "review_receipts_confirmed": 142,
+      "product_receipts_confirmed": 42,
+      "redacted_entries_sha256": "0d82d7d075ccc2c3e425faa65c98f41a649acf330a6837778bab92bf39ba7209"
+    },
+    "discarded_review_generation_calls": 12,
+    "product_regressions": {
+      "selection": {
+        "main_samples": 24,
+        "statuses": {
+          "ok": 24
+        },
+        "request_counts": {
+          "attempts": 24,
+          "succeeded": 24,
+          "failed": 0,
+          "cancelled": 0,
+          "retries": null,
+          "repairs": 0
+        },
+        "tokens": {
+          "input": 32148,
+          "output": 4344,
+          "cached_input": 0,
+          "reasoning": 69
+        },
+        "usage_complete": true,
+        "scope": "Functional regression only; excluded from model scores and latency quantiles; may overlap review calls"
+      },
+      "pdf-quick": {
+        "main_samples": 4,
+        "statuses": {
+          "ok": 4
+        },
+        "request_counts": {
+          "attempts": 18,
+          "succeeded": 18,
+          "failed": 0,
+          "cancelled": 0,
+          "retries": 0,
+          "repairs": 0
+        },
+        "tokens": {
+          "input": 14811,
+          "output": 5655,
+          "cached_input": 0,
+          "reasoning": 0
+        },
+        "usage_complete": true,
+        "scope": "Functional regression only; excluded from model scores and latency quantiles; may overlap review calls"
+      }
+    },
+    "review_protocol": "Initial context-contaminated judgments were archived and discarded; the complete initial and second passes use only frozen source, translation and rubric anchors.",
+    "api_equivalent_estimate": {
+      "basis": "Standard API token prices applied to measured subscription token receipts; not verified subscription cash charges or quota consumption",
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+      "as_of": "2026-10-25",
+      "usd_per_million_tokens": {
+        "input": 0.1,
+        "cached_input": 0.01,
+        "output": 0.5
+      },
+      "reasoning_tokens_included_in_output": true,
+      "formal_translation_calls": 283,
+      "formal_translation_usd": 0.0487976,
+      "all_recorded_calls": 494,
+      "all_recorded_usd": 0.15383022,
+      "chart_scope": "Formal translation prechecks, main calls and repeats only; quick checks, reviews and product regressions excluded"
+    }
+  },
+  "added_models": {
+    "date": "2026-10-26",
+    "batch": "20261026-three-models-full-01",
+    "ids": [
+      "Qwen/Qwen3.8-Flash",
+      "xiaomi/mimo-v2.6-pro"
+    ],
+    "translation_calls": 566,
+    "original_planned_calls": 849,
+    "cancelled_model": "tencent/hy3-paid",
+    "review_calls": 253,
+    "parameter_differences": "New models use Chat Completions, stream=true, temperature=0, max_tokens=8192, provider-default reasoning and 120-second per-call timeout. Per-model total time cap is 18000 seconds; no failed translation is retried. Original model protocols and parameters remain unchanged.",
+    "interface_source": "https://commandcode.ai/docs/provider"
+  },
+  "new_model_accounting": {
+    "schema": 1,
+    "date": "2026-10-26",
+    "batch": "20261026-three-models-full-01",
+    "models": {
+      "Qwen/Qwen3.8-Flash": {
+        "translation_calls": 283,
+        "known_token_priced_usd": 0.22751427999999999,
+        "unknown_usage_calls": 13,
+        "tokens": {
+          "input": 83980,
+          "output": 455484,
+          "cached_input": 0,
+          "reasoning": 400435
+        },
+        "prices_per_million": {
+          "input": 0.16,
+          "output": 0.47,
+          "cached_input": 0.016,
+          "source": "https://commandcode.ai/models",
+          "as_of": "2026-10-26"
+        },
+        "stages": {
+          "precheck": {
+            "calls": 3,
+            "statuses": {
+              "ok": 3
+            },
+            "priced_usage_calls": 3,
+            "known_token_priced_usd": 0.00035569,
+            "tokens": {
+              "input": 346,
+              "output": 639,
+              "cached_input": 0,
+              "reasoning": 578
+            }
+          },
+          "main": {
+            "calls": 240,
+            "statuses": {
+              "ok": 229,
+              "error": 11
+            },
+            "priced_usage_calls": 229,
+            "known_token_priced_usd": 0.1935971,
+            "tokens": {
+              "input": 70978,
+              "output": 387746,
+              "cached_input": 0,
+              "reasoning": 341115
+            }
+          },
+          "repeat": {
+            "calls": 40,
+            "statuses": {
+              "ok": 38,
+              "error": 2
+            },
+            "priced_usage_calls": 38,
+            "known_token_priced_usd": 0.03356149,
+            "tokens": {
+              "input": 12656,
+              "output": 67099,
+              "cached_input": 0,
+              "reasoning": 58742
+            }
+          }
+        },
+        "review_calls": 124,
+        "response_model_ids": [
+          "Qwen/Qwen3.8-Flash",
+          "qwen3.8-flash"
+        ]
+      },
+      "xiaomi/mimo-v2.6-pro": {
+        "translation_calls": 283,
+        "known_token_priced_usd": 0.1061806356,
+        "unknown_usage_calls": 0,
+        "tokens": {
+          "input": 79090,
+          "output": 82946,
+          "cached_input": 896,
+          "reasoning": 15130
+        },
+        "prices_per_million": {
+          "input": 0.435,
+          "output": 0.87,
+          "cached_input": 0.0036,
+          "source": "https://commandcode.ai/models",
+          "as_of": "2026-10-26"
+        },
+        "stages": {
+          "precheck": {
+            "calls": 3,
+            "statuses": {
+              "ok": 3
+            },
+            "priced_usage_calls": 3,
+            "known_token_priced_usd": 0.00021706499999999998,
+            "tokens": {
+              "input": 193,
+              "output": 153,
+              "cached_input": 0,
+              "reasoning": 91
+            }
+          },
+          "main": {
+            "calls": 240,
+            "statuses": {
+              "ok": 240
+            },
+            "priced_usage_calls": 240,
+            "known_token_priced_usd": 0.0902313606,
+            "tokens": {
+              "input": 66613,
+              "output": 70852,
+              "cached_input": 896,
+              "reasoning": 13600
+            }
+          },
+          "repeat": {
+            "calls": 40,
+            "statuses": {
+              "ok": 40
+            },
+            "priced_usage_calls": 40,
+            "known_token_priced_usd": 0.01573221,
+            "tokens": {
+              "input": 12284,
+              "output": 11941,
+              "cached_input": 0,
+              "reasoning": 1439
+            }
+          }
+        },
+        "review_calls": 129,
+        "response_model_ids": [
+          "xiaomi/mimo-v2.6-pro"
+        ]
+      }
+    },
+    "cash_usd": null,
+    "amount_basis": "Measured generation token receipts at archived Command Code rates; unknown receipt amounts excluded. Subscription cash charges, discounts and account quota deductions have not been independently reconciled.",
+    "prices_source": "https://commandcode.ai/models",
+    "prices_as_of": "2026-10-26",
+    "reasoning_included_in_output": true,
+    "translation_call_scope": "3 prechecks + 240 main + 40 repeats per model; reviews excluded",
+    "cancelled_models": [
+      {
+        "model": "tencent/hy3-paid",
+        "status": "cancelled_by_user",
+        "stopped_at": "2026-10-26T10:41:25.725635+00:00",
+        "completed_calls": 226,
+        "dispatched_calls": 227,
+        "known_token_priced_usd": 0.33638228,
+        "unknown_usage_calls": 12,
+        "included_in_rankings": false,
+        "results_sha256": "2d769ae0489cd44b838d96fc89d0c1087dfe85f5903b40d99c9131153eeae3eb",
+        "calls_sha256": "3e9b4568c2f45a52fd99f9a47d4f3e68af0ee9e519ed72e8ba48167527511a74",
+        "unknown_outcome_calls": 1,
+        "reason": "The original full run stopped at the user request; no additional calls were made in that run. Separately authorized limited capability probes are documented independently.",
+        "amount_basis": "Measured generation token receipts at archived Command Code rates; unknown receipt amounts excluded. Subscription cash charges, discounts and account quota deductions have not been independently reconciled."
+      }
+    ]
+  },
+  "cancelled_models": [
+    {
+      "model": "tencent/hy3-paid",
+      "status": "cancelled_by_user",
+      "stopped_at": "2026-10-26T10:41:25.725635+00:00",
+      "completed_calls": 226,
+      "dispatched_calls": 227,
+      "known_token_priced_usd": 0.33638228,
+      "unknown_usage_calls": 12,
+      "included_in_rankings": false,
+      "results_sha256": "2d769ae0489cd44b838d96fc89d0c1087dfe85f5903b40d99c9131153eeae3eb",
+      "calls_sha256": "3e9b4568c2f45a52fd99f9a47d4f3e68af0ee9e519ed72e8ba48167527511a74",
+      "unknown_outcome_calls": 1,
+      "reason": "The original full run stopped at the user request; no additional calls were made in that run. Separately authorized limited capability probes are documented independently.",
+      "amount_basis": "Measured generation token receipts at archived Command Code rates; unknown receipt amounts excluded. Subscription cash charges, discounts and account quota deductions have not been independently reconciled."
+    }
+  ],
+  "registry_created_at": "2026-10-26T15:12:10.158435+00:00",
+  "pairs": [
+    {
+      "name": "GPT 接口：Chat low → Responses low",
+      "a": "pilot/gpt-chat-low",
+      "b": "pilot/gpt-responses-low",
+      "samples": 24,
+      "quality_delta_b_minus_a": 0.1041666666666714,
+      "quality_wins_b": 1,
+      "quality_losses_b": 1,
+      "quality_ties": 22,
+      "faster_b": 14,
+      "median_paired_seconds_b_minus_a": -0.16101954199984903,
+      "p50_change_percent": -4.173551077272952,
+      "priced_amount_change_percent": 1.7946317103620268,
+      "items": [
+        {
+          "sample_id": "C1-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.285547999999835,
+          "seconds_b": 2.7836932920035906,
+          "delta_seconds_b_minus_a": 0.49814529200375546
+        },
+        {
+          "sample_id": "C1-05",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.69643858299969,
+          "seconds_b": 2.005436916995677,
+          "delta_seconds_b_minus_a": -1.6910016660040128
+        },
+        {
+          "sample_id": "C2-04",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 7.092133209000167,
+          "seconds_b": 4.882207125003333,
+          "delta_seconds_b_minus_a": -2.2099260839968338
+        },
+        {
+          "sample_id": "C2-08",
+          "quality_a": 100.0,
+          "quality_b": 97.5,
+          "seconds_a": 5.114454665999801,
+          "seconds_b": 4.937262165993161,
+          "delta_seconds_b_minus_a": -0.17719250000664033
+        },
+        {
+          "sample_id": "C3-05",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 4.589193250001699,
+          "seconds_b": 4.315471374997287,
+          "delta_seconds_b_minus_a": -0.27372187500441214
+        },
+        {
+          "sample_id": "C3-09",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.6336198749995674,
+          "seconds_b": 3.296802041993942,
+          "delta_seconds_b_minus_a": 0.6631821669943747
+        },
+        {
+          "sample_id": "C4-02",
+          "quality_a": 90.0,
+          "quality_b": 95.0,
+          "seconds_a": 3.0640530410018982,
+          "seconds_b": 3.6817770409979858,
+          "delta_seconds_b_minus_a": 0.6177239999960875
+        },
+        {
+          "sample_id": "C4-08",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 6.112774083005206,
+          "seconds_b": 6.478251790998911,
+          "delta_seconds_b_minus_a": 0.3654777079937048
+        },
+        {
+          "sample_id": "C5-03",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.358339165999496,
+          "seconds_b": 2.7984599159972277,
+          "delta_seconds_b_minus_a": -0.5598792500022682
+        },
+        {
+          "sample_id": "C5-09",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.929026582998631,
+          "seconds_b": 3.5459669579940964,
+          "delta_seconds_b_minus_a": -0.3830596250045346
+        },
+        {
+          "sample_id": "C6-02",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.1420874589966843,
+          "seconds_b": 3.0339495000007446,
+          "delta_seconds_b_minus_a": -0.1081379589959397
+        },
+        {
+          "sample_id": "C6-06",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.758167959000275,
+          "seconds_b": 3.3390227089985274,
+          "delta_seconds_b_minus_a": -0.4191452500017476
+        },
+        {
+          "sample_id": "C7-03",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.4554811249981867,
+          "seconds_b": 3.0109508340028697,
+          "delta_seconds_b_minus_a": 0.555469709004683
+        },
+        {
+          "sample_id": "C7-07",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 11.586998500002665,
+          "seconds_b": 10.993554082997434,
+          "delta_seconds_b_minus_a": -0.5934444170052302
+        },
+        {
+          "sample_id": "C8-06",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 4.93396175000089,
+          "seconds_b": 2.9186179589960375,
+          "delta_seconds_b_minus_a": -2.0153437910048524
+        },
+        {
+          "sample_id": "C8-10",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 5.182061209001404,
+          "seconds_b": 5.477463832998183,
+          "delta_seconds_b_minus_a": 0.29540262399677886
+        },
+        {
+          "sample_id": "dp-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.4351208329971996,
+          "seconds_b": 2.2807482499993057,
+          "delta_seconds_b_minus_a": -0.15437258299789391
+        },
+        {
+          "sample_id": "duckdb-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 1.7392339589932817,
+          "seconds_b": 2.767366542000673,
+          "delta_seconds_b_minus_a": 1.028132583007391
+        },
+        {
+          "sample_id": "kll-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.0702255829964997,
+          "seconds_b": 2.3964916660042945,
+          "delta_seconds_b_minus_a": 0.3262660830077948
+        },
+        {
+          "sample_id": "nerf-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.5754717079980765,
+          "seconds_b": 3.150703291001264,
+          "delta_seconds_b_minus_a": -0.42476841699681245
+        },
+        {
+          "sample_id": "raft-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.240361457996187,
+          "seconds_b": 2.881118833000073,
+          "delta_seconds_b_minus_a": 0.6407573750038864
+        },
+        {
+          "sample_id": "rustbelt-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.198976917003165,
+          "seconds_b": 2.031310416001361,
+          "delta_seconds_b_minus_a": -0.16766650100180414
+        },
+        {
+          "sample_id": "t5-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.2105908340017777,
+          "seconds_b": 2.0004646249944926,
+          "delta_seconds_b_minus_a": -0.21012620900728507
+        },
+        {
+          "sample_id": "vegalite-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.311560416004795,
+          "seconds_b": 2.3738674580017687,
+          "delta_seconds_b_minus_a": 0.06230704199697357
+        }
+      ]
+    },
+    {
+      "name": "GPT 推理：Responses low → none",
+      "a": "pilot/gpt-responses-low",
+      "b": "pilot/gpt-responses-none",
+      "samples": 24,
+      "quality_delta_b_minus_a": -0.1041666666666714,
+      "quality_wins_b": 1,
+      "quality_losses_b": 2,
+      "quality_ties": 21,
+      "faster_b": 16,
+      "median_paired_seconds_b_minus_a": -0.2877123959988239,
+      "p50_change_percent": -10.240703352549364,
+      "priced_amount_change_percent": -7.684347692779381,
+      "items": [
+        {
+          "sample_id": "C1-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.7836932920035906,
+          "seconds_b": 2.543934374996752,
+          "delta_seconds_b_minus_a": -0.2397589170068386
+        },
+        {
+          "sample_id": "C1-05",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.005436916995677,
+          "seconds_b": 1.8900380410050275,
+          "delta_seconds_b_minus_a": -0.11539887599064969
+        },
+        {
+          "sample_id": "C2-04",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 4.882207125003333,
+          "seconds_b": 4.210842542001046,
+          "delta_seconds_b_minus_a": -0.671364583002287
+        },
+        {
+          "sample_id": "C2-08",
+          "quality_a": 97.5,
+          "quality_b": 100.0,
+          "seconds_a": 4.937262165993161,
+          "seconds_b": 5.599538166003185,
+          "delta_seconds_b_minus_a": 0.6622760000100243
+        },
+        {
+          "sample_id": "C3-05",
+          "quality_a": 100.0,
+          "quality_b": 97.5,
+          "seconds_a": 4.315471374997287,
+          "seconds_b": 2.25913729199965,
+          "delta_seconds_b_minus_a": -2.056334082997637
+        },
+        {
+          "sample_id": "C3-09",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.296802041993942,
+          "seconds_b": 2.7026082910015248,
+          "delta_seconds_b_minus_a": -0.5941937509924173
+        },
+        {
+          "sample_id": "C4-02",
+          "quality_a": 95.0,
+          "quality_b": 92.5,
+          "seconds_a": 3.6817770409979858,
+          "seconds_b": 2.9438512080014334,
+          "delta_seconds_b_minus_a": -0.7379258329965523
+        },
+        {
+          "sample_id": "C4-08",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 6.478251790998911,
+          "seconds_b": 6.189544458000455,
+          "delta_seconds_b_minus_a": -0.28870733299845597
+        },
+        {
+          "sample_id": "C5-03",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.7984599159972277,
+          "seconds_b": 2.4696684169975924,
+          "delta_seconds_b_minus_a": -0.3287914989996352
+        },
+        {
+          "sample_id": "C5-09",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.5459669579940964,
+          "seconds_b": 2.8594029579980997,
+          "delta_seconds_b_minus_a": -0.6865639999959967
+        },
+        {
+          "sample_id": "C6-02",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.0339495000007446,
+          "seconds_b": 4.195747207995737,
+          "delta_seconds_b_minus_a": 1.1617977079949924
+        },
+        {
+          "sample_id": "C6-06",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.3390227089985274,
+          "seconds_b": 3.0523052499993355,
+          "delta_seconds_b_minus_a": -0.2867174589991919
+        },
+        {
+          "sample_id": "C7-03",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.0109508340028697,
+          "seconds_b": 3.5004809579986613,
+          "delta_seconds_b_minus_a": 0.48953012399579166
+        },
+        {
+          "sample_id": "C7-07",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 10.993554082997434,
+          "seconds_b": 9.764378624997335,
+          "delta_seconds_b_minus_a": -1.2291754580000998
+        },
+        {
+          "sample_id": "C8-06",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.9186179589960375,
+          "seconds_b": 3.4338925830015796,
+          "delta_seconds_b_minus_a": 0.5152746240055421
+        },
+        {
+          "sample_id": "C8-10",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 5.477463832998183,
+          "seconds_b": 5.039659165995545,
+          "delta_seconds_b_minus_a": -0.43780466700263787
+        },
+        {
+          "sample_id": "dp-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.2807482499993057,
+          "seconds_b": 2.749899833004747,
+          "delta_seconds_b_minus_a": 0.46915158300544135
+        },
+        {
+          "sample_id": "duckdb-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.767366542000673,
+          "seconds_b": 1.8729809999931604,
+          "delta_seconds_b_minus_a": -0.8943855420075124
+        },
+        {
+          "sample_id": "kll-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.3964916660042945,
+          "seconds_b": 2.621273457996722,
+          "delta_seconds_b_minus_a": 0.22478179199242732
+        },
+        {
+          "sample_id": "nerf-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.150703291001264,
+          "seconds_b": 2.2793448340016766,
+          "delta_seconds_b_minus_a": -0.8713584569995874
+        },
+        {
+          "sample_id": "raft-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.881118833000073,
+          "seconds_b": 2.1127734589972533,
+          "delta_seconds_b_minus_a": -0.7683453740028199
+        },
+        {
+          "sample_id": "rustbelt-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.031310416001361,
+          "seconds_b": 2.174683916004142,
+          "delta_seconds_b_minus_a": 0.14337350000278093
+        },
+        {
+          "sample_id": "t5-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.0004646249944926,
+          "seconds_b": 2.6150928339993698,
+          "delta_seconds_b_minus_a": 0.6146282090048771
+        },
+        {
+          "sample_id": "vegalite-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.3738674580017687,
+          "seconds_b": 2.1667125840031076,
+          "delta_seconds_b_minus_a": -0.20715487399866106
+        }
+      ]
+    },
+    {
+      "name": "Haiku：adaptive low → disabled",
+      "a": "pilot/haiku-adaptive-low",
+      "b": "pilot/haiku-disabled-paired",
+      "samples": 24,
+      "quality_delta_b_minus_a": -0.10416666666665719,
+      "quality_wins_b": 3,
+      "quality_losses_b": 2,
+      "quality_ties": 19,
+      "faster_b": 15,
+      "median_paired_seconds_b_minus_a": -0.14055781250135624,
+      "p50_change_percent": -5.728232282534707,
+      "priced_amount_change_percent": -7.6263513873355615,
+      "items": [
+        {
+          "sample_id": "C1-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.8074137910007266,
+          "seconds_b": 1.68017541700101,
+          "delta_seconds_b_minus_a": -1.1272383739997167
+        },
+        {
+          "sample_id": "C1-05",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 1.7930739579969668,
+          "seconds_b": 1.5919511249958305,
+          "delta_seconds_b_minus_a": -0.20112283300113631
+        },
+        {
+          "sample_id": "C2-04",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 3.08796083299967,
+          "seconds_b": 3.4319385409980896,
+          "delta_seconds_b_minus_a": 0.34397770799841965
+        },
+        {
+          "sample_id": "C2-08",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 5.0300083750044,
+          "seconds_b": 4.610099124998669,
+          "delta_seconds_b_minus_a": -0.41990925000573043
+        },
+        {
+          "sample_id": "C3-05",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 1.637724000000162,
+          "seconds_b": 1.6386990419996437,
+          "delta_seconds_b_minus_a": 0.0009750419994816184
+        },
+        {
+          "sample_id": "C3-09",
+          "quality_a": 85.0,
+          "quality_b": 90.0,
+          "seconds_a": 2.921668957998918,
+          "seconds_b": 2.070593041004031,
+          "delta_seconds_b_minus_a": -0.8510759169948869
+        },
+        {
+          "sample_id": "C4-02",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.338642124996113,
+          "seconds_b": 2.1777866249976796,
+          "delta_seconds_b_minus_a": -0.16085549999843352
+        },
+        {
+          "sample_id": "C4-08",
+          "quality_a": 100.0,
+          "quality_b": 97.5,
+          "seconds_a": 6.823182915999496,
+          "seconds_b": 3.8739009169948986,
+          "delta_seconds_b_minus_a": -2.9492819990045973
+        },
+        {
+          "sample_id": "C5-03",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.026166000003286,
+          "seconds_b": 2.1002248329969007,
+          "delta_seconds_b_minus_a": 0.07405883299361449
+        },
+        {
+          "sample_id": "C5-09",
+          "quality_a": 90.0,
+          "quality_b": 90.0,
+          "seconds_a": 2.7885642080000252,
+          "seconds_b": 2.0794900420005433,
+          "delta_seconds_b_minus_a": -0.7090741659994819
+        },
+        {
+          "sample_id": "C6-02",
+          "quality_a": 90.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.688757750001969,
+          "seconds_b": 2.56849762499769,
+          "delta_seconds_b_minus_a": -0.12026012500427896
+        },
+        {
+          "sample_id": "C6-06",
+          "quality_a": 100.0,
+          "quality_b": 80.0,
+          "seconds_a": 2.196408417003113,
+          "seconds_b": 3.311785249999957,
+          "delta_seconds_b_minus_a": 1.1153768329968443
+        },
+        {
+          "sample_id": "C7-03",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.287078334004036,
+          "seconds_b": 3.005683458999556,
+          "delta_seconds_b_minus_a": 0.7186051249955199
+        },
+        {
+          "sample_id": "C7-07",
+          "quality_a": 95.0,
+          "quality_b": 100.0,
+          "seconds_a": 7.113595292001264,
+          "seconds_b": 6.893110291995981,
+          "delta_seconds_b_minus_a": -0.22048500000528293
+        },
+        {
+          "sample_id": "C8-06",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.089448458995321,
+          "seconds_b": 2.346511333998933,
+          "delta_seconds_b_minus_a": 0.25706287500361213
+        },
+        {
+          "sample_id": "C8-10",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 4.338786915999663,
+          "seconds_b": 3.9895017500020913,
+          "delta_seconds_b_minus_a": -0.3492851659975713
+        },
+        {
+          "sample_id": "dp-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.0695268330018735,
+          "seconds_b": 1.568328166998981,
+          "delta_seconds_b_minus_a": -0.5011986660028924
+        },
+        {
+          "sample_id": "duckdb-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 1.9156820420030272,
+          "seconds_b": 2.0697714159978204,
+          "delta_seconds_b_minus_a": 0.15408937399479328
+        },
+        {
+          "sample_id": "kll-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 1.5168169579992536,
+          "seconds_b": 1.5280616669988376,
+          "delta_seconds_b_minus_a": 0.011244708999583963
+        },
+        {
+          "sample_id": "nerf-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 1.5911864579975372,
+          "seconds_b": 1.6775219580013072,
+          "delta_seconds_b_minus_a": 0.08633550000377
+        },
+        {
+          "sample_id": "raft-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 1.8838201249964186,
+          "seconds_b": 1.787627458004863,
+          "delta_seconds_b_minus_a": -0.0961926669915556
+        },
+        {
+          "sample_id": "rustbelt-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.3045633340007043,
+          "seconds_b": 1.5526838750010938,
+          "delta_seconds_b_minus_a": -0.7518794589996105
+        },
+        {
+          "sample_id": "t5-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 1.7019759160029935,
+          "seconds_b": 1.695896167002502,
+          "delta_seconds_b_minus_a": -0.006079749000491574
+        },
+        {
+          "sample_id": "vegalite-01",
+          "quality_a": 100.0,
+          "quality_b": 100.0,
+          "seconds_a": 2.116065667003568,
+          "seconds_b": 1.7033202499951585,
+          "delta_seconds_b_minus_a": -0.4127454170084093
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "model_id": "gpt-6-luna",
+      "name": "GPT-6 Luna",
+      "protocol": "responses",
+      "status": "3条预检证实关闭",
+      "parameters": {
+        "reasoning": {
+          "effort": "none"
+        }
+      },
+      "explicit_zero_reasoning_probes": 3,
+      "positive_control_reasoning_tokens": 35,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    },
+    {
+      "model_id": "tencent/hy3-paid",
+      "name": "Tencent Hy3",
+      "protocol": "responses",
+      "status": "3条预检证实关闭",
+      "parameters": {
+        "reasoning": {
+          "effort": "none"
+        }
+      },
+      "explicit_zero_reasoning_probes": 3,
+      "positive_control_reasoning_tokens": 524,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    },
+    {
+      "model_id": "xiaomi/mimo-v2.6-pro",
+      "name": "MiMo V2.6 Pro",
+      "protocol": "responses",
+      "status": "3条预检证实关闭",
+      "parameters": {
+        "reasoning": {
+          "effort": "none"
+        }
+      },
+      "explicit_zero_reasoning_probes": 3,
+      "positive_control_reasoning_tokens": 15,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    },
+    {
+      "model_id": "deepseek/deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "protocol": "chat_completions",
+      "status": "3条预检证实关闭",
+      "parameters": {
+        "reasoning_effort": "off"
+      },
+      "explicit_zero_reasoning_probes": 3,
+      "positive_control_reasoning_tokens": 68,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    },
+    {
+      "model_id": "xiaomi/mimo-v2.6-flash",
+      "name": "MiMo V2.6 Flash",
+      "protocol": "responses",
+      "status": "仅1条预检，待扩大验证",
+      "parameters": {
+        "reasoning": {
+          "effort": "none"
+        }
+      },
+      "explicit_zero_reasoning_probes": 1,
+      "positive_control_reasoning_tokens": null,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    },
+    {
+      "model_id": "Qwen/Qwen3.8-Flash",
+      "name": "Qwen 3.8 Flash",
+      "protocol": "chat_completions",
+      "status": "Chat off被拒绝，其他路由未验证",
+      "parameters": null,
+      "explicit_zero_reasoning_probes": null,
+      "positive_control_reasoning_tokens": null,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    },
+    {
+      "model_id": "Qwen/Qwen3.7-Flash",
+      "name": "Qwen 3.7 Flash",
+      "protocol": "chat_completions",
+      "status": "Chat off被拒绝，其他路由未验证",
+      "parameters": null,
+      "explicit_zero_reasoning_probes": null,
+      "positive_control_reasoning_tokens": null,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    },
+    {
+      "model_id": "z-ai/glm-5.3-flash",
+      "name": "GLM-5.3 Flash",
+      "protocol": "chat_completions",
+      "status": "Chat off被拒绝，其他路由未验证",
+      "parameters": null,
+      "explicit_zero_reasoning_probes": null,
+      "positive_control_reasoning_tokens": null,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    },
+    {
+      "model_id": "minimax/minimax-m3.1-flash",
+      "name": "MiniMax M3.1 Flash",
+      "protocol": "chat_completions",
+      "status": "Chat off被拒绝，其他路由未验证",
+      "parameters": null,
+      "explicit_zero_reasoning_probes": null,
+      "positive_control_reasoning_tokens": null,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    },
+    {
+      "model_id": "claude-haiku-5-5",
+      "name": "Claude Haiku 5.5",
+      "protocol": "anthropic_messages",
+      "status": "关闭参数获接受；未提供推理Token，未观察到thinking",
+      "parameters": {
+        "thinking": {
+          "type": "disabled"
+        }
+      },
+      "explicit_zero_reasoning_probes": null,
+      "positive_control_reasoning_tokens": null,
+      "observed_at": "2026-10-26T11:11:58.375344+00:00",
+      "source": "https://commandcode.ai/docs/provider"
+    }
+  ],
+  "probe_scope": {
+    "calls": 52,
+    "http_status_counts": {
+      "200": 36,
+      "400": 16
+    },
+    "note": "兼容性探测采用不同预算/连接方式，耗时不能用作正式性能比较。"
+  },
+  "products": [
+    {
+      "id": "quick",
+      "name": "ChatGPT 接入快速检查",
+      "date": "2026-10-25",
+      "model": "GPT-6 Luna · ChatGPT low",
+      "samples": 24,
+      "executed_jobs": 27,
+      "successes": 24,
+      "p50": 6.453385417000391,
+      "p95": 13.542626666996512,
+      "generation_calls": 27,
+      "quality": null,
+      "review_status": "未完成质量评审，不参与模型排名"
+    },
+    {
+      "id": "selection",
+      "name": "划词翻译回归",
+      "date": "2026-10-25",
+      "model": "GPT-6 Luna · ChatGPT low",
+      "samples": 24,
+      "executed_jobs": 24,
+      "successes": 24,
+      "p50": 7.592735790996812,
+      "p95": 11.705645082998672,
+      "generation_calls": 24,
+      "quality": null,
+      "review_status": "未完成质量评审，不参与模型排名"
+    },
+    {
+      "id": "pdf-quick",
+      "name": "PDF 流程回归",
+      "date": "2026-10-25",
+      "model": "GPT-6 Luna · ChatGPT low",
+      "samples": 4,
+      "executed_jobs": 4,
+      "successes": 4,
+      "p50": 57.00625479199516,
+      "p95": 84.37669029200333,
+      "generation_calls": 18,
+      "quality": null,
+      "review_status": "未完成质量评审，不参与模型排名"
+    }
+  ],
+  "sample_score_rows": 864,
+  "sample_score_coverage_note": "公开逐条评分覆盖ChatGPT正式批、Qwen/MiMo正式批和6组试测；原七模型保留汇总与调用回执，未编造缺失的逐条评语。",
+  "cost_note": "整批费用包含预检及复测；单位原文费用只取主测调用，除以全部对应原文字符数（含空白），每1000字符计价。缺失回执为已记录部分；ChatGPT为API等值估算，现金扣费未知。",
+  "scope_note": "同一数据集的16条记录；正式240条与试测24条分别筛选。跨日期/渠道的速度差还包含提供方路由和运行环境影响。",
+  "ledger_rows": 4219,
+  "formal_scope": {
+    "models": 9,
+    "samples_per_model": 240,
+    "main_outputs": 2400,
+    "translation_calls": 2830,
+    "all_attempts": 3901,
+    "configurations": 10,
+    "samples_per_configuration": 240,
+    "quick_calls": 27,
+    "cancelled_translation_calls": 227
+  }
+}

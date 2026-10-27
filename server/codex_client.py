@@ -540,10 +540,10 @@ class CodexClient:
         selected = next((entry for entry in self.list_models(check_cancelled=check) if entry["id"] == model), None)
         if selected is None:
             raise CodexError("codex_model_unavailable", "当前 Codex 模型目录未提供所选模型，请获取模型列表并选择可用模型。")
-        effort = reasoning_effort or selected["defaultReasoningEffort"]
+        effort = ("low" if "low" in selected["supportedReasoningEfforts"] else selected["defaultReasoningEffort"]) if reasoning_effort == "auto" else reasoning_effort or selected["defaultReasoningEffort"]
         if not effort or effort not in selected["supportedReasoningEfforts"]:
             raise CodexError("codex_invalid_reasoning", "所选模型不支持该推理档位，请重新获取模型列表。")
-        return {"version": self.version, "model": model, "reasoningEffort": effort,
+        return {"version": self.version, "model": model, "modelDetail": selected, "reasoningEffort": effort,
                 "serviceTier": "default", "authenticated": True}
 
     def _thread(self, transport, model, effort, check=None):

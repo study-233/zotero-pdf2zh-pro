@@ -1,0 +1,126 @@
+{
+  "method": "Price final reported cache writes using the archived rate. Frozen request/translation/receipt bytes are unchanged; unreported counters are not invented.",
+  "pricing_script_sha256": "3dbff7694db79771904811f28ee1028de75925665801636073d19a3d19fc5a2a",
+  "changed_call_estimates": [
+    {
+      "call_id": "268141ab068d4752ac24252b9e431720",
+      "record_id": "command-responses-low",
+      "receipt_sha256": "4bfb6cfc0f1462ee387c8ecf7ae4faad5f4858f6c4601216738e2110eb827b36",
+      "stored_estimate_usd": 0.0006713,
+      "derived_estimate_usd": 0.0006994249999999999,
+      "cache_write_input_tokens": 1125
+    },
+    {
+      "call_id": "ca3cc6cf6ea14ebe9957cbf1371b4cb1",
+      "record_id": "command-responses-none",
+      "receipt_sha256": "94ca227aa065d043c8e9df83d9a3657aa6d66b8daa912796b80e4d3dea72fde9",
+      "stored_estimate_usd": 0.0006678,
+      "derived_estimate_usd": 0.0006959249999999999,
+      "cache_write_input_tokens": 1125
+    },
+    {
+      "call_id": "86346c29d5ea4861a4a63861e49e0228",
+      "record_id": "command-chat_completions-low",
+      "receipt_sha256": "5ddc0c41e53820da2122390ba5c17e80f3434282cf908f3aacf78542991ddd82",
+      "stored_estimate_usd": 0.0006644,
+      "derived_estimate_usd": 0.0006908,
+      "cache_write_input_tokens": 1056
+    },
+    {
+      "call_id": "32d0c21f15cc43e08044f90b7f886009",
+      "record_id": "command-responses-none",
+      "receipt_sha256": "a94bbc5687cf563dd8d05d7f2de73a231733cc7efa18eacdf60015cf9fa2327f",
+      "stored_estimate_usd": 0.0006644,
+      "derived_estimate_usd": 0.0006908,
+      "cache_write_input_tokens": 1056
+    },
+    {
+      "call_id": "fc3711ee815043449a7a91c2385146b3",
+      "record_id": "command-responses-low",
+      "receipt_sha256": "8de91c7a604df5d79c543c460040fea3db9ea9ea7e0b6032075be35d397af28c",
+      "stored_estimate_usd": 0.0006638999999999999,
+      "derived_estimate_usd": 0.000689925,
+      "cache_write_input_tokens": 1041
+    },
+    {
+      "call_id": "78a5e2f16d2e4b2a892d2247a42a2f7a",
+      "record_id": "command-responses-none",
+      "receipt_sha256": "081722d3624dcd284fb5fa866a4f35843d2320084f24bd9fa8c59b96830754e0",
+      "stored_estimate_usd": 0.0006769,
+      "derived_estimate_usd": 0.000702925,
+      "cache_write_input_tokens": 1041
+    },
+    {
+      "call_id": "c76139c067a44bedba9827c398c055f1",
+      "record_id": "command-chat_completions-low",
+      "receipt_sha256": "964364a33593bef8f38ef6759269992046aecd4997f37f2885c1fafacda650aa",
+      "stored_estimate_usd": 0.0006466,
+      "derived_estimate_usd": 0.0006728,
+      "cache_write_input_tokens": 1048
+    },
+    {
+      "call_id": "b12b7aeb4c504f3892e25f7746d78924",
+      "record_id": "command-responses-none",
+      "receipt_sha256": "190c82223088b567584e9b2b6f9673192d1157237aac1164347c328cbfbcf18e",
+      "stored_estimate_usd": 0.0006406000000000001,
+      "derived_estimate_usd": 0.0006667999999999999,
+      "cache_write_input_tokens": 1048
+    },
+    {
+      "call_id": "bca17ae84e1a4cf7987af61dbb8655e6",
+      "record_id": "command-responses-low",
+      "receipt_sha256": "fb3c3dd55d311dc7b99bd1db6225c3ebde4d7adc6cd0bcd1bc13c5ddbd5dfc70",
+      "stored_estimate_usd": 0.0006461,
+      "derived_estimate_usd": 0.0006728,
+      "cache_write_input_tokens": 1068
+    },
+    {
+      "call_id": "fce125a589d043448ee6cd2a252b74db",
+      "record_id": "command-responses-none",
+      "receipt_sha256": "f8f8d38f85488df6d76c9266fc2fe766798a0b4f521ff23c47af0fad8e4a2106",
+      "stored_estimate_usd": 0.0006416,
+      "derived_estimate_usd": 0.0006682999999999999,
+      "cache_write_input_tokens": 1068
+    },
+    {
+      "call_id": "f64c1ee9b7b94c30819760c94af61d5a",
+      "record_id": "command-chat_completions-low",
+      "receipt_sha256": "5d510dbbf2cf64bc10358ab3d19c44b666acc9e6a367767d6d6d8e7a2a9763d6",
+      "stored_estimate_usd": 0.0006711,
+      "derived_estimate_usd": 0.0006977999999999999,
+      "cache_write_input_tokens": 1068
+    },
+    {
+      "call_id": "e1d0dd49388c4dc1ba4e3ea1f05cdbb2",
+      "record_id": "command-chat_completions-low",
+      "receipt_sha256": "2a456685822f420e52f8ad8d357894caa28007e918760878537ea2a418458f19",
+      "stored_estimate_usd": 0.0006483,
+      "derived_estimate_usd": 0.0006739249999999999,
+      "cache_write_input_tokens": 1025
+    },
+    {
+      "call_id": "f88c975e70d845be8368d9e5338a2126",
+      "record_id": "command-responses-none",
+      "receipt_sha256": "7fb4f577e78bca488c8850820806cb343b667995082ac391e22e88d4d4800708",
+      "stored_estimate_usd": 0.0006087999999999999,
+      "derived_estimate_usd": 0.000634425,
+      "cache_write_input_tokens": 1025
+    },
+    {
+      "call_id": "d13d1afa03624d399e3c80612bae0c2a",
+      "record_id": "command-responses-low",
+      "receipt_sha256": "9ec3c479828004ecb5437914dcb4be0e289fa1ca42ed076a0290f2e3da4926af",
+      "stored_estimate_usd": 0.0007294,
+      "derived_estimate_usd": 0.00075705,
+      "cache_write_input_tokens": 1106
+    },
+    {
+      "call_id": "9bd7ea9103ee4599bd3c6089b1eac23f",
+      "record_id": "command-responses-none",
+      "receipt_sha256": "b0c520f554f57bbb1cbaf840f03ccaf3dda7894fae05e6c6758481fa4377bdfc",
+      "stored_estimate_usd": 0.0007023999999999999,
+      "derived_estimate_usd": 0.00073005,
+      "cache_write_input_tokens": 1106
+    }
+  ]
+}

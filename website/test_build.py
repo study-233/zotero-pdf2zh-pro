@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from build_site import BENCHMARK, DEFAULT_BASE, GUIDE, ROOT, Website, guide_sections
+from build_site import BENCHMARK, DEFAULT_BASE, GUIDE, REGISTRY, ROOT, Website, guide_sections
 from check_docs import parse_document
 from check_site import Page, check
 
@@ -76,7 +76,7 @@ class WebsiteTests(unittest.TestCase):
 
     def test_theme_and_benchmark_scripts_are_shared_from_project_root(self):
         html = (self.output / 'benchmark/index.html').read_text(encoding='utf-8')
-        for script in ('ui.js', 'site/benchmark.js', 'site/site.js', 'site/vendor/plotly/plotly-gl3d-4.1.2.min.js'):
+        for script in ('ui.js', 'site/benchmark.js', 'site/vendor/plotly/plotly-gl3d-4.1.2.min.js'):
             self.assertRegex(html, f'src="{re.escape(DEFAULT_BASE + script)}\\?v=[0-9a-f]{{12}}"')
         self.assertIn('href="data/comparison.csv"', html)
         self.assertIn('id="model-comparison"', html)
@@ -87,11 +87,73 @@ class WebsiteTests(unittest.TestCase):
         self.assertFalse((self.output / 'benchmark/v2/index.html').exists())
         with (self.output / 'benchmark/data/comparison.csv').open(encoding='utf-8-sig', newline='') as stream:
             rows = list(csv.DictReader(stream))
-        self.assertEqual(len(rows), 7)
-        self.assertEqual(rows[0]['model'], 'GLM-5.3 Flash')
-        self.assertEqual(rows[0]['successful_requests'], '240')
+        registry = json.loads((REGISTRY / 'summary.json').read_text(encoding='utf-8'))
+        records = {model['id']: model for model in registry['models']}
+        self.assertEqual(len(rows), len(records))
+        self.assertEqual(sum(row['scope'] == 'formal' for row in rows), sum(model['kind'] == 'formal' for model in records.values()))
+        self.assertEqual(sum(row['scope'] == 'pilot' for row in rows), sum(model['kind'] == 'pilot' for model in records.values()))
+        glm = next(row for row in rows if row['model'] == 'GLM-5.3 Flash')
+        self.assertEqual(glm['successful_requests'], '240')
+        chatgpt = next(row for row in rows if 'ChatGPT' in row['model'])
+        self.assertEqual(chatgpt['recorded_usage_usd'], '')
+        self.assertEqual(float(chatgpt['estimated_api_equivalent_usd']), 0.0487976)
         for row in rows:
-            self.assertEqual(row['samples'], '240')
+            model = records[row['record_id']]
+            expected = model.get('estimated_api_equivalent_usd')
+            self.assertEqual(row['estimated_api_equivalent_usd'], '' if expected is None else str(expected))
+            if model['normalized_cost_estimated']:
+                self.assertEqual(row['recorded_usage_usd'], '')
+        # Keep the complete registry downloadable, while the chart stays a
+        # readable nine-model overview, including both GPT access sources.
+        chart_ids = re.findall(r'<tr data-id="([^"]+)"', html)
+        self.assertEqual(len(chart_ids), 10)
+        self.assertEqual(len({records[key]['model_id'] for key in chart_ids}), 9)
+        self.assertIn('id="visible-model-count">10</strong>', html)
+        chart_names = re.findall(r'<tr data-id="[^"]+" data-name="([^"]+)"', html)
+        self.assertEqual(len(set(chart_names)), 10)
+        for element in ('tab-table', 'copy-view', 'drag-controls'):
+            self.assertIn(f'id="{element}"', html)
+        self.assertIn('每组 240 条', html)
+        self.assertIn('20261027/command-responses-none', chart_ids)
+        self.assertIn('20261027/account-responses-low', chart_ids)
+        self.assertIn('GPT-6 Luna · Command Code', chart_names)
+        self.assertIn('GPT-6 Luna · 插件账号', chart_names)
+        self.assertIn('data-cost="0.0490566" data-cost-estimated="true"', html)
+        self.assertIn('≈$0.04906', html)
+        self.assertIn('API 等值估算', html)
+        self.assertIn('20261027/deepseek-chat-low', chart_ids)
+        self.assertIn('20261027/mimo-responses-low', chart_ids)
+        for key in chart_ids:
+            self.assertEqual(records[key]['kind'], 'formal')
+            self.assertEqual(records[key]['samples'], 240)
+        # The visible access source must come from each measured configuration,
+        # rather than being inferred from the model's manufacturer logo.
+        source_rows = re.findall(
+            r'<tr data-id="([^"]+)"[^>]*data-source="([^"]+)"[^>]*data-channel="([^"]+)"', html)
+        self.assertEqual(len(source_rows), len(chart_ids))
+        for key, label, channel in source_rows:
+            self.assertEqual(channel, records[key]['channel'])
+            self.assertEqual(label, 'Command Code 套餐' if channel == 'Command Code' else '插件 GPT 账号')
+        self.assertIn('aria-label="当前总览接入来源"', html)
+        self.assertIn('data-configuration="Responses · 关闭 · 2026-10-27"', html)
+        self.assertIn('data-cost-partial="true"', html)
+        self.assertIn('≥$', html)
+        for row in rows:
+            self.assertEqual(row['samples'], '240' if row['scope'] == 'formal' else '24')
+        for element in ('filter-scope', 'fee-basis', 'record-selector', 'sample-state', 'pair-selector', 'pair-apply'):
+            self.assertNotIn(f'id="{element}"', html)
+        self.assertNotIn('<select', html)
+        self.assertNotIn('class="site-header"', html)
+        self.assertNotIn(DEFAULT_BASE + 'site/site.js', html)
+        with (self.output / 'benchmark/data/sample-scores.csv').open(encoding='utf-8-sig', newline='') as stream:
+            self.assertEqual(len(list(csv.DictReader(stream))), registry['sample_score_rows'])
+        with (self.output / 'benchmark/data/calls.csv').open(encoding='utf-8-sig', newline='') as stream:
+            self.assertEqual(len(list(csv.DictReader(stream))), registry['ledger_rows'])
+        for name in ('summary.json', 'comparison.csv', 'sample-scores.csv', 'calls.csv'):
+            self.assertEqual((REGISTRY / name).read_bytes(), (self.output / 'benchmark/data' / name).read_bytes())
+        for source, destination in [('2026-10-26-v2', 'data/formal'), ('2026-10-26-interface-pilot-v1', 'pilot')]:
+            original = ROOT / 'benchmarks/translation/publications' / source / 'summary.json'
+            self.assertEqual(original.read_bytes(), (self.output / 'benchmark' / destination / 'summary.json').read_bytes())
         vendor = ROOT / 'website/static/vendor/plotly'
         manifest = json.loads((vendor / 'source.json').read_text(encoding='utf-8'))
         self.assertEqual(manifest['license'], 'MIT')

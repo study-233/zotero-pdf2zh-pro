@@ -1,0 +1,434 @@
+{
+  "b5945446760641ecb4244f9084326831": {
+    "phase": "initial",
+    "batch": 253,
+    "changes": [
+      {
+        "id": "E01518",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "a7c486651e9cc25122878f2b22c795d12a34a911ee264247530f7981788bd147",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "fe81267d216c415497e2752b78641c32": {
+    "phase": "initial",
+    "batch": 28,
+    "changes": [
+      {
+        "id": "E00163",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "9410bbae649d744e2e9b38fa359a444147338266eee4cf78dbe1560acedcf6aa",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "01b6f75afec043e0adc8ca0872f7e4b0": {
+    "phase": "initial",
+    "batch": 262,
+    "changes": [
+      {
+        "id": "E01567",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "28a293baff2fd90d07640f6e38817e90ddbc6a61ea1c961a4460280cbcf7d135",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "95d9ff30866b48c083bb20cf848261e3": {
+    "phase": "initial",
+    "batch": 242,
+    "changes": [
+      {
+        "id": "E01447",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "5739a399c208cba986640b9fa2645f6d2c82561c26c3974d83fa0d0111f06c36",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "3e4ea184ba614e58a97b44661d3170ab": {
+    "phase": "initial",
+    "batch": 278,
+    "changes": [
+      {
+        "id": "E01667",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "2e030390ea9bfbc6c1dd9cff06150ba92e0ab2b437c7be335c1271abf9bbf993",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "55b856ac16304024a19f665b03ddb77b": {
+    "phase": "initial",
+    "batch": 168,
+    "changes": [
+      {
+        "id": "E01004",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "d80bd710907413bdfdee8fd44c5ec2728eeec9cfae960f2d97bd455227ea842a",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "b0cc2dadb4394e5d993ade159ad7bd34": {
+    "phase": "initial",
+    "batch": 187,
+    "changes": [
+      {
+        "id": "E01117",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "9d157175127276406e9ac3826b8580a7dae836ebc316e844f47e70f0be9c68b2",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "6c87ef5dacdb41b5b7e97fdb2c6fe7a7": {
+    "phase": "initial",
+    "batch": 125,
+    "changes": [
+      {
+        "id": "E00749",
+        "metadata": {
+          "category_alias_repairs": [
+            {
+              "error_index": 1,
+              "original_category": "大段遗漏",
+              "normalized_category": "omission"
+            }
+          ]
+        }
+      }
+    ],
+    "raw_response_sha256": "868ff29f07f3fa993a92a06bcc2a31a3a84a4e07d6fb81683846698816b31eb7",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "f7457d8607dd40d0919e9eea73bcd1c5": {
+    "phase": "initial",
+    "batch": 236,
+    "changes": [
+      {
+        "id": "E01414",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "9090a85ab7d77ab66e5e89064d371b23a4a0f2b462b1845bac9512fdb056183a",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "f2e9c12e2eb44ef3a540b44d0fe5f1fc": {
+    "phase": "initial",
+    "batch": 20,
+    "changes": [
+      {
+        "id": "E00118",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "1e403b2420a896e1727fb8d2e7f164a0a91de112cdbe2ebd59c774d005a9c202",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "d79f8553ebe04af6bff30d20fbaef71c": {
+    "phase": "initial",
+    "batch": 295,
+    "changes": [
+      {
+        "id": "E01769",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "0de4e58a6ad1172f5fc3d0459e402106810ea22ef7728a9b1539a492e0d68fee",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "eee60380fcfb476aa5d44ea082669de1": {
+    "phase": "initial",
+    "batch": 230,
+    "changes": [
+      {
+        "id": "E01377",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "b1ed79b894b1940d437219630b6e962e61c0b779f85c30d8dc361a0b65099dcc",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "cc2ad0da78c84476989e092a0c634e95": {
+    "phase": "initial",
+    "batch": 288,
+    "changes": [
+      {
+        "id": "E01726",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "c4cb2a1ed5a36a32b2f584cd17451f3b1311d8ef3e15c444e7cefef513c84333",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "42a52acd9a064333a80d8aa9c6b34dbd": {
+    "phase": "initial",
+    "batch": 302,
+    "changes": [
+      {
+        "id": "E01810",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "9f71f6a4d2f9cf23865d2ac315ba07f6f758d127a406eea1a2843dc96dfbcad6",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "682b664063604be490ef68820cebe619": {
+    "phase": "initial",
+    "batch": 115,
+    "changes": [
+      {
+        "id": "E00690",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "6c772bbf5a691cca8ec4745c35e8ecbba77b69a4fa27f1a8aac2b6dba59bda5c",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "15f904a603344912a8fc96f23976eebb": {
+    "phase": "initial",
+    "batch": 339,
+    "changes": [
+      {
+        "id": "E02034",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "0cb71e32fd52012b7a9bcfbcf9674994043e60c3d4b1214546ea1abc66f5d730",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "da12253fbf864ab78ff611c61945c52d": {
+    "phase": "initial",
+    "batch": 155,
+    "changes": [
+      {
+        "id": "E00930",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "bbb7b60ee9416243c6dba94808de37f92eea439e554d03a0e41560d63bd399db",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "4ab31c0f83be473083666dacad8697b5": {
+    "phase": "initial",
+    "batch": 246,
+    "changes": [
+      {
+        "id": "E01472",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "37065088d3e7d7f4b684499cd7283ea1bd520ad7f8ac7f13acf7d4e8d60ecf68",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "483ac6c52d0b49f7a796b21f4cb19512": {
+    "phase": "initial",
+    "batch": 207,
+    "changes": [
+      {
+        "id": "E01241",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "1958bda5bfb0c678e86303503ba4b02475ea192414739755eed7b5e954c5a535",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "40765d79b9bf4a16882e65a54579efc9": {
+    "phase": "second-pass",
+    "batch": 253,
+    "changes": [
+      {
+        "id": "E01518",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "76c045216c356ed1de26ab2aa53fe6b1ff9f5eda40d9d27c5902f02285202c4a",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "56cfc4539dfa4f4481d7d3e8ef57d787": {
+    "phase": "second-pass",
+    "batch": 53,
+    "changes": [
+      {
+        "id": "E00316",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      },
+      {
+        "id": "E00318",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "fbddc9d00c9422ef268a27c80b45e9341e9c8dcc58d81dd48457ec45491808af",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "a9879bf659bd4209b0257e8798e62d34": {
+    "phase": "second-pass",
+    "batch": 262,
+    "changes": [
+      {
+        "id": "E01567",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "84a4c6a799ccd3186b0df5f75becb1c53103e42ac0b706f90d074b4565390be1",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "550dc39b4dee4e12aef9454d23ec0f21": {
+    "phase": "second-pass",
+    "batch": 242,
+    "changes": [
+      {
+        "id": "E01447",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "0ce1b6c56f3f503599e65a43320c4c477f1413137caa74da4ad6356d3c7a897e",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "1246c7d9d7a14a1d97057e7ef28af6ca": {
+    "phase": "second-pass",
+    "batch": 168,
+    "changes": [
+      {
+        "id": "E01004",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "f9c54298c1bf668a18e6681e7182fc220937c25d349553b7ca03a48b9350d701",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "2f2b93c8b1c5486db475964adcc771d3": {
+    "phase": "second-pass",
+    "batch": 20,
+    "changes": [
+      {
+        "id": "E00118",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "13831d144d6778dbbbedac1887e85019d8805c11e010c07a7b0a252c978a1c7b",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "72165903155f43e492e7cccbe42c7b1c": {
+    "phase": "second-pass",
+    "batch": 230,
+    "changes": [
+      {
+        "id": "E01377",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "adb8ac51309dfa44e6ba75321b2feb3e4bb2e2a60243c2c31e5705640de48c29",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "1886e21cbc9d4b77bc1a72be8b14dd79": {
+    "phase": "second-pass",
+    "batch": 302,
+    "changes": [
+      {
+        "id": "E01810",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "2b60cf0a9828b054228b7e97479de02b311b83c14d917cd1be2acf94004721ad",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  },
+  "38ff219c97314e1fa6d46e02c33f3970": {
+    "phase": "second-pass",
+    "batch": 207,
+    "changes": [
+      {
+        "id": "E01241",
+        "metadata": {
+          "rule_override_provenance": "source_checked_url_punctuation_schema_v2",
+          "rule_override_reason": "字面检查把英文右括号与逗号纳入了URL；源文与译文均完整包含网址本体，译文采用正常中文标点。依据原有量表允许的标点转写，保持模型给出的结构4分。"
+        }
+      }
+    ],
+    "raw_response_sha256": "af8f8fed4ba184c8d01a16fbe62937135435600a26fc1cf6836dd02e67e41202",
+    "scores_severity_explanations_quotes_notes_unchanged": true
+  }
+}

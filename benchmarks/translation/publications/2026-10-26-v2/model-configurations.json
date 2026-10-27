@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "date": "2026-10-26",
+  "models": [
+    {
+      "id": "Qwen/Qwen3.8-Flash",
+      "name": "Qwen 3.8 Flash",
+      "protocol": "chat_completions",
+      "parameters": {
+        "temperature": 0,
+        "max_tokens": 8192
+      },
+      "timeout_seconds": 120,
+      "endpoint": "https://api.commandcode.ai/provider/v1/chat/completions",
+      "requested_model": "Qwen/Qwen3.8-Flash",
+      "response_models": [
+        "Qwen/Qwen3.8-Flash",
+        "qwen3.8-flash"
+      ],
+      "uncontrolled": [
+        "provider_default_reasoning",
+        "provider_cache",
+        "provider_internal_routing"
+      ],
+      "test_started_at": "2026-10-26T08:26:50.139515+00:00",
+      "test_completed_at": "2026-10-26T10:42:49.270337+00:00"
+    },
+    {
+      "id": "xiaomi/mimo-v2.6-pro",
+      "name": "MiMo V2.6 Pro 普通版",
+      "protocol": "chat_completions",
+      "parameters": {
+        "temperature": 0,
+        "max_tokens": 8192
+      },
+      "timeout_seconds": 120,
+      "endpoint": "https://api.commandcode.ai/provider/v1/chat/completions",
+      "requested_model": "xiaomi/mimo-v2.6-pro",
+      "response_models": [
+        "xiaomi/mimo-v2.6-pro"
+      ],
+      "uncontrolled": [
+        "provider_default_reasoning",
+        "provider_cache",
+        "provider_internal_routing"
+      ],
+      "test_started_at": "2026-10-26T08:26:50.139522+00:00",
+      "test_completed_at": "2026-10-26T09:07:56.666961+00:00"
+    }
+  ]
+}

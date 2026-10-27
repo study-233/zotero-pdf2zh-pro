@@ -8,13 +8,13 @@
   <link rel="canonical" href="{{ origin }}{{ base }}{{ route }}">
   <link rel="icon" href="{{ base }}assets/logo.svg" type="image/svg+xml">
   <script src="{{ asset('ui.js') }}"></script>
-  {% if kind == 'benchmark' %}<link rel="stylesheet" href="{{ asset('style.css') }}">{% endif %}
   <link rel="stylesheet" href="{{ asset('site/site.css') }}">
-  <script src="{{ asset('site/site.js') }}" defer></script>
+  {% if kind != 'benchmark' %}<script src="{{ asset('site/site.js') }}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}
 </head>
 <body class="{{ kind }}-page" data-base="{{ base }}">
   <a class="skip-link" href="#main-content">跳到主要内容</a>
+  {% if kind != 'benchmark' %}
   <header class="site-header">
     <div class="site-header-inner">
       <a class="site-brand" href="{{ base }}"><img src="{{ base }}assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
@@ -30,7 +30,9 @@
       </div>
     </div>
   </header>
+  {% endif %}
   {% block main %}{% endblock %}
+  {% if kind != 'benchmark' %}
   <footer class="site-footer" id="community">
     <div><a class="footer-brand" href="{{ base }}">zotero-pdf2zh-pro</a><p>在 Zotero 中翻译论文，让阅读保持连贯。</p></div>
     <div class="footer-links"><a href="{{ base }}guide/troubleshooting/">常见问题</a><a href="{{ repo }}/issues/new?template=%E9%97%AE%E9%A2%98%E5%8F%8D%E9%A6%88.md">问题反馈</a><a href="{{ repo }}/blob/main/docs/development-notes.md">参与贡献</a><a href="{{ repo }}/blob/main/LICENSE">AGPL-3.0-or-later</a><a href="{{ repo }}/blob/main/server/THIRD_PARTY_NOTICES.md">第三方声明</a></div>
@@ -42,5 +44,6 @@
     <p id="search-status" role="status">输入关键词，查找安装与使用方法。</p><ul id="search-results"></ul>
   </dialog>
   <dialog id="image-dialog" class="image-dialog" aria-label="截图预览"><button class="site-icon-button" data-close-dialog aria-label="关闭截图">×</button><img alt=""><p></p></dialog>
+  {% endif %}
 </body>
 </html>

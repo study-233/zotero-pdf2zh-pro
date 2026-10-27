@@ -1,0 +1,183 @@
+{
+  "schema": 1,
+  "channel": "ChatGPT subscription",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "low",
+  "calls": 494,
+  "stages": {
+    "product-pdf-quick": {
+      "calls": 18,
+      "succeeded": 18,
+      "complete_usage_calls": 18,
+      "tokens": {
+        "input_tokens": 14811,
+        "output_tokens": 5655,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "estimated_api_equivalent_usd": 0.0043086
+    },
+    "product-selection": {
+      "calls": 24,
+      "succeeded": 24,
+      "complete_usage_calls": 24,
+      "tokens": {
+        "input_tokens": 32148,
+        "output_tokens": 4344,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 69
+      },
+      "estimated_api_equivalent_usd": 0.0053868
+    },
+    "quality-review": {
+      "calls": 142,
+      "succeeded": 142,
+      "complete_usage_calls": 142,
+      "tokens": {
+        "input_tokens": 681221,
+        "output_tokens": 51112,
+        "cached_input_tokens": 10112,
+        "reasoning_tokens": 1749
+      },
+      "estimated_api_equivalent_usd": 0.09276802
+    },
+    "quick-main": {
+      "calls": 24,
+      "succeeded": 24,
+      "complete_usage_calls": 24,
+      "tokens": {
+        "input_tokens": 5579,
+        "output_tokens": 3877,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "estimated_api_equivalent_usd": 0.0024964
+    },
+    "quick-precheck": {
+      "calls": 3,
+      "succeeded": 3,
+      "complete_usage_calls": 3,
+      "tokens": {
+        "input_tokens": 368,
+        "output_tokens": 72,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "estimated_api_equivalent_usd": 7.28e-05
+    },
+    "translation-main": {
+      "calls": 240,
+      "succeeded": 240,
+      "complete_usage_calls": 240,
+      "tokens": {
+        "input_tokens": 80052,
+        "output_tokens": 66014,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 178
+      },
+      "estimated_api_equivalent_usd": 0.0410122
+    },
+    "translation-precheck": {
+      "calls": 3,
+      "succeeded": 3,
+      "complete_usage_calls": 3,
+      "tokens": {
+        "input_tokens": 368,
+        "output_tokens": 70,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "estimated_api_equivalent_usd": 7.18e-05
+    },
+    "translation-repeat": {
+      "calls": 40,
+      "succeeded": 40,
+      "complete_usage_calls": 40,
+      "tokens": {
+        "input_tokens": 14476,
+        "output_tokens": 12532,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "estimated_api_equivalent_usd": 0.0077136
+    }
+  },
+  "cash_usd": null,
+  "quota_percent": null,
+  "amount_basis": "Actual call receipts and local content-free usage ledger; no verified cash amount or subscription quota percentage",
+  "quick_gate_passed": true,
+  "quick_main_samples": 24,
+  "quick_p50": 6.453385417000391,
+  "quick_p95": 13.542626666996512,
+  "quality_review_independent": false,
+  "ledger_confirmation": {
+    "translation_receipts_confirmed": 310,
+    "review_receipts_confirmed": 142,
+    "product_receipts_confirmed": 42,
+    "redacted_entries_sha256": "0d82d7d075ccc2c3e425faa65c98f41a649acf330a6837778bab92bf39ba7209"
+  },
+  "discarded_review_generation_calls": 12,
+  "product_regressions": {
+    "selection": {
+      "main_samples": 24,
+      "statuses": {
+        "ok": 24
+      },
+      "request_counts": {
+        "attempts": 24,
+        "succeeded": 24,
+        "failed": 0,
+        "cancelled": 0,
+        "retries": null,
+        "repairs": 0
+      },
+      "tokens": {
+        "input": 32148,
+        "output": 4344,
+        "cached_input": 0,
+        "reasoning": 69
+      },
+      "usage_complete": true,
+      "scope": "Functional regression only; excluded from model scores and latency quantiles; may overlap review calls"
+    },
+    "pdf-quick": {
+      "main_samples": 4,
+      "statuses": {
+        "ok": 4
+      },
+      "request_counts": {
+        "attempts": 18,
+        "succeeded": 18,
+        "failed": 0,
+        "cancelled": 0,
+        "retries": 0,
+        "repairs": 0
+      },
+      "tokens": {
+        "input": 14811,
+        "output": 5655,
+        "cached_input": 0,
+        "reasoning": 0
+      },
+      "usage_complete": true,
+      "scope": "Functional regression only; excluded from model scores and latency quantiles; may overlap review calls"
+    }
+  },
+  "review_protocol": "Initial context-contaminated judgments were archived and discarded; the complete initial and second passes use only frozen source, translation and rubric anchors.",
+  "api_equivalent_estimate": {
+    "basis": "Standard API token prices applied to measured subscription token receipts; not verified subscription cash charges or quota consumption",
+    "source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+    "as_of": "2026-10-25",
+    "usd_per_million_tokens": {
+      "input": 0.1,
+      "cached_input": 0.01,
+      "output": 0.5
+    },
+    "reasoning_tokens_included_in_output": true,
+    "formal_translation_calls": 283,
+    "formal_translation_usd": 0.0487976,
+    "all_recorded_calls": 494,
+    "all_recorded_usd": 0.15383022,
+    "chart_scope": "Formal translation prechecks, main calls and repeats only; quick checks, reviews and product regressions excluded"
+  }
+}

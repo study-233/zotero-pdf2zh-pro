@@ -62,6 +62,9 @@ export interface ServerHealthResponse {
         boundedCancellation?: boolean;
         detailedTaskProgress?: boolean;
         reasoningMode?: boolean;
+        reasoningLow?: boolean;
+        mimoApi?: boolean;
+        zhipuApi?: boolean;
         codexCli?: boolean;
         chatgptPlan?: boolean;
         codexProxy?: boolean;
@@ -120,6 +123,13 @@ export interface ValidateConfigResponse {
     message?: string;
     diagnostics?: DiagnosticMessage[];
     liveTest?: {
+        reasoning?: {
+            requested: string;
+            effective: string;
+            protocolFallback: boolean;
+            modelDetail?: import("./profileApiClient").ProfileModelDetail;
+            effort?: string;
+        };
         reasoningMessage?: string;
         enabled: boolean;
         ok?: boolean;

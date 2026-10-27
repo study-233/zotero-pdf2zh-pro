@@ -92,14 +92,14 @@ class ProtocolTests(unittest.TestCase):
         ):
             return OpenAITranslator(config, NoopRateLimiter())
 
-    def test_auto_chat_and_both_supported_use_chat(self):
-        translator = self.translator(lambda r: httpx.Response(200, json=chat()))
-        self.assertEqual(translator.health_check(), "译文")
-        self.assertEqual(translator.resolved_protocol, "chat_completions")
+    def test_auto_prefers_responses_when_both_supported(self):
+        translator = self.translator(lambda r: httpx.Response(200, json=response()))
+        self.assertEqual(translator.health_check(), "译文。")
+        self.assertEqual(translator.resolved_protocol, "responses")
         self.assertEqual(len(self.requests), 1)
 
     def test_health_check_honors_configured_timeout(self):
-        translator = self.translator(lambda r: httpx.Response(200, json=chat()))
+        translator = self.translator(lambda r: httpx.Response(200, json=response()))
         translator.timeout = "120"
         with patch.object(
             translator.client,
@@ -117,7 +117,7 @@ class ProtocolTests(unittest.TestCase):
                 )
             return httpx.Response(200, json=response())
 
-        translator = self.translator(handler)
+        translator = self.translator(handler, endpoint="https://gateway.invalid/prefix/v1/chat/completions")
         self.assertEqual(translator.health_check(), "译文。")
         self.assertEqual(translator.resolved_protocol, "responses")
         self.assertEqual(translator.do_translate("paper"), "译文。")
@@ -194,6 +194,7 @@ class ProtocolTests(unittest.TestCase):
                 if r.url.path.endswith("chat/completions")
                 else httpx.Response(200, json=response())
             )
+            , endpoint="https://gateway.invalid/prefix/v1/chat/completions"
         )
         translator.health_check()
         self.assertEqual(translator.resolved_protocol, "responses")
@@ -211,7 +212,7 @@ class ProtocolTests(unittest.TestCase):
                     httpx.Response(400, json={"error": rejection})
                     if r.url.path.endswith("chat/completions")
                     else httpx.Response(200, json=response())
-                ))
+                ), endpoint="https://gateway.invalid/prefix/v1/chat/completions")
                 translator.health_check()
                 self.assertEqual(translator.resolved_protocol, "responses")
                 self.assertEqual(len(self.requests), 2)
@@ -219,7 +220,7 @@ class ProtocolTests(unittest.TestCase):
             httpx.Response(400, json={"error": {"code": "protocol_not_supported"}})
             if r.url.path.endswith("chat/completions")
             else httpx.Response(403, json={"error": {"message": "请使用标准 Codex 客户端"}})
-        ))
+        ), endpoint="https://gateway.invalid/prefix/v1/chat/completions")
         with self.assertRaises(openai.PermissionDeniedError):
             translator.health_check()
         self.assertEqual(len(self.requests), 2)
@@ -262,7 +263,7 @@ class ProtocolTests(unittest.TestCase):
                 httpx.Response(200, json=chat())
                 if state[0]
                 else httpx.Response(404, json={"error": "Not found"})
-            )
+            ), endpoint="https://gateway.invalid/prefix/v1/chat/completions"
         )
         translator.health_check()
         state[0] = False

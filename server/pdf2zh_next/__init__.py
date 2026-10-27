@@ -2,6 +2,8 @@ from pdf2zh_next.config import BingSettings
 from pdf2zh_next.config import ClaudeCodeSettings
 from pdf2zh_next.config import DeepLSettings
 from pdf2zh_next.config import DeepSeekSettings
+from pdf2zh_next.config import MiMoSettings
+from pdf2zh_next.config import ZhipuSettings
 from pdf2zh_next.config import GeminiSettings
 from pdf2zh_next.config import GoogleSettings
 from pdf2zh_next.config import OllamaSettings
@@ -34,6 +36,8 @@ __all__ = [
     "GoogleSettings",
     "DeepLSettings",
     "DeepSeekSettings",
+    "MiMoSettings",
+    "ZhipuSettings",
     "OllamaSettings",
     "SiliconFlowSettings",
     "GeminiSettings",

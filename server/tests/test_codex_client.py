@@ -582,7 +582,11 @@ class CodexClientTests(unittest.TestCase):
         client, transport = self.client()
         self.assertEqual(client.check_ready("gpt-6-luna")["reasoningEffort"], "medium")
         self.assertEqual(client.check_ready("gpt-6-luna", "none")["reasoningEffort"], "none")
-        self.assertEqual(sum(m == "model/list" for m, _ in transport.calls), 1)
+        self.assertEqual(client.check_ready("gpt-6-luna", "auto")["reasoningEffort"], "medium")
+        transport.models[0]["supportedReasoningEfforts"].append({"reasoningEffort": "low"})
+        client._catalog_time = 0
+        self.assertEqual(client.check_ready("gpt-6-luna", "auto")["reasoningEffort"], "low")
+        self.assertEqual(sum(m == "model/list" for m, _ in transport.calls), 2)
 
     def test_expired_login_discards_cached_auth_manager_for_user_retry(self):
         client, transport = self.client(ScriptedTransport(lambda t, u, _: [

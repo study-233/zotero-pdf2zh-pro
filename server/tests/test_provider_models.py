@@ -24,6 +24,22 @@ class ModelDiscoveryTests(unittest.TestCase):
             with patch("provider_models.httpx.get", return_value=self.response(payload=payload)):
                 self.assertEqual(list_provider_models({"apiUrl": "https://relay.invalid/v1"}), [])
 
+    def test_mimo_discovers_text_models_with_default_and_token_plan_urls(self):
+        payload = {"data": [{"id": model} for model in [
+            "mimo-v2.6-pro", "mimo-v2.6-flash", "mimo-v2.6-pro-ultraspeed",
+            "mimo-v2.5-asr", "mimo-v2.5-tts", "mimo-v2.5-tts-voiceclone", "future-text-model",
+        ]]}
+        for base in (None, "https://token-plan-cn.xiaomimimo.com/v1"):
+            with patch("provider_models.httpx.get", return_value=self.response(payload=payload)) as get:
+                config = {"service": "mimo", "apiKey": "TEST_SECRET"}
+                if base:
+                    config["apiUrl"] = base
+                self.assertEqual(list_provider_models(config), [
+                    "future-text-model", "mimo-v2.6-flash", "mimo-v2.6-pro", "mimo-v2.6-pro-ultraspeed",
+                ])
+                self.assertEqual(get.call_args.args[0], (base or "https://api.xiaomimimo.com/v1") + "/models")
+                self.assertEqual(get.call_args.kwargs["headers"], {"Authorization": "Bearer TEST_SECRET"})
+
     def test_upstream_errors_are_useful_and_never_echo_secrets(self):
         for code, expected in [(401, "Key"), (403, "权限"), (404, "不支持"), (405, "不支持"), (429, "额度"), (500, "失败"), (302, "失败")]:
             with self.subTest(code=code), patch("provider_models.httpx.get", return_value=self.response(code, {"message": "TEST_SECRET"})):

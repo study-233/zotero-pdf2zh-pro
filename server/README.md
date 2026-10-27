@@ -78,8 +78,8 @@ fallback to the model. Free-service cache keys contain only selected text, langu
 and provider; no paper context or credentials are sent.
 
 The profile text provider supports Codex and existing presets resolving to OpenAISettings,
-including Chat Completions and Responses. A fixed API protocol needs no health-check
-request; `auto` negotiates only when a model request is actually needed.
+including Chat Completions and Responses. Legacy fixed/default profiles need no health-check
+request; `auto` protocol and automatic low negotiate only on an actual cache miss.
 Responses contain `translation` or `explanation`, `provider`, `model` when available,
 and `cached`. Errors have a fixed `code`: `empty_text`, `invalid_request`,
 `invalid_config`, `unsupported_selection_provider`, `provider_timeout` (504),
@@ -498,12 +498,12 @@ Each attempt runs in a spawn process, contained by a POSIX process group or Wind
 
 ## Provider audit and configuration schema v4
 
-The plugin exposes 11 platform presets backed by 9 services. OpenRouter uses
+The plugin exposes 13 platform presets backed by 11 services. OpenRouter uses
 `service: "openai"` and `apiUrl: "https://openrouter.ai/api/v1"`; the optional
 `providerPreset` profile field is UI metadata, not a new server service ID.
-New profiles use Chat Completions; saved protocols and custom URLs are preserved.
+New profiles use `apiProtocol: "auto"` (Responses first, then Chat on an explicit protocol rejection) and `reasoningMode: "low"`. Saved explicit choices and custom URLs are preserved.
 
-Zhipu, Grok, Groq, ModelScope, QwenMT, Azure OpenAI, Azure Translator, XInference
+Grok, Groq, ModelScope, QwenMT, Azure OpenAI, Azure Translator, XInference
 and AnythingLLM adapters are removed. Schema v4 keeps these profiles and their
 references for manual reconfiguration, and prevents translation or tests through
 them. There is no automatic replacement. The earlier removal of
@@ -512,7 +512,17 @@ in effect. Missing or removed service IDs return a validation error.
 
 `POST /list-models` retains its existing request and response shape. Supported
 HTTP catalogs are OpenAI-compatible endpoints (including OpenRouter), DeepSeek,
-Gemini and SiliconFlow. SiliconFlow includes `sub_type=chat`; Codex discovery
+Xiaomi MiMo, Gemini and SiliconFlow. MiMo defaults to `https://api.xiaomimimo.com/v1`
+and `mimo-v2.6-flash`; custom endpoints (including Token Plan) are preserved.
+MiMo discovery excludes ASR/TTS models. Both Chat Completions and Responses
+support the reasoning-off option and request metrics.
+Zhipu support is restored with `service: "zhipu"`, default model `glm-5.3-flash`,
+and Chat Completions base URL `https://open.bigmodel.cn/api/paas/v4`.
+Enter Zhipu model IDs manually. Official Zhipu base paths are selected per protocol: Responses uses
+`https://open.bigmodel.cn/api/v1`, while Chat uses `/api/paas/v4`. Custom gateway paths are preserved. GLM-5.3 variants do not offer reasoning off;
+verified older text models use `thinking.type=disabled` for Chat Completions.
+Existing Zhipu profile credentials, URLs, models and extra parameters are preserved.
+SiliconFlow includes `sub_type=chat`; Codex discovery
 uses app-server. Unsupported catalogs and failures allow manual model entry.
 
 See the [dated audit](../docs/provider-audit-2026-10-03.md) for migration and
@@ -557,3 +567,13 @@ Account management requires a loopback peer and Host, no Origin header, and `X-P
 Store credentials and the content-free usage ledger in `${PDF2ZH_DATA_DIR}/chatgpt-auth`, or set `PDF2ZH_CHATGPT_AUTH_DIR` before starting. Use one shared, private directory per authorization to serialize rotating refresh tokens. Logout attempts server-side revocation and always clears the local session; `revocationConfirmed: false` requires the user to disconnect the app in ChatGPT settings. Model lookup and cache hits do not add generation calls. Missing terminal usage remains unknown across restarts. Subscription percentage is unavailable, not zero.
 
 The account UI currently supports native local services only. Docker and remote server login are not advertised as supported; the account peer check deliberately rejects their non-loopback connections. Existing API Key deployments are unaffected. The new modules ship in the Python wheel and Docker image; the launcher and locked dependencies are unchanged. See [account and rollback details](../docs/chatgpt-account.md).
+
+### Low reasoning and protocol negotiation
+
+`/health.capabilities.reasoningLow` and `responsesFirst` identify this behavior.
+`reasoningMode` accepts `low`, `off`, or `default` (omitted preserves legacy defaults).
+Low is mapped per endpoint; MiMo on/off controls and SiliconFlow mappings are not reported as real low.
+Unknown endpoints may reject automatic low: only an explicit reasoning parameter rejection allows one initialization retry using provider defaults. Explicit custom parameters and off are never removed.
+`/list-models` also returns optional `modelDetails`; catalog capabilities are cached for ten minutes by base URL, credential fingerprint and model. No credentials are returned.
+`/validate-config.liveTest.reasoning` reports the requested/effective setting, protocol fallback and model controls. Request evidence retains `reasoningRequested` and `reasoningSetting`.
+OpenRouter native reasoning objects are preserved. SiliconFlow uses the shared compatible adapter for both PDF and selection. Account `reasoningEffort: "auto"` selects low if the account catalog offers it, otherwise its default. Ollama remains native; Claude Code uses `--effort low` only when its CLI declares the option.

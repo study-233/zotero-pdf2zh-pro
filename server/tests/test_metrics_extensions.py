@@ -18,7 +18,7 @@ class MetricsExtensionTests(unittest.TestCase):
         return TaskMetricsCollector(task_id="metrics", provider="test", model="test")
 
     def test_delayed_probe_replay_happens_once_and_does_not_fake_active_requests(self):
-        translator = self.translator(lambda _: httpx.Response(200, json=chat("你好")))
+        translator = self.translator(lambda _: httpx.Response(200, json=chat("你好")), protocol="chat_completions")
         translator.health_check()
         collector = self.collector()
         translator.set_metrics_collector(collector)

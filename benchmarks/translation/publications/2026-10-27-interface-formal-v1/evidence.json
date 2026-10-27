@@ -1,0 +1,17 @@
+{
+  "source_plan_sha256": "4dc2366d86fca9c4a1e50e6001bc4e87107c41e9872cabe6c70e2cddc1d864af",
+  "files": {
+    "summary.json": "ba18e54f4364242090df8cc532c981ca823e67b27326512cb13457a051b690c8",
+    "audit-notes.json": "5c80a4441ce52ec4595ffc6fd6c8bf43bd6420a860934490cbcabbde2fa94de9",
+    "pricing-derivation.json": "dcde0e67cc120f1a6cae6732850d779e4ae917d89c92cccc0aa4a40420a90434",
+    "review-schema-repairs.json": "ec5e0df337dab2961849639199f68cc683df69a59ddd55dedd77433ecb696dbe",
+    "repeat-scores.csv": "396b8473c9162305cc94bac063dc54b1a2605f3436fbac6fbe08e39279793e60",
+    "sample-scores.csv": "f9cce57712ef9d4ca23716780b418968701d74c564c9371e6ed8e25e32de8c27",
+    "repeat-scores.json": "a28519297087e5fe606dd4a31aadeb7ef4015a0ec2d1e0af18fdda3de8845dbb",
+    "schema-repair-policy.json": "bf7bdfc7872307915790e8837e67c2977fbbf38432c2a4f166664fbfe3ab3338",
+    "calls.csv": "6ff49088ef0363aa7231235d99623c8be1121a9dbf33595c629adb529e6a9dc3",
+    "sample-scores.json": "d62505dfc79b2675926f845d1371757d67454a2746a93ea89f62f954b89bff87"
+  },
+  "prior_publications_unchanged": true,
+  "privacy": "No account identity, credentials, machine paths or full source/translation texts. Evidence excerpts capped at240 characters."
+}

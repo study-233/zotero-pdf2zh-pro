@@ -214,6 +214,68 @@ class DeepSeekSettings(BaseModel):
 GUI_PASSWORD_FIELDS.append("deepseek_api_key")
 
 
+class MiMoSettings(BaseModel):
+    """Xiaomi MiMo OpenAI-compatible API settings"""
+
+    translate_engine_type: Literal["MiMo"] = Field(default="MiMo")
+    support_llm: Literal["yes", "no"] = Field(default="yes")
+    mimo_model: str = Field(default="mimo-v2.6-flash", description="MiMo model to use")
+    mimo_api_key: str | None = Field(default=None, description="API key for MiMo service")
+    mimo_base_url: str = Field(
+        default="https://api.xiaomimimo.com/v1", description="Base URL for MiMo API"
+    )
+
+    def validate_settings(self) -> None:
+        self.mimo_api_key = _clean_string(self.mimo_api_key)
+        if not self.mimo_api_key:
+            raise ValueError("MiMo API key is required")
+        self.mimo_model = _clean_string(self.mimo_model)
+        self.mimo_base_url = _clean_string(self.mimo_base_url)
+
+    def transform(self) -> OpenAISettings:
+        return OpenAISettings(
+            openai_model=self.mimo_model,
+            openai_api_key=self.mimo_api_key,
+            openai_base_url=self.mimo_base_url,
+        )
+
+
+GUI_PASSWORD_FIELDS.append("mimo_api_key")
+GUI_SENSITIVE_FIELDS.append("mimo_base_url")
+
+
+class ZhipuSettings(BaseModel):
+    """Zhipu GLM OpenAI-compatible API settings"""
+
+    translate_engine_type: Literal["Zhipu"] = Field(default="Zhipu")
+    support_llm: Literal["yes", "no"] = Field(default="yes")
+    zhipu_model: str = Field(default="glm-5.3-flash", description="Zhipu model to use")
+    zhipu_api_key: str | None = Field(default=None, description="API key for Zhipu service")
+    zhipu_base_url: str = Field(
+        default="https://open.bigmodel.cn/api/paas/v4", description="Base URL for Zhipu API"
+    )
+    zhipu_enable_json_mode: bool | None = Field(default=None, description="Enable JSON mode for Zhipu service")
+
+    def validate_settings(self) -> None:
+        self.zhipu_api_key = _clean_string(self.zhipu_api_key)
+        if not self.zhipu_api_key:
+            raise ValueError("Zhipu API key is required")
+        self.zhipu_model = _clean_string(self.zhipu_model)
+        self.zhipu_base_url = _clean_string(self.zhipu_base_url)
+
+    def transform(self) -> OpenAISettings:
+        return OpenAISettings(
+            openai_model=self.zhipu_model,
+            openai_api_key=self.zhipu_api_key,
+            openai_base_url=self.zhipu_base_url,
+            openai_enable_json_mode=self.zhipu_enable_json_mode,
+        )
+
+
+GUI_PASSWORD_FIELDS.append("zhipu_api_key")
+GUI_SENSITIVE_FIELDS.append("zhipu_base_url")
+
+
 class OllamaSettings(BaseModel):
     """Ollama API settings"""
 
@@ -226,6 +288,7 @@ class OllamaSettings(BaseModel):
     ollama_host: str | None = Field(
         default="http://localhost:11434", description="Ollama host"
     )
+    ollama_reasoning_mode: str = Field(default="default")
     num_predict: int | None = Field(
         default=2000, description="The max number of token to predict."
     )
@@ -401,7 +464,7 @@ class ChatGPTSettings(BaseModel):
     def validate_settings(self):
         if not self.chatgpt_model.strip():
             raise ValueError('请选择 ChatGPT 模型')
-        if self.chatgpt_reasoning_effort not in (None, 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'):
+        if self.chatgpt_reasoning_effort not in (None, 'auto', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'):
             raise ValueError('ChatGPT 推理档位无效，请重新获取模型列表')
         if self.chatgpt_account_id is not None and not re.fullmatch(r'[0-9a-f]{64}', self.chatgpt_account_id):
             raise ValueError('ChatGPT 账号标识无效，请重新登录并保存配置')
@@ -426,7 +489,7 @@ class CodexSettings(BaseModel):
         if not self.codex_model.strip():
             raise ValueError("请选择 Codex 模型")
         if self.codex_reasoning_effort is not None and self.codex_reasoning_effort not in {
-            "none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra",
+            "auto", "none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra",
         }:
             raise ValueError("Codex 推理档位无效，请重新获取模型列表")
 
@@ -435,6 +498,7 @@ class ClaudeCodeSettings(BaseModel):
     """Claude Code settings"""
 
     translate_engine_type: Literal["ClaudeCode"] = Field(default="ClaudeCode")
+    claude_code_reasoning_mode: str = Field(default="default")
     claude_code_path: str = Field(
         default="claude", description="Path to Claude Code CLI"
     )
@@ -520,6 +584,8 @@ TRANSLATION_ENGINE_SETTING_TYPE: TypeAlias = (
     | BingSettings
     | DeepLSettings
     | DeepSeekSettings
+    | MiMoSettings
+    | ZhipuSettings
     | OllamaSettings
     | SiliconFlowSettings
     | GeminiSettings

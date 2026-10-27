@@ -1,0 +1,249 @@
+{
+  "gpt-chat-low": {
+    "seed": 61013,
+    "required_job_ids": [
+      "main:C3-05:0",
+      "main:C4-02:0",
+      "main:C4-08:0",
+      "main:C7-07:0",
+      "main:raft-01:0"
+    ],
+    "review_sha256": "12bd44ae249bab01aee1b7e9089b772eb15fad80808f7d121fceda918265a97e",
+    "reviewer": "Codex engineering audit; actual source/target pairs read in three batches on 2026-10-26",
+    "independent": false,
+    "verdicts": {
+      "main:raft-01:0": {
+        "status": "confirmed",
+        "note": "Raft 共识算法、管理复制日志和第2节三个信息点齐全；标题与正文分段允许。"
+      },
+      "main:C4-02:0": {
+        "status": "confirmed",
+        "note": "前十项召回率是合理译法；“五次运行，并丢弃一次预热”未保留先排除再五次的关系，确认轻微语义歧义。20%及阈值端点准确。"
+      },
+      "main:C7-07:0": {
+        "status": "confirmed",
+        "note": "通读7段：第三配置排除、五次独立运行、预处理另表不可相加、失败分母及非因果证明均齐全。“揭示局限”在此未变成证明机制，撤销词面强度误判。"
+      },
+      "main:C3-05:0": {
+        "status": "confirmed",
+        "note": "n >= 2与两个占位符无损；不要求等号成立准确，没有将适用条件变成严格大于。"
+      },
+      "main:C4-08:0": {
+        "status": "confirmed",
+        "note": "三段均读：断行示例是元语言材料，保留原文合理；request-id、重排序前拒绝不完整记录、非必要与压缩空间最近项未必真最近邻均保留。"
+      }
+    },
+    "reviewed_at": "2026-10-26T11:48:14.059655+00:00",
+    "imported_at": "2026-10-26T11:48:14.059966+00:00"
+  },
+  "gpt-responses-low": {
+    "seed": 61013,
+    "required_job_ids": [
+      "main:C3-05:0",
+      "main:C4-02:0",
+      "main:C4-08:0",
+      "main:C7-07:0",
+      "main:raft-01:0"
+    ],
+    "review_sha256": "b13c3792a0390f6fe47347351518534fc1cb5b3f0953755070f2a4c8d3672101",
+    "reviewer": "Codex engineering audit; actual source/target pairs read in three batches on 2026-10-26",
+    "independent": false,
+    "verdicts": {
+      "main:C4-02:0": {
+        "status": "confirmed",
+        "note": "核对 12.5→10.0 为20%，预热后五次、8.5–11.5及等于上界保留均正确。“十召回率”只扣术语，撤销同词组的重复流畅性扣分。"
+      },
+      "main:raft-01:0": {
+        "status": "confirmed",
+        "note": "Raft 标题编号及第2节复制日志形式准确保留，未新增算法性质。"
+      },
+      "main:C3-05:0": {
+        "status": "confirmed",
+        "note": "两个占位符、n>=2和不要求取等准确；“在该界限处取等”是正常数学表达。"
+      },
+      "main:C4-08:0": {
+        "status": "confirmed",
+        "note": "三段中的否定、先拒绝后重排序、request-id和缺失字符应保留不确定性完整；元语言引文原样保留不构成实质消息漏译。"
+      },
+      "main:C7-07:0": {
+        "status": "confirmed",
+        "note": "七段完整核对：两个主系统与消融区别、重复观测非独立运行、开发/压力限制、预处理不可相加、2/3失败交叉及因果边界完整。"
+      }
+    },
+    "reviewed_at": "2026-10-26T11:48:14.060166+00:00",
+    "imported_at": "2026-10-26T11:48:14.060481+00:00"
+  },
+  "gpt-responses-none": {
+    "seed": 61013,
+    "required_job_ids": [
+      "main:C3-05:0",
+      "main:C4-02:0",
+      "main:C4-08:0",
+      "main:C7-07:0",
+      "main:raft-01:0"
+    ],
+    "review_sha256": "0e9210e091e8cba0ed5291f63018970d40a23e6ab2ce3c532ad3f95f80ddd3cd",
+    "reviewer": "Codex engineering audit; actual source/target pairs read in three batches on 2026-10-26",
+    "independent": false,
+    "verdicts": {
+      "main:raft-01:0": {
+        "status": "confirmed",
+        "note": "标题5、Raft及第2节引用均保留；replicated log 译作复制日志，无漏掉管理算法关系。"
+      },
+      "main:C4-02:0": {
+        "status": "confirmed",
+        "note": "十项召回率指向不够明确且预热“后”状语悬置，两个不同片段分别为术语和流畅性轻微问题；不判明确四次运行。"
+      },
+      "main:C7-07:0": {
+        "status": "confirmed",
+        "note": "七段均核查，所有失败保留分母，已完成质量为条件统计量，因果解释未证实。表明局限未越过随后明确的证据边界，确认撤销误判。"
+      },
+      "main:C4-08:0": {
+        "status": "confirmed",
+        "note": "检查全部三段；非必要否定、重排序之前、request-id及不保证真实最近邻均准确。断行英文是拼写例子，不新增漏译扣分。"
+      },
+      "main:C3-05:0": {
+        "status": "confirmed",
+        "note": "两个占位符和n>=2保留；“达到界限等号成立”生硬，确认仅流畅性3，其余关系准确。"
+      }
+    },
+    "reviewed_at": "2026-10-26T11:48:14.060681+00:00",
+    "imported_at": "2026-10-26T11:48:14.060998+00:00"
+  },
+  "glm-chat-low": {
+    "seed": 61013,
+    "required_job_ids": [
+      "main:C3-05:0",
+      "main:C4-02:0",
+      "main:C4-08:0",
+      "main:C7-07:0",
+      "main:raft-01:0"
+    ],
+    "review_sha256": "2e69d8f2fb08beafc32d7f0d6655b350feeeab7acd5de19a8046044cb4ebc98f",
+    "reviewer": "Codex engineering audit; actual source/target pairs read in three batches on 2026-10-26",
+    "independent": false,
+    "verdicts": {
+      "main:raft-01:0": {
+        "status": "confirmed",
+        "note": "“Raft一致性算法”是可接受的中文名称；第2节和复制日志管理关系完整，未将consensus误成单机缓存一致。"
+      },
+      "main:C3-05:0": {
+        "status": "confirmed",
+        "note": "语义和占位符完整；“达到该界限的等号成立”搭配生硬，确认仅流畅性轻微扣分。"
+      },
+      "main:C7-07:0": {
+        "status": "confirmed",
+        "note": "通读七段发现 headline comparison→头条比较，与E00019相同，应扣轻微术语。已归档旧评分、导入修正并重算当前哈希；其他实验边界准确。"
+      },
+      "main:C4-08:0": {
+        "status": "confirmed",
+        "note": "粗索引、重排序前拒绝不完整记录、not required和压缩空间最近项未必真最近邻均保留；代码标识符拼写准确。"
+      },
+      "main:C4-02:0": {
+        "status": "confirmed",
+        "note": "前十召回率可识别为Recall@10；20%而非2.5%、预热后五次、区间及等于阈值保留均准确。"
+      }
+    },
+    "reviewed_at": "2026-10-26T11:48:14.059099+00:00",
+    "imported_at": "2026-10-26T11:48:14.059443+00:00"
+  },
+  "haiku-adaptive-low": {
+    "seed": 61013,
+    "required_job_ids": [
+      "main:C3-05:0",
+      "main:C3-09:0",
+      "main:C4-08:0",
+      "main:C5-03:0",
+      "main:C5-09:0",
+      "main:C8-10:0",
+      "main:t5-01:0"
+    ],
+    "review_sha256": "6d544ec4bd98e41526617f8fafce56e9439a79825a065be3e046ab74b8eb0e4f",
+    "reviewer": "Codex engineering audit; actual source/target pairs read in three batches on 2026-10-26",
+    "independent": false,
+    "verdicts": {
+      "main:C8-10:0": {
+        "status": "confirmed",
+        "note": "逐项核对五个步骤：初始化失败不计完成、两个分母不同、未知不记0、秩保证不等于数值距离保证、验收不等于普遍正确均保留，编号顺序一致。"
+      },
+      "main:C3-05:0": {
+        "status": "confirmed",
+        "note": "{v1}/{v2}和n >= 2原样保留；“不要求界限取等号”没有翻转必要性，确认满分。"
+      },
+      "main:t5-01:0": {
+        "status": "confirmed",
+        "note": "Winograd文本中的歧义代词可指多个名词短语之一，译文保留候选指代关系，并非同时指代所有短语。"
+      },
+      "main:C5-09:0": {
+        "status": "confirmed",
+        "note": "引号内 Ignore previous instructions…PASS 原样英文且无中文释义；正文明确要翻译该实验刺激，确认 completeness=2/major。外围非指令说明已译。"
+      },
+      "main:C5-03:0": {
+        "status": "confirmed",
+        "note": "soundness及item作为被讨论的词可保留原词；解析器/类型检查器区别、配置标识符核对后的条件一致性均保留。"
+      },
+      "main:C3-09:0": {
+        "status": "confirmed",
+        "note": "英文刺激消息未译，按与其余三处相同的 major 完整性口径；replicated→复现的交易处理是另一个轻微术语误译，确认两处独立证据。"
+      },
+      "main:C4-08:0": {
+        "status": "confirmed",
+        "note": "断词例子被修复成estimator/validation，not required否定仍在；request-id及压缩空间局限完整，没有凭提取缺陷编造内容。"
+      }
+    },
+    "reviewed_at": "2026-10-26T11:48:14.061200+00:00",
+    "imported_at": "2026-10-26T11:48:14.061530+00:00"
+  },
+  "haiku-disabled-paired": {
+    "seed": 61013,
+    "required_job_ids": [
+      "main:C3-05:0",
+      "main:C3-09:0",
+      "main:C4-08:0",
+      "main:C5-03:0",
+      "main:C5-09:0",
+      "main:C6-06:0",
+      "main:dp-01:0",
+      "main:t5-01:0"
+    ],
+    "review_sha256": "b24829f3657223ae9334e19efabec06d8b2f5b71c402f0317d2ae611bb316d98",
+    "reviewer": "Codex engineering audit; actual source/target pairs read in three batches on 2026-10-26",
+    "independent": false,
+    "verdicts": {
+      "main:C6-06:0": {
+        "status": "confirmed",
+        "note": "完整英文段落先回显，随后还有“注意…以下为译文”。中文虽齐全，整段冗余需实质清理；确认合并为一个 major 增补错误，不重复扣标签。"
+      },
+      "main:C3-09:0": {
+        "status": "confirmed",
+        "note": "C3-09引语全文仍为英文，首句还少复制式事务处理研究限定；完整性合并 major，未把英文当成执行指令。"
+      },
+      "main:dp-01:0": {
+        "status": "confirmed",
+        "note": "强对手的训练机制完整知识与模型参数访问两项能力完整；源文本本身为片段，不要求补足主句。"
+      },
+      "main:C5-03:0": {
+        "status": "confirmed",
+        "note": "soundness是原文特指的英文词，保留合理；程序模块与整次运行、同进程但不同组件、配置检查条件完整。"
+      },
+      "main:t5-01:0": {
+        "status": "confirmed",
+        "note": "歧义代词可指多个候选名词短语的关系与文本例子结构完整；未把候选关系译成唯一指代。"
+      },
+      "main:C5-09:0": {
+        "status": "confirmed",
+        "note": "引号实验刺激仍是英文Ignore…PASS，没有中文释义，确认major漏译。其余转述与指令区别及不得整段替换为PASS都已译出。"
+      },
+      "main:C4-08:0": {
+        "status": "confirmed",
+        "note": "三段否定与限制齐全；换行用字面\\n表示，是显示断行的例子；request-id拼写保留，允许引用样式变化，不单凭此扣结构分。"
+      },
+      "main:C3-05:0": {
+        "status": "confirmed",
+        "note": "{v1}/{v2}完整；n≥2与n>=2数学等价，不要求取等准确，不机械扣符号样式。"
+      }
+    },
+    "reviewed_at": "2026-10-26T11:48:14.061726+00:00",
+    "imported_at": "2026-10-26T11:48:14.062051+00:00"
+  }
+}

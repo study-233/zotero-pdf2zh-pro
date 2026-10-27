@@ -31,7 +31,7 @@ RESERVED_OPTIONS = {
 def normalize_endpoint(url: str | None, protocol: str) -> tuple[str | None, str]:
     if protocol not in PROTOCOLS:
         raise ValueError("apiProtocol must be auto, chat_completions or responses")
-    hint = "chat_completions"
+    hint = "responses"
     if not url:
         return None, hint
     parts = urlsplit(url.strip())
@@ -95,7 +95,7 @@ def _nested_alias(options: dict, source: str, parent: str, child: str) -> None:
     nested.setdefault(child, value)
 
 
-def wire_options(options: dict, protocol: str) -> dict:
+def wire_options(options: dict, protocol: str, *, preserve_reasoning=False) -> dict:
     options = copy.deepcopy(options)
     if protocol == "responses":
         _merge_alias(options, "max_tokens", "max_output_tokens")
@@ -120,6 +120,10 @@ def wire_options(options: dict, protocol: str) -> dict:
             ("reasoning", "effort", "reasoning_effort"),
             ("text", "format", "response_format"),
         ):
+            if parent == "reasoning" and preserve_reasoning:
+                if "reasoning_effort" in options:
+                    _nested_alias(options, "reasoning_effort", "reasoning", "effort")
+                continue
             if parent in options:
                 nested = options.pop(parent)
                 if not isinstance(nested, dict) or set(nested) != {child}:

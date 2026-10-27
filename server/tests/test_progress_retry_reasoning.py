@@ -226,6 +226,18 @@ class ReasoningTests(unittest.TestCase):
             self.assertEqual(apply_reasoning_mode({}, "off", model, "chat_completions"), {"reasoning_effort": "none"})
             self.assertEqual(apply_reasoning_mode({}, "off", model, "responses"), {"reasoning": {"effort": "none"}})
         self.assertEqual(apply_reasoning_mode({}, "off", "deepseek-v4-flash", "chat_completions"), {"thinking": {"type": "disabled"}})
+        for model in ("mimo-v2.6-flash", "mimo-v2.6-pro", "mimo-v2.6-pro-ultraspeed"):
+            self.assertEqual(reasoning_family(model), "mimo")
+            self.assertEqual(apply_reasoning_mode({}, "off", model, "chat_completions"), {"thinking": {"type": "disabled"}})
+            self.assertEqual(apply_reasoning_mode({}, "off", model, "responses"), {"reasoning": {"effort": "none"}})
+        for model in ("glm-5.2", "glm-5.1", "glm-5", "glm-5-turbo", "glm-4.7", "glm-4.6", "glm-4.5", "glm-4.5-air"):
+            self.assertEqual(reasoning_family(model), "zhipu")
+            self.assertEqual(apply_reasoning_mode({}, "off", model, "chat_completions"), {"thinking": {"type": "disabled"}})
+            self.assertEqual(apply_reasoning_mode({}, "off", model, "responses"), {"reasoning": {"effort": "none"}})
+        for model in ("glm-5.3", "glm-5.3-flash", "glm-5.3-flashx", "glm-5.3-flashx-legal"):
+            self.assertIsNone(reasoning_family(model))
+            with self.assertRaisesRegex(ValueError, "必须开启推理"):
+                apply_reasoning_mode({}, "off", model, "chat_completions")
         for model in ("gpt-5", "gpt-5.2-pro", "gpt-5.4-codex", "gpt-6-astra", "custom"):
             self.assertIsNone(reasoning_family(model))
             with self.assertRaises(ValueError):

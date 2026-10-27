@@ -1,0 +1,33 @@
+{
+  "reference": "https://real-api-pricing.vercel.app/#lang=zh",
+  "captured_on": "2026-10-27",
+  "font": "DM Sans Variable (SIL OFL 1.1)",
+  "icons": "Phosphor regular (MIT)",
+  "files": {
+    "FONT-LICENSE.txt": "2af94f4fb533be8fa23282eb33e08ca311ddf47c2f32777e2040b282deeec65c",
+    "ICONS-LICENSE.txt": "b5b1f1da112d18ea2147decfd48ddc1bf2b5aeb6c265381579340e95b15a2bb2",
+    "REFERENCE-LICENSE.txt": "5b7c94000d4f222cb17c2c4f206e64a4f2976aa432335766719c12aab33b8716",
+    "SOURCE.md": "7fc0acb09e3518db601b7d878cec9c6c44917bd5677086a627dc2097736d386f",
+    "box.svg": "18f438c28c4670efd971cd800af92461db9fd125dd33f8e55b86c5ade62f3336",
+    "brands/alibaba.svg": "d890f699fe3f8995731cd3e9edeb1662f25db3f82feb8a750b9090eef26ae328",
+    "brands/anthropic.svg": "2d51dedb3f7839ab813a96aa46145174b5dd3ba7500a23ed4012bc50599513be",
+    "brands/deepseek.svg": "6fde0d2ed65c4179b653174cfea6d7d920a116b412a2fba73bb5b3dc2d392168",
+    "brands/minimax.svg": "6db8a2509acdecb822448760d81696cc3045a4984da97ba1875c45327a07994e",
+    "brands/openai.svg": "b997e5a92a3c1dd68eac900a6f658ba6adc762c6907f7545205a8356995edc5d",
+    "brands/xiaomi.svg": "35bf0beaf4fcc9f84d2dc9ca8f83cff519a6cb02af1d1e0b95f03da3c178a6a8",
+    "brands/zhipu.svg": "f223cd74335202feb2960241477ffc0ec6004bfcfd94c1a0b7f3817edd9d8bc4",
+    "channels/command-code.svg": "8b752d4f554ba028e8b17d2f640738775c2fc1723fddcc2877e04809c066e564",
+    "coins.svg": "b59ab51826ac16237b06842acfcf07e4c4cf23f6ba8970d614a33af08fc6d361",
+    "dm-sans-latin.woff2": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543",
+    "download.svg": "8f27135e74f40e93edd18b172ea2de38dcee80c309addbc0c599ccf150ed15fd",
+    "link.svg": "c66318a1ab5d61de1aa93dd5549203f22d104d3ebf01c7a743641b07227691ba",
+    "pan.svg": "df9b7d5a75907e239b17cfba4244b1e663ab8490a6120b177d2bf84561558f66",
+    "reset.svg": "d48a31b790928617a3ff37cc02408c4a27c00ece7a08cb686ff303d0df1ff166",
+    "scatter.svg": "8e035d8e5cd2322e78ea4eb5b533c3608c31aa9284dd2d7bcdd0484f531c6aa7",
+    "sort.svg": "9c3588f9f15c6feb7e43a9b003778ec3011e2c5e52dc16483e07208f690577fd",
+    "table.svg": "ea8baf41dcaf50d4cdca2e239c1f1d08b49a8943182eba8b7ea3f501ee2ae4f4",
+    "value.svg": "0171447d4348e5bc00f2559988a298be422b726d4165a2692cf4fdacf312a59b",
+    "zoomIn.svg": "7f4fa8671e7bf0ce13c823545daddf7ff7580958af0f15f0664a3bd319ecda5f",
+    "zoomOut.svg": "02ab35c62f9c27e3afa57c89145476af546c357d91a979a8bd2ad1efc8a8790c"
+  }
+}

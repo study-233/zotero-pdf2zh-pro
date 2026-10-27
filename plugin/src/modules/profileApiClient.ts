@@ -139,6 +139,7 @@ export async function testProfile(
     api: LLMApiData,
     signal?: AbortSignal,
     onRuntime?: (runtime: CodexRuntime) => void,
+    onModelDetail?: (detail: ProfileModelDetail) => void,
 ): Promise<string> {
     assertSupportedProfile(api);
     try {
@@ -154,6 +155,7 @@ export async function testProfile(
             health.capabilities?.codexCli,
             health.capabilities?.codexProxy,
             health.capabilities?.chatgptPlan,
+            health.capabilities?.reasoningLow,
         );
         const body = {
             service: api.service,
@@ -194,8 +196,33 @@ export async function testProfile(
                 },
             );
         }
+        const reasoning = data.liveTest?.reasoning;
+        if (reasoning?.modelDetail) onModelDetail?.(reasoning.modelDetail);
+        const state = reasoning?.effective;
+        const reasoningLabel =
+            state === "low"
+                ? "low"
+                : state === "off"
+                  ? getString("profile-reasoning-off")
+                  : state === "enabled"
+                    ? getString("profile-reasoning-enabled")
+                    : state === "requested_low"
+                      ? getString("profile-reasoning-requested")
+                      : state === "default" && reasoning?.requested === "low"
+                        ? getString("profile-reasoning-fallback")
+                        : state === "default"
+                          ? getString("profile-reasoning-provider-default")
+                          : "";
         return (
             getString("profile-tested") +
+            (data.resolvedProtocol
+                ? ` · ${data.resolvedProtocol === "responses" ? "Responses" : "Chat"}`
+                : "") +
+            (reasoning?.protocolFallback &&
+            data.resolvedProtocol === "chat_completions"
+                ? ` · ${getString("profile-protocol-fallback")}`
+                : "") +
+            (reasoningLabel ? ` · ${reasoningLabel}` : "") +
             (prepared.warning
                 ? ` · ${getString("notice-api-compatibility")}`
                 : "")
@@ -222,6 +249,10 @@ export interface ProfileModelDetail {
     displayName?: string;
     defaultReasoningEffort?: string;
     supportedReasoningEfforts: string[];
+    supportsReasoningOff?: boolean | null;
+    reasoningRequired?: boolean;
+    reasoningKind?: string;
+    supportedProtocols?: string[];
 }
 export interface ProfileModelCatalog {
     codexRuntime?: CodexRuntime;
@@ -248,6 +279,7 @@ export async function fetchProfileModelCatalog(
                 health.capabilities?.codexCli,
                 health.capabilities?.codexProxy,
                 health.capabilities?.chatgptPlan,
+                health.capabilities?.reasoningLow,
             );
         }
         const { data } =

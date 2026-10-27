@@ -211,9 +211,9 @@ test("Codex reasoning options follow the discovered model and retain an explicit
     ]);
     assert.deepEqual(
         nodes.reasoningEffort.children.map((option) => option.value),
-        ["", "none", "low", "medium"],
+        ["auto", "", "none", "low", "medium"],
     );
-    assert.match(nodes.reasoningEffort.children[0].textContent, /medium/);
+    assert.match(nodes.reasoningEffort.children[1].textContent, /medium/);
     assert.equal(context.read().reasoningEffort, "low");
     nodes.reasoningEffort.value = "ultra";
     assert.throws(() => context.read(), /推理档位/);
@@ -229,9 +229,9 @@ test("a changed Codex CLI path discards discovered capabilities", () => {
     context.catalog([
         { id: "gpt-6-luna", supportedReasoningEfforts: ["low", "medium"] },
     ]);
-    assert.equal(nodes.reasoningEffort.children.length, 3);
+    assert.equal(nodes.reasoningEffort.children.length, 4);
     for (const callback of nodes.cliPath.listeners.input) callback();
-    assert.equal(nodes.reasoningEffort.children.length, 1);
+    assert.equal(nodes.reasoningEffort.children.length, 2);
 });
 
 test("HTTP service omits Codex settings and retains HTTP fields", () => {
@@ -306,7 +306,13 @@ test("changing proxy during discovery rejects the stale model catalog", async ()
 });
 
 test("verified providers offer discovery and preserve saved model and endpoint", () => {
-    for (const service of ["openai", "deepseek", "gemini", "siliconflow"]) {
+    for (const service of [
+        "openai",
+        "deepseek",
+        "mimo",
+        "gemini",
+        "siliconflow",
+    ]) {
         const { nodes, context } = fixture(
             { service, model: "saved-model" },
             true,
@@ -315,6 +321,90 @@ test("verified providers offer discovery and preserve saved model and endpoint",
         assert.equal(nodes.apiUrl.value, "https://relay.invalid/v1");
         assert.equal(context.read().model, "saved-model");
         assert.deepEqual(Array.from(context.modelIds()), []);
+    }
+});
+
+test("MiMo uses its official endpoint and preserves the selected protocol and thinking mode", () => {
+    const preset = catalog.PROVIDER_PRESETS.find(
+        (entry) => entry.id === "mimo",
+    );
+    const { nodes, context } = fixture({
+        service: "mimo",
+        apiUrl: preset.url,
+        model: "mimo-v2.6-flash",
+    });
+    assert.equal(nodes.apiUrl.value, "https://api.xiaomimimo.com/v1");
+    assert.equal(nodes["get-models"].disabled, false);
+    for (const model of [
+        "mimo-v2.6-flash",
+        "mimo-v2.6-pro",
+        "mimo-v2.6-pro-ultraspeed",
+    ]) {
+        nodes.model.value = model;
+        context.updateReasoningMode();
+        assert.equal(nodes["reasoning-off"].disabled, false);
+        nodes.reasoningMode.value = "off";
+        nodes.apiProtocol.value = "responses";
+        assert.equal(context.read().service, "mimo");
+        assert.equal(context.read().apiProtocol, "responses");
+        assert.equal(context.read().reasoningMode, "off");
+    }
+    nodes.model.value = "unknown-mimo-model";
+    context.updateReasoningMode();
+    assert.equal(nodes["reasoning-off"].disabled, true);
+    assert.throws(() => context.read(), /不支持/);
+    const relay = fixture({ model: "mimo-v2.6-pro" });
+    assert.equal(relay.nodes["reasoning-off"].disabled, false);
+});
+
+test("Zhipu retains old profiles and only offers reasoning off for verified models", () => {
+    const preset = catalog.PROVIDER_PRESETS.find(
+        (entry) => entry.id === "zhipu",
+    );
+    assert.equal(preset.url, "https://open.bigmodel.cn/api/paas/v4");
+    assert.equal(catalog.RETIRED_SERVICES.includes("zhipu"), false);
+    const { nodes, context } = fixture({
+        service: "zhipu",
+        model: "glm-5.3-flash",
+        apiUrl: preset.url,
+    });
+    assert.equal(nodes.test.disabled, false);
+    assert.equal(nodes["get-models"].disabled, true);
+    for (const model of [
+        "glm-5.3",
+        "glm-5.3-flash",
+        "glm-5.3-flashx",
+        "glm-5.3-flashx-legal",
+        "unknown-glm",
+    ]) {
+        nodes.model.value = model;
+        context.updateReasoningMode();
+        assert.equal(nodes["reasoning-off"].disabled, true);
+        nodes.reasoningMode.value = "off";
+        assert.throws(() => context.read(), /不支持/);
+    }
+    nodes.model.value = "glm-5.3-flash";
+    context.updateReasoningMode();
+    assert.equal(
+        nodes["reasoning-hint"].textContent,
+        labels["reasoning-required"],
+    );
+    for (const model of [
+        "glm-5.2",
+        "glm-5.1",
+        "glm-5",
+        "glm-5-turbo",
+        "glm-4.7",
+        "glm-4.6",
+        "glm-4.5",
+        "glm-4.5-air",
+    ]) {
+        nodes.model.value = model;
+        context.updateReasoningMode();
+        assert.equal(nodes["reasoning-off"].disabled, false);
+        nodes.reasoningMode.value = "off";
+        assert.equal(context.read().service, "zhipu");
+        assert.equal(context.read().reasoningMode, "off");
     }
 });
 
@@ -410,4 +500,79 @@ test("editing while capabilities load does not lose the detection control", asyn
     await Promise.resolve();
     assert.equal(nodes["codex-discovery-field"].hidden, false);
     assert.equal(nodes["codex-detect"].disabled, false);
+});
+
+test("new profiles prefer Responses and low while saved choices remain intact", () => {
+    const { nodes, context } = fixture({ key: "", model: "gpt-6-luna" });
+    assert.equal(nodes.apiProtocol.value, "auto");
+    assert.equal(nodes.reasoningMode.value, "low");
+    assert.equal(nodes["reasoning-off"].disabled, false);
+    assert.equal(context.read().reasoningMode, "low");
+    const saved = fixture({
+        apiProtocol: "chat_completions",
+        reasoningMode: "off",
+    });
+    assert.equal(saved.context.read().apiProtocol, "chat_completions");
+    assert.equal(saved.context.read().reasoningMode, "off");
+});
+
+test("recommended settings reset protocol and reasoning without replacing credentials", () => {
+    const { nodes, context } = fixture({
+        apiProtocol: "chat_completions",
+        reasoningMode: "off",
+    });
+    nodes["apply-recommended"].listeners.click[0]();
+    const saved = context.read();
+    assert.equal(saved.apiProtocol, "auto");
+    assert.equal(saved.reasoningMode, "low");
+    assert.equal(saved.apiKey, "test");
+});
+
+test("endpoint catalog controls disabling reasoning for otherwise unknown models", () => {
+    const { nodes, context } = fixture({ model: "vendor/future" });
+    assert.equal(nodes["reasoning-off"].disabled, true);
+    context.catalog([
+        {
+            id: "vendor/future",
+            supportedReasoningEfforts: ["low"],
+            supportsReasoningOff: true,
+        },
+    ]);
+    assert.equal(nodes["reasoning-off"].disabled, false);
+    nodes.reasoningMode.value = "off";
+    assert.equal(context.read().reasoningMode, "off");
+    context.catalog([
+        {
+            id: "vendor/future",
+            supportedReasoningEfforts: ["low"],
+            supportsReasoningOff: false,
+        },
+    ]);
+    assert.equal(nodes["reasoning-off"].disabled, true);
+    assert.throws(() => context.read(), /不支持/);
+});
+
+test("new account profiles prefer low through their native catalog", () => {
+    const { nodes, context } = fixture({
+        key: "",
+        service: "codex",
+        model: "gpt-6-luna",
+    });
+    assert.equal(nodes.reasoningEffort.value, "auto");
+    context.catalog([
+        { id: "gpt-6-luna", supportedReasoningEfforts: ["medium", "high"] },
+    ]);
+    assert.equal(context.read().reasoningEffort, "auto");
+});
+
+test("DeepL strips inapplicable recommended HTTP settings", () => {
+    const { context } = fixture({
+        key: "",
+        service: "deepl",
+        reasoningMode: "low",
+        apiProtocol: "auto",
+    });
+    const saved = context.read();
+    assert.equal("reasoningMode" in saved, false);
+    assert.equal("apiProtocol" in saved, false);
 });

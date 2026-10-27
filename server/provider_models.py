@@ -10,6 +10,7 @@ from codex_client import CodexError, get_codex_client
 from codex_discovery import discovery_request
 
 from pdf2zh_next.translator.openai_protocol import normalize_endpoint
+from pdf2zh_next.translator.reasoning_mode import remember_capabilities
 
 
 class ModelDiscoveryError(ValueError):
@@ -37,12 +38,13 @@ def list_codex_models(data: dict, *, include_runtime=False):
 MODEL_ENDPOINTS = {
     "openai": "https://api.openai.com/v1",
     "deepseek": "https://api.deepseek.com/v1",
+    "mimo": "https://api.xiaomimimo.com/v1",
     "gemini": "https://generativelanguage.googleapis.com/v1beta/openai",
     "siliconflow": "https://api.siliconflow.cn/v1",
 }
 
 
-def list_provider_models(data: dict) -> list[str]:
+def list_provider_models(data: dict, *, include_details=False):
     service = data.get("service", "openai")
     if not isinstance(service, str) or service not in MODEL_ENDPOINTS:
         raise ModelDiscoveryError("此接口类型不支持获取模型列表，请手动填写模型。")
@@ -81,7 +83,14 @@ def list_provider_models(data: dict) -> list[str]:
         entries = payload.get("data")
         if not isinstance(entries, list):
             raise ValueError()
-        return sorted({entry["id"] for entry in entries
-                       if isinstance(entry, dict) and isinstance(entry.get("id"), str) and entry["id"].strip()})
+        models = {entry["id"] for entry in entries
+                  if isinstance(entry, dict) and isinstance(entry.get("id"), str) and entry["id"].strip()}
+        if service == "mimo":
+            # The catalog also includes speech recognition and synthesis models.
+            models = {model for model in models if not {"asr", "tts"}.intersection(model.lower().split("-"))}
+        details = remember_capabilities(base, key.strip(), entries)
+        if include_details:
+            return {"models": sorted(models), "modelDetails": [details[m] for m in sorted(models)]}
+        return sorted(models)
     except (ValueError, AttributeError):
         raise ModelDiscoveryError("模型列表格式不受支持，请手动填写模型名称。", 502) from None

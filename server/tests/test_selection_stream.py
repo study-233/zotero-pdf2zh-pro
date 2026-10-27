@@ -95,6 +95,7 @@ class OpenAISelectionStreamTests(unittest.TestCase):
         translator._request_metrics = threading.local()
         translator.resolved_protocol = protocol
         translator.model = 'test'
+        translator.base_url = 'https://relay.invalid/v1'
         translator._options = lambda _: {'temperature': 0}
         translator.check_cancelled = lambda: None
         translator._record_usage = Mock()

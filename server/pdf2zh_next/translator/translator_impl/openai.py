@@ -25,7 +25,7 @@ from pdf2zh_next.translator.openai_protocol import (
     response_text,
 )
 
-from pdf2zh_next.translator.reasoning_mode import apply_reasoning_mode
+from pdf2zh_next.translator.reasoning_mode import apply_reasoning_mode, cached_capabilities, low_parameter_rejected
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +137,14 @@ class OpenAITranslator(BaseTranslator):
         base_url, self.protocol_hint = normalize_endpoint(
             settings.translate_engine_settings.openai_base_url, self.api_protocol
         )
+        self.base_url = base_url or "https://api.openai.com/v1"
+        self.capabilities = cached_capabilities(settings.translate_engine_settings.openai_model,
+            self.base_url, settings.translate_engine_settings.openai_api_key)
+        supported = self.capabilities.get("supportedProtocols")
+        if self.api_protocol == "auto" and supported and self.protocol_hint not in supported:
+            self.protocol_hint = supported[0]
+        self._low_rejected = set()
+        self.protocol_fallback = False
         self.resolved_protocol = (
             None if self.api_protocol == "auto" else self.api_protocol
         )
@@ -264,9 +272,9 @@ class OpenAITranslator(BaseTranslator):
             if collector is not None:
                 started = collector.request_started(kind='translation')
             if protocol == 'responses':
-                stream = self.client.responses.create(model=self.model, input=messages, stream=True, extra_body=options)
+                stream = self._protocol_client(protocol).responses.create(model=self.model, input=messages, stream=True, extra_body=options)
             else:
-                stream = self.client.chat.completions.create(model=self.model, messages=messages, stream=True, extra_body=options)
+                stream = self._protocol_client(protocol).chat.completions.create(model=self.model, messages=messages, stream=True, extra_body=options)
             cancellation.close_with(stream.close)
             for event in stream:
                 self.check_cancelled()
@@ -328,7 +336,8 @@ class OpenAITranslator(BaseTranslator):
                 cancelled = getattr(failure, 'code', None) == 'selection_cancelled' or type(failure).__name__ == 'CancelledError'
                 collector.request_finished(started, succeeded=succeeded,
                     finish_reason='completed' if succeeded else 'cancelled' if cancelled else 'failed', protocol=protocol,
-                    visible_chars=sum(map(len, parts)))
+                    visible_chars=sum(map(len, parts)), reasoning_setting=self.reasoning_status()["effective"],
+                    reasoning_requested=self.reasoning_mode)
                 if succeeded:
                     collector.record_validation(started, 'accepted')
 
@@ -340,16 +349,30 @@ class OpenAITranslator(BaseTranslator):
             candidates.append(
                 "responses" if first == "chat_completions" else "chat_completions"
             )
+            supported = self.capabilities.get("supportedProtocols")
+            if supported is not None:
+                candidates = [p for p in candidates if p in supported]
+        if not candidates:
+            raise ValueError("此模型不支持 Responses 或 Chat，请使用该渠道支持的接入方式")
         for index, protocol in enumerate(candidates):
             try:
-                result = self._request(
-                    self.prompt("Hello"), protocol, health_check=True
-                )
+                try:
+                    result = self._request(self.prompt("Hello"), protocol, health_check=True)
+                except Exception as error:
+                    if (self.reasoning_mode == "low" and low_parameter_rejected(error)
+                            and not any(k in self.request_options or k in self.options for k in
+                                        ("reasoning", "reasoning_effort", "thinking", "enable_thinking"))):
+                        self._low_rejected.add(protocol)
+                        result = self._request(self.prompt("Hello"), protocol, health_check=True)
+                    else:
+                        raise
             except Exception as error:
-                if index == 0 and len(candidates) == 2 and endpoint_unsupported(error):
+                if index == 0 and len(candidates) == 2 and (endpoint_unsupported(error)
+                        or self.reasoning_mode == "off" and low_parameter_rejected(error)):
                     continue
                 raise
             self.resolved_protocol = protocol
+            self.protocol_fallback = index > 0
             self.requires_dedicated_term_extraction_translator = (
                 self.is_deepseek and protocol == "chat_completions"
             )
@@ -358,11 +381,36 @@ class OpenAITranslator(BaseTranslator):
             return result
         raise RuntimeError("No compatible API protocol found")
 
+    def _protocol_client(self, protocol):
+        # These official protocols have different base paths. Custom gateways
+        # retain their full user-supplied path.
+        parts = urlparse(self.base_url)
+        path = parts.path.rstrip("/")
+        if parts.hostname == "open.bigmodel.cn" and path in {"/api/paas/v4", "/api/v1"}:
+            target = "/api/v1" if protocol == "responses" else "/api/paas/v4"
+            if path != target:
+                return self.client.with_options(base_url=parts._replace(path=target).geturl())
+        return self.client
+
+    def reasoning_status(self):
+        protocol = self.resolved_protocol or self.protocol_hint
+        kind = self.capabilities["reasoningKind"]
+        effective = self.reasoning_mode
+        if effective == "low":
+            effective = ("default" if protocol in self._low_rejected or kind in {"mapped", "none"}
+                         or self.capabilities["supportedReasoningEfforts"] and "low" not in self.capabilities["supportedReasoningEfforts"]
+                         else "enabled" if kind == "toggle" else "requested_low" if kind == "unknown" else "low")
+        if self._term_extraction and self.is_deepseek and protocol == "chat_completions":
+            effective = "off"
+        return {"requested": self.reasoning_mode, "effective": effective,
+                "protocolFallback": self.protocol_fallback, "modelDetail": self.capabilities}
+
     def _options(self, protocol: str, rate_limit_params: dict | None = None) -> dict:
         # Normalize each source before merging so native and aliased options
         # supplied by the user override old internal settings consistently.
-        defaults = wire_options(self.options, protocol)
-        custom = wire_options(self.request_options, protocol)
+        preserve = urlparse(self.base_url).hostname == "openrouter.ai"
+        defaults = wire_options(self.options, protocol, preserve_reasoning=preserve)
+        custom = wire_options(self.request_options, protocol, preserve_reasoning=preserve)
         for key, value in custom.items():
             if isinstance(value, dict) and isinstance(defaults.get(key), dict):
                 defaults[key].update(copy.deepcopy(value))
@@ -385,7 +433,11 @@ class OpenAITranslator(BaseTranslator):
             and protocol == "chat_completions"
         ):
             defaults["thinking"] = {"type": "disabled"}
-        return apply_reasoning_mode(defaults, self.reasoning_mode, self.model, protocol)
+        mode = "default" if protocol in self._low_rejected else self.reasoning_mode
+        if self._term_extraction and self.is_deepseek and protocol == "chat_completions":
+            mode = "default"
+        return apply_reasoning_mode(defaults, mode, self.model, protocol,
+                                    endpoint=self.base_url, capabilities=self.capabilities)
 
     def _capture_http_status(self, response):
         self._request_metrics.status_code = response.status_code
@@ -517,9 +569,9 @@ class OpenAITranslator(BaseTranslator):
     ) -> str:
         options = self._options(protocol, rate_limit_params)
         client = (
-            self.client.with_options(timeout=float(self.timeout or 20))
+            self._protocol_client(protocol).with_options(timeout=float(self.timeout or 20))
             if health_check
-            else self.client
+            else self._protocol_client(protocol)
         )
         kind = "initialization" if health_check else (rate_limit_params or {}).get("metric_kind", "translation")
         if kind not in {"translation", "review", "initialization", "term_extraction"}:
@@ -582,6 +634,7 @@ class OpenAITranslator(BaseTranslator):
                            provider_code=getattr(request_error, 'code', None),
                            error_type=type(request_error).__name__ if request_error else None,
                            finish_reason=finish, protocol=protocol,
+                           reasoning_setting=self.reasoning_status()["effective"], reasoning_requested=self.reasoning_mode,
                            visible_chars=visible_chars, batch_size=batch_size)
             usage = self._request_metrics.usage
             if collector is not None:

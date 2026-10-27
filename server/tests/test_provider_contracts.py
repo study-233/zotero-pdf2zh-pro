@@ -52,7 +52,7 @@ class ProviderContractTests(unittest.TestCase):
 
     def test_retired_selection_services_are_rejected_before_generation(self):
         from text_translation import validate_text_request, TextTranslationError
-        for service in ["zhipu", "grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm"]:
+        for service in ["grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm"]:
             with self.subTest(service=service), self.assertRaises(TextTranslationError) as error:
                 validate_text_request({"text": "Hello", "service": service})
             self.assertEqual(error.exception.code, "invalid_config")
@@ -61,8 +61,8 @@ class ProviderContractTests(unittest.TestCase):
     def test_removed_and_unknown_services_never_select_default_engine(self):
         import server
         client = server.create_app().test_client()
-        self.assertEqual(len(SERVICE_FIELD_MAP), 10)
-        for service in ["OpenAI_Compatible", "tencentmechinetranslation", "Dify", "SiliconFlow_Free", "zhipu", "grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm", "unknown", "", None, 1]:
+        self.assertEqual(len(SERVICE_FIELD_MAP), 12)
+        for service in ["OpenAI_Compatible", "tencentmechinetranslation", "Dify", "SiliconFlow_Free", "grok", "groq", "modelscope", "qwenmt", "azureopenai", "azure", "xinference", "anythingllm", "unknown", "", None, 1]:
             with self.subTest(service=service), patch("server.validate_service_config") as validate:
                 with self.assertRaises(ValueError): require_supported_service(service)
                 self.assertEqual(client.post("/validate-config", json={"service": service}).status_code, 400)
@@ -85,6 +85,8 @@ class ProviderContractTests(unittest.TestCase):
         endpoints = {
             "openai": "https://api.openai.com/v1", "deepseek": "https://api.deepseek.com/v1",
             "gemini": "https://generativelanguage.googleapis.com/v1beta/openai",
+            "mimo": "https://api.xiaomimimo.com/v1",
+            "zhipu": "https://open.bigmodel.cn/api/paas/v4",
             "aliyundashscope": "https://workspace.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
             "siliconflow": "https://api.siliconflow.cn/v1",
         }
@@ -108,6 +110,105 @@ class ProviderContractTests(unittest.TestCase):
                 body = json.loads(request.content)
                 self.assertEqual(body["model"], api["model"])
                 self.assertIn("Hello", body["messages"][-1]["content"])
+
+    def test_new_provider_defaults_and_credentials(self):
+        from pdf2zh_next.config.translate_engine_model import GUI_PASSWORD_FIELDS
+        for service, endpoint, model in [
+            ("mimo", "https://api.xiaomimimo.com/v1", "mimo-v2.6-flash"),
+            ("zhipu", "https://open.bigmodel.cn/api/paas/v4", "glm-5.3-flash"),
+        ]:
+            with self.subTest(service=service):
+                config = runtime(service).translate_engine_settings
+                self.assertEqual(config.openai_base_url, endpoint)
+                self.assertEqual(config.openai_model, model)
+                self.assertEqual(config.openai_api_key, "TEST_KEY")
+                self.assertIn(service + "_api_key", GUI_PASSWORD_FIELDS)
+                for key in ("", "   "):
+                    with self.assertRaisesRegex(ValueError, "API key is required"):
+                        runtime(service, apiKey=key)
+
+    def test_mimo_custom_endpoint_and_options(self):
+        endpoint = "https://token-plan-cn.xiaomimimo.com/v1"
+        config = runtime("mimo", apiUrl=endpoint, model="mimo-v2.6-pro", apiProtocol="responses",
+                         reasoningMode="off", requestOptions={"max_output_tokens": 2048}).translate_engine_settings
+        self.assertEqual(config.openai_base_url, endpoint)
+        self.assertEqual(config.openai_model, "mimo-v2.6-pro")
+        self.assertEqual(config.openai_api_protocol, "responses")
+        self.assertEqual(config.openai_reasoning_mode, "off")
+        self.assertEqual(json.loads(config.openai_request_options), {"max_output_tokens": 2048})
+
+    def test_new_provider_protocols_emit_thinking_options_and_request_metrics(self):
+        from observability import TaskMetricsCollector, supports_request_metrics
+        from test_openai_protocol import response
+        for service, model, protocol, endpoint, path, result, expected in [
+            ("mimo", "mimo-v2.6-pro", "chat_completions", "https://api.xiaomimimo.com/v1", "/chat/completions", chat(), {"thinking": {"type": "disabled"}}),
+            ("mimo", "mimo-v2.6-pro", "responses", "https://api.xiaomimimo.com/v1", "/responses", response(), {"reasoning": {"effort": "none"}}),
+            ("zhipu", "glm-5.2", "chat_completions", "https://open.bigmodel.cn/api/paas/v4", "/chat/completions", chat(), {"thinking": {"type": "disabled"}}),
+            ("zhipu", "glm-5.2", "responses", "https://open.bigmodel.cn/api/v1", "/responses", response(), {"reasoning": {"effort": "none"}}),
+        ]:
+            with self.subTest(service=service, protocol=protocol):
+                self.assertTrue(supports_request_metrics(service))
+                calls = []
+                def capture(request):
+                    calls.append(request)
+                    return httpx.Response(200, json=result)
+                sdk = openai.OpenAI(api_key="TEST_KEY", base_url=endpoint, max_retries=0,
+                    http_client=httpx.Client(transport=httpx.MockTransport(capture)))
+                self.addCleanup(sdk.close)
+                with patch("openai.OpenAI", return_value=sdk):
+                    translator = get_translator(runtime(service, model=model, apiUrl=endpoint, apiProtocol=protocol, reasoningMode="off"))
+                metrics = TaskMetricsCollector(task_id="provider-test", provider=service, model=translator.model)
+                translator.set_metrics_collector(metrics)
+                self.assertTrue(translator.do_translate("Hello").startswith("译文"))
+                self.assertEqual(str(calls[-1].url), endpoint + path)
+                body = json.loads(calls[-1].content)
+                for key, value in expected.items():
+                    self.assertEqual(body[key], value)
+                self.assertEqual(metrics.snapshot()["requests"]["succeeded"], 2)
+                self.assertEqual(metrics.snapshot()["requests"]["byKind"]["translation"]["succeeded"], 1)
+                self.assertEqual(metrics.snapshot()["tokens"]["input"], 200)
+
+    def test_new_provider_selection_stream_only_emits_the_answer(self):
+        from text_translation import SelectionCancellation
+        from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+        chunks = [
+            {"choices": [{"index": 0, "delta": {"reasoning_content": "private reasoning"}, "finish_reason": None}]},
+            {"choices": [{"index": 0, "delta": {"content": "译文"}, "finish_reason": None}]},
+            {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]},
+        ]
+        body = "".join("data: " + json.dumps(chunk) + "\n\n" for chunk in chunks) + "data: [DONE]\n\n"
+        def capture(request):
+            self.assertEqual(str(request.url), endpoint + "/chat/completions")
+            self.assertEqual(request.headers["authorization"], "Bearer TEST_KEY")
+            self.assertTrue(json.loads(request.content)["stream"])
+            return httpx.Response(200, text=body, headers={"content-type": "text/event-stream"})
+        for service, endpoint in [("mimo", "https://api.xiaomimimo.com/v1"), ("zhipu", "https://open.bigmodel.cn/api/paas/v4")]:
+            with self.subTest(service=service):
+                sdk = openai.OpenAI(api_key="TEST_KEY", base_url=endpoint, max_retries=0,
+                    http_client=httpx.Client(transport=httpx.MockTransport(capture)))
+                self.addCleanup(sdk.close)
+                with patch("openai.OpenAI", return_value=sdk):
+                    translator = OpenAITranslator(runtime(service), NoopRateLimiter())
+                deltas = []
+                self.assertEqual(translator.selection_stream("Hello", deltas.append, SelectionCancellation()), "译文")
+                self.assertEqual(deltas, ["译文"])
+
+    def test_new_provider_fault_metrics_survive_diagnostic_export(self):
+        from diagnostics import DiagnosticStore
+        from diagnostic_contract import CONTRACT
+        from observability import TaskMetricsCollector
+        for service, model in [("mimo", "mimo-v2.6-flash"), ("zhipu", "glm-5.3-flash")]:
+            self.assertEqual(CONTRACT["productCapabilities"][service + "Api"]["coverage"], "request_metrics")
+            metrics = TaskMetricsCollector(task_id="provider-test", provider=service, model=model)
+            started = metrics.request_started()
+            metrics.request_finished(started, succeeded=False, status_code=429)
+            store = DiagnosticStore()
+            store.record("request", {"provider": service, "metrics": metrics.snapshot(), "apiKey": "TEST_SECRET"})
+            record = store.export()["records"][0]
+            self.assertEqual(record["provider"], service)
+            self.assertEqual(record["metrics"]["requests"]["failed"], 1)
+            self.assertEqual(record["metrics"]["requests"]["statusCodes"]["429"], 1)
+            self.assertNotIn("TEST_SECRET", json.dumps(record))
 
     def test_claude_print_cli_final_result_and_timeout_cleanup(self):
         from pdf2zh_next.translator.translator_impl.claudecode import ClaudeCodeTranslator
@@ -164,7 +265,8 @@ class ProviderContractTests(unittest.TestCase):
         from pdf2zh_next.config.cli_env_model import CLIEnvSettingsModel
         from pdf2zh_next.config.translate_engine_model import TRANSLATION_ENGINE_METADATA
         engines = {entry.translate_engine_type for entry in TRANSLATION_ENGINE_METADATA}
-        self.assertTrue(engines.isdisjoint({"SiliconFlowFree", "Zhipu", "Grok", "Groq", "ModelScope", "QwenMt", "AzureOpenAI", "Azure", "Xinference", "AnythingLLM"}))
+        self.assertTrue(engines.isdisjoint({"SiliconFlowFree", "Grok", "Groq", "ModelScope", "QwenMt", "AzureOpenAI", "Azure", "Xinference", "AnythingLLM"}))
+        self.assertTrue({"MiMo", "Zhipu"} <= engines)
         self.assertIn("SiliconFlow", engines)
         settings = CLIEnvSettingsModel().to_settings_model()
         self.assertIsNone(settings.translate_engine_settings)

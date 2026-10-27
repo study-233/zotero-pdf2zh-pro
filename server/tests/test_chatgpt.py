@@ -96,6 +96,16 @@ class ChatGPTContracts(unittest.TestCase):
         self.assertEqual(asyncio.run(pdf_worker()).text, '准确译文')
         self.assertEqual(client.usage.summary(ACCOUNT)['calls'], 1)
 
+    def test_automatic_low_uses_account_capabilities_and_keeps_explicit_choices(self):
+        client = self.client(lambda r: httpx.Response(200))
+        with patch.object(client, 'model_catalog', return_value=[{'id':'gpt-6-luna',
+                'supportedReasoningEfforts':['low', 'medium'], 'defaultReasoningEffort':'medium'}]):
+            self.assertEqual(client.check_ready('gpt-6-luna', 'auto')['reasoningEffort'], 'low')
+            self.assertEqual(client.check_ready('gpt-6-luna')['reasoningEffort'], 'medium')
+        with patch.object(client, 'model_catalog', return_value=[{'id':'gpt-6-luna',
+                'supportedReasoningEfforts':['medium'], 'defaultReasoningEffort':'medium'}]):
+            self.assertEqual(client.check_ready('gpt-6-luna', 'auto')['reasoningEffort'], 'medium')
+
     def test_failure_after_partial_output_keeps_known_usage_and_stops_task(self):
         failure = {'type': 'response.failed', 'response': {'usage': {'input_tokens': 8, 'output_tokens': 2},
             'error': {'code': 'subscription_sharing_usage_limit_exceeded'}}}

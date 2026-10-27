@@ -187,6 +187,7 @@ REQUEST_METRIC_SERVICES = frozenset(
         "chatgpt",
         "openaicompatible",
         "deepseek",
+        "mimo",
         "aliyundashscope",
         "modelscope",
         "zhipu",
@@ -409,6 +410,7 @@ class TaskMetricsCollector:
         kind="translation", error_type=None, finish_reason=None, protocol=None,
         visible_chars=None, batch_size=None,
         provider_code=None,
+        reasoning_setting=None, reasoning_requested=None,
     ) -> None:
         now = self.clock()
         with self._lock:
@@ -429,6 +431,7 @@ class TaskMetricsCollector:
                         requestState='succeeded' if succeeded else 'cancelled' if finish_reason == 'cancelled' else 'failed',
                         latencyMs=max((now - started_at) * 1000, 0), statusCode=status_code,
                         errorType=error_type, finishReason=finish_reason, protocol=protocol,
+                        reasoningSetting=reasoning_setting, reasoningRequested=reasoning_requested,
                         visibleOutputChars=visible_chars, batchSize=batch_size, providerCode=provider_code)
         latency_ms = max((now - started_at) * 1000, 0.0)
         self._finish_request(kind=kind, latency_ms=latency_ms, succeeded=succeeded,
@@ -437,7 +440,8 @@ class TaskMetricsCollector:
 
     def record_completed_request(self, *, kind, latency_ms, succeeded, status_code=None,
                                  error_type=None, finish_reason=None, protocol=None,
-                                 visible_chars=None, batch_size=None, provider_code=None):
+                                 visible_chars=None, batch_size=None, provider_code=None,
+                                 reasoning_setting=None, reasoning_requested=None):
         """Replay completed initialization without fabricating current active/QPS."""
         with self._lock:
             for stats in (self._requests, self._requests_by_kind[_kind(kind)], self._requests_by_purpose[_purpose(kind)]):
@@ -450,6 +454,7 @@ class TaskMetricsCollector:
                     requestState='succeeded' if succeeded else 'failed', latencyMs=latency_ms,
                     statusCode=status_code, errorType=error_type, finishReason=finish_reason,
                     protocol=protocol, visibleOutputChars=visible_chars, batchSize=batch_size, providerCode=provider_code)
+                self.evidence.request_finished(observed, reasoningSetting=reasoning_setting, reasoningRequested=reasoning_requested)
         self._finish_request(kind=kind, latency_ms=latency_ms, succeeded=succeeded,
                              status_code=status_code, error_type=error_type, finish_reason=finish_reason,
                              protocol=protocol, visible_chars=visible_chars, batch_size=batch_size, replay=True)

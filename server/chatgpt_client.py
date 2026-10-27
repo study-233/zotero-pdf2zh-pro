@@ -177,9 +177,11 @@ class ChatGPTClient:
         if not detail:
             raise ChatGPTError('chatgpt_model_unavailable', '当前 ChatGPT 账号无法使用所选模型，请重新获取模型列表。', 400, stop_task=True)
         supported = detail['supportedReasoningEfforts']
+        if reasoning_effort == 'auto':
+            reasoning_effort = 'low' if 'low' in supported else detail.get('defaultReasoningEffort')
         if reasoning_effort and supported and reasoning_effort not in supported:
             raise ChatGPTError('chatgpt_invalid_reasoning', '所选模型不支持此推理档位，请重新获取模型列表。', 400, stop_task=True)
-        return {'model': model, 'reasoningEffort': reasoning_effort or detail.get('defaultReasoningEffort'),
+        return {'model': model, 'modelDetail': detail, 'reasoningEffort': reasoning_effort or detail.get('defaultReasoningEffort'),
                 'accountId': self.account_id, 'authenticated': True, 'protocol': self.protocol}
 
     def translate(self, prompt, *, model, reasoning_effort, timeout, check_cancelled=None,

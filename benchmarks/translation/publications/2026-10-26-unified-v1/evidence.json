@@ -1,0 +1,18 @@
+{
+  "inputs": {
+    "benchmarks/translation/publications/2026-10-26-v2/summary.json": "a0f297a37d1836c844a5c9d89d8611a654f11f28440dc885586f84ea8315097a",
+    "benchmarks/translation/publications/2026-10-26-v2/evidence.json": "221eda1cdf66dc5391123feb7ac9527bcea34df9503b68af8afc13c1f909e0bd",
+    "benchmarks/translation/publications/2026-10-26-interface-pilot-v1/summary.json": "98e451d0c4814bfd6c0e715719c6cd965bb2b009864d126cc18658788d4cade6",
+    "benchmarks/translation/publications/2026-10-26-interface-pilot-v1/evidence.json": "15a11e7159c2f0a426c1757b9bfec85fd94912a5fc9cf596a7663d2414ca5fd6",
+    ".local-dev/translation-bench/runs/20261026-commandcode-thinking-probe-01/capabilities.json": "a36863c3047864809821432eb0b0ec2328f1a4b10d1f79817e32f268b6c3bcb2"
+  },
+  "files": {
+    "summary.json": "ec8592110f299dcc41e761866f100eac5e8198a99e3cd10335a81cdf42c151d2",
+    "sample-scores.csv": "7a4472256d3897d35a3b2705f4846232cd2d6e93ea223dec5f3f8cbbf92c1280",
+    "calls.csv": "e5d5adca8588a0da7b8fdaa1e62df5232460f0f304eaca7f10fffb84ac54c6bf",
+    "comparison.csv": "7b1a4ee2f248eb7c35b62a43586ee7ce4255a39d48a7c02229289c8165215398",
+    "sample-scores.json": "3bf20b4b3f944c6bf0faf76aeaa99238012a472654a08ba52188e4c765e29e5b"
+  },
+  "privacy": "No credentials, account identifiers, machine paths or full paper/translation texts. Error evidence quotes and review notes retained.",
+  "sample_score_rows": 864
+}

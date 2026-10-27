@@ -223,21 +223,27 @@ OpenRouter 配置使用 OpenAI 兼容接口，模型名称包含平台返回的�
 | 分类 | 平台 |
 | --- | --- |
 | 中转平台 | OpenRouter、自定义 OpenAI 兼容 |
-| 官方接口 | ChatGPT（使用套餐）、OpenAI、DeepSeek、Gemini、阿里云百炼、SiliconFlow |
+| 官方接口 | ChatGPT（使用套餐）、OpenAI、DeepSeek、小米 MiMo、智谱 GLM、Gemini、阿里云百炼、SiliconFlow |
 | 本地与账号 | Ollama、Claude Code |
 | 专用翻译 | DeepL |
 
-11 个平台入口复用 9 种底层服务。OpenRouter、自定义兼容、OpenAI、DeepSeek、Gemini、SiliconFlow 和 ChatGPT 支持获取模型列表；其他平台手填模型。
+13 个平台入口复用 11 种底层服务。OpenRouter、自定义兼容、OpenAI、DeepSeek、小米 MiMo、Gemini、SiliconFlow 和 ChatGPT 支持获取模型列表；智谱等其他平台手填模型。
 
 | 平台 | 配置要点 |
 | --- | --- |
 | SiliconFlow | 使用自己的 API Key；免费代理已移除 |
+| 小米 MiMo | 填写 MiMo API Key，默认地址为 `https://api.xiaomimimo.com/v1`；可获取模型列表或手填文本模型名，如 `mimo-v2.6-flash`、`mimo-v2.6-pro` |
+| 智谱 GLM | 填写智谱 API Key，默认地址为 `https://open.bigmodel.cn/api/paas/v4`；模型按[官方模型概览](https://docs.bigmodel.cn/cn/guide/start/model-overview)手填，如 `glm-5.3-flash`、`glm-5.3` |
 | 阿里云百炼 | 从控制台复制业务空间、地域对应的 OpenAI 兼容地址与模型 |
 | Ollama | 填写主机地址及已安装模型名，不需要 API Key |
 | Claude Code | 提前登录；可在高级设置填写服务所在电脑的 CLI 路径 |
 | DeepL | 只填写密钥，不显示模型和 API 地址 |
 
-Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、AnythingLLM 的专用支持已移除。
+MiMo 使用方法见[官方文档](https://mimo.mi.com/docs/en-US/quick-start/summary/first-api-call)。Token Plan 用户需在 API 地址中填写套餐专用地址 `https://token-plan-cn.xiaomimimo.com/v1`，并使用对应的套餐 Key。默认保持思考开启；官方暂不提供可调的 low 强度。上述 MiMo 模型及 `mimo-v2.6-pro-ultraspeed` 可在高级设置选择关闭推理，支持 Chat Completions 和 Responses。使用 MiMo 前需更新配套本地服务。
+
+智谱新配置优先使用 Responses，官方标准地址会按协议选择对应的 Base URL（Responses 为 `https://open.bigmodel.cn/api/v1`，Chat 为 `https://open.bigmodel.cn/api/paas/v4`），见[官方 Responses 说明](https://docs.bigmodel.cn/cn/guide/develop/responses/introduction)。GLM-5.3 系列强制开启思考，不能选择关闭推理；GLM-5.2、5.1、5、5-Turbo、4.7、4.6、4.5 和 4.5-Air 可使用关闭推理选项。已有智谱配置保留原地址、密钥和模型，更新插件与服务后重新测试。
+
+Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、AnythingLLM 的专用支持已移除。
 这些旧配置保留为“需重新配置”，可查看原参数、更换平台或删除；不会自动切换来源，也不会把旧密钥带入新平台。
 完整兼容记录见[接口审计](provider-audit-2026-10-03.md)。
 
@@ -270,10 +276,13 @@ Zhipu、Grok、Groq、ModelScope、QwenMT、Azure 两类服务、XInference、An
 
 ### 高级设置：协议和额外请求参数
 
-新增配置默认使用 **Chat Completions**。如果服务商明确要求某种协议，可展开“高级设置”，选择 Chat Completions 或 Responses。
+新增配置默认使用 **自动（Responses 优先）**和**低推理 low（推荐）**。如果服务商明确要求某种协议，可展开“高级设置”，固定选择 Chat Completions 或 Responses。旧配置保留原协议和推理设置；点击“应用推荐设置”可使用新默认值。
 
 - 如果填写的是完整端点，手动选择的协议须与 `/chat/completions` 或 `/responses` 后缀一致。
-- 自动识别仅在明确不支持接口时尝试另一协议；鉴权、模型、参数、限流和超时错误会直接提示。任务开始后固定使用已确定的协议。
+- 自动模式优先 Responses，明确不支持时回退 Chat；已知只支持 Chat 的渠道直接使用 Chat。完整端点的后缀作为优先提示。鉴权、模型、限流和超时错误不会触发协议切换，任务开始后固定已确定的协议。
+- 默认请求 low；模型只提供思考开关时保持开启，不支持 low 或将其映射为其他档位时使用提供方默认。未知渠道明确拒绝自动添加的推理参数时，只在初始化阶段移除该自动参数并重试一次，测试结果会显示实际选择。
+- 关闭推理仅对支持的模型开放；强制思考的 GLM-5.3 系列不能关闭。ChatGPT/Codex 账号从目录选择 low，目录没有 low 时使用该模型默认，none 表示关闭。Ollama 保留原生接口；Claude Code 仅在 CLI 支持时传入 low；DeepL 不适用。
+- 额外请求参数与 low 或关闭冲突时会提示修改；选择“保持模型默认”可沿用自行填写的推理参数。新默认值需要配套升级本地服务。
 - 可手动切换到自动识别；已有配置的协议保持原值。遇到协议不支持时，检查服务端更新。
 - Responses 全文翻译逐段同步请求，选文翻译支持流式显示，各请求默认 `store=false`；要求工具调用的接口不适用。
 
@@ -633,7 +642,7 @@ Windows 更新先在独立目录准备，连续空闲 60 秒后静默切换。PD
 <details>
 <summary>更新后配置消失或无法调用？</summary>
 
-已移除的 `OpenAICompatible` 旧预设、腾讯机器翻译、Dify 和 SiliconFlow 免费代理配置需要重新配置；升级会清理这些配置并取消对应的当前选择，不自动改用其他模型。选文翻译若单独指定了已删除配置，会提示重新选择。自备 Key 的 SiliconFlow 及其他已保存的地址、模型和参数保持原值。停用模型或失效地址需手动编辑并测试。阿里云旧共享域名仍可用。本轮精简的九种专用服务（含 Azure）保留原配置并提示“需重新配置”，停止调用其适配器。详情见[接口兼容记录](provider-audit-2026-10-03.md)。
+已移除的 `OpenAICompatible` 旧预设、腾讯机器翻译、Dify 和 SiliconFlow 免费代理配置需要重新配置；升级会清理这些配置并取消对应的当前选择，不自动改用其他模型。选文翻译若单独指定了已删除配置，会提示重新选择。自备 Key 的 SiliconFlow 及其他已保存的地址、模型和参数保持原值。停用模型或失效地址需手动编辑并测试。阿里云旧共享域名仍可用。仍被移除的八种专用服务（含 Azure）保留原配置并提示“需重新配置”，停止调用其适配器；智谱专用接口已恢复。早期精简情况见[接口兼容记录](provider-audit-2026-10-03.md)。
 
 </details>
 
