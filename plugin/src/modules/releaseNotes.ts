@@ -106,9 +106,9 @@ export const releaseSummaries: ReleaseSummary[] = [
                 priority: 1,
             },
             {
-                id: "unified-translation-benchmark",
-                message: "release-unified-translation-benchmark",
-                cardMessage: "release-card-unified-translation-benchmark",
+                id: "pdf-placeholder-repair",
+                message: "release-pdf-placeholder-repair",
+                cardMessage: "release-card-pdf-placeholder-repair",
                 priority: 2,
             },
         ],
