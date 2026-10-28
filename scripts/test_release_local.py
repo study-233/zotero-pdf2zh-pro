@@ -42,6 +42,26 @@ class LocalReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'changed'):
             local.Stages(state, {'commit': 'b' * 40})
 
+    def test_install_cache_contains_downloads_and_python_without_a_service_environment(self):
+        source = self.root / 'user-cache'
+        (source / 'archive-v0/package').mkdir(parents=True)
+        (source / 'archive-v0/package/data').write_bytes(b'verified wheel bytes')
+        (source / '.lock').touch()
+        python_root = self.root / 'user-python'
+        python = python_root / 'cpython-3.13.15-windows-x86_64-none'
+        python.mkdir(parents=True)
+        (python / 'python.exe').write_bytes(b'python')
+        environment = {}
+        with patch.object(local, 'ROOT', self.root), patch.object(control, 'command', side_effect=[str(source).encode(), str(python_root).encode()]):
+            cache = local.prepare_downloads(environment)
+        self.assertEqual((cache / 'cache/archive-v0/package/data').read_bytes(), b'verified wheel bytes')
+        self.assertTrue((cache / 'runtime/python' / python.name / 'python.exe').is_file())
+        self.assertFalse((cache / 'cache/.lock').exists())
+        self.assertFalse((cache / 'runtime/versions').exists())
+        self.assertEqual(environment['PDF2ZH_TEST_DOWNLOAD_CACHE'], str(cache))
+        with patch.object(local, 'ROOT', self.root), self.assertRaises(ValueError):
+            local.prepare_downloads({'PDF2ZH_TEST_DOWNLOAD_CACHE': str(source)})
+
     def receipt(self):
         plan = control_tests.PolicyTests().frozen_plan()
         artifacts = {Path(p).name: {'size': 1, 'sha256': '1' * 64} for p in control.product_paths(plan['version'])}

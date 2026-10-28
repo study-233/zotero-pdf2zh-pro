@@ -47,6 +47,24 @@ def tool_environment():
     return environment
 
 
+def prepare_downloads(environment):
+    """Seed isolated installs with downloaded bytes; installers still verify the lock hashes."""
+    cache = Path(environment.get('PDF2ZH_TEST_DOWNLOAD_CACHE', ROOT / '.tmp/cache/release-test-downloads')).resolve()
+    if not cache.is_relative_to((ROOT / '.tmp').resolve()):
+        raise ValueError('Release download cache must stay inside the repository .tmp directory')
+    source = Path(control.command(['uv', 'cache', 'dir']).decode().strip())
+    destination = cache / 'cache'
+    if source.resolve() != destination.resolve():
+        shutil.copytree(source, destination, dirs_exist_ok=True, ignore=shutil.ignore_patterns('.lock', '*.lock', '.temp'))
+    python_root = Path(control.command(['uv', 'python', 'dir']).decode().strip())
+    for python in python_root.glob('cpython-3.13*-windows-x86_64-none'):
+        target = cache / 'runtime/python' / python.name
+        if not target.exists():
+            shutil.copytree(python, target)
+    environment['PDF2ZH_TEST_DOWNLOAD_CACHE'] = str(cache)
+    return cache
+
+
 class Stages:
     def __init__(self, path, identity):
         self.path = Path(path)
@@ -146,7 +164,14 @@ def build(value, commit, plan_path, state_path):
         lifecycle = powershell('test_windows_lifecycle.ps1', '-WindowsPackage', str(package), '-PackageSource', str(wheel))
         if plan['lifecycle'] == 'standard':
             lifecycle.append('-SmokeOnly')
-        stages.execute('lifecycle', lambda: invoke(lifecycle), artifacts=artifacts)
+        cache = prepare_downloads(environment)
+        def installed_lifecycle():
+            root = Path(environment['PDF2ZH_WINDOWS_APP_ROOT'])
+            shutil.copytree(cache / 'cache', root / 'cache', dirs_exist_ok=True)
+            shutil.copytree(cache / 'runtime/python', root / 'runtime/python', dirs_exist_ok=True)
+            environment['PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE'] = '1'
+            invoke(lifecycle)
+        stages.execute('lifecycle', installed_lifecycle, artifacts=artifacts)
         def progress():
             unpacked = work / 'progress'
             with zipfile.ZipFile(package) as archive:
