@@ -15,7 +15,8 @@ struct Ui {
     state: Option<ControlState>,
     page: Page,
     previous: Page,
-    page_sizes: [Option<slint::LogicalSize>; 5],
+    previous_offset: f32,
+    window_size: Option<slint::LogicalSize>,
     settings_view: SettingsView,
     update_view: UpdateView,
     maintenance: Feedback,
@@ -112,7 +113,8 @@ impl Ui {
             state: None,
             page: if has_argument("--setup") { Page::Setup } else { Page::Home },
             previous: Page::Home,
-            page_sizes: [None; 5],
+            previous_offset: 0.,
+            window_size: None,
             settings_view: SettingsView::default(),
             update_view: UpdateView::default(),
             maintenance: Feedback::default(),
@@ -209,7 +211,7 @@ impl Ui {
             let app = self.app.clone();
             window.on_settings_state(move || { let _ = app.emit("settings-state", Value::Null); });
             let (width, height) = self.page.size();
-            window.window().set_size(self.page_sizes[self.page as usize].unwrap_or(slint::LogicalSize::new(width, height)));
+            window.window().set_size(self.window_size.unwrap_or(slint::LogicalSize::new(width, height)));
             self.window = Some(window);
         }
         self.render();
@@ -217,6 +219,13 @@ impl Ui {
         window.show().map_err(|e| e.to_string())?;
         window.window().with_winit_window(|w| {
             platform::sync_window_icons(w);
+            if let Some(monitor) = w.current_monitor() {
+                let available = monitor.size().to_logical::<f32>(w.scale_factor());
+                let mut size = w.inner_size().to_logical::<f32>(w.scale_factor());
+                size.width = size.width.min((available.width - 32.).max(460.));
+                size.height = size.height.min((available.height - 64.).max(420.));
+                let _ = w.request_inner_size(size);
+            }
             w.set_minimized(false);
             w.focus_window();
         });
@@ -241,22 +250,35 @@ impl Ui {
     }
     fn remember_window(&mut self) {
         if let Some(window) = &self.window {
-            self.page_sizes[self.page as usize] = Some(window.window().size().to_logical(window.window().scale_factor()));
+            self.window_size = Some(window.window().size().to_logical(window.window().scale_factor()));
             self.settings_view.offset = window.get_settings_offset();
             self.settings_view.advanced = window.get_advanced();
-            self.settings_view.thanks = window.get_thanks_open();
             self.settings_view.update_details = window.get_update_details_open();
             self.settings_view.maintenance_details = window.get_maintenance_details_open();
+            self.settings_view.connection = window.get_connection_open();
+            self.settings_view.installation = window.get_installation_open();
+            self.settings_view.updates = window.get_updates_open();
+            self.settings_view.general = window.get_general_open();
+            self.settings_view.about = window.get_about_open();
         }
     }
     fn navigate(&mut self, page: Page) {
         if self.page == page { return; }
         self.remember_window();
+        if page == Page::Confirm {
+            self.previous_offset = self.settings_view.offset;
+            self.settings_view.offset = 0.;
+        } else if self.page == Page::Confirm {
+            self.settings_view.offset = self.previous_offset;
+        }
         self.page = page;
+        match page {
+            Page::Setup => self.settings_view.installation = true,
+            Page::Settings => self.settings_view.general = true,
+            _ => {}
+        }
         if let Some(window) = &self.window {
             window.set_page(page as i32);
-            let (width, height) = page.size();
-            window.window().set_size(self.page_sizes[page as usize].unwrap_or(slint::LogicalSize::new(width, height)));
         }
     }
     fn render(&self) {
@@ -267,13 +289,19 @@ impl Ui {
             .window()
             .with_winit_window(platform::sync_window_icons);
         window.set_page(self.page as i32);
+        window.set_setup_mode(self.page == Page::Setup || (self.page == Page::Confirm && self.previous == Page::Setup));
         window.set_wizard_stage(self.wizard_stage);
         window.set_busy(self.active());
+        window.set_service_operation(matches!(self.last_action.as_str(), "start" | "stop"));
         window.set_settings_offset(self.settings_view.offset);
         window.set_advanced(self.settings_view.advanced);
-        window.set_thanks_open(self.settings_view.thanks);
         window.set_update_details_open(self.settings_view.update_details);
         window.set_maintenance_details_open(self.settings_view.maintenance_details);
+        window.set_connection_open(self.settings_view.connection);
+        window.set_installation_open(self.settings_view.installation);
+        window.set_updates_open(self.settings_view.updates);
+        window.set_general_open(self.settings_view.general);
+        window.set_about_open(self.settings_view.about);
         window.set_settings_notice(self.settings_notice.as_str().into());
         let update = &self.update_view;
         window.set_update_message(if update.feedback.message.is_empty() { "点击检查以查询最新稳定版本" } else { &update.feedback.message }.into());
@@ -346,41 +374,36 @@ impl Ui {
         window.set_animate(platform::animations_enabled());
         window.set_text_scale(platform::text_scale());
         if let Some(state) = &self.state {
-            let (heading, action) = match (&state.installation, &state.service) {
-                (InstallationStatus::NotInstalled, _) => ("尚未安装翻译服务", "安装翻译服务"),
-                (InstallationStatus::UpdateAvailable, _) => ("可以升级翻译服务", "升级翻译服务"),
-                (InstallationStatus::DowngradeBlocked, _) => ("已有更新版本", "重新检测"),
-                (_, ServiceStatus::Running) => ("翻译服务已就绪", "停止服务"),
-                (_, ServiceStatus::PortConflict) => ("端口被占用", "重新检测"),
-                _ => ("翻译服务已停止", "启动服务"),
-            };
-            window.set_heading(heading.into());
-            window.set_subtitle(
-                if matches!(state.service, ServiceStatus::Running) {
-                    "可以开始 PDF 翻译和划词精读"
-                } else {
-                    "在此管理本地翻译服务"
-                }
-                .into(),
-            );
-            window.set_action_label(
-                if self.active() {
-                    crate::ui_state::busy_action_label(self.busy.then_some(self.last_action.as_str()), self.progress.as_ref())
-                } else {
-                    action
-                }
-                .into(),
-            );
+            let starting = self.active() && self.last_action == "start";
+            let view = ui_state::home_status(&state.installation, state.service, starting);
+            let start_failed = self.failed && self.last_action == "start" && state.service == ServiceStatus::Stopped;
+            window.set_heading(if start_failed { "翻译服务启动失败" } else { view.heading }.into());
+            window.set_subtitle(if start_failed { self.status.as_str() } else { view.description }.into());
+            window.set_status_tone(if start_failed { 3 } else { view.tone });
+            window.set_action_label(if start_failed { "重试启动" } else { view.action }.into());
+            window.set_primary_enabled(match view.command {
+                "start" | "setup" => !self.active() && !self.update_view.pending(),
+                "" => false,
+                _ => true,
+            });
+            if self.active() && self.last_action == "stop" {
+                window.set_heading("正在停止翻译服务".into());
+                window.set_subtitle("".into());
+                window.set_status_tone(1);
+                window.set_action_label("正在停止…".into());
+                window.set_primary_enabled(false);
+            }
+            window.set_service_running(state.service == ServiceStatus::Running);
+            window.set_service_fault(view.tone == 3 || start_failed);
+            window.set_data_path(state.data_dir.as_str().into());
             window.set_address(state.address.as_str().into());
+            window.set_app_version(format!("v{}", state.app_version).into());
             window.set_version(
                 format!(
-                    "控制中心 {} · 服务 {}",
+                    "控制中心 {} · 已安装服务 {} · 运行版本 {}",
                     state.app_version,
-                    state
-                        .service_version
-                        .as_deref()
-                        .or(state.installed_version.as_deref())
-                        .unwrap_or("未安装")
+                    state.installed_version.as_deref().unwrap_or("未安装"),
+                    state.service_version.as_deref().unwrap_or("未运行")
                 )
                 .into(),
             );
@@ -405,16 +428,7 @@ impl Ui {
                 .unwrap_or(&self.status)
         };
         window.set_operation_message(
-            short_message(if message.is_empty() {
-                if self.preferences.auto_update_disabled {
-                    "自动更新已关闭"
-                } else {
-                    "空闲时自动检查更新"
-                }
-            } else {
-                message
-            })
-            .into(),
+            short_message(message).into(),
         );
         let known = progress.filter(|p| p.unit.as_deref() == Some("bytes")).and_then(|p| p.percent());
         window.set_progress_known(known.is_some() && active && !self.cancelled);
@@ -481,7 +495,41 @@ impl Ui {
         if lines.is_empty() { "暂无日志。".into() } else { lines.join("\n") }
     }
     fn command(&mut self, command: &str) {
+        self.remember_window();
+        if command == "primary" && self.state.as_ref().is_some_and(|state|
+            ui_state::home_status(&state.installation, state.service, false).command == "zotero") {
+            self.command("zotero");
+            return;
+        }
         match command {
+            "zotero" => {
+                if let Err(error) = platform::open_zotero() {
+                    self.settings_notice = error;
+                    self.settings_view.connection = true;
+                }
+                return;
+            }
+            "refresh" => { self.app.refresh(); return; }
+            "connection" => {
+                self.settings_view.connection = true;
+                self.settings_view.offset = 0.;
+                return;
+            }
+            "maintenance" => {
+                self.settings_view.advanced = true;
+                self.settings_view.connection = true;
+                self.settings_view.offset = 0.;
+                return;
+            }
+            "setup" => {
+                if !self.active() {
+                    self.wizard_stage = 0;
+                    self.navigate(Page::Setup);
+                    self.settings_view.installation = true;
+                    self.settings_view.offset = 0.;
+                }
+                return;
+            }
             "open" => {
                 if let Err(e) = self.open() {
                     self.app.error(e);
@@ -637,25 +685,10 @@ impl Ui {
             let Some(state) = &self.state else {
                 return;
             };
-            match (&state.installation, &state.service) {
-                (InstallationStatus::NotInstalled | InstallationStatus::UpdateAvailable, _) => {
-                    self.wizard_stage = 0;
-                    self.navigate(Page::Setup);
-                    return;
-                }
-                (InstallationStatus::DowngradeBlocked, _) | (_, ServiceStatus::PortConflict) => {
-                    self.app.refresh();
-                    return;
-                }
-                (_, ServiceStatus::Running) => {
-                    self.perform("stop", None);
-                    return;
-                }
-                _ => {
-                    self.perform("start", None);
-                    return;
-                }
-            }
+            let action = ui_state::home_status(&state.installation, state.service, false).command;
+            if action == "start" { self.perform("start", None); }
+            else { self.command(action); }
+            return;
         }
         if command == "retry" {
             if self.last_action.is_empty() {
@@ -679,7 +712,7 @@ impl Ui {
             .into();
             self.pending_action = command.into();
             self.purge_data = false;
-            self.previous = self.page;
+            if self.page != Page::Confirm { self.previous = self.page; }
             self.navigate(Page::Confirm);
             return;
         }
@@ -742,6 +775,9 @@ impl Ui {
         } else if matches!(action, "repair" | "clean" | "relocate" | "uninstall") {
             self.maintenance.start(action, &self.status);
         }
+        if matches!(action, "check" | "update") { self.settings_view.updates = true; }
+        if matches!(action, "repair" | "clean" | "relocate" | "uninstall") { self.settings_view.advanced = true; }
+        if action == "install" { self.settings_view.installation = true; }
         let target = self.update_view.latest.clone();
         let app = self.app.clone();
         let action = action.to_owned();
@@ -798,6 +834,17 @@ impl Ui {
         if self.progress.as_ref().is_some_and(|p| p == &value ||
             (p.operation_id == value.operation_id && value.sequence < p.sequence)) {
             return;
+        }
+        let new_operation = self.progress.as_ref().is_none_or(|p| p.operation_id != value.operation_id);
+        let new_failure = matches!(value.status.as_str(), "failed" | "rolledBack")
+            && self.progress.as_ref().is_none_or(|p| p.status != value.status);
+        if new_operation || new_failure {
+            match value.operation.as_str() {
+                "update" => self.settings_view.updates = true,
+                "install" => self.settings_view.installation = true,
+                "repair" | "clean" | "relocate" => self.settings_view.advanced = true,
+                _ => {}
+            }
         }
         if value.operation == "update" {
             if value.active() && self.progress.as_ref().is_none_or(|p| p.operation_id != value.operation_id) {
@@ -874,7 +921,12 @@ impl Ui {
                         self.tray.notify(&short_message(&state.error));
                         self.notification = state.error.clone();
                     }
+                    let was_pending = self.update_view.pending();
+                    let was_failed = self.update_view.phase == UpdatePhase::Failed;
                     self.update_view.state(&state);
+                    if (!was_pending && self.update_view.pending()) || (!was_failed && self.update_view.phase == UpdatePhase::Failed) {
+                        self.settings_view.updates = true;
+                    }
                 }
             }
             "update-check-result" => {
@@ -882,6 +934,7 @@ impl Ui {
                     if self.update_view.checked(payload["id"].as_u64().unwrap_or(0), result, payload["at"].as_u64().unwrap_or(0)) {
                         self.status = self.update_view.feedback.message.clone();
                         self.failed = self.update_view.feedback.failed;
+                        if self.failed { self.settings_view.updates = true; }
                     }
                 }
             }
@@ -978,6 +1031,17 @@ impl Ui {
             }
             "state" => {
                 if let Ok(state) = serde_json::from_value::<ControlState>(payload.clone()) {
+                    if self.state.as_ref().is_none_or(|old| old.service != state.service) {
+                        match state.service {
+                            ServiceStatus::VersionMismatch => {
+                                self.settings_view.connection = true;
+                                self.settings_view.advanced = true;
+                            }
+                            ServiceStatus::WorkspaceMismatch | ServiceStatus::WorkspaceUnwritable | ServiceStatus::PortConflict => self.settings_view.connection = true,
+                            ServiceStatus::HealthCheckFailed => self.details_open = true,
+                            _ => {}
+                        }
+                    }
                     if self.state.is_none() {
                         self.existing =
                             !matches!(state.installation, InstallationStatus::NotInstalled);
@@ -990,6 +1054,7 @@ impl Ui {
                             );
                             self.selected_root = PathBuf::from(&state.install_root);
                         }
+                        if !self.existing || self.page == Page::Setup { self.settings_view.installation = true; }
                     }
                     self.state = Some(state);
                 }
@@ -1041,7 +1106,7 @@ impl Ui {
             "status" => self.status = payload.as_str().unwrap_or("").into(),
             "error" => {
                 let message = payload.as_str().unwrap_or("操作失败");
-                self.settings_notice = message.into();
+                self.settings_notice = friendly_error(message);
                 self.details.push_str(&format!("\n{message}"));
                 self.status = friendly_error(message);
                 self.failed = true;
@@ -1202,11 +1267,55 @@ pub fn run() {
 mod visual_tests {
     use super::*;
 
-    fn render_next(fixture: AppWindow, controller: Ui, output: PathBuf, count: std::rc::Rc<std::cell::Cell<usize>>) {
-        let (name, theme, text, contrast) = [
-            ("dark", 2, 1., false), ("light", 1, 1., false),
-            ("large-text", 2, 1.5, false), ("high-contrast", 2, 1., true),
-        ][count.get()];
+    fn render_next(fixture: AppWindow, mut controller: Ui, output: PathBuf, count: std::rc::Rc<std::cell::Cell<usize>>) {
+        let index = count.get();
+        let (name, theme, text, contrast, service) = [
+            ("ready-light", 1, 1., false, ServiceStatus::Running),
+            ("ready-dark", 2, 1., false, ServiceStatus::Running),
+            ("stopped", 1, 1., false, ServiceStatus::Stopped),
+            ("starting", 1, 1., false, ServiceStatus::Stopped),
+            ("directory-error", 1, 1., false, ServiceStatus::WorkspaceUnwritable),
+            ("version-error", 2, 1., false, ServiceStatus::VersionMismatch),
+            ("large-text", 1, 1.5, false, ServiceStatus::Running),
+            ("high-contrast", 2, 1., true, ServiceStatus::Running),
+            ("installing", 1, 1., false, ServiceStatus::Stopped),
+            ("inline-confirm", 1, 1., false, ServiceStatus::Running),
+            ("waiting-update", 2, 1., false, ServiceStatus::Running),
+        ][index];
+        controller.window = Some(fixture.clone_strong());
+        controller.page = if index == 8 { Page::Setup } else if index == 9 { Page::Confirm } else { Page::Home };
+        controller.busy = matches!(index, 3 | 8);
+        controller.last_action = if index == 3 { "start" } else if index == 8 { "install" } else { "" }.into();
+        controller.failed = false;
+        controller.existing = true;
+        controller.status.clear();
+        controller.progress = None;
+        controller.details_open = false;
+        controller.settings_view = SettingsView::default();
+        controller.settings_view.connection = matches!(index, 4 | 5);
+        controller.settings_view.general = matches!(index, 6 | 7);
+        controller.settings_view.installation = index == 8;
+        controller.settings_view.updates = index == 10;
+        controller.update_view = UpdateView::default();
+        controller.wizard_stage = if index == 8 { 1 } else { 0 };
+        controller.pending_action = if index == 9 { "uninstall" } else { "" }.into();
+        controller.confirmation = "将移除控制中心和翻译运行环境。配置、任务和结果默认保留。".into();
+        if index == 8 {
+            controller.progress = Some(progress::OperationProgress { operation_id: "install-fixture".into(),
+                operation: "install".into(), phase: "dependencies".into(), status: "running".into(),
+                message: "正在准备翻译依赖".into(), started_at: progress::now(), ..Default::default() });
+        }
+        if index == 10 {
+            controller.update_view.state(&scheduler::UpdateState { phase: "ready".into(), version: "1.9.7".into(), ..Default::default() });
+        }
+        if let Some(state) = &mut controller.state {
+            state.service = service;
+            state.app_version = "1.9.6".into(); state.installed_version = Some("1.9.6".into());
+            state.service_version = (service != ServiceStatus::Stopped).then(|| if index == 5 { "1.9.5" } else { "1.9.6" }.into());
+            state.data_dir = controller.selected_root.join("data").to_string_lossy().into();
+            state.running_from_installed_path = true;
+        }
+        controller.render();
         fixture.set_effective_theme(theme);
         fixture.set_theme(theme);
         fixture.set_text_scale(text);
@@ -1219,12 +1328,12 @@ mod visual_tests {
         slint::Timer::single_shot(Duration::from_millis(250), move || {
             let scale = fixture.window().scale_factor();
             let pixels = fixture.window().take_snapshot().unwrap();
-            assert_eq!((pixels.width(), pixels.height()), ((520. * scale) as u32, (480. * scale) as u32));
+            assert_eq!((pixels.width(), pixels.height()), ((560. * scale) as u32, (680. * scale) as u32));
             let name = format!("{name}-{}", (scale * 100.) as u32);
             fs::write(output.join(format!("{name}.rgba")), pixels.as_bytes()).unwrap();
             fs::write(output.join(format!("{name}.json")), format!("{{\"width\":{},\"height\":{}}}", pixels.width(), pixels.height())).unwrap();
             count.set(count.get() + 1);
-            if count.get() == 4 { slint::quit_event_loop().unwrap(); }
+            if count.get() == 11 { slint::quit_event_loop().unwrap(); }
             else { render_next(fixture, controller, output, count); }
         });
     }
@@ -1262,6 +1371,11 @@ mod visual_tests {
                 running_from_installed_path: false, install_root: ui.selected_root.to_string_lossy().into(),
                 default_install_root: String::new(), can_relocate: false, last_operation_error: None,
             });
+            ui.command("setup");
+            fixture.set_installation_open(false);
+            ui.command("setup");
+            ui.render();
+            assert!(fixture.get_installation_open(), "The install action reopens its section even when already in setup");
             ui.last_action = "check".into();
             ui.app.context().operation_busy.store(true, Ordering::Release);
             let mut cleanup = progress::OperationProgress {
@@ -1270,7 +1384,7 @@ mod visual_tests {
             };
             ui.accept_progress(cleanup.clone());
             ui.render();
-            assert_eq!(fixture.get_action_label(), "正在清理缓存…");
+            assert_eq!(fixture.get_action_label(), "打开 Zotero");
             assert!(fixture.get_busy());
             assert_eq!(fixture.get_operation_message(), "正在自动清理安装缓存");
             cleanup.sequence += 1;
@@ -1279,7 +1393,7 @@ mod visual_tests {
             ui.accept_progress(cleanup);
             ui.app.context().operation_busy.store(false, Ordering::Release);
             ui.render();
-            assert_eq!(fixture.get_action_label(), "停止服务");
+            assert_eq!(fixture.get_action_label(), "打开 Zotero");
             assert!(!fixture.get_busy());
             ui.progress = None;
             ui.maintenance = Feedback::default();
@@ -1287,25 +1401,28 @@ mod visual_tests {
             ui.navigate(Page::Settings);
             fixture.set_settings_offset(-120.);
             fixture.set_advanced(true);
-            fixture.set_thanks_open(true);
+            fixture.set_general_open(true);
             ui.command("clean");
             assert_eq!(ui.page, Page::Confirm);
+            ui.command("uninstall");
+            assert_eq!(ui.previous, Page::Settings, "Changing an inline confirmation must keep its return location");
             ui.command("back");
             ui.render();
             assert_eq!(ui.page, Page::Settings);
-            assert!(fixture.get_advanced() && fixture.get_thanks_open());
+            assert!(fixture.get_advanced() && fixture.get_general_open());
             assert_eq!(fixture.get_settings_offset(), -120.);
-            ui.command("check");
-            assert_eq!(ui.page, Page::Settings, "Starting a check must preserve the page");
+            ui.busy = true;
+            ui.last_action = "check".into();
+            ui.request_id = 7;
+            ui.update_view.checking(7);
             let check_id = ui.request_id;
             ui.command("check");
             assert_eq!(ui.request_id, check_id, "Repeated clicks must not start another request");
             ui.command("home");
-            for _ in 0..100 {
-                while let Ok(event) = ui.rx.try_recv() { ui.event(event); }
-                if !ui.busy { break; }
-                thread::sleep(Duration::from_millis(10));
-            }
+            ui.event(serde_json::json!({"kind":"update-check-result", "payload":{
+                "id":7,"result":Result::<update::UpdateCheck,String>::Err("隔离测试：检查失败".into()),"at":progress::now()}}));
+            ui.event(serde_json::json!({"kind":"command-completed", "payload":{
+                "id":7,"action":"check","result":Result::<(),String>::Ok(())}}));
             assert!(!ui.busy);
             assert_eq!(ui.page, Page::Home, "A late failure must not navigate");
             assert_eq!(ui.update_view.phase, UpdatePhase::Failed);
@@ -1329,12 +1446,18 @@ mod visual_tests {
             fixture.set_version("控制中心 1.9.0 · 服务 1.9.0".into());
             fixture.set_install_path("D:\\隔离测试\\带空格的安装位置\\zotero-pdf2zh-pro".into());
             fixture.set_installed(true);
+            fixture.set_heading("翻译服务已就绪".into());
+            fixture.set_subtitle("".into());
+            fixture.set_action_label("打开 Zotero".into());
+            fixture.set_primary_enabled(true);
+            fixture.set_service_running(true);
+            fixture.set_status_tone(2);
             fixture.set_autostart(true);
             fixture.set_automatic_updates(true);
             fixture.show().unwrap();
             render_next(fixture, ui, output, rendered_count);
         });
         slint::run_event_loop_until_quit().unwrap();
-        assert_eq!(rendered.get(), 4, "All requested snapshots must be rendered");
+        assert_eq!(rendered.get(), 11, "All requested snapshots must be rendered");
     }
 }

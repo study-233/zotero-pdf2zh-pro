@@ -109,12 +109,17 @@ enum InstallationStatus {
     DowngradeBlocked,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 enum ServiceStatus {
+    #[default]
     Stopped,
     Running,
     PortConflict,
+    VersionMismatch,
+    WorkspaceMismatch,
+    WorkspaceUnwritable,
+    HealthCheckFailed,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -147,6 +152,7 @@ struct HealthResult {
     listening: bool,
     valid: bool,
     version: Option<String>,
+    service: ServiceStatus,
 }
 
 fn port() -> u16 {
@@ -239,13 +245,49 @@ fn installation_status(paths: &ProductPaths) -> (InstallationStatus, Option<Stri
     }
 }
 
+fn classify_health(json: &Value, expected_version: &str, data_dir: &Path) -> ServiceStatus {
+    let Some(version) = json.get("version").and_then(Value::as_str) else {
+        return ServiceStatus::PortConflict;
+    };
+    let Some(workspace) = json.get("workspace").and_then(Value::as_object) else {
+        return ServiceStatus::HealthCheckFailed;
+    };
+    let Some(path) = workspace.get("path").and_then(Value::as_str) else {
+        return ServiceStatus::HealthCheckFailed;
+    };
+    if !path_equal(Path::new(path), data_dir) {
+        return ServiceStatus::WorkspaceMismatch;
+    }
+    if version != expected_version {
+        return ServiceStatus::VersionMismatch;
+    }
+    match workspace.get("writable").and_then(Value::as_bool) {
+        Some(false) => return ServiceStatus::WorkspaceUnwritable,
+        None => return ServiceStatus::HealthCheckFailed,
+        Some(true) => {}
+    }
+    if json.get("status").and_then(Value::as_str) != Some("ok") {
+        return ServiceStatus::HealthCheckFailed;
+    }
+    ServiceStatus::Running
+}
+
 fn query_health(paths: &ProductPaths) -> HealthResult {
     let address = SocketAddr::from((Ipv4Addr::LOCALHOST, port()));
-    let Ok(mut stream) = TcpStream::connect_timeout(&address, Duration::from_millis(600)) else {
-        return HealthResult::default();
+    let mut stream = match TcpStream::connect_timeout(&address, Duration::from_millis(600)) {
+        Ok(stream) => stream,
+        Err(error) => return HealthResult {
+            service: if error.kind() == std::io::ErrorKind::ConnectionRefused {
+                ServiceStatus::Stopped
+            } else {
+                ServiceStatus::HealthCheckFailed
+            },
+            ..Default::default()
+        },
     };
     let mut result = HealthResult {
         listening: true,
+        service: ServiceStatus::HealthCheckFailed,
         ..HealthResult::default()
     };
     let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
@@ -276,22 +318,8 @@ fn query_health(paths: &ProductPaths) -> HealthResult {
         .map(str::to_owned);
     let expected_version = read_trimmed(&paths.installed_version)
         .unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_owned());
-    let version_matches = result.version.as_deref() == Some(expected_version.as_str());
-    let workspace = json.get("workspace");
-    let writable = workspace
-        .and_then(|value| value.get("writable"))
-        .and_then(Value::as_bool)
-        .unwrap_or(false);
-    let workspace_path = workspace
-        .and_then(|value| value.get("path"))
-        .and_then(Value::as_str)
-        .map(PathBuf::from);
-    result.valid = version_matches
-        && writable
-        && workspace_path
-            .as_deref()
-            .map(|value| path_equal(value, &paths.data_dir))
-            .unwrap_or(false);
+    result.service = classify_health(&json, &expected_version, &paths.data_dir);
+    result.valid = result.service == ServiceStatus::Running;
     result
 }
 
@@ -301,13 +329,7 @@ fn build_state(_app: &AppHandle) -> Result<ControlState, String> {
     let installed_path = running_from_installed_path(&paths);
     let can_relocate = installed_path && matches!(&installation, InstallationStatus::Current);
     let health = query_health(&paths);
-    let service = if health.valid {
-        ServiceStatus::Running
-    } else if health.listening {
-        ServiceStatus::PortConflict
-    } else {
-        ServiceStatus::Stopped
-    };
+    let service = health.service;
     Ok(ControlState {
         installation,
         service,
@@ -761,6 +783,28 @@ mod tests {
         let result = HealthResult::default();
         assert!(!result.listening);
         assert!(!result.valid);
+        assert_eq!(result.service, ServiceStatus::Stopped);
+    }
+
+    #[test]
+    fn health_failures_keep_their_actual_cause() {
+        let directory = Path::new(r"D:\Translation\data");
+        let healthy = serde_json::json!({"status":"ok", "version":"1.9.6",
+            "workspace":{"path":directory,"writable":true}});
+        assert_eq!(classify_health(&healthy, "1.9.6", directory), ServiceStatus::Running);
+        let mut value = healthy.clone();
+        value["workspace"]["writable"] = false.into();
+        value["status"] = "degraded".into();
+        assert_eq!(classify_health(&value, "1.9.6", directory), ServiceStatus::WorkspaceUnwritable);
+        value = healthy.clone(); value["version"] = "1.9.5".into();
+        assert_eq!(classify_health(&value, "1.9.6", directory), ServiceStatus::VersionMismatch);
+        value = healthy.clone(); value["workspace"]["path"] = r"D:\Other\data".into();
+        assert_eq!(classify_health(&value, "1.9.6", directory), ServiceStatus::WorkspaceMismatch);
+        value = healthy.clone(); value["status"] = "degraded".into();
+        assert_eq!(classify_health(&value, "1.9.6", directory), ServiceStatus::HealthCheckFailed);
+        value = healthy; value["workspace"].as_object_mut().unwrap().remove("writable");
+        assert_eq!(classify_health(&value, "1.9.6", directory), ServiceStatus::HealthCheckFailed);
+        assert_eq!(classify_health(&serde_json::json!({"name":"other program"}), "1.9.6", directory), ServiceStatus::PortConflict);
     }
 
     #[test]

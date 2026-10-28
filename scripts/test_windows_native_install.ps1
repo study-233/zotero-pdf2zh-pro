@@ -36,6 +36,11 @@ function Invoke-SetupButton([Diagnostics.Process]$Process,[string]$Name) {
   if ($handle -ne [IntPtr]::Zero) {
    $window=[Windows.Automation.AutomationElement]::FromHandle($handle)
    $button=$window.FindFirst([Windows.Automation.TreeScope]::Descendants,$condition)
+   if (-not $button -and $Name -eq '完成并启动服务') {
+    # Keep historical installer validation compatible with its completion label.
+    $legacy=New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::NameProperty,'打开控制中心')
+    $button=$window.FindFirst([Windows.Automation.TreeScope]::Descendants,$legacy)
+   }
    if ($button -and $button.Current.IsEnabled) {
     $invoke=$button.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern)
     $invoke.Invoke()
@@ -81,7 +86,7 @@ try {
   if($progress -and $progress.status -in @('failed','rolledBack')){throw "Installation failed: $($progress.message)"}
  } while ((-not $progress -or $progress.status -ne 'completed') -and $clock.ElapsedMilliseconds -lt 600000)
  if(-not $progress -or $progress.status -ne 'completed'){throw 'Installation wizard did not complete.'}
- Invoke-SetupButton $installer '打开控制中心'
+ Invoke-SetupButton $installer '完成并启动服务'
  do {
   Start-Sleep -Milliseconds 500
   $control=Get-ManagedControlPanelProcessId

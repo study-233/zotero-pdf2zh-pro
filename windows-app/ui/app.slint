@@ -28,30 +28,6 @@ component SettingRow inherits HorizontalLayout {
     }
     @children
 }
-component BackButton inherits Rectangle {
-    width: 36px; height: 36px; border-radius: 4px;
-    background: pointer.pressed ? Appearance.border : pointer.has-hover ? Appearance.card : transparent;
-    border-width: 1px; border-color: focus.has-focus ? Appearance.foreground : transparent;
-    accessible-role: button;
-    accessible-label: "返回主页";
-    accessible-action-default => { root.clicked(); }
-    callback clicked();
-    forward-focus: focus;
-    Path {
-        x: 9px; y: 9px; width: 18px; height: 18px;
-        viewbox-width: 24; viewbox-height: 24;
-        commands: "M 14 5 L 7 12 L 14 19 M 7 12 L 22 12";
-        stroke: Appearance.foreground; stroke-width: 2px; fill: transparent;
-    }
-    pointer := TouchArea { clicked => { focus.focus(); root.clicked(); } }
-    focus := FocusScope {
-        width: 0px; height: 0px;
-        key-pressed(event) => {
-            if event.text == Key.Return || event.text == Key.Space { root.clicked(); return accept; }
-            return reject;
-        }
-    }
-}
 component OperationFeedback inherits VerticalLayout {
     in property <string> message;
     in property <string> detail;
@@ -133,44 +109,82 @@ component SettingsFeedback inherits VerticalLayout {
         }
     }
 }
-component Details inherits VerticalLayout {
-    in-out property <bool> expanded;
-    in-out property <bool> follow;
-    in-out property <length> offset;
-    in property <string> text;
-    in property <bool> copied;
-    callback action(string);
-    callback state-changed();
-    spacing: 10px; vertical-stretch: root.expanded ? 1 : 0;
-    HorizontalLayout { spacing: 8px; vertical-stretch: 0;
-        Button { text: root.expanded ? "收起操作详情" : "展开操作详情"; clicked => { root.expanded = !root.expanded; root.state-changed(); } }
-        Rectangle { horizontal-stretch: 1; }
-        if root.expanded: Button { text: root.copied ? "已复制" : "复制详情"; clicked => { root.action("copy-details"); } }
-        if root.expanded: Button { text: "打开日志"; clicked => { root.action("log"); } }
-        if root.expanded && !root.follow: Button { text: "回到最新"; clicked => { root.follow = true; root.state-changed(); } }
+
+
+component SectionHeader inherits Rectangle {
+    in property <string> title;
+    in property <string> summary;
+    in property <bool> expanded;
+    callback toggled();
+    min-height: 44px; vertical-stretch: 0;
+    border-radius: 7px;
+    background: hit.pressed ? Palette.alternate-background : hit.has-hover ? Palette.background : transparent;
+    border-width: focus.has-focus ? 2px : 0px;
+    border-color: Appearance.high-contrast ? Appearance.foreground : Palette.accent-background;
+    accessible-role: button;
+    accessible-label: (root.expanded ? "收起" : "展开") + root.title;
+    accessible-expanded: root.expanded;
+    accessible-action-default => { root.toggled(); }
+    forward-focus: focus;
+    HorizontalLayout {
+        padding: 14px; padding-top: 11px; padding-bottom: 11px; spacing: 10px;
+        Label { text: root.title; font-weight: 600; vertical-alignment: center; }
+        Caption { text: root.expanded ? "" : root.summary; horizontal-stretch: 1;
+            horizontal-alignment: right; vertical-alignment: center; overflow: elide; wrap: no-wrap; min-width: 0px; }
+        Rectangle { width: 14px; horizontal-stretch: 0;
+            Image { source: @image-url("../../plugin/addon/content/icons/preferences/chevron-right.svg");
+                width: 14px; height: 14px; y: (parent.height - self.height) / 2;
+                colorize: Appearance.foreground; transform-rotation: root.expanded ? 90deg : 0deg; }
+        }
     }
-    if root.expanded: VerticalLayout { spacing: 10px;
-        Card { VerticalLayout { padding: 12px;
-            LogView { text: root.text; follow <=> root.follow; offset <=> root.offset; position-changed => { root.state-changed(); } }
-        }}
+    hit := TouchArea { mouse-cursor: pointer;
+        clicked => { focus.focus(); root.toggled(); } }
+    focus := FocusScope {
+        width: 0px;
+        key-pressed(event) => {
+            if event.text == Key.Space || event.text == Key.Return {
+                root.toggled(); return accept;
+            }
+            return reject;
+        }
+    }
+}
+component FoldSection inherits Card {
+    in property <string> title;
+    in property <string> summary;
+    in-out property <bool> expanded;
+    callback toggled();
+    vertical-stretch: 0;
+    VerticalLayout { padding: 1px; spacing: 0px;
+        SectionHeader { title: root.title; summary: root.summary; expanded: root.expanded;
+            toggled => { root.expanded = !root.expanded; root.toggled(); } }
+        if root.expanded: Rectangle { height: 1px; background: Appearance.border; }
+        Rectangle { visible: root.expanded; vertical-stretch: 0;
+            min-height: root.expanded ? body.min-height : 0px;
+            preferred-height: root.expanded ? body.preferred-height : 0px;
+            max-height: root.expanded ? 100000px : 0px;
+            body := VerticalLayout { padding: 14px; padding-bottom: 16px; spacing: 14px; @children }
+        }
     }
 }
 
 export component AppWindow inherits Window {
-    title: page == 2 ? "zotero-pdf2zh-pro 安装" : "zotero-pdf2zh-pro";
+    title: "zotero-pdf2zh-pro";
     icon: @image-url("../../assets/logo.png");
-    preferred-width: page == 0 ? 400px : page == 2 ? 560px : 520px;
-    preferred-height: page == 0 ? 300px : 480px;
-    min-width: max(380px, content.min-width);
-    min-height: max(300px, content.min-height);
+    preferred-width: 560px;
+    preferred-height: 680px;
+    min-width: 460px;
+    min-height: 420px;
     background: Appearance.background;
     in property <float> text-scale: 1;
     default-font-size: 14px * root.text-scale;
     in property <int> page;
     in property <int> wizard-stage;
+    in property <bool> setup-mode;
     in property <string> heading: "正在检测服务…";
-    in property <string> subtitle: "在此管理本地翻译服务";
+    in property <string> subtitle;
     in property <string> address;
+    in property <string> app-version;
     in property <string> version;
     in property <string> action-label: "正在检测";
     in property <string> operation-message;
@@ -196,7 +210,6 @@ export component AppWindow inherits Window {
     in-out property <bool> details-open;
     in-out property <bool> follow-logs: true;
     in-out property <length> log-offset;
-    in-out property <bool> thanks-open: false;
     callback details-state(bool, bool, float);
     in property <string> confirmation;
     in property <bool> confirm-uninstall;
@@ -241,200 +254,197 @@ export component AppWindow inherits Window {
     callback draft-options(bool, bool);
     changed effective-theme => { Palette.color-scheme = root.effective-theme == 1 ? ColorScheme.light : root.effective-theme == 2 ? ColorScheme.dark : ColorScheme.unknown; }
 
+    in property <int> status-tone;
+    in property <bool> primary-enabled;
+    in property <bool> service-running;
+    in property <bool> service-fault;
+    in property <bool> service-operation;
+    in property <string> data-path;
+    in-out property <bool> connection-open;
+    in-out property <bool> installation-open;
+    in-out property <bool> updates-open;
+    in-out property <bool> general-open;
+    in-out property <bool> about-open;
+
     content := VerticalLayout {
-        padding: 24px; spacing: 16px;
-        if root.page == 0: ScrollView { VerticalLayout {
-            spacing: 16px;
-            VerticalLayout {
-                spacing: 6px;
-                Label { text: root.heading; font-size: 1.57rem; font-weight: 600; }
+        padding: 20px; spacing: 16px;
+        Card { vertical-stretch: 0; VerticalLayout {
+            padding: 18px; spacing: 12px;
+            HorizontalLayout { spacing: 10px;
+                Rectangle { width: 9px; horizontal-stretch: 0;
+                    Rectangle { width: 9px; height: 9px; y: (parent.height - self.height) / 2; border-radius: 5px;
+                        background: Appearance.high-contrast ? Appearance.foreground : root.status-tone == 2 ? #16803c : root.status-tone == 3 ? #c43c35 : root.status-tone == 1 ? Palette.accent-background : #777;
+                    }
+                }
+                Label { text: root.heading; font-size: 1.43rem; font-weight: 600; horizontal-stretch: 1; }
+                Caption { text: root.app-version; vertical-alignment: center; wrap: no-wrap; }
             }
-            HorizontalLayout {
-                spacing: 12px;
-                LineEdit { text: root.address; read-only: true; accessible-label: "服务地址"; horizontal-stretch: 1; }
-                Button { text: root.copied ? "已复制" : "复制"; clicked => { root.action("copy-address"); } }
+            if root.subtitle != "": Caption { text: root.subtitle; }
+            HorizontalLayout { spacing: 10px;
+                Button { text: root.action-label; primary: true; horizontal-stretch: 1; enabled: root.primary-enabled;
+                    clicked => { root.action("primary"); } }
+                if root.service-running: Button { text: "停止服务"; enabled: !root.busy && !root.update-pending; clicked => { root.action("stop"); } }
+                if root.service-fault && root.action-label != "重新检测": Button { text: "重新检测"; enabled: !root.busy; clicked => { root.action("refresh"); } }
+                Button { text: "后台运行"; clicked => { root.action("background"); } }
             }
-            HorizontalLayout {
-                spacing: 12px;
-                Button { text: root.action-label; primary: true; horizontal-stretch: 1; enabled: root.ready && !root.busy && !root.update-pending; clicked => { root.action("primary"); } }
-                Button { text: "设置"; clicked => { root.action("settings"); } }
-            }
-            OperationFeedback { message: root.operation-message; detail: root.operation-detail; progress: root.progress; known: root.progress-known; active: root.progress-active; animate: root.animate; }
-            DownloadList { files: root.active-files; }
-            HorizontalLayout {
-                spacing: 8px;
-                Caption { text: root.version; horizontal-stretch: 1; }
-                if root.failed: Button { text: "重试"; enabled: !root.busy; clicked => { root.action("retry"); } }
-            }
-            Details { expanded <=> root.details-open; follow <=> root.follow-logs; offset <=> root.log-offset;
-                text: root.details; copied: root.copied; action(value) => { root.action(value); }
-                state-changed => { root.details-state(root.details-open, root.follow-logs, root.log-offset / 1px); }
+            if root.service-operation && root.operation-message != "": OperationFeedback {
+                message: root.operation-message; detail: root.operation-detail;
+                progress: root.progress; known: root.progress-known; active: root.progress-active; animate: root.animate;
             }
         }}
-        if root.page == 1: VerticalLayout {
-            spacing: 16px;
-            HorizontalLayout {
-                spacing: 12px; vertical-stretch: 0; alignment: start;
-                BackButton { clicked => { root.action("home"); } }
-                Label { text: "设置"; font-size: 1.57rem; font-weight: 600; horizontal-stretch: 1; vertical-alignment: center; }
-            }
-            settings-scroll := ScrollView {
-                horizontal-scrollbar-policy: ScrollBarPolicy.always-off;
-                content-width: self.visible-width;
-                content-y: root.settings-offset * 1px;
-                scrolled => { root.settings-offset = self.content-y / 1px; root.settings-state(); }
-                VerticalLayout {
-                    spacing: 16px; padding-right: 8px; alignment: start;
-                    if root.settings-notice != "": Card { VerticalLayout { padding: 12px; Label { text: root.settings-notice; } } }
-                    Label { text: "外观与启动"; font-weight: 600; }
-                    Card { VerticalLayout { padding: 16px; spacing: 16px;
-                        SettingRow { name: "主题"; description: Appearance.high-contrast ? "系统高对比度优先" : "选择控制中心的显示方式";
-                            ComboBox { width: max(176px, 10rem); model: ["跟随系统", "浅色", "深色"]; current-index <=> root.theme; enabled: !Appearance.high-contrast; accessible-label: "外观主题";
-                                selected(_) => { root.preferences(root.theme, root.autostart, root.automatic-updates); } }
-                        }
-                        SettingRow { name: "登录时启动"; description: "自动进入托盘，保持面板关闭";
-                            Switch { checked <=> root.autostart; enabled: root.installed && !root.busy; accessible-label: "登录时启动";
-                                toggled => { root.preferences(root.theme, root.autostart, root.automatic-updates); } }
-                        }
-                    }}
-                    Label { text: "更新"; font-weight: 600; }
-                    Card { VerticalLayout { padding: 16px; spacing: 16px;
-                        SettingRow { name: "自动更新"; description: "仅在服务空闲时切换版本";
-                            Switch { checked <=> root.automatic-updates; enabled: root.installed && !root.busy; accessible-label: "自动更新";
-                                toggled => { root.preferences(root.theme, root.autostart, root.automatic-updates); } }
-                        }
-                        SettingRow { name: "稳定版本"; description: root.version;
-                            Button { text: root.update-checking ? "正在检查…" : "检查更新"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("check"); } }
-                        }
-                        Caption { text: root.update-checked; }
-                        SettingsFeedback {
-                            message: root.update-message; detail: root.update-detail; logs: root.update-logs;
-                            known: root.update-progress-known; progress: root.update-progress;
-                            files: root.update-files; failed: root.update-failed; busy: root.busy;
-                            expanded <=> root.update-details-open; state-changed => { root.settings-state(); }
-                            retry => { root.action("retry-update"); } copy => { root.action("copy-update"); } log => { root.action("log"); }
-                        }
-                        if root.update-available: Button { text: root.update-action-label; primary: true; enabled: root.installed && !root.busy; clicked => { root.action("update"); } }
-                        if root.update-available || root.update-pending: Caption { text: "服务空闲后切换版本，控制中心将在后台重新启动。"; }
-                    }}
-                    Label { text: "存储与维护"; font-weight: 600; }
-                    Card { VerticalLayout { padding: 16px; spacing: 12px;
-                        Caption { text: "安装位置"; }
-                        Label { text: root.install-path; wrap: no-wrap; overflow: elide; }
-                        HorizontalLayout {
-                            spacing: 8px;
-                            Button { text: "打开目录"; clicked => { root.action("location"); } }
-                            Button { text: "数据目录"; clicked => { root.action("data"); } }
-                            Button { text: "打开日志"; clicked => { root.action("log"); } }
-                        }
-                        Button { text: root.advanced ? "收起维护工具" : "展开维护工具"; clicked => { root.advanced = !root.advanced; root.settings-state(); } }
-                        if root.advanced: VerticalLayout { spacing: 12px;
-                            SettingRow { name: "修复环境"; description: "保留配置和数据，完成后控制中心将在后台重新启动";
-                                Button { text: "修复"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("repair"); } }
-                            }
-                            SettingRow { name: "安装缓存"; description: "清理后，更新或修复可能需要补下载";
-                                Button { text: "清理"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("clean"); } }
-                            }
-                            SettingRow { name: "更改安装位置"; description: "迁移配置和数据，过程需要暂停服务";
-                                Button { text: "迁移"; enabled: root.can-relocate && !root.busy && !root.update-pending; clicked => { root.action("relocate"); } }
-                            }
-                        }
-                        if root.maintenance-message != "": SettingsFeedback {
-                            message: root.maintenance-message; detail: root.maintenance-detail; logs: root.maintenance-logs;
-                            known: root.maintenance-progress-known; progress: root.maintenance-progress;
-                            files: root.maintenance-files; failed: root.maintenance-failed; busy: root.busy || root.update-pending;
-                            expanded <=> root.maintenance-details-open; state-changed => { root.settings-state(); }
-                            retry => { root.action("retry-maintenance"); } copy => { root.action("copy-maintenance"); } log => { root.action("log"); }
-                        }
-                    }}
-                    Label { text: "关于"; font-weight: 600; }
+        if root.settings-notice != "": Label { text: root.settings-notice; }
+        home-scroll := ScrollView {
+            horizontal-scrollbar-policy: ScrollBarPolicy.always-off;
+            content-width: self.visible-width;
+            content-y: root.settings-offset * 1px;
+            scrolled => { root.settings-offset = self.content-y / 1px; root.settings-state(); }
+            VerticalLayout { spacing: 10px; padding-right: 8px; alignment: start;
+                if root.page == 4: Card { vertical-stretch: 0; VerticalLayout {
+                    padding: 16px; spacing: 12px;
+                    Label { text: root.confirm-cancel ? "取消安装？" : root.confirm-uninstall ? "卸载翻译服务？" : "确认操作"; font-weight: 600; }
+                    Label { text: root.confirmation; }
+                    if root.confirm-uninstall: VerticalLayout { spacing: 8px;
+                        CheckBox { text: "同时删除配置、数据和日志"; checked <=> root.purge-data; toggled => { root.purge-changed(root.purge-data); } }
+                        Caption { text: root.purge-data ? "将删除配置、翻译任务、结果和日志，无法撤销。" : "配置、翻译任务、结果和日志将保留。"; }
+                    }
+                    HorizontalLayout { spacing: 10px;
+                        Button { text: root.confirm-cancel ? "继续安装" : "取消"; clicked => { root.action("back"); } }
+                        Rectangle { horizontal-stretch: 1; }
+                        Button { text: root.confirm-cancel ? "取消安装" : root.confirm-uninstall ? "卸载" : "继续"; primary: true;
+                            enabled: root.confirm-cancel ? root.can-cancel && !root.cancelling : !root.busy && !root.update-pending;
+                            clicked => { root.action(root.confirm-cancel ? "cancel-install-now" : "confirm"); } }
+                    }
+                }}
+                FoldSection { title: "连接信息"; summary: root.address;
+                    expanded <=> root.connection-open; toggled => { root.settings-state(); }
+                    HorizontalLayout { spacing: 10px;
+                        LineEdit { text: root.address; read-only: true; accessible-label: "服务地址"; horizontal-stretch: 1; }
+                        Button { text: root.copied ? "已复制" : "复制地址"; clicked => { root.action("copy-address"); } }
+                    }
                     Caption { text: root.version; }
-                    SettingRow { name: "License"; description: "AGPL-3.0-only";
-                        Button { text: "查看许可证"; clicked => { root.action("license"); } }
-                    }
-                    Button { text: root.thanks-open ? "收起致谢" : "致谢"; clicked => { root.thanks-open = !root.thanks-open; root.settings-state(); } }
-                    if root.thanks-open: VerticalLayout { spacing: 8px;
-                        Caption { text: "感谢 PDFMathTranslate、PDFMathTranslate-next、BabelDOC、uv、Slint 及其他上游项目。"; }
-                        Button { text: "第三方许可证"; clicked => { root.action("notices"); } }
-                    }
-                    HorizontalLayout { spacing: 12px;
-                        Button { text: "退出控制中心"; enabled: !root.busy; clicked => { root.action("quit"); } }
-                        Button { text: "卸载…"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("uninstall"); } }
-                    }
+                    Label { text: "数据目录"; font-weight: 600; }
+                    Label { text: root.data-path; }
+                    Button { text: "打开数据目录"; clicked => { root.action("data"); } }
                 }
-            }
-        }
-        if root.page == 2: VerticalLayout {
-            spacing: 16px;
-            VerticalLayout { spacing: 6px; vertical-stretch: 0;
-                Label { text: root.wizard-stage == 0 ? (root.existing ? "升级或修复翻译服务" : "安装本地翻译服务") : root.wizard-stage == 2 ? "安装完成" : root.cancelled ? "安装已取消" : root.cancelling ? "正在取消安装" : root.failed ? "安装未完成" : "正在安装翻译服务"; font-size: 1.57rem; font-weight: 600; }
-                Caption { text: root.wizard-stage == 2 ? "本地翻译服务已准备就绪。" : root.cancelled ? "已下载的文件会在重新安装时复用。" : root.cancelling ? "正在停止下载，请稍候。" : root.wizard-stage == 0 ? "准备 Python 与翻译依赖，完成后即可使用。" : "首次安装需要下载 Python 和翻译依赖。"; }
-            }
-            if root.wizard-stage == 0: ScrollView {
-                VerticalLayout { spacing: 16px; padding-right: 8px; alignment: start;
-                    Label { text: "安装位置"; font-weight: 600; }
-                    HorizontalLayout { spacing: 8px;
-                        LineEdit { text <=> root.install-path; enabled: root.ready && !root.existing; accessible-label: "安装位置"; horizontal-stretch: 1; edited => { root.path-edited(root.install-path); } }
-                        Button { text: "浏览…"; enabled: root.ready && !root.existing; clicked => { root.action("browse"); } }
+                FoldSection { title: "安装与运行环境"; summary: root.setup-mode && root.wizard-stage == 1 ? root.operation-message : root.existing ? "已安装" : "尚未安装";
+                    expanded <=> root.installation-open; toggled => { root.settings-state(); }
+                    if !root.setup-mode: VerticalLayout { spacing: 12px;
+                        Caption { text: root.install-path; }
+                        Button { text: root.existing ? "升级或重新安装" : "配置安装"; enabled: !root.busy && !root.update-pending; clicked => { root.action("setup"); } }
                     }
-                    Switch { text: "登录 Windows 后自动启动"; checked <=> root.autostart; enabled: root.ready && !root.existing; toggled => { root.draft-options(root.autostart, root.automatic-updates); } }
-                    Switch { text: "空闲时自动更新"; checked <=> root.automatic-updates; enabled: root.ready && !root.existing; toggled => { root.draft-options(root.autostart, root.automatic-updates); } }
-                    Caption { text: root.downgrade ? "已安装版本更高，请使用对应版本的安装器。" : root.existing ? "沿用安装位置、自启选择和现有配置。" : "首次安装需要联网准备 Python 和翻译依赖。"; }
-                }
-            }
-            if root.wizard-stage != 0: VerticalLayout {
-                spacing: 16px;
-                HorizontalLayout { spacing: 12px; vertical-stretch: 0;
-                    for label[index] in ["1  准备环境", "2  下载组件", "3  完成配置"]: Label {
-                        text: label; font-size: 0.86rem;
-                        font-weight: index == root.operation-step ? 600 : 400;
-                        opacity: Appearance.high-contrast || index <= root.operation-step ? 1 : 0.6;
-                        horizontal-stretch: 1;
-                    }
-                }
-                Card { vertical-stretch: 0;
-                    VerticalLayout { padding: 16px; spacing: 12px;
-                        HorizontalLayout { spacing: 12px;
-                            Caption { text: root.active-files.length > 0 ? "下载进度" : "当前步骤"; horizontal-stretch: 1; }
-                            Caption { text: root.elapsed; }
+                    if root.setup-mode && root.wizard-stage == 0: VerticalLayout { spacing: 12px;
+                        Label { text: root.existing ? "升级或修复翻译服务" : "安装本地翻译服务"; font-weight: 600; }
+                        Caption { text: "首次安装需要联网下载 Python 和翻译依赖。"; }
+                        HorizontalLayout { spacing: 8px;
+                            LineEdit { text <=> root.install-path; enabled: root.ready && !root.existing; accessible-label: "安装位置"; horizontal-stretch: 1; edited => { root.path-edited(root.install-path); } }
+                            Button { text: "浏览…"; enabled: root.ready && !root.existing; clicked => { root.action("browse"); } }
                         }
-                        if root.failed || root.active-files.length == 0: OperationFeedback { message: root.operation-message; detail: root.operation-detail; progress: root.progress; known: root.progress-known; active: root.progress-active; animate: root.animate; }
+                        Switch { text: "登录 Windows 后自动启动"; checked <=> root.autostart; enabled: root.ready && !root.existing; toggled => { root.draft-options(root.autostart, root.automatic-updates); } }
+                        Switch { text: "空闲时自动更新"; checked <=> root.automatic-updates; enabled: root.ready && !root.existing; toggled => { root.draft-options(root.autostart, root.automatic-updates); } }
+                        if root.existing || root.downgrade: Caption { text: root.downgrade ? "已安装版本更高，请使用对应版本的安装器。" : "沿用安装位置、自启选择和现有配置。"; }
+                        Button { text: root.existing ? "升级 / 修复" : "开始安装"; primary: true; enabled: root.ready && !root.busy && !root.downgrade;
+                            clicked => { root.install(root.install-path, root.autostart, root.automatic-updates); } }
+                    }
+                    if root.setup-mode && root.wizard-stage != 0: VerticalLayout { spacing: 12px;
+                        Label { text: root.wizard-stage == 2 ? "安装完成" : root.cancelled ? "安装已取消" : root.cancelling ? "正在取消安装" : root.failed ? "安装未完成" : "正在安装翻译服务"; font-weight: 600; }
+                        if root.wizard-stage != 2: HorizontalLayout { spacing: 8px;
+                            for label[index] in ["准备环境", "下载组件", "完成配置"]: Caption {
+                                text: label; font-weight: index == root.operation-step ? 600 : 400;
+                                horizontal-stretch: 1;
+                            }
+                        }
+                        Caption { text: root.elapsed; }
+                        if root.failed || root.active-files.length == 0: OperationFeedback {
+                            message: root.operation-message; detail: root.operation-detail; progress: root.progress; known: root.progress-known;
+                        }
                         if root.active-files.length == 1: DownloadList { files: root.active-files; }
                         if root.active-files.length > 1: ScrollView { height: 132px;
-                            VerticalLayout { padding-right: 12px; alignment: start; DownloadList { files: root.active-files; } }
+                            VerticalLayout { padding-right: 8px; alignment: start; DownloadList { files: root.active-files; } }
+                        }
+                        HorizontalLayout { spacing: 10px;
+                            if root.busy: Button { text: root.cancelling ? "正在取消…" : "取消安装"; enabled: root.can-cancel && !root.cancelling; clicked => { root.action("cancel-install"); } }
+                            if (root.failed || root.cancelled) && !root.busy: Button { text: root.cancelled ? "重新安装" : "重试安装"; primary: true; clicked => { root.action("retry"); } }
+                            if root.wizard-stage == 2: Button { text: root.existing ? "完成并打开控制中心" : "完成并启动服务"; primary: true; clicked => { root.action("finish"); } }
+                            Rectangle { horizontal-stretch: 1; }
                         }
                     }
                 }
-                Details { expanded <=> root.details-open; follow <=> root.follow-logs; offset <=> root.log-offset;
-                    text: root.details; copied: root.copied; action(value) => { root.action(value); }
-                    state-changed => { root.details-state(root.details-open, root.follow-logs, root.log-offset / 1px); }
+                FoldSection { title: "更新"; summary: root.update-pending || root.update-failed ? root.update-message : root.automatic-updates ? "空闲时自动更新" : "自动更新已关闭";
+                    expanded <=> root.updates-open; toggled => { root.settings-state(); }
+                    SettingRow { name: "自动更新"; description: "仅在服务空闲时切换版本";
+                        Switch { checked <=> root.automatic-updates; enabled: root.installed && !root.busy; accessible-label: "自动更新";
+                            toggled => { root.preferences(root.theme, root.autostart, root.automatic-updates); } }
+                    }
+                    HorizontalLayout { spacing: 10px;
+                        Caption { text: root.update-checked; horizontal-stretch: 1; }
+                        Button { text: root.update-checking ? "正在检查…" : "检查更新"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("check"); } }
+                    }
+                    SettingsFeedback {
+                        message: root.update-message; detail: root.update-detail; logs: root.update-logs;
+                        known: root.update-progress-known; progress: root.update-progress;
+                        files: root.update-files; failed: root.update-failed; busy: root.busy;
+                        expanded <=> root.update-details-open; state-changed => { root.settings-state(); }
+                        retry => { root.action("retry-update"); } copy => { root.action("copy-update"); } log => { root.action("log"); }
+                    }
+                    if root.update-available: Button { text: root.update-action-label; primary: true; enabled: root.installed && !root.busy; clicked => { root.action("update"); } }
+                    if root.update-available || root.update-pending: Caption { text: "服务空闲后切换版本，控制中心将在后台重新启动。"; }
                 }
-                if !root.details-open: Rectangle { vertical-stretch: 1; }
-            }
-            Rectangle { height: 1px; background: Appearance.border; }
-            HorizontalLayout { spacing: 12px; vertical-stretch: 0;
-                if root.busy: Button { text: root.cancelling ? "正在取消…" : "取消安装"; enabled: root.can-cancel && !root.cancelling; clicked => { root.action("cancel-install"); } }
-                Rectangle { horizontal-stretch: 1; }
-                Button { text: root.busy ? "后台运行" : "关闭"; clicked => { root.action(root.busy ? "background" : "close"); } }
-                if root.wizard-stage == 0: Button { text: root.existing ? "升级 / 修复" : "开始安装"; primary: true; enabled: root.ready && !root.busy && !root.downgrade; clicked => { root.install(root.install-path,root.autostart,root.automatic-updates); } }
-                if (root.failed || root.cancelled) && root.wizard-stage != 0: Button { text: root.cancelled ? "重新安装" : "重试"; primary: true; enabled: !root.busy; clicked => { root.action("retry"); } }
-                if root.wizard-stage == 2: Button { text: "打开控制中心"; primary: true; clicked => { root.action("finish"); } }
-            }
-        }
-        if root.page == 4: VerticalLayout {
-            spacing: 20px;
-            Label { text: root.confirm-cancel ? "取消安装？" : root.confirm-uninstall ? "卸载翻译服务？" : "确认操作"; font-size: 1.57rem; font-weight: 600; }
-            Label { text: root.confirmation; }
-            if root.confirm-uninstall: VerticalLayout { spacing: 8px; vertical-stretch: 0;
-                CheckBox { text: "同时删除配置、数据和日志"; checked <=> root.purge-data; toggled => { root.purge-changed(root.purge-data); } }
-                Caption { text: root.purge-data ? "将删除此安装目录中的配置、翻译任务、结果文件和日志，无法撤销。" : "配置、翻译任务、结果文件和日志将保留，方便以后重新安装。"; }
-            }
-            Rectangle { vertical-stretch: 1; }
-            HorizontalLayout { spacing: 12px;
-                Button { text: root.confirm-cancel ? "继续安装" : "取消"; clicked => { root.action("back"); } }
-                Rectangle { horizontal-stretch: 1; }
-                if root.confirm-cancel: Button { text: "后台运行"; clicked => { root.action("background"); } }
-                Button { text: root.confirm-cancel ? "取消安装" : root.confirm-uninstall ? "卸载" : "继续"; primary: true; enabled: root.confirm-cancel ? root.can-cancel && !root.cancelling : !root.busy; clicked => { root.action(root.confirm-cancel ? "cancel-install-now" : "confirm"); } }
+                FoldSection { title: "常规设置";
+                    expanded <=> root.general-open; toggled => { root.settings-state(); }
+                    SettingRow { name: "主题"; description: Appearance.high-contrast ? "系统高对比度优先" : "";
+                        ComboBox { width: max(176px, 10rem); model: ["跟随系统", "浅色", "深色"]; current-index <=> root.theme;
+                            enabled: !Appearance.high-contrast; accessible-label: "外观主题";
+                            selected(_) => { root.preferences(root.theme, root.autostart, root.automatic-updates); } }
+                    }
+                    SettingRow { name: "登录时启动"; description: "自动启动翻译服务并驻留托盘";
+                        Switch { checked <=> root.autostart; enabled: root.installed && !root.busy; accessible-label: "登录时启动";
+                            toggled => { root.preferences(root.theme, root.autostart, root.automatic-updates); } }
+                    }
+                }
+                FoldSection { title: "存储与维护";
+                    expanded <=> root.advanced; toggled => { root.settings-state(); }
+                    Caption { text: "安装位置"; }
+                    Label { text: root.install-path; }
+                    Button { text: "打开安装目录"; clicked => { root.action("location"); } }
+                    SettingRow { name: "修复环境"; description: "保留配置和数据，完成后在后台重新启动";
+                        Button { text: "修复"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("repair"); } }
+                    }
+                    SettingRow { name: "安装缓存"; description: "清理后，更新或修复可能需要补下载";
+                        Button { text: "清理"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("clean"); } }
+                    }
+                    SettingRow { name: "更改安装位置"; description: "迁移配置和数据，过程需要暂停服务";
+                        Button { text: "迁移"; enabled: root.can-relocate && !root.busy && !root.update-pending; clicked => { root.action("relocate"); } }
+                    }
+                    if root.maintenance-message != "": SettingsFeedback {
+                        message: root.maintenance-message; detail: root.maintenance-detail; logs: root.maintenance-logs;
+                        known: root.maintenance-progress-known; progress: root.maintenance-progress;
+                        files: root.maintenance-files; failed: root.maintenance-failed; busy: root.busy || root.update-pending;
+                        expanded <=> root.maintenance-details-open; state-changed => { root.settings-state(); }
+                        retry => { root.action("retry-maintenance"); } copy => { root.action("copy-maintenance"); } log => { root.action("log"); }
+                    }
+                    Button { text: "卸载翻译服务…"; enabled: root.installed && !root.busy && !root.update-pending; clicked => { root.action("uninstall"); } }
+                }
+                FoldSection { title: "日志与诊断"; summary: root.failed ? "操作失败" : "";
+                    expanded <=> root.details-open; toggled => { root.details-state(root.details-open, root.follow-logs, root.log-offset / 1px); }
+                    LogView { text: root.details; height: 150px; follow <=> root.follow-logs; offset <=> root.log-offset;
+                        position-changed => { root.details-state(root.details-open, root.follow-logs, root.log-offset / 1px); } }
+                    HorizontalLayout { spacing: 8px;
+                        Button { text: root.copied ? "已复制" : "复制详情"; clicked => { root.action("copy-details"); } }
+                        Button { text: "打开日志"; clicked => { root.action("log"); } }
+                        if !root.follow-logs: Button { text: "回到最新"; clicked => { root.follow-logs = true; root.details-state(root.details-open, root.follow-logs, root.log-offset / 1px); } }
+                        Rectangle { horizontal-stretch: 1; }
+                    }
+                }
+                FoldSection { title: "关于";
+                    expanded <=> root.about-open; toggled => { root.settings-state(); }
+                    Caption { text: root.version; }
+                    SettingRow { name: "许可证"; description: "AGPL-3.0-only";
+                        Button { text: "查看许可证"; clicked => { root.action("license"); } }
+                    }
+                    Caption { text: "感谢 PDFMathTranslate、PDFMathTranslate-next、BabelDOC、uv、Slint 及其他上游项目。"; }
+                    Button { text: "第三方许可证"; clicked => { root.action("notices"); } }
+                    Button { text: "退出控制中心"; enabled: !root.busy; clicked => { root.action("quit"); } }
+                }
             }
         }
     }

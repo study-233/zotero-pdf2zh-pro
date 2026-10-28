@@ -1,14 +1,31 @@
 //! Page and feedback state survives Slint component destruction.
-use crate::{progress::OperationProgress, scheduler::UpdateState, update::UpdateCheck};
+use crate::{progress::OperationProgress, scheduler::UpdateState, update::UpdateCheck, InstallationStatus, ServiceStatus};
 
-pub fn busy_action_label(manual: Option<&str>, progress: Option<&OperationProgress>) -> &'static str {
-    let action = manual.or_else(|| progress.filter(|p| p.active()).map(|p| p.operation.as_str()));
-    match action {
-        Some("start") => "正在启动…", Some("stop") => "正在停止…",
-        Some("check") => "正在检查…", Some("clean") => "正在清理缓存…",
-        Some("update") => "正在更新…", Some("repair") => "正在修复…",
-        _ => "正在处理…",
-    }
+pub struct HomeStatus {
+    pub heading: &'static str,
+    pub description: &'static str,
+    pub action: &'static str,
+    pub command: &'static str,
+    pub tone: i32,
+}
+
+pub fn home_status(installation: &InstallationStatus, service: ServiceStatus, starting: bool) -> HomeStatus {
+    let (heading, description, action, command, tone) = if starting {
+        ("正在启动翻译服务", "", "正在启动…", "", 1)
+    } else if matches!(installation, InstallationStatus::NotInstalled) {
+        ("翻译服务未启动", "", "安装翻译服务", "setup", 0)
+    } else {
+        match service {
+            ServiceStatus::Stopped => ("翻译服务未启动", "", "启动服务", "start", 0),
+            ServiceStatus::Running => ("翻译服务已就绪", "", "打开 Zotero", "zotero", 2),
+            ServiceStatus::WorkspaceUnwritable => ("翻译数据目录无法写入", "请检查数据目录权限和磁盘空间，再重新检测", "打开数据目录", "data", 3),
+            ServiceStatus::WorkspaceMismatch => ("连接到了其他安装", "服务的数据目录与当前安装不同，请核对连接信息", "查看连接信息", "connection", 3),
+            ServiceStatus::VersionMismatch => ("翻译服务版本不匹配", "运行版本与已安装版本不同，请查看版本和修复选项", "查看修复选项", "maintenance", 3),
+            ServiceStatus::PortConflict => ("端口响应不匹配", "连接地址上的程序未返回翻译服务信息，请核对连接", "查看连接信息", "connection", 3),
+            ServiceStatus::HealthCheckFailed => ("翻译服务响应异常", "健康检查未通过，请重新检测或查看日志", "重新检测", "refresh", 3),
+        }
+    };
+    HomeStatus { heading, description, action, command, tone }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -17,7 +34,7 @@ pub enum Page { #[default] Home = 0, Settings = 1, Setup = 2, Confirm = 4 }
 
 impl Page {
     pub fn size(self) -> (f32, f32) {
-        match self { Self::Home => (400., 300.), Self::Settings => (520., 480.), Self::Setup => (560., 480.), Self::Confirm => (520., 480.) }
+        (560., 680.)
     }
 }
 
@@ -25,9 +42,13 @@ impl Page {
 pub struct SettingsView {
     pub offset: f32,
     pub advanced: bool,
-    pub thanks: bool,
     pub update_details: bool,
     pub maintenance_details: bool,
+    pub connection: bool,
+    pub installation: bool,
+    pub updates: bool,
+    pub general: bool,
+    pub about: bool,
 }
 
 #[derive(Default)]
@@ -155,12 +176,20 @@ impl UpdateView {
 mod tests {
     use super::*;
     #[test]
-    fn background_cleanup_does_not_reuse_a_previous_check_label() {
-        let mut progress = OperationProgress { operation: "clean".into(), status: "running".into(), ..Default::default() };
-        assert_eq!(busy_action_label(None, Some(&progress)), "正在清理缓存…");
-        assert_eq!(busy_action_label(Some("check"), Some(&progress)), "正在检查…");
-        progress.status = "completed".into();
-        assert_eq!(busy_action_label(None, Some(&progress)), "正在处理…");
+    fn home_actions_follow_service_state_and_do_not_promote_stopping() {
+        let current = InstallationStatus::Current;
+        let stopped = home_status(&current, ServiceStatus::Stopped, false);
+        assert_eq!((stopped.tone, stopped.command), (0, "start"));
+        let starting = home_status(&current, ServiceStatus::Stopped, true);
+        assert_eq!((starting.tone, starting.command), (1, ""));
+        let ready = home_status(&current, ServiceStatus::Running, false);
+        assert_eq!((ready.tone, ready.command), (2, "zotero"));
+        for issue in [ServiceStatus::WorkspaceUnwritable, ServiceStatus::WorkspaceMismatch,
+            ServiceStatus::VersionMismatch, ServiceStatus::PortConflict, ServiceStatus::HealthCheckFailed] {
+            let view = home_status(&current, issue, false);
+            assert_eq!(view.tone, 3);
+            assert_ne!(view.command, "stop");
+        }
     }
     #[test]
     fn late_checks_cannot_overwrite_new_requests_or_downloads() {

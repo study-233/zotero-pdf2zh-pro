@@ -21,6 +21,33 @@ const TRAY_EVENT: u32 = WM_APP + 4;
 pub fn wide(value: &str) -> Vec<u16> {
     value.encode_utf16().chain(Some(0)).collect()
 }
+
+pub fn open_zotero() -> Result<(), String> {
+    // Resolve the protocol's executable without passing an incomplete select URI.
+    let association = wide("zotero");
+    let verb = wide("open");
+    let mut executable = vec![0u16; 32768];
+    let mut length = executable.len() as u32;
+    let resolved = unsafe {
+        AssocQueryStringW(ASSOCF_IS_PROTOCOL, ASSOCSTR_EXECUTABLE, association.as_ptr(),
+            verb.as_ptr(), executable.as_mut_ptr(), &mut length)
+    };
+    let fallback = wide("zotero.exe");
+    let target = if resolved == 0 && length > 1 && length as usize <= executable.len() {
+        &executable[..length as usize]
+    } else {
+        &fallback
+    };
+    let result = unsafe {
+        ShellExecuteW(ptr::null_mut(), verb.as_ptr(), target.as_ptr(),
+            ptr::null(), ptr::null(), SW_SHOWNORMAL)
+    };
+    if result as isize <= 32 {
+        Err("无法打开 Zotero，请确认已安装 Zotero，或从开始菜单打开。".into())
+    } else {
+        Ok(())
+    }
+}
 struct Owner {
     app: AppHandle,
     taskbar: u32,

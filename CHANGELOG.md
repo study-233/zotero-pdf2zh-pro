@@ -5,16 +5,16 @@
 
 ## v1.9.6 - 2026-10-28
 
-本次更新增加文档导出，更新 PDF 引擎，并修复本地依赖的安全问题。
+本次更新新增文档导出，更新 PDF 引擎，并改进 Windows 控制中心。
 
 - **文档导出**：在附件菜单“导出文件”中选择 Markdown、JSON 或 TXT，直接保存原文或译文 PDF 的内容，支持取消，不调用翻译模型。
-- **PDF 引擎**：更新解析与排版流程，保留公式、术语、补译、质量检查和历史缓存；解析版本变化时保留旧恢复数据，避免错配段落。
+- **PDF 引擎**：更新解析与排版流程及安全依赖，保留公式、术语、补译、质量检查和历史缓存；解析版本变化时保留旧恢复数据。
+- **Windows 控制中心**：首页直接显示状态与版本，点击分组标题展开安装、更新和设置；修正异常误判，并保留折叠和滚动位置。
 - **Windows 升级**：修复更换安装位置后历史任务仍指向旧目录的问题，保留已有译文和历次迁移备份。
-- **设置与帮助**：设置按分组折叠，显示当前配置摘要，并跟随 Zotero 的深浅色主题。
 
 插件与本地服务需分别升级。**Mac 新版服务支持 Apple Silicon，Intel Mac 请保留现有服务。**
 
-[安装指南](docs/user-guide.md) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.5...main)
+[Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.6/zotero-pdf2zh-pro-windows-x64-setup.exe) · [安装指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.9.6/docs/user-guide.md) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.5...v1.9.6)
 
 ## v1.9.5 - 2026-10-28
 
