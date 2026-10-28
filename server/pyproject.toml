@@ -26,7 +26,7 @@ dependencies = [
     "httpx[socks]>=0.28.1",
     "hyperscan>=0.7.13",
     "levenshtein>=0.27.1",
-    "msgpack>=1.1.0",
+    "msgpack>=1.2.3",
     "numpy>=2.0.2,<3",
     "ollama",
     "onnx>=1.21.0",
