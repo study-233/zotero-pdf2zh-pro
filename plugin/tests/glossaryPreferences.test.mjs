@@ -199,7 +199,7 @@ globalThis.ztoolkit = {
 };
 globalThis.IOUtils = { read: async () => bytes };
 const ui = await asModule(
-    "const registerAttachmentNamingPreferences = () => {}; const registerSelectionPreferences = () => {}; const resetSelectionTranslation = () => {};\n" +
+    "const registerAttachmentNamingPreferences = () => {}; const registerSelectionPreferences = () => {}; const registerPreferenceCards = async () => {}; const resetSelectionTranslation = () => {};\n" +
         "const {config,version,getString,renderNotice,errorNotice,getLocaleID,getPref,setPref,axios,loadGlossaryEntries,importGlossaryCsv,clearGlossaryEntries,listGlossaryPacks,checkGlossaryUpdates,downloadGlossaryPack,cancelGlossaryDownload,removeGlossaryPack,getSelectedGlossaryPackIds,setSelectedGlossaryPackIds,supportsGlossaryPackLanguage}=globalThis.__glossaryUiTest;\n" +
         compile("preferenceScript") +
         "\nexport {importGlossary,refreshGlossarySummary,refreshServerVersion,refreshGlossaryPacks,renderGlossaryPacks,runGlossaryPackAction};\n//# sourceURL=preferences-fixture.js",
@@ -322,14 +322,42 @@ test("a delayed health response cannot replace the selected server's capability 
               };
     try {
         const oldCheck = ui.refreshServerVersion();
+        assert.equal(
+            nodes.get("serverVersionCard").getAttribute("data-state"),
+            "checking",
+        );
         prefs.set("new_serverip", "http://new-server");
         await ui.refreshServerVersion();
         resolveOld({ data: { status: "ok" } });
         await oldCheck;
         assert.equal(nodes.get("qualityCapabilities").hidden, true);
+        assert.equal(
+            nodes.get("serverVersionCard").getAttribute("data-state"),
+            "ok",
+        );
     } finally {
         axios.get = originalGet;
     }
+});
+
+test("connection colors distinguish degraded, unreachable and retrying states", async () => {
+    reset();
+    health = { status: "degraded", version: "1.9.5" };
+    await ui.refreshServerVersion();
+    const card = nodes.get("serverVersionCard");
+    assert.equal(card.getAttribute("data-state"), "degraded");
+    assert.match(nodes.get("serverStatus").textContent, /警告/);
+    prefs.set("new_serverip", "");
+    await ui.refreshServerVersion();
+    assert.equal(card.getAttribute("data-state"), "error");
+    assert.match(nodes.get("serverStatus").textContent, /未连接/);
+    prefs.set("new_serverip", "http://localhost:8890");
+    health = { status: "ok", version: "1.9.5" };
+    const retry = ui.refreshServerVersion();
+    assert.equal(card.getAttribute("data-state"), "checking");
+    await retry;
+    assert.equal(card.getAttribute("data-state"), "ok");
+    assert.equal(nodes.get("serverStatus").textContent, "已连接");
 });
 
 const serverURL = "http://localhost:8890";

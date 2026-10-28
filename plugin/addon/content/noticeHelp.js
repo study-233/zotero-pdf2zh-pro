@@ -51,10 +51,14 @@ window.addEventListener("DOMContentLoaded", () => {
         ["troubleshooting", "troubleshooting"],
     ]) {
         const item = create("li");
-        item.append(
-            link(`notice-help-${key}-title`, `${api.guideUrl}#${anchor}`),
-            create("p", t(`notice-help-${key}`)),
+        const topic = link(
+            `notice-help-${key}-title`,
+            `${api.guideUrl}#${anchor}`,
         );
+        const label = create("span", topic.textContent);
+        label.className = "help-topic-title";
+        topic.replaceChildren(label, create("p", t(`notice-help-${key}`)));
+        item.append(topic);
         list.append(item);
     }
     help.append(list);

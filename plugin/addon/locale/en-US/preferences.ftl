@@ -4,6 +4,11 @@ pref-glossary-invalid-row = Invalid CSV at line { $line }. Check columns, quotes
 pref-help = { $name } Build { $version } { $time }
 
 pref-config = Translation settings
+pref-card-profiles = Translation profiles
+pref-card-unconfigured = No profile selected
+pref-card-automatic = Automatic
+pref-card-no-glossary = No glossary enabled
+pref-card-advanced-summary = QPS { $qps } · Workers { $pool }
 pref-connection = Server Connection
 pref-plugin-version = Plugin
 pref-server-version = Server

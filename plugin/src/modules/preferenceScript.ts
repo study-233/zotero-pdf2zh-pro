@@ -4,6 +4,7 @@ import { errorNotice, renderNotice } from "./userNotice";
 import { openNoticeHelp, showUserNotice } from "./pluginNotices";
 import { registerAttachmentNamingPreferences } from "./attachmentNamingPreferences";
 import { registerSelectionPreferences } from "./selectionPreferences";
+import { registerPreferenceCards } from "./preferenceCards";
 import { resetSelectionTranslation } from "./selectionTranslate";
 import { config, version } from "../../package.json";
 import { getPref, setPref } from "../utils/prefs";
@@ -228,6 +229,7 @@ export async function registerPrefsScripts(window: Window) {
         report(error);
     }
     void refreshServerVersion();
+    await registerPreferenceCards(window);
 }
 
 export function initializeProfileMigration() {
@@ -818,6 +820,7 @@ async function refreshServerVersion() {
     packStatus("pref-pack-connecting");
     const button = element("checkConnection") as HTMLButtonElement | null;
     if (button) button.disabled = true;
+    element("serverVersionCard")?.setAttribute("data-state", "checking");
     localizedStatus("serverStatus", "pref-server-checking");
     status("qualityCapabilities", "");
     try {
@@ -841,7 +844,10 @@ async function refreshServerVersion() {
         else if (data.status === "degraded")
             localizedStatus("connectionResult", "pref-server-check-storage");
         else status("connectionResult", "");
-        element("serverVersionCard")?.setAttribute("data-state", "ok");
+        element("serverVersionCard")?.setAttribute(
+            "data-state",
+            data.status === "degraded" ? "degraded" : "ok",
+        );
         if (
             data.capabilities?.glossaryEntries !== true ||
             data.capabilities?.semanticReview !== true

@@ -12,8 +12,7 @@
     onload="Zotero.__addonInstance__.hooks.onPrefsEvent('load', { window })"
 >
     <html:div class="pref-header">
-        <html:div class="pref-heading">
-            <html:h2 class="pref-title" data-l10n-id="pref-config" />
+        <html:div class="pref-heading main-section">
             <html:button
                 id="zotero-prefpane-__addonRef__-notice-help"
                 class="help-link"
@@ -46,786 +45,917 @@
         </html:div>
     </html:div>
 
-    <html:section class="pref-section">
-        <html:label
-            class="pref-section-title"
-            for="zotero-prefpane-__addonRef__-selectedApiKey"
-            data-l10n-id="pref-current-profile"
-        />
-        <html:div class="llm-toolbar">
-            <menulist
-                id="zotero-prefpane-__addonRef__-selectedApiKey"
-                class="profile-select"
-                style="flex: 1; min-width: 0; margin: 0"
-            >
-                <menupopup native="false" />
-            </menulist>
-            <html:button
-                id="zotero-prefpane-__addonRef__-profile-manage"
-                data-l10n-id="pref-profile-manage"
-            />
-        </html:div>
-        <html:p
-            id="zotero-prefpane-__addonRef__-profileSummary"
-            class="pref-description"
-        />
-        <html:p
-            id="zotero-prefpane-__addonRef__-apiResult"
-            class="connection-result"
-            role="status"
-            aria-live="polite"
-            hidden="hidden"
-        />
-        <html:div
-            id="zotero-prefpane-__addonRef__-retirement-notice"
-            hidden="hidden"
-            role="status"
+    <html:details class="pref-card" data-pref-card="profiles">
+        <html:summary
+            aria-labelledby="zotero-prefpane-__addonRef__-card-profiles-title zotero-prefpane-__addonRef__-card-profiles-note"
         >
-            <html:p id="zotero-prefpane-__addonRef__-retirement-text" />
-            <html:button
-                id="zotero-prefpane-__addonRef__-retirement-action"
-                data-l10n-id="pref-profile-manage"
-            />
-        </html:div>
-    </html:section>
-
-    <html:section class="pref-section">
-        <html:div class="section-heading">
-            <html:h3
-                class="pref-section-title"
-                data-l10n-id="pref-language-settings"
-            />
-        </html:div>
-        <html:div class="form-grid">
-            <html:div class="form-field">
-                <html:label
-                    class="field-label"
-                    for="zotero-prefpane-__addonRef__-sourceLang"
-                    data-l10n-id="pref-sourceLang"
-                />
-                <html:div class="inline-controls">
-                    <html:input
-                        id="zotero-prefpane-__addonRef__-sourceLang"
-                        preference="extensions.zotero.__addonRef__.sourceLang"
-                        type="text"
-                        class="code-input"
-                    />
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-sourceLangSelect"
-                        preference="extensions.zotero.__addonRef__.sourceLang"
-                        class="select-input"
-                        ><menupopup native="false"
-                    /></menulist>
-                </html:div>
-            </html:div>
-
-            <html:div class="form-field">
-                <html:label
-                    class="field-label"
-                    for="zotero-prefpane-__addonRef__-targetLang"
-                    data-l10n-id="pref-targetLang"
-                />
-                <html:div class="inline-controls">
-                    <html:input
-                        id="zotero-prefpane-__addonRef__-targetLang"
-                        preference="extensions.zotero.__addonRef__.targetLang"
-                        type="text"
-                        class="code-input"
-                    />
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-targetLangSelect"
-                        preference="extensions.zotero.__addonRef__.targetLang"
-                        class="select-input"
-                        ><menupopup native="false"
-                    /></menulist>
-                </html:div>
-            </html:div>
-        </html:div>
-    </html:section>
-
-    <html:section class="pref-section output-settings">
-        <html:div class="section-heading">
-            <html:h3
-                class="pref-section-title"
-                data-l10n-id="pref-outputMode"
-            />
-        </html:div>
-        <html:div class="output-options">
-            <html:div class="settings-row">
-                <html:span
-                    class="field-label"
-                    data-l10n-id="pref-output-format"
-                />
-                <html:div class="output-option-row">
-                    <html:div class="output-choice">
-                        <checkbox
-                            id="zotero-prefpane-__addonRef__-outputMono"
-                            preference="extensions.zotero.__addonRef__.outputMono"
-                        />
-                        <html:label
-                            for="zotero-prefpane-__addonRef__-outputMono"
-                            data-l10n-id="pref-outputMode-mono"
-                        />
-                    </html:div>
-                    <html:div class="output-choice">
-                        <checkbox
-                            id="zotero-prefpane-__addonRef__-outputDual"
-                            preference="extensions.zotero.__addonRef__.outputDual"
-                        />
-                        <html:label
-                            for="zotero-prefpane-__addonRef__-outputDual"
-                            data-l10n-id="pref-outputMode-dual"
-                        />
-                    </html:div>
-                </html:div>
-            </html:div>
-            <html:div class="settings-row">
-                <html:span
-                    class="field-label"
-                    data-l10n-id="pref-after-translation"
-                />
-                <html:div class="output-option-row">
-                    <html:div class="toggle-row">
-                        <checkbox
-                            id="zotero-prefpane-__addonRef__-openAfterTranslate"
-                            preference="extensions.zotero.__addonRef__.openAfterTranslate"
-                        />
-                        <html:label
-                            for="zotero-prefpane-__addonRef__-openAfterTranslate"
-                            data-l10n-id="pref-open"
-                        />
-                    </html:div>
-                    <html:div class="toggle-row">
-                        <checkbox
-                            id="zotero-prefpane-__addonRef__-notifyOnTranslationComplete"
-                            preference="extensions.zotero.__addonRef__.notifyOnTranslationComplete"
-                        />
-                        <html:label
-                            for="zotero-prefpane-__addonRef__-notifyOnTranslationComplete"
-                            data-l10n-id="pref-notifyOnTranslationComplete"
-                        />
-                    </html:div>
-                    <html:div class="toggle-row">
-                        <checkbox
-                            id="zotero-prefpane-__addonRef__-addTranslatedTag"
-                            preference="extensions.zotero.__addonRef__.addTranslatedTag"
-                        />
-                        <html:label
-                            for="zotero-prefpane-__addonRef__-addTranslatedTag"
-                            data-l10n-id="pref-addTranslatedTag"
-                        />
-                    </html:div>
-                </html:div>
-            </html:div>
-        </html:div>
-        <html:div class="attachment-naming settings-row">
+            <html:span class="pref-card-icon" aria-hidden="true" />
             <html:span
-                class="field-label"
-                data-l10n-id="pref-attachment-naming"
+                id="zotero-prefpane-__addonRef__-card-profiles-title"
+                class="pref-card-title"
+                data-l10n-id="pref-card-profiles"
             />
-            <html:div class="toggle-row">
-                <checkbox
-                    id="zotero-prefpane-__addonRef__-rename"
-                    preference="extensions.zotero.__addonRef__.rename"
-                />
-                <html:label
-                    for="zotero-prefpane-__addonRef__-rename"
-                    data-l10n-id="pref-rename"
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-profiles-note"
+                class="pref-card-note"
+            />
+        </html:summary>
+        <html:section
+            aria-labelledby="zotero-prefpane-__addonRef__-card-profiles-title"
+            class="pref-section"
+        >
+            <html:label
+                class="pref-section-title"
+                for="zotero-prefpane-__addonRef__-selectedApiKey"
+                data-l10n-id="pref-current-profile"
+            />
+            <html:div class="llm-toolbar">
+                <menulist
+                    native="true"
+                    id="zotero-prefpane-__addonRef__-selectedApiKey"
+                    class="profile-select"
+                    style="flex: 1; min-width: 0; margin: 0"
+                >
+                    <menupopup native="false" />
+                </menulist>
+                <html:button
+                    id="zotero-prefpane-__addonRef__-profile-manage"
+                    data-l10n-id="pref-profile-manage"
                 />
             </html:div>
             <html:p
-                id="zotero-prefpane-__addonRef__-attachmentTitleDisabled"
+                id="zotero-prefpane-__addonRef__-profileSummary"
                 class="pref-description"
-                data-l10n-id="pref-title-disabled"
-                hidden="true"
+            />
+            <html:p
+                id="zotero-prefpane-__addonRef__-apiResult"
+                class="connection-result"
+                role="status"
+                aria-live="polite"
+                hidden="hidden"
             />
             <html:div
-                id="zotero-prefpane-__addonRef__-attachmentTitleEditor"
-                class="title-builder"
+                id="zotero-prefpane-__addonRef__-retirement-notice"
+                hidden="hidden"
+                role="status"
             >
-                <html:div class="title-add-controls">
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-attachmentTitleFields"
-                        class="title-field-menu"
-                        ><menupopup native="false"
-                    /></menulist>
-                    <html:button
-                        id="zotero-prefpane-__addonRef__-attachmentTitleAddText"
-                        data-l10n-id="pref-title-add-text"
-                    />
-                    <html:button
-                        id="zotero-prefpane-__addonRef__-attachmentTitleReset"
-                        data-l10n-id="pref-title-template-reset"
-                        class="title-reset"
-                    />
-                </html:div>
-                <html:div
-                    id="zotero-prefpane-__addonRef__-attachmentTitleBlocks"
-                    class="title-block-list"
-                    data-l10n-id="pref-title-arrange"
+                <html:p id="zotero-prefpane-__addonRef__-retirement-text" />
+                <html:button
+                    id="zotero-prefpane-__addonRef__-retirement-action"
+                    data-l10n-id="pref-profile-manage"
                 />
-                <html:div class="title-separator-row">
+            </html:div>
+        </html:section>
+    </html:details>
+
+    <html:details class="pref-card" data-pref-card="languages">
+        <html:summary
+            aria-labelledby="zotero-prefpane-__addonRef__-card-languages-title zotero-prefpane-__addonRef__-card-languages-note"
+        >
+            <html:span class="pref-card-icon" aria-hidden="true" />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-languages-title"
+                class="pref-card-title"
+                data-l10n-id="pref-language-settings"
+            />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-languages-note"
+                class="pref-card-note"
+            />
+        </html:summary>
+        <html:section
+            aria-labelledby="zotero-prefpane-__addonRef__-card-languages-title"
+            class="pref-section"
+        >
+            <html:div class="form-grid">
+                <html:div class="form-field">
+                    <html:label
+                        class="field-label"
+                        for="zotero-prefpane-__addonRef__-sourceLang"
+                        data-l10n-id="pref-sourceLang"
+                    />
+                    <html:div class="inline-controls">
+                        <html:input
+                            id="zotero-prefpane-__addonRef__-sourceLang"
+                            preference="extensions.zotero.__addonRef__.sourceLang"
+                            type="text"
+                            class="code-input"
+                        />
+                        <menulist
+                            native="true"
+                            id="zotero-prefpane-__addonRef__-sourceLangSelect"
+                            preference="extensions.zotero.__addonRef__.sourceLang"
+                            class="select-input"
+                            ><menupopup native="false"
+                        /></menulist>
+                    </html:div>
+                </html:div>
+
+                <html:div class="form-field">
+                    <html:label
+                        class="field-label"
+                        for="zotero-prefpane-__addonRef__-targetLang"
+                        data-l10n-id="pref-targetLang"
+                    />
+                    <html:div class="inline-controls">
+                        <html:input
+                            id="zotero-prefpane-__addonRef__-targetLang"
+                            preference="extensions.zotero.__addonRef__.targetLang"
+                            type="text"
+                            class="code-input"
+                        />
+                        <menulist
+                            native="true"
+                            id="zotero-prefpane-__addonRef__-targetLangSelect"
+                            preference="extensions.zotero.__addonRef__.targetLang"
+                            class="select-input"
+                            ><menupopup native="false"
+                        /></menulist>
+                    </html:div>
+                </html:div>
+            </html:div>
+        </html:section>
+    </html:details>
+
+    <html:details class="pref-card" data-pref-card="output">
+        <html:summary
+            aria-labelledby="zotero-prefpane-__addonRef__-card-output-title zotero-prefpane-__addonRef__-card-output-note"
+        >
+            <html:span class="pref-card-icon" aria-hidden="true" />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-output-title"
+                class="pref-card-title"
+                data-l10n-id="pref-outputMode"
+            />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-output-note"
+                class="pref-card-note"
+            />
+        </html:summary>
+        <html:section
+            aria-labelledby="zotero-prefpane-__addonRef__-card-output-title"
+            class="pref-section output-settings"
+        >
+            <html:div class="output-options">
+                <html:div class="settings-row">
                     <html:span
                         class="field-label"
-                        data-l10n-id="pref-title-separator"
+                        data-l10n-id="pref-output-format"
                     />
-                    <html:div class="title-separator-controls">
-                        <html:div
-                            id="zotero-prefpane-__addonRef__-attachmentTitleSeparators"
-                            class="title-field-buttons"
-                        />
-                        <html:div class="title-custom-separator">
-                            <html:label
-                                for="zotero-prefpane-__addonRef__-attachmentTitleSeparatorCustom"
-                                data-l10n-id="pref-title-separator-custom-label"
+                    <html:div class="output-option-row">
+                        <html:div class="output-choice">
+                            <checkbox
+                                native="true"
+                                id="zotero-prefpane-__addonRef__-outputMono"
+                                preference="extensions.zotero.__addonRef__.outputMono"
                             />
-                            <html:input
-                                id="zotero-prefpane-__addonRef__-attachmentTitleSeparatorCustom"
-                                type="text"
-                                data-l10n-id="pref-title-separator-custom"
+                            <html:label
+                                for="zotero-prefpane-__addonRef__-outputMono"
+                                data-l10n-id="pref-outputMode-mono"
+                            />
+                        </html:div>
+                        <html:div class="output-choice">
+                            <checkbox
+                                native="true"
+                                id="zotero-prefpane-__addonRef__-outputDual"
+                                preference="extensions.zotero.__addonRef__.outputDual"
+                            />
+                            <html:label
+                                for="zotero-prefpane-__addonRef__-outputDual"
+                                data-l10n-id="pref-outputMode-dual"
                             />
                         </html:div>
                     </html:div>
                 </html:div>
-                <html:div
-                    id="zotero-prefpane-__addonRef__-attachmentTitleError"
-                    role="alert"
-                    hidden="true"
-                />
-                <html:div class="title-preview-box" aria-live="polite">
-                    <html:div
+                <html:div class="settings-row">
+                    <html:span
                         class="field-label"
-                        data-l10n-id="pref-title-template-preview"
+                        data-l10n-id="pref-after-translation"
                     />
-                    <html:div class="title-preview-values">
-                        <html:div class="title-preview-row"
-                            ><html:span
-                                data-l10n-id="pref-title-preview-mono" /><html:span
-                                id="zotero-prefpane-__addonRef__-attachmentTitlePreview-mono"
-                        /></html:div>
-                        <html:div class="title-preview-row"
-                            ><html:span
-                                data-l10n-id="pref-title-preview-dual" /><html:span
-                                id="zotero-prefpane-__addonRef__-attachmentTitlePreview-dual"
-                        /></html:div>
+                    <html:div class="output-option-row">
+                        <html:div class="toggle-row">
+                            <checkbox
+                                native="true"
+                                id="zotero-prefpane-__addonRef__-openAfterTranslate"
+                                preference="extensions.zotero.__addonRef__.openAfterTranslate"
+                            />
+                            <html:label
+                                for="zotero-prefpane-__addonRef__-openAfterTranslate"
+                                data-l10n-id="pref-open"
+                            />
+                        </html:div>
+                        <html:div class="toggle-row">
+                            <checkbox
+                                native="true"
+                                id="zotero-prefpane-__addonRef__-notifyOnTranslationComplete"
+                                preference="extensions.zotero.__addonRef__.notifyOnTranslationComplete"
+                            />
+                            <html:label
+                                for="zotero-prefpane-__addonRef__-notifyOnTranslationComplete"
+                                data-l10n-id="pref-notifyOnTranslationComplete"
+                            />
+                        </html:div>
+                        <html:div class="toggle-row">
+                            <checkbox
+                                native="true"
+                                id="zotero-prefpane-__addonRef__-addTranslatedTag"
+                                preference="extensions.zotero.__addonRef__.addTranslatedTag"
+                            />
+                            <html:label
+                                for="zotero-prefpane-__addonRef__-addTranslatedTag"
+                                data-l10n-id="pref-addTranslatedTag"
+                            />
+                        </html:div>
                     </html:div>
                 </html:div>
-                <html:span
-                    class="pref-description"
-                    data-l10n-id="pref-title-template-help"
-                />
             </html:div>
-        </html:div>
-    </html:section>
-    <html:section class="pref-section selection-settings">
-        <html:div class="section-heading">
-            <html:h3
-                class="pref-section-title"
+            <html:div class="attachment-naming settings-row">
+                <html:span
+                    class="field-label"
+                    data-l10n-id="pref-attachment-naming"
+                />
+                <html:div class="toggle-row">
+                    <checkbox
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-rename"
+                        preference="extensions.zotero.__addonRef__.rename"
+                    />
+                    <html:label
+                        for="zotero-prefpane-__addonRef__-rename"
+                        data-l10n-id="pref-rename"
+                    />
+                </html:div>
+                <html:p
+                    id="zotero-prefpane-__addonRef__-attachmentTitleDisabled"
+                    class="pref-description"
+                    data-l10n-id="pref-title-disabled"
+                    hidden="true"
+                />
+                <html:div
+                    id="zotero-prefpane-__addonRef__-attachmentTitleEditor"
+                    class="title-builder"
+                >
+                    <html:div class="title-add-controls">
+                        <menulist
+                            native="true"
+                            id="zotero-prefpane-__addonRef__-attachmentTitleFields"
+                            class="title-field-menu"
+                            ><menupopup native="false"
+                        /></menulist>
+                        <html:button
+                            id="zotero-prefpane-__addonRef__-attachmentTitleAddText"
+                            data-l10n-id="pref-title-add-text"
+                        />
+                        <html:button
+                            id="zotero-prefpane-__addonRef__-attachmentTitleReset"
+                            data-l10n-id="pref-title-template-reset"
+                            class="title-reset"
+                        />
+                    </html:div>
+                    <html:div
+                        id="zotero-prefpane-__addonRef__-attachmentTitleBlocks"
+                        class="title-block-list"
+                        data-l10n-id="pref-title-arrange"
+                    />
+                    <html:div class="title-separator-row">
+                        <html:span
+                            class="field-label"
+                            data-l10n-id="pref-title-separator"
+                        />
+                        <html:div class="title-separator-controls">
+                            <html:div
+                                id="zotero-prefpane-__addonRef__-attachmentTitleSeparators"
+                                class="title-field-buttons"
+                            />
+                            <html:div class="title-custom-separator">
+                                <html:label
+                                    for="zotero-prefpane-__addonRef__-attachmentTitleSeparatorCustom"
+                                    data-l10n-id="pref-title-separator-custom-label"
+                                />
+                                <html:input
+                                    id="zotero-prefpane-__addonRef__-attachmentTitleSeparatorCustom"
+                                    type="text"
+                                    data-l10n-id="pref-title-separator-custom"
+                                />
+                            </html:div>
+                        </html:div>
+                    </html:div>
+                    <html:div
+                        id="zotero-prefpane-__addonRef__-attachmentTitleError"
+                        role="alert"
+                        hidden="true"
+                    />
+                    <html:div class="title-preview-box" aria-live="polite">
+                        <html:div
+                            class="field-label"
+                            data-l10n-id="pref-title-template-preview"
+                        />
+                        <html:div class="title-preview-values">
+                            <html:div class="title-preview-row"
+                                ><html:span
+                                    data-l10n-id="pref-title-preview-mono" /><html:span
+                                    id="zotero-prefpane-__addonRef__-attachmentTitlePreview-mono"
+                            /></html:div>
+                            <html:div class="title-preview-row"
+                                ><html:span
+                                    data-l10n-id="pref-title-preview-dual" /><html:span
+                                    id="zotero-prefpane-__addonRef__-attachmentTitlePreview-dual"
+                            /></html:div>
+                        </html:div>
+                    </html:div>
+                    <html:span
+                        class="pref-description"
+                        data-l10n-id="pref-title-template-help"
+                    />
+                </html:div>
+            </html:div>
+        </html:section>
+    </html:details>
+    <html:details class="pref-card" data-pref-card="selection">
+        <html:summary
+            aria-labelledby="zotero-prefpane-__addonRef__-card-selection-title zotero-prefpane-__addonRef__-card-selection-note"
+        >
+            <html:span class="pref-card-icon" aria-hidden="true" />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-selection-title"
+                class="pref-card-title"
                 data-l10n-id="pref-selection-title"
             />
-        </html:div>
-        <html:div class="selection-controls">
-            <html:div class="selection-service-row">
-                <html:div class="selection-field">
-                    <html:label
-                        class="field-label"
-                        data-l10n-id="pref-selection-trigger"
-                        for="zotero-prefpane-__addonRef__-selection-trigger"
-                    />
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-selection-trigger"
-                        class="select-input"
-                        crop="end"
-                    >
-                        <menupopup
-                            ><menuitem
-                                value="auto"
-                                data-l10n-id="pref-selection-trigger-auto" /><menuitem
-                                value="click"
-                                data-l10n-id="pref-selection-trigger-click"
-                        /></menupopup>
-                    </menulist>
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-selection-note"
+                class="pref-card-note"
+            />
+        </html:summary>
+        <html:section
+            aria-labelledby="zotero-prefpane-__addonRef__-card-selection-title"
+            class="pref-section selection-settings"
+        >
+            <html:div class="selection-controls">
+                <html:div class="selection-service-row">
+                    <html:div class="selection-field">
+                        <html:label
+                            class="field-label"
+                            data-l10n-id="pref-selection-trigger"
+                            for="zotero-prefpane-__addonRef__-selection-trigger"
+                        />
+                        <menulist
+                            native="true"
+                            id="zotero-prefpane-__addonRef__-selection-trigger"
+                            class="select-input"
+                            crop="end"
+                        >
+                            <menupopup
+                                ><menuitem
+                                    value="auto"
+                                    data-l10n-id="pref-selection-trigger-auto" /><menuitem
+                                    value="click"
+                                    data-l10n-id="pref-selection-trigger-click"
+                            /></menupopup>
+                        </menulist>
+                    </html:div>
+                    <html:div class="selection-field">
+                        <html:label
+                            class="field-label"
+                            data-l10n-id="pref-selection-display"
+                            for="zotero-prefpane-__addonRef__-selection-display"
+                        />
+                        <menulist
+                            native="true"
+                            id="zotero-prefpane-__addonRef__-selection-display"
+                            class="select-input"
+                            crop="end"
+                        >
+                            <menupopup
+                                ><menuitem
+                                    value="floating"
+                                    data-l10n-id="pref-selection-display-floating" /><menuitem
+                                    value="sidebar"
+                                    data-l10n-id="pref-selection-display-sidebar"
+                            /></menupopup>
+                        </menulist>
+                    </html:div>
                 </html:div>
-                <html:div class="selection-field">
-                    <html:label
-                        class="field-label"
-                        data-l10n-id="pref-selection-display"
-                        for="zotero-prefpane-__addonRef__-selection-display"
-                    />
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-selection-display"
-                        class="select-input"
-                        crop="end"
-                    >
-                        <menupopup
-                            ><menuitem
-                                value="floating"
-                                data-l10n-id="pref-selection-display-floating" /><menuitem
-                                value="sidebar"
-                                data-l10n-id="pref-selection-display-sidebar"
-                        /></menupopup>
-                    </menulist>
+                <html:div class="selection-service-row">
+                    <html:div class="selection-field">
+                        <html:label
+                            class="field-label"
+                            data-l10n-id="pref-selection-dictionary"
+                            for="zotero-prefpane-__addonRef__-selection-dictionary"
+                        />
+                        <menulist
+                            native="true"
+                            id="zotero-prefpane-__addonRef__-selection-dictionary"
+                            class="select-input"
+                            crop="end"
+                        >
+                            <menupopup
+                                ><menuitem
+                                    value="ecdict"
+                                    data-l10n-id="pref-selection-ecdict" /><menuitem
+                                    value="youdao"
+                                    data-l10n-id="pref-selection-youdao" /><menuitem
+                                    value="bing"
+                                    data-l10n-id="pref-selection-bing-dictionary" /><menuitem
+                                    value="collins"
+                                    data-l10n-id="pref-selection-collins"
+                            /></menupopup>
+                        </menulist>
+                    </html:div>
+                    <html:div class="selection-field">
+                        <html:label
+                            class="field-label"
+                            data-l10n-id="pref-selection-provider"
+                            for="zotero-prefpane-__addonRef__-selection-provider"
+                        />
+                        <menulist
+                            native="true"
+                            id="zotero-prefpane-__addonRef__-selection-provider"
+                            class="select-input"
+                            crop="end"
+                        >
+                            <menupopup
+                                ><menuitem
+                                    value="bing"
+                                    data-l10n-id="pref-selection-bing" /><menuitem
+                                    value="profile"
+                                    data-l10n-id="pref-selection-profile"
+                            /></menupopup>
+                        </menulist>
+                    </html:div>
                 </html:div>
             </html:div>
-            <html:div class="selection-service-row">
-                <html:div class="selection-field">
-                    <html:label
-                        class="field-label"
-                        data-l10n-id="pref-selection-dictionary"
-                        for="zotero-prefpane-__addonRef__-selection-dictionary"
-                    />
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-selection-dictionary"
-                        class="select-input"
-                        crop="end"
+            <html:p
+                id="zotero-prefpane-__addonRef__-selection-service-hint"
+                class="pref-description"
+                data-l10n-id="pref-selection-service-hint"
+            />
+            <html:div
+                id="zotero-prefpane-__addonRef__-selection-model-status"
+                class="pref-description"
+                role="alert"
+                hidden="true"
+            />
+            <html:details class="selection-advanced">
+                <html:summary data-l10n-id="pref-selection-advanced" />
+                <html:div class="selection-advanced-content">
+                    <html:div
+                        class="selection-field"
+                        id="zotero-prefpane-__addonRef__-selection-model-field"
                     >
-                        <menupopup
-                            ><menuitem
-                                value="ecdict"
-                                data-l10n-id="pref-selection-ecdict" /><menuitem
-                                value="youdao"
-                                data-l10n-id="pref-selection-youdao" /><menuitem
-                                value="bing"
-                                data-l10n-id="pref-selection-bing-dictionary" /><menuitem
-                                value="collins"
-                                data-l10n-id="pref-selection-collins"
-                        /></menupopup>
-                    </menulist>
-                </html:div>
-                <html:div class="selection-field">
-                    <html:label
-                        class="field-label"
-                        data-l10n-id="pref-selection-provider"
-                        for="zotero-prefpane-__addonRef__-selection-provider"
-                    />
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-selection-provider"
-                        class="select-input"
-                        crop="end"
+                        <html:label
+                            class="field-label"
+                            for="zotero-prefpane-__addonRef__-selection-model"
+                            data-l10n-id="pref-selection-model"
+                        />
+                        <menulist
+                            native="true"
+                            id="zotero-prefpane-__addonRef__-selection-model"
+                            class="select-input"
+                            crop="end"
+                            ><menupopup native="false"
+                        /></menulist>
+                    </html:div>
+                    <html:div
+                        class="selection-field selection-fallback"
+                        id="zotero-prefpane-__addonRef__-selection-fallback-field"
                     >
-                        <menupopup
-                            ><menuitem
-                                value="bing"
-                                data-l10n-id="pref-selection-bing" /><menuitem
-                                value="profile"
-                                data-l10n-id="pref-selection-profile"
-                        /></menupopup>
-                    </menulist>
-                </html:div>
-            </html:div>
-        </html:div>
-        <html:p
-            id="zotero-prefpane-__addonRef__-selection-service-hint"
-            class="pref-description"
-            data-l10n-id="pref-selection-service-hint"
-        />
-        <html:div
-            id="zotero-prefpane-__addonRef__-selection-model-status"
-            class="pref-description"
-            role="alert"
-            hidden="true"
-        />
-        <html:details class="selection-advanced">
-            <html:summary data-l10n-id="pref-selection-advanced" />
-            <html:div class="selection-advanced-content">
-                <html:div
-                    class="selection-field"
-                    id="zotero-prefpane-__addonRef__-selection-model-field"
-                >
-                    <html:label
-                        class="field-label"
-                        for="zotero-prefpane-__addonRef__-selection-model"
-                        data-l10n-id="pref-selection-model"
+                        <html:label
+                            class="field-label"
+                            for="zotero-prefpane-__addonRef__-selection-fallback"
+                            data-l10n-id="pref-selection-fallback"
+                        />
+                        <menulist
+                            native="true"
+                            id="zotero-prefpane-__addonRef__-selection-fallback"
+                            class="select-input"
+                        >
+                            <menupopup
+                                ><menuitem
+                                    value="youdao"
+                                    data-l10n-id="pref-selection-youdao" /><menuitem
+                                    value="bing"
+                                    data-l10n-id="pref-selection-bing-dictionary"
+                            /></menupopup>
+                        </menulist>
+                    </html:div>
+                    <html:p
+                        id="zotero-prefpane-__addonRef__-selection-model-shared"
+                        class="pref-description"
+                        data-l10n-id="pref-selection-model-shared"
+                        hidden="true"
                     />
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-selection-model"
-                        class="select-input"
-                        crop="end"
-                        ><menupopup native="false"
-                    /></menulist>
-                </html:div>
-                <html:div
-                    class="selection-field selection-fallback"
-                    id="zotero-prefpane-__addonRef__-selection-fallback-field"
-                >
-                    <html:label
-                        class="field-label"
-                        for="zotero-prefpane-__addonRef__-selection-fallback"
-                        data-l10n-id="pref-selection-fallback"
+                    <html:p
+                        class="pref-description"
+                        data-l10n-id="pref-selection-learning-hint"
                     />
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-selection-fallback"
-                        class="select-input"
-                    >
-                        <menupopup
-                            ><menuitem
-                                value="youdao"
-                                data-l10n-id="pref-selection-youdao" /><menuitem
-                                value="bing"
-                                data-l10n-id="pref-selection-bing-dictionary"
-                        /></menupopup>
-                    </menulist>
-                </html:div>
-                <html:p
-                    id="zotero-prefpane-__addonRef__-selection-model-shared"
-                    class="pref-description"
-                    data-l10n-id="pref-selection-model-shared"
-                    hidden="true"
-                />
-                <html:p
-                    class="pref-description"
-                    data-l10n-id="pref-selection-learning-hint"
-                />
-                <html:div class="toggle-grid">
-                    <html:label class="toggle-row">
-                        <html:input
-                            type="checkbox"
-                            id="zotero-prefpane-__addonRef__-selection-auto-dictionary"
-                        />
-                        <html:span
-                            data-l10n-id="pref-selection-auto-dictionary"
-                        />
-                    </html:label>
-                    <html:label class="toggle-row">
-                        <html:input
-                            type="checkbox"
-                            id="zotero-prefpane-__addonRef__-selection-stream"
-                        />
-                        <html:span data-l10n-id="pref-selection-stream" />
-                    </html:label>
-                </html:div>
-                <html:div class="dictionary-download-row">
-                    <html:div>
-                        <html:strong data-l10n-id="pref-selection-pack" />
-                        <html:div
-                            id="zotero-prefpane-__addonRef__-selection-dictionary-status"
-                            class="pref-description"
-                            aria-live="polite"
+                    <html:div class="toggle-grid">
+                        <html:label class="toggle-row">
+                            <html:input
+                                type="checkbox"
+                                id="zotero-prefpane-__addonRef__-selection-auto-dictionary"
+                            />
+                            <html:span
+                                data-l10n-id="pref-selection-auto-dictionary"
+                            />
+                        </html:label>
+                        <html:label class="toggle-row">
+                            <html:input
+                                type="checkbox"
+                                id="zotero-prefpane-__addonRef__-selection-stream"
+                            />
+                            <html:span data-l10n-id="pref-selection-stream" />
+                        </html:label>
+                    </html:div>
+                    <html:div class="dictionary-download-row">
+                        <html:div>
+                            <html:strong data-l10n-id="pref-selection-pack" />
+                            <html:div
+                                id="zotero-prefpane-__addonRef__-selection-dictionary-status"
+                                class="pref-description"
+                                aria-live="polite"
+                            />
+                        </html:div>
+                        <html:button
+                            id="zotero-prefpane-__addonRef__-selection-download"
                         />
                     </html:div>
-                    <html:button
-                        id="zotero-prefpane-__addonRef__-selection-download"
+                    <html:progress
+                        id="zotero-prefpane-__addonRef__-selection-download-progress"
+                        max="100"
+                        value="0"
+                        hidden="true"
                     />
+                    <html:div
+                        id="zotero-prefpane-__addonRef__-selection-download-error"
+                        role="alert"
+                        hidden="true"
+                    />
+                    <html:div class="llm-toolbar compact-toolbar">
+                        <html:button
+                            id="zotero-prefpane-__addonRef__-selection-import"
+                            data-l10n-id="pref-selection-import"
+                        />
+                        <html:button
+                            id="zotero-prefpane-__addonRef__-selection-clear-online"
+                            data-l10n-id="pref-selection-clear-online"
+                        />
+                        <html:button
+                            id="zotero-prefpane-__addonRef__-selection-clear-cache"
+                            data-l10n-id="pref-selection-clear-cache"
+                        />
+                    </html:div>
+                    <html:p
+                        id="zotero-prefpane-__addonRef__-selection-cache-status"
+                        class="pref-description"
+                        role="status"
+                        aria-live="polite"
+                    />
+
+                    <html:p
+                        class="pref-description"
+                        data-l10n-id="pref-selection-cache-hint"
+                    />
+
+                    <html:details class="dictionary-details">
+                        <html:summary data-l10n-id="pref-selection-details" />
+                        <html:div
+                            id="zotero-prefpane-__addonRef__-selection-dictionary-details"
+                        />
+                    </html:details>
                 </html:div>
-                <html:progress
-                    id="zotero-prefpane-__addonRef__-selection-download-progress"
-                    max="100"
-                    value="0"
-                    hidden="true"
+            </html:details>
+        </html:section>
+    </html:details>
+
+    <html:details class="pref-card" data-pref-card="glossary">
+        <html:summary
+            aria-labelledby="zotero-prefpane-__addonRef__-card-glossary-title zotero-prefpane-__addonRef__-card-glossary-note"
+        >
+            <html:span class="pref-card-icon" aria-hidden="true" />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-glossary-title"
+                class="pref-card-title"
+                data-l10n-id="pref-glossary-title"
+            />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-glossary-note"
+                class="pref-card-note"
+            />
+        </html:summary>
+        <html:section
+            aria-labelledby="zotero-prefpane-__addonRef__-card-glossary-title"
+            class="pref-section"
+        >
+            <html:div class="section-heading section-tools">
+                <html:button
+                    id="zotero-prefpane-__addonRef__-glossary-check-updates"
+                    data-l10n-id="pref-pack-check-updates"
+                    disabled="true"
                 />
+            </html:div>
+            <html:p class="pref-description" data-l10n-id="pref-pack-hint" />
+            <html:p
+                id="zotero-prefpane-__addonRef__-glossaryPackLanguage"
+                class="pref-description"
+                data-l10n-id="pref-pack-language-inactive"
+                hidden="true"
+            />
+            <html:div
+                id="zotero-prefpane-__addonRef__-glossaryPacks"
+                class="glossary-pack-list"
+            />
+            <html:p
+                id="zotero-prefpane-__addonRef__-glossaryPacksResult"
+                class="pref-description"
+                role="status"
+                aria-live="polite"
+                hidden="true"
+            />
+            <html:details class="glossary-pack-details">
+                <html:summary data-l10n-id="pref-pack-sources" />
                 <html:div
-                    id="zotero-prefpane-__addonRef__-selection-download-error"
-                    role="alert"
-                    hidden="true"
+                    id="zotero-prefpane-__addonRef__-glossaryPackSources"
                 />
-                <html:div class="llm-toolbar compact-toolbar">
-                    <html:button
-                        id="zotero-prefpane-__addonRef__-selection-import"
-                        data-l10n-id="pref-selection-import"
+            </html:details>
+            <html:h4
+                class="glossary-custom-title"
+                data-l10n-id="pref-glossary-custom"
+            />
+            <html:details class="glossary-pack-details">
+                <html:summary data-l10n-id="pref-glossary-format" />
+                <html:p
+                    class="pref-description"
+                    data-l10n-id="pref-glossary-format-hint"
+                />
+            </html:details>
+            <html:p
+                id="zotero-prefpane-__addonRef__-glossarySummary"
+                class="pref-description"
+            />
+            <html:div class="llm-toolbar compact-toolbar">
+                <html:button
+                    id="zotero-prefpane-__addonRef__-glossary-import"
+                    data-l10n-id="pref-glossary-import"
+                />
+                <html:button
+                    id="zotero-prefpane-__addonRef__-glossary-clear"
+                    data-l10n-id="pref-glossary-clear"
+                />
+            </html:div>
+            <html:div
+                id="zotero-prefpane-__addonRef__-glossaryResult"
+                class="connection-result"
+                role="status"
+                aria-live="polite"
+                hidden="true"
+            />
+            <html:div class="review-options">
+                <html:div class="toggle-row">
+                    <checkbox
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-semanticReview"
+                        preference="extensions.zotero.__addonRef__.semanticReview"
                     />
-                    <html:button
-                        id="zotero-prefpane-__addonRef__-selection-clear-online"
-                        data-l10n-id="pref-selection-clear-online"
-                    />
-                    <html:button
-                        id="zotero-prefpane-__addonRef__-selection-clear-cache"
-                        data-l10n-id="pref-selection-clear-cache"
+                    <html:label
+                        for="zotero-prefpane-__addonRef__-semanticReview"
+                        data-l10n-id="pref-semanticReview"
                     />
                 </html:div>
+                <html:details class="pref-help-details">
+                    <html:summary data-l10n-id="pref-selection-details" />
+                    <html:p
+                        class="pref-description"
+                        data-l10n-id="pref-glossary-hint"
+                    />
+                    <html:p
+                        class="pref-description"
+                        data-l10n-id="pref-semanticReview-hint"
+                    />
+                </html:details>
                 <html:p
-                    id="zotero-prefpane-__addonRef__-selection-cache-status"
+                    id="zotero-prefpane-__addonRef__-qualityCapabilities"
                     class="pref-description"
                     role="status"
                     aria-live="polite"
                 />
-
-                <html:p
-                    class="pref-description"
-                    data-l10n-id="pref-selection-cache-hint"
-                />
-
-                <html:details class="dictionary-details">
-                    <html:summary data-l10n-id="pref-selection-details" />
-                    <html:div
-                        id="zotero-prefpane-__addonRef__-selection-dictionary-details"
-                    />
-                </html:details>
             </html:div>
-        </html:details>
-    </html:section>
-
-    <html:section class="pref-section">
-        <html:div class="section-heading">
-            <html:h3
-                class="pref-section-title"
-                data-l10n-id="pref-glossary-title"
-            />
-            <html:button
-                id="zotero-prefpane-__addonRef__-glossary-check-updates"
-                data-l10n-id="pref-pack-check-updates"
-                disabled="true"
-            />
-        </html:div>
-        <html:p class="pref-description" data-l10n-id="pref-pack-hint" />
-        <html:p
-            id="zotero-prefpane-__addonRef__-glossaryPackLanguage"
-            class="pref-description"
-            data-l10n-id="pref-pack-language-inactive"
-            hidden="true"
-        />
-        <html:div
-            id="zotero-prefpane-__addonRef__-glossaryPacks"
-            class="glossary-pack-list"
-        />
-        <html:p
-            id="zotero-prefpane-__addonRef__-glossaryPacksResult"
-            class="pref-description"
-            role="status"
-            aria-live="polite"
-            hidden="true"
-        />
-        <html:details class="glossary-pack-details">
-            <html:summary data-l10n-id="pref-pack-sources" />
-            <html:div id="zotero-prefpane-__addonRef__-glossaryPackSources" />
-        </html:details>
-        <html:h4
-            class="glossary-custom-title"
-            data-l10n-id="pref-glossary-custom"
-        />
-        <html:details class="glossary-pack-details">
-            <html:summary data-l10n-id="pref-glossary-format" />
-            <html:p
-                class="pref-description"
-                data-l10n-id="pref-glossary-format-hint"
-            />
-        </html:details>
-        <html:p
-            id="zotero-prefpane-__addonRef__-glossarySummary"
-            class="pref-description"
-        />
-        <html:div class="llm-toolbar compact-toolbar">
-            <html:button
-                id="zotero-prefpane-__addonRef__-glossary-import"
-                data-l10n-id="pref-glossary-import"
-            />
-            <html:button
-                id="zotero-prefpane-__addonRef__-glossary-clear"
-                data-l10n-id="pref-glossary-clear"
-            />
-        </html:div>
-        <html:div
-            id="zotero-prefpane-__addonRef__-glossaryResult"
-            class="connection-result"
-            role="status"
-            aria-live="polite"
-            hidden="true"
-        />
-        <html:div class="review-options">
-            <html:div class="toggle-row">
-                <checkbox
-                    id="zotero-prefpane-__addonRef__-semanticReview"
-                    preference="extensions.zotero.__addonRef__.semanticReview"
-                />
-                <html:label
-                    for="zotero-prefpane-__addonRef__-semanticReview"
-                    data-l10n-id="pref-semanticReview"
-                />
-            </html:div>
-            <html:details class="pref-help-details">
-                <html:summary data-l10n-id="pref-selection-details" />
-                <html:p
-                    class="pref-description"
-                    data-l10n-id="pref-glossary-hint"
-                />
-                <html:p
-                    class="pref-description"
-                    data-l10n-id="pref-semanticReview-hint"
-                />
-            </html:details>
-            <html:p
-                id="zotero-prefpane-__addonRef__-qualityCapabilities"
-                class="pref-description"
-                role="status"
-                aria-live="polite"
-            />
-        </html:div>
-    </html:section>
-
-    <html:details class="pref-section advanced-translation">
-        <html:summary
-            class="pref-section-title"
-            data-l10n-id="pref-advanced-translation"
-        />
-        <html:div class="form-grid">
-            <html:div class="form-field">
-                <html:label
-                    class="field-label"
-                    for="zotero-prefpane-__addonRef__-qps"
-                    data-l10n-id="pref-qps"
-                />
-                <html:input
-                    id="zotero-prefpane-__addonRef__-qps"
-                    preference="extensions.zotero.__addonRef__.qps"
-                    type="number"
-                    class="short-input"
-                />
-            </html:div>
-            <html:div class="form-field">
-                <html:label
-                    class="field-label"
-                    for="zotero-prefpane-__addonRef__-poolSize"
-                    data-l10n-id="pref-poolSize"
-                />
-                <html:input
-                    id="zotero-prefpane-__addonRef__-poolSize"
-                    preference="extensions.zotero.__addonRef__.poolSize"
-                    type="number"
-                    class="short-input"
-                />
-            </html:div>
-            <html:div class="form-field">
-                <html:label
-                    class="field-label"
-                    for="zotero-prefpane-__addonRef__-skipLastPages"
-                    data-l10n-id="pref-skipLastPages"
-                />
-                <html:input
-                    id="zotero-prefpane-__addonRef__-skipLastPages"
-                    preference="extensions.zotero.__addonRef__.skipLastPages"
-                    type="number"
-                    class="short-input"
-                />
-            </html:div>
-            <html:div class="form-field">
-                <html:label
-                    class="field-label"
-                    data-l10n-id="pref-fontFamily"
-                    for="zotero-prefpane-__addonRef__-fontFamily"
-                />
-                <menulist
-                    id="zotero-prefpane-__addonRef__-fontFamily"
-                    preference="extensions.zotero.__addonRef__.fontFamily"
-                    class="select-input"
-                    ><menupopup native="false">
-                        <menuitem value="auto" label="auto" />
-                        <menuitem value="serif" label="serif" />
-                        <menuitem value="sans-serif" label="sans-serif" />
-                        <menuitem value="script" label="script" /> </menupopup
-                ></menulist>
-            </html:div>
-        </html:div>
-
-        <html:div class="toggle-grid">
-            <html:div class="toggle-row">
-                <checkbox
-                    id="zotero-prefpane-__addonRef__-ocr"
-                    preference="extensions.zotero.__addonRef__.ocr"
-                />
-                <html:label
-                    data-l10n-id="pref-ocr"
-                    for="zotero-prefpane-__addonRef__-ocr"
-                />
-            </html:div>
-            <html:div class="toggle-row">
-                <checkbox
-                    id="zotero-prefpane-__addonRef__-autoOcr"
-                    preference="extensions.zotero.__addonRef__.autoOcr"
-                />
-                <html:label
-                    data-l10n-id="pref-autoOcr"
-                    for="zotero-prefpane-__addonRef__-autoOcr"
-                />
-            </html:div>
-            <html:div class="toggle-row">
-                <checkbox
-                    id="zotero-prefpane-__addonRef__-translateTableText"
-                    preference="extensions.zotero.__addonRef__.translateTableText"
-                />
-                <html:label
-                    data-l10n-id="pref-translateTableText"
-                    for="zotero-prefpane-__addonRef__-translateTableText"
-                />
-            </html:div>
-            <html:div class="toggle-row">
-                <checkbox
-                    id="zotero-prefpane-__addonRef__-skipReferences"
-                    preference="extensions.zotero.__addonRef__.skipReferences"
-                />
-                <html:label
-                    data-l10n-id="pref-skipReferences"
-                    for="zotero-prefpane-__addonRef__-skipReferences"
-                />
-            </html:div>
-            <html:div class="toggle-row">
-                <checkbox
-                    id="zotero-prefpane-__addonRef__-skipTextChecks"
-                    preference="extensions.zotero.__addonRef__.skipTextChecks"
-                />
-                <html:label
-                    data-l10n-id="pref-skipTextChecks"
-                    for="zotero-prefpane-__addonRef__-skipTextChecks"
-                />
-            </html:div>
-            <html:div class="toggle-row">
-                <checkbox
-                    id="zotero-prefpane-__addonRef__-noWatermark"
-                    preference="extensions.zotero.__addonRef__.noWatermark"
-                />
-                <html:label
-                    data-l10n-id="pref-noWatermark"
-                    for="zotero-prefpane-__addonRef__-noWatermark"
-                />
-            </html:div>
-            <html:div class="toggle-row">
-                <checkbox
-                    id="zotero-prefpane-__addonRef__-disableTermExtraction"
-                    preference="extensions.zotero.__addonRef__.disableTermExtraction"
-                />
-                <html:label
-                    data-l10n-id="pref-disableTermExtraction"
-                    for="zotero-prefpane-__addonRef__-disableTermExtraction"
-                />
-            </html:div>
-        </html:div>
+        </html:section>
     </html:details>
 
-    <html:section class="pref-section">
-        <html:div class="section-heading">
-            <html:h3
-                class="pref-section-title"
+    <html:details class="pref-card" data-pref-card="advanced">
+        <html:summary
+            aria-labelledby="zotero-prefpane-__addonRef__-card-advanced-title zotero-prefpane-__addonRef__-card-advanced-note"
+        >
+            <html:span class="pref-card-icon" aria-hidden="true" />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-advanced-title"
+                class="pref-card-title"
+                data-l10n-id="pref-advanced-translation"
+            />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-advanced-note"
+                class="pref-card-note"
+            />
+        </html:summary>
+        <html:section
+            class="pref-section advanced-translation"
+            aria-labelledby="zotero-prefpane-__addonRef__-card-advanced-title"
+        >
+            <html:div class="form-grid">
+                <html:div class="form-field">
+                    <html:label
+                        class="field-label"
+                        for="zotero-prefpane-__addonRef__-qps"
+                        data-l10n-id="pref-qps"
+                    />
+                    <html:input
+                        id="zotero-prefpane-__addonRef__-qps"
+                        preference="extensions.zotero.__addonRef__.qps"
+                        type="number"
+                        class="short-input"
+                    />
+                </html:div>
+                <html:div class="form-field">
+                    <html:label
+                        class="field-label"
+                        for="zotero-prefpane-__addonRef__-poolSize"
+                        data-l10n-id="pref-poolSize"
+                    />
+                    <html:input
+                        id="zotero-prefpane-__addonRef__-poolSize"
+                        preference="extensions.zotero.__addonRef__.poolSize"
+                        type="number"
+                        class="short-input"
+                    />
+                </html:div>
+                <html:div class="form-field">
+                    <html:label
+                        class="field-label"
+                        for="zotero-prefpane-__addonRef__-skipLastPages"
+                        data-l10n-id="pref-skipLastPages"
+                    />
+                    <html:input
+                        id="zotero-prefpane-__addonRef__-skipLastPages"
+                        preference="extensions.zotero.__addonRef__.skipLastPages"
+                        type="number"
+                        class="short-input"
+                    />
+                </html:div>
+                <html:div class="form-field">
+                    <html:label
+                        class="field-label"
+                        data-l10n-id="pref-fontFamily"
+                        for="zotero-prefpane-__addonRef__-fontFamily"
+                    />
+                    <menulist
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-fontFamily"
+                        preference="extensions.zotero.__addonRef__.fontFamily"
+                        class="select-input"
+                        ><menupopup native="false">
+                            <menuitem value="auto" label="auto" />
+                            <menuitem value="serif" label="serif" />
+                            <menuitem value="sans-serif" label="sans-serif" />
+                            <menuitem
+                                value="script"
+                                label="script"
+                            /> </menupopup
+                    ></menulist>
+                </html:div>
+            </html:div>
+
+            <html:div class="toggle-grid">
+                <html:div class="toggle-row">
+                    <checkbox
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-ocr"
+                        preference="extensions.zotero.__addonRef__.ocr"
+                    />
+                    <html:label
+                        data-l10n-id="pref-ocr"
+                        for="zotero-prefpane-__addonRef__-ocr"
+                    />
+                </html:div>
+                <html:div class="toggle-row">
+                    <checkbox
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-autoOcr"
+                        preference="extensions.zotero.__addonRef__.autoOcr"
+                    />
+                    <html:label
+                        data-l10n-id="pref-autoOcr"
+                        for="zotero-prefpane-__addonRef__-autoOcr"
+                    />
+                </html:div>
+                <html:div class="toggle-row">
+                    <checkbox
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-translateTableText"
+                        preference="extensions.zotero.__addonRef__.translateTableText"
+                    />
+                    <html:label
+                        data-l10n-id="pref-translateTableText"
+                        for="zotero-prefpane-__addonRef__-translateTableText"
+                    />
+                </html:div>
+                <html:div class="toggle-row">
+                    <checkbox
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-skipReferences"
+                        preference="extensions.zotero.__addonRef__.skipReferences"
+                    />
+                    <html:label
+                        data-l10n-id="pref-skipReferences"
+                        for="zotero-prefpane-__addonRef__-skipReferences"
+                    />
+                </html:div>
+                <html:div class="toggle-row">
+                    <checkbox
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-skipTextChecks"
+                        preference="extensions.zotero.__addonRef__.skipTextChecks"
+                    />
+                    <html:label
+                        data-l10n-id="pref-skipTextChecks"
+                        for="zotero-prefpane-__addonRef__-skipTextChecks"
+                    />
+                </html:div>
+                <html:div class="toggle-row">
+                    <checkbox
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-noWatermark"
+                        preference="extensions.zotero.__addonRef__.noWatermark"
+                    />
+                    <html:label
+                        data-l10n-id="pref-noWatermark"
+                        for="zotero-prefpane-__addonRef__-noWatermark"
+                    />
+                </html:div>
+                <html:div class="toggle-row">
+                    <checkbox
+                        native="true"
+                        id="zotero-prefpane-__addonRef__-disableTermExtraction"
+                        preference="extensions.zotero.__addonRef__.disableTermExtraction"
+                    />
+                    <html:label
+                        data-l10n-id="pref-disableTermExtraction"
+                        for="zotero-prefpane-__addonRef__-disableTermExtraction"
+                    />
+                </html:div>
+            </html:div>
+        </html:section>
+    </html:details>
+
+    <html:details class="pref-card" data-pref-card="connection">
+        <html:summary
+            aria-labelledby="zotero-prefpane-__addonRef__-card-connection-title zotero-prefpane-__addonRef__-card-connection-note"
+        >
+            <html:span class="pref-card-icon" aria-hidden="true" />
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-connection-title"
+                class="pref-card-title"
                 data-l10n-id="pref-connection"
             />
-        </html:div>
-        <html:div class="connection-field">
-            <html:div class="form-field">
-                <html:label
-                    class="field-label"
-                    for="zotero-prefpane-__addonRef__-new_serverip"
-                    data-l10n-id="pref-serverip"
+            <html:span
+                id="zotero-prefpane-__addonRef__-card-connection-note"
+                class="pref-card-note"
+            />
+        </html:summary>
+        <html:section
+            aria-labelledby="zotero-prefpane-__addonRef__-card-connection-title"
+            class="pref-section"
+        >
+            <html:div class="connection-field">
+                <html:div class="form-field">
+                    <html:label
+                        class="field-label"
+                        for="zotero-prefpane-__addonRef__-new_serverip"
+                        data-l10n-id="pref-serverip"
+                    />
+                    <html:input
+                        id="zotero-prefpane-__addonRef__-new_serverip"
+                        preference="extensions.zotero.__addonRef__.new_serverip"
+                        type="text"
+                        class="server-url-input"
+                    />
+                </html:div>
+            </html:div>
+            <html:div class="connection-actions">
+                <html:button
+                    id="zotero-prefpane-__addonRef__-checkConnection"
+                    data-l10n-id="pref-check-local-service"
                 />
-                <html:input
-                    id="zotero-prefpane-__addonRef__-new_serverip"
-                    preference="extensions.zotero.__addonRef__.new_serverip"
-                    type="text"
-                    class="server-url-input"
+                <html:button
+                    id="zotero-prefpane-__addonRef__-export-diagnostics"
+                    type="button"
+                    data-l10n-id="pref-export-diagnostics"
                 />
             </html:div>
-        </html:div>
-        <html:div class="connection-actions">
-            <html:button
-                id="zotero-prefpane-__addonRef__-checkConnection"
-                data-l10n-id="pref-check-local-service"
+            <html:pre
+                id="zotero-prefpane-__addonRef__-connectionResult"
+                class="connection-result"
+                hidden="hidden"
             />
-            <html:button
-                id="zotero-prefpane-__addonRef__-export-diagnostics"
-                type="button"
-                data-l10n-id="pref-export-diagnostics"
-            />
-        </html:div>
-        <html:pre
-            id="zotero-prefpane-__addonRef__-connectionResult"
-            class="connection-result"
-            hidden="hidden"
-        />
-    </html:section>
+        </html:section>
+    </html:details>
 </groupbox>

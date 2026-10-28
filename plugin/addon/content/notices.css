@@ -93,13 +93,40 @@
     outline: 2px solid Highlight;
     outline-offset: 2px;
 }
+.pdf2zh-help-window {
+    color-scheme: light dark;
+    background: var(--color-background, Canvas);
+}
 .pdf2zh-help {
+    --help-text: var(--fill-primary, CanvasText);
+    --help-muted: var(
+        --fill-secondary,
+        color-mix(in srgb, CanvasText 68%, Canvas)
+    );
+    --help-panel: var(
+        --fill-senary,
+        color-mix(in srgb, CanvasText 2%, transparent)
+    );
+    --help-border: var(
+        --color-border,
+        color-mix(in srgb, CanvasText 18%, transparent)
+    );
+    --help-divider: var(
+        --color-border50,
+        color-mix(in srgb, CanvasText 10%, transparent)
+    );
+    --help-accent: var(--accent-blue, Highlight);
+    --help-link: color-mix(in srgb, var(--help-accent) 70%, var(--help-text));
     margin: 0;
     padding: 20px 24px;
+    color: var(--help-text);
+    background: var(--color-background, Canvas);
     font-size: 13px;
     line-height: 20px;
 }
 .pdf2zh-help main {
+    display: grid;
+    gap: 16px;
     max-width: 760px;
     margin: 0 auto;
 }
@@ -109,8 +136,8 @@
 .pdf2zh-help h1 {
     font-size: 20px;
     line-height: 28px;
-    font-weight: 600;
-    margin: 0 0 16px;
+    font-weight: 400;
+    margin: 2px 0 0;
 }
 .pdf2zh-help h2,
 .pdf2zh-help h3 {
@@ -124,13 +151,30 @@
 }
 .pdf2zh-help .release-heading {
     display: flex;
-    align-items: baseline;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
 }
 .pdf2zh-help .release-heading span,
 .pdf2zh-help .help-topics p {
-    color: color-mix(in srgb, CanvasText 68%, Canvas);
+    color: var(--help-muted);
     font-size: 12px;
+}
+.pdf2zh-help .release-heading span {
+    padding: 1px 8px;
+    border: 1px solid var(--help-divider);
+    border-radius: 10px;
+    line-height: 18px;
+}
+.pdf2zh-help #updates,
+.pdf2zh-help #history,
+.pdf2zh-help .help-topics a {
+    border: 1px solid var(--help-border);
+    border-radius: 8px;
+    background: var(--help-panel);
+}
+.pdf2zh-help #updates {
+    padding: 14px 16px 16px;
 }
 .pdf2zh-help .release-notes {
     display: grid;
@@ -141,41 +185,122 @@
 .pdf2zh-help .help-topics {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px 24px;
-    margin: 12px 0 0;
+    gap: 10px;
+    margin: 10px 0 0;
     padding: 0;
     list-style: none;
 }
 .pdf2zh-help .help-topics p {
     margin-top: 4px;
 }
+.pdf2zh-help .help-topics li {
+    display: flex;
+    min-width: 0;
+}
+.pdf2zh-help .help-topics a {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    text-decoration: none;
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease;
+}
+.pdf2zh-help .help-topic-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--help-text);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.pdf2zh-help .help-topic-title::after {
+    content: "";
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    background: var(--help-muted);
+    mask: url("icons/preferences/chevron-right.svg") center / contain no-repeat;
+}
+.pdf2zh-help .help-topics a:hover {
+    border-color: var(--help-accent);
+    background: color-mix(in srgb, var(--help-accent) 6%, transparent);
+}
 .pdf2zh-help a {
-    color: LinkText;
+    color: var(--help-link);
     text-decoration: underline;
     text-underline-offset: 3px;
 }
 .pdf2zh-help a:hover {
     text-decoration-thickness: 2px;
 }
-.pdf2zh-help section + section,
-.pdf2zh-help footer {
-    border-top: 1px solid color-mix(in srgb, CanvasText 14%, Canvas);
-    margin-top: 18px;
-    padding-top: 16px;
-}
 .pdf2zh-help summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 10px 14px;
+    list-style: none;
+    font-weight: 600;
     cursor: pointer;
 }
+.pdf2zh-help summary::after {
+    content: "";
+    width: 14px;
+    height: 14px;
+    background: var(--help-muted);
+    mask: url("icons/preferences/chevron-right.svg") center / contain no-repeat;
+    transition: transform 160ms ease;
+}
+.pdf2zh-help #history[open] summary::after {
+    transform: rotate(90deg);
+}
+.pdf2zh-help summary:hover {
+    background: var(--help-panel);
+}
+.pdf2zh-help summary:focus-visible {
+    outline-offset: -2px;
+    border-radius: 8px;
+}
+.pdf2zh-help #history-releases {
+    padding: 0 14px 14px;
+}
 .pdf2zh-help #history-releases article {
-    margin-top: 12px;
+    border-top: 1px solid var(--help-divider);
+    margin-top: 14px;
+    padding-top: 14px;
+}
+.pdf2zh-help #history-releases article:first-child {
+    margin-top: 0;
 }
 .pdf2zh-help #documents {
     display: flex;
     flex-wrap: wrap;
     gap: 8px 20px;
     margin-top: 14px;
+    padding-inline: 2px;
     font-size: 12px;
 }
 .pdf2zh-help #history[hidden] + #documents {
     margin-top: 0;
+}
+@media (prefers-color-scheme: dark) {
+    .pdf2zh-help {
+        --help-link: color-mix(
+            in srgb,
+            var(--help-accent) 50%,
+            var(--help-text)
+        );
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pdf2zh-help .help-topics a,
+    .pdf2zh-help summary::after {
+        transition: none;
+    }
 }

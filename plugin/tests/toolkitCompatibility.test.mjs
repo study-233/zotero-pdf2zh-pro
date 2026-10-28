@@ -103,7 +103,8 @@ test("native item menu registers once across main-window loads and retains all a
 
 test("help actions register a stable preferences pane and navigate with a CSS selector", async () => {
     const registrations = [],
-        navigations = [];
+        navigations = [],
+        targets = [];
     const { PDF2zhBasicFactory: factory } = loadModule(
         "pdf2zh",
         {
@@ -125,10 +126,16 @@ test("help actions register a stable preferences pane and navigate with a CSS se
                 },
             },
         },
-        { "../utils/locale": { getString: (key) => key } },
+        {
+            "../utils/locale": { getString: (key) => key },
+            "./preferenceCards": {
+                preparePreferenceTarget: (target) => targets.push(target),
+            },
+        },
     );
     await factory.registerPrefs();
     factory.openPrefs("selection-provider");
+    assert.deepEqual(targets, ["selection-provider"]);
     assert.equal(registrations[0].id, "pdf2zhpro-preferences");
     assert.deepEqual(navigations, [
         [

@@ -1,4 +1,5 @@
 import { getString } from "../utils/locale";
+import { preparePreferenceTarget } from "./preferenceCards";
 
 export class PDF2zhBasicFactory {
     static paneID = "pdf2zhpro-preferences";
@@ -13,6 +14,7 @@ export class PDF2zhBasicFactory {
     }
 
     static openPrefs(target = "new_serverip") {
+        preparePreferenceTarget(target);
         Zotero.Utilities.Internal.openPreferences(this.paneID, {
             scrollTo: `#zotero-prefpane-${addon.data.config.addonRef}-${target}`,
         });

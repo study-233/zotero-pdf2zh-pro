@@ -1,6 +1,7 @@
 import { cancelDictionaryDownload } from "./modules/selectionDictionaryDownload";
 import { stopDevelopmentLibrary } from "./modules/developmentLibrary";
 import { stopDiagnostics } from "./modules/diagnostics";
+import { stopPreferenceCards } from "./modules/preferenceCards";
 // lifecycle hooks
 import { PDF2zhBasicFactory, PDF2zhUIFactory } from "./modules/pdf2zh";
 import { PDF2zhTaskManager } from "./modules/pdf2zhTaskManager";
@@ -92,6 +93,7 @@ async function onMainWindowUnload(_win: Window): Promise<void> {
 }
 
 async function onShutdown(): Promise<void> {
+    stopPreferenceCards();
     stopPluginNotices();
     stopDevelopmentLibrary();
     cancelDictionaryDownload();

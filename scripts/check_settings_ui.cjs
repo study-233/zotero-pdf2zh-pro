@@ -9,7 +9,7 @@ const root = path.resolve(__dirname, '..');
 const output = require('./workspace.cjs').newReport('settings-ui');
 fs.mkdirSync(output,{recursive:true});
 const modules={};
-for(const name of ['userNotice','attachmentNaming','attachmentTitleLayout','attachmentNamingSettings','attachmentNamingPreferences','selectionPreferences','llmApiManager']) modules['./'+name]=ts.transpileModule(fs.readFileSync(path.join(root,'plugin/src/modules/'+name+'.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+for(const name of ['userNotice','attachmentNaming','attachmentTitleLayout','attachmentNamingSettings','attachmentNamingPreferences','selectionPreferences','preferenceCards','llmApiManager']) modules['./'+name]=ts.transpileModule(fs.readFileSync(path.join(root,'plugin/src/modules/'+name+'.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const markup=fs.readFileSync(path.join(root,'plugin/addon/content/preferences.xhtml'),'utf8').replaceAll('__addonRef__','test');
 const preferencesCss=fs.readFileSync(path.join(root,'plugin/addon/content/preferences.css'),'utf8');
 const locales={};
@@ -21,7 +21,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
    const page=await browser.newPage({viewport:{width:960,height:1050}});page.setDefaultTimeout(10000);
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.setContent('<html><body></body></html>');
-   await page.evaluate(({markup,preferencesCss,modules,fluent,language})=>{
+   await page.evaluate(async({markup,preferencesCss,modules,fluent,language})=>{
     const labels={};let current;
     for(const line of fluent.split(/\r?\n/)) {const m=line.match(/^([\w-]+)\s*=\s*(.*)$/);if(m){current=m[1];labels[current]=m[2];}else if(current&&/^\s+\.\w+/.test(line)){const a=line.match(/\.(\w[\w-]*)\s*=\s*(.*)/);labels[current+'.'+a[1]]=a[2];}else if(current&&line.startsWith('    ')) labels[current]+='\n'+line.trim();}
     window.msg=(key,args={})=>{if(!(key in labels))throw Error('Missing locale '+key);return labels[key].replace(/\{ \$(\w+) \}/g,(_,k)=>args[k]??'');};
@@ -57,6 +57,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
      button, select, input { margin-block:4px; }
     `;document.head.append(nativeStyle);
     const pane=convert(xml.querySelector('.pdf2zh-pref-pane'));document.body.append(pane);
+    const heading=document.createElement('h1');heading.textContent='zotero-pdf2zh-pro';pane.querySelector('.main-section').prepend(heading);
     document.body.style.cssText='margin:22px;font:16px/1.5 system-ui;background:Field;color:FieldText';
     window.prefs=new Map([['rename',true],['selectionDictionary','ecdict'],['selectedApiKey','document'],['attachmentTitleTemplate','{title} � {type}']]);
     window.profiles=[{key:'document',name:'Document',service:'openai',model:'document-model'},{key:'selection',name:'Selection',service:'openai',model:'selection-model'}];
@@ -65,7 +66,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
     const imports={
      '../../package.json':{config:{addonRef:'test'}},
      '../utils/prefs':{getPref:k=>prefs.get(k),setPref:(k,v)=>prefs.set(k,v)},
-     '../utils/locale':{getString:(key,options)=>msg(key,options?.args)},
+     '../utils/locale':{getString:(key,options)=>msg(key,options?.args),getLocaleID:key=>key},
      './diagnostics':{recordDiagnostic(){}},
      './profileStore':{loadProfiles:()=>profiles},
      './pdf2zhHelper':{PDF2zhHelperFactory:{getServerConfig:()=>({serverUrl:'http://localhost:8890'})}},
@@ -95,7 +96,33 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
     id('selectedApiKey').append(new Option('Document · document-model','document'));
     id('profileSummary').textContent='api.example.test';
     id('sourceLang').value='en';id('targetLang').value='zh-CN';id('new_serverip').value='http://127.0.0.1:8890';
+    document.l10n={formatValue:async(key,args)=>msg(key,args)};
+    const search=document.createElement('input');search.id='prefs-search';search.hidden=true;document.body.append(search);
+    Object.assign(window,require('./preferenceCards'));
+    await registerPreferenceCards(window);
    },{markup,preferencesCss,modules,fluent:locales[language],language});
+   assert.equal(await page.locator('.pref-card').count(),7);
+   assert.equal(await page.locator('.pref-card[open]').count(),0,'overview starts collapsed');
+   const firstSummary=page.locator('.pref-card > summary').first();
+   await firstSummary.focus();await page.keyboard.press('Space');
+   assert.equal(await page.locator('.pref-card[open]').count(),1,'keyboard expands native details');
+   await page.keyboard.press('Space');
+   assert.equal(await page.locator('.pref-card[open]').count(),0,'keyboard collapses native details');
+   assert.match(await page.locator('[id$="card-languages-note"]').textContent(),/en.*zh-CN/);
+   await page.evaluate(()=>{id('sourceLang').value='fr';id('sourceLang').dispatchEvent(new Event('input',{bubbles:true}));});
+   await page.waitForFunction(()=>id('card-languages-note').textContent.startsWith('fr'));
+   await page.evaluate(()=>{id('sourceLang').value='en';id('sourceLang').dispatchEvent(new Event('input',{bubbles:true}));const search=document.getElementById('prefs-search');search.value='glossary';search.dispatchEvent(new Event('command'));});
+   assert.equal(await page.locator('.pref-card[open]').count(),7,'native settings search reveals collapsed controls');
+   await page.evaluate(()=>{const search=document.getElementById('prefs-search');search.value='';search.dispatchEvent(new Event('command'));});
+   assert.equal(await page.locator('.pref-card[open]').count(),0,'clearing search restores disclosure state');
+   await page.evaluate(()=>preparePreferenceTarget('selection-model'));
+   assert.equal(await page.locator('[data-pref-card="selection"]').getAttribute('open'),'');
+   assert.equal(await page.locator('.selection-advanced').getAttribute('open'),'');
+   await page.evaluate(async()=>{stopPreferenceCards();preparePreferenceTarget('qps');await registerPreferenceCards(window);});
+   assert.equal(await page.locator('[data-pref-card="advanced"]').getAttribute('open'),'','initial settings navigation reveals the target');
+   await page.evaluate(()=>{document.querySelectorAll('.pref-card').forEach(card=>card.open=false);document.querySelector('.selection-advanced').open=false;});
+   await page.screenshot({path:path.join(output,language+'-overview.png'),fullPage:true});
+   await page.evaluate(()=>document.querySelectorAll('.pref-card').forEach(card=>card.open=true));
    const id=n=>page.locator('#zotero-prefpane-test-'+n);
    const addField=async field=>{
     await id('attachmentTitleFields').selectOption(field);
@@ -106,7 +133,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
     const bounds=await page.evaluate(()=>{
      const rect=el=>{const {x,y,width,height,right,bottom}=el.getBoundingClientRect();return {x,y,width,height,right,bottom};};
      return {
-      section:rect(document.querySelector('.selection-settings')),
+      section:rect(document.querySelector('.selection-settings > .selection-controls')),
       menus:['selection-trigger','selection-display','selection-dictionary','selection-provider','selection-model'].map(n=>rect(id(n))),
       labels:['selection-trigger','selection-display','selection-dictionary','selection-provider','selection-model'].map(n=>rect(document.querySelector('label[for="'+id(n).id+'"]'))),
       card:rect(document.querySelector('.dictionary-download-row')),

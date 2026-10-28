@@ -27,12 +27,15 @@ const locales = Object.fromEntries(["zh-CN", "en-US"].map(locale => [locale, Obj
     let checks = 0;
     try {
         for (const locale of Object.keys(locales)) for (const theme of ["light", "dark"]) for (const width of [620, 960]) {
-            const page = await browser.newPage({viewport: {width, height: 560}, colorScheme: theme});
+            const page = await browser.newPage({viewport: {width, height: 640}, colorScheme: theme});
             const errors = [];
             page.on("pageerror", error => errors.push(error.message));
             await page.route("**/*", route => {
                 const url = new URL(route.request().url());
                 const file = path.basename(url.pathname);
+                if (file === "chevron-right.svg") {
+                    return route.fulfill({body: fs.readFileSync(path.join(build, "content/icons/preferences", file)), contentType: "image/svg+xml"});
+                }
                 if (["noticeHelp.xhtml", "noticeHelp.js", "notices.css"].includes(file)) {
                     return route.fulfill({body: fs.readFileSync(path.join(build, "content", file)), contentType: file.endsWith("xhtml") ? "application/xhtml+xml" : file.endsWith("css") ? "text/css" : "text/javascript"});
                 }
@@ -79,6 +82,7 @@ const locales = Object.fromEntries(["zh-CN", "en-US"].map(locale => [locale, Obj
             });
             assert.equal(await page.locator("#updates li").count(), currentNoteCount);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+            assert.equal(await page.locator('#documents').evaluate(node => node.getBoundingClientRect().bottom <= innerHeight), true, 'help topics and document links fit the initial window');
             assert.equal(await page.locator(".pdf2zh-help button").count(), 0);
             await page.locator("#help a").first().click();
             assert.deepEqual(await page.evaluate(() => window.noticeLinks), ["https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/user-guide.md#usage"]);

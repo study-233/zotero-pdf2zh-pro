@@ -206,7 +206,7 @@ export function openNoticeHelp() {
         main.openDialog(
             `chrome://${config.addonRef}/content/noticeHelp.xhtml`,
             `${config.addonRef}-help`,
-            "chrome,centerscreen,resizable,dialog=no,width=620,height=560",
+            "chrome,centerscreen,resizable,dialog=no,width=620,height=640",
             {
                 message: getString,
                 version,

@@ -102,6 +102,13 @@ for (const locale of ["zh-CN", "en-US"]) {
                 "troubleshooting",
             ].map((anchor) => `${guideUrl}#${anchor}`);
             const links = [...doc.querySelectorAll("#help a")];
+            assert.ok(
+                links.every(
+                    (link) =>
+                        link.querySelector(".help-topic-title") &&
+                        link.querySelector("p"),
+                ),
+            );
             assert.deepEqual(
                 links.map((link) => link.href),
                 expected,

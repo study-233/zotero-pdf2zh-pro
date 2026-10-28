@@ -3,6 +3,11 @@ pref-notice-help = 新功能与帮助
 pref-help = { $name } Build { $version } { $time }
 
 pref-config = 翻译设置
+pref-card-profiles = 翻译配置
+pref-card-unconfigured = 未选择配置
+pref-card-automatic = 自动
+pref-card-no-glossary = 未启用术语库
+pref-card-advanced-summary = QPS { $qps } · 并发 { $pool }
 pref-connection = 服务端连接
 pref-plugin-version = 插件
 pref-server-version = 服务
