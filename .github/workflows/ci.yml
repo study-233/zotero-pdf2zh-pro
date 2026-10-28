@@ -159,6 +159,7 @@ jobs:
           set -euo pipefail
           uv sync --locked
           uv run --locked python -m unittest discover -s tests -p test_native_pdf_pipeline.py
+          uv run --locked python -m unittest discover -s tests -p test_legacy_runtime_compat.py
           uv run --locked python -m unittest discover -s tests -p test_document_export.py
           uv run --locked python -m unittest discover -s tests -p test_core_boundaries.py
           uv run --locked python -m unittest discover -s tests -p test_recovery_storage.py

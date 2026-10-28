@@ -198,6 +198,7 @@ for(const language of ['zh-CN','en-US']) locales[language]=['addon','preferences
    await page.evaluate(()=>{profiles.pop();window.dispatchEvent(new Event('profiles-changed'));});
    assert.equal(await id('selection-model-status').isVisible(),true);
    await id('selection-model').selectOption('');
+   await page.waitForFunction(()=>id('selection-model-status').hidden);
    assert.equal(await id('selection-model-status').isVisible(),false);
    assert.equal(await id('selection-auto-dictionary').isChecked(),true);
    await id('selection-auto-dictionary').uncheck();

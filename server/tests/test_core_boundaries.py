@@ -33,6 +33,7 @@ import text_translation
 settings = create_model_settings({'service':'openai','llm_api':{'apiKey':'test-key'}})
 assert settings.translate_engine_settings.openai_api_key == 'test-key'
 assert 'pdf2zh_pro.pdf' not in sys.modules
+assert 'pymupdf' not in sys.modules
 assert not any(name == 'babeldoc' or name.startswith('babeldoc.') for name in sys.modules)
 assert not any(name == 'pdf2zh_next' or name.startswith('pdf2zh_next.') for name in sys.modules)
 '''

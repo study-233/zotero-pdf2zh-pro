@@ -66,20 +66,22 @@ class PyMuPDFCompatibilityTests(unittest.TestCase):
                 self.assertTrue(result[0].get_fonts())
 
     def test_fresh_worker_uses_current_bindings_without_legacy_patch(self):
-        result = subprocess.run(
-            [sys.executable, "-W", "error::DeprecationWarning", "-c",
-             "import babeldoc, pymupdf; doc=pymupdf.open(); doc.new_page(); "
-             "assert len(doc.tobytes()) > 0; doc.close()"],
-            cwd=Path(babeldoc.__file__).resolve().parents[1],
-            capture_output=True, text=True, timeout=15,
-        )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertNotIn('DeprecationWarning', result.stderr)
+        for bootstrap in ("babeldoc", "pdf2zh_pro.document"):
+            with self.subTest(bootstrap=bootstrap):
+                result = subprocess.run(
+                    [sys.executable, "-W", "error::DeprecationWarning", "-c",
+                     f"import {bootstrap}, pymupdf; doc=pymupdf.open(); doc.new_page(); "
+                     "assert len(doc.tobytes()) > 0; doc.close()"],
+                    cwd=Path(babeldoc.__file__).resolve().parents[1],
+                    capture_output=True, text=True, timeout=15,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertNotIn('DeprecationWarning', result.stderr)
 
     def test_binding_warning_filter_preserves_other_warnings(self):
         result = subprocess.run(
             [sys.executable, "-W", "always", "-c",
-             "import babeldoc, warnings; "
+             "import babeldoc, pymupdf, warnings; "
              "warnings.warn('application deprecation', DeprecationWarning); "
              "warnings.warn('application resource leak', ResourceWarning)"],
             cwd=Path(babeldoc.__file__).resolve().parents[1],
@@ -89,6 +91,17 @@ class PyMuPDFCompatibilityTests(unittest.TestCase):
         self.assertNotIn('has no __module__ attribute', result.stderr)
         self.assertIn('DeprecationWarning: application deprecation', result.stderr)
         self.assertIn('ResourceWarning: application resource leak', result.stderr)
+
+    def test_binding_warning_filter_keeps_application_deprecations_as_errors(self):
+        result = subprocess.run(
+            [sys.executable, "-W", "error::DeprecationWarning", "-c",
+             "import pdf2zh_pro.document, pymupdf, warnings; "
+             "warnings.warn('application deprecation', DeprecationWarning)"],
+            cwd=Path(babeldoc.__file__).resolve().parents[1],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn('DeprecationWarning: application deprecation', result.stderr)
 
 
 class CMapCompatibilityTests(unittest.TestCase):

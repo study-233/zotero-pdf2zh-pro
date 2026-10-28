@@ -113,6 +113,29 @@ export const releaseSummaries: ReleaseSummary[] = [
             },
         ],
     },
+    {
+        version: "1.9.6",
+        notes: [
+            {
+                id: "mac-apple-silicon-runtime",
+                message: "release-mac-apple-silicon-runtime",
+                cardMessage: "release-card-mac-apple-silicon-runtime",
+                priority: 0,
+            },
+            {
+                id: "document-format-export",
+                message: "release-document-format-export",
+                cardMessage: "release-card-document-format-export",
+                priority: 1,
+            },
+            {
+                id: "windows-relocation-data",
+                message: "release-windows-relocation-data",
+                cardMessage: "release-card-windows-relocation-data",
+                priority: 2,
+            },
+        ],
+    },
 ];
 
 export function compareVersions(a: string, b: string): number {
