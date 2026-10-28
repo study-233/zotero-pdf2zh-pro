@@ -268,6 +268,20 @@ def build(value, commit, plan_path, state_path):
     return stages
 
 
+def candidate_release(tag, release_id=None):
+    # The tag endpoint omits drafts. Resolve their ID from the authenticated list.
+    if release_id:
+        return control.api(f'repos/{control.REPO}/releases/{release_id}')
+    pages = json.loads(control.command(['gh', 'api', '--paginate', '--slurp',
+                                      f'repos/{control.REPO}/releases?per_page=100']))
+    found = [r for page in pages for r in page if r['tag_name'] == tag]
+    if len(found) > 1:
+        raise ValueError('Ambiguous candidate release')
+    if not found:
+        raise RuntimeError('Candidate not found (HTTP 404)')
+    return found[0]
+
+
 def stage_candidate(stages, value, commit):
     """Authenticated draft assets are transport; the receiving workflow verifies all bytes."""
     directory = ROOT / 'dist/release'
@@ -284,7 +298,7 @@ def stage_candidate(stages, value, commit):
     save(stages.path, stages.state)
     tag = candidate['tag']
     try:
-        release = control.api(f'repos/{control.REPO}/releases/tags/{tag}')
+        release = candidate_release(tag, candidate.get('releaseId'))
     except RuntimeError as error:
         if 'HTTP 404' not in str(error):
             raise
@@ -292,13 +306,15 @@ def stage_candidate(stages, value, commit):
         notes.write_text('Local release candidate and validation evidence; pending import into Actions.\n', encoding='utf-8')
         run(['gh', 'release', 'create', tag, '--repo', control.REPO, '--draft', '--latest=false', '--target', commit,
             '--title', f'Candidate v{value}', '--notes-file', notes])
-        release = control.api(f'repos/{control.REPO}/releases/tags/{tag}')
+        release = candidate_release(tag)
     if not release['draft'] or release['target_commitish'] != commit:
         raise ValueError('Candidate release identity changed')
+    candidate['releaseId'] = release['id']
+    save(stages.path, stages.state)
     found = [a for a in release['assets'] if a['name'] == bundle.name]
     if not found:
         run(['gh', 'release', 'upload', tag, str(bundle), '--repo', control.REPO])
-        release = control.api(f'repos/{control.REPO}/releases/tags/{tag}')
+        release = candidate_release(tag, release['id'])
         found = [a for a in release['assets'] if a['name'] == bundle.name]
     if len(found) != 1 or found[0].get('digest') != 'sha256:' + sha:
         raise ValueError('Candidate upload differs; preserve it and inspect before resuming')

@@ -157,12 +157,21 @@ class LocalReleaseTests(unittest.TestCase):
             bundle = self.root / 'local-candidate.zip'
             return {'id': 10, 'draft': True, 'target_commitish': commit,
                     'assets': [{'id': 20, 'name': bundle.name, 'digest': 'sha256:' + control.digest(bundle)}]}
-        with patch.object(local, 'ROOT', self.root), patch.object(control, 'api', side_effect=release), patch.object(local, 'run') as command:
+        with patch.object(local, 'ROOT', self.root), patch.object(local, 'candidate_release', side_effect=lambda *args: release(None)), patch.object(local, 'run') as command:
             first = local.stage_candidate(stages, value, commit)
             (source / 'checksums.json').touch()  # Collecting the same bytes changes filesystem timestamps.
             second = local.stage_candidate(stages, value, commit)
         self.assertEqual(first, second)
         command.assert_not_called()
+
+    def test_draft_resolution_uses_authenticated_list_and_then_the_release_id(self):
+        draft = {'id': 42, 'tag_name': 'candidate', 'draft': True}
+        with patch.object(control, 'command', return_value=json.dumps([[draft]]).encode()) as command:
+            self.assertEqual(local.candidate_release('candidate'), draft)
+            self.assertNotIn('/tags/', command.call_args.args[0][-1])
+        with patch.object(control, 'api', return_value=draft) as api:
+            self.assertEqual(local.candidate_release('candidate', 42), draft)
+        self.assertTrue(api.call_args.args[0].endswith('/releases/42'))
 
     def test_failed_candidate_import_retries_the_same_run_without_dispatching_a_build(self):
         with patch.object(control, 'ROOT', self.root):
