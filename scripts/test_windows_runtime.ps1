@@ -81,3 +81,4 @@ try {
     if ((Split-Path $resolved -Parent) -ne [IO.Path]::GetTempPath().TrimEnd('\') -or (Split-Path $resolved -Leaf) -notlike 'pdf2zh-runtime-test-*') {throw 'Unsafe test cleanup path.'}
     Remove-Item -LiteralPath $resolved -Recurse -Force
 }
+& (Join-Path $PSScriptRoot 'test_windows_recovery.ps1')

@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+pub(crate) const RECOVERY_BUSY_EXIT_CODE: i32 = 1618;
+
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct UpdateState {
@@ -106,6 +108,33 @@ pub fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<(), String> {
     Ok(())
 }
 
+async fn recover_installation(app: &AppHandle, paths: &ProductPaths) -> Result<(), String> {
+    let script = paths.script("recover-install.ps1");
+    if !script.is_file() { return Ok(()); }
+    let mut waiting = false;
+    while !app.context().exiting.load(Ordering::Acquire) {
+        let worker = app.clone();
+        let script = script.clone();
+        let root = paths.app_root.clone();
+        let log = paths.control_log.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            run_powershell(&worker, &script, &[], &log, Some(&root))
+        }).await.map_err(|error| error.to_string())?;
+        if result.as_ref().err().map(String::as_str) != Some(OPERATION_BUSY) {
+            if waiting && result.is_ok() {
+                emit_log(app, &paths.control_log, "安装锁已释放，继续启动与更新调度。".into());
+            }
+            return result;
+        }
+        if !waiting {
+            emit_log(app, &paths.control_log, "安装操作仍在进行，等待安装锁释放后自动重试恢复。".into());
+            waiting = true;
+        }
+        tokio::time::sleep(Duration::from_secs(3)).await;
+    }
+    Ok(())
+}
+
 pub fn start(app: AppHandle, installed: bool) {
     app.clone().0.runtime.spawn(async move {
         if installed && has_argument("--enable-autostart") {
@@ -119,22 +148,13 @@ pub fn start(app: AppHandle, installed: bool) {
                 Err(error) => { app.error(error); return; }
             };
             if let Ok(paths) = ProductPaths::discover() {
-                let script = paths.script("recover-install.ps1");
-                if script.is_file() {
-                    let worker = app.clone();
-                    let root = paths.app_root.clone();
-                    let log = paths.control_log.clone();
-                    let recovery = tokio::task::spawn_blocking(move || {
-                        run_powershell(&worker, &script, &[], &log, Some(&root))
-                    })
-                    .await;
-                    if !matches!(recovery, Ok(Ok(()))) {
-                        app.error("中断恢复失败，请查看控制中心日志并处理后重新启动。".into());
-                        return;
-                    }
+                if let Err(error) = recover_installation(&app, &paths).await {
+                    app.error(format!("中断恢复失败：{error}"));
+                    return;
                 }
             }
         }
+        if app.context().exiting.load(Ordering::Acquire) { return; }
         if installed
             && (has_argument("--autostart") || has_argument("--post-install"))
             && !has_argument("--keep-stopped")
@@ -176,10 +196,15 @@ pub fn start(app: AppHandle, installed: bool) {
                             let root = paths.app_root.clone();
                             let log = paths.control_log.clone();
                             if script.is_file() {
-                                let _ = tokio::task::spawn_blocking(move || {
-                                    run_powershell(&worker, &script, &[], &log, Some(&root))
+                                progress::begin(&app, &paths.app_root, "clean", "正在自动清理安装缓存");
+                                let result = tokio::task::spawn_blocking(move || {
+                                    run_powershell(&worker, &script, &["-SkipSpaceReport".into()], &log, Some(&root))
                                 })
-                                .await;
+                                .await.map_err(|error| error.to_string()).and_then(|result| result);
+                                match result {
+                                    Ok(()) => progress::phase(&app, &paths.app_root, "clean", "complete", "安装缓存已自动清理", "completed"),
+                                    Err(error) => progress::phase(&app, &paths.app_root, "clean", "failed", &error, "failed"),
+                                }
                             }
                             state.cleanup_at = now();
                             let _ = write_json(&state_path(&paths), &state);
@@ -486,6 +511,67 @@ pub async fn clean_cache(app: &AppHandle) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct RecoveryFixture(ProductPaths);
+    impl RecoveryFixture {
+        fn new(name: &str) -> Self {
+            let root = env::temp_dir().join(format!("pdf2zh-recovery-{}-{name}", std::process::id()));
+            let paths = ProductPaths::from_root(root);
+            fs::create_dir_all(&paths.bin_dir).unwrap();
+            Self(paths)
+        }
+        fn script(&self, source: &str) {
+            fs::write(self.0.script("recover-install.ps1"), source).unwrap();
+        }
+    }
+    impl Drop for RecoveryFixture {
+        fn drop(&mut self) {
+            let root = &self.0.app_root;
+            assert_eq!(root.parent(), Some(env::temp_dir().as_path()));
+            assert!(root.file_name().unwrap().to_string_lossy().starts_with("pdf2zh-recovery-"));
+            let _ = fs::remove_dir_all(root);
+        }
+    }
+    #[test]
+    fn recovery_retries_busy_exit_and_resumes_the_prepared_update() {
+        let fixture = RecoveryFixture::new("retry");
+        fixture.script(r#"
+$counter = Join-Path $env:PDF2ZH_WINDOWS_APP_ROOT 'attempts.txt'
+$attempt = if (Test-Path -LiteralPath $counter) { [int](Get-Content -Raw -LiteralPath $counter) + 1 } else { 1 }
+Set-Content -LiteralPath $counter -Value $attempt
+if ($attempt -lt 3) { exit 1618 }
+"#);
+        let app = controller::test_handle();
+        let state = UpdateState { phase: "ready".into(), version: "2.0.0".into(), manual_version: Some("2.0.0".into()), ..Default::default() };
+        write_json(&state_path(&fixture.0), &state).unwrap();
+        app.0.runtime.block_on(async {
+            let _guard = begin_operation(app.context()).unwrap();
+            tokio::time::timeout(Duration::from_secs(20), recover_installation(&app, &fixture.0)).await.unwrap().unwrap();
+        });
+        assert_eq!(read_trimmed(&fixture.0.app_root.join("attempts.txt")).as_deref(), Some("3"));
+        assert!(should_apply(&read_state(&fixture.0), false));
+        assert!(!app.context().operation_busy.load(Ordering::Acquire));
+    }
+    #[test]
+    fn recovery_preserves_fatal_errors_and_stops_retrying_on_exit() {
+        let fixture = RecoveryFixture::new("failure");
+        fixture.script("throw 'Injected recovery failure'");
+        let app = controller::test_handle();
+        let error = app.0.runtime.block_on(recover_installation(&app, &fixture.0)).unwrap_err();
+        assert_ne!(error, OPERATION_BUSY);
+        assert!(error.contains("Injected recovery failure"));
+        fixture.script("exit 1618");
+        app.0.runtime.block_on(async {
+            let worker = app.clone();
+            let stop = app.0.runtime.spawn(async move {
+                tokio::time::sleep(Duration::from_millis(100)).await;
+                worker.context().exiting.store(true, Ordering::Release);
+            });
+            tokio::time::timeout(Duration::from_secs(10), recover_installation(&app, &fixture.0)).await.unwrap().unwrap();
+            stop.await.unwrap();
+        });
+    }
+
     #[test]
     fn manual_request_is_version_bound_and_survives_disabled_automatic_updates() {
         let mut state: UpdateState = serde_json::from_str(r#"{"phase":"ready","version":"2.0.0"}"#).unwrap();

@@ -365,12 +365,7 @@ impl Ui {
             );
             window.set_action_label(
                 if self.active() {
-                    match self.last_action.as_str() {
-                        "start" => "正在启动…",
-                        "stop" => "正在停止…",
-                        "check" => "正在检查…",
-                        _ => "正在处理…",
-                    }
+                    crate::ui_state::busy_action_label(self.busy.then_some(self.last_action.as_str()), self.progress.as_ref())
                 } else {
                     action
                 }
@@ -1259,6 +1254,36 @@ mod visual_tests {
             let tray = platform::Tray::new(app.clone(), &root).unwrap();
             let mut ui = Ui::new(app, rx, tray, root, controller::Settings::default());
             ui.window = Some(fixture.clone_strong());
+            ui.state = Some(ControlState {
+                installation: InstallationStatus::Current, service: ServiceStatus::Running,
+                app_version: "1.9.5".into(), installed_version: Some("1.9.5".into()), service_version: Some("1.9.5".into()),
+                address: "http://127.0.0.1:8890".into(), autostart_enabled: false,
+                data_dir: String::new(), log_file: String::new(), control_log: String::new(),
+                running_from_installed_path: false, install_root: ui.selected_root.to_string_lossy().into(),
+                default_install_root: String::new(), can_relocate: false, last_operation_error: None,
+            });
+            ui.last_action = "check".into();
+            ui.app.context().operation_busy.store(true, Ordering::Release);
+            let mut cleanup = progress::OperationProgress {
+                operation_id: "background-cleanup".into(), operation: "clean".into(), phase: "starting".into(),
+                status: "running".into(), message: "正在自动清理安装缓存".into(), ..Default::default()
+            };
+            ui.accept_progress(cleanup.clone());
+            ui.render();
+            assert_eq!(fixture.get_action_label(), "正在清理缓存…");
+            assert!(fixture.get_busy());
+            assert_eq!(fixture.get_operation_message(), "正在自动清理安装缓存");
+            cleanup.sequence += 1;
+            cleanup.status = "completed".into();
+            cleanup.message = "安装缓存已自动清理".into();
+            ui.accept_progress(cleanup);
+            ui.app.context().operation_busy.store(false, Ordering::Release);
+            ui.render();
+            assert_eq!(fixture.get_action_label(), "停止服务");
+            assert!(!fixture.get_busy());
+            ui.progress = None;
+            ui.maintenance = Feedback::default();
+            ui.status.clear();
             ui.navigate(Page::Settings);
             fixture.set_settings_offset(-120.);
             fixture.set_advanced(true);

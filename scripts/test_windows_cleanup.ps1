@@ -29,10 +29,17 @@ try {
     $cleanup=Join-Path $PSScriptRoot 'windows/clean-cache.ps1'
     & "$PSHOME/powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $cleanup
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $legacy)) {throw 'Recent rollback runtime was removed.'}
+    $cleanupLog = Join-Path $directory 'logs/control-panel.log'
+    if ((Get-Content -Raw -LiteralPath $cleanupLog) -notmatch 'Space report logicalBytes=') {throw 'Manual cleanup did not report disk usage.'}
     $transaction.created=(Get-Date).ToUniversalTime().AddDays(-8).ToString('o')
     $transaction|ConvertTo-Json|Set-Content -LiteralPath $journal -Encoding utf8
-    & "$PSHOME/powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $cleanup
-    if ($LASTEXITCODE -ne 0 -or (Test-Path -LiteralPath $legacy) -or (Test-Path -LiteralPath $launcher)) {throw 'Expired legacy product environment was not reclaimed.'}
+    $heldData = [IO.File]::Open((Join-Path $directory 'data/preserved.txt'), 'Open', 'ReadWrite', 'None')
+    try {
+        # Full space reporting would attempt to open this live file and fail.
+        & "$PSHOME/powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $cleanup -SkipSpaceReport
+        if ($LASTEXITCODE -ne 0 -or (Test-Path -LiteralPath $legacy) -or (Test-Path -LiteralPath $launcher)) {throw 'Automatic cleanup failed or did not reclaim the expired environment.'}
+    } finally { $heldData.Dispose() }
+    if (@(Select-String -LiteralPath $cleanupLog -SimpleMatch 'Space report logicalBytes=').Count -ne 1) {throw 'Automatic cleanup scanned every file for a space report.'}
     foreach ($path in @($active,$other,(Join-Path $directory 'data/preserved.txt'))) {
         if (-not (Test-Path -LiteralPath $path)) {throw "Cleanup removed protected content: $path"}
     }

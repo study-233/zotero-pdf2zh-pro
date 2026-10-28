@@ -28,9 +28,17 @@ function Write-AtomicJson {
 }
 
 function Enter-RuntimeOperation {
+    param([switch]$AllowBusy)
     New-Item -ItemType Directory -Force -Path $AppRoot | Out-Null
     try { return [IO.File]::Open((Join-Path $AppRoot '.operation.lock'), 'OpenOrCreate', 'ReadWrite', 'None') }
-    catch { throw 'Another installation, update, migration or cleanup is running.' }
+    catch {
+        $cause = $_.Exception.GetBaseException()
+        if ($cause -is [IO.IOException] -and ($cause.HResult -band 0xffff) -in @(32, 33)) {
+            if ($AllowBusy) { return $null }
+            throw 'Another installation, update, migration or cleanup is running.'
+        }
+        throw
+    }
 }
 
 function Assert-ProductChild {

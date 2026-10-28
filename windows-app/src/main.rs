@@ -459,6 +459,11 @@ fn run_powershell(
     };
     let _ = stdout_thread.join();
     let detail = stderr_thread.join().ok().flatten();
+    if status.code() == Some(scheduler::RECOVERY_BUSY_EXIT_CODE)
+        && script.file_name() == Some(OsStr::new("recover-install.ps1"))
+    {
+        return Err(OPERATION_BUSY.into());
+    }
     if status.code() == Some(cancellation::EXIT_CODE) { return Err(cancellation::ERROR.into()); }
     if !status.success() {
         return Err(format!(

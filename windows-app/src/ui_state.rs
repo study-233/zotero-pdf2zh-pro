@@ -1,6 +1,16 @@
 //! Page and feedback state survives Slint component destruction.
 use crate::{progress::OperationProgress, scheduler::UpdateState, update::UpdateCheck};
 
+pub fn busy_action_label(manual: Option<&str>, progress: Option<&OperationProgress>) -> &'static str {
+    let action = manual.or_else(|| progress.filter(|p| p.active()).map(|p| p.operation.as_str()));
+    match action {
+        Some("start") => "正在启动…", Some("stop") => "正在停止…",
+        Some("check") => "正在检查…", Some("clean") => "正在清理缓存…",
+        Some("update") => "正在更新…", Some("repair") => "正在修复…",
+        _ => "正在处理…",
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[repr(i32)]
 pub enum Page { #[default] Home = 0, Settings = 1, Setup = 2, Confirm = 4 }
@@ -144,6 +154,14 @@ impl UpdateView {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn background_cleanup_does_not_reuse_a_previous_check_label() {
+        let mut progress = OperationProgress { operation: "clean".into(), status: "running".into(), ..Default::default() };
+        assert_eq!(busy_action_label(None, Some(&progress)), "正在清理缓存…");
+        assert_eq!(busy_action_label(Some("check"), Some(&progress)), "正在检查…");
+        progress.status = "completed".into();
+        assert_eq!(busy_action_label(None, Some(&progress)), "正在处理…");
+    }
     #[test]
     fn late_checks_cannot_overwrite_new_requests_or_downloads() {
         let mut view = UpdateView::default();

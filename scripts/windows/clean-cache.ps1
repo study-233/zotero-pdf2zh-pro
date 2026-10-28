@@ -1,4 +1,4 @@
-﻿param([switch]$ClearDownloads, [switch]$ReportOnly)
+﻿param([switch]$ClearDownloads, [switch]$ReportOnly, [switch]$SkipSpaceReport)
 . (Join-Path $PSScriptRoot 'common.ps1')
 . (Join-Path $PSScriptRoot 'runtime.ps1')
 $operation = Enter-RuntimeOperation
@@ -60,6 +60,8 @@ try {
             if (Test-Path -LiteralPath $downloads) { Remove-Item -LiteralPath (Assert-ProductChild $downloads $AppRoot) -Recurse -Force }
         }
     }
+    # Daily cleanup must not hold the operation lock while inspecting every cached file.
+    if ($SkipSpaceReport) { return }
     # Deduplicate by NTFS volume/file identity, including links shared by uv and environments.
     Add-Type -TypeDefinition @'
 using System;
