@@ -23,7 +23,7 @@ from babeldoc.format.pdf.document_il.midend.il_translator_llm_only import (
 from babeldoc.format.pdf.document_il.utils.layout_helper import get_char_unicode_string
 from babeldoc.format.pdf.document_il.utils.formular_helper import is_formulas_start_char
 from babeldoc.format.pdf.translation_recovery import TranslationRecovery
-from babeldoc.translator.validation import InvalidTranslation, validate_text
+from pdf2zh_pro.translator.validation import InvalidTranslation, validate_text
 
 
 def paragraph(text, index=0, label="text"):

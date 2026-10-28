@@ -14,8 +14,8 @@ from babeldoc.format.pdf.document_il.midend.il_translator_llm_only import ILTran
 from babeldoc.format.pdf.document_il.midend.il_translator import PageTranslateTracker
 from babeldoc.format.pdf.document_il.utils.paragraph_helper import is_url_only_paragraph
 from babeldoc.format.pdf.translation_recovery import TranslationRecovery
-from babeldoc.translator.url_utils import is_url_only_text
-from babeldoc.translator.validation import InvalidTranslation, validate_text, validate_batch
+from pdf2zh_pro.translator.url_utils import is_url_only_text
+from pdf2zh_pro.translator.validation import InvalidTranslation, validate_text, validate_batch
 
 
 APPLE = '1https://support.apple.com/en-gb/guide/apple-vision-pro/dev26039f68/'

@@ -68,6 +68,31 @@ export class PDF2zhUIFactory {
                                 addon.hooks.onDialogEvents("openTaskManager"),
                         },
                         {
+                            menuType: "submenu",
+                            onShowing: (_event, context) => {
+                                context.menuElem.setAttribute(
+                                    "label",
+                                    getString("export-title"),
+                                );
+                            },
+                            menus: (["md", "json", "txt"] as const).map<
+                                _ZoteroTypes.MenuManager.MenuData<_ZoteroTypes.MenuManager.LibraryMenuContext>
+                            >((format) => ({
+                                menuType: "menuitem",
+                                onShowing: (_event, context) => {
+                                    context.menuElem.setAttribute(
+                                        "label",
+                                        getString(`export-format-${format}`),
+                                    );
+                                },
+                                onCommand: () =>
+                                    addon.hooks.onDialogEvents(
+                                        "exportDocument",
+                                        format,
+                                    ),
+                            })),
+                        },
+                        {
                             menuType: "menuitem",
                             onShowing: (_event, context) => {
                                 context.menuElem.setAttribute(

@@ -90,9 +90,11 @@ function Get-TestControlStartupChildren {
 function Wait-TestControlStartup {
     # A PID marker precedes recovery/startup completion. Wait for its PowerShell
     # children before stopping the service or starting another transaction.
+    # On Windows, each TCP/CIM ownership query can take tens of seconds. Include
+    # the controller's startup checks and four quiet samples in one bounded wait.
     $quietSamples = 0
     $deadline = [Diagnostics.Stopwatch]::StartNew()
-    while ($deadline.ElapsedMilliseconds -lt 90000) {
+    while ($deadline.ElapsedMilliseconds -lt 180000) {
         $controlProcessId = Get-ManagedControlPanelProcessId
         if ($controlProcessId) {
             $children = @(Get-TestControlStartupChildren -ControlProcessId $controlProcessId)

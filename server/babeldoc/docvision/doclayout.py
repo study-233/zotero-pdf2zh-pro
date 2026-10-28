@@ -10,7 +10,8 @@ import numpy as np
 
 from babeldoc.docvision.base_doclayout import DocLayoutModel
 from babeldoc.docvision.base_doclayout import YoloResult
-from babeldoc.format.pdf.document_il.utils.mupdf_helper import get_no_rotation_img
+from babeldoc.format.pdf.document_il.utils.raster_geometry import RasterGeometry
+from babeldoc.format.pdf.document_il.utils.raster_geometry import with_target_long_edge
 
 try:
     import onnx
@@ -178,7 +179,14 @@ class OnnxModel(DocLayoutModel):
         boxes[..., :4] = (boxes[..., :4] - [pad_x, pad_y, pad_x, pad_y]) / gain
         return boxes
 
-    def predict(self, image, imgsz=800, batch_size=16, **kwargs):
+    def predict(
+        self,
+        image,
+        imgsz=800,
+        batch_size=16,
+        geometry: RasterGeometry | None = None,
+        **kwargs,
+    ):
         """
         Predict the layout of document pages.
 
@@ -237,6 +245,13 @@ class OnnxModel(DocLayoutModel):
                         preds[..., :4],
                         orig_shapes[j],
                     )
+                    if geometry is not None:
+                        preds[..., [0, 2]] = geometry.px_len_to_pt(
+                            preds[..., [0, 2]], "x"
+                        )
+                        preds[..., [1, 3]] = geometry.px_len_to_pt(
+                            preds[..., [1, 3]], "y"
+                        )
                 results.append(YoloResult(boxes_data=preds, names=self._names))
 
         return results
@@ -253,14 +268,14 @@ class OnnxModel(DocLayoutModel):
         for page in pages:
             translate_config.raise_if_cancelled()
             with self.lock:
-                # pix = mupdf_doc[page.page_number].get_pixmap(dpi=72)
-                pix = get_no_rotation_img(mupdf_doc[page.page_number])
-            image = np.frombuffer(pix.samples, np.uint8).reshape(
-                pix.height,
-                pix.width,
-                3,
-            )[:, :, ::-1]
-            predict_result = self.predict(image)[0]
+                geometry = with_target_long_edge(
+                    mupdf_doc[page.page_number],
+                    72,
+                    self._FIXED_IMGSZ,
+                    normalize_rotation=True,
+                )
+            image = geometry.image[:, :, ::-1]
+            predict_result = self.predict(image, geometry=geometry)[0]
             save_debug_image(
                 image,
                 predict_result,

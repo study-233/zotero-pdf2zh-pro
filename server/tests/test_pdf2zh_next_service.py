@@ -16,20 +16,20 @@ from unittest.mock import patch
 SERVER_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SERVER_DIR))
 
-from pdf2zh_next_service import build_settings_input
-from pdf2zh_next_service import create_runtime_settings
-from pdf2zh_next_service import collect_output_files
-from pdf2zh_next_service import create_font_progress_event
-from pdf2zh_next_service import diagnose_service_error
-from pdf2zh_next_service import ensure_translation_provider_timeout
-from pdf2zh_next_service import explain_service_error
-from pdf2zh_next_service import install_text_check_bypass
-from pdf2zh_next_service import ProgressLogger
-from pdf2zh_next_service import run_live_translator_test
-from pdf2zh_next_service import set_text_checks_skipped
-from pdf2zh_next_service import translate_pdf_with_callbacks
-from pdf2zh_next_service import validate_service_config
-from pdf2zh_next.config.cli_env_model import CLIEnvSettingsModel
+from pdf2zh_pro.pdf import build_settings_input
+from pdf2zh_pro.pdf import create_runtime_settings
+from pdf2zh_pro.pdf import collect_output_files
+from pdf2zh_pro.pdf import create_font_progress_event
+from pdf2zh_pro.pdf import diagnose_service_error
+from pdf2zh_pro.pdf import ensure_translation_provider_timeout
+from pdf2zh_pro.pdf import explain_service_error
+from pdf2zh_pro.pdf import install_text_check_bypass
+from pdf2zh_pro.pdf import ProgressLogger
+from pdf2zh_pro.pdf import run_live_translator_test
+from pdf2zh_pro.pdf import set_text_checks_skipped
+from pdf2zh_pro.pdf import translate_pdf_with_callbacks
+from pdf2zh_pro.pdf import validate_service_config
+from pdf2zh_pro.config import SettingsModel
 
 
 def make_settings_payload(**overrides):
@@ -101,7 +101,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
             }))
 
     def test_dedicated_term_translator_inherits_resolved_protocol_and_base(self):
-        from pdf2zh_next.high_level import create_babeldoc_config
+        from pdf2zh_pro.pdf import create_babeldoc_config
         runtime = create_runtime_settings(make_settings_payload(service="openai", no_auto_extract_glossary=False, llm_api={
             "apiKey": "test-key", "apiUrl": "https://relay.invalid/custom/chat/completions",
             "model": "model", "apiProtocol": "auto",
@@ -110,9 +110,9 @@ class PDF2zhNextServiceTests(unittest.TestCase):
             resolved_protocol="responses", requires_dedicated_term_extraction_translator=True,
             client=SimpleNamespace(base_url="https://relay.invalid/custom/"),
         )
-        with patch("pdf2zh_next.high_level.get_translator", return_value=translator), \
-             patch("pdf2zh_next.high_level.get_term_translator", return_value=translator) as term, \
-             patch("pdf2zh_next.high_level.BabelDOCConfig"):
+        with patch("pdf2zh_pro.pdf.prepare_translator", return_value=translator), \
+             patch("pdf2zh_pro.pdf.prepare_term_translator", return_value=translator) as term, \
+             patch("pdf2zh_pro.pdf.BabelDOCConfig"):
             create_babeldoc_config(runtime, Path("/tmp/source.pdf"))
         inherited = term.call_args.args[0].term_extraction_engine_settings
         self.assertEqual(inherited.openai_api_protocol, "responses")
@@ -120,7 +120,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         self.assertEqual(runtime.translate_engine_settings.openai_api_protocol, "auto")
 
     def test_disabled_term_extraction_never_creates_or_probes_a_dedicated_translator(self):
-        from pdf2zh_next.high_level import create_babeldoc_config
+        from pdf2zh_pro.pdf import create_babeldoc_config
         runtime = create_runtime_settings(make_settings_payload(service="openai", llm_api={
             "apiKey": "test-key", "apiUrl": "https://relay.invalid/v1", "model": "main-model",
         }))
@@ -128,9 +128,9 @@ class PDF2zhNextServiceTests(unittest.TestCase):
             update={"openai_model": "different-term-model"})
         runtime.translation.term_qps = 1
         translator = SimpleNamespace(requires_dedicated_term_extraction_translator=True)
-        with patch("pdf2zh_next.high_level.get_translator", return_value=translator) as main, \
-             patch("pdf2zh_next.high_level.get_term_translator") as term, \
-             patch("pdf2zh_next.high_level.BabelDOCConfig") as config:
+        with patch("pdf2zh_pro.pdf.prepare_translator", return_value=translator) as main, \
+             patch("pdf2zh_pro.pdf.prepare_term_translator") as term, \
+             patch("pdf2zh_pro.pdf.BabelDOCConfig") as config:
             create_babeldoc_config(runtime, Path("/tmp/source.pdf"))
         main.assert_called_once()
         term.assert_not_called()
@@ -139,7 +139,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         self.assertFalse(config.call_args.kwargs["auto_extract_glossary"])
 
     def test_enabled_term_extraction_reuses_only_matching_effective_settings_and_qps(self):
-        from pdf2zh_next.high_level import create_babeldoc_config
+        from pdf2zh_pro.pdf import create_babeldoc_config
         for term_qps, different_model, dedicated, expected_separate in (
             (None, False, False, False), (20, False, False, False),
             (1, False, False, True), (None, True, False, True), (None, False, True, True),
@@ -155,9 +155,9 @@ class PDF2zhNextServiceTests(unittest.TestCase):
                         update={"openai_model": "different-term-model"})
                 translator = SimpleNamespace(requires_dedicated_term_extraction_translator=dedicated)
                 term_translator = object()
-                with patch("pdf2zh_next.high_level.get_translator", return_value=translator), \
-                     patch("pdf2zh_next.high_level.get_term_translator", return_value=term_translator) as term, \
-                     patch("pdf2zh_next.high_level.BabelDOCConfig") as config:
+                with patch("pdf2zh_pro.pdf.prepare_translator", return_value=translator), \
+                     patch("pdf2zh_pro.pdf.prepare_term_translator", return_value=term_translator) as term, \
+                     patch("pdf2zh_pro.pdf.BabelDOCConfig") as config:
                     create_babeldoc_config(runtime, Path("/tmp/source.pdf"))
                 self.assertEqual(term.call_count, int(expected_separate))
                 self.assertIs(config.call_args.kwargs["term_extraction_translator"],
@@ -190,16 +190,16 @@ class PDF2zhNextServiceTests(unittest.TestCase):
 
         with (
             TemporaryDirectory() as directory,
-            patch("pdf2zh_next_service.Path.read_bytes", return_value=b"pdf"),
-            patch("pdf2zh_next_service.create_runtime_settings", return_value=object()),
-            patch("pdf2zh_next_service.create_babeldoc_config", return_value=config),
+            patch("pdf2zh_pro.pdf.Path.read_bytes", return_value=b"pdf"),
+            patch("pdf2zh_pro.pdf.create_runtime_settings", return_value=object()),
+            patch("pdf2zh_pro.pdf.create_babeldoc_config", return_value=config),
             patch(
-                "pdf2zh_next_service.download_all_fonts_async",
+                "pdf2zh_pro.pdf.download_all_fonts_async",
                 side_effect=prepare_fonts,
             ),
-            patch("pdf2zh_next_service.babeldoc_translate", side_effect=translate),
+            patch("pdf2zh_pro.pdf.babeldoc_translate", side_effect=translate),
             patch(
-                "pdf2zh_next_service.collect_output_files",
+                "pdf2zh_pro.pdf.collect_output_files",
                 return_value=expected_files,
             ),
         ):
@@ -273,9 +273,9 @@ class PDF2zhNextServiceTests(unittest.TestCase):
 
     def test_settings_contract_and_defaults(self) -> None:
         settings_input = build_settings_input(make_settings_payload())
-        settings = CLIEnvSettingsModel.model_validate(
+        settings = SettingsModel.model_validate(
             settings_input
-        ).to_settings_model()
+        )
 
         self.assertEqual(settings.translation.lang_in, "en")
         self.assertEqual(settings.translation.lang_out, "fr")
@@ -302,9 +302,9 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         default_payload = make_settings_payload()
         default_payload.pop("pool_size")
         default_payload.pop("no_auto_extract_glossary")
-        default_settings = CLIEnvSettingsModel.model_validate(
+        default_settings = SettingsModel.model_validate(
             build_settings_input(default_payload)
-        ).to_settings_model()
+        )
         self.assertEqual(default_settings.translation.pool_max_workers, 50)
         self.assertTrue(default_settings.translation.no_auto_extract_glossary)
 
@@ -335,9 +335,9 @@ class PDF2zhNextServiceTests(unittest.TestCase):
         for protocol in ("chat_completions", "responses"):
             with self.subTest(protocol=protocol):
                 translator = SimpleNamespace(model="custom-model", resolved_protocol=protocol)
-                with patch("pdf2zh_next_service.create_runtime_settings"), \
-                     patch("pdf2zh_next_service.get_translator", return_value=translator), \
-                     patch("pdf2zh_next_service.run_live_translator_test") as probe:
+                with patch("pdf2zh_pro.pdf.create_model_settings"), \
+                     patch("pdf2zh_pro.pdf.prepare_translator", return_value=translator), \
+                     patch("pdf2zh_pro.pdf.run_live_translator_test") as probe:
                     result = validate_service_config({"service": "openai", "live_test": True}, "test")
                 self.assertEqual(result.resolved_protocol, protocol)
                 self.assertTrue(result.live_test["ok"])

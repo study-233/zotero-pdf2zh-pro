@@ -663,9 +663,22 @@ class TypesettingUnit:
         scale: float,
     ):
         """Transform a curve for formula relocation."""
-        import copy
-
-        new_curve = copy.deepcopy(curve)
+        new_curve = PdfCurve(
+            box=curve.box,
+            graphic_state=curve.graphic_state,
+            pdf_path=list(curve.pdf_path),
+            pdf_original_path=list(curve.pdf_original_path),
+            pdf_original_path_primitive=curve.pdf_original_path_primitive,
+            debug_info=curve.debug_info,
+            fill_background=curve.fill_background,
+            stroke_path=curve.stroke_path,
+            evenodd=curve.evenodd,
+            passthrough_paint=curve.passthrough_paint,
+            xobj_id=curve.xobj_id,
+            render_order=curve.render_order,
+            ctm=list(curve.ctm),
+            relocation_transform=list(curve.relocation_transform),
+        )
 
         if new_curve.box:
             # Calculate relative position to formula's original position (same as chars)
@@ -722,9 +735,18 @@ class TypesettingUnit:
         scale: float,
     ):
         """Transform a form for formula relocation."""
-        import copy
-
-        new_form = copy.deepcopy(form)
+        new_form = PdfForm(
+            box=form.box,
+            graphic_state=form.graphic_state,
+            pdf_matrix=form.pdf_matrix,
+            pdf_affine_transform=form.pdf_affine_transform,
+            pdf_form_subtype=form.pdf_form_subtype,
+            xobj_id=form.xobj_id,
+            ctm=list(form.ctm),
+            relocation_transform=list(form.relocation_transform),
+            render_order=form.render_order,
+            form_type=form.form_type,
+        )
 
         if new_form.box:
             # Calculate relative position to formula's original position (same as chars)
@@ -1226,7 +1248,7 @@ class Typesetting:
             font_size=6,
             graphic_state=il_version_1.GraphicState(),
         )
-        text = f"本文档由 funstory.ai 的开源 PDF 翻译库 BabelDOC {WATERMARK_VERSION} (http://yadt.io) 翻译，本仓库正在积极的建设当中，欢迎 star 和关注。"
+        text = f"本文档由 funstory.ai 的开源 PDF 翻译库 BabelDOC {WATERMARK_VERSION} (https://github.com/funstory-ai/BabelDOC) 翻译，本仓库正在积极的建设当中，欢迎 star 和关注。"
         if self.translation_config.debug:
             text += "\n 当前为 DEBUG 模式，将显示更多辅助信息。请注意，部分框的位置对应原文，但在译文中可能不正确。"
         page.pdf_paragraph.append(
@@ -1434,7 +1456,17 @@ class Typesetting:
                 max_height = max(current_line_heights)
                 mode_height = statistics.mode(current_line_heights)
 
-                current_y -= max(mode_height * line_skip, max_height * 1.05)
+                # Line advance must not collapse below the dominant em height.
+                # current_line_heights are per-glyph bounding-box heights, which
+                # for an all-Latin line (e.g. a citation run) are far shorter than
+                # the CJK em, shrinking the advance to ~half a line and letting the
+                # next CJK line overlap it. Floor the advance with font_size (the
+                # paragraph's dominant em) so script-mix never undersizes the gap.
+                current_y -= max(
+                    font_size * scale * line_skip,
+                    mode_height * line_skip,
+                    max_height * 1.05,
+                )
                 line_ys.append(current_y)
                 line_height = 0.0
                 current_line_heights = []  # 清空当前行高度列表

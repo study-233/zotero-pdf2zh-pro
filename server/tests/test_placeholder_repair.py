@@ -7,9 +7,9 @@ from unittest.mock import Mock
 
 import httpx
 
-from babeldoc.translator.placeholder_repair import PlaceholderRepair
-from babeldoc.translator.validation import PLACEHOLDER_PATTERN, InvalidTranslation, validate_text, canonicalize_placeholders
-from babeldoc.translator.request_budget import ParagraphRequestBudget
+from pdf2zh_pro.translator.placeholder_repair import PlaceholderRepair
+from pdf2zh_pro.translator.validation import PLACEHOLDER_PATTERN, InvalidTranslation, validate_text, canonicalize_placeholders
+from pdf2zh_pro.translator.request_budget import ParagraphRequestBudget
 from babeldoc.format.pdf.document_il import PdfCharacter, PdfFormula, PdfSameStyleCharacters, PdfStyle
 from babeldoc.format.pdf.document_il.midend.il_translator import (
     ILTranslator, ParagraphTranslateTracker, FormulaPlaceholder, RichTextPlaceholder,

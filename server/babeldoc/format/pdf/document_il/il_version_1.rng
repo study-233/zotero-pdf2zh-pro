@@ -94,6 +94,26 @@
         <data type="int"/>
       </attribute>
       <optional>
+        <attribute name="fontSubtype">
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="type3FontMatrix">
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="type3FontBBox">
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="type3EmHeight">
+          <data type="float"/>
+        </attribute>
+      </optional>
+      <optional>
         <attribute name="bold">
           <data type="boolean"/>
         </attribute>
@@ -461,6 +481,11 @@
       </optional>
       <optional>
         <attribute name="evenodd">
+          <data type="boolean"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="passthroughPaint">
           <data type="boolean"/>
         </attribute>
       </optional>

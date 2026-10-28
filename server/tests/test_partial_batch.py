@@ -16,8 +16,8 @@ from babeldoc.format.pdf.document_il.il_version_1 import (
 from babeldoc.format.pdf.document_il.midend.il_translator import ILTranslator, PageTranslateTracker
 from babeldoc.format.pdf.document_il.midend.il_translator_llm_only import ILTranslatorLLMOnly, BatchParagraph
 from babeldoc.format.pdf.translation_recovery import TranslationRecovery
-from babeldoc.translator.validation import InvalidTranslation, inspect_batch, validate_batch
-from pdf2zh_next.translator.base_translator import BaseTranslator
+from pdf2zh_pro.translator.validation import InvalidTranslation, inspect_batch, validate_batch
+from pdf2zh_pro.translator.base import BaseTranslator
 
 
 def translated(source):

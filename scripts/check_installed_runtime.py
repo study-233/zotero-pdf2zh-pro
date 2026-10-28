@@ -9,12 +9,13 @@ import sys
 import server
 
 import babeldoc
-import numpy
 import observability
-import pdf2zh_next
+import pdf2zh_pro
+import pymupdf
 import openai
 from packaging.version import Version
-from rapidocr_onnxruntime import RapidOCR
+from babeldoc.format.pdf.new_parser.runtime.cmap_secure_loader import load_verified_cmap_data
+from babeldoc.format.pdf.new_parser.native_parse import parse_prepared_pdf_with_new_parser_to_legacy_ir
 
 import truststore
 import task_manager
@@ -41,9 +42,9 @@ FORBIDDEN_DISTRIBUTIONS = {
     "uvicorn",
 }
 
-SECURITY_MINIMUMS = {"pypdf": "6.21.2", "pillow": "13.0.0",
+SECURITY_MINIMUMS = {"pymupdf": "2.0", "pillow": "13.0.0",
                      "filelock": "4.2.1", "certifi": "2026.10.19", "urllib3": "2.8.0",
-                     "fsspec": "2026.6.0", "werkzeug": "3.1.9"}
+                     "werkzeug": "3.1.9", "onnx": "1.21.0", "cryptography": "46.0.7"}
 
 
 def canonicalize_name(value: str) -> str:
@@ -78,9 +79,9 @@ def main() -> None:
         raise RuntimeError(f"Installed CLI entry point mismatch: {scripts}")
     if ssl.SSLContext is not truststore.SSLContext:
         raise RuntimeError("Server startup did not enable system certificate verification")
-    if pdf2zh_next.__version__ != "2.8.2":
-        raise RuntimeError(f"Unexpected pdf2zh_next snapshot: {pdf2zh_next.__version__}")
-    if babeldoc.__version__ != "0.5.24":
+    if pdf2zh_pro.__version__ != expected_version:
+        raise RuntimeError(f"Unexpected pdf2zh_pro version: {pdf2zh_pro.__version__}")
+    if babeldoc.__version__ != "0.6.4":
         raise RuntimeError(f"Unexpected BabelDOC snapshot: {babeldoc.__version__}")
     if not callable(observability.empty_metrics):
         raise RuntimeError("Observability runtime is incomplete")
@@ -98,19 +99,30 @@ def main() -> None:
         raise RuntimeError("Persistent runtime storage is missing")
 
     health = server.build_health_payload()
+    if health.get("capabilities", {}).get("structuredExport") is not True:
+        raise RuntimeError("Runtime is missing structured document exports")
     if not callable(maintenance.MaintenanceGate) or health.get("capabilities", {}).get("updateMaintenance") is not True:
         raise RuntimeError("Runtime is missing authenticated update maintenance")
     if health.get("capabilities", {}).get("glossaryPacks") is not True:
         raise RuntimeError("Runtime is missing downloadable glossary capabilities")
     if health.get("supportedApiProtocols") != ["auto", "chat_completions", "responses"]:
         raise RuntimeError("Runtime is missing dual-protocol capabilities")
-    if health["pdf2zhVersion"] != "2.8.2":
+    if health["pdf2zhVersion"] != expected_version:
         raise RuntimeError(f"Health reports wrong pdf2zh version: {health}")
-    if health["babeldocVersion"] != "0.5.24":
+    if health["babeldocVersion"] != "0.6.4":
         raise RuntimeError(f"Health reports wrong BabelDOC version: {health}")
 
-    image = numpy.full((32, 32, 3), 255, dtype=numpy.uint8)
-    RapidOCR()(image)
+    if not load_verified_cmap_data("UniGB-UCS2-H"):
+        raise RuntimeError("Native parser CMap resources are missing")
+    if not callable(parse_prepared_pdf_with_new_parser_to_legacy_ir):
+        raise RuntimeError("Native parser is missing")
+    with pymupdf.open() as document:
+        document.new_page().insert_text((72, 72), "Installed PDF runtime")
+        with pymupdf.open(stream=document.tobytes(), filetype="pdf") as reopened:
+            if "Installed PDF runtime" not in reopened[0].get_text():
+                raise RuntimeError("Installed PDF bindings cannot roundtrip text")
+            if "Installed PDF runtime" not in reopened.to_markdown(use_ocr=False, show_progress=False):
+                raise RuntimeError("Installed Layout/4LLM cannot export Markdown")
     print(
         f"validated installed runtime {expected_version}: "
         f"{len(installed)} distributions"

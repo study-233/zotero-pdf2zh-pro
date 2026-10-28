@@ -238,12 +238,21 @@ $OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($f
 . (Join-Path $PSScriptRoot 'workspace.ps1')
 $run=New-WorkspaceRun -Name 'powershell-check'
 Set-Content -LiteralPath (Join-Path $run.work 'validation.json') -Value '{"passed":true}'
-Complete-WorkspaceRun -Run $run -Passed $true
+Complete-WorkspaceRun -Run $run -Passed $true 2>&1 | ForEach-Object { Write-Output $_ }
 if (Test-Path -LiteralPath $run.work) {throw 'Temporary environment survived completion.'}
 if (-not (Test-Path -LiteralPath (Join-Path $run.report 'evidence.zip'))) {throw 'Evidence was lost.'}
+$failed=$false
+try { Invoke-WorkspaceManager -Arguments @('invalid-command') } catch { $failed=$true }
+if (-not $failed) {throw 'Workspace command failure was ignored.'}
 """, encoding='utf-8')
-        result = subprocess.run([shutil.which('pwsh') or shutil.which('powershell'), '-NoProfile', '-File', str(check)], capture_output=True, encoding='utf-8', errors='replace')
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        environment = dict(os.environ)
+        environment.pop('PSModulePath', None)
+        for shell in dict.fromkeys(filter(None, (shutil.which('pwsh'), shutil.which('powershell')))):
+            with self.subTest(shell=shell):
+                result = subprocess.run([shell, '-NoProfile', '-File', str(check)], env=environment,
+                                        capture_output=True, encoding='utf-8', errors='replace', timeout=60)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertNotIn('Temporary workspace retained', result.stdout + result.stderr)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js required')
     def test_node_helper_creates_managed_report_and_records_process_exit(self):

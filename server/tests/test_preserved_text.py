@@ -6,12 +6,12 @@ from contextlib import ExitStack
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from babeldoc.translator.preserved_text import preserved_text_reason
-from babeldoc.translator.literal_tags import LiteralTags
-from babeldoc.translator.validation import InvalidTranslation, validate_text
+from pdf2zh_pro.translator.preserved_text import preserved_text_reason
+from pdf2zh_pro.translator.literal_tags import LiteralTags
+from pdf2zh_pro.translator.validation import InvalidTranslation, validate_text
 from babeldoc.format.pdf.document_il.midend.il_translator import ILTranslator, ParagraphTranslateTracker
 from babeldoc.format.pdf.document_il.utils.layout_helper import get_paragraph_unicode
-from pdf2zh_next.translator.base_translator import BaseTranslator
+from pdf2zh_pro.translator.base import BaseTranslator
 import test_partial_batch as batch_fixtures
 
 

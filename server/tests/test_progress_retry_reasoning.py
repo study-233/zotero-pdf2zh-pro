@@ -12,20 +12,20 @@ import httpx
 import openai
 
 from babeldoc.progress_monitor import ProgressMonitor
-from babeldoc.translator.request_budget import ParagraphRequestBudget, TranslationBudgetExhausted
-from babeldoc.translator.request_budget import submit_translation
+from pdf2zh_pro.translator.request_budget import ParagraphRequestBudget, TranslationBudgetExhausted
+from pdf2zh_pro.translator.request_budget import submit_translation
 from babeldoc.format.pdf.document_il.midend.il_translator_llm_only import ILTranslatorLLMOnly
 from babeldoc.format.pdf.document_il.midend.il_translator import PageTranslateTracker, PbarContext
-from pdf2zh_next.translator.reasoning_mode import apply_reasoning_mode, reasoning_family
+from pdf2zh_pro.translator.reasoning_mode import apply_reasoning_mode, reasoning_family
 from observability import TaskMetricsCollector
 import test_openai_protocol as protocol_tests
 from test_openai_protocol import chat
 import test_partial_batch as partial_tests
 from test_partial_batch import MemoryCache, translated
 from test_cache_namespace import settings, NoopRateLimiter
-from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+from pdf2zh_pro.translator.openai import OpenAITranslator
 from test_pdf2zh_next_service import make_settings_payload
-from pdf2zh_next_service import create_runtime_settings, validate_service_config
+from pdf2zh_pro.pdf import create_runtime_settings, validate_service_config
 
 
 class ProgressTests(unittest.TestCase):
@@ -189,7 +189,7 @@ class BudgetTests(unittest.TestCase):
             engine.llm_translate("input", True, {"batch_size": 1, "request_budget": budget})
         self.assertEqual(len(helper.requests), 2)
         engine.check_cancelled = Mock(side_effect=asyncio.CancelledError)
-        from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+        from pdf2zh_pro.translator.openai import OpenAITranslator
         with self.assertRaises(asyncio.CancelledError):
             OpenAITranslator._wait_cancel(engine, 30)
 
@@ -201,7 +201,7 @@ class ReasoningTests(unittest.TestCase):
             config = settings(model="deepseek-v4-flash")
             if mode is not None:
                 config.translate_engine_settings.openai_reasoning_mode = mode
-            with patch("pdf2zh_next.translator.translator_impl.openai.openai.OpenAI"):
+            with patch("pdf2zh_pro.translator.openai.openai.OpenAI"):
                 engines.append(OpenAITranslator(config, NoopRateLimiter()))
         self.assertEqual(engines[0].cache.translate_engine_params, engines[1].cache.translate_engine_params)
         self.assertNotEqual(engines[1].cache.translate_engine_params, engines[2].cache.translate_engine_params)
@@ -217,7 +217,7 @@ class ReasoningTests(unittest.TestCase):
         for tokens, expected in ((2, "可能未生效"), (None, "无法确认"), (0, "为 0")):
             translator = SimpleNamespace(model="deepseek-v4-flash", reasoning_mode="off", resolved_protocol="chat_completions",
                 _pending_initialization_metrics=[{"usage": {"reasoning_tokens": tokens}}])
-            with patch("pdf2zh_next_service.get_translator", return_value=translator):
+            with patch("pdf2zh_pro.pdf.prepare_translator", return_value=translator):
                 result = validate_service_config({**payload, "live_test": True}, "test")
             self.assertIn(expected, result.live_test["reasoningMessage"])
 

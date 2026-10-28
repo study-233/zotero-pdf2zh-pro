@@ -14,6 +14,16 @@ import httpx
 from chatgpt_auth import AUTHORITY, AuthError, AuthStore, b64, credential_lock, login, private_write, verify_identity
 
 class LoginCancellationTests(unittest.TestCase):
+    def setUp(self):
+        # These tests exercise the real callback socket, not remote OAuth or TLS
+        # initialization. Loading a system trust store can exceed the startup
+        # deadline on a busy Windows host before the callback even exists.
+        client = Mock()
+        client.request.side_effect = AssertionError('Unexpected network request')
+        self.client_patch = patch('httpx.Client', return_value=client)
+        self.client_patch.start()
+        self.addCleanup(self.client_patch.stop)
+
     def test_loopback_login_startup_does_not_require_reverse_dns(self):
         cancelled = threading.Event()
         urls = []

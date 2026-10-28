@@ -1,5 +1,5 @@
-from babeldoc.translator.validation import InvalidTranslation, inspect_batch
-from babeldoc.translator.request_budget import submit_translation
+from pdf2zh_pro.translator.validation import InvalidTranslation, inspect_batch
+from pdf2zh_pro.translator.request_budget import submit_translation
 import openai
 
 import copy
@@ -37,8 +37,9 @@ from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
 from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
     is_pure_numeric_paragraph,
 )
+from babeldoc.format.pdf.translation_config import TitleContextSnapshot
 from babeldoc.format.pdf.translation_config import TranslationConfig
-from babeldoc.translator.translator import BaseTranslator
+from pdf2zh_pro.translator.base import BaseTranslator
 from babeldoc.utils.priority_thread_pool_executor import PriorityThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
@@ -206,9 +207,11 @@ class ILTranslatorLLMOnly:
             # Try to find the first title paragraph
             title_paragraph = self.find_title_paragraph(docs)
             self.translation_config.shared_context_cross_split_part.first_paragraph = (
-                copy.deepcopy(title_paragraph)
+                self.shared_context_cross_split_part.snapshot_title_paragraph(
+                    title_paragraph
+                )
             )
-            self.translation_config.shared_context_cross_split_part.recent_title_paragraph = copy.deepcopy(
+            self.translation_config.shared_context_cross_split_part.recent_title_paragraph = self.shared_context_cross_split_part.snapshot_title_paragraph(
                 title_paragraph
             )
             if title_paragraph:
@@ -624,7 +627,9 @@ class ILTranslatorLLMOnly:
             translated_ids.add(id(paragraph))
             if paragraph.layout_label == "title":
                 self.shared_context_cross_split_part.recent_title_paragraph = (
-                    copy.deepcopy(paragraph)
+                    self.shared_context_cross_split_part.snapshot_title_paragraph(
+                        paragraph
+                    )
                 )
 
             if total_token_count > 200 or len(paragraphs) > 5:
@@ -669,8 +674,8 @@ class ILTranslatorLLMOnly:
         pbar: tqdm | None = None,
         page_font_map: dict[str, PdfFont] = None,
         xobj_font_map: dict[int, dict[str, PdfFont]] = None,
-        title_paragraph: PdfParagraph | None = None,
-        local_title_paragraph: PdfParagraph | None = None,
+        title_paragraph: TitleContextSnapshot | None = None,
+        local_title_paragraph: TitleContextSnapshot | None = None,
         executor: PriorityThreadPoolExecutor | None = None,
         paragraph_token_count: int = 0,
         mp_id: int = 0,
@@ -975,8 +980,8 @@ class ILTranslatorLLMOnly:
     def _build_llm_prompt(
         self,
         json_input_str: str,
-        title_paragraph: PdfParagraph | None,
-        local_title_paragraph: PdfParagraph | None,
+        title_paragraph: TitleContextSnapshot | None,
+        local_title_paragraph: TitleContextSnapshot | None,
         batch_text_for_glossary_matching: str,
     ) -> str:
         """Build LLM prompt using a single template for easier maintenance."""

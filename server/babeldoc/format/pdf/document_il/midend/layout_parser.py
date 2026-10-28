@@ -186,7 +186,9 @@ class LayoutParser:
                 or source_page.mediabox.x0 or source_page.mediabox.y0):
             return
         try:
-            tables = source_page.find_tables(strategy="lines_strict").tables
+            # Layout regions were already detected by our PDF pipeline. PyMuPDF
+            # 2 defaults to a second model gate which can reject valid ruled cells.
+            tables = source_page.find_tables(strategy="lines_strict", use_layout=False).tables
         except Exception as error:
             logger.warning("native table detection failed: error_type=%s", type(error).__name__)
             return

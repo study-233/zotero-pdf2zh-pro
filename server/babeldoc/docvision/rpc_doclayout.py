@@ -17,7 +17,8 @@ import babeldoc
 from babeldoc.docvision.base_doclayout import DocLayoutModel
 from babeldoc.docvision.base_doclayout import YoloBox
 from babeldoc.docvision.base_doclayout import YoloResult
-from babeldoc.format.pdf.document_il.utils.mupdf_helper import get_no_rotation_img
+from babeldoc.format.pdf.document_il.utils.raster_geometry import RasterGeometry
+from babeldoc.format.pdf.document_il.utils.raster_geometry import with_target_long_edge
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +210,7 @@ class RpcDocLayoutModel(DocLayoutModel):
         host: str = None,
         result_container: ResultContainer | None = None,
         imgsz: int = 1024,
+        geometry: RasterGeometry | None = None,
     ) -> ResultContainer:
         """Predict the layout of document pages using RPC service."""
         if result_container is None:
@@ -232,6 +234,10 @@ class RpcDocLayoutModel(DocLayoutModel):
                     )
                     for x in pred["boxes"]
                 ]
+                if geometry is not None:
+                    for box in boxes:
+                        box.xyxy[[0, 2]] = geometry.px_len_to_pt(box.xyxy[[0, 2]], "x")
+                        box.xyxy[[1, 3]] = geometry.px_len_to_pt(box.xyxy[[1, 3]], "y")
                 result_container.result = YoloResult(
                     boxes=boxes,
                     names={int(k): v for k, v in pred["names"].items()},
@@ -244,11 +250,17 @@ class RpcDocLayoutModel(DocLayoutModel):
         if isinstance(image, np.ndarray) and len(image.shape) == 3:
             image = [image]
 
+        geometry = kwargs.get("geometry")
         result_containers = [ResultContainer() for _ in image]
         predict_thread = ThreadPoolExecutor(max_workers=len(image))
         for img, result_container in zip(image, result_containers, strict=True):
             predict_thread.submit(
-                self.predict_image, img, self.host, result_container, 800
+                self.predict_image,
+                img,
+                self.host,
+                result_container,
+                800,
+                geometry,
             )
         predict_thread.shutdown(wait=True)
         result = [result_container.result for result_container in result_containers]
@@ -259,14 +271,20 @@ class RpcDocLayoutModel(DocLayoutModel):
     ):
         translate_config.raise_if_cancelled()
         with self.lock:
-            # pix = mupdf_doc[page.page_number].get_pixmap(dpi=72)
-            pix = get_no_rotation_img(mupdf_doc[page.page_number])
-        image = np.frombuffer(pix.samples, np.uint8).reshape(
-            pix.height,
-            pix.width,
-            3,
-        )[:, :, ::-1]
-        predict_result = self.predict_image(image, self.host, None, 800)
+            geometry = with_target_long_edge(
+                mupdf_doc[page.page_number],
+                72,
+                800,
+                normalize_rotation=True,
+            )
+        image = geometry.image[:, :, ::-1]
+        predict_result = self.predict_image(
+            image,
+            self.host,
+            None,
+            800,
+            geometry,
+        )
         save_debug_image(image, predict_result, page.page_number + 1)
         return page, predict_result
 

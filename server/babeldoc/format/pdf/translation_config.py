@@ -5,6 +5,7 @@ import tempfile
 import threading
 from asyncio import CancelledError
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 
 from babeldoc.const import CACHE_FOLDER
@@ -13,7 +14,7 @@ from babeldoc.format.pdf.split_manager import PageCountStrategy
 from babeldoc.glossary import Glossary
 from babeldoc.glossary import GlossaryEntry
 from babeldoc.progress_monitor import ProgressMonitor
-from babeldoc.translator.translator import BaseTranslator
+from pdf2zh_pro.translator.base import BaseTranslator
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +25,17 @@ class WatermarkOutputMode(enum.Enum):
     Both = "both"
 
 
+@dataclass(frozen=True, slots=True)
+class TitleContextSnapshot:
+    debug_id: str | None
+    unicode: str | None
+    layout_label: str | None = None
+
+
 class SharedContextCrossSplitPart:
     def __init__(self):
-        self.first_paragraph = None
-        self.recent_title_paragraph = None
+        self.first_paragraph: TitleContextSnapshot | None = None
+        self.recent_title_paragraph: TitleContextSnapshot | None = None
         self._lock = threading.Lock()
         self.user_glossaries: list[Glossary] = []
         self.auto_extracted_glossary: Glossary | None = None
@@ -36,6 +44,15 @@ class SharedContextCrossSplitPart:
         # Statistics for valid characters/text across the whole file
         self.valid_char_count_total: int = 0
         self.total_valid_text_token_count: int = 0
+
+    def snapshot_title_paragraph(self, paragraph) -> TitleContextSnapshot | None:
+        if paragraph is None:
+            return None
+        return TitleContextSnapshot(
+            debug_id=getattr(paragraph, "debug_id", None),
+            unicode=getattr(paragraph, "unicode", None),
+            layout_label=getattr(paragraph, "layout_label", None),
+        )
 
     def initialize_glossaries(self, initial_glossaries: list[Glossary] | None):
         with self._lock:
@@ -206,6 +223,7 @@ class TranslationConfig:
         disable_same_text_fallback: bool = False,
         skip_references: bool = False,
         cancel_event: threading.Event | None = None,
+        translate_table_text: bool = False,
     ):
         self.translator = translator
         self.term_extraction_translator = term_extraction_translator or translator
@@ -315,7 +333,12 @@ class TranslationConfig:
         self._part_working_dirs: dict[int, Path] = {}
         self._part_output_dirs: dict[int, Path] = {}
 
-        self.table_model = table_model
+        if table_model is not None:
+            logger.warning(
+                "TranslationConfig.table_model is deprecated and ignored; "
+                "RapidOCR table-text detection has been retired."
+            )
+        self.table_model = None
         self.show_char_box = show_char_box
         self.custom_system_prompt = custom_system_prompt
         self.add_formula_placehold_hint = add_formula_placehold_hint
@@ -346,10 +369,7 @@ class TranslationConfig:
 
         self.save_auto_extracted_glossary = save_auto_extracted_glossary
 
-        # Native ruled cells can be translated without enabling the unfinished OCR model.
-        self.translate_table_text = table_model is not None
-        # force disable table translate until the new model is ready
-        self.table_model = None
+        self.translate_table_text = translate_table_text
         self.enable_graphic_element_process = enable_graphic_element_process
         self.skip_form_render = skip_form_render
         self.skip_curve_render = skip_curve_render

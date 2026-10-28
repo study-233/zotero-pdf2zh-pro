@@ -15,7 +15,7 @@ from babeldoc.format.pdf.document_il import Document, Page
 from babeldoc.format.pdf.document_il.midend.batch_finalizer import BatchFinalizer, ParagraphOutput
 from babeldoc.format.pdf.document_il.midend.il_translator import ILTranslator, PageTranslateTracker
 from babeldoc.format.pdf.document_il.midend.il_translator_llm_only import BatchParagraph
-from babeldoc.translator.validation import inspect_batch
+from pdf2zh_pro.translator.validation import inspect_batch
 
 
 class FinalizerTests(unittest.TestCase):

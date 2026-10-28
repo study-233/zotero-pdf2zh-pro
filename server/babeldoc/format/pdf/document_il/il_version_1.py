@@ -402,6 +402,34 @@ class PdfFont:
             "required": True,
         },
     )
+    font_subtype: str | None = field(
+        default=None,
+        metadata={
+            "name": "fontSubtype",
+            "type": "Attribute",
+        },
+    )
+    type3_font_matrix: str | None = field(
+        default=None,
+        metadata={
+            "name": "type3FontMatrix",
+            "type": "Attribute",
+        },
+    )
+    type3_font_bbox: str | None = field(
+        default=None,
+        metadata={
+            "name": "type3FontBBox",
+            "type": "Attribute",
+        },
+    )
+    type3_em_height: float | None = field(
+        default=None,
+        metadata={
+            "name": "type3EmHeight",
+            "type": "Attribute",
+        },
+    )
     bold: bool | None = field(
         default=None,
         metadata={
@@ -472,6 +500,27 @@ class PdfOriginalPath:
             "name": "pdfPath",
             "type": "Element",
             "required": True,
+        },
+    )
+
+
+@dataclass(slots=True)
+class PdfOriginalPathPrimitive:
+    class Meta:
+        name = "pdfOriginalPathPrimitive"
+
+    op: str | None = field(
+        default=None,
+        metadata={
+            "type": "Attribute",
+            "required": True,
+        },
+    )
+    args: list[float] = field(
+        default_factory=list,
+        metadata={
+            "type": "Attribute",
+            "tokens": True,
         },
     )
 
@@ -701,6 +750,13 @@ class PdfCurve:
             "type": "Element",
         },
     )
+    pdf_original_path_primitive: PdfOriginalPathPrimitive | None = field(
+        default=None,
+        metadata={
+            "name": "pdfOriginalPathPrimitive",
+            "type": "Element",
+        },
+    )
     debug_info: bool | None = field(
         default=None,
         metadata={
@@ -722,6 +778,13 @@ class PdfCurve:
     evenodd: bool | None = field(
         default=None,
         metadata={
+            "type": "Attribute",
+        },
+    )
+    passthrough_paint: bool | None = field(
+        default=None,
+        metadata={
+            "name": "passthroughPaint",
             "type": "Attribute",
         },
     )

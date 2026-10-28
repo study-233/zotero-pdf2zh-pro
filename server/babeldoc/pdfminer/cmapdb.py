@@ -20,8 +20,8 @@ from typing import BinaryIO
 from typing import TextIO
 from typing import cast
 
-from babeldoc.pdfminer.cmap_secure_loader import CMapIntegrityError
-from babeldoc.pdfminer.cmap_secure_loader import load_verified_cmap_data
+from babeldoc.format.pdf.new_parser.runtime.cmap_secure_loader import CMapIntegrityError
+from babeldoc.format.pdf.new_parser.runtime.cmap_secure_loader import load_verified_cmap_data
 from babeldoc.pdfminer.encodingdb import name2unicode
 from babeldoc.pdfminer.pdfexceptions import PDFException
 from babeldoc.pdfminer.pdfexceptions import PDFTypeError

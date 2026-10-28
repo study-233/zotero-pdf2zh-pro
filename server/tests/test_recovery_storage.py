@@ -68,7 +68,7 @@ class RecoveryStorageTests(unittest.TestCase):
         restored.register(docs, self.config)
         self.assertEqual(restored.restored(paragraphs[0], paragraphs[0].unicode), TARGET)
 
-    def test_configuration_change_clears_database_without_reimporting_legacy(self):
+    def test_configuration_change_preserves_history_without_reimporting_legacy(self):
         legacy, _, _ = self.legacy_file()
         original = legacy.read_bytes()
         self.recovery().close()
@@ -76,8 +76,42 @@ class RecoveryStorageTests(unittest.TestCase):
         self.assertEqual(changed.entries, {})
         self.assertEqual(changed.connection.execute("SELECT count(*) FROM contexts").fetchone()[0], 0)
         changed.close()
-        self.assertEqual(self.recovery().entries, {})
+        self.assertEqual(len(self.recovery().entries), 2)
         self.assertEqual(legacy.read_bytes(), original)
+
+    def test_generation_switch_preserves_committed_wal_context_and_review_budget(self):
+        old = self.recovery()
+        docs, paragraphs = self.document()
+        old.register(docs, self.config)
+        old.attempt(paragraphs, "private context")
+        old.record(paragraphs[0], "succeeded", input=paragraphs[0].unicode, translation=TARGET)
+        old.reserve_review_request(1, 8)
+        # Keep the source connection open: committed rows can still be in WAL.
+        changed = self.recovery("parser-v2")
+        changed.register(docs, self.config)
+        self.assertIsNone(changed.restored(paragraphs[0], paragraphs[0].unicode))
+        changed.close()
+        restored = self.recovery()
+        restored.register(docs, self.config)
+        self.assertEqual(restored.restored(paragraphs[0], paragraphs[0].unicode), TARGET)
+        self.assertEqual(restored.connection.execute("SELECT prompt FROM contexts").fetchone()[0], "private context")
+        self.assertTrue(restored.reserve_review_request(1, 2))
+        self.assertFalse(restored.reserve_review_request(1, 2))
+
+    def test_interrupted_generation_switch_leaves_active_and_history_intact(self):
+        self.legacy_file()
+        original = self.recovery()
+        original.close()
+        switch = TranslationRecovery._switch_generation
+        def interrupted(recovery, metadata):
+            switch(recovery, metadata)
+            raise RuntimeError("interrupted generation switch")
+        with patch.object(TranslationRecovery, "_switch_generation", interrupted):
+            with self.assertRaisesRegex(RuntimeError, "interrupted generation"):
+                self.recovery("parser-v2")
+        restored = self.recovery()
+        self.assertEqual(len(restored.entries), 2)
+        self.assertEqual(restored.connection.execute("SELECT count(*) FROM recovery_history").fetchone()[0], 0)
 
     def test_interrupted_migration_rolls_back_and_can_be_retried(self):
         legacy, _, _ = self.legacy_file()

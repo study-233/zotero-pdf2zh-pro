@@ -1,3 +1,8 @@
+import {
+    cancelDocumentExport,
+    exportSelectedDocument,
+    type DocumentExportFormat,
+} from "./modules/documentExport";
 import { cancelDictionaryDownload } from "./modules/selectionDictionaryDownload";
 import { stopDevelopmentLibrary } from "./modules/developmentLibrary";
 import { stopDiagnostics } from "./modules/diagnostics";
@@ -86,6 +91,7 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
 }
 
 async function onMainWindowUnload(_win: Window): Promise<void> {
+    cancelDocumentExport();
     unregisterNoticeWindow(_win);
     ztoolkit.unregisterAll();
     addon.data.dialog?.window?.close();
@@ -93,6 +99,7 @@ async function onMainWindowUnload(_win: Window): Promise<void> {
 }
 
 async function onShutdown(): Promise<void> {
+    cancelDocumentExport();
     stopPreferenceCards();
     stopPluginNotices();
     stopDevelopmentLibrary();
@@ -119,7 +126,9 @@ async function onNotify(
 
 function onShortcuts(_type: string) {}
 
-function onDialogEvents(type: string) {
+function onDialogEvents(type: string, format?: DocumentExportFormat) {
+    if (type === "exportDocument" && format)
+        void exportSelectedDocument(format);
     if (type === "openNoticeHelp") openNoticeHelp();
     if (type === "reloginChatGPT") openChatGPTLogin();
     if (type === "translatePDF") {

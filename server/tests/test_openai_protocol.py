@@ -9,12 +9,12 @@ import openai
 from tenacity import wait_none
 
 from observability import TaskMetricsCollector
-from pdf2zh_next.translator.openai_protocol import (
+from pdf2zh_pro.translator.openai_protocol import (
     normalize_endpoint,
     parse_request_options,
     wire_options,
 )
-from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+from pdf2zh_pro.translator.openai import OpenAITranslator
 from test_cache_namespace import settings, NoopRateLimiter
 
 
@@ -87,7 +87,7 @@ class ProtocolTests(unittest.TestCase):
         )
         self.addCleanup(client.close)
         with patch(
-            "pdf2zh_next.translator.translator_impl.openai.openai.OpenAI",
+            "pdf2zh_pro.translator.openai.openai.OpenAI",
             return_value=client,
         ):
             return OpenAITranslator(config, NoopRateLimiter())

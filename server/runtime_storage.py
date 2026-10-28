@@ -121,10 +121,16 @@ def _rebase_tasks(staging: Path, source: Path, target: Path):
                 return
             container[key] = str(target / relative)
 
-    for name in ("tasks.json", "tasks.json.bak"):
-        path = staging / name
-        if not path.exists():
-            continue
+    paths = [staging / name for name in ("tasks.json", "tasks.json.bak") if (staging / name).exists()]
+    if not paths:
+        return
+    backup_root = staging / "migration-backup"
+    backup_root.mkdir(exist_ok=True, mode=0o700)
+    if any((backup_root / path.name).exists() for path in paths):
+        # A second relocation must keep every earlier recovery copy intact.
+        backup_root = Path(tempfile.mkdtemp(prefix="relocation-", dir=backup_root))
+    for path in paths:
+        name = path.name
         data = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict) or not isinstance(data.get("tasks"), list):
             raise ValueError(f"Invalid legacy task store: {name}")
@@ -135,8 +141,7 @@ def _rebase_tasks(staging: Path, source: Path, target: Path):
                 relocate(request, key)
             for output in (task.get("result_files") or {}).values():
                 relocate(output, "output_path")
-        backup = staging / "migration-backup" / name
-        backup.parent.mkdir(exist_ok=True, mode=0o700)
+        backup = backup_root / name
         shutil.copy2(path, backup)
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 

@@ -1,10 +1,12 @@
 import asyncio
 import tempfile
 import unittest
+from contextlib import nullcontext
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 import pymupdf
-from babeldoc.format.pdf.document_il.frontend.il_creater import ILCreater
+from babeldoc.format.pdf.document_il.frontend.il_creater_active import ActiveILCreater as ILCreater
 from babeldoc.format.pdf.babelpdf.type3 import get_type3_bbox
 
 
@@ -56,7 +58,7 @@ class FontParseCacheTests(unittest.TestCase):
         from dataclasses import asdict
         from io import BytesIO
         from unittest.mock import patch
-        from babeldoc.format.pdf.high_level import start_parse_il
+        from babeldoc.format.pdf.new_parser.native_parse import parse_prepared_pdf_with_new_parser_to_legacy_ir
         from babeldoc.format.pdf.translation_config import TranslationConfig
         from babeldoc.progress_monitor import ProgressMonitor
         doc,font=type3_document()
@@ -73,11 +75,12 @@ class FontParseCacheTests(unittest.TestCase):
                 config=TranslationConfig(translator=SimpleNamespace(),input_file='generated.pdf',lang_in='en',lang_out='zh-CN',doc_layout_model=object(),working_dir=temp,output_dir=temp)
                 events=[];config.diagnostic_callback=events.append
                 config.progress_monitor=ProgressMonitor([(ILCreater.stage_name,1)],report_interval=60)
+                path=Path(temp)/'generated.pdf';path.write_bytes(pdf)
                 with pymupdf.open(stream=pdf,filetype='pdf') as parsed:
-                    il=ILCreater(config);il.mupdf=parsed
-                    if not cached:il.parse_font_xobj_id=il._parse_font_xobj_uncached
-                    start_parse_il(BytesIO(pdf),doc_zh=parsed,il_creater=il,translation_config=config)
-                    return asdict(il.docs),events
+                    override=nullcontext() if cached else patch.object(ILCreater, 'parse_font_xobj_id', ILCreater._parse_font_xobj_uncached)
+                    with override:
+                        document=parse_prepared_pdf_with_new_parser_to_legacy_ir(path,config=config,doc_pdf=parsed)
+                    return asdict(document),events
         with concurrent.futures.ThreadPoolExecutor(1) as pool:
             expected,_=pool.submit(parse,False).result()
             actual,events=pool.submit(parse,True).result()

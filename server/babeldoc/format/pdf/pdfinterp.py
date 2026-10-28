@@ -1,12 +1,14 @@
+"""Legacy pdfminer interpreter retained for explicit compatibility tooling."""
+
 import logging
 from collections.abc import Sequence
 from typing import Any
+from typing import Protocol
 from typing import cast
 
 import numpy as np
 
 from babeldoc.format.pdf.babelpdf.utils import guarded_bbox
-from babeldoc.format.pdf.document_il.frontend.il_creater import ILCreater
 from babeldoc.pdfminer import settings
 from babeldoc.pdfminer.pdfcolor import PREDEFINED_COLORSPACE
 from babeldoc.pdfminer.pdfcolor import PDFColorSpace
@@ -43,6 +45,40 @@ from babeldoc.pdfminer.utils import choplist
 from babeldoc.pdfminer.utils import mult_matrix
 
 log = logging.getLogger(__name__)
+
+
+class _InterpreterILCreater(Protocol):
+    xobj_id: int
+    passthrough_per_char_instruction: list[tuple[str, str]]
+
+    def on_page_resource_font(self, font, objid, fontid) -> None: ...
+    def on_stroking_color_space(self, color_space_name) -> None: ...
+    def on_non_stroking_color_space(self, color_space_name) -> None: ...
+    def on_passthrough_per_char(self, operator: str, args: list[str]) -> None: ...
+    def remove_latest_passthrough_per_char_instruction(self) -> None: ...
+    def on_xobj_form(
+        self,
+        ctm,
+        xobj_id: int,
+        xref_id: int,
+        form_type,
+        do_args: str,
+        bbox,
+        matrix,
+    ) -> None: ...
+    def on_xobj_begin(self, bbox, xref_id): ...
+    def on_xobj_end(self, xobj_id, base_op): ...
+    def on_pdf_clip_path(self, clip_path, evenodd: bool, ctm) -> None: ...
+    def on_page_start(self) -> None: ...
+    def on_page_crop_box(self, x0, y0, x1, y1) -> None: ...
+    def push_passthrough_per_char_instruction(self) -> None: ...
+    def pop_passthrough_per_char_instruction(self) -> None: ...
+    def on_line_dash(self, dash, phase) -> None: ...
+    def on_inline_image_begin(self) -> None: ...
+    def on_inline_image_end(self, stream_obj, ctm) -> None: ...
+    def on_new_stream(self) -> None: ...
+    def is_passthrough_per_char_operation(self, operator: str): ...
+    def is_graphic_operation(self, operator: str): ...
 
 
 def safe_float(o: Any) -> float | None:
@@ -99,7 +135,7 @@ class PDFPageInterpreterEx(PDFPageInterpreter):
         rsrcmgr: PDFResourceManager,
         device: PDFDevice,
         obj_patch,
-        il_creater: ILCreater,
+        il_creater: _InterpreterILCreater,
     ) -> None:
         self.rsrcmgr = rsrcmgr
         self.device = device

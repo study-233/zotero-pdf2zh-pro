@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 import server
 from text_translation import TextTranslationService, TextTranslationError, SelectionCancellation
 from translation_memory import TranslationMemory
-from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+from pdf2zh_pro.translator.openai import OpenAITranslator
 
 
 def frames(stream):

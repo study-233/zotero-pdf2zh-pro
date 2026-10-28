@@ -44,6 +44,7 @@ $package = [IO.Path]::GetFullPath($PackageSource)
 . (Join-Path $windowsDir "common.ps1")
 . (Join-Path $PSScriptRoot 'test_windows_process_helpers.ps1')
 $initialTestRoot = $AppRoot
+$previousDataDirectory = $env:PDF2ZH_DATA_DIR
 $destinationRoot = $null
 if (-not $AutostartApprovedKey.StartsWith($env:PDF2ZH_WINDOWS_REGISTRY_KEY + '\', [StringComparison]::OrdinalIgnoreCase)) {
     throw 'StartupApproved must be isolated with the test registry.'
@@ -61,12 +62,18 @@ function Wait-ExpectedHealth {
     $lastHealth = $null
     $startupChildren = @()
     $deadline = [Diagnostics.Stopwatch]::StartNew()
+    $ownershipDeadline = $null
     # A live service answers immediately during replacement. Counting polls
     # shortened that case to 30 seconds, even though first startup allowed much
     # longer network waits. Give both cases the same bounded startup deadline.
-    while ($deadline.ElapsedMilliseconds -lt 90000) {
+    while ($deadline.ElapsedMilliseconds -lt 90000 -or
+        ($ownershipDeadline -and $ownershipDeadline.ElapsedMilliseconds -lt 90000)) {
         $lastHealth = Get-ServerHealth
         if (Test-ExpectedHealth -Health $lastHealth) {
+            # Ownership queries can finish after HTTP becomes ready, especially
+            # while relocation cleanup scans a large installation. Bound that
+            # phase independently without weakening the ownership requirement.
+            if (-not $ownershipDeadline) {$ownershipDeadline = [Diagnostics.Stopwatch]::StartNew()}
             # Health can become ready before the startup script finishes checking ownership.
             # Do not inject a stop or port conflict until the GUI's startup children exit.
             $controlProcessId = Get-ManagedControlPanelProcessId
@@ -103,6 +110,9 @@ function Wait-ExpectedHealth {
                 Write-Host "[health-diagnostic] $_"
             }
         }
+    }
+    if (Test-ExpectedHealth -Health $lastHealth) {
+        throw "The endpoint is healthy but control startup ownership checks did not finish during $Stage."
     }
     throw "The expected health endpoint did not become ready during $Stage."
 }
@@ -207,6 +217,13 @@ function Invoke-RelocationProcess {
 try {
 Assert-True (Test-Path -LiteralPath $gui -PathType Leaf) "GUI binary is missing."
 Assert-True (Test-Path -LiteralPath $package -PathType Leaf) "Server wheel is missing."
+# An inherited data directory must not be read during candidate preparation.
+# An accidental import of this invalid store creates a recovery copy. Checking
+# directory contents detects reads even when TaskManager safely catches errors.
+$preflightSentinel = Join-Path $workspaceRun.work 'foreign-data'
+New-Item -ItemType Directory -Path $preflightSentinel | Out-Null
+[IO.File]::WriteAllText((Join-Path $preflightSentinel 'tasks.json'), 'invalid synthetic task store')
+$env:PDF2ZH_DATA_DIR = $preflightSentinel
 
 # A real first launch writes these before the user clicks Install.
 if (-not (Test-Path -LiteralPath $AppRoot)) {
@@ -225,6 +242,8 @@ if ($env:PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE -eq "1") {
     $initialInstallArguments.AllowPreparedDestination = $true
 }
 & (Join-Path $windowsDir "install.ps1") @initialInstallArguments
+Assert-True (@(Get-ChildItem -LiteralPath $preflightSentinel).Count -eq 1) "Candidate preparation read the inherited task store."
+Assert-True ([IO.File]::ReadAllText((Join-Path $preflightSentinel 'tasks.json')) -eq 'invalid synthetic task store') "Candidate preparation modified inherited data."
 Assert-True (Test-Path -LiteralPath $ControlPanelExecutable) "Installer did not copy the GUI."
 Assert-True ((Get-Content -Raw -LiteralPath $InstalledVersionFile).Trim() -eq $PackageVersion) "Installed version marker is incorrect."
 $savedExecutable = (Get-Content -Raw -LiteralPath $ExecutableFile).Trim()
@@ -468,6 +487,9 @@ Remove-Item -LiteralPath (Assert-TestPath $runtimeBackup) -Recurse -Force
     -NonInteractive
 Assert-True (Test-Path -LiteralPath $PrivateUvExecutable -PathType Leaf) "Reinstall did not restore private uv before relocation."
 Assert-True (Test-Path -LiteralPath (Join-Path $DataDir "preserve-me")) "Reinstall did not preserve data."
+$fixturePython = Join-Path (Split-Path (Get-ServerExecutable)) 'python.exe'
+& $fixturePython (Join-Path $PSScriptRoot 'release-data-fixtures.py') seed $DataDir
+Assert-True ($LASTEXITCODE -eq 0) 'Cannot seed historical paths before relocation.'
 & (Join-Path $BinDir "start-server.ps1") -Quiet
 $recoveryDir = Join-Path $DataDir "relocation-task"
 New-Item -ItemType Directory -Force -Path $recoveryDir | Out-Null
@@ -487,6 +509,8 @@ Assert-True (Test-Path -LiteralPath (Join-Path $recoveryDir "paragraph-recovery.
 Assert-True (-not (Test-Path -LiteralPath $rollbackRoot)) "Failed relocation left the destination behind."
 $rollbackControlProcessId = Wait-ControlPanel
 Wait-ExpectedHealth -Stage "failed relocation rollback"
+& $fixturePython (Join-Path $PSScriptRoot 'release-data-fixtures.py') verify $DataDir
+Assert-True ($LASTEXITCODE -eq 0) 'Failed relocation changed historical data.'
 Stop-ManagedControlPanel
 & (Join-Path $BinDir "start-server.ps1") -Quiet
 Wait-ExpectedHealth -Stage "successful relocation precondition"
@@ -516,6 +540,9 @@ Assert-True ($uninstallShortcut.Path -eq (Join-Path $BinDir "uninstall.cmd")) "R
 Assert-Autostart -Enabled $false
 Wait-PathAbsent -Path $sourceRoot
 Assert-True (-not (Test-Path -LiteralPath $sourceRoot)) "Relocation left the old product root behind."
+$fixturePython = Join-Path (Split-Path (Get-ServerExecutable)) 'python.exe'
+& $fixturePython (Join-Path $PSScriptRoot 'release-data-fixtures.py') verify $DataDir
+Assert-True ($LASTEXITCODE -eq 0) 'Historical task paths or data broke after relocation.'
 
 & (Join-Path $BinDir "uninstall.ps1") -PurgeData -NonInteractive
 Wait-PathAbsent -Path $AppRoot
@@ -528,5 +555,6 @@ $passed = $true
     $cleanupRoots = @($initialTestRoot, $destinationRoot)
     if ($WindowsPackage) { $cleanupRoots += $windowsDir }
     Stop-IsolatedTestProcesses -Roots $cleanupRoots
+    $env:PDF2ZH_DATA_DIR = $previousDataDirectory
     Complete-WorkspaceRun -Run $workspaceRun -Passed $passed
 }

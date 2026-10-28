@@ -241,7 +241,7 @@ class GlossaryManagerTests(unittest.TestCase):
             self.assertEqual(custom[0]["target"], "自定义")
 
     def test_language_aliases_scope_and_custom_language_specific_precedence(self):
-        from babeldoc.glossary_options import glossary_entries_for_language
+        from pdf2zh_pro.glossary import glossary_entries_for_language
         metadata, content = fixture_pack()
         manager = self.manager(metadata)
         self.install(manager, metadata, content)

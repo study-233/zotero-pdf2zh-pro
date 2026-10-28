@@ -9,8 +9,8 @@ import httpx
 from codex_client import CodexError, get_codex_client
 from codex_discovery import discovery_request
 
-from pdf2zh_next.translator.openai_protocol import normalize_endpoint
-from pdf2zh_next.translator.reasoning_mode import remember_capabilities
+from pdf2zh_pro.translator.openai_protocol import normalize_endpoint
+from pdf2zh_pro.translator.reasoning_mode import remember_capabilities
 
 
 class ModelDiscoveryError(ValueError):

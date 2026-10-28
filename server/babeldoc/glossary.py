@@ -9,7 +9,7 @@ from pathlib import Path
 import chardet
 import hyperscan
 import regex
-from babeldoc.glossary_options import contains_glossary_term
+from pdf2zh_pro.glossary import contains_glossary_term
 
 logger = logging.getLogger(__name__)
 

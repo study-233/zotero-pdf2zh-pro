@@ -72,7 +72,7 @@ class DiagnosticTests(unittest.TestCase):
             self.assertNotIn(secret, json.dumps(rows))
 
     def test_native_validation_details_survive_recovery_and_task_api(self):
-        from babeldoc.translator.validation import InvalidTranslation, validate_text
+        from pdf2zh_pro.translator.validation import InvalidTranslation, validate_text
         from babeldoc.format.pdf.translation_recovery import safe_error
         try:
             validate_text('Result {v1}', '结果 {v2}', 'zh-CN')

@@ -16,12 +16,11 @@ from unittest.mock import patch
 import babeldoc
 import pymupdf
 
-from babeldoc.pdfminer import cmap_secure_loader
-from babeldoc.pdfminer._cmap_manifest_data import CMAP_MANIFEST
+from babeldoc.format.pdf.new_parser.runtime import cmap_secure_loader
+from babeldoc.format.pdf.new_parser.runtime._cmap_manifest_data import CMAP_MANIFEST
 from babeldoc.pdfminer.cmapdb import CMapDB
 from babeldoc.pdfminer.image import ImageWriter
 from babeldoc.pdfminer.lzw import lzwdecode
-from babeldoc.pymupdf_compat import install_compatibility_fixes
 
 
 def unusual_font_pdf(subtype="/UnsupportedTestFont"):
@@ -66,19 +65,11 @@ class PyMuPDFCompatibilityTests(unittest.TestCase):
                 self.assertIn("PDF compatibility check", result[0].get_text())
                 self.assertTrue(result[0].get_fonts())
 
-    def test_install_is_idempotent_and_version_scoped(self):
-        original = pymupdf.message
-        install_compatibility_fixes()
-        self.assertIs(pymupdf.message, original)
-        sentinel = lambda text="": None
-        with patch.object(pymupdf, "VersionBind", "9.0.0"), patch.object(pymupdf, "message", sentinel):
-            install_compatibility_fixes()
-            self.assertIs(pymupdf.message, sentinel)
-
-    def test_fresh_worker_import_installs_fix(self):
+    def test_fresh_worker_uses_current_bindings_without_legacy_patch(self):
         result = subprocess.run(
             [sys.executable, "-W", "error::DeprecationWarning", "-c",
-             "import babeldoc, pymupdf; pymupdf.message('worker %s', 'ready')"],
+             "import babeldoc, pymupdf; doc=pymupdf.open(); doc.new_page(); "
+             "assert len(doc.tobytes()) > 0; doc.close()"],
             cwd=Path(babeldoc.__file__).resolve().parents[1],
             capture_output=True, text=True, timeout=15,
         )
@@ -186,7 +177,7 @@ class LegacyParserTests(unittest.TestCase):
 
     def test_public_engine_exports_are_importable(self):
         namespace = {}
-        exec("from pdf2zh_next import *", namespace)
+        exec("from pdf2zh_pro.translator.providers import ClaudeCodeSettings", namespace)
         self.assertIn("ClaudeCodeSettings", namespace)
 
 

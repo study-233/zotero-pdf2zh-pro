@@ -94,6 +94,11 @@ class TranslationRecovery:
             self.connection.execute("CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             self.connection.execute("CREATE TABLE IF NOT EXISTS contexts (id INTEGER PRIMARY KEY, prompt TEXT NOT NULL UNIQUE)")
             self.connection.execute("CREATE TABLE IF NOT EXISTS paragraphs (key TEXT PRIMARY KEY, payload TEXT NOT NULL, context_id INTEGER REFERENCES contexts(id))")
+            # Keep the active v1 tables readable by the translation-memory sync.
+            # A configuration/parser change archives the complete generation in
+            # the same transaction; it must never destroy an earlier checkpoint.
+            self.connection.execute("CREATE TABLE IF NOT EXISTS recovery_history (fingerprint TEXT NOT NULL, key TEXT NOT NULL, payload TEXT NOT NULL, context TEXT, PRIMARY KEY(fingerprint, key))")
+            self.connection.execute("CREATE TABLE IF NOT EXISTS recovery_history_metadata (fingerprint TEXT PRIMARY KEY, payload TEXT NOT NULL)")
             metadata = dict(self.connection.execute("SELECT key, value FROM metadata"))
             if not metadata:
                 for key, entry in self._legacy_entries(legacy_path).items():
@@ -109,9 +114,42 @@ class TranslationRecovery:
             elif metadata.get("version") != str(self.VERSION):
                 raise ValueError("Unsupported recovery database version")
             elif metadata.get("fingerprint") != self.fingerprint:
-                self.connection.execute("DELETE FROM paragraphs")
-                self.connection.execute("DELETE FROM contexts")
-                self.connection.execute("UPDATE metadata SET value=? WHERE key='fingerprint'", (self.fingerprint,))
+                self._switch_generation(metadata)
+
+    def _switch_generation(self, metadata):
+        """Archive and restore exact fingerprints atomically, including WAL data.
+
+        Do not reuse entries across parser generations: paragraph indices and
+        placeholder ownership may have changed even when the PDF is identical.
+        """
+        previous = metadata["fingerprint"]
+        self.connection.execute("DELETE FROM recovery_history WHERE fingerprint=?", (previous,))
+        self.connection.execute(
+            "INSERT INTO recovery_history SELECT ?, p.key, p.payload, c.prompt "
+            "FROM paragraphs p LEFT JOIN contexts c ON c.id=p.context_id", (previous,),
+        )
+        self.connection.execute(
+            "INSERT INTO recovery_history_metadata VALUES (?, ?) "
+            "ON CONFLICT(fingerprint) DO UPDATE SET payload=excluded.payload",
+            (previous, json.dumps(metadata)),
+        )
+        saved = self.connection.execute(
+            "SELECT payload FROM recovery_history_metadata WHERE fingerprint=?", (self.fingerprint,),
+        ).fetchone()
+        restored_metadata = json.loads(saved[0]) if saved else {
+            "version": str(self.VERSION), "fingerprint": self.fingerprint,
+        }
+        self.connection.execute("DELETE FROM paragraphs")
+        self.connection.execute("DELETE FROM contexts")
+        self.connection.execute("DELETE FROM metadata")
+        self.connection.executemany("INSERT INTO metadata VALUES (?, ?)", restored_metadata.items())
+        for key, payload, context in self.connection.execute(
+            "SELECT key, payload, context FROM recovery_history WHERE fingerprint=?", (self.fingerprint,),
+        ).fetchall():
+            entry = json.loads(payload)
+            if context is not None:
+                entry["contextId"] = self._context_id(context)
+            self._upsert(key, entry)
 
     def _legacy_entries(self, path):
         try:

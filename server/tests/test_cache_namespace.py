@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+from pdf2zh_pro.translator.openai import OpenAITranslator
 
 
 class NoopRateLimiter:
@@ -46,7 +46,7 @@ def settings(
 
 class CacheNamespaceTests(unittest.TestCase):
     def params(self, runtime_settings) -> dict:
-        with patch("pdf2zh_next.translator.translator_impl.openai.openai.OpenAI"):
+        with patch("pdf2zh_pro.translator.openai.openai.OpenAI"):
             translator = OpenAITranslator(runtime_settings, NoopRateLimiter())
         translator.configure_cache_namespace(provider="deepseek")
         return json.loads(translator.cache.translate_engine_params)
@@ -76,7 +76,7 @@ class CacheNamespaceTests(unittest.TestCase):
         self.assertEqual(self.params(settings()), baseline)
 
     def test_deepseek_term_extraction_disables_thinking_and_separates_cache(self) -> None:
-        with patch("pdf2zh_next.translator.translator_impl.openai.openai.OpenAI"):
+        with patch("pdf2zh_pro.translator.openai.openai.OpenAI"):
             translator = OpenAITranslator(settings(), NoopRateLimiter())
         translator.configure_for_term_extraction()
         translator.client = Mock()
@@ -94,7 +94,7 @@ class CacheNamespaceTests(unittest.TestCase):
         self.assertEqual(params["deepseek_thinking"], "disabled")
 
     def test_regular_deepseek_translation_keeps_provider_default_thinking(self) -> None:
-        with patch("pdf2zh_next.translator.translator_impl.openai.openai.OpenAI"):
+        with patch("pdf2zh_pro.translator.openai.openai.OpenAI"):
             translator = OpenAITranslator(settings(), NoopRateLimiter())
         translator.client = Mock()
         translator.client.chat.completions.create.return_value = SimpleNamespace(

@@ -38,7 +38,8 @@ def visible_windows(process_id):
 if __name__ == '__main__':
     windows = visible_windows(int(sys.argv[1]))
     if '--panel' in sys.argv[2:]:
-        panels = [window for window in windows if window['title'] == 'zotero-pdf2zh-pro']
+        title = 'zotero-pdf2zh-pro 安装' if '--setup' in sys.argv[2:] else 'zotero-pdf2zh-pro'
+        panels = [window for window in windows if window['title'] == title]
         print(panels[0]['handle'] if panels else 0)
         raise SystemExit(0)
     if windows:

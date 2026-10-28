@@ -12,9 +12,9 @@ from tenacity import wait_none
 from babeldoc.format.pdf.quality_review import QualityReview, ReviewBudgetExhausted
 from babeldoc.format.pdf.document_il import Document, Page, PdfParagraph, PdfParagraphComposition, PdfCharacter
 from babeldoc.format.pdf.translation_recovery import TranslationRecovery
-from babeldoc.translator.validation import InvalidTranslation, validate_text
-from pdf2zh_next.translator.base_translator import BaseTranslator
-from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+from pdf2zh_pro.translator.validation import InvalidTranslation, validate_text
+from pdf2zh_pro.translator.base import BaseTranslator
+from pdf2zh_pro.translator.openai import OpenAITranslator
 import test_openai_protocol as protocol_fixtures
 
 

@@ -2,8 +2,17 @@
 $script:workspaceManager = Join-Path $PSScriptRoot 'workspace.py'
 function Invoke-WorkspaceManager {
     param([string[]]$Arguments)
-    $text = & python -B -X utf8 $script:workspaceManager @Arguments
-    if ($LASTEXITCODE -ne 0) { throw "Workspace manager failed: $($Arguments[0])" }
+    # Python reports cleanup progress on stderr. Windows PowerShell 5.1 treats
+    # redirected native stderr as errors; the process exit code is authoritative.
+    $previousErrorAction = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $text = & python -B -X utf8 $script:workspaceManager @Arguments
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorAction
+    }
+    if ($exitCode -ne 0) { throw "Workspace manager failed: $($Arguments[0])" }
     return ($text -join "`n" | ConvertFrom-Json)
 }
 function New-WorkspaceRun {

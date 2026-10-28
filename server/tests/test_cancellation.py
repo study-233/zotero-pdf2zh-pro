@@ -11,7 +11,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 import babeldoc.format.pdf.high_level as high_level
-import pdf2zh_next_service as service
+import pdf2zh_pro.pdf as service
 from babeldoc.format.pdf.translation_config import TranslationConfig
 from babeldoc.progress_monitor import ProgressMonitor
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaRevision": 3,
+  "schemaRevision": 4,
   "supportedSchemaVersions": [
     1
   ],
@@ -12,7 +12,8 @@
     "schema_negotiation",
     "evidence_chain",
     "execution_history",
-    "offline_analysis"
+    "offline_analysis",
+    "structured_export"
   ],
   "numeric": [
     "accepted",
@@ -372,6 +373,17 @@
       "default",
       "low",
       "off"
+    ],
+    "exportCode": [
+      "export_forbidden",
+      "export_invalid_request",
+      "export_invalid_pdf",
+      "export_needs_ocr",
+      "export_busy",
+      "export_cancelled",
+      "export_timeout",
+      "export_too_large",
+      "export_failed"
     ]
   },
   "identifiers": [
@@ -1050,6 +1062,10 @@
     "responsesFirst": {
       "coverage": "request_metrics",
       "component": "server"
+    },
+    "structuredExport": {
+      "coverage": "task_events",
+      "component": "server"
     }
   },
   "events": {
@@ -1230,6 +1246,34 @@
     "worker_started": {
       "component": "server",
       "requiredFields": []
+    },
+    "document_export_started": {
+      "component": "server",
+      "requiredFields": [
+        "taskId",
+        "executionId"
+      ]
+    },
+    "document_export_completed": {
+      "component": "server",
+      "requiredFields": [
+        "taskId",
+        "executionId"
+      ]
+    },
+    "document_export_failed": {
+      "component": "server",
+      "requiredFields": [
+        "taskId",
+        "executionId"
+      ]
+    },
+    "document_export_cancelled": {
+      "component": "server",
+      "requiredFields": [
+        "taskId",
+        "executionId"
+      ]
     }
   },
   "eventPatterns": [

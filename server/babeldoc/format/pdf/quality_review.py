@@ -6,8 +6,8 @@ import threading
 from collections import Counter
 from dataclasses import dataclass, field
 
-from babeldoc.glossary_options import glossary_entries_for_language, contains_glossary_term
-from babeldoc.translator.validation import InvalidTranslation, clean_json, validate_text
+from pdf2zh_pro.glossary import glossary_entries_for_language, contains_glossary_term
+from pdf2zh_pro.translator.validation import InvalidTranslation, clean_json, validate_text
 
 
 REVIEW_VERSION = "body-review-v1"

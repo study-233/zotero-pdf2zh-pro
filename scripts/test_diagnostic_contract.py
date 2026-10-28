@@ -29,7 +29,7 @@ class DiagnosticContractTests(unittest.TestCase):
         original = Path.read_text
         def source(path, *args, **kwargs):
             text = original(path, *args, **kwargs)
-            if path == ROOT / 'server/babeldoc/translator/validation.py':
+            if path == ROOT / 'server/pdf2zh_pro/translator/validation.py':
                 text += '\nraise InvalidTranslation("new_feature_failure")\n'
             return text
         with patch.object(Path, 'read_text', source), self.assertRaisesRegex(ValueError, 'Unregistered validation'):

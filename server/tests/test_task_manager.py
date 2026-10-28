@@ -9,7 +9,7 @@ from unittest.mock import patch
 SERVER_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SERVER_DIR))
 
-from pdf2zh_next_service import TranslationOutputFile
+from pdf2zh_pro.pdf import TranslationOutputFile
 from task_manager import TaskManager
 from task_manager import TaskRecord
 from observability import empty_metrics

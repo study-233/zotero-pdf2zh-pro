@@ -12,7 +12,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import server
-from pdf2zh_next_service import translate_pdf_with_callbacks
+from pdf2zh_pro.pdf import translate_pdf_with_callbacks
 from task_manager import TaskManager, TaskRecord
 from translation_memory import TranslationMemory, document_fingerprint, sync_recovery
 
@@ -185,11 +185,11 @@ class MemoryTests(unittest.TestCase):
             self.assertFalse(self.memory.lookup(document_fingerprint(pdf), SOURCE)['matched'])
             return {'dual': SimpleNamespace(filename='translated.pdf')}
 
-        with patch('pdf2zh_next_service.create_runtime_settings', return_value=object()), \
-             patch('pdf2zh_next_service.create_babeldoc_config', return_value=config), \
-             patch('pdf2zh_next_service.download_all_fonts_async', side_effect=fonts), \
-             patch('pdf2zh_next_service.babeldoc_translate', side_effect=translate), \
-             patch('pdf2zh_next_service.collect_output_files', side_effect=output):
+        with patch('pdf2zh_pro.pdf.create_runtime_settings', return_value=object()), \
+             patch('pdf2zh_pro.pdf.create_babeldoc_config', return_value=config), \
+             patch('pdf2zh_pro.pdf.download_all_fonts_async', side_effect=fonts), \
+             patch('pdf2zh_pro.pdf.babeldoc_translate', side_effect=translate), \
+             patch('pdf2zh_pro.pdf.collect_output_files', side_effect=output):
             result = asyncio.run(translate_pdf_with_callbacks(payload, 'pipeline'))
         self.assertEqual(result.translation_memory_sync, 'pending')
         self.assertFalse(self.memory.lookup(document_fingerprint(pdf), SOURCE)['matched'])
@@ -199,7 +199,7 @@ class MemoryTests(unittest.TestCase):
     def test_lookup_route_validation_and_zero_provider_calls(self):
         self.memory.upsert('one', [entry()])
         with patch.object(server, 'TRANSLATES_DIR', self.root), \
-             patch('pdf2zh_next_service.get_translator') as provider:
+             patch('pdf2zh_pro.pdf.prepare_translator') as provider:
             client = server.create_app().test_client()
             base = {'documentFingerprint': 'one', 'text': SOURCE, 'page': 5}
             for changes, kind in (({}, 'exact'), ({'text': 'physical devices'}, 'contained')):
@@ -215,7 +215,7 @@ class MemoryTests(unittest.TestCase):
 
 class MemoryFailureIsolationTests(unittest.TestCase):
     def test_generated_pdf_survives_memory_failure_and_startup_retries_without_translation(self):
-        from pdf2zh_next_service import TranslationOutputFile
+        from pdf2zh_pro.pdf import TranslationOutputFile
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source = root / 'paper.pdf'
@@ -237,11 +237,11 @@ class MemoryFailureIsolationTests(unittest.TestCase):
             with patch.object(manager, '_start_worker_locked'):
                 manager.create_task(task_id='memory-failure', file_name='paper.pdf', service='openai',
                     output_modes=['dual'], request_payload=payload, workspace_dir=root)
-            with patch('pdf2zh_next_service.create_runtime_settings', return_value=object()), \
-                 patch('pdf2zh_next_service.create_babeldoc_config', return_value=config), \
-                 patch('pdf2zh_next_service.download_all_fonts_async', side_effect=fonts), \
-                 patch('pdf2zh_next_service.babeldoc_translate', side_effect=translate) as provider, \
-                 patch('pdf2zh_next_service.collect_output_files', side_effect=output), \
+            with patch('pdf2zh_pro.pdf.create_runtime_settings', return_value=object()), \
+                 patch('pdf2zh_pro.pdf.create_babeldoc_config', return_value=config), \
+                 patch('pdf2zh_pro.pdf.download_all_fonts_async', side_effect=fonts), \
+                 patch('pdf2zh_pro.pdf.babeldoc_translate', side_effect=translate) as provider, \
+                 patch('pdf2zh_pro.pdf.collect_output_files', side_effect=output), \
                  patch('translation_memory.sync_recovery', side_effect=sqlite3.OperationalError('locked')):
                 manager._run_task('memory-failure', 1)
                 task = manager.get_task('memory-failure')

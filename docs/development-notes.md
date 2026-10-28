@@ -116,7 +116,7 @@ UV_DEFAULT_INDEX=https://pypi.org/simple uv --directory server lock
 ```
 
 面向用户的 PyPI 包和 CLI 都叫 `zotero-pdf2zh-pro`。包内固定包含
-pdf2zh-next、BabelDOC 和 RapidOCR 核心快照；来源、SHA 和许可证记录在
+自主维护的 pdf2zh_pro 核心与 BabelDOC PDF 引擎；来源、SHA 和许可证记录在
 `server/THIRD_PARTY_NOTICES.md`。更新快照后必须重建锁文件、wheel/sdist，
 再执行产物校验。
 
@@ -354,7 +354,7 @@ zotero-dev restart-server  # Python 源码修改后重启开发后端
 
 所有开发数据在 `.local-dev/runtime/`：`profile/`、`library/`、`tasks/`、`config/`、
 `cache/`、`logs/`、`samples/` 和 `backups/`。后端通过 `PDF2ZH_CONFIG_DIR` 隔离配置，
-通过 `PDF2ZH_TRANSLATION_CACHE_DIR` 分别隔离 pdf2zh-next 与 BabelDOC 翻译数据库。
+通过 `PDF2ZH_TRANSLATION_CACHE_DIR` 隔离核心翻译数据库（保留历史 pdf2zh_next 子目录和缓存键）。
 未设置这两个变量时保持正式版默认路径；字体和模型下载缓存继续共享。
 开发管理不删除任何共享缓存，也不安装登录自启。
 
@@ -548,7 +548,7 @@ PyPI 包来源。已安装同版本的客户端需手动重装修订包：Zotero
 
 模型调用与段落关联由 `server/diagnostic_evidence.py` 保存到任务工作目录，随 wheel 和 Docker 分发；本地安装不依赖共享 JSON 的源码路径。新增调用流程同时传递段落、操作和父请求上下文，验证 `test_diagnostic_evidence`、`test_diagnostic_evidence_integration` 及插件最终 ZIP 的证据。离线读取其他用户诊断包的方法见[任务、请求与段落证据链](task-diagnostics-and-cancellation.md#任务请求与段落证据链)。
 
-macOS 测试时临时目录可使用 `TMPDIR=/private/tmp`，避免 `/var` 与 `/private/var` 的路径别名影响既有路径断言。缓存隔离验证应使用 `pdf2zh_next.translator.cache.init_test_db()` 和 `clean_test_db()`，避免把测试内容写入用户翻译缓存。进程回收测试有界等待，真实永久阻塞任务仅在受控子进程中构造。
+macOS 测试时临时目录可使用 `TMPDIR=/private/tmp`，避免 `/var` 与 `/private/var` 的路径别名影响既有路径断言。缓存隔离验证应使用 `pdf2zh_pro.translator.cache.init_test_db()` 和 `clean_test_db()`，避免把测试内容写入用户翻译缓存。进程回收测试有界等待，真实永久阻塞任务仅在受控子进程中构造。
 
 ## 划词功能验收
 

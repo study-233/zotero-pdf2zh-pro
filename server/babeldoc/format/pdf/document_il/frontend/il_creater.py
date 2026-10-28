@@ -1,3 +1,7 @@
+"""Legacy IR creator retained for explicit compatibility tooling."""
+
+from __future__ import annotations
+
 import base64
 import functools
 import logging
@@ -8,38 +12,105 @@ import unicodedata
 from io import BytesIO
 from itertools import islice
 from typing import Literal
+from typing import Protocol
 
 import freetype
 import pymupdf
 import tiktoken
 
-import babeldoc.pdfminer.pdfinterp
 from babeldoc.format.pdf.babelpdf.base14 import get_base14_bbox
 from babeldoc.format.pdf.babelpdf.cidfont import get_cidfont_bbox
 from babeldoc.format.pdf.babelpdf.cidfont import get_glyph_bbox
 from babeldoc.format.pdf.babelpdf.encoding import WinAnsiEncoding
 from babeldoc.format.pdf.babelpdf.encoding import get_type1_encoding
+from babeldoc.format.pdf.babelpdf.type3 import Type3FontMetrics
 from babeldoc.format.pdf.babelpdf.type3 import get_type3_bbox
+from babeldoc.format.pdf.babelpdf.type3 import get_type3_font_metrics
 from babeldoc.format.pdf.babelpdf.utils import guarded_bbox
 from babeldoc.format.pdf.document_il import il_version_1
+from babeldoc.format.pdf.document_il.frontend.inline_image_params import (
+    normalize_inline_image_parameters,
+)
 from babeldoc.format.pdf.document_il.utils import zstd_helper
 from babeldoc.format.pdf.document_il.utils.fontmap import FontMapper
 from babeldoc.format.pdf.document_il.utils.matrix_helper import decompose_ctm
 from babeldoc.format.pdf.document_il.utils.style_helper import BLACK
 from babeldoc.format.pdf.document_il.utils.style_helper import YELLOW
+from babeldoc.format.pdf.document_il.utils.type3_font_metrics import (
+    build_type3_pdf_font_fields,
+)
+from babeldoc.format.pdf.document_il.utils.type3_font_metrics import (
+    effective_type3_font_size,
+)
+from babeldoc.format.pdf.new_parser.pdf_token_serializer import serialize_pdf_token
+from babeldoc.format.pdf.new_parser.state import apply_matrix_pt
+from babeldoc.format.pdf.new_parser.state import get_bound
+from babeldoc.format.pdf.new_parser.state import multiply_matrices
 from babeldoc.format.pdf.translation_config import TranslationConfig
-from babeldoc.pdfminer.layout import LTChar
-from babeldoc.pdfminer.layout import LTFigure
-from babeldoc.pdfminer.pdffont import PDFCIDFont
-from babeldoc.pdfminer.pdffont import PDFFont
 
 # from babeldoc.pdfminer.pdfpage import PDFPage as PDFMinerPDFPage
 # from babeldoc.pdfminer.pdftypes import PDFObjRef as PDFMinerPDFObjRef
 # from babeldoc.pdfminer.pdftypes import resolve1 as pdftypes_resolve1
-from babeldoc.pdfminer.psparser import PSLiteral
-from babeldoc.pdfminer.utils import apply_matrix_pt
-from babeldoc.pdfminer.utils import get_bound
-from babeldoc.pdfminer.utils import mult_matrix
+
+
+class _UnicodeMapLike(Protocol):
+    cid2unichr: dict[int, object]
+
+
+class _FontLike(Protocol):
+    fontname: str | bytes
+    ascent: float
+    descent: float
+    unicode_map: _UnicodeMapLike | None
+
+
+class _GraphicStateLike(Protocol):
+    passthrough_instruction: list[tuple[str, str]]
+
+
+class _CharLike(Protocol):
+    aw_font_id: str | None
+    matrix: tuple[float, float, float, float, float, float]
+    graphicstate: _GraphicStateLike
+    xobj_id: int
+    size: float
+    cid: int
+    adv: float
+    bbox: tuple[float, float, float, float]
+    render_order: int
+
+    def get_text(self) -> str: ...
+
+
+class _CurveLike(Protocol):
+    bbox: tuple[float, float, float, float]
+    passthrough_instruction: list[tuple[str, str]]
+    clip_paths: list[tuple]
+    original_path: list[tuple]
+    fill: bool
+    stroke: bool
+    evenodd: bool
+    xobj_id: int
+    render_order: int
+
+
+class _FigureLike(Protocol):
+    bbox: tuple[float, float, float, float]
+
+
+def mult_matrix(
+    left: tuple[float, float, float, float, float, float],
+    right: tuple[float, float, float, float, float, float],
+) -> tuple[float, float, float, float, float, float]:
+    return multiply_matrices(left, right)
+
+
+def _is_legacy_pdfminer_cid_font(font: object) -> bool:
+    if not type(font).__module__.startswith("babeldoc.pdfminer."):
+        return False
+    from babeldoc.pdfminer.pdffont import PDFCIDFont
+
+    return isinstance(font, PDFCIDFont)
 
 
 def invert_matrix(
@@ -475,13 +546,7 @@ class ILCreater:
             self.passthrough_per_char_instruction.pop()
 
     def parse_arg(self, arg: str):
-        if isinstance(arg, PSLiteral):
-            return f"/{arg.name}"
-        elif isinstance(arg, float):
-            return f"{arg:f}"
-        elif not isinstance(arg, str):
-            return str(arg)
-        return arg
+        return serialize_pdf_token(arg)
 
     def pop_passthrough_per_char_instruction(self):
         if self.passthrough_per_char_instruction_stack:
@@ -641,7 +706,7 @@ class ILCreater:
         operation = zstd_helper.zstd_compress(operation)
         self.current_page.base_operations = il_version_1.BaseOperations(value=operation)
 
-    def on_page_resource_font(self, font: PDFFont, xref_id: int, font_id: str):
+    def on_page_resource_font(self, font: _FontLike, xref_id: int, font_id: str):
         font_name = font.fontname
         logger.debug(f"handle font {font_name} @ {xref_id} in {self.xobj_id}")
         if isinstance(font_name, bytes):
@@ -650,7 +715,7 @@ class ILCreater:
             except UnicodeDecodeError:
                 font_name = "BASE64:" + base64.b64encode(font_name).decode("utf-8")
         encoding_length = 1
-        if isinstance(font, PDFCIDFont):
+        if _is_legacy_pdfminer_cid_font(font):
             try:
                 # pdf 32000:2008 page 273
                 # Table 118 - Predefined CJK CMap names
@@ -699,24 +764,38 @@ class ILCreater:
             italic = None
             monospaced = None
             serif = None
+        font_subtype = self._get_font_subtype(xref_id)
+        type3_metrics = (
+            get_type3_font_metrics(self.mupdf, xref_id)
+            if font_subtype == "Type3"
+            else None
+        )
+        type3_fields = build_type3_pdf_font_fields(
+            font_subtype=font_subtype,
+            metrics=type3_metrics,
+            fallback_ascent=font.ascent,
+            fallback_descent=font.descent,
+        )
         il_font_metadata = il_version_1.PdfFont(
             name=font_name,
             xref_id=xref_id,
             font_id=font_id,
             encoding_length=encoding_length,
+            **type3_fields,
             bold=bold,
             italic=italic,
             monospace=monospaced,
             serif=serif,
-            ascent=font.ascent,
-            descent=font.descent,
             pdf_font_char_bounding_box=[],
         )
         try:
             if xref_id is None:
                 logger.warning("xref_id is None for font %s", font_name)
                 raise ValueError("xref_id is None for font %s", font_name)
-            bbox_list, cmap = self.parse_font_xobj_id(xref_id)
+            bbox_list, cmap = self.parse_font_xobj_id(
+                xref_id,
+                type3_metrics=type3_metrics,
+            )
             font_char_bounding_box_map = {}
             if not cmap:
                 cmap = {x: x for x in range(257)}
@@ -778,6 +857,15 @@ class ILCreater:
             fonts.remove(sr)
         fonts.append(il_font_metadata)
 
+    def _get_font_subtype(self, xref_id: int) -> str | None:
+        try:
+            _kind, value = self.mupdf.xref_get_key(xref_id, "Subtype")
+        except Exception:
+            return None
+        if not value:
+            return None
+        return value[1:] if value.startswith("/") else value
+
     def report_operation(self, operation, **detail):
         self.translation_config.raise_if_cancelled()
         callback = getattr(self.translation_config, "report_parse_progress", None)
@@ -785,7 +873,7 @@ class ILCreater:
             callback(operation, fontParseCount=self.font_parse_count,
                      fontCacheHits=self.font_cache_hits, **detail)
 
-    def parse_font_xobj_id(self, xobj_id: int):
+    def parse_font_xobj_id(self, xobj_id: int, *, type3_metrics=None):
         self.translation_config.raise_if_cancelled()
         if xobj_id is None:
             return (), MappingProxyType({})
@@ -793,14 +881,14 @@ class ILCreater:
             self.font_cache_hits += 1
             return self._font_parse_cache[xobj_id]
         self.report_operation("font", fontObject=xobj_id)
-        boxes, cmap = self._parse_font_xobj_uncached(xobj_id)
+        boxes, cmap = self._parse_font_xobj_uncached(xobj_id, type3_metrics=type3_metrics)
         # Owned by this document only. Consumers must not mutate shared values.
         result = (tuple(tuple(box) for box in boxes), MappingProxyType(dict(cmap)))
         self._font_parse_cache[xobj_id] = result
         self.font_parse_count += 1
         return result
 
-    def _parse_font_xobj_uncached(self, xobj_id: int):
+    def _parse_font_xobj_uncached(self, xobj_id: int, *, type3_metrics=None):
         if xobj_id is None:
             return [], {}
 
@@ -831,12 +919,18 @@ class ILCreater:
         if cid_bbox := get_cidfont_bbox(self.mupdf, xobj_id, self.translation_config.raise_if_cancelled):
             bbox_list = cid_bbox
         if self.mupdf.xref_get_key(xobj_id, "Subtype")[1] == "/Type3":
-            bbox_list = get_type3_bbox(self.mupdf, xobj_id, self.translation_config.raise_if_cancelled)
+            bbox_list = get_type3_bbox(
+                self.mupdf,
+                xobj_id,
+                normalize_to_1000_em=True,
+                metrics=type3_metrics,
+                check_cancelled=self.translation_config.raise_if_cancelled,
+            )
         return bbox_list, cmap
 
     def create_graphic_state(
         self,
-        gs: babeldoc.pdfminer.pdfinterp.PDFGraphicState | list[tuple[str, str]],
+        gs: _GraphicStateLike | list[tuple[str, str]],
         include_clipping: bool = False,
         target_ctm: tuple[float, float, float, float, float, float] = None,
         clip_paths=None,
@@ -903,7 +997,7 @@ class ILCreater:
 
         return graphic_state
 
-    def on_lt_char(self, char: LTChar):
+    def on_lt_char(self, char: _CharLike):
         if char.aw_font_id is None:
             return
         try:
@@ -929,10 +1023,12 @@ class ILCreater:
                 font = pdf_font
                 break
 
+        font_size = effective_type3_font_size(font, char.size)
+
         # Get descent from font
         descent = 0
         if font and hasattr(font, "descent"):
-            descent = font.descent * char.size / 1000
+            descent = font.descent * font_size / 1000
 
         char_id = char.cid
 
@@ -993,7 +1089,7 @@ class ILCreater:
         visual_bbox = il_version_1.VisualBbox(box=visual_bbox)
         pdf_style = il_version_1.PdfStyle(
             font_id=char.aw_font_id,
-            font_size=char.size,
+            font_size=font_size,
             graphic_state=gs,
         )
 
@@ -1092,7 +1188,7 @@ class ILCreater:
         if not is_invalid:
             self._page_valid_chars_buffer.append(ch)
 
-    def on_lt_curve(self, curve: babeldoc.pdfminer.layout.LTCurve):
+    def on_lt_curve(self, curve: _CurveLike):
         if not self.enable_graphic_element_process:
             return
         bbox = il_version_1.Box(
@@ -1187,6 +1283,16 @@ class ILCreater:
                         )
                     )
 
+        original_path_primitive = None
+        if (
+            getattr(curve, "original_path_primitive", None) is not None
+            and curve.original_path_primitive[0] == "re"
+        ):
+            original_path_primitive = il_version_1.PdfOriginalPathPrimitive(
+                op="re",
+                args=[float(arg) for arg in curve.original_path_primitive[1]],
+            )
+
         curve_obj = il_version_1.PdfCurve(
             box=bbox,
             graphic_state=gs,
@@ -1199,6 +1305,7 @@ class ILCreater:
             render_order=curve.render_order,
             ctm=list(ctm) if ctm is not None else None,
             pdf_original_path=raw_pdf_paths,
+            pdf_original_path_primitive=original_path_primitive,
         )
         self.current_page.pdf_curve.append(curve_obj)
         pass
@@ -1292,7 +1399,7 @@ class ILCreater:
             total,
         )
 
-    def on_pdf_figure(self, figure: LTFigure):
+    def on_pdf_figure(self, figure: _FigureLike):
         box = il_version_1.Box(
             figure.bbox[0],
             figure.bbox[1],
@@ -1311,24 +1418,13 @@ class ILCreater:
 
     def on_inline_image_end(self, stream_obj, ctm):
         """End processing inline image and create PdfForm"""
-        import base64
         import json
-
-        from babeldoc.format.pdf.babelpdf.utils import guarded_bbox
-        from babeldoc.format.pdf.document_il.utils.matrix_helper import decompose_ctm
-        from babeldoc.pdfminer.utils import apply_matrix_pt
-        from babeldoc.pdfminer.utils import get_bound
 
         # Extract image parameters from stream dictionary
         image_dict = stream_obj.attrs if hasattr(stream_obj, "attrs") else {}
 
         # Build parameters dictionary
-        parameters = {}
-        for key, value in image_dict.items():
-            if hasattr(value, "name"):
-                parameters[key] = value.name
-            else:
-                parameters[key] = str(value)
+        parameters = normalize_inline_image_parameters(image_dict)
 
         # Get image data (encoded as base64)
         image_data = ""

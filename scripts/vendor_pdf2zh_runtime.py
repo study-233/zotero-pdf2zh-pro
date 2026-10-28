@@ -2,16 +2,16 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
-import tempfile
 import urllib.request
 import zipfile
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+
+from workspace import Workspace
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SERVER_DIR = REPO_ROOT / "server"
-LICENSES_DIR = SERVER_DIR / "LICENSES"
+
 
 
 @dataclass(frozen=True)
@@ -50,38 +50,18 @@ SNAPSHOTS = (
     ),
     WheelSnapshot(
         name="BabelDOC",
-        version="0.5.24",
+        version="0.6.4",
         package="babeldoc",
         url=(
-            "https://files.pythonhosted.org/packages/64/36/"
-            "fbb911469a2c744712ba44cbd0fc88cede1ab59b89865b9f4fa4a7b141d7/"
-            "babeldoc-0.5.24-py3-none-any.whl"
+            "https://files.pythonhosted.org/packages/3e/b1/"
+            "7036b4a5ec6fda008e161950ac619a6e989730a05f3a90fcf1e437f07dec/"
+            "babeldoc-0.6.4-py3-none-any.whl"
         ),
-        sha256="8810b9d8faecbe9b3f3e41f7af1f5d83cbee060ac16c9f17aa2a81abb149c6f2",
-        license_member="babeldoc-0.5.24.dist-info/licenses/LICENSE",
+        sha256="e7dcdd5b8213f657af1df68e329f92d0534c9b94c53fcd82e9e04c52060cb7d0",
+        license_member="babeldoc-0.6.4.dist-info/licenses/LICENSE",
         license_name="BabelDOC-AGPL-3.0.txt",
         excludes=("tools",),
     ),
-    WheelSnapshot(
-        name="rapidocr-onnxruntime",
-        version="1.4.4",
-        package="rapidocr_onnxruntime",
-        url=(
-            "https://files.pythonhosted.org/packages/ba/12/"
-            "1e5497183bdbe782dbb91bad1d0d2297dba4d2831b2652657f7517bfc6df/"
-            "rapidocr_onnxruntime-1.4.4-py3-none-any.whl"
-        ),
-        sha256="971d7d5f223a7a808662229df1ef69893809d8457d834e6373d3854bc1782cbf",
-        license_member=None,
-        license_name="RapidOCR-Apache-2.0.txt",
-    ),
-)
-
-RAPIDOCR_LICENSE_URL = (
-    "https://raw.githubusercontent.com/RapidAI/RapidOCR/v1.4.4/LICENSE"
-)
-RAPIDOCR_LICENSE_SHA256 = (
-    "3e0af25fdd06aa9586ae97adb00ea927ebe5a3805ac77d2d3a81ce5f55693333"
 )
 
 
@@ -107,52 +87,52 @@ def should_extract(snapshot: WheelSnapshot, member_name: str) -> bool:
     )
 
 
-def extract_snapshot(snapshot: WheelSnapshot, wheel_path: Path) -> bytes | None:
-    destination = SERVER_DIR / snapshot.package
-    if destination.exists():
-        shutil.rmtree(destination)
-
-    license_bytes: bytes | None = None
+def extract_snapshot(snapshot: WheelSnapshot, wheel_path: Path, staging: Path) -> None:
+    """Extract an upstream reference into a new directory, never into maintained code."""
+    staging = staging.resolve()
+    source = SERVER_DIR.resolve()
+    if staging.is_relative_to(source) or source.is_relative_to(staging):
+        raise ValueError("Snapshot staging must be separate from maintained server sources")
+    # Refuse reuse; never remove an existing package or license directory.
+    staging.mkdir(parents=True, exist_ok=False)
     with zipfile.ZipFile(wheel_path) as archive:
+        members = []
         for member in archive.infolist():
-            if should_extract(snapshot, member.filename):
-                target = SERVER_DIR / member.filename
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(archive.read(member))
+            if not should_extract(snapshot, member.filename):
+                continue
+            name = PurePosixPath(member.filename)
+            target = staging / member.filename
+            if ("\\" in member.filename or ":" in member.filename or ".." in name.parts
+                    or not target.resolve().is_relative_to(staging / snapshot.package)):
+                raise ValueError(f"Unsafe wheel member: {member.filename}")
+            members.append((member, target))
+        for member, target in members:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(archive.read(member))
         if snapshot.license_member:
-            license_bytes = archive.read(snapshot.license_member)
-
-    init_file = destination / "__init__.py"
-    if not init_file.exists():
-        raise RuntimeError(f"Missing package after extraction: {init_file}")
-    return license_bytes
+            licenses = staging / "LICENSES"
+            licenses.mkdir()
+            (licenses / snapshot.license_name).write_bytes(archive.read(snapshot.license_member))
+    if not (staging / snapshot.package / "__init__.py").is_file():
+        raise RuntimeError(f"Missing package after extraction: {snapshot.package}")
 
 
 def main() -> None:
-    LICENSES_DIR.mkdir(parents=True, exist_ok=True)
-    for old_license in LICENSES_DIR.iterdir():
-        if old_license.is_file():
-            old_license.unlink()
-
-    with tempfile.TemporaryDirectory(prefix="zotero-pdf2zh-vendor-") as temp_dir:
-        temp_root = Path(temp_dir)
+    workspace = Workspace(REPO_ROOT)
+    work = workspace.create("vendor-snapshot", "run")
+    (work / ".keep").write_text("Upstream reference for manual merge; never copy over pdf2zh_pro.\n", encoding="utf-8")
+    status = "failed"
+    try:
         for snapshot in SNAPSHOTS:
-            wheel_bytes = download(snapshot.url, snapshot.sha256)
-            wheel_path = temp_root / Path(snapshot.url).name
-            wheel_path.write_bytes(wheel_bytes)
-            license_bytes = extract_snapshot(snapshot, wheel_path)
-            if license_bytes is not None:
-                (LICENSES_DIR / snapshot.license_name).write_bytes(license_bytes)
-
-    rapidocr_license = download(RAPIDOCR_LICENSE_URL, RAPIDOCR_LICENSE_SHA256)
-    (LICENSES_DIR / "RapidOCR-Apache-2.0.txt").write_bytes(rapidocr_license)
-    shutil.copyfile(
-        REPO_ROOT / "LICENSE",
-        LICENSES_DIR / "zotero-pdf2zh-pro-AGPL-3.0-or-later.txt",
-    )
-
-    for snapshot in SNAPSHOTS:
-        print(f"vendored {snapshot.name}=={snapshot.version}")
+            wheel_path = work / Path(snapshot.url).name
+            wheel_path.write_bytes(download(snapshot.url, snapshot.sha256))
+            staging = work / f"{snapshot.package}-{snapshot.version}"
+            extract_snapshot(snapshot, wheel_path, staging)
+            print(f"Staged {snapshot.name}=={snapshot.version}: {staging}")
+        print("Maintained sources are unchanged. Review vendor-manifest.json and merge explicitly.")
+        status = "passed"
+    finally:
+        workspace.finish(work, status)
 
 
 if __name__ == "__main__":

@@ -147,3 +147,18 @@ jobs:
       - name: Test diagnostic evidence storage and offline analysis without providers
         working-directory: server
         run: uv run --no-project python -m unittest discover -s tests -p test_diagnostic_evidence.py
+
+      - name: Test native PDF engine, historical data and attachment exports
+        working-directory: server
+        env:
+          PYTHONUTF8: '1'
+          PDF2ZH_DATA_DIR: ${{ runner.temp }}/pdf2zh-test-data
+          PDF2ZH_TRANSLATION_CACHE_DIR: ${{ runner.temp }}/pdf2zh-test-cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv sync --locked
+          uv run --locked python -m unittest discover -s tests -p test_native_pdf_pipeline.py
+          uv run --locked python -m unittest discover -s tests -p test_document_export.py
+          uv run --locked python -m unittest discover -s tests -p test_core_boundaries.py
+          uv run --locked python -m unittest discover -s tests -p test_recovery_storage.py

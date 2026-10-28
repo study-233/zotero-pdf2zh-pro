@@ -22,8 +22,8 @@ class TextCancellationTests(unittest.TestCase):
         self.client.session.return_value = self.client
         self.client.check_ready.return_value = {'reasoningEffort': 'medium'}
         self.client.translate.return_value = SimpleNamespace(text='样本', usage={})
-        self.enterContext(patch('pdf2zh_next.translator.base_translator.TranslationCache'))
-        self.enterContext(patch('pdf2zh_next.translator.translator_impl.codex.get_codex_client', return_value=self.client))
+        self.enterContext(patch('pdf2zh_pro.translator.base.TranslationCache'))
+        self.enterContext(patch('pdf2zh_pro.translator.codex.get_codex_client', return_value=self.client))
         self.data = {'text': 'sample', 'target': 'zh-CN', 'service': 'codex',
                      'llm_api': {'model': 'gpt-6-luna'}, 'requestId': 'request_1234567890abcdef'}
 

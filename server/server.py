@@ -37,10 +37,10 @@ truststore.inject_into_ssl()
 
 from flask import Flask, Response, jsonify, request, send_file, stream_with_context
 from werkzeug.exceptions import HTTPException
-from pdf2zh_next_service import require_supported_service
-from pdf2zh_next_service import diagnose_service_error
-from pdf2zh_next_service import translate_pdf_with_callbacks
-from pdf2zh_next_service import validate_service_config
+from pdf2zh_pro.config import require_supported_service
+from pdf2zh_pro.errors import diagnose_service_error
+from pdf2zh_pro.pdf import translate_pdf_with_callbacks
+from pdf2zh_pro.pdf import validate_service_config
 from task_manager import TaskManager, TaskStoreError, TaskPersistenceError
 from maintenance import install_routes, control_token
 from translation_memory import TranslationMemory
@@ -48,9 +48,10 @@ from text_translation import TextTranslationService, TextTranslationError
 from codex_client import close_codex_clients, get_codex_client, CodexError
 from chatgpt_client import close_chatgpt_clients, get_chatgpt_client, ChatGPTError
 from chatgpt_routes import install_chatgpt_routes
+from document_export import install_document_export_routes
 from codex_discovery import discovery_request, cancel_discovery
 from provider_models import ModelDiscoveryError, list_provider_models, list_codex_models
-from babeldoc.glossary_options import normalize_glossary_entries
+from pdf2zh_pro.glossary import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
 from diagnostics import exception_frames, diagnostic_capabilities, negotiate_schema
 
@@ -103,6 +104,7 @@ def create_app() -> Flask:
             TASK_MANAGER.require_task_store()
     install_routes(app, runtime_busy, lambda: TRANSLATES_DIR)
     install_chatgpt_routes(app, runtime_busy)
+    install_document_export_routes(app, lambda: TRANSLATES_DIR, lambda: TASK_MANAGER.diagnostics, save_pdf_input)
 
     @app.errorhandler(Exception)
     def unexpected_error(error):
@@ -190,7 +192,7 @@ def create_app() -> Flask:
         if failure is not None:
             return failure
         payload = TASK_MANAGER.export_diagnostics()
-        payload["environment"].update(serviceVersion=VERSION, babeldocVersion=package_version("babeldoc"), pdf2zhVersion=package_version("pdf2zh_next"))
+        payload["environment"].update(serviceVersion=VERSION, babeldocVersion=package_version("babeldoc"), pdf2zhVersion=package_version("pdf2zh_pro"))
         return jsonify(payload)
 
     @app.get("/tasks/<task_id>/diagnostics")
@@ -201,7 +203,7 @@ def create_app() -> Flask:
         payload = TASK_MANAGER.export_diagnostics(task_id)
         if payload is None:
             return jsonify({"status": "error", "message": "Task not found"}), 404
-        payload["environment"].update(serviceVersion=VERSION, babeldocVersion=package_version("babeldoc"), pdf2zhVersion=package_version("pdf2zh_next"))
+        payload["environment"].update(serviceVersion=VERSION, babeldocVersion=package_version("babeldoc"), pdf2zhVersion=package_version("pdf2zh_pro"))
         return jsonify(payload)
 
     @app.get("/glossaries")
@@ -641,15 +643,9 @@ def validate_config_request(data: dict[str, Any], *, check_cancelled=None):
     return validate_service_config(request_payload, job_id, **({"check_cancelled": check_cancelled} if check_cancelled else {}))
 
 
-def prepare_translation_request(
-    data: dict[str, Any],
-    workspace_dir: Path,
-    *, upload=None,
-) -> PreparedTranslationRequest:
+def save_pdf_input(data: dict[str, Any], workspace_dir: Path, *, upload=None) -> tuple[str, Path]:
     file_bytes = decode_pdf_content(data.get("fileContent")) if upload is None else None
     file_name = sanitize_pdf_filename(data.get("fileName"))
-    service = normalize_service(data.get("service"))
-    output_modes = normalize_output_modes(data)
     workspace_dir = workspace_dir.resolve()
     root_prefix = str(workspace_dir) + os.sep
     input_name = os.path.normpath(os.path.join(str(workspace_dir), file_name))
@@ -663,8 +659,6 @@ def prepare_translation_request(
         raise RequestValidationError("Invalid PDF filename")
     if Path(resolved_name).parent != workspace_dir:
         raise RequestValidationError("Invalid PDF filename")
-    output_dir = workspace_dir / "output"
-    output_dir.mkdir(parents=True, exist_ok=True)
     try:
         with input_path.open("xb") as output:
             if upload is None:
@@ -680,6 +674,20 @@ def prepare_translation_request(
                     raise RequestValidationError("PDF upload is empty")
     except FileExistsError:
         raise RequestValidationError("PDF input file already exists") from None
+
+    return file_name, input_path
+
+
+def prepare_translation_request(
+    data: dict[str, Any],
+    workspace_dir: Path,
+    *, upload=None,
+) -> PreparedTranslationRequest:
+    service = normalize_service(data.get("service"))
+    output_modes = normalize_output_modes(data)
+    file_name, input_path = save_pdf_input(data, workspace_dir, upload=upload)
+    output_dir = workspace_dir / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     request_payload = {
         "source_lang": normalize_language(data.get("sourceLang"), "en"),
@@ -941,10 +949,10 @@ def build_health_payload() -> dict[str, Any]:
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
         "diagnostics": diagnostic_capabilities(),
-        "capabilities": {"diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "mimoApi": True, "zhipuApi": True,
+        "capabilities": {"structuredExport": True, "diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "mimoApi": True, "zhipuApi": True,
             "tokenOutputSpeed": True, "reasoningMode": True, "reasoningLow": True, "responsesFirst": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True, "taskSubmissionIdempotency": True, "taskRecovery": True, "taskTiming": True, "binaryTaskUpload": True, "taskPagination": True},
         "supportsModelDiscovery": True,
-        "pdf2zhVersion": package_version("pdf2zh_next"),
+        "pdf2zhVersion": package_version("pdf2zh_pro"),
         "babeldocVersion": package_version("babeldoc"),
         "workspace": workspace,
         "tasks": task_stats,

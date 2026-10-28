@@ -1,44 +1,34 @@
-# Bundled runtime snapshots
+# Maintained core and bundled PDF engine
 
-`zotero-pdf2zh-pro` bundles fixed, source-readable runtime snapshots so its
-PyPI package does not resolve a newer `pdf2zh-next` release or install the
-upstream Gradio/FastAPI web UI.
+`zotero-pdf2zh-pro` maintains `pdf2zh_pro` directly. It derives from the customized
+pdf2zh-next 2.8.2 source, with provider protocols, cache identities and downstream
+behavior retained. It is no longer an installable `pdf2zh-next` snapshot or CLI.
 
-| Project | Version | Upstream | Wheel SHA256 | License |
+| Origin | Base version | Upstream | Wheel SHA256 | License |
 | --- | --- | --- | --- | --- |
-| pdf2zh-next | 2.8.2 | https://github.com/PDFMathTranslate-next/PDFMathTranslate-next | `5416f8e65828783df9a2323893380145d30846ed7c201539f847307b8689b770` | AGPL-3.0 |
-| BabelDOC | 0.5.24 | https://github.com/funstory-ai/BabelDOC | `8810b9d8faecbe9b3f3e41f7af1f5d83cbee060ac16c9f17aa2a81abb149c6f2` | AGPL-3.0 |
-| rapidocr-onnxruntime | 1.4.4 | https://github.com/RapidAI/RapidOCR | `971d7d5f223a7a808662229df1ef69893809d8457d834e6373d3854bc1782cbf` | Apache-2.0 |
+| pdf2zh-next → pdf2zh_pro | 2.8.2 | https://github.com/PDFMathTranslate-next/PDFMathTranslate-next | `5416f8e65828783df9a2323893380145d30846ed7c201539f847307b8689b770` | AGPL-3.0 |
+| BabelDOC | 0.6.4 | https://github.com/funstory-ai/BabelDOC | `e7dcdd5b8213f657af1df68e329f92d0534c9b94c53fcd82e9e04c52060cb7d0` | AGPL-3.0 |
 
-The `pdf2zh-next` Gradio GUI modules and BabelDOC development tools are not
-included. Translation providers, PDF processing, OCR models, table handling,
-and glossary extraction remain included. Exact license texts are under
-`LICENSES/` and are copied into wheel metadata.
+Exact source moves, original hashes and downstream feature inventory are recorded
+in `pdf2zh_pro/vendor-manifest.json`. License texts remain under `LICENSES/` and
+are included in distribution metadata. The historical RapidOCR license is retained
+for attribution; its unused vendored table OCR implementation and models are removed.
+OCR detection and BabelDOC's OCR text-layer workaround remain in the PDF pipeline.
 
-These are **base snapshot versions**, not unmodified upstream distributions.
-Local translation recovery, provider protocols, metrics and compatibility fixes
-must be retained when replacing a snapshot. The extraction script removes the
-existing package directories; run it only in a disposable checkout when preparing
-an upgrade, then review and reapply the downstream changes:
+BabelDOC uses the 0.6.4 native parser and active IL creator, with local font caching,
+Type3 geometry, cancellation, translation recovery, glossary precedence, placeholder
+repair, quality review and metrics preserved. The native parser and legacy helpers
+share one verified, bounded CMap resource loader; external CMap overrides remain
+unsupported. The old PyMuPDF 1.25 compatibility patch is removed.
 
-```bash
-uv run python scripts/vendor_pdf2zh_runtime.py
-```
+The external `pymupdf` 2.0 dependency includes Layout/4LLM. Its public Document APIs
+provide on-demand Markdown, JSON and TXT export in a separate worker. BabelDOC still
+provides translated PDF typesetting; its provider implementations, CLI and duplicate
+translation cache are removed. PyMuPDF and its bundled components retain their own
+upstream licenses and distribution metadata.
 
-## Downstream compatibility backports (2026-09-29)
-
-- PyMuPDF 1.25.1/1.25.2: format warning arguments for unsupported font subtypes
-  and invalid annotation items before passing them to `message()`. This does not
-  add support for unsupported fonts or suppress PDF processing exceptions.
-- BabelDOC 0.6.4 (`17480db9df92`): backport the CMap manifest and verified loader
-  to the bundled legacy `pdfminer` layout (GHSA-m8gf-v64p-gfmg). All 148 CMaps
-  match the upstream manifest. Reads are bounded and external `CMAP_PATH`
-  overrides are intentionally unsupported.
-- Backport LZW invalid-code checks and ImageWriter filename containment from the
-  same upstream comparison; image names also strip Windows separators on POSIX.
-- Restore the missing `ClaudeCodeSettings` public import in `pdf2zh_next`.
-
-The PyMuPDF compatibility hook is loaded by `babeldoc` in both the service and
-fresh PDF worker processes. These backports do **not** include the BabelDOC 0.6
-parser rewrite. See `docs/runtime-compatibility-audit-2026-09-29.md` in the source
-repository for the remaining migration work and verification limits.
+`scripts/vendor_pdf2zh_runtime.py` downloads hash-pinned upstream source into a new
+managed staging directory **only**. It refuses maintained source directories and
+existing targets. Future upgrades require an explicit diff and migration of the
+manifest's downstream features; the script never overwrites `server/pdf2zh_pro`
+or `server/babeldoc`.

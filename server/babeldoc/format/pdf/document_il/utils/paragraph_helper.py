@@ -2,8 +2,8 @@ import logging
 import re
 
 from babeldoc.format.pdf.document_il import il_version_1
-from babeldoc.translator.url_utils import is_url_only_text
-from babeldoc.translator.preserved_text import preserved_text_reason
+from pdf2zh_pro.translator.url_utils import is_url_only_text
+from pdf2zh_pro.translator.preserved_text import preserved_text_reason
 
 logger = logging.getLogger(__name__)
 

@@ -75,7 +75,7 @@ def validate(contract, root=ROOT):
     for event, definition in contract['events'].items():
         if not set(definition['requiredFields']) <= known_fields:
             raise ValueError(f'Unregistered required event fields: {event}')
-    roots = [root / 'server/babeldoc', root / 'server/pdf2zh_next']
+    roots = [root / 'server/babeldoc', root / 'server/pdf2zh_pro']
     paths = [*root.joinpath('server').glob('*.py'), *(p for folder in roots for p in folder.rglob('*.py'))]
     for path in paths:
         for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):

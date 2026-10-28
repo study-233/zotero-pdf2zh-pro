@@ -5,12 +5,20 @@
     [Parameter(Mandatory=$true)][string]$Package,
     [Parameter(Mandatory=$true)][string]$Wheel,
     [Parameter(Mandatory=$true)][string]$Version,
+    [switch]$AllowSameVersion,
     [string]$DownloadCache,
     [string]$Receipt, [string]$PlanSha256, [string]$HarnessSha256, [string]$SourceCommit
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
-if ([version]$PreviousVersion -ge [version]$Version) {throw 'Upgrade requires genuinely different, increasing versions.'}
+if ([version]$PreviousVersion -gt [version]$Version -or
+    ([version]$PreviousVersion -eq [version]$Version -and -not $AllowSameVersion)) {
+    throw 'Upgrade requires increasing versions; local same-version candidates require -AllowSameVersion.'
+}
+if ($AllowSameVersion -and (Get-FileHash -Algorithm SHA256 -LiteralPath $PreviousWheel).Hash -eq
+    (Get-FileHash -Algorithm SHA256 -LiteralPath $Wheel).Hash) {
+    throw 'Same-version validation requires different baseline and candidate wheel contents.'
+}
 . (Join-Path $PSScriptRoot 'workspace.ps1')
 . (Join-Path $PSScriptRoot 'test_windows_process_helpers.ps1')
 $run=New-WorkspaceRun -Name 'stable-upgrade'

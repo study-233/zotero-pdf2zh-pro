@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from babeldoc.glossary_options import normalize_glossary_entries, glossary_entries_for_language
-from pdf2zh_next.high_level import _get_glossaries
+from pdf2zh_pro.glossary import normalize_glossary_entries, glossary_entries_for_language
+from pdf2zh_pro.pdf import _get_glossaries
 from test_server import build_pdf_payload
 import server
 

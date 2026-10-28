@@ -2,7 +2,7 @@
     "name": "zotero-pdf2zh-pro",
     "version": "1.9.5",
     "packageManager": "pnpm@10.34.5",
-    "description": "Minimal Zotero bridge for pdf2zh_next",
+    "description": "Zotero integration for the pdf2zh_pro translation core",
     "config": {
         "addonName": "zotero-pdf2zh-pro",
         "addonID": "zotero-pdf2zh-pro@study-233",

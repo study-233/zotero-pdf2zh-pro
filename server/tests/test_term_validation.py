@@ -8,8 +8,8 @@ from babeldoc.format.pdf.document_il.midend.automatic_term_extractor import (
     BatchParagraph,
     PageTermExtractTracker,
 )
-from babeldoc.translator.validation import InvalidTranslation
-from pdf2zh_next.translator.base_translator import BaseTranslator
+from pdf2zh_pro.translator.validation import InvalidTranslation
+from pdf2zh_pro.translator.base import BaseTranslator
 
 
 class MemoryCache:

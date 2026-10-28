@@ -13,8 +13,8 @@ import httpx
 from chatgpt_auth import AuthStore, private_write
 from chatgpt_client import ChatGPTClient, ChatGPTError
 from observability import TaskMetricsCollector
-from pdf2zh_next.translator.translator_impl.chatgpt import ChatGPTTranslator
-from pdf2zh_next_service import create_runtime_settings
+from pdf2zh_pro.translator.chatgpt import ChatGPTTranslator
+from pdf2zh_pro.pdf import create_runtime_settings
 from test_chatgpt import credential, Events, completed
 from test_pdf2zh_next_service import make_settings_payload
 from text_translation import TextTranslationError
@@ -168,7 +168,7 @@ class UnauthorizedRecoveryTests(unittest.TestCase):
     def adapter(self, client, collector):
         settings = create_runtime_settings(make_settings_payload(service='chatgpt', llm_api={
             'model': 'm', 'reasoningEffort': 'low'}))
-        with patch('pdf2zh_next.translator.translator_impl.chatgpt.get_chatgpt_client', return_value=client), \
+        with patch('pdf2zh_pro.translator.chatgpt.get_chatgpt_client', return_value=client), \
                 patch.object(client, 'check_ready', return_value={'reasoningEffort': 'low'}):
             adapter = ChatGPTTranslator(settings, None)
         adapter.set_metrics_collector(collector)
@@ -197,7 +197,7 @@ class UnauthorizedRecoveryTests(unittest.TestCase):
         adapter.request_state.check()
 
     def test_pdf_retry_budget_exhaustion_leaves_no_phantom_active_request(self):
-        from babeldoc.translator.request_budget import TranslationBudgetExhausted
+        from pdf2zh_pro.translator.request_budget import TranslationBudgetExhausted
         client = self.client()
         collector = TaskMetricsCollector(task_id='limited', provider='chatgpt', model='m')
         adapter = self.adapter(client, collector)

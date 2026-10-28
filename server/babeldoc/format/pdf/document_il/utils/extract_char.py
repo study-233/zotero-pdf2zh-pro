@@ -1,5 +1,6 @@
+import argparse
+import json
 import logging
-import shutil
 from collections import defaultdict
 from pathlib import Path
 
@@ -9,8 +10,6 @@ import pymupdf
 from rich.logging import RichHandler
 from sklearn.cluster import DBSCAN
 
-import babeldoc.format.pdf.high_level
-import babeldoc.format.pdf.translation_config
 from babeldoc.const import get_process_pool
 from babeldoc.format.pdf.document_il import il_version_1
 
@@ -53,38 +52,23 @@ MERGE_ADJACENCY_GAP_MULTIPLIER = 1.5
 # --- End of Parameters ---
 
 
-def parse_pdf(pdf_path, page_ranges=None) -> il_version_1.Document:
-    translation_config = babeldoc.format.pdf.translation_config.TranslationConfig(
-        *[None for _ in range(4)], doc_layout_model=None
+def parse_pdf(
+    pdf_path,
+    page_ranges=None,
+    *,
+    working_dir: str | Path | None = None,
+    debug: bool = False,
+) -> il_version_1.Document:
+    from babeldoc.format.pdf.new_parser.native_parse import (
+        parse_with_new_parser_to_legacy_ir,
     )
-    if page_ranges:
-        translation_config.page_ranges = [page_ranges]
-    translation_config.progress_monitor = (
-        babeldoc.format.pdf.high_level.ProgressMonitor(
-            babeldoc.format.pdf.high_level.TRANSLATE_STAGES
-        )
+
+    return parse_with_new_parser_to_legacy_ir(
+        pdf_path,
+        pages=page_ranges,
+        working_dir=working_dir,
+        debug=debug,
     )
-    try:
-        shutil.copy(pdf_path, translation_config.get_working_file_path("input.pdf"))
-        doc = pymupdf.open(pdf_path)
-        il_creater = babeldoc.format.pdf.high_level.ILCreater(translation_config)
-        il_creater.mupdf = doc
-        with Path(translation_config.get_working_file_path("input.pdf")).open(
-            "rb"
-        ) as f:
-            babeldoc.format.pdf.high_level.start_parse_il(
-                f,
-                doc_zh=doc,
-                resfont="test_font",
-                il_creater=il_creater,
-                translation_config=translation_config,
-            )
-        il = il_creater.create_il()
-        doc.close()
-        return il
-    finally:
-        translation_config.cleanup_temp_files()
-    return None
 
 
 class Line:
@@ -145,8 +129,17 @@ def _recalculate_line_text_with_spacing(line, orientation):
 # vertical: True if the char is vertical, False if the char is horizontal
 def extract_paragraph_line(
     pdf_path,
-) -> dict[int, list[tuple[il_version_1.Box, str, bool]]]:
-    il = parse_pdf(pdf_path)
+    page_ranges=None,
+    *,
+    working_dir: str | Path | None = None,
+    debug: bool = False,
+) -> dict[int, list[tuple[il_version_1.Box, str, bool]]] | None:
+    il = parse_pdf(
+        pdf_path,
+        page_ranges=page_ranges,
+        working_dir=working_dir,
+        debug=debug,
+    )
     if il is None:
         return None
     line_boxes = {}
@@ -632,9 +625,14 @@ def cluster_chars_to_lines(
     return clustered_lines
 
 
-def draw_clustered_lines_to_image(pdf_path, clustered_lines: dict[int, list[Line]]):
+def draw_clustered_lines_to_image(
+    pdf_path,
+    clustered_lines: dict[int, list[Line]],
+    *,
+    output_root: str | Path = "ocr-box-image-clustered",
+) -> Path:
     doc = pymupdf.open(pdf_path)
-    debug_dir = Path("ocr-box-image-clustered") / Path(pdf_path).stem
+    debug_dir = Path(output_root) / Path(pdf_path).stem
     debug_dir.mkdir(parents=True, exist_ok=True)
 
     for page_number, lines in clustered_lines.items():
@@ -724,25 +722,56 @@ def draw_clustered_lines_to_image(pdf_path, clustered_lines: dict[int, list[Line
         cv2.imwrite(str(debug_dir / f"{page_number}_annotated.png"), annotated_image)
 
     doc.close()
+    return debug_dir
 
 
-def main():
+def main(argv: list[str] | None = None):
     logging.basicConfig(level=logging.INFO, handlers=[RichHandler()])
-    for pdf_path in (
-        "2404.16109v1.pdf",
-        "2022 - Bortoli_Valentin De, Mathieu_Emile - Riemannian Score-Based Generative Modelling.pdf",
-        "2024 - Regev_Oded - On Lattices, Learning with Errors, Random Linear Codes, and Cryptography.pdf",
-        "2024 - Yang_Tian-Le, Lee_Kuang-Yao - Functional Linear Non-Gaussian Acyclic Model for Causal Discovery.pdf",
-    ):
+    parser = argparse.ArgumentParser(
+        description="Agent-only debug helper: extract native-parser character boxes and clustered line images."
+    )
+    parser.add_argument("pdf", nargs="+", help="PDF path(s) to inspect.")
+    parser.add_argument("--pages", help="Optional BabelDOC page range, e.g. 1-3.")
+    parser.add_argument(
+        "--working-dir",
+        help="Optional working directory for parser temporary files.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="ocr-box-image-clustered",
+        help="Directory for annotated image artifacts.",
+    )
+    parser.add_argument("--debug", action="store_true")
+    parser.add_argument(
+        "--no-images",
+        action="store_true",
+        help="Skip annotated image generation and only emit JSON summary.",
+    )
+    args = parser.parse_args(argv)
+
+    summaries = []
+    for pdf_path in args.pdf:
         logger.info(f"Processing {pdf_path}")
-        char_boxes = extract_paragraph_line(pdf_path)
+        char_boxes = extract_paragraph_line(
+            pdf_path,
+            page_ranges=args.pages,
+            working_dir=args.working_dir,
+            debug=args.debug,
+        )
         if not char_boxes:
             logger.warning(f"No character boxes extracted from {pdf_path}")
+            summaries.append(
+                {
+                    "char_count": 0,
+                    "line_count": 0,
+                    "pdf": pdf_path,
+                    "status": "no_chars",
+                }
+            )
             continue
 
-        logger.info(
-            f"Extracted {sum(len(c) for c in char_boxes.values())} characters. Clustering them into lines..."
-        )
+        char_count = sum(len(chars) for chars in char_boxes.values())
+        logger.info(f"Extracted {char_count} characters. Clustering them into lines...")
         lines = cluster_chars_to_lines(char_boxes)
 
         total_lines = sum(len(l) for l in lines.values())
@@ -755,8 +784,27 @@ def main():
         #         logger.info(f"  Line {i}: {line.text}")
         # logger.info("----------------------------")
 
-        draw_clustered_lines_to_image(pdf_path, lines)
-        logger.info("Annotated images saved in 'ocr-box-image-clustered' directory.")
+        output_dir = None
+        if not args.no_images:
+            output_dir = draw_clustered_lines_to_image(
+                pdf_path,
+                lines,
+                output_root=args.output_dir,
+            )
+            logger.info(f"Annotated images saved in {output_dir}.")
+        summaries.append(
+            {
+                "char_count": char_count,
+                "line_count": total_lines,
+                "output_dir": str(output_dir) if output_dir is not None else None,
+                "page_count": len(char_boxes),
+                "pages": args.pages,
+                "pdf": pdf_path,
+                "status": "ok",
+            }
+        )
+
+    print(json.dumps({"results": summaries}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

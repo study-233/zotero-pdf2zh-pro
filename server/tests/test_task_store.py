@@ -129,7 +129,7 @@ class TaskStoreTests(unittest.TestCase):
         self.assertTrue(manager._pending.empty())
 
     def operation_manager(self, status='failed'):
-        from pdf2zh_next_service import TranslationOutputFile
+        from pdf2zh_pro.pdf import TranslationOutputFile
         manager = TaskManager(self.path)
         work = self.root / 'operation'
         output = work / 'output'

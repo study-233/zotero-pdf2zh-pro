@@ -8,6 +8,15 @@ from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 
 from babeldoc.format.pdf.document_il import il_version_1
+from babeldoc.format.pdf.document_il.frontend.il_creater_active_support import (
+    LazyPassthroughInstruction,
+)
+
+
+def _orjson_default(value):
+    if isinstance(value, LazyPassthroughInstruction):
+        return value.materialize()
+    raise TypeError
 
 
 class XMLConverter:
@@ -44,6 +53,7 @@ class XMLConverter:
             option=orjson.OPT_APPEND_NEWLINE
             | orjson.OPT_INDENT_2
             | orjson.OPT_SORT_KEYS,
+            default=_orjson_default,
         ).decode()
 
     def write_json(self, document: il_version_1.Document, path: str):

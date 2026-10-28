@@ -577,3 +577,32 @@ Unknown endpoints may reject automatic low: only an explicit reasoning parameter
 `/list-models` also returns optional `modelDetails`; catalog capabilities are cached for ten minutes by base URL, credential fingerprint and model. No credentials are returned.
 `/validate-config.liveTest.reasoning` reports the requested/effective setting, protocol fallback and model controls. Request evidence retains `reasoningRequested` and `reasoningSetting`.
 OpenRouter native reasoning objects are preserved. SiliconFlow uses the shared compatible adapter for both PDF and selection. Account `reasoningEffort: "auto"` selects low if the account catalog offers it, otherwise its default. Ollama remains native; Claude Code uses `--effort low` only when its CLI declares the option.
+
+## Structured attachment export
+
+`GET /health` advertises `capabilities.structuredExport`. `POST /document-exports`
+accepts a multipart `file` PDF (up to 512 MiB), with `X-PDF2ZH-Client: zotero` and
+a fresh `X-PDF2ZH-Request-ID` of 16–64 ASCII letters, digits or hyphens. Requests
+with an Origin are rejected. There is no local-path or provider configuration input.
+The required multipart `format` field selects `md`, `json` or `txt` to download that UTF-8
+file directly, with its matching content type and extension. The Zotero menu
+offers these formats under **Export File**. Missing or unsupported formats return
+`export_invalid_request` (400). Markdown embeds images; JSON contains layout boxes and page information.
+The exported content comes from the selected PDF, including existing translated PDFs.
+It does not call a translation provider or write translation history.
+
+`POST /document-exports/<request-id>/cancel`, with the same client header, cancels
+processing and also handles cancellation arriving before upload. One export runs
+at a time; competing requests return `export_busy` (429). Parsing times out after
+300 seconds, followed by bounded process cleanup. Temporary input and output files
+are removed after delivery, failure or cancellation. JSON uses only the source
+basename, and diagnostics omit PDF text and absolute source paths.
+
+Empty image-only PDFs return `export_needs_ocr` (422). Extraction reads existing
+text/OCR layers; it does not install or silently invoke an OCR engine. Password
+protected PDFs return `export_invalid_pdf`. Old clients and all existing PDF task,
+selection, recovery and diagnostic endpoints remain compatible.
+
+The source tree supports Windows x64, Apple Silicon macOS, and Linux deployments
+with supported native dependency wheels. Intel macOS is outside the support scope.
+Python remains 3.12/3.13. See `pdf2zh_pro/vendor-manifest.json` for source provenance.

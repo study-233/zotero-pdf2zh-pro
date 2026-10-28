@@ -44,9 +44,11 @@ class UninstallTests(unittest.TestCase):
                     str(binary / 'uninstall.ps1'), '-NonInteractive']
             if purge:
                 args.append('-PurgeData')
-            result = subprocess.run(args, env=environment, capture_output=True, timeout=20)
+            # Ownership queries and first-use PowerShell compilation can exceed
+            # 20 seconds while the native installation suite is also running.
+            result = subprocess.run(args, env=environment, capture_output=True, timeout=60)
             self.assertEqual(result.returncode, 0, result.stderr.decode(errors='replace'))
-            deadline = time.monotonic() + 12
+            deadline = time.monotonic() + 60
             while (list(parent.glob('zotero-pdf2zh-pro-cleanup-*.ps1')) or
                    (root.exists() if purge else binary.exists())) and time.monotonic() < deadline:
                 time.sleep(.1)

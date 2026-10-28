@@ -4,7 +4,9 @@ import logging
 import threading
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import cv2
 import httpx
@@ -29,8 +31,10 @@ from babeldoc.format.pdf.document_il.utils.extract_char import (
 from babeldoc.format.pdf.document_il.utils.fontmap import FontMapper
 from babeldoc.format.pdf.document_il.utils.layout_helper import SPACE_REGEX
 from babeldoc.format.pdf.document_il.utils.mupdf_helper import (
-    get_no_rotation_img_multiprocess,
+    get_no_rotation_raster_geometry_multiprocess,
 )
+from babeldoc.format.pdf.document_il.utils.raster_geometry import DEFAULT_MAX_PIXELS
+from babeldoc.format.pdf.document_il.utils.raster_geometry import RasterGeometry
 
 logger = logging.getLogger(__name__)
 DPI = 150
@@ -84,12 +88,18 @@ def predict_layout(
     _imgsz: int = 1024,
     lines=None,
     font_mapper: FontMapper | None = None,
+    *,
+    geometry: RasterGeometry | None = None,
 ):
     """Predict document layout using OCR line information (RPC service)."""
 
     if lines is None:
         lines = []
 
+    if lines and geometry is None:
+        raise ValueError("geometry is required when service1 OCR lines are supplied")
+    if geometry is not None:
+        image = geometry.image
     image_data = encode_image(image)
 
     def convert_line(line):
@@ -101,13 +111,18 @@ def predict_layout(
         min_y = min(b.y for b in boxes)
         max_y = max(b.y2 for b in boxes)
 
-        image_height, image_width = image.shape[:2]
+        if geometry is None:
+            raise ValueError(
+                "geometry is required when service1 OCR lines are supplied"
+            )
+        image_width = geometry.pixel_width
+        image_height = geometry.pixel_height
 
         # Transform to image pixel coordinates
-        min_x = min_x / 72 * DPI
-        max_x = max_x / 72 * DPI
-        min_y = min_y / 72 * DPI
-        max_y = max_y / 72 * DPI
+        min_x = geometry.pt_len_to_px(min_x, "x")
+        max_x = geometry.pt_len_to_px(max_x, "x")
+        min_y = geometry.pt_len_to_px(min_y, "y")
+        max_y = geometry.pt_len_to_px(max_y, "y")
 
         min_y, max_y = image_height - max_y, image_height - min_y
 
@@ -136,7 +151,9 @@ def predict_layout(
     request_data = {
         "image": image_b64,
         "ocr_results": formatted_results,
-        "image_size": list(image.shape[:2])[::-1],  # (height, width)
+        "image_size": [geometry.pixel_width, geometry.pixel_height]
+        if geometry is not None
+        else [image.shape[1], image.shape[0]],
     }
 
     response = httpx.post(
@@ -200,6 +217,8 @@ def predict_layout2(
     image,
     host: str = "http://localhost:8000",
     _imgsz: int = 1024,
+    *,
+    geometry: RasterGeometry | None = None,
 ):
     """
     Predict document layout using the MOSEC service
@@ -214,7 +233,9 @@ def predict_layout2(
     """
     # Prepare request data
 
-    if not isinstance(image, list):
+    if geometry is not None:
+        image = [geometry.image]
+    elif not isinstance(image, list):
         image = [image]
     image_data = [encode_image(image) for image in image]
     data = {
@@ -286,6 +307,76 @@ class ResultContainer:
         self.result = YoloResult(boxes_data=np.array([]), names=[])
 
 
+@dataclass(frozen=True)
+class _PageInput:
+    page: Any
+    geometry: RasterGeometry
+    lines: list[Any]
+
+
+def _legacy_synthetic_geometry(image: np.ndarray) -> RasterGeometry:
+    """Build the legacy image-only coordinate mapping without PDF rendering."""
+
+    height, width = image.shape[:2]
+    return RasterGeometry(
+        image=image,
+        requested_dpi=DPI,
+        render_dpi=DPI,
+        pixel_width=width,
+        pixel_height=height,
+        page_width_pt=width * 72 / DPI,
+        page_height_pt=height * 72 / DPI,
+    )
+
+
+def _raster_box_to_page_points(
+    box: list[float] | np.ndarray,
+    geometry: RasterGeometry,
+) -> np.ndarray:
+    """Convert an uploaded-raster xyxy box to PDF point/top-left coordinates."""
+
+    return np.array(
+        [
+            geometry.px_len_to_pt(float(box[0]), "x"),
+            geometry.px_len_to_pt(float(box[1]), "y"),
+            geometry.px_len_to_pt(float(box[2]), "x"),
+            geometry.px_len_to_pt(float(box[3]), "y"),
+        ]
+    )
+
+
+def _project_result_to_raster(
+    result: YoloResult,
+    geometry: RasterGeometry,
+) -> YoloResult:
+    """Copy point-space boxes into pixel space for the debug callback only."""
+
+    boxes = [
+        YoloBox(
+            None,
+            _raster_box_from_page_points(box.xyxy, geometry),
+            box.conf,
+            box.cls,
+        )
+        for box in result.boxes
+    ]
+    return YoloResult(boxes=boxes, names=result.names)
+
+
+def _raster_box_from_page_points(
+    box: list[float] | np.ndarray,
+    geometry: RasterGeometry,
+) -> np.ndarray:
+    return np.array(
+        [
+            geometry.pt_len_to_px(float(box[0]), "x"),
+            geometry.pt_len_to_px(float(box[1]), "y"),
+            geometry.pt_len_to_px(float(box[2]), "x"),
+            geometry.pt_len_to_px(float(box[3]), "y"),
+        ]
+    )
+
+
 def filter_text(txt: str, font_mapper: FontMapper):
     normalize = unicodedata.normalize("NFKC", txt)
     unicodes = []
@@ -328,73 +419,6 @@ class RpcDocLayoutModel(DocLayoutModel):
     def stride(self) -> int:
         """Stride of the model input."""
         return self._stride
-
-    def resize_and_pad_image(self, image, new_shape):
-        """
-        Resize and pad the image to the specified size,
-        ensuring dimensions are multiples of stride.
-
-        Parameters:
-        - image: Input image
-        - new_shape: Target size (integer or (height, width) tuple)
-        - stride: Padding alignment stride, default 32
-
-        Returns:
-        - Processed image
-        """
-        if isinstance(new_shape, int):
-            new_shape = (new_shape, new_shape)
-
-        h, w = image.shape[:2]
-        new_h, new_w = new_shape
-
-        # Calculate scaling ratio
-        r = min(new_h / h, new_w / w)
-        resized_h, resized_w = int(round(h * r)), int(round(w * r))
-
-        # Resize image
-        image = cv2.resize(
-            image, (resized_w, resized_h), interpolation=cv2.INTER_LINEAR
-        )
-
-        # Calculate padding size
-        pad_h = new_h - resized_h
-        pad_w = new_w - resized_w
-        top, bottom = pad_h // 2, pad_h - pad_h // 2
-        left, right = pad_w // 2, pad_w - pad_w // 2
-
-        # Add padding
-        image = cv2.copyMakeBorder(
-            image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114)
-        )
-
-        return image
-
-    def scale_boxes(self, img1_shape, boxes, img0_shape):
-        """
-        Rescales bounding boxes (in the format of xyxy by default) from the shape of the image they were originally
-        specified in (img1_shape) to the shape of a different image (img0_shape).
-
-        Args:
-            img1_shape (tuple): The shape of the image that the bounding boxes are for,
-                in the format of (height, width).
-            boxes (torch.Tensor): the bounding boxes of the objects in the image, in the format of (x1, y1, x2, y2)
-            img0_shape (tuple): the shape of the target image, in the format of (height, width).
-
-        Returns:
-            boxes (torch.Tensor): The scaled bounding boxes, in the format of (x1, y1, x2, y2)
-        """
-
-        # Calculate scaling ratio
-        gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])
-
-        # Calculate padding size
-        pad_x = round((img1_shape[1] - img0_shape[1] * gain) / 2 - 0.1)
-        pad_y = round((img1_shape[0] - img0_shape[0] * gain) / 2 - 0.1)
-
-        # Remove padding and scale boxes
-        boxes = (boxes - [pad_x, pad_y, pad_x, pad_y]) / gain
-        return boxes
 
     def calculate_iou(self, box1, box2):
         """Calculate IoU between two boxes in xyxy format."""
@@ -479,16 +503,14 @@ class RpcDocLayoutModel(DocLayoutModel):
         image,
         imgsz: int = 1024,
         lines=None,
+        *,
+        geometry: RasterGeometry | None = None,
     ) -> YoloResult:
         """Predict the layout of a single page and fuse results from two RPC services."""
 
-        # Resize/pad image if needed – use original size to avoid extra scaling artefacts
-        orig_h, orig_w = image.shape[:2]
-        target_imgsz = (orig_h, orig_w)
-        if image.shape[0] != target_imgsz[0] or image.shape[1] != target_imgsz[1]:
-            image_proc = self.resize_and_pad_image(image, new_shape=target_imgsz)
-        else:
-            image_proc = image
+        if geometry is None:
+            geometry = _legacy_synthetic_geometry(image)
+        image_proc = geometry.image
 
         # Parallel calls to both services; exceptions propagate if either fails
         with ThreadPoolExecutor(max_workers=2) as ex:
@@ -500,8 +522,15 @@ class RpcDocLayoutModel(DocLayoutModel):
                     imgsz,
                     lines,
                     self.font_mapper,
+                    geometry=geometry,
                 )
-            future2 = ex.submit(predict_layout2, image_proc, self.host2, imgsz)
+            future2 = ex.submit(
+                predict_layout2,
+                image_proc,
+                self.host2,
+                imgsz,
+                geometry=geometry,
+            )
 
             # .result() will re-raise any exception occurred in worker thread.
             if lines:
@@ -510,19 +539,13 @@ class RpcDocLayoutModel(DocLayoutModel):
                 preds1 = None
             preds2 = future2.result()
 
-        # Convert DPI to PDF points (72 dpi)
-        pdf_h, pdf_w = orig_h / DPI * 72, orig_w / DPI * 72
-
         merged_boxes: list[YoloBox] = []
         names: dict[int, str] = {}
 
         def _process_preds(preds, id_offset: int, label_suffix: str | None):
             for pred in preds or []:
                 for box in pred["boxes"]:
-                    # scale coords back to PDF space
-                    scaled_xyxy = self.scale_boxes(
-                        target_imgsz, np.array(box["xyxy"]), (pdf_h, pdf_w)
-                    )
+                    scaled_xyxy = _raster_box_to_page_points(box["xyxy"], geometry)
 
                     new_cls_id = box["cls"] + id_offset
 
@@ -558,7 +581,11 @@ class RpcDocLayoutModel(DocLayoutModel):
         return YoloResult(boxes=merged_boxes, names=names)
 
     def predict(self, image, imgsz=1024, **kwargs) -> list[YoloResult]:  # type: ignore[override]
-        """Predict the layout for one or multiple images."""
+        """Predict images using a legacy synthetic geometry.
+
+        This image-only path does not render a PDF page and is therefore not
+        protected by the PDF page pixel budget.
+        """
 
         # Normalize to list
         if isinstance(image, np.ndarray) and len(image.shape) == 3:
@@ -573,21 +600,26 @@ class RpcDocLayoutModel(DocLayoutModel):
 
     def predict_page(self, page, pdf_bytes: Path, translate_config, save_debug_image):
         translate_config.raise_if_cancelled()
-        # doc = pymupdf.open(io.BytesIO(pdf_bytes))
-        # with self.lock:
-        # pix = mupdf_doc[page.page_number].get_pixmap(dpi=72)
-        image = get_no_rotation_img_multiprocess(
-            pdf_bytes.as_posix(), page.page_number, dpi=DPI
+        geometry = get_no_rotation_raster_geometry_multiprocess(
+            pdf_bytes.as_posix(),
+            page.page_number,
+            requested_dpi=DPI,
+            max_pixels=DEFAULT_MAX_PIXELS,
         )
-        # image = np.frombuffer(pix.samples, np.uint8).reshape(
-        #     pix.height,
-        #     pix.width,
-        #     3,
-        # )[:, :, ::-1]
         char_boxes = convert_page_to_char_boxes(page)
         lines = process_page_chars_to_lines(char_boxes)
-        predict_result = self.predict_image(image, 800, lines)
-        save_debug_image(image, predict_result, page.page_number + 1)
+        page_input = _PageInput(page, geometry, lines)
+        predict_result = self.predict_image(
+            page_input.geometry.image,
+            800,
+            page_input.lines,
+            geometry=page_input.geometry,
+        )
+        save_debug_image(
+            page_input.geometry.image,
+            _project_result_to_raster(predict_result, page_input.geometry),
+            page.page_number + 1,
+        )
         return page, predict_result
 
     def handle_document(  # type: ignore[override]

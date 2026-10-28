@@ -85,7 +85,7 @@ class RuntimeStorageTests(unittest.TestCase):
         self.assert_pack(target, metadata)
         self.assertEqual((target / "migration-backup/tasks.json").read_bytes(), (legacy / "tasks.json").read_bytes())
         for name in ("tasks.json", "tasks.json.bak"):
-            task = json.loads((target / name).read_text())["tasks"][0]
+            task = json.loads((target / name).read_text(encoding="utf-8"))["tasks"][0]
             self.assertEqual(task["workspace_dir"], str(target / "existing-task"))
             self.assertEqual(Path(task["request_payload"]["input_path"]).read_bytes(), b"source pdf")
             self.assertEqual(task["request_payload"]["translation_memory_path"], str(target / "translation-memory.sqlite3"))
@@ -141,6 +141,27 @@ class RuntimeStorageTests(unittest.TestCase):
             self.assertEqual(storage.prepare_data_directory(module, data), data)
             self.assert_pack(data, metadata)
         self.assertEqual(storage._manifest(data), before)
+
+    def test_repeated_relocation_keeps_old_backups_and_rebases_live_paths(self):
+        source, _ = self.seed(self.module('first/Lib/site-packages'))
+        original = (source / 'tasks.json').read_bytes()
+        second = self.root / 'second/data'
+        shutil.copytree(source, second)
+        storage._rebase_tasks(second, source, second)
+        before_second_move = (second / 'tasks.json').read_bytes()
+        third = self.root / 'third/data'
+        shutil.copytree(second, third)
+        storage._rebase_tasks(third, second, third)
+        self.assertEqual((third / 'migration-backup/tasks.json').read_bytes(), original)
+        self.assertTrue(any(path.read_bytes() == before_second_move
+            for path in (third / 'migration-backup').rglob('tasks.json')))
+        shutil.rmtree(source)
+        shutil.rmtree(second)
+        for name in ('tasks.json', 'tasks.json.bak'):
+            task = json.loads((third / name).read_text(encoding='utf-8'))['tasks'][0]
+            self.assertEqual(task['workspace_dir'], str(third / 'existing-task'))
+            self.assertEqual(Path(task['request_payload']['input_path']).read_bytes(), b'source pdf')
+            self.assertEqual(Path(task['result_files']['dual']['output_path']).read_bytes(), b'translated pdf')
 
     def test_source_and_docker_layout_are_unchanged(self):
         for relative in ("checkout/server", "app/server"):

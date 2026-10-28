@@ -10,15 +10,15 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import server
-from babeldoc.translator.request_budget import ParagraphRequestBudget
-from babeldoc.translator.validation import InvalidTranslation
+from pdf2zh_pro.translator.request_budget import ParagraphRequestBudget
+from pdf2zh_pro.translator.validation import InvalidTranslation
 from codex_client import CodexError
 from diagnostics import safe_fields
 from observability import TaskMetricsCollector
-from pdf2zh_next.config.translate_engine_model import CodexSettings, TERM_EXTRACTION_ENGINE_METADATA
-from pdf2zh_next.translator import get_translator
-from pdf2zh_next.translator.translator_impl.codex import CodexTranslator
-from pdf2zh_next_service import create_runtime_settings, validate_service_config, run_live_translator_test
+from pdf2zh_pro.translator.providers import CodexSettings, TRANSLATION_ENGINE_METADATA
+from pdf2zh_pro.translator import prepare_translator
+from pdf2zh_pro.translator.codex import CodexTranslator
+from pdf2zh_pro.pdf import create_runtime_settings, validate_service_config, run_live_translator_test
 from provider_models import list_codex_models, ModelDiscoveryError
 from test_pdf2zh_next_service import make_settings_payload
 from text_translation import TextTranslationService, TextTranslationError
@@ -44,13 +44,13 @@ class MemoryCache:
 
 class CodexProviderTests(unittest.TestCase):
     def setUp(self):
-        self.enterContext(patch("pdf2zh_next.translator.base_translator.TranslationCache", MemoryCache))
+        self.enterContext(patch("pdf2zh_pro.translator.base.TranslationCache", MemoryCache))
         self.client = Mock()
         self.client.session.return_value = self.client
         self.client.check_ready.return_value = {"model": "gpt-6-luna"}
         self.client.translate.return_value = SimpleNamespace(text="样本量有限。", usage={})
         self.factory = self.enterContext(patch(
-            "pdf2zh_next.translator.translator_impl.codex.get_codex_client", return_value=self.client))
+            "pdf2zh_pro.translator.codex.get_codex_client", return_value=self.client))
         self.payload = make_settings_payload(service="codex", llm_api={"model": "gpt-6-luna"})
 
     def translator(self, api=None):
@@ -108,7 +108,7 @@ class CodexProviderTests(unittest.TestCase):
                 self.assertEqual(translator.llm_translate("second"), "样本量有限。")
 
     def test_codex_qps_and_pool_are_capped_before_readiness_without_raising_user_limits(self):
-        from pdf2zh_next.translator import get_term_translator
+        from pdf2zh_pro.translator import prepare_term_translator
         for requested, expected in ((10, 2), (1, 1)):
             with self.subTest(requested=requested):
                 settings = create_runtime_settings({**self.payload, "qps": requested, "pool_size": requested,
@@ -118,19 +118,19 @@ class CodexProviderTests(unittest.TestCase):
                     self.assertEqual(settings.translation.pool_max_workers, expected)
                     return {"reasoningEffort": "medium"}
                 self.client.check_ready.side_effect = ready
-                translator = get_translator(settings)
+                translator = prepare_translator(settings)
                 self.assertEqual(translator.rate_limiter.max_qps, expected)
                 settings.translation.term_qps = 1
                 settings.translation.term_pool_max_workers = 1
-                terms = get_term_translator(settings)
+                terms = prepare_term_translator(settings)
                 self.assertEqual(terms.rate_limiter.max_qps, 1)
                 self.assertEqual(settings.translation.term_pool_max_workers, 1)
 
     def test_dedicated_term_translator_shares_task_stop_state(self):
-        from pdf2zh_next.high_level import create_babeldoc_config
+        from pdf2zh_pro.pdf import create_babeldoc_config
         settings = create_runtime_settings({**self.payload, "no_auto_extract_glossary": False})
         settings.translation.term_qps = 1
-        with patch("pdf2zh_next.high_level.BabelDOCConfig", side_effect=lambda **kwargs: SimpleNamespace(**kwargs)):
+        with patch("pdf2zh_pro.pdf.BabelDOCConfig", side_effect=lambda **kwargs: SimpleNamespace(**kwargs)):
             config = create_babeldoc_config(settings, Path("/tmp/source.pdf"))
         self.assertIsNot(config.translator, config.term_extraction_translator)
         self.assertIs(config.translator.request_state, config.term_extraction_translator.request_state)
@@ -157,13 +157,13 @@ class CodexProviderTests(unittest.TestCase):
         self.assertEqual(settings.translate_engine_settings.codex_model, "gpt-6-luna")
         self.assertEqual(settings.translate_engine_settings.codex_reasoning_effort, "none")
         self.assertIs(settings.term_extraction_engine_settings, settings.translate_engine_settings)
-        self.assertIn("Codex", [item.translate_engine_type for item in TERM_EXTRACTION_ENGINE_METADATA])
+        self.assertIn("Codex", [item.translate_engine_type for item in TRANSLATION_ENGINE_METADATA if item.support_llm])
         with self.assertRaises(ValueError):
             create_runtime_settings({**self.payload, "llm_api": {"reasoningEffort": "unbounded"}})
 
     def test_factory_health_checks_config_without_generation(self):
         self.client.check_ready.return_value["reasoningEffort"] = "medium"
-        translator = get_translator(create_runtime_settings(self.payload))
+        translator = prepare_translator(create_runtime_settings(self.payload))
         self.assertIsInstance(translator, CodexTranslator)
         self.client.check_ready.assert_called_once_with("gpt-6-luna", None,
                                                        check_cancelled=translator.check_cancelled)

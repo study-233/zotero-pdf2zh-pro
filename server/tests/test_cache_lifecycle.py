@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch
 
 from peewee import SqliteDatabase
 
-from babeldoc.translator.cache_lifecycle import cache_connection_scope
+from pdf2zh_pro.translator.cache_lifecycle import cache_connection_scope
 from babeldoc.utils.priority_thread_pool_executor import PriorityThreadPoolExecutor
 
 
@@ -21,7 +21,7 @@ class TranslationCacheLifecycleTests(unittest.TestCase):
         directory = self.enterContext(tempfile.TemporaryDirectory())
         self.enterContext(patch.dict(os.environ, {'PDF2ZH_TRANSLATION_CACHE_DIR': directory}))
         self.caches = []
-        for name in ('pdf2zh_next.translator.cache', 'babeldoc.translator.cache'):
+        for name in ('pdf2zh_pro.translator.cache',):
             module = importlib.import_module(name)
             database = SqliteDatabase(None)
             self.enterContext(patch.object(module, 'db', database))
@@ -117,7 +117,7 @@ class TranslationCacheLifecycleTests(unittest.TestCase):
                         self.assertEqual(closed, [])
                     self.assertEqual(closed, [True])
 
-    def test_task_scope_reuses_both_caches_and_nested_scopes(self):
+    def test_task_scope_reuses_cache_and_nested_scopes(self):
         for module, database in self.caches:
             module.init_db()
         with ExitStack() as patches:
@@ -138,7 +138,7 @@ class TranslationCacheLifecycleTests(unittest.TestCase):
                             self.assertIsNone(cache.get('source'))
                     self.assertFalse(database.is_closed())
                     self.assertIs(database.connection(), connection)
-            self.assertEqual([connect.call_count for connect in connects], [1, 1])
+            self.assertEqual([connect.call_count for connect in connects], [1])
         for (_, database), connection in zip(self.caches, connections):
             self.assertTrue(database.is_closed())
             with self.assertRaisesRegex(sqlite3.ProgrammingError, 'closed database'):

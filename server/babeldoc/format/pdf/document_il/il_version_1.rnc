@@ -36,6 +36,10 @@ PDFFont =
     attribute fontId { xsd:string },
     attribute xrefId { PDFXrefId },
     attribute encodingLength { xsd:int },
+    attribute fontSubtype { xsd:string }?,
+    attribute type3FontMatrix { xsd:string }?,
+    attribute type3FontBBox { xsd:string }?,
+    attribute type3EmHeight { xsd:float }?,
     attribute bold { xsd:boolean }?,
     attribute italic { xsd:boolean }?,
     attribute monospace { xsd:boolean }?,
@@ -165,6 +169,7 @@ PDFCurve =
     attribute fill_background { xsd:boolean }?,
     attribute stroke_path { xsd:boolean }?,
     attribute evenodd { xsd:boolean }?,
+    attribute passthroughPaint { xsd:boolean }?,
     attribute xobjId { xsd:int }?,
     attribute renderOrder { xsd:int }?,
     attribute ctm {

@@ -5,7 +5,7 @@ import httpx
 from tenacity import wait_none
 
 from observability import TaskMetricsCollector
-from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+from pdf2zh_pro.translator.openai import OpenAITranslator
 import test_openai_protocol as protocol_fixtures
 
 chat, response = protocol_fixtures.chat, protocol_fixtures.response
@@ -71,7 +71,7 @@ class MetricsExtensionTests(unittest.TestCase):
         self.assertEqual(kind["errorTypes"], {"RateLimitError": 1})
 
     def test_malformed_generation_retry_keeps_review_classification(self):
-        from babeldoc.translator.validation import InvalidTranslation
+        from pdf2zh_pro.translator.validation import InvalidTranslation
         translator = self.translator(lambda _: httpx.Response(200, json=chat("译文")), protocol="chat_completions")
         collector = self.collector()
         translator.set_metrics_collector(collector)

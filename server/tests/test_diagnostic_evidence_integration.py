@@ -89,7 +89,7 @@ class NativeEvidenceTests(unittest.TestCase):
         import httpx
         from unittest.mock import Mock
         from test_openai_protocol import ProtocolTests, chat
-        from babeldoc.translator.validation import InvalidTranslation, validate_text
+        from pdf2zh_pro.translator.validation import InvalidTranslation, validate_text
         source = 'This is a complete English paragraph about the experiment.'
         with tempfile.TemporaryDirectory() as directory:
             ledger = EvidenceLedger(directory, 'native', 1)
@@ -150,7 +150,7 @@ class NativeEvidenceTests(unittest.TestCase):
         import httpx
         from unittest.mock import Mock
         from test_openai_protocol import ProtocolTests, chat
-        from babeldoc.translator.validation import InvalidTranslation
+        from pdf2zh_pro.translator.validation import InvalidTranslation
         with tempfile.TemporaryDirectory() as directory:
             ledger = EvidenceLedger(directory, 'native', 1)
             self.addCleanup(ledger.close, 'failed')

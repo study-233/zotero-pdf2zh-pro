@@ -15,15 +15,15 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 import requests
 
-from babeldoc.glossary_options import normalize_glossary_entries, matching_glossary_entries
+from pdf2zh_pro.glossary import normalize_glossary_entries, matching_glossary_entries
 from codex_client import CodexError
 from chatgpt_client import ChatGPTError
-from pdf2zh_next.config.translate_engine_model import CodexSettings, ChatGPTSettings, OpenAISettings
-from pdf2zh_next.translator.translator_impl.codex import CodexTranslator
-from pdf2zh_next.translator.translator_impl.chatgpt import ChatGPTTranslator
-from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
-from pdf2zh_next.translator.rate_limiter.qps_rate_limiter import QPSRateLimiter
-from pdf2zh_next_service import create_runtime_settings, SERVICE_FIELD_MAP, require_supported_service
+from pdf2zh_pro.translator.providers import CodexSettings, ChatGPTSettings, OpenAISettings
+from pdf2zh_pro.translator.codex import CodexTranslator
+from pdf2zh_pro.translator.chatgpt import ChatGPTTranslator
+from pdf2zh_pro.translator.openai import OpenAITranslator
+from pdf2zh_pro.translator.rate_limit import QPSRateLimiter
+from pdf2zh_pro.config import create_model_settings, SERVICE_FIELD_MAP, require_supported_service
 from translation_memory import normalize_text
 from selection_cache import SelectionCache, dictionary_entry, context_meaning
 
@@ -470,8 +470,7 @@ class TextTranslationService:
             service = data.get('service') or 'openai'
             if not isinstance(service, str) or service not in SERVICE_FIELD_MAP:
                 raise TextTranslationError('invalid_config')
-            settings = create_runtime_settings({
-                'input_path': 'selection.pdf', 'output_dir': '.', 'output_modes': ['dual'],
+            settings = create_model_settings({
                 'source_lang': data.get('source') or 'en', 'target_lang': target,
                 'service': service, 'llm_api': data.get('llm_api') or {},
             })

@@ -27,10 +27,10 @@ def install():
     if os.environ.get('PDF2ZH_BENCHMARK_WORKER_CAP'):
         if os.environ['PDF2ZH_BENCHMARK_WORKER_CAP'] != '4':
             raise RuntimeError('Unexpected experimental worker cap')
-        from pdf2zh_next.translator.translator_impl.chatgpt import ChatGPTTranslator
+        from pdf2zh_pro.translator.chatgpt import ChatGPTTranslator
         # In this owned service only. PDF tasks supply a shared semaphore sized
         # to the effective pool, so the normal standalone fallback stays intact.
-        ChatGPTTranslator.pdf2zh_next_recommended_pool_max_workers = 4
+        ChatGPTTranslator.recommended_pool_max_workers = 4
     root = Path(os.environ[required[2]])
     root.mkdir(parents=True, exist_ok=True)
     lock = threading.Lock()

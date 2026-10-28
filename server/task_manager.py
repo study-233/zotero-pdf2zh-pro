@@ -21,10 +21,10 @@ from typing import Any
 from typing import Callable
 
 
-from pdf2zh_next_service import TranslationOutputFile
-from pdf2zh_next_service import diagnose_service_error
-from pdf2zh_next_service import explain_service_error
-from pdf2zh_next_service import translate_pdf_with_callbacks
+from pdf2zh_pro.types import TranslationOutputFile
+from pdf2zh_pro.errors import diagnose_service_error
+from pdf2zh_pro.errors import explain_service_error
+from pdf2zh_pro.pdf import translate_pdf_with_callbacks
 from observability import empty_metrics, supports_request_metrics, merge_metrics
 from diagnostics import DiagnosticStore, safe_fields, requested_configuration
 from task_runtime import run_translation, CleanupFailed, recover_leases

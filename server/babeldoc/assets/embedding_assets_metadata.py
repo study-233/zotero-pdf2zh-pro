@@ -4,10 +4,6 @@ DOCLAYOUT_YOLO_DOCSTRUCTBENCH_IMGSZ1024ONNX_SHA3_256 = (
     "60be061226930524958b5465c8c04af3d7c03bcb0beb66454f5da9f792e3cf2a"
 )
 
-TABLE_DETECTION_RAPIDOCR_MODEL_SHA3_256 = (
-    "062f4619afe91b33147c033acadecbb53f2a7b99ac703d157b96d5b10948da5e"
-)
-
 TIKTOKEN_CACHES = {
     "fb374d419588a4632f3f557e76b4b70aebbca790": "cb04bcda5782cfbbe77f2f991d92c0ea785d9496ef1137c91dfc3c8c324528d6"
 }
@@ -37,12 +33,6 @@ DOC_LAYOUT_ONNX_MODEL_URL = {
     "huggingface": "https://huggingface.co/wybxc/DocLayout-YOLO-DocStructBench-onnx/resolve/main/doclayout_yolo_docstructbench_imgsz1024.onnx?download=true",
     "hf-mirror": "https://hf-mirror.com/wybxc/DocLayout-YOLO-DocStructBench-onnx/resolve/main/doclayout_yolo_docstructbench_imgsz1024.onnx?download=true",
     "modelscope": "https://www.modelscope.cn/models/AI-ModelScope/DocLayout-YOLO-DocStructBench-onnx/resolve/master/doclayout_yolo_docstructbench_imgsz1024.onnx",
-}
-
-TABLE_DETECTION_RAPIDOCR_MODEL_URL = {
-    "huggingface": "https://huggingface.co/spaces/RapidAI/RapidOCR/resolve/main/models/text_det/ch_PP-OCRv4_det_infer.onnx",
-    "hf-mirror": "https://hf-mirror.com/spaces/RapidAI/RapidOCR/resolve/main/models/text_det/ch_PP-OCRv4_det_infer.onnx",
-    "modelscope": "https://www.modelscope.cn/models/RapidAI/RapidOCR/resolve/master/onnx/PP-OCRv4/det/ch_PP-OCRv4_det_infer.onnx",
 }
 
 # from https://github.com/funstory-ai/BabelDOC-Assets/blob/main/font_metadata.json

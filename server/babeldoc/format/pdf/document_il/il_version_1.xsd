@@ -63,6 +63,10 @@
       <xs:attribute name="fontId" use="required" type="xs:string"/>
       <xs:attribute name="xrefId" use="required" type="PDFXrefId"/>
       <xs:attribute name="encodingLength" use="required" type="xs:int"/>
+      <xs:attribute name="fontSubtype" type="xs:string"/>
+      <xs:attribute name="type3FontMatrix" type="xs:string"/>
+      <xs:attribute name="type3FontBBox" type="xs:string"/>
+      <xs:attribute name="type3EmHeight" type="xs:float"/>
       <xs:attribute name="bold" type="xs:boolean"/>
       <xs:attribute name="italic" type="xs:boolean"/>
       <xs:attribute name="monospace" type="xs:boolean"/>
@@ -245,6 +249,7 @@
       <xs:attribute name="fill_background" type="xs:boolean"/>
       <xs:attribute name="stroke_path" type="xs:boolean"/>
       <xs:attribute name="evenodd" type="xs:boolean"/>
+      <xs:attribute name="passthroughPaint" type="xs:boolean"/>
       <xs:attribute name="xobjId" type="xs:int"/>
       <xs:attribute name="renderOrder" type="xs:int"/>
       <xs:attribute name="ctm">

@@ -17,9 +17,9 @@ from chatgpt_auth import AuthStore, AuthError, private_write
 from chatgpt_client import ChatGPTClient, ChatGPTError, response_error
 from chatgpt_routes import install_chatgpt_routes
 from chatgpt_usage import UsageStore
-from pdf2zh_next_service import create_runtime_settings
-from pdf2zh_next.translator.translator_impl.chatgpt import ChatGPTTranslator
-from pdf2zh_next.translator import get_translator, get_term_translator
+from pdf2zh_pro.pdf import create_runtime_settings
+from pdf2zh_pro.translator.chatgpt import ChatGPTTranslator
+from pdf2zh_pro.translator import prepare_translator, prepare_term_translator
 from observability import TaskMetricsCollector
 from test_pdf2zh_next_service import make_settings_payload
 from text_translation import TextTranslationError
@@ -220,7 +220,9 @@ class ChatGPTContracts(unittest.TestCase):
             callbacks.append(ready)
             ready('http://127.0.0.1:12345/start/test')
             entered.set()
-            finish.wait(3)
+            # Keep the simulated login alive until the assertion thread releases
+            # it; status/client construction can exceed 3 seconds on Windows.
+            finish.wait(30)
             return {'authenticated': False, 'error': 'oauth_login_cancelled'}
         with patch('chatgpt_routes.login', side_effect=waiting_login), patch('chatgpt_routes.close_chatgpt_clients'):
             session = app.extensions['chatgpt_login']
@@ -253,7 +255,7 @@ class ChatGPTContracts(unittest.TestCase):
         factory.translate.side_effect = translate
         payload = make_settings_payload(service='chatgpt', llm_api={'model':'gpt-6-luna','reasoningEffort':'low'})
         settings = create_runtime_settings(payload)
-        with patch('pdf2zh_next.translator.translator_impl.chatgpt.get_chatgpt_client', return_value=factory):
+        with patch('pdf2zh_pro.translator.chatgpt.get_chatgpt_client', return_value=factory):
             adapter = ChatGPTTranslator(settings, None)
             collector = TaskMetricsCollector(task_id='test', provider='chatgpt', model='gpt-6-luna')
             adapter.set_metrics_collector(collector)
@@ -267,22 +269,22 @@ class ChatGPTContracts(unittest.TestCase):
     def test_pdf_default_24_workers_and_three_qps_preserve_lower_user_limits(self):
         client = Mock()
         client.check_ready.return_value = {'reasoningEffort':'low'}
-        with patch('pdf2zh_next.translator.translator_impl.chatgpt.get_chatgpt_client', return_value=client):
+        with patch('pdf2zh_pro.translator.chatgpt.get_chatgpt_client', return_value=client):
             for requested, expected in ((None,24), (0,24), (50,24), (24,24), (8,8), (2,2), (1,1)):
                 for requested_qps, expected_qps in ((10,3), (3,3), (2,2), (1,1)):
                     with self.subTest(requested=requested, qps=requested_qps):
                         settings = create_runtime_settings(make_settings_payload(service='chatgpt',
                             pool_size=requested, qps=requested_qps, no_auto_extract_glossary=False,
                             llm_api={'model':'gpt-6-luna','reasoningEffort':'low'}))
-                        main = get_translator(settings)
+                        main = prepare_translator(settings)
                         self.assertEqual(settings.translation.pool_max_workers, expected)
                         self.assertEqual(main.rate_limiter.max_qps, expected_qps)
-                        terms = get_term_translator(settings)
+                        terms = prepare_term_translator(settings)
                         self.assertEqual(settings.translation.term_pool_max_workers, expected)
                         self.assertEqual(terms.rate_limiter.max_qps, expected_qps)
                         settings.translation.term_pool_max_workers = 1
                         settings.translation.term_qps = 1
-                        terms = get_term_translator(settings)
+                        terms = prepare_term_translator(settings)
                         self.assertEqual(settings.translation.term_pool_max_workers, 1)
                         self.assertEqual(terms.rate_limiter.max_qps, 1)
                         main.configure_execution(expected, lambda: None)
@@ -300,7 +302,7 @@ class ChatGPTContracts(unittest.TestCase):
             return Mock(text='译文', usage={'prompt_tokens':15,'completion_tokens':6,'cache_hit_tokens':0})
         client.translate.side_effect = translate
         settings = create_runtime_settings(make_settings_payload(service='chatgpt', llm_api={'model':'gpt-6-luna'}))
-        with patch('pdf2zh_next.translator.translator_impl.chatgpt.get_chatgpt_client', return_value=client):
+        with patch('pdf2zh_pro.translator.chatgpt.get_chatgpt_client', return_value=client):
             adapter = ChatGPTTranslator(settings, None)
         # No test override or supplied semaphore: the product default admits 24.
         adapter.configure_execution(50, lambda: None)
@@ -405,7 +407,7 @@ class LoginExpiryTests(unittest.TestCase):
         self.assertFalse(store.status()['requires_login'])
 
     def test_pdf_diagnostics_preserve_login_reason_and_exclude_transient_refresh(self):
-        from pdf2zh_next_service import diagnose_service_error
+        from pdf2zh_pro.pdf import diagnose_service_error
         for message in ('ChatGPT 登录已失效，请重新登录。', 'ChatGPT 授权无法续期，请重新登录。', 'chatgpt_sign_in_required'):
             self.assertEqual(diagnose_service_error(message)[0]['code'], 'chatgpt_sign_in_required')
         self.assertNotIn('chatgpt_sign_in_required', [d['code'] for d in diagnose_service_error(

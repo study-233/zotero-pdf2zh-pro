@@ -17,9 +17,9 @@ from babeldoc.format.pdf.document_il.midend.il_translator import ILTranslator, P
 from babeldoc.format.pdf.document_il.midend.il_translator_llm_only import ILTranslatorLLMOnly, BatchParagraph
 from babeldoc.format.pdf.document_il.midend.il_translator import PageTranslateTracker
 from babeldoc.format.pdf.translation_recovery import TranslationRecovery, safe_error
-from babeldoc.translator.validation import InvalidTranslation, validate_batch, validate_text
-from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator, _retry_wait
-from pdf2zh_next_service import TranslationResult, TranslationOutputFile
+from pdf2zh_pro.translator.validation import InvalidTranslation, validate_batch, validate_text
+from pdf2zh_pro.translator.openai import OpenAITranslator, _retry_wait
+from pdf2zh_pro.pdf import TranslationResult, TranslationOutputFile
 from task_manager import TaskManager, TaskRecord
 import test_openai_protocol as protocol_fixtures
 chat = protocol_fixtures.chat

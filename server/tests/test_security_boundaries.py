@@ -14,9 +14,9 @@ from test_server import build_pdf_payload
 
 class InstalledDependencyTests(unittest.TestCase):
     def test_active_runtime_meets_security_minimums(self):
-        for package, minimum in {"pypdf": "6.21.2", "pillow": "13.0.0",
+        for package, minimum in {"pymupdf": "2.0", "pillow": "13.0.0",
                                  "filelock": "4.2.1", "certifi": "2026.10.19", "urllib3": "2.8.0",
-                                 "fsspec": "2026.6.0", "werkzeug": "3.1.9"}.items():
+                                 "werkzeug": "3.1.9"}.items():
             with self.subTest(package=package):
                 self.assertGreaterEqual(Version(importlib.metadata.version(package)), Version(minimum))
 

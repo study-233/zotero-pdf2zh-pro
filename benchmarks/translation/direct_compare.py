@@ -88,7 +88,7 @@ def prepare(data, output, *, model, effort, cli_path, rounds=3, max_requests=60,
 
 def inspect(case, text):
     sys.path.insert(0, str(ROOT / 'server'))
-    from babeldoc.translator.validation import inspect_batch, InvalidTranslation
+    from pdf2zh_pro.translator.validation import inspect_batch, InvalidTranslation
     try:
         result = inspect_batch(text, [p['source_text'] for p in case['parts']], 'zh-CN')
         return {'complete': result.complete, 'valid_paragraphs': len(result.valid_outputs),

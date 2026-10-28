@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 
 import requests
 
-from babeldoc.glossary_options import normalize_glossary_entries
+from pdf2zh_pro.glossary import normalize_glossary_entries
 from glossary_catalog import CATALOG_URL, GLOSSARY_CATALOG
 
 MAX_PACK_BYTES = 32 * 1024 * 1024

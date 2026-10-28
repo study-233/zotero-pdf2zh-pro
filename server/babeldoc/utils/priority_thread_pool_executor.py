@@ -19,7 +19,7 @@ from concurrent.futures.thread import _WorkItem
 from heapq import heappop
 from heapq import heappush
 
-from babeldoc.translator.cache_lifecycle import cache_connection_scope
+from pdf2zh_pro.translator.cache_lifecycle import cache_connection_scope
 
 logger = logging.getLogger(__name__)
 

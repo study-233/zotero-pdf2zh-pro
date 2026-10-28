@@ -18,10 +18,6 @@ from babeldoc.assets.embedding_assets_metadata import (
 from babeldoc.assets.embedding_assets_metadata import EMBEDDING_FONT_METADATA
 from babeldoc.assets.embedding_assets_metadata import FONT_METADATA_URL
 from babeldoc.assets.embedding_assets_metadata import FONT_URL_BY_UPSTREAM
-from babeldoc.assets.embedding_assets_metadata import (
-    TABLE_DETECTION_RAPIDOCR_MODEL_SHA3_256,
-)
-from babeldoc.assets.embedding_assets_metadata import TABLE_DETECTION_RAPIDOCR_MODEL_URL
 from babeldoc.assets.embedding_assets_metadata import TIKTOKEN_CACHES
 from babeldoc.const import get_cache_file_path
 from tenacity import retry
@@ -46,20 +42,33 @@ FileProgressCallback = Callable[[int], None]
 class ResultContainer:
     def __init__(self):
         self.result = None
+        self.exception: BaseException | None = None
 
     def set_result(self, result):
         self.result = result
+
+    def set_exception(self, exc: BaseException):
+        self.exception = exc
 
 
 def run_in_another_thread(coro):
     result_container = ResultContainer()
 
     def _wrapper():
-        result_container.set_result(asyncio.run(coro))
+        try:
+            result_container.set_result(asyncio.run(coro))
+        except BaseException as exc:  # noqa: BLE001
+            result_container.set_exception(exc)
 
     thread = threading.Thread(target=_wrapper)
     thread.start()
     thread.join()
+    if result_container.exception is not None:
+        msg = (
+            "asset coroutine failed: "
+            f"{type(result_container.exception).__name__}: {result_container.exception}"
+        )
+        raise RuntimeError(msg) from result_container.exception
     return result_container.result
 
 
@@ -276,34 +285,12 @@ async def get_doclayout_onnx_model_path_async(client: httpx.AsyncClient | None =
     return onnx_path
 
 
-async def get_table_detection_rapidocr_model_path_async(
-    client: httpx.AsyncClient | None = None,
-):
-    onnx_path = get_cache_file_path("ch_PP-OCRv4_det_infer.onnx", "models")
-    if verify_file(onnx_path, TABLE_DETECTION_RAPIDOCR_MODEL_SHA3_256):
-        return onnx_path
-
-    logger.info("table detection rapidocr model not found or corrupted, downloading...")
-    fastest_upstream, _ = await get_fastest_upstream_for_model(client)
-    if fastest_upstream is None:
-        logger.error("Failed to get fastest upstream")
-        exit(1)
-
-    url = TABLE_DETECTION_RAPIDOCR_MODEL_URL[fastest_upstream]
-
-    await download_file(client, url, onnx_path, TABLE_DETECTION_RAPIDOCR_MODEL_SHA3_256)
-    logger.info(
-        f"Download table detection rapidocr model from {fastest_upstream} success"
-    )
-    return onnx_path
 
 
 def get_doclayout_onnx_model_path():
     return run_coro(get_doclayout_onnx_model_path_async())
 
 
-def get_table_detection_rapidocr_model_path():
-    return run_coro(get_table_detection_rapidocr_model_path_async())
 
 
 def get_font_url_by_name_and_upstream(font_file_name: str, upstream: str):
@@ -565,12 +552,9 @@ async def async_warmup():
     _ = encoding_for_model("gpt-4o")
     async with httpx.AsyncClient() as client:
         onnx_task = asyncio.create_task(get_doclayout_onnx_model_path_async(client))
-        onnx_task2 = asyncio.create_task(
-            get_table_detection_rapidocr_model_path_async(client)
-        )
         font_tasks = asyncio.create_task(download_all_fonts_async(client))
         cmap_tasks = asyncio.create_task(download_all_cmaps_async(client))
-        await asyncio.gather(onnx_task, onnx_task2, font_tasks, cmap_tasks)
+        await asyncio.gather(onnx_task, font_tasks, cmap_tasks)
 
 
 def warmup():
@@ -608,12 +592,6 @@ def generate_all_assets_file_list():
         {
             "name": "doclayout_yolo_docstructbench_imgsz1024.onnx",
             "sha3_256": DOCLAYOUT_YOLO_DOCSTRUCTBENCH_IMGSZ1024ONNX_SHA3_256,
-        },
-    )
-    result["models"].append(
-        {
-            "name": "ch_PP-OCRv4_det_infer.onnx",
-            "sha3_256": TABLE_DETECTION_RAPIDOCR_MODEL_SHA3_256,
         },
     )
     return result
@@ -728,6 +706,4 @@ if __name__ == "__main__":
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     # warmup()
     # generate_offline_assets_package()
-    # restore_offline_assets_package(Path(
-    #     '/Users/aw/.cache/babeldoc/assets/offline_assets_33971e4940e90ba0c35baacda44bbe83b214f4703a7bdb8b837de97d0383508c.zip'))
     # warmup()

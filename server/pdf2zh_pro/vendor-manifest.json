@@ -1,0 +1,375 @@
+{
+  "schema": 1,
+  "reviewed_on": "2026-10-28",
+  "policy": "pdf2zh_pro is maintained source, not a replaceable vendor snapshot. Stage upstream wheels with scripts/vendor_pdf2zh_runtime.py and merge explicitly. Preserve licenses and the downstream features listed here.",
+  "core": {
+    "origin": "pdf2zh-next",
+    "version": "2.8.2",
+    "repository": "https://github.com/PDFMathTranslate-next/PDFMathTranslate-next",
+    "wheel_sha256": "5416f8e65828783df9a2323893380145d30846ed7c201539f847307b8689b770",
+    "moves": [
+      {
+        "from": "pdf2zh_next/config/model.py",
+        "to": "pdf2zh_pro/config.py",
+        "previous_sha256": "41c1bd0a3089f833c0997a1cc4e51bbf7a3f46e8921ce25fcacd1b37c7db4374"
+      },
+      {
+        "from": "pdf2zh_next/config/translate_engine_model.py",
+        "to": "pdf2zh_pro/translator/providers.py",
+        "previous_sha256": "e0d5cc727b5c7233e70aaa99c6c98d2cff2a523ba25c9e88385d31346bfa5cda"
+      },
+      {
+        "from": "pdf2zh_next/translator/account_translator.py",
+        "to": "pdf2zh_pro/translator/account.py",
+        "previous_sha256": "cb9b0a90fa9d1403bacf1a0f17ffb89b4bfb8e8f9903b24dcb1dce7d9f60f740"
+      },
+      {
+        "from": "pdf2zh_next/translator/base_translator.py",
+        "to": "pdf2zh_pro/translator/base.py",
+        "previous_sha256": "7aa77f9f47a0f44991ac52b9edd44b9b4d1b025fc3204d55ee7222f12680253b"
+      },
+      {
+        "from": "pdf2zh_next/translator/cache.py",
+        "to": "pdf2zh_pro/translator/cache.py",
+        "previous_sha256": "333606d6b8940c08eb507e1e4ad0fefff0cfe219c76e5ca7cdb72fcbe2f47fc7"
+      },
+      {
+        "from": "pdf2zh_next/translator/openai_protocol.py",
+        "to": "pdf2zh_pro/translator/openai_protocol.py",
+        "previous_sha256": "779b82627a545f6cd204f3a1a825d46284b2c4200c3113dfce667ff8c060b95a"
+      },
+      {
+        "from": "pdf2zh_next/translator/reasoning_mode.py",
+        "to": "pdf2zh_pro/translator/reasoning_mode.py",
+        "previous_sha256": "a1a2c1ac3af1514a6efb3dd9d3d66429550482c74e231c57fe7326561fd0dcc5"
+      },
+      {
+        "from": "pdf2zh_next/translator/translator_impl/chatgpt.py",
+        "to": "pdf2zh_pro/translator/chatgpt.py",
+        "previous_sha256": "1cb1291b71163b110aff8eb312689bd9e1a6a1cd743f94b2b53b7c5ad570ba0d"
+      },
+      {
+        "from": "pdf2zh_next/translator/translator_impl/claudecode.py",
+        "to": "pdf2zh_pro/translator/claudecode.py",
+        "previous_sha256": "465b4ebecb462bc706260f30a93af320d9024e73f148180829b14c35c32f3f9b"
+      },
+      {
+        "from": "pdf2zh_next/translator/translator_impl/codex.py",
+        "to": "pdf2zh_pro/translator/codex.py",
+        "previous_sha256": "339c4fc1c9710a05c1696ca59a998fd076ea611d80f03cbe4b972edf2be70292"
+      },
+      {
+        "from": "pdf2zh_next/translator/translator_impl/ollama.py",
+        "to": "pdf2zh_pro/translator/ollama.py",
+        "previous_sha256": "fb5c69a03badd81ee193f13b21295cad7a45a2bdbf05e0f122843997166af705"
+      },
+      {
+        "from": "pdf2zh_next/translator/translator_impl/openai.py",
+        "to": "pdf2zh_pro/translator/openai.py",
+        "previous_sha256": "c31ab5f6cc29db7fe645fdeac594228c5d41407b4113778b024930a215271327"
+      },
+      {
+        "from": "pdf2zh_next/translator/utils.py",
+        "to": "pdf2zh_pro/translator/__init__.py",
+        "previous_sha256": "1a9596e24c005c38a004a5da7f8a7c5810ccc6ae91daff7c73a75d9db2d0e7b6"
+      },
+      {
+        "from": "pdf2zh_next_service.py + pdf2zh_next/high_level.py",
+        "to": "pdf2zh_pro/pdf.py + config.py + types.py + errors.py"
+      },
+      {
+        "from": "pdf2zh_next/translator/base_rate_limiter.py + rate_limiter/qps_rate_limiter.py",
+        "to": "pdf2zh_pro/translator/rate_limit.py"
+      },
+      {
+        "from": "pdf2zh_next/translator/translator_impl/deepl.py",
+        "to": "pdf2zh_pro/translator/deepl.py"
+      }
+    ],
+    "removed": "Upstream CLI/GUI/config discovery, subprocess IPC, unused Bing/Google/CLI providers; selection Bing remains in text_translation.py. SiliconFlow uses its existing OpenAI protocol normalization."
+  },
+  "engine": {
+    "origin": "BabelDOC",
+    "previous_version": "0.5.24",
+    "version": "0.6.4",
+    "commit": "17480db9df92ddcb37349ce34b312335226e8ec9",
+    "repository": "https://github.com/funstory-ai/BabelDOC",
+    "wheel_sha256": "e7dcdd5b8213f657af1df68e329f92d0534c9b94c53fcd82e9e04c52060cb7d0",
+    "local_changes": [
+      {
+        "previous_path": "babeldoc/__init__.py",
+        "path": "babeldoc/__init__.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "da6c685d6a58f3e9c4ee0e3792e305d80d9b7dd83a24451445f680e1f9d38288"
+      },
+      {
+        "previous_path": "babeldoc/assets/assets.py",
+        "path": "babeldoc/assets/assets.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "1f24692aec793d82f1400314536e7f7571daa75a50de043ffaf99b1b7cadce84"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/babelpdf/base14.py",
+        "path": "babeldoc/format/pdf/babelpdf/base14.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "cc1bc8fd51417efaa4eff2885af9a105999baef3ffe12f05e9854369c9b63433"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/babelpdf/cidfont.py",
+        "path": "babeldoc/format/pdf/babelpdf/cidfont.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "c9313d566eb43d85b377e80e852134de22c3019e4ca6fc271ede05859de3f0d5"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/babelpdf/type3.py",
+        "path": "babeldoc/format/pdf/babelpdf/type3.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "7bfdab05469c6a06df0c0ac4c4a0e5c678539879e8aa22989ffe75a958365d60"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/frontend/il_creater.py",
+        "path": "babeldoc/format/pdf/document_il/frontend/il_creater.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "70f835c18b1999dc49ff42d7426dbb47e415a1761a9f5d008c30c3725cd460ea",
+        "additional_target": "babeldoc/format/pdf/document_il/frontend/il_creater_active.py"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/midend/automatic_term_extractor.py",
+        "path": "babeldoc/format/pdf/document_il/midend/automatic_term_extractor.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "b3ec189bd2f2b69c0e08b80622564331e8459df134af3233dcf60a8b14c7219d"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/midend/batch_finalizer.py",
+        "path": "babeldoc/format/pdf/document_il/midend/batch_finalizer.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "57545323c14a52154fe8b165b6c82255d8188ac5ad149970ef32e5087a70df44"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/midend/body_input.py",
+        "path": "babeldoc/format/pdf/document_il/midend/body_input.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "4f2c6cb822b560c8e6164037e8d709542b193cb8524f78b88cd88562f223efa5"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/midend/il_translator.py",
+        "path": "babeldoc/format/pdf/document_il/midend/il_translator.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "1bd28b93b37b0b9d7ff854e430cb8f693d3c86a2701443628987f5ec7225e1f0"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/midend/il_translator_llm_only.py",
+        "path": "babeldoc/format/pdf/document_il/midend/il_translator_llm_only.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "c4ebbac0671d25923051a8e308a65b5fd1d7f091a95894f0446519f2c2b11423"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/midend/layout_parser.py",
+        "path": "babeldoc/format/pdf/document_il/midend/layout_parser.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "18049fb617b4750b094f849b6577188e770e11031dd9795a6cf94f236aedead2"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/midend/paragraph_finder.py",
+        "path": "babeldoc/format/pdf/document_il/midend/paragraph_finder.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "21dbe7b7dfd3ad112a046fb3f0e7c3882991f1333081c50aacfc8099026157dd"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/midend/reference_filter.py",
+        "path": "babeldoc/format/pdf/document_il/midend/reference_filter.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "9e182eb81c35f44dcd574260ed7da436f567922d81dba8dec55a58ca99858cc8"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/midend/typesetting.py",
+        "path": "babeldoc/format/pdf/document_il/midend/typesetting.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "bc8e335f18ebd55707e216cdf6c348092ea98d628819293df8ceb8037f782f88"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/utils/layout_helper.py",
+        "path": "babeldoc/format/pdf/document_il/utils/layout_helper.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "19fc4f84af15ae5e4fb0ca05a7dc07d96952472c3016bcc6611655a7cbc01cf6"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/document_il/utils/paragraph_helper.py",
+        "path": "babeldoc/format/pdf/document_il/utils/paragraph_helper.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "8ee387cc6165e18c05ca6830d7568366e2e1ba2044f290968305a92b6cdaa4c3"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/high_level.py",
+        "path": "babeldoc/format/pdf/high_level.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "95b2c13ab1789f2f02702873c3cd21af90decbb8805b6174b3e355172edbd90d"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/pdfinterp.py",
+        "path": "babeldoc/format/pdf/pdfinterp.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "864658dfccaf6f511e94ab9b8c0267a5ae28d7e682e12cd3e83795114b00d7e8"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/quality_review.py",
+        "path": "babeldoc/format/pdf/quality_review.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "51106c9cbecaff39d1641c2674e48c590114695c17c81141619056406df91091"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/translation_config.py",
+        "path": "babeldoc/format/pdf/translation_config.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "002769903136843f253c38228ce5ea51f9dcf085425d7424edb33b8ee4546906"
+      },
+      {
+        "previous_path": "babeldoc/format/pdf/translation_recovery.py",
+        "path": "babeldoc/format/pdf/translation_recovery.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "e206aa560deb72e394563a7add70a8cbbf32933cf4fd77eea009790331430de8"
+      },
+      {
+        "previous_path": "babeldoc/glossary.py",
+        "path": "babeldoc/glossary.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "e97808b2c870d13fbe7e7f6dd025ab74c5a05d700eae4e627c2a65cd01da464c"
+      },
+      {
+        "previous_path": "babeldoc/glossary_options.py",
+        "path": "pdf2zh_pro/glossary.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "97334faee4cfce67b806d469487efdd7ee2bbc8b82e0a113f92d6c074226e0d1"
+      },
+      {
+        "previous_path": "babeldoc/pdfminer/LICENSE",
+        "path": "babeldoc/pdfminer/LICENSE",
+        "action": "retained-and-merged",
+        "previous_sha256": "7dc3c60cc22c2107f116bc3046a656bbb21d81dcb8c1cedb1031befa86b7960f"
+      },
+      {
+        "previous_path": "babeldoc/pdfminer/_cmap_manifest_data.py",
+        "path": "babeldoc/format/pdf/new_parser/runtime/_cmap_manifest_data.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "e177b4777e8aff35c452c8c413124ad1c6cba8f12ce890d253d3321aac6b504e"
+      },
+      {
+        "previous_path": "babeldoc/pdfminer/cmap_secure_loader.py",
+        "path": "babeldoc/format/pdf/new_parser/runtime/cmap_secure_loader.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "55d8ebb523b896c5720c0f6a756427bcccc51de3950c91ba01630a31ee29e680"
+      },
+      {
+        "previous_path": "babeldoc/pdfminer/cmapdb.py",
+        "path": "babeldoc/pdfminer/cmapdb.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "6d394a1dcc45eb92c9e1923309d1173e4367b776c98fc7fed271d749376eeff8"
+      },
+      {
+        "previous_path": "babeldoc/pdfminer/image.py",
+        "path": "babeldoc/pdfminer/image.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "c424ab80cca1ee433581ca4836c4353b446c6f25a93f48ee389869f6ed7bf432"
+      },
+      {
+        "previous_path": "babeldoc/pdfminer/lzw.py",
+        "path": "babeldoc/pdfminer/lzw.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "beb36e3e8d05301d3eb865be261874c1855cf31c9afbc1aaa2abd572a6c4de58"
+      },
+      {
+        "previous_path": "babeldoc/progress_monitor.py",
+        "path": "babeldoc/progress_monitor.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "9b52cfb586e0380a891800650772d9413c21945319dab7cd839ec601c4d4b2c6"
+      },
+      {
+        "previous_path": "babeldoc/pymupdf_compat.py",
+        "path": null,
+        "action": "removed",
+        "previous_sha256": "703dc4d1b70aa7dbc57559a22d9fbd08daa413034ff9ad003a98662be3eb8bcf",
+        "reason": "Obsolete PyMuPDF 1.25 monkey patch; upstream 2.0 fixes verified."
+      },
+      {
+        "previous_path": "babeldoc/translator/cache.py",
+        "path": null,
+        "action": "removed",
+        "previous_sha256": "8022233cc67b07ad88b327cc729d28ce1a83fee6654ce8bc26bfc0c6eaa0a807",
+        "reason": "Duplicate cache backend retired; existing database files remain untouched."
+      },
+      {
+        "previous_path": "babeldoc/translator/cache_lifecycle.py",
+        "path": "pdf2zh_pro/translator/cache_lifecycle.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "643debb20b687b62339869267fee1e4d933b59336cd750913b7fbc5ef018fce6"
+      },
+      {
+        "previous_path": "babeldoc/translator/literal_tags.py",
+        "path": "pdf2zh_pro/translator/literal_tags.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "e332d46ec0673b77952b9400c2f8f41e7df24f211d1d500d068debbb78c2a0d1"
+      },
+      {
+        "previous_path": "babeldoc/translator/placeholder_repair.py",
+        "path": "pdf2zh_pro/translator/placeholder_repair.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "69aa80bee4fd01d46c3577d49fe9debcee61fee52778aab5c19d38dead85e59e"
+      },
+      {
+        "previous_path": "babeldoc/translator/preserved_text.py",
+        "path": "pdf2zh_pro/translator/preserved_text.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "fcd98d9c4739f16340ab72cc6ec6dfccb0d1b21be3075114962ca5421de38101"
+      },
+      {
+        "previous_path": "babeldoc/translator/request_budget.py",
+        "path": "pdf2zh_pro/translator/request_budget.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "36ecb884588a79908d724dbaa52a1a3052825b78618420de2ca35ff555b7c0be"
+      },
+      {
+        "previous_path": "babeldoc/translator/url_utils.py",
+        "path": "pdf2zh_pro/translator/url_utils.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "4cc0fd73cbb9793e1815c20f631dfa6902cc368cd3c8c3158692bfc09b4d0041"
+      },
+      {
+        "previous_path": "babeldoc/translator/validation.py",
+        "path": "pdf2zh_pro/translator/validation.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "80e1a02e76f228ba4b224b8231a6e659981efb656e77744be4aedbc54a4efa36"
+      },
+      {
+        "previous_path": "babeldoc/utils/priority_thread_pool_executor.py",
+        "path": "babeldoc/utils/priority_thread_pool_executor.py",
+        "action": "retained-and-merged",
+        "previous_sha256": "9711bb9a711a804f3e318d151e7f27282195ec916cf390a022da87ede66b4d56"
+      }
+    ],
+    "integration_changes": [
+      "Native parser and ActiveILCreater are the active PDF entry path; document-local font cache and cancellable Type3 parsing ported to both IR frontends.",
+      "PyMuPDF 2 native ruled-table recognition uses use_layout=False; no duplicate OCR/layout model.",
+      "Explicit close of PDF handles before Windows worker cleanup.",
+      "Native CMaps share one verified, size-bounded resource loader with the legacy parser.",
+      "Checkpoint generation switches archive old paragraphs, contexts and review metadata transactionally; parser-version fingerprint prevents positional reuse across incompatible IR."
+    ],
+    "excluded": [
+      "main.py",
+      "tools/",
+      "translator/translator.py",
+      "translator/cache.py",
+      "docvision/table_detection/rapidocr.py",
+      "format/pdf/document_il/midend/table_parser.py",
+      "pymupdf_compat.py"
+    ]
+  },
+  "pdf_binding": {
+    "distribution": "pymupdf",
+    "version": "2.0",
+    "reason": "Full package provides Layout/4LLM for on-demand Markdown, JSON and TXT attachment exports. Translation retains the BabelDOC native parser and typesetting pipeline. Intel macOS is unsupported."
+  },
+  "historical_storage": {
+    "response_cache": "~/.cache/pdf2zh_next/cache.v1.db (or PDF2ZH_TRANSLATION_CACHE_DIR/pdf2zh_next/cache.v1.db)",
+    "policy": "Do not rename paths, rebuild old caches, delete inactive BabelDOC caches, or clear task history. Recovery generations are retained in SQLite archive tables."
+  }
+}

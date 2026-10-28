@@ -10,11 +10,11 @@ import openai
 import test_openai_protocol as protocols
 from test_provider_contracts import runtime
 from test_cache_namespace import NoopRateLimiter
-from pdf2zh_next.translator import get_translator
-from pdf2zh_next.translator.reasoning_mode import (
+from pdf2zh_pro.translator import prepare_translator
+from pdf2zh_pro.translator.reasoning_mode import (
     model_capabilities, apply_reasoning_mode, remember_capabilities, cached_capabilities,
 )
-from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+from pdf2zh_pro.translator.openai import OpenAITranslator
 
 
 class ProviderDefaultsTests(unittest.TestCase):
@@ -120,7 +120,7 @@ class ProviderDefaultsTests(unittest.TestCase):
                     http_client=httpx.Client(transport=httpx.MockTransport(handler)))
                 self.addCleanup(sdk.close)
                 with patch("openai.OpenAI", return_value=sdk):
-                    engine = get_translator(runtime(service, apiUrl=endpoint, model=model, apiProtocol="auto", reasoningMode="low"))
+                    engine = prepare_translator(runtime(service, apiUrl=endpoint, model=model, apiProtocol="auto", reasoningMode="low"))
                 self.assertEqual(engine.resolved_protocol, protocol)
                 self.assertEqual(len(calls), 1)
                 if service == "zhipu": self.assertEqual(calls[0].url.path, "/api/v1/responses")
@@ -162,8 +162,8 @@ class ProviderDefaultsTests(unittest.TestCase):
         self.assertNotIn("reasoning", engine._options("responses"))
 
     def test_native_ollama_and_claude_controls(self):
-        from pdf2zh_next.translator.translator_impl.ollama import OllamaTranslator
-        from pdf2zh_next.translator.translator_impl.claudecode import ClaudeCodeTranslator
+        from pdf2zh_pro.translator.ollama import OllamaTranslator
+        from pdf2zh_pro.translator.claudecode import ClaudeCodeTranslator
         for values, expected in [(["low", "medium"], "low"), ([True, False], True), ([], None)]:
             client = Mock()
             client.show.return_value = {"thinking": {"values": values}}

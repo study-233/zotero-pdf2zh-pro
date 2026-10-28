@@ -7,14 +7,14 @@ from unittest.mock import Mock, patch
 
 import httpx
 import openai
-from pdf2zh_next.translator import get_translator
-from pdf2zh_next_service import create_runtime_settings, require_supported_service, SERVICE_FIELD_MAP
+from pdf2zh_pro.translator import prepare_translator
+from pdf2zh_pro.pdf import create_runtime_settings, require_supported_service, SERVICE_FIELD_MAP
 from provider_models import list_provider_models, MODEL_ENDPOINTS, ModelDiscoveryError
 from test_pdf2zh_next_service import make_settings_payload
 from test_openai_protocol import chat
 from test_cache_namespace import NoopRateLimiter
 
-IMPL = "pdf2zh_next.translator.translator_impl."
+IMPL = "pdf2zh_pro.translator."
 
 
 def runtime(service, **api):
@@ -24,7 +24,7 @@ def runtime(service, **api):
 
 class ProviderContractTests(unittest.TestCase):
     def test_openrouter_stream_uses_compatible_url_auth_and_model(self):
-        from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+        from pdf2zh_pro.translator.openai import OpenAITranslator
         from text_translation import SelectionCancellation
         calls = []
         def capture(request):
@@ -101,7 +101,7 @@ class ProviderContractTests(unittest.TestCase):
                 sdk = openai.OpenAI(api_key="TEST_KEY", base_url=endpoint, max_retries=0,
                     http_client=httpx.Client(transport=httpx.MockTransport(capture)))
                 self.addCleanup(sdk.close)
-                with patch("openai.OpenAI", return_value=sdk) as factory: translator = get_translator(config)
+                with patch("openai.OpenAI", return_value=sdk) as factory: translator = prepare_translator(config)
                 self.assertEqual(str(factory.call_args.kwargs["base_url"]).rstrip("/"), endpoint)
                 self.assertEqual(translator.do_translate("Hello"), "译文")
                 request = calls[-1]
@@ -112,7 +112,7 @@ class ProviderContractTests(unittest.TestCase):
                 self.assertIn("Hello", body["messages"][-1]["content"])
 
     def test_new_provider_defaults_and_credentials(self):
-        from pdf2zh_next.config.translate_engine_model import GUI_PASSWORD_FIELDS
+        from pdf2zh_pro.translator.providers import CREDENTIAL_FIELDS
         for service, endpoint, model in [
             ("mimo", "https://api.xiaomimimo.com/v1", "mimo-v2.6-flash"),
             ("zhipu", "https://open.bigmodel.cn/api/paas/v4", "glm-5.3-flash"),
@@ -122,7 +122,7 @@ class ProviderContractTests(unittest.TestCase):
                 self.assertEqual(config.openai_base_url, endpoint)
                 self.assertEqual(config.openai_model, model)
                 self.assertEqual(config.openai_api_key, "TEST_KEY")
-                self.assertIn(service + "_api_key", GUI_PASSWORD_FIELDS)
+                self.assertIn(service + "_api_key", CREDENTIAL_FIELDS)
                 for key in ("", "   "):
                     with self.assertRaisesRegex(ValueError, "API key is required"):
                         runtime(service, apiKey=key)
@@ -156,7 +156,7 @@ class ProviderContractTests(unittest.TestCase):
                     http_client=httpx.Client(transport=httpx.MockTransport(capture)))
                 self.addCleanup(sdk.close)
                 with patch("openai.OpenAI", return_value=sdk):
-                    translator = get_translator(runtime(service, model=model, apiUrl=endpoint, apiProtocol=protocol, reasoningMode="off"))
+                    translator = prepare_translator(runtime(service, model=model, apiUrl=endpoint, apiProtocol=protocol, reasoningMode="off"))
                 metrics = TaskMetricsCollector(task_id="provider-test", provider=service, model=translator.model)
                 translator.set_metrics_collector(metrics)
                 self.assertTrue(translator.do_translate("Hello").startswith("译文"))
@@ -170,7 +170,7 @@ class ProviderContractTests(unittest.TestCase):
 
     def test_new_provider_selection_stream_only_emits_the_answer(self):
         from text_translation import SelectionCancellation
-        from pdf2zh_next.translator.translator_impl.openai import OpenAITranslator
+        from pdf2zh_pro.translator.openai import OpenAITranslator
         chunks = [
             {"choices": [{"index": 0, "delta": {"reasoning_content": "private reasoning"}, "finish_reason": None}]},
             {"choices": [{"index": 0, "delta": {"content": "译文"}, "finish_reason": None}]},
@@ -211,7 +211,7 @@ class ProviderContractTests(unittest.TestCase):
             self.assertNotIn("TEST_SECRET", json.dumps(record))
 
     def test_claude_print_cli_final_result_and_timeout_cleanup(self):
-        from pdf2zh_next.translator.translator_impl.claudecode import ClaudeCodeTranslator
+        from pdf2zh_pro.translator.claudecode import ClaudeCodeTranslator
         with patch(IMPL + "claudecode.subprocess.run", return_value=NS(returncode=0)):
             translator = ClaudeCodeTranslator(runtime("claudecode", model="sonnet", apiUrl="claude"), NoopRateLimiter())
         process = Mock(returncode=0)
@@ -231,8 +231,8 @@ class ProviderContractTests(unittest.TestCase):
         process.kill.assert_called_once()
 
     def test_local_sdk_and_deepl_contracts(self):
-        from pdf2zh_next.translator.translator_impl.ollama import OllamaTranslator
-        from pdf2zh_next.translator.translator_impl.deepl import DeepLTranslator
+        from pdf2zh_pro.translator.ollama import OllamaTranslator
+        from pdf2zh_pro.translator.deepl import DeepLTranslator
         with patch(IMPL + "ollama.ollama.Client") as factory:
             translator = OllamaTranslator(runtime("ollama", apiUrl="http://localhost:11434", model="installed-model"), NoopRateLimiter())
             factory.return_value.chat.return_value = NS(message=NS(content="译文"), prompt_eval_count=1, eval_count=2)
@@ -262,15 +262,13 @@ class ProviderContractTests(unittest.TestCase):
                 self.assertEqual(list(Path(work).iterdir()), [])
 
     def test_engine_catalog_excludes_free_proxy_and_requires_explicit_service(self):
-        from pdf2zh_next.config.cli_env_model import CLIEnvSettingsModel
-        from pdf2zh_next.config.translate_engine_model import TRANSLATION_ENGINE_METADATA
+        from pdf2zh_pro.config import SettingsModel
+        from pdf2zh_pro.translator.providers import TRANSLATION_ENGINE_METADATA
         engines = {entry.translate_engine_type for entry in TRANSLATION_ENGINE_METADATA}
         self.assertTrue(engines.isdisjoint({"SiliconFlowFree", "Grok", "Groq", "ModelScope", "QwenMt", "AzureOpenAI", "Azure", "Xinference", "AnythingLLM"}))
         self.assertTrue({"MiMo", "Zhipu"} <= engines)
         self.assertIn("SiliconFlow", engines)
-        settings = CLIEnvSettingsModel().to_settings_model()
+        settings = SettingsModel()
         self.assertIsNone(settings.translate_engine_settings)
         with self.assertRaisesRegex(ValueError, "Must provide a translation service"):
             settings.validate_settings()
-        settings.basic.warmup = True
-        settings.validate_settings()

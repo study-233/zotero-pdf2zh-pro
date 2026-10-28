@@ -9,7 +9,7 @@ from unittest.mock import patch
 import httpx
 import openai
 
-import pdf2zh_next_service as service
+import pdf2zh_pro.pdf as service
 from babeldoc.format.pdf.translation_recovery import TranslationRecovery
 from observability import TaskMetricsCollector
 from test_observability import FakeClock
@@ -31,7 +31,7 @@ class ServiceMetricsTests(unittest.TestCase):
         client = openai.OpenAI(api_key="test-key", base_url="https://relay.invalid/v1", max_retries=0,
                                http_client=httpx.Client(transport=httpx.MockTransport(handler)))
         self.addCleanup(client.close)
-        return self.enterContext(patch("pdf2zh_next.translator.translator_impl.openai.openai.OpenAI", return_value=client))
+        return self.enterContext(patch("pdf2zh_pro.translator.openai.openai.OpenAI", return_value=client))
 
     def test_failed_initialization_probe_is_measured_before_configuration_returns(self):
         requests, snapshots = [], []
@@ -71,7 +71,7 @@ class ServiceMetricsTests(unittest.TestCase):
         async def translate(config):
             yield {"type": "finish", "translate_result": object()}
 
-        with patch("pdf2zh_next.high_level.BabelDOCConfig", side_effect=config), \
+        with patch("pdf2zh_pro.pdf.BabelDOCConfig", side_effect=config), \
              patch.object(service, "download_all_fonts_async", return_value=None), \
              patch.object(service, "babeldoc_translate", side_effect=translate), \
              patch.object(service, "collect_output_files", return_value={}):

@@ -1,7 +1,6 @@
 import logging
 
 import cv2
-import numpy as np
 import pymupdf
 import regex
 from skimage.metrics import structural_similarity
@@ -9,6 +8,7 @@ from skimage.metrics import structural_similarity
 from babeldoc.babeldoc_exception.BabelDOCException import ScannedPDFError
 from babeldoc.format.pdf.document_il import il_version_1
 from babeldoc.format.pdf.document_il.backend.pdf_creater import PDFCreater
+from babeldoc.format.pdf.document_il.utils.raster_geometry import with_pixel_budget
 from babeldoc.format.pdf.document_il.utils.style_helper import BLACK
 from babeldoc.format.pdf.document_il.utils.style_helper import GREEN
 from babeldoc.format.pdf.translation_config import TranslationConfig
@@ -151,22 +151,20 @@ class DetectScannedFile:
     def detect_page_is_scanned(
         self, page: il_version_1.Page, pdf: pymupdf.Document, pdf_creater: PDFCreater
     ) -> bool:
-        before_page_image = pdf[page.page_number].get_pixmap()
-        before_page_image = np.frombuffer(before_page_image.samples, np.uint8).reshape(
-            before_page_image.height,
-            before_page_image.width,
-            3,
-        )[:, :, ::-1]
+        geometry = with_pixel_budget(
+            pdf[page.page_number],
+            72,
+            normalize_rotation=False,
+        )
+        before_page_image = geometry.image[:, :, ::-1]
 
         pdf_creater.update_page_content_stream(
             False, page, pdf, self.translation_config, True
         )
 
-        after_page_image = pdf[page.page_number].get_pixmap()
-        after_page_image = np.frombuffer(after_page_image.samples, np.uint8).reshape(
-            after_page_image.height,
-            after_page_image.width,
-            3,
+        after_page_image = geometry.render_at_dpi(
+            pdf[page.page_number],
+            normalize_rotation=False,
         )[:, :, ::-1]
         before_page_image = cv2.cvtColor(before_page_image, cv2.COLOR_RGB2GRAY)
         after_page_image = cv2.cvtColor(after_page_image, cv2.COLOR_RGB2GRAY)

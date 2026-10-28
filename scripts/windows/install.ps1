@@ -114,7 +114,9 @@ try {
         Write-OperationProgress 'dependencies' '正在准备依赖'
         Invoke-Uv -Arguments @('pip','install','--python',$python,'--no-deps','--require-hashes','--no-config','--link-mode','hardlink','--default-index','https://pypi.org/simple','-r',$requirements)
         Invoke-Uv -Arguments @('pip','install','--python',$python,'--no-deps','--no-config','--link-mode','hardlink',$wheel)
-        & $python -c 'import sys, server, maintenance; assert server.VERSION == sys.argv[1]' $PackageVersion
+        # Import validation must not open the live/default task store while the
+        # current service is still running. Health checks use the real data later.
+        & $python -c "import os, sys; os.environ['PDF2ZH_DATA_DIR']=sys.argv[2]; import server, maintenance; assert server.VERSION == sys.argv[1]" $PackageVersion (Join-Path $environment '.validation-data')
         if ($LASTEXITCODE -ne 0) {throw 'Candidate failed import/version validation.'}
         Write-AtomicJson $marker @{version=$PackageVersion;python=$manifest.python;requirementsSha256=$manifest.requirementsSha256;wheelSha256=$manifest.serverWheel.sha256}
     } else {

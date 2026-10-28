@@ -232,6 +232,13 @@ try {
 
     Write-RelocationLog "[3/8] Copying task data, recovery checkpoints, logs, and cache..."
     Copy-DirectoryContents -Source $sourcePaths.Data -Destination (Join-Path $DestinationRoot "data")
+    # Rebase only the destination copy while both services are stopped. Keeping
+    # source paths would break downloads/retries once the old root is removed.
+    $sourcePython = Join-Path (Split-Path $sourcePaths.Server -Parent) 'python.exe'
+    if (-not (Test-Path -LiteralPath $sourcePython -PathType Leaf)) {$sourcePython = Get-ToolPythonExecutable}
+    if (-not $sourcePython) {throw 'Cannot find the source interpreter to migrate task paths.'}
+    & $sourcePython -c 'import sys; from pathlib import Path; from runtime_storage import _rebase_tasks; target=Path(sys.argv[2]); _rebase_tasks(target, Path(sys.argv[1]), target)' $sourcePaths.Data (Join-Path $DestinationRoot 'data')
+    if ($LASTEXITCODE -ne 0) {throw 'Cannot migrate task paths; the original data is preserved.'}
     Copy-DirectoryContents -Source $sourcePaths.Logs -Destination (Join-Path $DestinationRoot "logs")
     Copy-DirectoryContents -Source (Join-Path $SourceRoot "cache") -Destination (Join-Path $DestinationRoot "cache")
     # Managed Python and uv are relocatable; rebuild only the environment at the new path.

@@ -11,11 +11,9 @@ import time
 from asyncio import CancelledError
 from pathlib import Path
 from typing import Any
-from typing import BinaryIO
 
 import pymupdf
 from pymupdf import Document
-from pymupdf import Font
 
 from babeldoc import asynchronize
 from babeldoc.assets.assets import warmup
@@ -26,13 +24,11 @@ from babeldoc.babeldoc_exception.BabelDOCException import (
 from babeldoc.const import CACHE_FOLDER
 from babeldoc.const import WATERMARK_VERSION
 from babeldoc.const import close_process_pool
-from babeldoc.format.pdf.converter import TranslateConverter
 from babeldoc.format.pdf.document_il import il_version_1
 from babeldoc.format.pdf.document_il.backend.pdf_creater import SAVE_PDF_STAGE_NAME
 from babeldoc.format.pdf.document_il.backend.pdf_creater import SUBSET_FONT_STAGE_NAME
 from babeldoc.format.pdf.document_il.backend.pdf_creater import PDFCreater
 from babeldoc.format.pdf.document_il.backend.pdf_creater import reproduce_cmap
-from babeldoc.format.pdf.document_il.frontend.il_creater import ILCreater
 from babeldoc.format.pdf.document_il.midend.add_debug_information import (
     AddDebugInformation,
 )
@@ -47,31 +43,24 @@ from babeldoc.format.pdf.document_il.midend.il_translator_llm_only import (
 from babeldoc.format.pdf.document_il.midend.layout_parser import LayoutParser
 from babeldoc.format.pdf.document_il.midend.paragraph_finder import ParagraphFinder
 from babeldoc.format.pdf.document_il.midend.styles_and_formulas import StylesAndFormulas
-from babeldoc.format.pdf.document_il.midend.table_parser import TableParser
 from babeldoc.format.pdf.document_il.midend.typesetting import Typesetting
 from babeldoc.format.pdf.document_il.utils.fontmap import FontMapper
 from babeldoc.format.pdf.document_il.xml_converter import XMLConverter
-from babeldoc.format.pdf.pdfinterp import PDFPageInterpreterEx
 from babeldoc.format.pdf.result_merger import ResultMerger
 from babeldoc.format.pdf.split_manager import SplitManager
 from babeldoc.format.pdf.translation_config import TranslateResult
 from babeldoc.format.pdf.translation_config import TranslationConfig
 from babeldoc.format.pdf.translation_config import WatermarkOutputMode
-from babeldoc.pdfminer.pdfdocument import PDFDocument
-from babeldoc.pdfminer.pdfinterp import PDFResourceManager
-from babeldoc.pdfminer.pdfpage import PDFPage
-from babeldoc.pdfminer.pdfparser import PDFParser
 from babeldoc.progress_monitor import ProgressMonitor
-from babeldoc.translator.cache_lifecycle import cache_connection_scope
+from pdf2zh_pro.translator.cache_lifecycle import cache_connection_scope
 from babeldoc.utils import memory
 
 logger = logging.getLogger(__name__)
 
 TRANSLATE_STAGES = [
-    (ILCreater.stage_name, 14.12),  # Parse PDF and Create IR
+    ("Parse PDF and Create Intermediate Representation", 14.12),
     (DetectScannedFile.stage_name, 2.45),  # DetectScannedFile
     (LayoutParser.stage_name, 14.03),  # Parse Page Layout
-    (TableParser.stage_name, 1.0),  # Parse Table
     (ParagraphFinder.stage_name, 6.26),  # Parse Paragraphs
     (StylesAndFormulas.stage_name, 1.66),  # Parse Formulas and Styles
     # (RemoveDescent.stage_name, 0.15),  # Remove Char Descent
@@ -102,6 +91,66 @@ def safe_save(doc, *args, **kwargs):
     except Exception:
         # second try, saving with 'garbage=3' for object missing
         doc.ez_save(*args, **kwargs)
+
+
+def rebuild_pdf_by_inserting_pages(
+    pdf_path: str | Path,
+    output_pdf_path: str | Path,
+) -> None:
+    output_pdf_path = Path(output_pdf_path)
+    rebuilt_pdf_path = output_pdf_path.with_name(
+        f"{output_pdf_path.stem}.rebuilt{output_pdf_path.suffix}"
+    )
+    if rebuilt_pdf_path.exists():
+        rebuilt_pdf_path.unlink()
+
+    source_doc = Document(pdf_path)
+    rebuilt_doc = Document()
+    try:
+        rebuilt_doc.insert_pdf(source_doc)
+        rebuilt_doc.save(rebuilt_pdf_path)
+    finally:
+        rebuilt_doc.close()
+        source_doc.close()
+
+    rebuilt_pdf_path.replace(output_pdf_path)
+
+
+def open_pdf_with_save_fallback(
+    pdf_path: str | Path,
+    output_pdf_path: str | Path,
+) -> Document:
+    doc_pdf = Document(pdf_path)
+    try:
+        safe_save(doc_pdf, output_pdf_path)
+        return doc_pdf
+    except Exception:
+        doc_pdf.close()
+        rebuild_pdf_by_inserting_pages(pdf_path, output_pdf_path)
+        return Document(output_pdf_path)
+
+
+def save_pdf_with_same_path_fallback(
+    doc_pdf: Document,
+    output_pdf_path: str | Path,
+) -> Document:
+    output_pdf_path = Path(output_pdf_path)
+    doc_name = Path(getattr(doc_pdf, "name", "") or "")
+    if doc_name.resolve() != output_pdf_path.resolve():
+        safe_save(doc_pdf, output_pdf_path)
+        return doc_pdf
+
+    saved_pdf_path = output_pdf_path.with_name(
+        f"{output_pdf_path.stem}.saved{output_pdf_path.suffix}"
+    )
+    if saved_pdf_path.exists():
+        saved_pdf_path.unlink()
+    try:
+        safe_save(doc_pdf, saved_pdf_path)
+    finally:
+        doc_pdf.close()
+    saved_pdf_path.replace(output_pdf_path)
+    return Document(output_pdf_path)
 
 
 def check_metadata(pdf: Document):
@@ -135,31 +184,31 @@ def add_metadata(
         processed.append(path)
 
         temp_path = translate_config.get_working_file_path(f"{path.stem}.cmap.pdf")
-        pdf = pymupdf.open(path)
-        meta = pdf.metadata
-        if not meta:
-            meta = {}
-        creator = meta.get("creator", None)
-        producer = meta.get("producer", None)
-        if producer:
-            if not creator:
-                creator = producer
-            else:
-                creator += f", {producer}"
+        with pymupdf.open(path) as pdf:
+            meta = pdf.metadata
+            if not meta:
+                meta = {}
+            creator = meta.get("creator", None)
+            producer = meta.get("producer", None)
+            if producer:
+                if not creator:
+                    creator = producer
+                else:
+                    creator += f", {producer}"
 
-        translated_by = f"BabelDOC{WATERMARK_VERSION}_{time.time()}_Translation_generated_by_AI,please_carefully_discern"
-        if translate_config.metadata_extra_data:
-            translated_by += f"_{translate_config.metadata_extra_data}"
-        meta["producer"] = translated_by
-        meta["creator"] = creator
+            translated_by = f"BabelDOC{WATERMARK_VERSION}_{time.time()}_Translation_generated_by_AI,please_carefully_discern"
+            if translate_config.metadata_extra_data:
+                translated_by += f"_{translate_config.metadata_extra_data}"
+            meta["producer"] = translated_by
+            meta["creator"] = creator
 
-        for k, v in meta.items():
-            if v:
-                # 使用正则替换掉 surrogate 范围内的字符
-                meta[k] = re.sub(r"[\uD800-\uDFFF]", "", v)
+            for k, v in meta.items():
+                if v:
+                    # 使用正则替换掉 surrogate 范围内的字符
+                    meta[k] = re.sub(r"[\uD800-\uDFFF]", "", v)
 
-        pdf.set_metadata(meta)
-        safe_save(pdf, temp_path)
+            pdf.set_metadata(meta)
+            safe_save(pdf, temp_path)
         shutil.move(temp_path, path)
 
 
@@ -177,9 +226,9 @@ def fix_cmap(translate_result: TranslateResult, translate_config: TranslationCon
         processed.append(path)
 
         temp_path = translate_config.get_working_file_path(f"{path.stem}.cmap.pdf")
-        pdf = pymupdf.open(path)
-        reproduce_cmap(pdf)
-        safe_save(pdf, temp_path)
+        with pymupdf.open(path) as pdf:
+            reproduce_cmap(pdf)
+            safe_save(pdf, temp_path)
         shutil.move(temp_path, path)
 
 
@@ -206,135 +255,6 @@ def translator_supports_llm(translator) -> bool:
         return False
 
 
-def start_parse_il(
-    inf: BinaryIO,
-    pages: list[int] | None = None,
-    vfont: str = "",
-    vchar: str = "",
-    thread: int = 0,
-    doc_zh: Document = None,
-    lang_in: str = "",
-    lang_out: str = "",
-    service: str = "",
-    resfont: str = "",
-    noto: Font = None,
-    cancellation_event: asyncio.Event = None,
-    il_creater: ILCreater = None,
-    translation_config: TranslationConfig = None,
-    **kwarg: Any,
-) -> None:
-    rsrcmgr = PDFResourceManager()
-    layout = {}
-    device = TranslateConverter(
-        rsrcmgr,
-        vfont,
-        vchar,
-        thread,
-        layout,
-        lang_in,
-        lang_out,
-        service,
-        resfont,
-        noto,
-        kwarg.get("envs", {}),
-        kwarg.get("prompt", []),
-        il_creater=il_creater,
-    )
-    # model = DocLayoutModel.load_available()
-
-    assert device is not None
-    assert il_creater is not None
-    assert translation_config is not None
-    obj_patch = {}
-    interpreter = PDFPageInterpreterEx(rsrcmgr, device, obj_patch, il_creater)
-    if pages:
-        total_pages = len(pages)
-    else:
-        total_pages = doc_zh.page_count
-
-    il_creater.on_total_pages(total_pages)
-
-    parser = PDFParser(inf)
-    doc = PDFDocument(parser)
-
-    selected_total = sum(1 for n in range(doc_zh.page_count)
-                         if (not pages or n in pages) and translation_config.should_translate_page(n + 1))
-    selected_index = 0
-    for pageno, page in enumerate(PDFPage.create_pages(doc)):
-        if cancellation_event and cancellation_event.is_set():
-            raise CancelledError("task cancelled")
-        if pages and (pageno not in pages):
-            continue
-        page.pageno = pageno
-
-        if not translation_config.should_translate_page(pageno + 1):
-            continue
-
-        height, width = (
-            page.cropbox[3] - page.cropbox[1],
-            page.cropbox[2] - page.cropbox[0],
-        )
-        if height > 1200 or width > 2000:
-            logger.warning(f"page {pageno + 1} is too large, maybe unable to translate")
-            # continue
-
-        translation_config.raise_if_cancelled()
-        # The current program no longer relies on
-        # the following layout recognition results,
-        # but in order to facilitate the migration of pdf2zh,
-        # the relevant code is temporarily retained.
-        # pix = doc_zh[page.pageno].get_pixmap()
-        # image = np.frombuffer(pix.samples, np.uint8).reshape(
-        #     pix.height, pix.width, 3
-        # )[:, :, ::-1]
-        # page_layout = model.predict(
-        #     image, imgsz=int(pix.height / 32) * 32)[0]
-        # # kdtree 是不可能 kdtree 的，不如直接渲染成图片，用空间换时间
-        # box = np.ones((pix.height, pix.width))
-        # h, w = box.shape
-        # vcls = ["abandon", "figure", "table",
-        #         "isolate_formula", "formula_caption"]
-        # for i, d in enumerate(page_layout.boxes):
-        #     if page_layout.names[int(d.cls)] not in vcls:
-        #         x0, y0, x1, y1 = d.xyxy.squeeze()
-        #         x0, y0, x1, y1 = (
-        #             np.clip(int(x0 - 1), 0, w - 1),
-        #             np.clip(int(h - y1 - 1), 0, h - 1),
-        #             np.clip(int(x1 + 1), 0, w - 1),
-        #             np.clip(int(h - y0 + 1), 0, h - 1),
-        #         )
-        #         box[y0:y1, x0:x1] = i + 2
-        # for i, d in enumerate(page_layout.boxes):
-        #     if page_layout.names[int(d.cls)] in vcls:
-        #         x0, y0, x1, y1 = d.xyxy.squeeze()
-        #         x0, y0, x1, y1 = (
-        #             np.clip(int(x0 - 1), 0, w - 1),
-        #             np.clip(int(h - y1 - 1), 0, h - 1),
-        #             np.clip(int(x1 + 1), 0, w - 1),
-        #             np.clip(int(h - y0 + 1), 0, h - 1),
-        #         )
-        #         box[y0:y1, x0:x1] = 0
-        # layout[page.pageno] = box
-        # 新建一个 xref 存放新指令流
-        # page.page_xref = doc_zh.get_new_xref()  # hack 插入页面的新 xref
-        # doc_zh.update_object(page.page_xref, "<<>>")
-        # doc_zh.update_stream(page.page_xref, b"")
-        # doc_zh[page.pageno].set_contents(page.page_xref)
-        selected_index += 1
-        translation_config.report_parse_progress(
-            "page_start", force=True, currentPage=pageno + 1,
-            selectedPage=selected_index, completedPages=selected_index - 1, totalPages=selected_total)
-        ops_base = interpreter.process_page(page)
-        il_creater.on_page_base_operation(ops_base)
-        il_creater.on_page_end()
-        translation_config.report_parse_progress(
-            "page_end", force=True, currentPage=pageno + 1,
-            selectedPage=selected_index, completedPages=selected_index, totalPages=selected_total,
-            fontParseCount=il_creater.font_parse_count, fontCacheHits=il_creater.font_cache_hits)
-    il_creater.on_finish()
-    device.close()
-
-
 def translate(translation_config: TranslationConfig) -> TranslateResult:
     with ProgressMonitor(get_translation_stage(translation_config)) as pm:
         return do_translate(pm, translation_config)
@@ -352,7 +272,6 @@ def get_translation_stage(
             [
                 DetectScannedFile.stage_name,
                 LayoutParser.stage_name,
-                TableParser.stage_name,
                 ParagraphFinder.stage_name,
                 StylesAndFormulas.stage_name,
                 AutomaticTermExtractor.stage_name,
@@ -362,8 +281,6 @@ def get_translation_stage(
         )
     else:
         # Original logic for selective removal
-        if not translation_config.table_model:
-            should_remove.append(TableParser.stage_name)
         if translation_config.skip_scanned_detection:
             should_remove.append(DetectScannedFile.stage_name)
         if not translation_config.auto_extract_glossary:
@@ -640,7 +557,8 @@ def do_translate(
         original_pdf_path = translation_config.input_file
         logger.info(f"start to translate: {original_pdf_path}")
         try:
-            check_metadata(Document(original_pdf_path))
+            with Document(original_pdf_path) as source_pdf:
+                check_metadata(source_pdf)
         except InputFileGeneratedByBabelDOCError as e:
             logger.error(
                 f"input file {original_pdf_path} is generated by BabelDOC, Cannot translate files that have already been translated."
@@ -849,29 +767,29 @@ def migrate_toc(
     if translation_config.use_alternating_pages_dual:
         logger.info('skipping TOC migration for "use_alternating_pages_dual" mode')
         return
-    old_doc = Document(translation_config.input_file)
-    if not old_doc:
-        return
-    try:
-        fix_filter(old_doc)
-        fix_null_xref(old_doc)
-    except Exception:
-        logger.exception("auto fix failed, please check the pdf file")
+    with Document(translation_config.input_file) as old_doc:
+        if not old_doc:
+            return
+        try:
+            fix_filter(old_doc)
+            fix_null_xref(old_doc)
+        except Exception:
+            logger.exception("auto fix failed, please check the pdf file")
 
-    toc_data = old_doc.get_toc()
+        toc_data = old_doc.get_toc()
 
-    if not toc_data:
-        logger.info("No TOC found in the original PDF, skipping migration.")
-        return
+        if not toc_data:
+            logger.info("No TOC found in the original PDF, skipping migration.")
+            return
 
-    if translation_config.only_include_translated_page:
-        total_page = set(range(0, len(old_doc)))
+        if translation_config.only_include_translated_page:
+            total_page = set(range(0, len(old_doc)))
 
-        pages_to_translate = {
-            i for i in len(old_doc) if translation_config.should_translate_page(i + 1)
-        }
+            pages_to_translate = {
+                i for i in range(len(old_doc)) if translation_config.should_translate_page(i + 1)
+            }
 
-        should_removed_page = list(total_page - pages_to_translate)
+            should_removed_page = list(total_page - pages_to_translate)
 
     files = {
         translate_result.dual_pdf_path,
@@ -887,18 +805,18 @@ def migrate_toc(
             "mig_toc_temp.pdf"
         )
         shutil.copy(f, mig_toc_temp_input)
-        new_doc = Document(mig_toc_temp_input.as_posix())
-        if not new_doc:
-            continue
+        with Document(mig_toc_temp_input.as_posix()) as new_doc:
+            if not new_doc:
+                continue
 
-        new_doc.set_toc(toc_data)
-        PDFCreater.save_pdf_with_timeout(
-            new_doc,
-            f.as_posix(),
-            translation_config=translation_config,
-            clean=not translation_config.skip_clean,
-            tag="mig_toc",
-        )
+            new_doc.set_toc(toc_data)
+            PDFCreater.save_pdf_with_timeout(
+                new_doc,
+                f.as_posix(),
+                translation_config=translation_config,
+                clean=not translation_config.skip_clean,
+                tag="mig_toc",
+            )
 
 
 # mediabox -> '[0 nul 792]'
@@ -973,223 +891,215 @@ def _do_translate_single(
 
     # Continue with original processing
     temp_pdf_path = translation_config.get_working_file_path("input.pdf")
-    doc_pdf2zh = Document(original_pdf_path)
-    safe_save(doc_pdf2zh, temp_pdf_path)
-
-    # Fix null xref in PDF file
-    invalid_pages = []
+    doc_pdf2zh = None
     try:
-        invalid_pages = fix_null_page_content(doc_pdf2zh)
-        fix_filter(doc_pdf2zh)
-        fix_null_xref(doc_pdf2zh)
-    except Exception:
-        logger.exception("auto fix failed, please check the pdf file")
+        doc_pdf2zh = open_pdf_with_save_fallback(original_pdf_path, temp_pdf_path)
 
-    mediabox_data = fix_media_box(doc_pdf2zh)
+        # Fix null xref in PDF file
+        invalid_pages = []
+        try:
+            invalid_pages = fix_null_page_content(doc_pdf2zh)
+            fix_filter(doc_pdf2zh)
+            fix_null_xref(doc_pdf2zh)
+        except Exception:
+            logger.exception("auto fix failed, please check the pdf file")
 
-    # for page in doc_pdf2zh:
-    #     page.insert_font(resfont, None)
+        mediabox_data = fix_media_box(doc_pdf2zh)
 
-    resfont = None
-    safe_save(doc_pdf2zh, temp_pdf_path)
+        # for page in doc_pdf2zh:
+        #     page.insert_font(resfont, None)
 
-    # if not translation_config.skip_scanned_detection and DetectScannedFile(
-    #     translation_config
-    # ).fast_check(doc_pdf2zh):
-    #     if translation_config.auto_enable_ocr_workaround:
-    #         logger.warning(
-    #             "Fast scanned check hit, Turning on OCR workaround.",
-    #         )
-    #         translation_config.shared_context_cross_split_part.auto_enabled_ocr_workaround = True
-    #         translation_config.ocr_workaround = True
-    #         translation_config.skip_scanned_detection = True
-    #     else:
-    #         logger.warning(
-    #             "Fast scanned check hit, Please check the input PDF file.",
-    #         )
-    #         raise ScannedPDFError("Scanned PDF detected.")
+        doc_pdf2zh = save_pdf_with_same_path_fallback(doc_pdf2zh, temp_pdf_path)
 
-    il_creater = ILCreater(translation_config)
-    il_creater.mupdf = doc_pdf2zh
-    xml_converter = XMLConverter()
-    logger.debug(f"start parse il from {temp_pdf_path}")
-    with Path(temp_pdf_path).open("rb") as f:
-        start_parse_il(
-            f,
-            doc_zh=doc_pdf2zh,
-            resfont=resfont,
-            il_creater=il_creater,
-            translation_config=translation_config,
-        )
-    logger.debug(f"finish parse il from {temp_pdf_path}")
-    docs = il_creater.create_il()
-    logger.debug(f"finish create il from {temp_pdf_path}")
-    del il_creater
-    if translation_config.only_include_translated_page and not docs.page:
-        return None
+        # if not translation_config.skip_scanned_detection and DetectScannedFile(
+        #     translation_config
+        # ).fast_check(doc_pdf2zh):
+        #     if translation_config.auto_enable_ocr_workaround:
+        #         logger.warning(
+        #             "Fast scanned check hit, Turning on OCR workaround.",
+        #         )
+        #         translation_config.shared_context_cross_split_part.auto_enabled_ocr_workaround = True
+        #         translation_config.ocr_workaround = True
+        #         translation_config.skip_scanned_detection = True
+        #     else:
+        #         logger.warning(
+        #             "Fast scanned check hit, Please check the input PDF file.",
+        #         )
+        #         raise ScannedPDFError("Scanned PDF detected.")
 
-    if translation_config.debug:
-        xml_converter.write_json(
-            docs,
-            translation_config.get_working_file_path("create_il.debug.json"),
+        xml_converter = XMLConverter()
+        logger.debug(f"start parse il from {temp_pdf_path}")
+        from babeldoc.format.pdf.new_parser.native_parse import (
+            parse_prepared_pdf_with_new_parser_to_legacy_ir,
         )
 
-    if check_cid_char(docs):
-        raise ExtractTextError("The document contains too many CID chars.")
-
-    # Skip all translation processing if only_parse_generate_pdf is enabled
-    if translation_config.only_parse_generate_pdf:
-        logger.debug("only_parse_generate_pdf enabled, skipping translation processing")
-        # Skip directly to PDF generation
-        pdf_creater = PDFCreater(temp_pdf_path, docs, translation_config, mediabox_data)
-        result = pdf_creater.write(translation_config)
-        result.original_pdf_path = translation_config.input_file
-        return result
-
-    # Rest of the original translation logic...
-    # [Previous implementation of do_translate continues here]
-
-    # 检测是否为扫描文件
-    if translation_config.skip_scanned_detection:
-        logger.debug("skipping scanned file detection")
-    else:
-        logger.debug("start detect scanned file")
-        DetectScannedFile(translation_config).process(
-            docs, temp_pdf_path, mediabox_data
+        docs = parse_prepared_pdf_with_new_parser_to_legacy_ir(
+            temp_pdf_path,
+            config=translation_config,
+            doc_pdf=doc_pdf2zh,
         )
-        logger.debug("finish detect scanned file")
+        logger.debug(f"finish parse il from {temp_pdf_path}")
+        logger.debug(f"finish create il from {temp_pdf_path}")
+        if translation_config.only_include_translated_page and not docs.page:
+            return None
+
         if translation_config.debug:
             xml_converter.write_json(
                 docs,
-                translation_config.get_working_file_path("detect_scanned_file.json"),
+                translation_config.get_working_file_path("create_il.debug.json"),
             )
 
-    # Generate layouts for all pages
-    logger.debug("start generating layouts")
-    docs = LayoutParser(translation_config).process(docs, doc_pdf2zh)
-    logger.debug("finish generating layouts")
-    close_process_pool()
-    if translation_config.debug:
-        xml_converter.write_json(
-            docs,
-            translation_config.get_working_file_path("layout_generator.json"),
-        )
+        if check_cid_char(docs):
+            raise ExtractTextError("The document contains too many CID chars.")
 
-    if translation_config.table_model:
-        docs = TableParser(translation_config).process(docs, doc_pdf2zh)
-        logger.debug("finish table parser")
-        if translation_config.debug:
-            xml_converter.write_json(
-                docs,
-                translation_config.get_working_file_path("table_parser.json"),
-            )
-    ParagraphFinder(translation_config).process(docs)
-    logger.debug(f"finish paragraph finder from {temp_pdf_path}")
-    if translation_config.debug:
-        xml_converter.write_json(
-            docs,
-            translation_config.get_working_file_path("paragraph_finder.json"),
-        )
-    StylesAndFormulas(translation_config).process(docs)
-    logger.debug(f"finish styles and formulas from {temp_pdf_path}")
-    if translation_config.debug:
-        xml_converter.write_json(
-            docs,
-            translation_config.get_working_file_path("styles_and_formulas.json"),
-        )
+        # Skip all translation processing if only_parse_generate_pdf is enabled
+        if translation_config.only_parse_generate_pdf:
+            logger.debug("only_parse_generate_pdf enabled, skipping translation processing")
+            # Skip directly to PDF generation
+            pdf_creater = PDFCreater(temp_pdf_path, docs, translation_config, mediabox_data)
+            result = pdf_creater.write(translation_config)
+            result.original_pdf_path = translation_config.input_file
+            return result
 
-    translate_engine = translation_config.translator
-    term_extraction_engine = translation_config.get_term_extraction_translator()
+        # Rest of the original translation logic...
+        # [Previous implementation of do_translate continues here]
 
-    support_llm_translate = translator_supports_llm(translate_engine)
-    support_llm_term_extraction = translator_supports_llm(term_extraction_engine)
-
-    if support_llm_term_extraction and translation_config.auto_extract_glossary:
-        AutomaticTermExtractor(term_extraction_engine, translation_config).procress(
-            docs
-        )
-
-    if not translation_config.skip_translation:
-        if support_llm_translate:
-            il_translator = ILTranslatorLLMOnly(translate_engine, translation_config)
+        # 检测是否为扫描文件
+        if translation_config.skip_scanned_detection:
+            logger.debug("skipping scanned file detection")
         else:
-            il_translator = ILTranslator(translate_engine, translation_config)
-
-        recovery = getattr(translation_config, "recovery", None)
-        if recovery is not None:
-            recovery.register(docs, translation_config)
-        il_translator.translate(docs)
-        translation_config.raise_if_cancelled()
-        if recovery is not None:
-            recovery.finish()
-        del il_translator
-        logger.debug(f"finish ILTranslator from {temp_pdf_path}")
-    else:
-        logger.info("skip ILTranslator")
-
-    if translation_config.debug:
-        xml_converter.write_json(
-            docs,
-            translation_config.get_working_file_path("il_translated.json"),
-        )
-
-    if translation_config.debug:
-        AddDebugInformation(translation_config).process(docs)
-        xml_converter.write_json(
-            docs,
-            translation_config.get_working_file_path("add_debug_information.json"),
-        )
-    mono_watermark_first_page_doc_bytes = None
-    dual_watermark_first_page_doc_bytes = None
-    try:
-        if translation_config.watermark_output_mode == WatermarkOutputMode.Both:
-            mono_watermark_first_page_doc_bytes, dual_watermark_first_page_doc_bytes = (
-                generate_first_page_with_watermark(
-                    doc_pdf2zh, translation_config, docs, mediabox_data
-                )
+            logger.debug("start detect scanned file")
+            DetectScannedFile(translation_config).process(
+                docs, temp_pdf_path, mediabox_data
             )
-    except Exception:
-        logger.warning(
-            "Failed to generate watermark for first page, using no watermark"
-        )
-        translation_config.watermark_output_mode = WatermarkOutputMode.NoWatermark
+            logger.debug("finish detect scanned file")
+            if translation_config.debug:
+                xml_converter.write_json(
+                    docs,
+                    translation_config.get_working_file_path("detect_scanned_file.json"),
+                )
+
+        # Generate layouts for all pages
+        logger.debug("start generating layouts")
+        docs = LayoutParser(translation_config).process(docs, doc_pdf2zh)
+        logger.debug("finish generating layouts")
+        close_process_pool()
+        if translation_config.debug:
+            xml_converter.write_json(
+                docs,
+                translation_config.get_working_file_path("layout_generator.json"),
+            )
+
+        ParagraphFinder(translation_config).process(docs)
+        logger.debug(f"finish paragraph finder from {temp_pdf_path}")
+        if translation_config.debug:
+            xml_converter.write_json(
+                docs,
+                translation_config.get_working_file_path("paragraph_finder.json"),
+            )
+        StylesAndFormulas(translation_config).process(docs)
+        logger.debug(f"finish styles and formulas from {temp_pdf_path}")
+        if translation_config.debug:
+            xml_converter.write_json(
+                docs,
+                translation_config.get_working_file_path("styles_and_formulas.json"),
+            )
+
+        translate_engine = translation_config.translator
+        term_extraction_engine = translation_config.get_term_extraction_translator()
+
+        support_llm_translate = translator_supports_llm(translate_engine)
+        support_llm_term_extraction = translator_supports_llm(term_extraction_engine)
+
+        if support_llm_term_extraction and translation_config.auto_extract_glossary:
+            AutomaticTermExtractor(term_extraction_engine, translation_config).procress(
+                docs
+            )
+
+        if not translation_config.skip_translation:
+            if support_llm_translate:
+                il_translator = ILTranslatorLLMOnly(translate_engine, translation_config)
+            else:
+                il_translator = ILTranslator(translate_engine, translation_config)
+
+            recovery = getattr(translation_config, "recovery", None)
+            if recovery is not None:
+                recovery.register(docs, translation_config)
+            il_translator.translate(docs)
+            translation_config.raise_if_cancelled()
+            if recovery is not None:
+                recovery.finish()
+            del il_translator
+            logger.debug(f"finish ILTranslator from {temp_pdf_path}")
+        else:
+            logger.info("skip ILTranslator")
+
+        if translation_config.debug:
+            xml_converter.write_json(
+                docs,
+                translation_config.get_working_file_path("il_translated.json"),
+            )
+
+        if translation_config.debug:
+            AddDebugInformation(translation_config).process(docs)
+            xml_converter.write_json(
+                docs,
+                translation_config.get_working_file_path("add_debug_information.json"),
+            )
         mono_watermark_first_page_doc_bytes = None
         dual_watermark_first_page_doc_bytes = None
-
-    Typesetting(translation_config).typesetting_document(docs)
-    logger.debug(f"finish typsetting from {temp_pdf_path}")
-    if translation_config.debug:
-        xml_converter.write_json(
-            docs,
-            translation_config.get_working_file_path("typsetting.json"),
-        )
-
-    pdf_creater = PDFCreater(temp_pdf_path, docs, translation_config, mediabox_data)
-    result = pdf_creater.write(translation_config)
-    try:
-        if mono_watermark_first_page_doc_bytes:
-            mono_watermark_pdf = merge_watermark_doc(
-                result.mono_pdf_path,
-                mono_watermark_first_page_doc_bytes,
-                translation_config,
+        try:
+            if translation_config.watermark_output_mode == WatermarkOutputMode.Both:
+                mono_watermark_first_page_doc_bytes, dual_watermark_first_page_doc_bytes = (
+                    generate_first_page_with_watermark(
+                        doc_pdf2zh, translation_config, docs, mediabox_data
+                    )
+                )
+        except Exception:
+            logger.warning(
+                "Failed to generate watermark for first page, using no watermark"
             )
-            result.mono_pdf_path = mono_watermark_pdf
-    except Exception:
-        result.mono_pdf_path = result.no_watermark_mono_pdf_path
-    try:
-        if dual_watermark_first_page_doc_bytes:
-            dual_watermark_pdf = merge_watermark_doc(
-                result.dual_pdf_path,
-                dual_watermark_first_page_doc_bytes,
-                translation_config,
+            translation_config.watermark_output_mode = WatermarkOutputMode.NoWatermark
+            mono_watermark_first_page_doc_bytes = None
+            dual_watermark_first_page_doc_bytes = None
+
+        Typesetting(translation_config).typesetting_document(docs)
+        logger.debug(f"finish typsetting from {temp_pdf_path}")
+        if translation_config.debug:
+            xml_converter.write_json(
+                docs,
+                translation_config.get_working_file_path("typsetting.json"),
             )
-            result.dual_pdf_path = dual_watermark_pdf
-    except Exception:
-        result.dual_pdf_path = result.no_watermark_dual_pdf_path
 
-    result.original_pdf_path = translation_config.input_file
+        pdf_creater = PDFCreater(temp_pdf_path, docs, translation_config, mediabox_data)
+        result = pdf_creater.write(translation_config)
+        try:
+            if mono_watermark_first_page_doc_bytes:
+                mono_watermark_pdf = merge_watermark_doc(
+                    result.mono_pdf_path,
+                    mono_watermark_first_page_doc_bytes,
+                    translation_config,
+                )
+                result.mono_pdf_path = mono_watermark_pdf
+        except Exception:
+            result.mono_pdf_path = result.no_watermark_mono_pdf_path
+        try:
+            if dual_watermark_first_page_doc_bytes:
+                dual_watermark_pdf = merge_watermark_doc(
+                    result.dual_pdf_path,
+                    dual_watermark_first_page_doc_bytes,
+                    translation_config,
+                )
+                result.dual_pdf_path = dual_watermark_pdf
+        except Exception:
+            result.dual_pdf_path = result.no_watermark_dual_pdf_path
 
-    return result
+        result.original_pdf_path = translation_config.input_file
+
+        return result
+    finally:
+        if doc_pdf2zh is not None and not doc_pdf2zh.is_closed:
+            doc_pdf2zh.close()
 
 
 def generate_first_page_with_watermark(
@@ -1214,7 +1124,7 @@ def generate_first_page_with_watermark(
         )
         safe_save(first_page_doc, watermarked_temp_pdf_path)
 
-        Typesetting(watermarked_config).typsetting_document(il_only_first_page_doc)
+        Typesetting(watermarked_config).typesetting_document(il_only_first_page_doc)
         pdf_creater = PDFCreater(
             watermarked_temp_pdf_path.as_posix(),
             il_only_first_page_doc,
@@ -1241,6 +1151,7 @@ def generate_first_page_with_watermark(
         return mono_pdf_bytes, dual_pdf_bytes
     finally:
         watermarked_config.progress_monitor.disable = False
+        first_page_doc.close()
 
 
 def merge_watermark_doc(
@@ -1257,25 +1168,26 @@ def merge_watermark_doc(
             f"watermark_first_page_pdf_bytes not found: {watermark_first_page_pdf_bytes}"
         )
 
-    no_watermark_pdf = Document(no_watermark_pdf_path.as_posix())
-    no_watermark_pdf.delete_page(0)
+    with Document(no_watermark_pdf_path.as_posix()) as no_watermark_pdf, Document(
+        "pdf", watermark_first_page_pdf_bytes
+    ) as watermark_first_page_pdf:
+        no_watermark_pdf.delete_page(0)
 
-    watermark_first_page_pdf = Document("pdf", watermark_first_page_pdf_bytes)
-    no_watermark_pdf.insert_pdf(
-        watermark_first_page_pdf, from_page=0, to_page=0, start_at=0
-    )
+        no_watermark_pdf.insert_pdf(
+            watermark_first_page_pdf, from_page=0, to_page=0, start_at=0
+        )
 
-    new_save_path = no_watermark_pdf_path.with_name(
-        no_watermark_pdf_path.name.replace(".no_watermark", "")
-    )
+        new_save_path = no_watermark_pdf_path.with_name(
+            no_watermark_pdf_path.name.replace(".no_watermark", "")
+        )
 
-    PDFCreater.save_pdf_with_timeout(
-        no_watermark_pdf,
-        new_save_path.as_posix(),
-        translation_config=translation_config,
-        clean=not translation_config.skip_clean,
-    )
-    return new_save_path
+        PDFCreater.save_pdf_with_timeout(
+            no_watermark_pdf,
+            new_save_path.as_posix(),
+            translation_config=translation_config,
+            clean=not translation_config.skip_clean,
+        )
+        return new_save_path
 
 
 def download_font_assets():

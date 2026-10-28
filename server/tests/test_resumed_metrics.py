@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from observability import TaskMetricsCollector, empty_metrics, merge_metrics
 from task_manager import TaskManager, TaskRecord
-from pdf2zh_next_service import TranslationResult
+from pdf2zh_pro.pdf import TranslationResult
 
 
 def metrics(latencies, *, tokens=True):

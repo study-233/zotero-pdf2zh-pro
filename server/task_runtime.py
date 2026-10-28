@@ -114,12 +114,12 @@ def child_entry(payload, identity, cancel, gate, stack_request, telemetry, contr
     threading.Thread(target=watch,daemon=True,name='task-watchdog').start()
     logging.basicConfig(level=logging.INFO,handlers=[SafeLogHandler(record)],force=True)
     try:
-        if target is not None:  # Dependency injection for offline process tests only; never request-controlled.
+        if target is not None:  # Trusted internal worker (export or offline tests); never request-controlled.
             result=target(payload,cancel,emit)
         else:
             import truststore
             truststore.inject_into_ssl()
-            from pdf2zh_next_service import translate_pdf_with_callbacks
+            from pdf2zh_pro.pdf import translate_pdf_with_callbacks
             result=asyncio.run(translate_pdf_with_callbacks(payload,identity['taskId'],cancel_event=cancel,
                 evidence_identity=identity,
                 progress_callback=lambda e:emit('progress',e),metrics_callback=lambda m:emit('metrics',m)))

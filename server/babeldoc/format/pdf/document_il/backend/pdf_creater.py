@@ -1,6 +1,7 @@
 import io
 import itertools
 import logging
+import math
 import os
 import re
 import time
@@ -19,7 +20,11 @@ from babeldoc.format.pdf.document_il import PdfOriginalPath
 from babeldoc.format.pdf.document_il import il_version_1
 from babeldoc.format.pdf.document_il.utils.fontmap import FontMapper
 from babeldoc.format.pdf.document_il.utils.matrix_helper import matrix_to_bytes
+from babeldoc.format.pdf.document_il.utils.type3_font_metrics import (
+    inverse_type3_font_size_for_tf,
+)
 from babeldoc.format.pdf.document_il.utils.zstd_helper import zstd_decompress
+from babeldoc.format.pdf.new_parser.pdf_token_serializer import serialize_pdf_token
 from babeldoc.format.pdf.translation_config import TranslateResult
 from babeldoc.format.pdf.translation_config import TranslationConfig
 from babeldoc.format.pdf.translation_config import WatermarkOutputMode
@@ -28,6 +33,8 @@ logger = logging.getLogger(__name__)
 
 SUBSET_FONT_STAGE_NAME = "Subset font"
 SAVE_PDF_STAGE_NAME = "Save PDF"
+_EXTGSTATE_USAGE_RE = re.compile(rb"/([!#$%&'*+,\-.0-9:;=?@A-Z\\^_`a-z{|}~]+)\s+gs\b")
+_SHADING_USAGE_RE = re.compile(rb"/([!#$%&'*+,\-.0-9:;=?@A-Z\\^_`a-z{|}~]+)\s+sh\b")
 
 
 class RenderUnit(ABC):
@@ -82,6 +89,7 @@ class CharacterRenderUnit(RenderUnit):
 
         char_size = char.pdf_style.font_size
         font_id = char.pdf_style.font_id
+        tf_font_size = self._font_size_for_pdf_tf(char_size, font_id, context)
 
         # Get encoding length map based on xobj_id
         if self.xobj_id in context.xobj_encoding_length_map:
@@ -102,12 +110,14 @@ class CharacterRenderUnit(RenderUnit):
 
         if char.vertical:
             draw_op.append(
-                f"BT /{font_id} {char_size:f} Tf 0 1 -1 0 {char.box.x2:f} {char.box.y:f} Tm ".encode(),
+                f"BT /{font_id} {tf_font_size:f} Tf 0 1 -1 0 {char.box.x2:f} {char.box.y:f} Tm ".encode(),
             )
         else:
-            draw_op.append(
-                f"BT /{font_id} {char_size:f} Tf 1 0 0 1 {char.box.x:f} {char.box.y:f} Tm ".encode(),
+            text_draw_op = (
+                f"BT /{font_id} {tf_font_size:f} Tf "
+                f"1 0 0 1 {char.box.x:f} {char.box.y:f} Tm "
             )
+            draw_op.append(text_draw_op.encode())
 
         encoding_length = encoding_length_map.get(font_id, None)
         if encoding_length is None:
@@ -123,6 +133,28 @@ class CharacterRenderUnit(RenderUnit):
             f"<{char.pdf_character_id:0{encoding_length * 2}x}>".upper().encode(),
         )
         draw_op.append(b" Tj ET Q \n")
+
+    def _font_size_for_pdf_tf(
+        self,
+        char_size: float,
+        font_id: str,
+        context: "RenderContext",
+    ) -> float:
+        get_scoped_font = getattr(context, "get_scoped_font", None)
+        font = (
+            get_scoped_font(font_id, self.xobj_id)
+            if callable(get_scoped_font)
+            else None
+        )
+        if font is None:
+            xobj_font_map = getattr(context, "xobj_font_map", {})
+            if self.xobj_id in xobj_font_map:
+                font = xobj_font_map[self.xobj_id].get(font_id)
+        if font is None:
+            font = getattr(context, "page_font_map", {}).get(font_id)
+        if font is None:
+            return char_size
+        return inverse_type3_font_size_for_tf(font, char_size)
 
 
 class FormRenderUnit(RenderUnit):
@@ -183,17 +215,7 @@ class FormRenderUnit(RenderUnit):
                     for key, value in params.items():
                         if key.startswith("/"):
                             key = key[1:]  # Remove leading slash
-                        # Convert Python boolean to PDF boolean
-                        if value is True:
-                            value = "true"
-                        elif value is False:
-                            value = "false"
-                        elif isinstance(value, str) and value in (
-                            "True",
-                            "False",
-                        ):
-                            value = value.lower()
-                        draw_op.append(f"/{key} {value} ".encode())
+                        draw_op.append(f"/{key} {serialize_pdf_token(value)} ".encode())
                 except json.JSONDecodeError:
                     pass
 
@@ -299,6 +321,10 @@ class CurveRenderUnit(RenderUnit):
             curve.graphic_state.passthrough_per_char_instruction.encode(),
         )
 
+        if curve.passthrough_paint:
+            draw_op.append(b" Q\n")
+            return
+
         draw_op.append(b" ")
         path_op = BitStream(b" ")
 
@@ -308,13 +334,14 @@ class CurveRenderUnit(RenderUnit):
             if curve.pdf_original_path is not None
             else curve.pdf_path
         )
-        for path in path_to_use:
-            if isinstance(path, PdfOriginalPath):
-                path = path.pdf_path
-            if path.has_xy:
-                path_op.append(f"{path.x:F} {path.y:F} {path.op} ".encode())
-            else:
-                path_op.append(f"{path.op} ".encode())
+        if not self._append_original_primitive_path(path_op):
+            for path in path_to_use:
+                if isinstance(path, PdfOriginalPath):
+                    path = path.pdf_path
+                if path.has_xy:
+                    path_op.append(f"{path.x:F} {path.y:F} {path.op} ".encode())
+                else:
+                    path_op.append(f"{path.op} ".encode())
 
         if curve.fill_background:
             draw_op.append(path_op)
@@ -331,6 +358,19 @@ class CurveRenderUnit(RenderUnit):
 
         draw_op.append(b" n Q\n")
 
+    def _append_original_primitive_path(self, path_op: BitStream) -> bool:
+        primitive = self.curve.pdf_original_path_primitive
+        if primitive is None or primitive.op != "re" or len(primitive.args) != 4:
+            return False
+        try:
+            x, y, width, height = (float(arg) for arg in primitive.args)
+        except (TypeError, ValueError):
+            return False
+        if not all(math.isfinite(arg) for arg in (x, y, width, height)):
+            return False
+        path_op.append(f"{x:F} {y:F} {width:F} {height:F} re ".encode())
+        return True
+
 
 class RenderContext:
     """Context object containing shared state for rendering."""
@@ -344,6 +384,8 @@ class RenderContext:
         all_encoding_length_map: dict[str, int],
         xobj_available_fonts: dict[str, set[str]],
         xobj_encoding_length_map: dict[str, dict[str, int]],
+        page_font_map: dict[str, il_version_1.PdfFont],
+        xobj_font_map: dict[str, dict[str, il_version_1.PdfFont]],
         ctm_for_ops: bytes,
         check_font_exists: bool = False,
     ):
@@ -354,8 +396,21 @@ class RenderContext:
         self.all_encoding_length_map = all_encoding_length_map
         self.xobj_available_fonts = xobj_available_fonts
         self.xobj_encoding_length_map = xobj_encoding_length_map
+        self.page_font_map = page_font_map
+        self.xobj_font_map = xobj_font_map
         self.ctm_for_ops = ctm_for_ops
         self.check_font_exists = check_font_exists
+
+    def get_scoped_font(
+        self,
+        font_id: str,
+        xobj_id: str | None = None,
+    ) -> il_version_1.PdfFont | None:
+        if xobj_id in self.xobj_font_map:
+            scoped_font = self.xobj_font_map[xobj_id].get(font_id)
+            if scoped_font is not None:
+                return scoped_font
+        return self.page_font_map.get(font_id)
 
 
 def to_int(src):
@@ -607,6 +662,151 @@ class PDFCreater:
                 f"{graphic_state.passthrough_per_char_instruction} \n".encode(),
             )
 
+    @staticmethod
+    def _parse_xref_ref(value: str) -> int | None:
+        match = re.match(r"^\s*(\d+)\s+0\s+R\s*$", value)
+        if match is None:
+            return None
+        return int(match.group(1))
+
+    @classmethod
+    def _find_resource_ref(
+        cls,
+        pdf: pymupdf.Document,
+        candidate_resource_xrefs: list[int],
+        resource_kind: str,
+        name: str,
+    ) -> str | None:
+        for candidate_xref in candidate_resource_xrefs:
+            try:
+                value_type, value = pdf.xref_get_key(
+                    candidate_xref,
+                    f"Resources/{resource_kind}/{name}",
+                )
+            except Exception:
+                continue
+            if value_type != "null" and value != "null":
+                return value
+        return None
+
+    @classmethod
+    def _set_resource_ref(
+        cls,
+        pdf: pymupdf.Document,
+        target_xref: int,
+        resource_kind: str,
+        name: str,
+        resource_ref: str,
+    ) -> None:
+        resource_key = f"Resources/{resource_kind}/{name}"
+        try:
+            pdf.xref_set_key(target_xref, resource_key, resource_ref)
+            return
+        except Exception as exc:
+            if "has indirects" not in str(exc):
+                raise
+            direct_set_error = exc
+
+        resources_type, resources_value = pdf.xref_get_key(
+            target_xref,
+            "Resources",
+        )
+        resources_xref = (
+            cls._parse_xref_ref(resources_value) if resources_type == "xref" else None
+        )
+        if resources_xref is None:
+            raise direct_set_error
+
+        kind_type, kind_value = pdf.xref_get_key(resources_xref, resource_kind)
+        kind_xref = cls._parse_xref_ref(kind_value) if kind_type == "xref" else None
+        if kind_xref is not None:
+            pdf.xref_set_key(kind_xref, name, resource_ref)
+            return
+
+        pdf.xref_set_key(
+            resources_xref,
+            f"{resource_kind}/{name}",
+            resource_ref,
+        )
+
+    @classmethod
+    def _ensure_stream_named_resources(
+        cls,
+        pdf: pymupdf.Document,
+        target_xref: int,
+        stream: bytes,
+        candidate_resource_xrefs: list[int],
+        *,
+        resource_kind: str,
+        usage_re: re.Pattern[bytes],
+    ) -> None:
+        used_names = {
+            match.group(1).decode("latin-1") for match in usage_re.finditer(stream)
+        }
+        if not used_names:
+            return
+
+        for name in sorted(used_names):
+            try:
+                current_type, current_value = pdf.xref_get_key(
+                    target_xref,
+                    f"Resources/{resource_kind}/{name}",
+                )
+            except Exception:
+                current_type, current_value = "null", "null"
+            if current_type != "null" and current_value != "null":
+                continue
+
+            resource_ref = cls._find_resource_ref(
+                pdf,
+                candidate_resource_xrefs,
+                resource_kind,
+                name,
+            )
+            if resource_ref is None:
+                continue
+            cls._set_resource_ref(
+                pdf,
+                target_xref,
+                resource_kind,
+                name,
+                resource_ref,
+            )
+
+    @classmethod
+    def _ensure_stream_extgstate_resources(
+        cls,
+        pdf: pymupdf.Document,
+        target_xref: int,
+        stream: bytes,
+        candidate_resource_xrefs: list[int],
+    ) -> None:
+        cls._ensure_stream_named_resources(
+            pdf,
+            target_xref,
+            stream,
+            candidate_resource_xrefs,
+            resource_kind="ExtGState",
+            usage_re=_EXTGSTATE_USAGE_RE,
+        )
+
+    @classmethod
+    def _ensure_stream_shading_resources(
+        cls,
+        pdf: pymupdf.Document,
+        target_xref: int,
+        stream: bytes,
+        candidate_resource_xrefs: list[int],
+    ) -> None:
+        cls._ensure_stream_named_resources(
+            pdf,
+            target_xref,
+            stream,
+            candidate_resource_xrefs,
+            resource_kind="Shading",
+            usage_re=_SHADING_USAGE_RE,
+        )
+
     def render_paragraph_to_char(
         self,
         paragraph: il_version_1.PdfParagraph,
@@ -707,7 +907,11 @@ class PDFCreater:
         if not translation_config.skip_curve_render:
             all_curves = list(page.pdf_curve) + formula_curves
             for i, curve in enumerate(all_curves):
-                if curve.debug_info or translation_config.debug:
+                if (
+                    curve.passthrough_paint
+                    or curve.debug_info
+                    or translation_config.debug
+                ):
                     render_order = getattr(
                         curve, "render_order", 20
                     )  # Curves render after rectangles
@@ -1241,6 +1445,7 @@ class PDFCreater:
         translation_config: TranslationConfig,
         check_font_exists: bool = False,
     ) -> TranslateResult:
+        documents = []
         try:
             basename = Path(translation_config.input_file).stem
             debug_suffix = ".debug" if translation_config.debug else ""
@@ -1253,6 +1458,7 @@ class PDFCreater:
                 f"{basename}{debug_suffix}.{translation_config.lang_out}.mono.pdf",
             )
             pdf = pymupdf.open(self.original_pdf_path)
+            documents.append(pdf)
             self.font_mapper.add_font(pdf, self.docs)
             with self.translation_config.progress_monitor.stage_start(
                 self.stage_name,
@@ -1275,6 +1481,7 @@ class PDFCreater:
                     pdf = self.subset_fonts_in_subprocess(
                         pdf, translation_config, tag="mono"
                     )
+                    documents.append(pdf)
 
                 pbar.advance()
             try:
@@ -1329,6 +1536,7 @@ class PDFCreater:
                     )
                     translation_config.raise_if_cancelled()
                     original_pdf = pymupdf.open(self.original_pdf_path)
+                    documents.append(original_pdf)
 
                     if translation_config.debug:
                         translation_config.raise_if_cancelled()
@@ -1336,6 +1544,7 @@ class PDFCreater:
                             original_pdf = self.write_debug_info(
                                 original_pdf, translation_config
                             )
+                            documents.append(original_pdf)
                         except Exception:
                             logger.warning(
                                 "Failed to write debug info to dual PDF",
@@ -1371,6 +1580,7 @@ class PDFCreater:
                             translation_config,
                         )
 
+                    documents.append(dual)
                     self.save_pdf_with_timeout(
                         dual,
                         dual_out_path,
@@ -1421,6 +1631,12 @@ class PDFCreater:
             if not check_font_exists:
                 return self.write(translation_config, True)
             raise
+        finally:
+            # PyMuPDF documents may retain page references. Do not rely on GC
+            # before the worker cleans up its files (particularly on Windows).
+            for document in reversed(documents):
+                if not document.is_closed:
+                    document.close()
 
     def update_page_content_stream(
         self, check_font_exists, page, pdf, translation_config, skip_char: bool = False
@@ -1441,6 +1657,8 @@ class PDFCreater:
         xobj_draw_ops = {}
         xobj_encoding_length_map = {}
         available_font_list = self.get_available_font_list(pdf, page)
+        page_font_map = {f.font_id: f for f in page.pdf_font}
+        xobj_font_map = {}
         page_encoding_length_map: dict[str | None, int | None] = {
             f.font_id: f.encoding_length for f in page.pdf_font
         }
@@ -1453,6 +1671,8 @@ class PDFCreater:
                 )
             except Exception:
                 pass
+            xobj_font_map[xobj.xobj_id] = page_font_map.copy()
+            xobj_font_map[xobj.xobj_id].update({f.font_id: f for f in xobj.pdf_font})
             xobj_encoding_length_map[xobj.xobj_id] = {
                 f.font_id: f.encoding_length for f in xobj.pdf_font
             }
@@ -1481,6 +1701,8 @@ class PDFCreater:
             all_encoding_length_map=all_encoding_length_map,
             xobj_available_fonts=xobj_available_fonts,
             xobj_encoding_length_map=xobj_encoding_length_map,
+            page_font_map=page_font_map,
+            xobj_font_map=xobj_font_map,
             ctm_for_ops=ctm_for_ops,
             check_font_exists=check_font_exists,
         )
@@ -1494,11 +1716,28 @@ class PDFCreater:
             ]
         # Render all units to their appropriate streams
         self.render_units_to_stream(render_units, context, page_op, xobj_draw_ops)
+        candidate_resource_xrefs = [
+            pdf[page.page_number].xref,
+            *(xobj.xref_id for xobj in page.pdf_xobject),
+        ]
         # Update xobject streams
         for xobj in page.pdf_xobject:
             draw_op = xobj_draw_ops[xobj.xobj_id]
             try:
-                pdf.update_stream(xobj.xref_id, draw_op.tobytes())
+                stream = draw_op.tobytes()
+                self._ensure_stream_extgstate_resources(
+                    pdf,
+                    xobj.xref_id,
+                    stream,
+                    candidate_resource_xrefs,
+                )
+                self._ensure_stream_shading_resources(
+                    pdf,
+                    xobj.xref_id,
+                    stream,
+                    candidate_resource_xrefs,
+                )
+                pdf.update_stream(xobj.xref_id, stream)
             except Exception:
                 logger.warning(f"update xref {xobj.xref_id} stream fail, continue")
         draw_op = page_op
@@ -1506,5 +1745,18 @@ class PDFCreater:
         # Since this is a draw instruction container,
         # no additional information is needed
         pdf.update_object(op_container, "<<>>")
-        pdf.update_stream(op_container, draw_op.tobytes())
+        stream = draw_op.tobytes()
+        self._ensure_stream_extgstate_resources(
+            pdf,
+            pdf[page.page_number].xref,
+            stream,
+            candidate_resource_xrefs,
+        )
+        self._ensure_stream_shading_resources(
+            pdf,
+            pdf[page.page_number].xref,
+            stream,
+            candidate_resource_xrefs,
+        )
+        pdf.update_stream(op_container, stream)
         pdf[page.page_number].set_contents(op_container)

@@ -56,6 +56,10 @@ function menuFixture(registerResult) {
                     ({
                         "prefs-menu-translate": "Translate PDF",
                         "prefs-menu-tasks": "Task Manager",
+                        "export-title": "Export File",
+                        "export-format-md": "Markdown…",
+                        "export-format-json": "JSON…",
+                        "export-format-txt": "TXT…",
                         "notice-help-title": "What is new and help",
                     })[key],
             },
@@ -74,7 +78,10 @@ test("native item menu registers once across main-window loads and retains all a
     assert.equal(options.pluginID, "pdf2zhpro@test");
     const submenu = options.menus[0];
     const labels = [];
-    for (const menu of [submenu, ...submenu.menus]) {
+    for (const menu of [
+        submenu,
+        ...submenu.menus.flatMap((menu) => [menu, ...(menu.menus || [])]),
+    ]) {
         menu.onShowing(
             {},
             {
@@ -91,12 +98,20 @@ test("native item menu registers once across main-window loads and retains all a
         "zotero-pdf2zh-pro",
         "zotero-pdf2zh-pro: Translate PDF",
         "zotero-pdf2zh-pro: Task Manager",
+        "Export File",
+        "Markdown…",
+        "JSON…",
+        "TXT…",
         "What is new and help",
     ]);
-    for (const menu of submenu.menus) menu.onCommand();
+    for (const menu of submenu.menus.flatMap((menu) => menu.menus || [menu]))
+        menu.onCommand();
     assert.deepEqual(commands, [
         "translatePDF",
         "openTaskManager",
+        "exportDocument",
+        "exportDocument",
+        "exportDocument",
         "openNoticeHelp",
     ]);
 });

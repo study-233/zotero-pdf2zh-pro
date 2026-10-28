@@ -23,12 +23,12 @@ from babeldoc.format.pdf.document_il.utils.paragraph_helper import (
 from babeldoc.format.pdf.document_il.midend.reference_filter import (
     find_reference_paragraph_ids,
 )
-from babeldoc.translator.validation import InvalidTranslation
+from pdf2zh_pro.translator.validation import InvalidTranslation
 from babeldoc.utils.priority_thread_pool_executor import PriorityThreadPoolExecutor
 
 if TYPE_CHECKING:
     from babeldoc.format.pdf.translation_config import TranslationConfig
-    from babeldoc.translator.translator import BaseTranslator
+    from pdf2zh_pro.translator.base import BaseTranslator
 
 logger = logging.getLogger(__name__)
 
