@@ -46,12 +46,13 @@ description: Prepare, publish, or resume zotero-pdf2zh-pro releases across Zoter
 
 ## 验证与发布
 
-先读 [Actions 测试规范](../../../docs/actions-testing.md)，按变更风险和开发环境选择验证。正式发布默认执行 `bash scripts/release.sh <version>`。Windows 优先在本机做受影响的开发回归；macOS 或本机条件不足时使用远端 Windows。正式 EXE 始终由 Actions 构建一次，无需用户切换电脑。
+先读 [Actions 测试规范](../../../docs/actions-testing.md)，按变更风险和开发环境选择验证。正式发布默认执行 `bash scripts/release.sh <version>`。Windows 优先在本机构建与验收最终产物，复用现有 LLVM/Skia、release target 和下载缓存；`--build-source local` 强制本机，`--build-source actions` 使用远端。macOS 或本机条件不足时使用远端 Windows。本地失败先诊断，不能自动切换远端绕过产品失败。
 
 `--no-push` **不是 dry-run 或“只提交”模式**：它在 Windows 本地构建制品，并可能产生版本提交。只提交推送的请求应单独更新版本文件、运行相关检查、commit/push。
 
 - 核心 CI 验证插件、服务端、Windows PowerShell/事务/进程/进度等快速检查、两平台 Codex 兼容及发布守卫。日常 CI 不编译 Slint/Skia；不能将其成功当作原生构建或安装验收。成功证据必须对应实际发布提交，修复后只重跑受影响检查。
-- Windows 标准流程复用核心 CI，构建一批制品，Rust 单测共用该次 release 编译。保留最终 EXE/DLL、安装器载荷和大小、窗口启动、全新 Python 3.13/OCR、安装和自更新检查；选中的生命周期在 Actions 执行一次，本机只补显式选择的兼容升级，不重复整套安装流程。
+- Windows 标准流程复用核心 CI，构建一批制品，Rust 单测共用该次 release 编译，默认限制为两个测试线程。保留最终 EXE/DLL、安装器载荷和大小、窗口启动、全新 Python 3.13/OCR、安装和自更新检查；本地模式执行全部选中场景，远端模式只在本机补显式兼容升级。同一批制品、计划和工具链已通过的阶段直接复用，失败从对应阶段恢复。
+- 本地模式由 release_local.py 记录真实 Windows 环境、独立执行 ID、阶段结果及升级回执，schema 2 不伪造 Actions run/attempt。上传候选草稿附件后，轻量接收任务核对源码、核心 CI、文件摘要、包内容与完整验证契约，再生成发布使用的 Actions 制品；后续 PyPI OIDC、GitHub 和 Homebrew 复用原包。发布守卫同时兼容原远端 schema 1，不接受缺少场景的本地回执。
 - 发布入口按共享策略自动选测，上一正式版升级为基线；数据或依赖改动保留数据格式回归，安装和目录布局改动追加重装、迁移与回滚，不因此追加旧版本。周期回归最多覆盖含目标版的最近三个版本，旧布局仅在 `--baseline <version>` 明确指定时运行。普通补丁不枚举所有旧版，新增未分类服务端模块保守扩大验证。验证层级与证据路径以 [Actions 测试规范](../../../docs/actions-testing.md) 为准；`--full-validation` 扩大生命周期，保持所选版本范围，本机条件不足时加 `--remote-validation`，不能借此绕过产品失败。
 - 发布前核验冻结计划、所需场景及最终制品摘要。复用测试结果须匹配八项制品哈希、完整计划、验收代码和原 run/attempt，不能只凭同一提交或步骤成功状态。缺少新标准回执时复用原包补验，不伪造回执。单个升级场景在归档前落盘，恢复逐项核验计划、源提交、验收脚本和前后制品摘要。Windows 子进程统一使用 windows_powershell.py，禁止继承 PowerShell 7 的模块路径。测试须隔离并清理进程；失败时保留原始错误和恢复记录，从对应阶段继续。
 - 入口或模块布局变更时，核对 CLI 元数据、打包模块、安装验收和对应分发目标。制品身份、大小、哈希与更新清单由现有守卫核验；不重复叠加人工下载全检。

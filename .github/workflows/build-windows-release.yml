@@ -12,6 +12,14 @@ on:
         description: Full 40-character commit SHA containing this version
         required: true
         type: string
+      local_candidate:
+        description: Authenticated draft asset ID of locally built and validated packages
+        required: false
+        type: string
+      candidate_sha256:
+        description: SHA-256 of the local candidate archive
+        required: false
+        type: string
       full_validation:
         description: Additional Windows rollback, relocation and previous-release migration; core CI is reused
         required: false
@@ -53,6 +61,7 @@ concurrency:
 
 jobs:
   build:
+    if: inputs.local_candidate == ''
     runs-on: windows-latest
     timeout-minutes: 90
     env:
@@ -478,3 +487,47 @@ jobs:
         if: always() && env.PDF2ZH_WINDOWS_BUILD_ROOT != ''
         shell: pwsh
         run: 'subst.exe P: /D'
+
+  import-local:
+    if: inputs.local_candidate != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_COMMIT: ${{ inputs.commit }}
+      LOCAL_CANDIDATE: ${{ inputs.local_candidate }}
+      CANDIDATE_SHA256: ${{ inputs.candidate_sha256 }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify local candidate source and core CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/main
+          [[ "$RELEASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          git merge-base --is-ancestor "$RELEASE_COMMIT" "$GITHUB_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$RELEASE_COMMIT&status=success&per_page=100" > "$RUNNER_TEMP/core.json"
+          python - "$RUNNER_TEMP/core.json" "$RELEASE_COMMIT" <<'PY_LOCAL_CORE'
+          import json, sys
+          from pathlib import Path
+          runs = json.loads(Path(sys.argv[1]).read_text())["workflow_runs"]
+          assert any(r["head_sha"] == sys.argv[2] and r["event"] == "push" and r["conclusion"] == "success" for r in runs)
+          PY_LOCAL_CORE
+          git switch --detach "$RELEASE_COMMIT"
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          python-version: "3.13"
+      - name: Import and independently verify local packages
+        run: uv run --no-project python scripts/release_local.py import "$LOCAL_CANDIDATE" "$CANDIDATE_SHA256" "$RELEASE_VERSION" "$RELEASE_COMMIT" "$RUNNER_TEMP/candidate"
+      - name: Upload verified distributions and checksums
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-${{ inputs.version }}-${{ inputs.commit }}
+          path: dist/release/*
+          if-no-files-found: error
+          retention-days: 30

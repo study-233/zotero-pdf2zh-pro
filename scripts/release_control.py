@@ -412,8 +412,8 @@ def workflow(path, stage, name, fields, retry_failed=False):
                 return record['runId']
             if not retry_failed or stage not in ('build', 'pypi'):
                 raise ValueError(f'Workflow failed: {record["runId"]}; inspect the failed stage before retrying')
-            if stage == 'pypi':
-                if not fields.get('build_run_id'):
+            if stage == 'pypi' or fields.get('local_candidate'):
+                if stage == 'pypi' and not fields.get('build_run_id'):
                     raise ValueError('PyPI recovery requires the same verified artifact build')
                 if not record.get('retryAfterAttempt'):
                     record['retryAfterAttempt'] = run['run_attempt']
@@ -429,7 +429,7 @@ def workflow(path, stage, name, fields, retry_failed=False):
                         record.update(conclusion=retried['conclusion'], attempt=retried['run_attempt'])
                         save(path, state)
                         if retried['conclusion'] != 'success':
-                            raise ValueError(f'Publication retry failed: {record["runId"]}; inspect its failed job')
+                            raise ValueError(f'Workflow retry failed: {record["runId"]}; inspect its failed job')
                         return record['runId']
                     time.sleep(2)
                 raise TimeoutError('Publication rerun outcome unknown; resume the same run and state')
@@ -543,12 +543,29 @@ def product_identity(value):
 
 def verify_standard_receipt(receipt, plan, artifacts):
     """A passed step/commit alone cannot identify the bytes or coverage it validated."""
-    if (receipt.get('schemaVersion') != 1 or receipt.get('status') != 'passed'
+    local = receipt.get('schemaVersion') == 2
+    if (receipt.get('schemaVersion') not in (1, 2) or receipt.get('status') != 'passed'
             or receipt.get('plan') != plan or receipt.get('planSha256') != plan_digest(plan)
             or receipt.get('lifecycle') != plan['lifecycle']
-            or not re.fullmatch(r'[1-9][0-9]*', str(receipt.get('runId', '')))
-            or not isinstance(receipt.get('runAttempt'), int) or receipt['runAttempt'] < 1):
+            or (not local and (not re.fullmatch(r'[1-9][0-9]*', str(receipt.get('runId', '')))
+                or not isinstance(receipt.get('runAttempt'), int) or receipt['runAttempt'] < 1))):
         raise ValueError('Standard validation plan or run identity mismatch; rerun selected checks')
+    if local:
+        execution = receipt.get('execution', {})
+        required = {'native-tests', 'package-window', 'runtime', 'lifecycle', 'progress', 'upgrades'}
+        stages = receipt.get('stages', {})
+        if (execution.get('type') != 'local' or execution.get('system') != 'Windows'
+                or not re.fullmatch('[0-9a-f]{32}', execution.get('id', ''))
+                or not execution.get('rustc') or not execution.get('python')
+                or not required.issubset(stages)
+                or any(stages[name].get('status') != 'passed'
+                       or stages[name].get('artifacts') != artifacts for name in required)):
+            raise ValueError('Local validation environment or stages are incomplete')
+        cases = receipt.get('cases', [])
+        if {(c.get('id'), c.get('baseline')) for c in cases} != {(c['id'], c['baseline']) for c in plan['cases']}:
+            raise ValueError('Local validation is missing selected upgrade cases')
+        for case in cases:
+            verify_case_receipt(plan, case['id'], case['baseline'], case.get('receipt', {}), artifacts)
     expected_names = {Path(name).name for name in product_paths(plan['version'])}
     if set(artifacts) != expected_names or receipt.get('artifacts') != artifacts:
         raise ValueError('Standard validation used different artifacts')

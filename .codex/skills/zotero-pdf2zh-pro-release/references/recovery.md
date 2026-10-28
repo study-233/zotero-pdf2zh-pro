@@ -4,6 +4,13 @@
 
 ## 记录和定位
 
+Windows 本地发布使用原 `release-state.json` 加 `--resume`，保持 `--build-source local`。
+旁边的 `local-build.json` 分别记录编译、打包和验收结果；源码、工具链、冻结计划及产物摘要
+一致时直接复用成功阶段。`local-upgrades.json.cases/` 保存各升级场景的独立回执。
+本地 schema 2 标准回执记录真实执行环境与所有选中场景，不填写远端 run/attempt。
+候选草稿只作传输，轻量 Actions 接收任务独立核验后生成正常发布制品；接收失败时只重跑
+该任务，PyPI 与 GitHub 仍使用成功接收 run 的原包。原远端构建的恢复规则继续适用。
+
 保留版本/tag、发布提交、核心 CI run、Windows build run、PyPI publish run、各渠道已完成状态。查询特定 run，不拿最新的任意成功 run 代替发布证据。
 
 正常发布由 `release.sh` 创建带 `.keep` 的恢复记录，按 [Actions 测试规范](../../../../docs/actions-testing.md#时间复用与恢复)

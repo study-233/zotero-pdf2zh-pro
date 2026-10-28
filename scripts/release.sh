@@ -3,14 +3,16 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: scripts/release.sh <version> [--resume <state.json>] [--full-validation] [--baseline <version>] [--remote-validation] [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
+Usage: scripts/release.sh <version> [--build-source auto|local|actions] [--resume <state.json>] [--full-validation] [--baseline <version>] [--remote-validation] [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
 
 Build, validate, and publish a unified zotero-pdf2zh-pro release.
 
 The release includes the Zotero XPI and update manifest, PyPI wheel/sdist,
 Windows GUI ZIP, a local corresponding-source archive, and an optional
 update to the public source-only Homebrew tap. Add a matching CHANGELOG.md
-section first. Publication reuses verified CI artifacts; --no-push builds on Windows.
+section first. Windows prefers local build and validation, then imports verified packages
+into Actions for publication. --build-source actions explicitly uses the remote builder.
+--no-push builds on Windows without publishing.
 --full-validation also runs rollback and relocation checks against the final packages.
 --baseline explicitly adds an older release; defaults use only the previous stable.
 Explicit compatibility upgrades run locally on Windows, remotely on macOS/Linux. Use
@@ -79,6 +81,7 @@ PUBLISH_PYPI=1
 UPDATE_TAP=1
 FULL_VALIDATION=false
 REMOTE_VALIDATION=false
+BUILD_SOURCE=auto
 TAP_PATH=""
 REPLACE_EXISTING=""
 RESUME_STATE=""
@@ -88,6 +91,11 @@ unset UV_PUBLISH_TOKEN
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --build-source)
+            [[ $# -ge 2 ]] || die "--build-source requires auto, local or actions"
+            BUILD_SOURCE="$2"
+            shift
+            ;;
         --full-validation) FULL_VALIDATION=true ;;
         --baseline)
             [[ $# -ge 2 ]] || die "--baseline requires a version"
@@ -127,6 +135,8 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+case "$BUILD_SOURCE" in auto|local|actions) ;; *) die "Invalid --build-source: $BUILD_SOURCE" ;; esac
 
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] ||
     die "version must look like semver, got: $VERSION"
@@ -324,6 +334,24 @@ if [[ "$PUSH" -eq 1 ]]; then
         --field "full_validation=$REMOTE_FULL_VALIDATION" --field "replacement_commit=$REPLACE_EXISTING"
         --field "defer_extended_validation=$LOCAL_EXTENDED_VALIDATION"
         --field "validation_plan=$(cat "$VALIDATION_PLAN")")
+    if [[ "$BUILD_SOURCE" == auto ]]; then
+        if [[ "${OS:-}" == Windows_NT && "$REMOTE_VALIDATION" == false && -z "$REPLACE_EXISTING" ]] &&
+            uv run --no-project python scripts/release_local.py preflight; then
+            BUILD_SOURCE=local
+        else
+            BUILD_SOURCE=actions
+            echo 'Using Actions build; select --build-source local to require the local toolchain.' >&2
+        fi
+    fi
+    if [[ "$BUILD_SOURCE" == local ]]; then
+        [[ -z "$REPLACE_EXISTING" && "$REMOTE_VALIDATION" == false ]] || die "Local build cannot use replacement or --remote-validation"
+        LOCAL_EXTENDED_VALIDATION=false
+        LOCAL_CANDIDATE="$(uv run --no-project python scripts/release_local.py build "$VERSION" "$COMMIT" "$VALIDATION_PLAN" "$(dirname "$RELEASE_STATE")/local-build.json" --upload)"
+        build_args=("$RELEASE_STATE" build build-windows-release.yml
+            --field "version=$VERSION" --field "commit=$COMMIT"
+            --field "local_candidate=$(printf '%s' "$LOCAL_CANDIDATE" | node -e 'process.stdout.write(String(JSON.parse(require("fs").readFileSync(0,"utf8")).assetId))')"
+            --field "candidate_sha256=$(printf '%s' "$LOCAL_CANDIDATE" | node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(0,"utf8")).sha256)')")
+    fi
     [[ -z "$RESUME_STATE" ]] || build_args+=(--retry-failed)
     BUILD_RUN="$(uv run --no-project python scripts/release_control.py workflow "${build_args[@]}")"
     VERIFIED_INFO="$(uv run --no-project python scripts/workspace.py start verified-download --owner-pid "$$")"

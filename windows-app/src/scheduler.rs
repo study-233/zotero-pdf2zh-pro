@@ -546,7 +546,9 @@ if ($attempt -lt 3) { exit 1618 }
         write_json(&state_path(&fixture.0), &state).unwrap();
         app.0.runtime.block_on(async {
             let _guard = begin_operation(app.context()).unwrap();
-            tokio::time::timeout(Duration::from_secs(20), recover_installation(&app, &fixture.0)).await.unwrap().unwrap();
+            // Three real PowerShell launches include process/ownership probes.
+            // Bound the whole retry scenario independently of runner startup speed.
+            tokio::time::timeout(Duration::from_secs(60), recover_installation(&app, &fixture.0)).await.unwrap().unwrap();
         });
         assert_eq!(read_trimmed(&fixture.0.app_root.join("attempts.txt")).as_deref(), Some("3"));
         assert!(should_apply(&read_state(&fixture.0), false));

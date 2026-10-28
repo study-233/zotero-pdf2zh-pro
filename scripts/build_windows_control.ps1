@@ -4,7 +4,8 @@ param(
     [string]$TargetDirectory = $env:CARGO_TARGET_DIR,
     [string]$ManifestPath = 'windows-app/Cargo.toml',
     [switch]$RunTests,
-    [string]$TestFilter
+    [string]$TestFilter,
+    [ValidateRange(1, 16)][int]$TestThreads = 2
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'workspace.ps1')
@@ -57,6 +58,7 @@ New-Item -ItemType Directory -Force -Path $probeLogs | Out-Null
 $probeCommand = if ($RunTests) { 'test' } else { 'build' }
 $cargoArguments = @($probeCommand, '--release', '--locked', '--target', 'x86_64-pc-windows-msvc', '--manifest-path', (Join-Path $probeRepository $ManifestPath))
 if ($RunTests -and $TestFilter) { $cargoArguments += $TestFilter }
+if ($RunTests) { $cargoArguments += @('--', "--test-threads=$TestThreads") }
 $previousErrorPreference = $ErrorActionPreference
 try {
     # Windows PowerShell 5.1 wraps native stderr as ErrorRecord even for normal

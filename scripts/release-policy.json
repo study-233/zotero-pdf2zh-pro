@@ -18,6 +18,7 @@
     "scripts/test_windows_uv_progress.py",
     "scripts/test_windows_update_reuse.ps1",
     "scripts/release_control.py",
+    "scripts/release_local.py",
     "scripts/release_policy.py",
     "scripts/release-policy.json",
     "scripts/release-data-fixtures.py",
