@@ -89,6 +89,8 @@ def build(value, commit, plan_path, state_path):
     environment = tool_environment()
     rustc = control.command(['rustc', '+stable-x86_64-pc-windows-msvc', '-Vv']).decode().strip()
     stages = Stages(state_path, {'commit': commit, 'plan': control.plan_digest(plan), 'rustc': rustc,
+        'python': platform.python_version(), 'uv': control.command(['uv', '--version']).decode().strip(),
+        'clang': control.command([str(Path(environment['LLVM_HOME']) / 'bin/clang-cl.exe'), '--version']).decode().strip(),
         'target': environment['CARGO_TARGET_DIR'], 'llvm': environment['LLVM_HOME'], 'skia': environment['SKIA_SOURCE_DIR']})
     invoke = lambda args: run(args, environment)
     script = lambda name, *args: invoke([PYTHON, 'scripts/' + name, *args])
@@ -103,10 +105,12 @@ def build(value, commit, plan_path, state_path):
     stages.execute('python-build', python_packages, [wheel, sdist])
     def plugin():
         # npx.cmd requires the Windows command processor; no user text is interpolated.
-        invoke(['cmd.exe', '/d', '/c', 'npx.cmd', '--yes', 'pnpm@10.34.5', '--dir', 'plugin', 'install', '--frozen-lockfile'])
+        run(['cmd.exe', '/d', '/c', 'npx.cmd', '--yes', 'pnpm@10.34.5', '--dir', 'plugin', 'install', '--frozen-lockfile',
+             '--store-dir', str(ROOT / '.local-dev/pnpm-store')], dict(environment, CI='true'))
         invoke(['cmd.exe', '/d', '/c', 'npx.cmd', '--yes', 'pnpm@10.34.5', '--dir', 'plugin', 'build'])
     stages.execute('plugin-build', plugin, [ROOT / f'plugin/build/{product}.xpi', ROOT / 'plugin/build/update.json'])
-    stages.execute('native-build', lambda: invoke(powershell('build_windows_control.ps1')), [binary, bootstrap])
+    stages.execute('native-build', lambda: invoke(powershell('build_windows_control.ps1')),
+                   [binary, bootstrap, Path(environment['CARGO_TARGET_DIR']) / 'THIRD_PARTY_NOTICES.md'])
     package = ROOT / f'dist/{product}-windows-x64.zip'
     installer = ROOT / f'dist/{product}-windows-x64-setup.exe'
     update = ROOT / 'dist/windows-update.json'

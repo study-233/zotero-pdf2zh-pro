@@ -319,8 +319,6 @@ if [[ "$PUSH" -eq 1 ]]; then
         sleep 2
     done
     [[ -n "$CORE_RUN" ]] || die "Core CI did not start for the release commit"
-    uv run --no-project python scripts/release_control.py watch "$CORE_RUN" --timeout 1200
-    uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" core --field "runId=$CORE_RUN" --field status=passed
     [[ -z "$REPLACE_EXISTING" ]] || FULL_VALIDATION=true
     # BEGIN_VALIDATION_ROUTING
     REMOTE_FULL_VALIDATION="$FULL_VALIDATION"
@@ -352,6 +350,8 @@ if [[ "$PUSH" -eq 1 ]]; then
             --field "local_candidate=$(printf '%s' "$LOCAL_CANDIDATE" | node -e 'process.stdout.write(String(JSON.parse(require("fs").readFileSync(0,"utf8")).assetId))')"
             --field "candidate_sha256=$(printf '%s' "$LOCAL_CANDIDATE" | node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(0,"utf8")).sha256)')")
     fi
+    uv run --no-project python scripts/release_control.py watch "$CORE_RUN" --timeout 1200
+    uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" core --field "runId=$CORE_RUN" --field status=passed
     [[ -z "$RESUME_STATE" ]] || build_args+=(--retry-failed)
     BUILD_RUN="$(uv run --no-project python scripts/release_control.py workflow "${build_args[@]}")"
     VERIFIED_INFO="$(uv run --no-project python scripts/workspace.py start verified-download --owner-pid "$$")"
