@@ -79,8 +79,8 @@ try {
                 throw 'Only an isolated repository download cache may be reused.'
             }
             New-Item -ItemType Directory -Force -Path (Join-Path $env:PDF2ZH_WINDOWS_APP_ROOT 'runtime') | Out-Null
-            Copy-Item -LiteralPath (Join-Path $cache 'cache') -Destination (Join-Path $env:PDF2ZH_WINDOWS_APP_ROOT 'cache') -Recurse
-            Copy-Item -LiteralPath (Join-Path $cache 'runtime/python') -Destination (Join-Path $env:PDF2ZH_WINDOWS_APP_ROOT 'runtime/python') -Recurse
+            & python (Join-Path $PSScriptRoot 'release_local.py') seed-cache $cache $env:PDF2ZH_WINDOWS_APP_ROOT
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot prepare isolated lifecycle download cache.' }
             $env:PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE = '1'
         }
         $lifecycleArguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File',

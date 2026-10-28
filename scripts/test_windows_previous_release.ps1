@@ -86,8 +86,8 @@ try {
         $cacheSource=(Resolve-Path -LiteralPath $DownloadCache).Path
         if (-not $cacheSource.StartsWith($temporaryRoot,[StringComparison]::OrdinalIgnoreCase)) {throw 'Only a repository .tmp download cache may be reused.'}
         New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root 'runtime') | Out-Null
-        Copy-Item -LiteralPath (Join-Path $cacheSource 'cache') -Destination (Join-Path $Root 'cache') -Recurse
-        Copy-Item -LiteralPath (Join-Path $cacheSource 'runtime/python') -Destination (Join-Path $Root 'runtime/python') -Recurse
+        & python (Join-Path $PSScriptRoot 'release_local.py') seed-cache $cacheSource $Root
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot prepare isolated historical download cache.' }
     }
     # A genuine private tool avoids inheriting the outer UV_TOOL_DIR. Pin its
     # bytes as well: the old installer's floating bootstrap changes over time.

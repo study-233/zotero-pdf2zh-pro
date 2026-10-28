@@ -63,10 +63,8 @@ try {
         $allowed=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../.tmp')).TrimEnd('\')+'\'
         if (-not $cache.StartsWith($allowed,[StringComparison]::OrdinalIgnoreCase)) {throw 'Only a repository test download cache may be reused.'}
         New-Item -ItemType Directory -Force -Path (Join-Path $root 'runtime')|Out-Null
-        Copy-Item -LiteralPath (Join-Path $cache 'cache') -Destination (Join-Path $root 'cache') -Recurse
-        foreach ($part in @('python','uv')) {
-            Copy-Item -LiteralPath (Join-Path $cache "runtime/$part") -Destination (Join-Path $root "runtime/$part") -Recurse
-        }
+        & python (Join-Path $PSScriptRoot 'release_local.py') seed-cache $cache $root
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot prepare isolated upgrade download cache.' }
         $installArguments+='-AllowPreparedDestination'
     }
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $old 'install.ps1') -PackageSource (Resolve-Path $PreviousWheel).Path -GuiSource (Join-Path $old 'zotero-pdf2zh-pro.exe') -NonInteractive @installArguments

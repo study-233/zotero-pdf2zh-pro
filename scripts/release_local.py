@@ -6,9 +6,11 @@ from pathlib import Path
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import time
+import tomllib
 import uuid
 import zipfile
 
@@ -47,20 +49,89 @@ def tool_environment():
     return environment
 
 
-def prepare_downloads(environment):
+def cached_copy(source, destination):
+    source, destination = Path(source), Path(destination)
+    if destination.exists():
+        before, after = source.stat(), destination.stat()
+        if (before.st_size, before.st_mtime_ns) == (after.st_size, after.st_mtime_ns):
+            return str(destination)
+        destination.chmod(destination.stat().st_mode | stat.S_IWRITE)
+    elif any(part.startswith('archive-v') for part in source.parts):
+        # uv's extracted wheel files are immutable. Same-volume fixtures can share
+        # them; removing an installation only removes its own hard links.
+        try:
+            os.link(source, destination)
+            return str(destination)
+        except OSError:
+            pass
+    return shutil.copy2(source, destination)
+
+
+def copy_downloads(source, destination, required):
+    source, destination = Path(source), Path(destination)
+    metadata = {f'{name}-{version}.dist-info'.lower().replace('-', '_') for name, version in required}
+    for bucket in source.glob('archive-v*'):
+        for archive in bucket.iterdir():
+            if archive.is_dir() and any(p.name.lower().replace('-', '_') in metadata for p in archive.iterdir()):
+                shutil.copytree(archive, destination / bucket.name / archive.name, dirs_exist_ok=True, copy_function=cached_copy)
+    versions = {}
+    for name, version in required:
+        versions.setdefault(name.replace('-', '_'), set()).add(version)
+    for bucket in source.glob('wheels-v*'):
+        pypi = bucket / 'pypi'
+        if pypi.is_dir():
+            for package in pypi.iterdir():
+                for item in package.iterdir() if package.is_dir() else ():
+                    if item.name.endswith('.lock') or not any(item.name.startswith(v + '-') for v in versions.get(package.name.replace('-', '_'), ())):
+                        continue
+                    target = destination / bucket.name / 'pypi' / package.name / item.name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    if item.is_dir():
+                        shutil.copytree(item, target, dirs_exist_ok=True, copy_function=cached_copy)
+                    else:
+                        cached_copy(item, target)
+        if (bucket / 'url').exists():
+            shutil.copytree(bucket / 'url', destination / bucket.name / 'url', dirs_exist_ok=True,
+                            copy_function=cached_copy, ignore=shutil.ignore_patterns('*.lock', '.tmp*'))
+    for bucket in source.glob('simple-v*'):
+        shutil.copytree(bucket, destination / bucket.name, dirs_exist_ok=True,
+                        copy_function=cached_copy, ignore=shutil.ignore_patterns('*.lock', '.tmp*'))
+
+
+def seed_install(cache, root):
+    cache, root = Path(cache).resolve(), Path(root).resolve()
+    temporary = (ROOT / '.tmp').resolve()
+    if not cache.is_relative_to(temporary) or not root.is_relative_to(temporary) or root.is_relative_to(cache) or cache.is_relative_to(root):
+        raise ValueError('Cache and installation must be separate isolated repository paths')
+    for part in ('cache', 'runtime/python', 'runtime/uv'):
+        if (cache / part).is_dir():
+            shutil.copytree(cache / part, root / part, dirs_exist_ok=True, copy_function=cached_copy,
+                            ignore=shutil.ignore_patterns('*.lock', '.tmp*'))
+
+
+def prepare_downloads(environment, plan=None):
     """Seed isolated installs with downloaded bytes; installers still verify the lock hashes."""
-    cache = Path(environment.get('PDF2ZH_TEST_DOWNLOAD_CACHE', ROOT / '.tmp/cache/release-test-downloads')).resolve()
+    cache = Path(environment.get('PDF2ZH_TEST_DOWNLOAD_CACHE', ROOT / '.tmp/cache/release-downloads')).resolve()
     if not cache.is_relative_to((ROOT / '.tmp').resolve()):
         raise ValueError('Release download cache must stay inside the repository .tmp directory')
+    packages = tomllib.loads((ROOT / 'server/uv.lock').read_text(encoding='utf-8'))['package']
+    for baseline in (plan or {}).get('baselines', {}):
+        packages += tomllib.loads(control.command(['git', 'show', f'v{baseline}:server/uv.lock']).decode())['package']
+    required = {(p['name'], p['version']) for p in packages}
+    print(f'Preparing download cache for {len(required)} current/baseline package versions', file=sys.stderr, flush=True)
     source = Path(control.command(['uv', 'cache', 'dir']).decode().strip())
-    destination = cache / 'cache'
-    if source.resolve() != destination.resolve():
-        shutil.copytree(source, destination, dirs_exist_ok=True, ignore=shutil.ignore_patterns('.lock', '*.lock', '.temp'))
+    old = ROOT / '.tmp/cache/release-test-downloads'
+    for origin in (old / 'cache', source):
+        if origin.is_dir() and origin.resolve() != (cache / 'cache').resolve():
+            copy_downloads(origin, cache / 'cache', required)
+    if (old / 'runtime/python').is_dir():
+        shutil.copytree(old / 'runtime/python', cache / 'runtime/python', dirs_exist_ok=True, copy_function=cached_copy)
     python_root = Path(control.command(['uv', 'python', 'dir']).decode().strip())
     for python in python_root.glob('cpython-3.13*-windows-x86_64-none'):
         target = cache / 'runtime/python' / python.name
-        if not target.exists():
-            shutil.copytree(python, target)
+        shutil.copytree(python, target, dirs_exist_ok=True, copy_function=cached_copy)
+    (cache / 'runtime/uv').mkdir(parents=True, exist_ok=True)
+    cached_copy(shutil.which('uv'), cache / 'runtime/uv/uv.exe')
     environment['PDF2ZH_TEST_DOWNLOAD_CACHE'] = str(cache)
     return cache
 
@@ -164,11 +235,10 @@ def build(value, commit, plan_path, state_path):
         lifecycle = powershell('test_windows_lifecycle.ps1', '-WindowsPackage', str(package), '-PackageSource', str(wheel))
         if plan['lifecycle'] == 'standard':
             lifecycle.append('-SmokeOnly')
-        cache = prepare_downloads(environment)
+        cache = prepare_downloads(environment, plan)
         def installed_lifecycle():
             root = Path(environment['PDF2ZH_WINDOWS_APP_ROOT'])
-            shutil.copytree(cache / 'cache', root / 'cache', dirs_exist_ok=True)
-            shutil.copytree(cache / 'runtime/python', root / 'runtime/python', dirs_exist_ok=True)
+            seed_install(cache, root)
             environment['PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE'] = '1'
             invoke(lifecycle)
         stages.execute('lifecycle', installed_lifecycle, artifacts=artifacts)
@@ -284,6 +354,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='action', required=True)
     sub.add_parser('preflight')
+    seed = sub.add_parser('seed-cache')
+    seed.add_argument('cache'); seed.add_argument('root')
     local = sub.add_parser('build')
     local.add_argument('version'); local.add_argument('commit'); local.add_argument('plan', type=Path)
     local.add_argument('state', type=Path); local.add_argument('--upload', action='store_true')
@@ -293,6 +365,8 @@ def main():
     args = parser.parse_args()
     if args.action == 'preflight':
         tool_environment()
+    elif args.action == 'seed-cache':
+        seed_install(args.cache, args.root)
     elif args.action == 'build':
         stages = build(args.version, args.commit, args.plan, args.state)
         if args.upload:

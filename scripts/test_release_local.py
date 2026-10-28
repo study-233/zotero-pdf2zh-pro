@@ -45,22 +45,46 @@ class LocalReleaseTests(unittest.TestCase):
     def test_install_cache_contains_downloads_and_python_without_a_service_environment(self):
         source = self.root / 'user-cache'
         (source / 'archive-v0/package').mkdir(parents=True)
+        (source / 'archive-v0/package/demo-1.0.dist-info').mkdir()
         (source / 'archive-v0/package/data').write_bytes(b'verified wheel bytes')
+        (source / 'archive-v0/unrelated/other-2.0.dist-info').mkdir(parents=True)
+        (source / 'archive-v0/unrelated/data').write_bytes(b'unrelated bytes')
         (source / '.lock').touch()
+        (self.root / 'server').mkdir()
+        (self.root / 'server/uv.lock').write_text('[[package]]\nname="demo"\nversion="1.0"\n')
+        uv = self.root / 'uv.exe'
+        uv.write_bytes(b'uv')
         python_root = self.root / 'user-python'
         python = python_root / 'cpython-3.13.15-windows-x86_64-none'
         python.mkdir(parents=True)
         (python / 'python.exe').write_bytes(b'python')
         environment = {}
-        with patch.object(local, 'ROOT', self.root), patch.object(control, 'command', side_effect=[str(source).encode(), str(python_root).encode()]):
+        with patch.object(local, 'ROOT', self.root), patch.object(local.shutil, 'which', return_value=str(uv)), \
+             patch.object(control, 'command', side_effect=[str(source).encode(), str(python_root).encode()]):
             cache = local.prepare_downloads(environment)
         self.assertEqual((cache / 'cache/archive-v0/package/data').read_bytes(), b'verified wheel bytes')
         self.assertTrue((cache / 'runtime/python' / python.name / 'python.exe').is_file())
         self.assertFalse((cache / 'cache/.lock').exists())
+        self.assertFalse((cache / 'cache/archive-v0/unrelated').exists())
         self.assertFalse((cache / 'runtime/versions').exists())
         self.assertEqual(environment['PDF2ZH_TEST_DOWNLOAD_CACHE'], str(cache))
         with patch.object(local, 'ROOT', self.root), self.assertRaises(ValueError):
             local.prepare_downloads({'PDF2ZH_TEST_DOWNLOAD_CACHE': str(source)})
+
+    def test_seeded_install_removal_preserves_download_cache_and_rejects_overlapping_paths(self):
+        cache = self.root / '.tmp/cache/downloads'
+        root = self.root / '.tmp/runs/install'
+        file = cache / 'cache/archive-v0/id/package.py'
+        file.parent.mkdir(parents=True)
+        file.write_bytes(b'immutable package')
+        with patch.object(local, 'ROOT', self.root):
+            local.seed_install(cache, root)
+            installed = root / 'cache/archive-v0/id/package.py'
+            self.assertTrue(file.samefile(installed))
+            installed.unlink()
+            self.assertEqual(file.read_bytes(), b'immutable package')
+            with self.assertRaises(ValueError): local.seed_install(cache, cache / 'install')
+            with self.assertRaises(ValueError): local.seed_install(cache, self.root / 'outside')
 
     def receipt(self):
         plan = control_tests.PolicyTests().frozen_plan()
