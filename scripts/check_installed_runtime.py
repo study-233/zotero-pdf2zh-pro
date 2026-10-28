@@ -44,7 +44,8 @@ FORBIDDEN_DISTRIBUTIONS = {
 
 SECURITY_MINIMUMS = {"pymupdf": "2.0", "pillow": "13.0.0",
                      "filelock": "4.2.1", "certifi": "2026.10.19", "urllib3": "2.8.0",
-                     "werkzeug": "3.1.9", "onnx": "1.21.0", "cryptography": "46.0.7"}
+                     "werkzeug": "3.1.9", "onnx": "1.21.0", "cryptography": "46.0.7",
+                     "msgpack": "1.2.3"}
 
 
 def canonicalize_name(value: str) -> str:
