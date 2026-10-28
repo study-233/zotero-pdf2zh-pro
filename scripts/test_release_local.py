@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+from urllib.error import HTTPError
 import zipfile
 
 import release_control as control
@@ -173,17 +174,37 @@ class LocalReleaseTests(unittest.TestCase):
             self.assertEqual(local.candidate_release('candidate', 42), draft)
         self.assertTrue(api.call_args.args[0].endswith('/releases/42'))
 
-    def test_failed_candidate_import_retries_the_same_run_without_dispatching_a_build(self):
+    def test_failed_candidate_import_renews_transport_without_rebuilding(self):
         with patch.object(control, 'ROOT', self.root):
             state_path = control.start_state('1.9.6', 'a' * 40)
-        fields = {'version': '1.9.6', 'local_candidate': '20', 'candidate_sha256': 'b' * 64}
+        fields = {'version': '1.9.6', 'local_candidate': '20', 'candidate_sha256': 'b' * 64, 'candidate_url': 'old'}
         state = json.loads(state_path.read_text())
         state['stages']['build'] = {'workflow': 'build-windows-release.yml', 'fields': fields, 'runId': 123}
         control.save(state_path, state)
-        with patch.object(control, 'command') as command, patch.object(control, 'api', return_value={'run_attempt': 2}), \
-             patch.object(control, 'wait_run', side_effect=[{'conclusion': 'failure', 'run_attempt': 1}, {'conclusion': 'success', 'run_attempt': 2}]):
-            self.assertEqual(control.workflow(state_path, 'build', 'build-windows-release.yml', fields, retry_failed=True), 123)
-        self.assertEqual(command.call_args.args[0], ['gh', 'run', 'rerun', '123', '--failed', '--repo', control.REPO])
+        run = {'id':124, 'head_sha':'a'*40, 'run_attempt':1, 'display_title':'Build ['+'a'*32+']'}
+        with patch.object(control, 'command') as command, patch.object(control, 'api', return_value={'workflow_runs':[run]}), \
+             patch.object(control.uuid, 'uuid4') as uuid, \
+             patch.object(control, 'wait_run', side_effect=[{'conclusion': 'failure', 'run_attempt': 1}, {'conclusion': 'success', 'run_attempt': 1}]):
+            uuid.return_value.hex = 'a'*32
+            self.assertEqual(control.workflow(state_path, 'build', 'build-windows-release.yml', dict(fields,candidate_url='new'), retry_failed=True), 124)
+        self.assertEqual(command.call_args.args[0][:4], ['gh', 'workflow', 'run', 'build-windows-release.yml'])
+        self.assertIn('candidate_url=new', command.call_args.args[0])
+        self.assertIn('local_candidate=20', command.call_args.args[0])
+
+    def test_signed_transport_keeps_credentials_local_and_checks_download_hash(self):
+        url='https://release-assets.githubusercontent.com/github-production-release-asset/123?token=temporary'
+        redirect=HTTPError('https://api.github.com/asset',302,'redirect',{'Location':url},None)
+        with patch.object(control,'command',return_value=b'fixture-token'), patch.object(local,'build_opener') as opener:
+            opener.return_value.open.side_effect=redirect
+            self.assertEqual(local.signed_candidate_url('123'),url)
+            request=opener.return_value.open.call_args.args[0]
+            self.assertTrue(request.full_url.startswith('https://api.github.com/'))
+        for invalid in ('http://127.0.0.1/x','file:///x','https://evil.example/x','https://user@release-assets.githubusercontent.com/x'):
+            with self.assertRaises(ValueError): local.validate_candidate_url(invalid)
+        with patch.object(control,'api') as api, patch.object(control,'download',side_effect=lambda args,path: Path(path).write_bytes(b'wrong bytes')):
+            with self.assertRaisesRegex(ValueError,'digest mismatch'):
+                local.import_candidate('123','a'*64,'1.9.6','b'*40,self.root/'import',url)
+        api.assert_not_called()
 
 
 if __name__ == '__main__':

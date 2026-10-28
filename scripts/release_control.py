@@ -402,7 +402,8 @@ def workflow(path, stage, name, fields, retry_failed=False):
         requested_fields = fields
         state = json.loads(path.read_text(encoding='utf-8'))
         record = state['stages'].get(stage)
-        if record and (record.get('requestedFields', record['fields']) != fields or record['workflow'] != name):
+        stable_fields = lambda value: {k:v for k,v in value.items() if k != 'candidate_url'} if value.get('local_candidate') else value
+        if record and (stable_fields(record.get('requestedFields', record['fields'])) != stable_fields(fields) or record['workflow'] != name):
             raise ValueError('Workflow inputs changed; refusing to reuse unrelated validation')
         if record and record.get('runId'):
             run = wait_run(REPO, record['runId'])
@@ -412,7 +413,7 @@ def workflow(path, stage, name, fields, retry_failed=False):
                 return record['runId']
             if not retry_failed or stage not in ('build', 'pypi'):
                 raise ValueError(f'Workflow failed: {record["runId"]}; inspect the failed stage before retrying')
-            if stage == 'pypi' or fields.get('local_candidate'):
+            if stage == 'pypi':
                 if stage == 'pypi' and not fields.get('build_run_id'):
                     raise ValueError('PyPI recovery requires the same verified artifact build')
                 if not record.get('retryAfterAttempt'):
@@ -433,7 +434,7 @@ def workflow(path, stage, name, fields, retry_failed=False):
                         return record['runId']
                     time.sleep(2)
                 raise TimeoutError('Publication rerun outcome unknown; resume the same run and state')
-            if stage == 'build':
+            if stage == 'build' and not fields.get('local_candidate'):
                 jobs = api(f'repos/{REPO}/actions/runs/{record["runId"]}/jobs?filter=latest&per_page=100')
                 if not any(s['name'] in ('Build artifacts and verify Windows startup', 'Restore packages from a completed artifact build')
                            and s['conclusion'] == 'success' for j in jobs['jobs'] for s in j.get('steps', [])):
@@ -446,7 +447,7 @@ def workflow(path, stage, name, fields, retry_failed=False):
                         fields['validation_run_id'] = str(record['runId'])
                     elif 'Bind recovered validation to exact packages and plan' in passed and record['fields'].get('validation_run_id'):
                         fields['validation_run_id'] = record['fields']['validation_run_id']
-            elif not fields.get('build_run_id'):
+            elif stage == 'pypi' and not fields.get('build_run_id'):
                 raise ValueError('PyPI recovery requires the same verified artifact build')
             state.setdefault('previousAttempts', []).append(record)
             record = None

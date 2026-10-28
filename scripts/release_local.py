@@ -12,6 +12,9 @@ import sys
 import time
 import tomllib
 import uuid
+from urllib.error import HTTPError
+from urllib.parse import urlparse
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 import zipfile
 
 import release_control as control
@@ -323,17 +326,46 @@ def stage_candidate(stages, value, commit):
     return candidate
 
 
-def import_candidate(asset_id, sha, value, commit, destination):
+def signed_candidate_url(asset_id):
+    class NoRedirect(HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            return None
+    token = control.command(['gh', 'auth', 'token']).decode().strip()
+    request = Request(f'https://api.github.com/repos/{control.REPO}/releases/assets/{asset_id}',
+                      headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/octet-stream'})
+    try:
+        with build_opener(NoRedirect).open(request, timeout=30):
+            raise ValueError('GitHub did not provide a temporary candidate download URL')
+    except HTTPError as error:
+        if error.code not in (302, 307):
+            raise
+        url = error.headers['Location']
+    validate_candidate_url(url)
+    return url
+
+
+def validate_candidate_url(url):
+    parsed = urlparse(url)
+    if (any(c in url for c in '\r\n') or parsed.scheme != 'https' or not (parsed.hostname or '').endswith('.githubusercontent.com')
+            or parsed.username or parsed.password or parsed.port not in (None, 443)):
+        raise ValueError('Candidate URL must be a GitHub HTTPS asset download')
+
+
+def import_candidate(asset_id, sha, value, commit, destination, url=None):
     if not re.fullmatch('[1-9][0-9]*', asset_id) or not re.fullmatch('[0-9a-f]{64}', sha):
         raise ValueError('Invalid candidate asset identity')
     destination = Path(destination)
     destination.mkdir(parents=True, exist_ok=True)
     bundle = destination.parent / 'local-candidate.zip'
-    asset = control.api(f'repos/{control.REPO}/releases/assets/{asset_id}')
-    if asset['name'] != bundle.name or asset.get('digest') != 'sha256:' + sha:
-        raise ValueError('Candidate asset digest mismatch')
-    control.download(['gh', 'api', '-H', 'Accept: application/octet-stream',
-                      f'repos/{control.REPO}/releases/assets/{asset_id}'], bundle)
+    if url:
+        validate_candidate_url(url)
+        control.download(['curl', '--fail', '--silent', '--show-error', '--proto', '=https', url], bundle)
+    else:
+        asset = control.api(f'repos/{control.REPO}/releases/assets/{asset_id}')
+        if asset['name'] != bundle.name or asset.get('digest') != 'sha256:' + sha:
+            raise ValueError('Candidate asset digest mismatch')
+        control.download(['gh', 'api', '-H', 'Accept: application/octet-stream',
+                          f'repos/{control.REPO}/releases/assets/{asset_id}'], bundle)
     if control.digest(bundle) != sha:
         raise ValueError('Candidate download digest mismatch')
     names = {Path(p).name for p in control.product_paths(value)} | {'checksums.json', 'validation-plan.json', 'standard-validation.json'}
@@ -376,6 +408,8 @@ def main():
     local.add_argument('version'); local.add_argument('commit'); local.add_argument('plan', type=Path)
     local.add_argument('state', type=Path); local.add_argument('--upload', action='store_true')
     receive = sub.add_parser('import')
+    receive.add_argument('--url')
+    receive.add_argument('--url-from-event', action='store_true')
     for name in ('asset', 'sha256', 'version', 'commit', 'destination'):
         receive.add_argument(name)
     args = parser.parse_args()
@@ -388,7 +422,13 @@ def main():
         if args.upload:
             print(json.dumps(stage_candidate(stages, args.version, args.commit)))
     else:
-        import_candidate(args.asset, args.sha256, args.version, args.commit, args.destination)
+        url = args.url
+        if args.url_from_event:
+            event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+            url = event['inputs']['candidate_url']
+            validate_candidate_url(url)
+            print('::add-mask::' + url, flush=True)
+        import_candidate(args.asset, args.sha256, args.version, args.commit, args.destination, url)
 
 
 if __name__ == '__main__':

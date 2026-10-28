@@ -345,9 +345,11 @@ if [[ "$PUSH" -eq 1 ]]; then
         [[ -z "$REPLACE_EXISTING" && "$REMOTE_VALIDATION" == false ]] || die "Local build cannot use replacement or --remote-validation"
         LOCAL_EXTENDED_VALIDATION=false
         LOCAL_CANDIDATE="$(uv run --no-project python scripts/release_local.py build "$VERSION" "$COMMIT" "$VALIDATION_PLAN" "$(dirname "$RELEASE_STATE")/local-build.json" --upload)"
+        CANDIDATE_URL="$(printf '%s' "$LOCAL_CANDIDATE" | uv run --no-project python -c 'import json,sys; sys.path.insert(0,"scripts"); from release_local import signed_candidate_url; print(signed_candidate_url(str(json.load(sys.stdin)["assetId"])))')"
         build_args=("$RELEASE_STATE" build build-windows-release.yml
             --field "version=$VERSION" --field "commit=$COMMIT"
             --field "local_candidate=$(printf '%s' "$LOCAL_CANDIDATE" | node -e 'process.stdout.write(String(JSON.parse(require("fs").readFileSync(0,"utf8")).assetId))')"
+            --field "candidate_url=$CANDIDATE_URL"
             --field "candidate_sha256=$(printf '%s' "$LOCAL_CANDIDATE" | node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(0,"utf8")).sha256)')")
     fi
     uv run --no-project python scripts/release_control.py watch "$CORE_RUN" --timeout 1200

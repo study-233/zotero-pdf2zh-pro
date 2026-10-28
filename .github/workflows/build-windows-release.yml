@@ -20,6 +20,10 @@ on:
         description: SHA-256 of the local candidate archive
         required: false
         type: string
+      candidate_url:
+        description: Short-lived GitHub-signed download URL; importer keeps read-only permissions
+        required: false
+        type: string
       full_validation:
         description: Additional Windows rollback, relocation and previous-release migration; core CI is reused
         required: false
@@ -518,12 +522,20 @@ jobs:
           runs = json.loads(Path(sys.argv[1]).read_text())["workflow_runs"]
           assert any(r["head_sha"] == sys.argv[2] and r["event"] == "push" and r["conclusion"] == "success" for r in runs)
           PY_LOCAL_CORE
+          mkdir -p "$RUNNER_TEMP/local-import"
+          for name in release_local.py release_control.py release_policy.py release-policy.json workspace.py; do
+            cp "scripts/$name" "$RUNNER_TEMP/local-import/$name"
+          done
           git switch --detach "$RELEASE_COMMIT"
       - uses: astral-sh/setup-uv@v8.3.2
         with:
           python-version: "3.13"
       - name: Import and independently verify local packages
-        run: uv run --no-project python scripts/release_local.py import "$LOCAL_CANDIDATE" "$CANDIDATE_SHA256" "$RELEASE_VERSION" "$RELEASE_COMMIT" "$RUNNER_TEMP/candidate"
+        env:
+          PDF2ZH_RELEASE_ROOT: ${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}/scripts
+        run: |
+          uv run --no-project python "$RUNNER_TEMP/local-import/release_local.py" import "$LOCAL_CANDIDATE" "$CANDIDATE_SHA256" "$RELEASE_VERSION" "$RELEASE_COMMIT" "$RUNNER_TEMP/candidate" --url-from-event
       - name: Upload verified distributions and checksums
         uses: actions/upload-artifact@v6
         with:
