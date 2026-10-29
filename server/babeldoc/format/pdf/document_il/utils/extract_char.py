@@ -275,7 +275,9 @@ def _cluster_by_axis(chars: list[tuple[il_version_1.Box, str, bool]], orientatio
         )
 
         if centroids.size > 0:
-            db = DBSCAN(eps=eps, min_samples=1, metric="manhattan").fit(centroids)
+            # Small per-line inputs must not start a parallel brute-force distance
+            # calculation inside each page worker. Keep the same exact metric.
+            db = DBSCAN(eps=eps, min_samples=1, metric="manhattan", algorithm="kd_tree", n_jobs=1).fit(centroids)
 
             line_groups = defaultdict(list)
             for i, label in enumerate(db.labels_):
@@ -326,6 +328,8 @@ def _cluster_by_axis(chars: list[tuple[il_version_1.Box, str, bool]], orientatio
             db = DBSCAN(
                 eps=max_char_secondary_size * LINE_SPLIT_DBSCAN_EPS_MULTIPLIER,
                 min_samples=1,
+                algorithm="kd_tree",
+                n_jobs=1,
             ).fit(centers)
 
             sub_lines = defaultdict(list)

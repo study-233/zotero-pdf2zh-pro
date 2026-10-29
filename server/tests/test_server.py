@@ -92,7 +92,7 @@ class ServerRouteTests(unittest.TestCase):
                     self.assertTrue(Path(manager._tasks[task_id].request_payload["input_path"]).is_file())
                     self.assertEqual(manager._pending.qsize(), 1)
                     health = self.client.get("/health").json["capabilities"]
-                    for name in ("taskSubmissionIdempotency", "taskRecovery", "taskTiming"):
+                    for name in ("taskSubmissionIdempotency", "taskRecovery", "preprocessingReuse", "taskTiming"):
                         self.assertTrue(health[name])
                 finally:
                     manager.close()

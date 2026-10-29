@@ -21,7 +21,18 @@ class LayoutParser:
 
     def __init__(self, translation_config: TranslationConfig):
         self.translation_config = translation_config
-        self.model = translation_config.doc_layout_model
+
+    @property
+    def model(self):
+        translation_config = self.translation_config
+        if translation_config.doc_layout_model is None:
+            from babeldoc.docvision.base_doclayout import DocLayoutModel
+
+            context = translation_config.shared_context_cross_split_part
+            if context.doc_layout_model is None:
+                context.doc_layout_model = DocLayoutModel.load_available()
+            translation_config.doc_layout_model = context.doc_layout_model
+        return translation_config.doc_layout_model
 
     def _save_debug_image(self, image: np.ndarray, layout, page_number: int):
         """Save debug image with drawn boxes if debug mode is enabled."""

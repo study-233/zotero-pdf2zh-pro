@@ -18,6 +18,12 @@ GROUPED_EMAIL = re.compile(
     r"\{\s*[a-zA-Z0-9.!#$%&'*+/=?^_`|~-]+"
     r"(?:\s*[,;]\s*[a-zA-Z0-9.!#$%&'*+/=?^_`|~-]+)+\s*\}@" + DOMAIN
 )
+# Standalone call sequences in code listings, including PDF-extracted line numbers.
+# Restrict arguments to literals so captions and explanatory prose stay translatable.
+_LITERAL = r'''(?:[+-]?\d+(?:\.\d+)?|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')'''
+_CALL = r"[a-z_][A-Za-z_0-9]*\(\s*(?:" + _LITERAL + r"(?:\s*,\s*" + _LITERAL + r")*)?\s*\)"
+_CALL_SEQUENCE = re.compile(r"(?:\d+\s+)?" + _CALL + r"(?:\s*;\s*" + _CALL + r")+\s*;?")
+_CODE_QUOTES = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
 
 
 def preserved_text_reason(text):
@@ -26,6 +32,8 @@ def preserved_text_reason(text):
         return None
     if GROUPED_EMAIL.fullmatch(text):
         return "email_only"
+    if _CALL_SEQUENCE.fullmatch(text.translate(_CODE_QUOTES)):
+        return "code_only"
     if is_url_only_text(text) or re.fullmatch(
         r"www\.[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}(?:/[^\s<>]*)?", text
     ) or re.fullmatch(r"www [a-z0-9][a-z0-9-]* (?:com|org|net|edu|gov|io|cn)", text):

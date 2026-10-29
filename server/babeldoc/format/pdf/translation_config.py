@@ -41,6 +41,7 @@ class SharedContextCrossSplitPart:
         self.auto_extracted_glossary: Glossary | None = None
         self.raw_extracted_terms: list[tuple[str, str]] = []
         self.auto_enabled_ocr_workaround = False
+        self.doc_layout_model = None
         # Statistics for valid characters/text across the whole file
         self.valid_char_count_total: int = 0
         self.total_valid_text_token_count: int = 0
@@ -315,12 +316,6 @@ class TranslationConfig:
 
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-        if not doc_layout_model:
-            from babeldoc.docvision.doclayout import DocLayoutModel
-
-            doc_layout_model = DocLayoutModel.load_available()
-        self.doc_layout_model = doc_layout_model
-
         self.shared_context_cross_split_part = SharedContextCrossSplitPart()
         self.shared_context_cross_split_part.initialize_glossaries(
             initial_user_glossaries
@@ -361,6 +356,7 @@ class TranslationConfig:
             "script",
         ]
         self.primary_font_family = primary_font_family
+        self._font_resource_cache = {}
 
         if only_include_translated_page is None:
             only_include_translated_page = False

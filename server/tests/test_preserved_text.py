@@ -23,6 +23,50 @@ SOURCES = [
 
 
 class PreservedTextTests(unittest.TestCase):
+    def test_standalone_call_sequences_preserve_source_but_not_mixed_prose(self):
+        for source in [
+            "1 turn_cw(180);goto(’apple’)",
+            "1 move_left(50);goto(’apple’)",
+            "turn_cw(-180); goto('apple');",
+            '12 move_left(50.5, -2);\nnotify("target; found")',
+            "start();stop()",
+        ]:
+            with self.subTest(source=source):
+                self.assertEqual(preserved_text_reason(source), 'code_only')
+                validate_text(source, source, 'zh-CN')
+                with self.assertRaises(InvalidTranslation):
+                    validate_text(source, '', 'zh-CN')
+        for source in [
+            "Call turn_cw(180);goto('apple') to find the target.",
+            "1 turn_cw(180);goto('apple') rotates the drone.",
+            "1 turn_cw(180); then go to the apple.",
+            "turn_cw(180);goto('apple') # Find the target",
+            "1 Figure(5)", "Figure(5); Table(1)",
+            "The operator turns clockwise (180); then finds an apple.",
+        ]:
+            with self.subTest(source=source):
+                self.assertIsNone(preserved_text_reason(source))
+
+    def test_fresh_and_repair_preserve_code_without_provider_requests(self):
+        for repair in (False, True):
+            with self.subTest(repair=repair), ExitStack() as stack:
+                tmp = stack.enter_context(tempfile.TemporaryDirectory())
+                ps, recovery, engine, batch, run = batch_fixtures.PartialBatchTests().fixture(stack, tmp, Mock())
+                codes = ["1 turn_cw(180);goto(’apple’)", "1 move_left(50);goto(’apple’)"]
+                for paragraph, source in zip(ps, codes):
+                    paragraph.unicode = source
+                    if repair:
+                        recovery.fail(paragraph, InvalidTranslation('unchanged_translation'))
+                for paragraph in ps[2:]:
+                    recovery.record(paragraph, 'succeeded', input=paragraph.unicode,
+                                    translation=batch_fixtures.translated(paragraph.unicode))
+                run()
+                self.assertEqual(engine.requests, [])
+                self.assertEqual(recovery.snapshot(),
+                                 (dict(total=6, succeeded=4, skipped=2, failed=0, pending=0), []))
+                self.assertEqual([p.unicode for p in ps[:2]], codes)
+                self.assertTrue(all(recovery.current[recovery.keys[id(p)]]['reason'] == 'code_only' for p in ps[:2]))
+
     def test_shared_domain_email_groups_are_preserved_but_mixed_prose_is_not(self):
         sources = [
             '{alpha, beta-one, gamma-two, delta}@example.com',

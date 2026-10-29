@@ -5,6 +5,7 @@ The PDF fixture and embedded Chinese font are generated locally by PyMuPDF.
 """
 import tempfile
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import patch
 
@@ -68,7 +69,16 @@ class NativePipelineTests(unittest.TestCase):
                         watermark_output_mode=watermark)
                     config.recovery = TranslationRecovery(root / 'recovery.json', 'native-pipeline-fixture')
                     try:
-                        result = translate(config)
+                        with ExitStack() as checks:
+                            if attempt == 2:
+                                for target in (
+                                    'babeldoc.format.pdf.new_parser.native_parse.parse_prepared_pdf_with_new_parser_to_legacy_ir',
+                                    'babeldoc.format.pdf.high_level.LayoutParser.process',
+                                    'babeldoc.format.pdf.high_level.ParagraphFinder.process',
+                                    'babeldoc.format.pdf.high_level.StylesAndFormulas.process',
+                                ):
+                                    checks.enter_context(patch(target, side_effect=AssertionError('Repair must reuse preprocessing')))
+                            result = translate(config)
                         self.assertEqual(config.watermark_output_mode, watermark, 'watermark generation must not silently fall back')
                         if watermark == WatermarkOutputMode.Both:
                             self.assertNotEqual(result.mono_pdf_path, result.no_watermark_mono_pdf_path)

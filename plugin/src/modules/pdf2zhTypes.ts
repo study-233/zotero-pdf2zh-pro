@@ -76,6 +76,7 @@ export interface ServerHealthResponse {
         textTranslation?: boolean;
         taskSubmissionIdempotency?: boolean;
         taskRecovery?: boolean;
+        preprocessingReuse?: boolean;
         taskTiming?: boolean;
         binaryTaskUpload?: boolean;
         taskPagination?: boolean;

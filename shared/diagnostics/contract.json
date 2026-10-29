@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaRevision": 4,
+  "schemaRevision": 5,
   "supportedSchemaVersions": [
     1
   ],
@@ -227,6 +227,10 @@
       "initialization",
       "page_end",
       "page_start",
+      "preprocessing_cache_hit",
+      "preprocessing_cache_invalid",
+      "preprocessing_cache_miss",
+      "preprocessing_cache_write_failed",
       "resources"
     ],
     "cancelPhase": [
@@ -1036,6 +1040,10 @@
       "component": "server"
     },
     "taskRecovery": {
+      "coverage": "task_events",
+      "component": "server"
+    },
+    "preprocessingReuse": {
       "coverage": "task_events",
       "component": "server"
     },

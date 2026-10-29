@@ -46,6 +46,7 @@ from babeldoc.format.pdf.document_il.midend.styles_and_formulas import StylesAnd
 from babeldoc.format.pdf.document_il.midend.typesetting import Typesetting
 from babeldoc.format.pdf.document_il.utils.fontmap import FontMapper
 from babeldoc.format.pdf.document_il.xml_converter import XMLConverter
+from babeldoc.format.pdf.preprocessing_cache import PreprocessingCache
 from babeldoc.format.pdf.result_merger import ResultMerger
 from babeldoc.format.pdf.split_manager import SplitManager
 from babeldoc.format.pdf.translation_config import TranslateResult
@@ -597,10 +598,13 @@ def do_translate(
                             translation_config.watermark_output_mode
                         )
                         original_doc = Document(original_pdf_path)
+                        preprocessing_source_hash = hashlib.sha256(Path(original_pdf_path).read_bytes()).hexdigest()
                         for i, split_point in enumerate(split_points):
                             try:
                                 # Create a copy of config for this part
                                 part_config = copy.copy(translation_config)
+                                # Generated part PDFs get new PDF IDs on each attempt.
+                                part_config.preprocessing_source_key = [preprocessing_source_hash, split_point.start_page, split_point.end_page]
                                 part_config.skip_clean = True
                                 should_translate_pages = []
                                 for page in range(
@@ -893,117 +897,128 @@ def _do_translate_single(
     temp_pdf_path = translation_config.get_working_file_path("input.pdf")
     doc_pdf2zh = None
     try:
-        doc_pdf2zh = open_pdf_with_save_fallback(original_pdf_path, temp_pdf_path)
-
-        # Fix null xref in PDF file
-        invalid_pages = []
-        try:
-            invalid_pages = fix_null_page_content(doc_pdf2zh)
-            fix_filter(doc_pdf2zh)
-            fix_null_xref(doc_pdf2zh)
-        except Exception:
-            logger.exception("auto fix failed, please check the pdf file")
-
-        mediabox_data = fix_media_box(doc_pdf2zh)
-
-        # for page in doc_pdf2zh:
-        #     page.insert_font(resfont, None)
-
-        doc_pdf2zh = save_pdf_with_same_path_fallback(doc_pdf2zh, temp_pdf_path)
-
-        # if not translation_config.skip_scanned_detection and DetectScannedFile(
-        #     translation_config
-        # ).fast_check(doc_pdf2zh):
-        #     if translation_config.auto_enable_ocr_workaround:
-        #         logger.warning(
-        #             "Fast scanned check hit, Turning on OCR workaround.",
-        #         )
-        #         translation_config.shared_context_cross_split_part.auto_enabled_ocr_workaround = True
-        #         translation_config.ocr_workaround = True
-        #         translation_config.skip_scanned_detection = True
-        #     else:
-        #         logger.warning(
-        #             "Fast scanned check hit, Please check the input PDF file.",
-        #         )
-        #         raise ScannedPDFError("Scanned PDF detected.")
-
         xml_converter = XMLConverter()
-        logger.debug(f"start parse il from {temp_pdf_path}")
-        from babeldoc.format.pdf.new_parser.native_parse import (
-            parse_prepared_pdf_with_new_parser_to_legacy_ir,
-        )
-
-        docs = parse_prepared_pdf_with_new_parser_to_legacy_ir(
-            temp_pdf_path,
-            config=translation_config,
-            doc_pdf=doc_pdf2zh,
-        )
-        logger.debug(f"finish parse il from {temp_pdf_path}")
-        logger.debug(f"finish create il from {temp_pdf_path}")
-        if translation_config.only_include_translated_page and not docs.page:
-            return None
-
-        if translation_config.debug:
-            xml_converter.write_json(
-                docs,
-                translation_config.get_working_file_path("create_il.debug.json"),
-            )
-
-        if check_cid_char(docs):
-            raise ExtractTextError("The document contains too many CID chars.")
-
-        # Skip all translation processing if only_parse_generate_pdf is enabled
-        if translation_config.only_parse_generate_pdf:
-            logger.debug("only_parse_generate_pdf enabled, skipping translation processing")
-            # Skip directly to PDF generation
-            pdf_creater = PDFCreater(temp_pdf_path, docs, translation_config, mediabox_data)
-            result = pdf_creater.write(translation_config)
-            result.original_pdf_path = translation_config.input_file
-            return result
-
-        # Rest of the original translation logic...
-        # [Previous implementation of do_translate continues here]
-
-        # 检测是否为扫描文件
-        if translation_config.skip_scanned_detection:
-            logger.debug("skipping scanned file detection")
+        preprocessing = PreprocessingCache(translation_config)
+        cached = preprocessing.load(temp_pdf_path)
+        if cached is not None:
+            docs, doc_pdf2zh, mediabox_data = cached
+            for stage_name, _ in TRANSLATE_STAGES[:5]:
+                if stage_name in pm.stage:
+                    with pm.stage_start(stage_name, 0):
+                        pass
         else:
-            logger.debug("start detect scanned file")
-            DetectScannedFile(translation_config).process(
-                docs, temp_pdf_path, mediabox_data
+            doc_pdf2zh = open_pdf_with_save_fallback(original_pdf_path, temp_pdf_path)
+
+            # Fix null xref in PDF file
+            invalid_pages = []
+            try:
+                invalid_pages = fix_null_page_content(doc_pdf2zh)
+                fix_filter(doc_pdf2zh)
+                fix_null_xref(doc_pdf2zh)
+            except Exception:
+                logger.exception("auto fix failed, please check the pdf file")
+
+            mediabox_data = fix_media_box(doc_pdf2zh)
+
+            # for page in doc_pdf2zh:
+            #     page.insert_font(resfont, None)
+
+            doc_pdf2zh = save_pdf_with_same_path_fallback(doc_pdf2zh, temp_pdf_path)
+
+            # if not translation_config.skip_scanned_detection and DetectScannedFile(
+            #     translation_config
+            # ).fast_check(doc_pdf2zh):
+            #     if translation_config.auto_enable_ocr_workaround:
+            #         logger.warning(
+            #             "Fast scanned check hit, Turning on OCR workaround.",
+            #         )
+            #         translation_config.shared_context_cross_split_part.auto_enabled_ocr_workaround = True
+            #         translation_config.ocr_workaround = True
+            #         translation_config.skip_scanned_detection = True
+            #     else:
+            #         logger.warning(
+            #             "Fast scanned check hit, Please check the input PDF file.",
+            #         )
+            #         raise ScannedPDFError("Scanned PDF detected.")
+
+            logger.debug(f"start parse il from {temp_pdf_path}")
+            from babeldoc.format.pdf.new_parser.native_parse import (
+                parse_prepared_pdf_with_new_parser_to_legacy_ir,
             )
-            logger.debug("finish detect scanned file")
+
+            docs = parse_prepared_pdf_with_new_parser_to_legacy_ir(
+                temp_pdf_path,
+                config=translation_config,
+                doc_pdf=doc_pdf2zh,
+            )
+            logger.debug(f"finish parse il from {temp_pdf_path}")
+            logger.debug(f"finish create il from {temp_pdf_path}")
+            if translation_config.only_include_translated_page and not docs.page:
+                return None
+
             if translation_config.debug:
                 xml_converter.write_json(
                     docs,
-                    translation_config.get_working_file_path("detect_scanned_file.json"),
+                    translation_config.get_working_file_path("create_il.debug.json"),
                 )
 
-        # Generate layouts for all pages
-        logger.debug("start generating layouts")
-        docs = LayoutParser(translation_config).process(docs, doc_pdf2zh)
-        logger.debug("finish generating layouts")
-        close_process_pool()
-        if translation_config.debug:
-            xml_converter.write_json(
-                docs,
-                translation_config.get_working_file_path("layout_generator.json"),
-            )
+            if check_cid_char(docs):
+                raise ExtractTextError("The document contains too many CID chars.")
 
-        ParagraphFinder(translation_config).process(docs)
-        logger.debug(f"finish paragraph finder from {temp_pdf_path}")
-        if translation_config.debug:
-            xml_converter.write_json(
-                docs,
-                translation_config.get_working_file_path("paragraph_finder.json"),
-            )
-        StylesAndFormulas(translation_config).process(docs)
-        logger.debug(f"finish styles and formulas from {temp_pdf_path}")
-        if translation_config.debug:
-            xml_converter.write_json(
-                docs,
-                translation_config.get_working_file_path("styles_and_formulas.json"),
-            )
+            # Skip all translation processing if only_parse_generate_pdf is enabled
+            if translation_config.only_parse_generate_pdf:
+                logger.debug("only_parse_generate_pdf enabled, skipping translation processing")
+                # Skip directly to PDF generation
+                pdf_creater = PDFCreater(temp_pdf_path, docs, translation_config, mediabox_data)
+                result = pdf_creater.write(translation_config)
+                result.original_pdf_path = translation_config.input_file
+                return result
+
+            # Rest of the original translation logic...
+            # [Previous implementation of do_translate continues here]
+
+            # 检测是否为扫描文件
+            if translation_config.skip_scanned_detection:
+                logger.debug("skipping scanned file detection")
+            else:
+                logger.debug("start detect scanned file")
+                DetectScannedFile(translation_config).process(
+                    docs, temp_pdf_path, mediabox_data
+                )
+                logger.debug("finish detect scanned file")
+                if translation_config.debug:
+                    xml_converter.write_json(
+                        docs,
+                        translation_config.get_working_file_path("detect_scanned_file.json"),
+                    )
+
+            # Generate layouts for all pages
+            logger.debug("start generating layouts")
+            docs = LayoutParser(translation_config).process(docs, doc_pdf2zh)
+            logger.debug("finish generating layouts")
+            close_process_pool()
+            if translation_config.debug:
+                xml_converter.write_json(
+                    docs,
+                    translation_config.get_working_file_path("layout_generator.json"),
+                )
+
+            ParagraphFinder(translation_config).process(docs)
+            logger.debug(f"finish paragraph finder from {temp_pdf_path}")
+            if translation_config.debug:
+                xml_converter.write_json(
+                    docs,
+                    translation_config.get_working_file_path("paragraph_finder.json"),
+                )
+            StylesAndFormulas(translation_config).process(docs)
+            logger.debug(f"finish styles and formulas from {temp_pdf_path}")
+            if translation_config.debug:
+                xml_converter.write_json(
+                    docs,
+                    translation_config.get_working_file_path("styles_and_formulas.json"),
+                )
+
+            preprocessing.save(docs, temp_pdf_path, mediabox_data)
 
         translate_engine = translation_config.translator
         term_extraction_engine = translation_config.get_term_extraction_translator()

@@ -59,8 +59,16 @@ class FontMapper:
 
         self.fonts: dict[str, pymupdf.Font] = {}
         self.fontid2fontpath: dict[str, Path] = {}
+        # Parsing, formulas, translation and rendering use the same font assets.
+        # Keep resources scoped to this task (also shared by its split parts).
+        if not hasattr(translation_config, "_font_resource_cache"):
+            translation_config._font_resource_cache = {}
+        font_cache = translation_config._font_resource_cache
         for font_file_name in self.font_file_names:
             if font_file_name in self.fontid2fontpath:
+                continue
+            if font_file_name in font_cache:
+                self.fonts[font_file_name], self.fontid2fontpath[font_file_name] = font_cache[font_file_name]
                 continue
             font_path, font_metadata = assets.get_font_and_metadata(font_file_name)
             pymupdf_font = pymupdf.Font(fontfile=str(font_path))
@@ -79,6 +87,7 @@ class FontMapper:
             self.fonts[font_file_name].encoding_length = font_metadata[
                 "encoding_length"
             ]
+            font_cache[font_file_name] = (pymupdf_font, font_path)
 
         self.normal_font_ids: list[str] = font_family["normal"]
         self.script_font_ids: list[str] = font_family["script"]
