@@ -3,6 +3,18 @@
 这里记录 `zotero-pdf2zh-pro` 的用户可见变化。旧项目的历史仍保留在 Git 历史中，
 不作为本产品的版本序列。
 
+## v1.9.7 - 2026-10-29
+
+本次更新减少 PDF 翻译中的重复处理，并修复代码识别与官网导航。
+
+- **PDF 处理**：补译与自动修复复用同一任务的解析结果，减少重复预处理，并优化字符聚类与字体加载。
+- **代码保留**：识别论文中的独立代码调用序列，避免将无需翻译的代码反复判为未翻译。
+- **官网导航**：恢复翻译测评页的顶部导航，便于返回首页和使用指南。
+
+插件与本地服务需分别升级。**Mac 新版服务支持 Apple Silicon，Intel Mac 请保留现有服务。**
+
+[Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.7/zotero-pdf2zh-pro-windows-x64-setup.exe) · [安装指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/v1.9.7/docs/user-guide.md) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.6...v1.9.7)
+
 ## v1.9.6 - 2026-10-29
 
 本次更新新增文档导出，更新 PDF 引擎，并改进 Windows 控制中心。

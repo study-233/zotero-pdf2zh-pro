@@ -1718,7 +1718,7 @@ soap = [
 
 [[package]]
 name = "zotero-pdf2zh-pro"
-version = "1.9.6"
+version = "1.9.7"
 source = { editable = "." }
 dependencies = [
     { name = "anyio" },

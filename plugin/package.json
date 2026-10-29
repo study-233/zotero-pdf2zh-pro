@@ -1,6 +1,6 @@
 {
     "name": "zotero-pdf2zh-pro",
-    "version": "1.9.6",
+    "version": "1.9.7",
     "packageManager": "pnpm@10.34.5",
     "description": "Zotero integration for the pdf2zh_pro translation core",
     "config": {

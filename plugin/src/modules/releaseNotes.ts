@@ -136,6 +136,23 @@ export const releaseSummaries: ReleaseSummary[] = [
             },
         ],
     },
+    {
+        version: "1.9.7",
+        notes: [
+            {
+                id: "pdf-preprocessing-reuse",
+                message: "release-pdf-preprocessing-reuse",
+                cardMessage: "release-card-pdf-preprocessing-reuse",
+                priority: 2,
+            },
+            {
+                id: "code-sequence-preservation",
+                message: "release-code-sequence-preservation",
+                cardMessage: "release-card-code-sequence-preservation",
+                priority: 2,
+            },
+        ],
+    },
 ];
 
 export function compareVersions(a: string, b: string): number {
