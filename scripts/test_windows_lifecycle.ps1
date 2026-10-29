@@ -44,6 +44,7 @@ $package = [IO.Path]::GetFullPath($PackageSource)
 . (Join-Path $windowsDir "common.ps1")
 . (Join-Path $PSScriptRoot 'test_windows_process_helpers.ps1')
 $initialTestRoot = $AppRoot
+$initialTestRegistry = $env:PDF2ZH_WINDOWS_REGISTRY_KEY
 $previousDataDirectory = $env:PDF2ZH_DATA_DIR
 $destinationRoot = $null
 if (-not $AutostartApprovedKey.StartsWith($env:PDF2ZH_WINDOWS_REGISTRY_KEY + '\', [StringComparison]::OrdinalIgnoreCase)) {
@@ -143,6 +144,7 @@ function Assert-ProductShortcutIcon {
 
 function Wait-PathAbsent {
     param([string]$Path, [int]$TimeoutSeconds = 600)
+    Invoke-MeasuredOperation -Name 'cleanup.wait-for-path' -Details @{path=$Path} -Action {
     $attempts = $TimeoutSeconds * 2
     for ($attempt = 0; $attempt -lt $attempts; $attempt++) {
         if (-not (Test-Path -LiteralPath $Path)) {
@@ -151,6 +153,7 @@ function Wait-PathAbsent {
         Start-Sleep -Milliseconds 500
     }
     throw "Timed out waiting for asynchronous cleanup of $Path"
+    }
 }
 
 function Assert-Autostart {
@@ -239,6 +242,16 @@ $initialInstallArguments = @{
     NonInteractive = $true
 }
 if ($env:PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE -eq "1") {
+    $initialInstallArguments.AllowPreparedDestination = $true
+}
+if (-not $SmokeOnly -and $env:PDF2ZH_WINDOWS_LIFECYCLE_PREPARED_CACHE -ne '1') {
+    if (-not $env:PDF2ZH_TEST_DOWNLOAD_CACHE) {
+        $cachePath = & python (Join-Path $PSScriptRoot 'release_local.py') prepare-cache $windowsDir
+        if ($LASTEXITCODE -ne 0) {throw 'Cannot prepare lifecycle download set.'}
+        $env:PDF2ZH_TEST_DOWNLOAD_CACHE = ($cachePath -join "`n").Trim()
+    }
+    & python (Join-Path $PSScriptRoot 'release_local.py') seed-cache $env:PDF2ZH_TEST_DOWNLOAD_CACHE $AppRoot
+    if ($LASTEXITCODE -ne 0) {throw 'Cannot seed lifecycle download set.'}
     $initialInstallArguments.AllowPreparedDestination = $true
 }
 & (Join-Path $windowsDir "install.ps1") @initialInstallArguments
@@ -441,16 +454,6 @@ try {
 Assert-True $downgradeBlocked "Downgrade was not blocked."
 Set-Content -LiteralPath $InstalledVersionFile -Value $PackageVersion -Encoding ascii
 
-$cacheBackup = Join-Path (Split-Path $AppRoot -Parent) ".lifecycle-cache-backup"
-$runtimeBackup = Join-Path (Split-Path $AppRoot -Parent) ".lifecycle-runtime-backup"
-Remove-Item -LiteralPath (Assert-TestPath $cacheBackup) -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -LiteralPath (Assert-TestPath $runtimeBackup) -Recurse -Force -ErrorAction SilentlyContinue
-Copy-Item -LiteralPath $UvCacheDir -Destination $cacheBackup -Recurse -Force
-foreach ($runtimePart in @('python', 'uv')) {
-    $backupPart = Join-Path $runtimeBackup $runtimePart
-    New-Item -ItemType Directory -Force -Path $backupPart | Out-Null
-    Get-ChildItem -LiteralPath (Join-Path $AppRoot ("runtime\$runtimePart")) -Force | Copy-Item -Destination $backupPart -Recurse -Force
-}
 & (Join-Path $BinDir "uninstall.ps1") -NonInteractive
 Wait-PathAbsent -Path $BinDir
 Wait-PathAbsent -Path $UvCacheDir
@@ -472,14 +475,10 @@ Assert-True (-not (Test-Path -LiteralPath $UvCacheDir)) "Default uninstall left 
 Assert-True (-not (Test-Path -LiteralPath $StartMenuDir)) "Uninstall left Start menu shortcuts behind."
 Assert-Autostart -Enabled $false
 
-Copy-Item -LiteralPath $cacheBackup -Destination $UvCacheDir -Recurse -Force
-Remove-Item -LiteralPath (Assert-TestPath $cacheBackup) -Recurse -Force
-foreach ($runtimePart in @('python', 'uv')) {
-    $restoredPart = Join-Path $AppRoot ("runtime\$runtimePart")
-    New-Item -ItemType Directory -Force -Path $restoredPart | Out-Null
-    Get-ChildItem -LiteralPath (Join-Path $runtimeBackup $runtimePart) -Force | Copy-Item -Destination $restoredPart -Recurse -Force
+Invoke-MeasuredOperation -Name 'cache.reseed-after-uninstall' -Action {
+    & python (Join-Path $PSScriptRoot 'release_local.py') seed-cache $env:PDF2ZH_TEST_DOWNLOAD_CACHE $AppRoot
+    if ($LASTEXITCODE -ne 0) {throw 'Cannot reseed downloads after uninstall.'}
 }
-Remove-Item -LiteralPath (Assert-TestPath $runtimeBackup) -Recurse -Force
 & (Join-Path $windowsDir "install.ps1") `
     -PackageSource $package `
     -GuiSource $gui `
@@ -499,11 +498,12 @@ Set-Content -LiteralPath $cacheMarker -Value "preserve cache" -Encoding utf8
 $sourceRoot = $AppRoot
 $rollbackRoot = Join-Path (Split-Path $sourceRoot -Parent) "rollback-target\zotero-pdf2zh-pro"
 $relocateScript = Join-Path $BinDir "relocate.ps1"
-$rollbackExit = Invoke-RelocationProcess `
+$rollbackExit = Invoke-MeasuredOperation -Name 'relocation.rollback' -Action { Invoke-RelocationProcess `
     -Script $relocateScript `
     -Source $sourceRoot `
     -Destination $rollbackRoot `
     -Wheel (Join-Path $repoRoot "missing.whl")
+}
 Assert-True ($rollbackExit -ne 0) "Invalid relocation unexpectedly succeeded."
 Assert-True (Test-Path -LiteralPath (Join-Path $recoveryDir "paragraph-recovery.json")) "Failed relocation removed the recovery checkpoint."
 Assert-True (-not (Test-Path -LiteralPath $rollbackRoot)) "Failed relocation left the destination behind."
@@ -516,11 +516,12 @@ Stop-ManagedControlPanel
 Wait-ExpectedHealth -Stage "successful relocation precondition"
 
 $destinationRoot = Join-Path (Split-Path $sourceRoot -Parent) "relocated\zotero-pdf2zh-pro"
-$relocationExit = Invoke-RelocationProcess `
+$relocationExit = Invoke-MeasuredOperation -Name 'relocation.success' -Action { Invoke-RelocationProcess `
     -Script $relocateScript `
     -Source $sourceRoot `
     -Destination $destinationRoot `
     -Wheel $package
+}
 Assert-True ($relocationExit -eq 0) "Installation relocation failed."
 $env:PDF2ZH_WINDOWS_APP_ROOT = $destinationRoot
 . (Join-Path (Join-Path $destinationRoot "bin") "common.ps1")
@@ -555,6 +556,10 @@ $passed = $true
     $cleanupRoots = @($initialTestRoot, $destinationRoot)
     if ($WindowsPackage) { $cleanupRoots += $windowsDir }
     Stop-IsolatedTestProcesses -Roots $cleanupRoots
+    # Remove only the registry namespace allocated by the local release harness.
+    if ($initialTestRegistry -match '^HKCU:\\+Software\\+pdf2zh-local-release-[a-f0-9]{32}$') {
+        Remove-Item -LiteralPath $initialTestRegistry -Recurse -Force -ErrorAction SilentlyContinue
+    }
     $env:PDF2ZH_DATA_DIR = $previousDataDirectory
     Complete-WorkspaceRun -Run $workspaceRun -Passed $passed
 }

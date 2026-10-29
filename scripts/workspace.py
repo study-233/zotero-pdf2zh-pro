@@ -144,6 +144,29 @@ def remove(path, parent):
 
 
 @contextmanager
+def measure(operation, **details):
+    """Record operation costs without letting telemetry replace the original error."""
+    started = time.time()
+    clock = time.monotonic()
+    result = dict(operation=operation, started=started, pid=os.getpid(), status='failed', **details)
+    try:
+        yield result
+        result['status'] = 'passed'
+    finally:
+        result['seconds'] = time.monotonic() - clock
+        directory = os.environ.get('PDF2ZH_RELEASE_METRICS_DIR')
+        if directory:
+            try:
+                target = Path(directory)
+                target.mkdir(parents=True, exist_ok=True)
+                with (target / f'python-{os.getpid()}.jsonl').open('a', encoding='utf-8') as stream:
+                    stream.write(json.dumps(result, ensure_ascii=False) + '\n')
+            except OSError as error:
+                print(f'Cannot record release timing: {error}', file=sys.stderr, flush=True)
+        print(f'{operation}: {result["status"]}; elapsed {result["seconds"]:.2f}s', file=sys.stderr, flush=True)
+
+
+@contextmanager
 def progress(phase, path):
     stopped = threading.Event()
     started = time.monotonic()
@@ -154,7 +177,8 @@ def progress(phase, path):
     print(f'{phase}: {path}', file=sys.stderr, flush=True)
     worker.start()
     try:
-        yield
+        with measure(phase, path=str(path)):
+            yield
     finally:
         stopped.set()
         worker.join()

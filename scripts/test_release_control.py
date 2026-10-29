@@ -96,6 +96,22 @@ class PublicationTests(unittest.TestCase):
 
 
 class PolicyTests(unittest.TestCase):
+    def test_translation_and_diagnostic_changes_keep_scoped_data_validation(self):
+        paths = ['server/babeldoc/format/pdf/document_il/midend/layout_parser.py',
+                 'server/babeldoc/format/pdf/document_il/utils/extract_char.py',
+                 'server/babeldoc/format/pdf/document_il/utils/fontmap.py',
+                 'server/babeldoc/format/pdf/high_level.py',
+                 'server/babeldoc/format/pdf/preprocessing_cache.py',
+                 'server/babeldoc/format/pdf/translation_config.py', 'shared/diagnostics/contract.json']
+        result = policy.select(paths, '1.9.6', '1.9.7')
+        self.assertEqual(result['lifecycle'], 'standard')
+        self.assertEqual(result['unknownPaths'], [])
+        self.assertIn('data', result['riskGroups'])
+        self.assertEqual(result['cases'], [{'id': 'recent-upgrade', 'baseline': '1.9.6'}])
+        for changes in (['scripts/windows/relocate.ps1'], ['server/babeldoc/format/pdf/new_storage.py']):
+            self.assertEqual(policy.select(changes, '1.9.6', '1.9.7')['lifecycle'], 'extended')
+        self.assertEqual(policy.select(paths, '1.9.6', '1.9.7', full=True)['lifecycle'], 'extended')
+
     def test_pinned_wheel_cache_avoids_another_download(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);package=root/'package.zip';package.write_bytes(b'zip')
@@ -359,6 +375,30 @@ class RecoveryTests(unittest.TestCase):
 
 
 class EntryPointTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == 'nt', 'Windows registry namespace cleanup')
+    def test_lifecycle_registry_cleanup_removes_only_its_local_test_namespace(self):
+        text = (ROOT/'scripts/test_windows_lifecycle.ps1').read_text(encoding='utf-8')
+        body = text.split('# Remove only the registry namespace allocated by the local release harness.', 1)[1].split('$env:PDF2ZH_DATA_DIR', 1)[0]
+        command = """$ErrorActionPreference='Stop'
+$owned='HKCU:\\Software\\pdf2zh-local-release-'+[guid]::NewGuid().ToString('N')
+$other='HKCU:\\Software\\pdf2zh-cleanup-fixture-'+[guid]::NewGuid().ToString('N')
+try {
+ New-Item -Path ($owned+'\\StartupApproved') -Force|Out-Null
+ New-Item -Path $other -Force|Out-Null
+ $initialTestRegistry=$owned
+""" + body + """
+ if(Test-Path -LiteralPath $owned){throw 'Owned registry namespace survived cleanup.'}
+ $initialTestRegistry=$other
+""" + body + """
+ if(-not(Test-Path -LiteralPath $other)){throw 'Unrelated namespace was removed.'}
+} finally {
+ Remove-Item -LiteralPath $owned,$other -Recurse -Force -ErrorAction SilentlyContinue
+}
+exit 0
+"""
+        result = subprocess.run(['powershell', '-NoProfile', '-Command', command], capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_progress_missing_candidate_is_failure_instead_of_skip(self):
         environment = {key:value for key,value in os.environ.items() if not key.startswith('PDF2ZH_TEST_')}
         result = subprocess.run([sys.executable,str(ROOT/'scripts/test_windows_uv_progress.py')],

@@ -41,7 +41,8 @@
     "data": {
       "paths": ["server/task_manager.py", "server/task_runtime.py", "server/translation_memory.py",
         "server/selection_cache.py", "server/glossary_manager.py", "server/chatgpt_auth.py",
-        "server/chatgpt_usage.py", "server/server.py", "server/babeldoc/format/pdf/translation_recovery.py"],
+        "server/chatgpt_usage.py", "server/server.py", "server/babeldoc/format/pdf/translation_recovery.py",
+        "server/babeldoc/format/pdf/preprocessing_cache.py", "server/babeldoc/format/pdf/translation_config.py"],
       "lifecycle": "standard"
     }
   },
@@ -51,6 +52,10 @@
     "server/chatgpt_client.py", "server/chatgpt_routes.py", "server/codex_client.py",
     "server/codex_discovery.py", "server/provider_models.py", "server/text_translation.py",
     "server/glossary_catalog.py", "server/diagnostic_contract.py", "server/diagnostic_evidence.py",
+    "shared/diagnostics/contract.json", "server/babeldoc/format/pdf/high_level.py",
+    "server/babeldoc/format/pdf/document_il/midend/layout_parser.py",
+    "server/babeldoc/format/pdf/document_il/utils/extract_char.py",
+    "server/babeldoc/format/pdf/document_il/utils/fontmap.py",
     "server/diagnostics.py", "server/observability.py", "server/pdf2zh_pro/pdf.py",
     "server/pdf2zh_pro/config.py", "server/pdf2zh_pro/types.py", "server/pdf2zh_pro/errors.py",
     "server/pdf2zh_pro/glossary.py", "server/pdf2zh_pro/translator/*",

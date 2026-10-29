@@ -1,5 +1,26 @@
 # Local developer outputs only; never use the installed product's cleanup helpers.
 $script:workspaceManager = Join-Path $PSScriptRoot 'workspace.py'
+function Invoke-MeasuredOperation {
+    param([Parameter(Mandatory=$true)][string]$Name, [Parameter(Mandatory=$true)][scriptblock]$Action, [hashtable]$Details=@{})
+    $timer = [Diagnostics.Stopwatch]::StartNew()
+    $result = @{operation=$Name;started=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()/1000;pid=$PID;status='failed'}
+    if ($Details.Count) {$result.details=$Details}
+    try {
+        & $Action
+        $result.status = 'passed'
+    } finally {
+        $timer.Stop()
+        $result.seconds = $timer.Elapsed.TotalSeconds
+        if ($env:PDF2ZH_RELEASE_METRICS_DIR) {
+            try {
+                $null = [IO.Directory]::CreateDirectory($env:PDF2ZH_RELEASE_METRICS_DIR)
+                $path = Join-Path $env:PDF2ZH_RELEASE_METRICS_DIR "powershell-$PID.jsonl"
+                [IO.File]::AppendAllText($path, (($result | ConvertTo-Json -Compress) + "`n"), (New-Object Text.UTF8Encoding($false)))
+            } catch {Write-Warning "Cannot record release timing: $_"}
+        }
+        Write-Host ("{0}: {1}; elapsed {2:F2}s" -f $Name,$result.status,$result.seconds)
+    }
+}
 function Invoke-WorkspaceManager {
     param([string[]]$Arguments)
     # Python reports cleanup progress on stderr. Windows PowerShell 5.1 treats

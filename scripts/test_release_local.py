@@ -1,5 +1,6 @@
 """Local release recovery and authenticated candidate verification regressions."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -43,6 +44,51 @@ class LocalReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'changed'):
             local.Stages(state, {'commit': 'b' * 40})
 
+    def test_completed_validation_never_prepares_cache_or_creates_a_test_workspace(self):
+        stages = local.Stages(self.root / 'stages.json', {'commit': 'a' * 40})
+        artifacts = {'wheel': 'verified'}
+        cases = self.root / 'local-upgrades.json'
+        cases.write_text('{"cases": []}')
+        for name in ('runtime', 'lifecycle', 'progress', 'upgrades'):
+            stages.execute(name, lambda: None, [cases] if name == 'upgrades' else [], artifacts)
+        with patch.object(local, 'prepare_downloads') as prepare, patch.object(local, 'Workspace') as workspace, \
+             patch.object(local, 'run') as execute:
+            local.validate_local(stages, {}, {}, self.root / 'plan.json', artifacts, '1.9.7', 'a' * 40,
+                                 self.root / 'app.zip', self.root / 'setup.exe', self.root / 'app.whl')
+        prepare.assert_not_called()
+        workspace.assert_not_called()
+        execute.assert_not_called()
+
+    def test_timing_preserves_failure_and_records_success_and_failure(self):
+        from workspace import measure
+        with patch.dict('os.environ', PDF2ZH_RELEASE_METRICS_DIR=str(self.root / 'metrics')):
+            with measure('success'):
+                pass
+            with self.assertRaisesRegex(RuntimeError, 'original failure'):
+                with measure('failure'):
+                    raise RuntimeError('original failure')
+        rows = [json.loads(line) for file in (self.root / 'metrics').glob('*.jsonl') for line in file.read_text().splitlines()]
+        self.assertEqual([(r['operation'], r['status']) for r in rows], [('success', 'passed'), ('failure', 'failed')])
+        self.assertTrue(all(r['seconds'] >= 0 for r in rows))
+
+    def test_progress_only_recovery_does_not_prepare_installation_downloads(self):
+        stages = local.Stages(self.root / 'stages.json', {'commit': 'a' * 40})
+        artifacts = {'wheel': 'verified'}
+        cases = self.root / 'local-upgrades.json'
+        cases.write_text('{"cases": []}')
+        for name in ('runtime', 'lifecycle', 'upgrades'):
+            stages.execute(name, lambda: None, [cases] if name == 'upgrades' else [], artifacts)
+        package = self.root / 'package.zip'
+        with zipfile.ZipFile(package, 'w') as archive:
+            archive.writestr('zotero-pdf2zh-pro.exe', b'fixture')
+        with patch.object(local, 'ROOT', self.root), patch.object(local, 'prepare_downloads') as prepare, \
+             patch.object(local, 'run') as execute, patch.object(control, 'command', return_value=b'python.exe'):
+            local.validate_local(stages, {}, {'lifecycle': 'standard'}, self.root / 'plan.json', artifacts,
+                                 '1.9.7', 'a' * 40, package, self.root / 'setup.exe', self.root / 'app.whl')
+        prepare.assert_not_called()
+        execute.assert_called_once()
+        self.assertTrue(stages.reusable('progress', artifacts=artifacts))
+
     def test_install_cache_contains_downloads_and_python_without_a_service_environment(self):
         source = self.root / 'user-cache'
         (source / 'archive-v0/package').mkdir(parents=True)
@@ -51,26 +97,78 @@ class LocalReleaseTests(unittest.TestCase):
         (source / 'archive-v0/unrelated/other-2.0.dist-info').mkdir(parents=True)
         (source / 'archive-v0/unrelated/data').write_bytes(b'unrelated bytes')
         (source / '.lock').touch()
-        (self.root / 'server').mkdir()
-        (self.root / 'server/uv.lock').write_text('[[package]]\nname="demo"\nversion="1.0"\n')
+        package = self.root / 'package'
+        package.mkdir()
+        requirements = b'demo==1.0 --hash=sha256:fixture\n'
+        (package / 'windows-requirements.txt').write_bytes(requirements)
+        (package / 'windows-dependencies.json').write_text(json.dumps({
+            'python': '3.13.15', 'requirementsSha256': hashlib.sha256(requirements).hexdigest()}))
         uv = self.root / 'uv.exe'
         uv.write_bytes(b'uv')
         python_root = self.root / 'user-python'
         python = python_root / 'cpython-3.13.15-windows-x86_64-none'
         python.mkdir(parents=True)
         (python / 'python.exe').write_bytes(b'python')
+        (python_root / 'cpython-3.13.14-windows-x86_64-none').mkdir()
         environment = {}
+        def populate(arguments, env):
+            if arguments[:3] == ['uv', 'pip', 'install']:
+                destination = Path(env['UV_CACHE_DIR']) / 'archive-v0/package/demo-1.0.dist-info'
+                destination.mkdir(parents=True, exist_ok=True)
+                (destination.parent / 'data').write_bytes(b'verified wheel bytes')
         with patch.object(local, 'ROOT', self.root), patch.object(local.shutil, 'which', return_value=str(uv)), \
-             patch.object(control, 'command', side_effect=[str(source).encode(), str(python_root).encode()]):
-            cache = local.prepare_downloads(environment)
+             patch.object(local.platform, 'python_version', return_value='3.13.0'), \
+             patch.object(control, 'command', return_value=str(python / 'python.exe').encode()), \
+             patch.object(local, 'run', side_effect=populate) as run:
+            cache = local.prepare_downloads(environment, package=package)
+            self.assertEqual(local.prepare_downloads(environment, package=package), cache)
+            self.assertEqual(run.call_count, 2)
         self.assertEqual((cache / 'cache/archive-v0/package/data').read_bytes(), b'verified wheel bytes')
         self.assertTrue((cache / 'runtime/python' / python.name / 'python.exe').is_file())
         self.assertFalse((cache / 'cache/.lock').exists())
         self.assertFalse((cache / 'cache/archive-v0/unrelated').exists())
         self.assertFalse((cache / 'runtime/versions').exists())
+        self.assertEqual([p.name for p in (cache / 'runtime/python').iterdir()], [python.name])
         self.assertEqual(environment['PDF2ZH_TEST_DOWNLOAD_CACHE'], str(cache))
         with patch.object(local, 'ROOT', self.root), self.assertRaises(ValueError):
-            local.prepare_downloads({'PDF2ZH_TEST_DOWNLOAD_CACHE': str(source)})
+            local.prepare_downloads({'PDF2ZH_TEST_DOWNLOAD_CACHE': str(source)}, package=package)
+
+    def test_download_spec_rejects_hash_mismatch_before_installing(self):
+        package = self.root / 'package'
+        package.mkdir()
+        (package / 'windows-requirements.txt').write_bytes(b'changed dependency')
+        (package / 'windows-dependencies.json').write_text(json.dumps({'python': '3.13.15', 'requirementsSha256': '0' * 64}))
+        with self.assertRaisesRegex(ValueError, 'differ'):
+            local.download_spec(package)
+
+    def test_incremental_cache_reuses_unchanged_bytes_and_cleans_only_changed_packages(self):
+        base = self.root / '.tmp/cache/downloads'
+        source = base / 'sets/source'
+        target = base / 'sets/target'
+        file = source / 'cache/archive-v0/unchanged/package.py'
+        file.parent.mkdir(parents=True)
+        file.write_bytes(b'immutable unchanged package')
+        identity = {'uvSha256': '1' * 64, 'platform': 'windows-x86_64', 'requirements': [['3.13.15', 'new']]}
+        (source / 'ready.json').write_text(json.dumps({**identity, 'requirements': [['3.13.15', 'old']]}))
+        (source / 'packages.json').write_text(json.dumps({'demo': ['1.0'], 'unchanged': ['1.0']}))
+        target.mkdir(parents=True)
+        environment = {'UV_CACHE_DIR': str(target / 'cache')}
+        with patch.object(local, 'ROOT', self.root), patch.object(local, 'run') as run:
+            local.reuse_downloads(base, target, identity, {'demo': ['2.0'], 'unchanged': ['1.0']}, environment)
+        run.assert_called_once_with(['uv', 'cache', 'clean', 'demo'], environment)
+        self.assertTrue(file.samefile(target / 'cache/archive-v0/unchanged/package.py'))
+        self.assertEqual(file.read_bytes(), b'immutable unchanged package')
+
+    def test_download_set_writer_lock_is_exclusive_and_released_after_failure(self):
+        lock = self.root / 'cache.lock'
+        with self.assertRaisesRegex(RuntimeError, 'original failure'):
+            with local.download_cache_lock(lock):
+                with self.assertRaises(OSError):
+                    with local.download_cache_lock(lock):
+                        self.fail('Concurrent cache writers were accepted')
+                raise RuntimeError('original failure')
+        with local.download_cache_lock(lock):
+            pass
 
     def test_seeded_install_removal_preserves_download_cache_and_rejects_overlapping_paths(self):
         cache = self.root / '.tmp/cache/downloads'
@@ -78,10 +176,14 @@ class LocalReleaseTests(unittest.TestCase):
         file = cache / 'cache/archive-v0/id/package.py'
         file.parent.mkdir(parents=True)
         file.write_bytes(b'immutable package')
+        ignored = cache / 'runtime/python/.temp/unfinished'
+        ignored.parent.mkdir(parents=True)
+        ignored.write_bytes(b'unfinished download')
         with patch.object(local, 'ROOT', self.root):
             local.seed_install(cache, root)
             installed = root / 'cache/archive-v0/id/package.py'
             self.assertTrue(file.samefile(installed))
+            self.assertFalse((root / 'runtime/python/.temp').exists())
             installed.unlink()
             self.assertEqual(file.read_bytes(), b'immutable package')
             with self.assertRaises(ValueError): local.seed_install(cache, cache / 'install')
