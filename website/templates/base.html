@@ -14,7 +14,6 @@
 </head>
 <body class="{{ kind }}-page" data-base="{{ base }}">
   <a class="skip-link" href="#main-content">跳到主要内容</a>
-  {% if kind != 'benchmark' %}
   <header class="site-header">
     <div class="site-header-inner">
       <a class="site-brand" href="{{ base }}"><img src="{{ base }}assets/logo.svg" width="32" height="32" alt="牛马读书 logo"><span>zotero-pdf2zh-pro</span></a>
@@ -30,7 +29,6 @@
       </div>
     </div>
   </header>
-  {% endif %}
   {% block main %}{% endblock %}
   {% if kind != 'benchmark' %}
   <footer class="site-footer" id="community">

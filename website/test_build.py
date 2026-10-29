@@ -143,7 +143,10 @@ class WebsiteTests(unittest.TestCase):
         for element in ('filter-scope', 'fee-basis', 'record-selector', 'sample-state', 'pair-selector', 'pair-apply'):
             self.assertNotIn(f'id="{element}"', html)
         self.assertNotIn('<select', html)
-        self.assertNotIn('class="site-header"', html)
+        self.assertIn('class="site-header"', html)
+        for path in ('', 'guide/', 'changelog/'):
+            self.assertIn(f'href="{DEFAULT_BASE}{path}"', html)
+        self.assertIn(f'href="{DEFAULT_BASE}benchmark/" aria-current="page"', html)
         self.assertNotIn(DEFAULT_BASE + 'site/site.js', html)
         with (self.output / 'benchmark/data/sample-scores.csv').open(encoding='utf-8-sig', newline='') as stream:
             self.assertEqual(len(list(csv.DictReader(stream))), registry['sample_score_rows'])
