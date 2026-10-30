@@ -30,10 +30,11 @@ fn load_payload(path: &Path) -> Result<Vec<u8>, String> {
 
 fn extract(payload: Vec<u8>, directory: &Path, mut tick: impl FnMut(u64, u64)) -> Result<(), String> {
     let mut zip = zip::ZipArchive::new(Cursor::new(payload)).map_err(|e| e.to_string())?;
+    zip.validate_header_consistency().map_err(|e| e.to_string())?;
     let mut names = HashSet::new(); let mut total = 0u64;
     for i in 0..zip.len() {
         let file = zip.by_index(i).map_err(|e| e.to_string())?;
-        let name = file.name();
+        let name = file.name().map_err(|e| e.to_string())?;
         if name.is_empty() || !name.is_ascii() || name.contains(['/', '\\', ':']) ||
             name.starts_with('.') || name.ends_with(['.', ' ']) || file.is_dir() ||
             file.unix_mode().is_some_and(|mode| mode & 0o170000 == 0o120000) ||
@@ -49,7 +50,8 @@ fn extract(payload: Vec<u8>, directory: &Path, mut tick: impl FnMut(u64, u64)) -
     let mut done = 0u64;
     for i in 0..zip.len() {
         let mut entry = zip.by_index(i).map_err(|e| e.to_string())?;
-        let mut output = fs::OpenOptions::new().write(true).create_new(true).open(directory.join(entry.name())).map_err(|e| e.to_string())?;
+        let name = entry.name().map_err(|e| e.to_string())?;
+        let mut output = fs::OpenOptions::new().write(true).create_new(true).open(directory.join(name.as_ref())).map_err(|e| e.to_string())?;
         let bytes = std::io::copy(&mut entry, &mut output).map_err(|e| e.to_string())?;
         if bytes != entry.size() { return Err("安装文件解包不完整。".into()); }
         done += bytes; tick(done, total);
@@ -159,5 +161,23 @@ mod tests {
         zip.write_all(b"bad").unwrap();
         let data = zip.finish().unwrap().into_inner();
         assert!(extract(data, Path::new("nonexistent-test-directory"), |_, _| {}).is_err());
+    }
+
+    #[test]
+    fn inconsistent_headers_are_rejected_before_writing_any_file() {
+        let mut zip = zip::ZipWriter::new(Cursor::new(Vec::new()));
+        for name in ["install.ps1", "zotero-pdf2zh-pro.exe", "windows-dependencies.json", "windows-requirements.txt"] {
+            zip.start_file(name, zip::write::SimpleFileOptions::default()).unwrap();
+            zip.write_all(b"fixture").unwrap();
+        }
+        let mut data = zip.finish().unwrap().into_inner();
+        data[30..41].copy_from_slice(b"outside.ps1");
+        let directory = env::temp_dir().join(format!("pdf2zh-loader-headers-{}", std::process::id()));
+        fs::create_dir(&directory).unwrap();
+        let result = extract(data, &directory, |_, _| {});
+        let files = fs::read_dir(&directory).unwrap().count();
+        fs::remove_dir_all(directory).unwrap();
+        assert!(result.is_err());
+        assert_eq!(files, 0);
     }
 }

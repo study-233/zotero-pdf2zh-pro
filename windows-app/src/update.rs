@@ -203,14 +203,17 @@ fn package_version(common_script: &Path) -> Result<String, String> {
 fn extract_package(payload: Vec<u8>, destination: &Path, version: &str) -> Result<(), String> {
     let mut archive = ZipArchive::new(Cursor::new(payload))
         .map_err(|error| format!("无法打开 Windows 更新包：{error}"))?;
+    archive.validate_header_consistency()
+        .map_err(|error| format!("Windows 更新包头部不一致：{error}"))?;
     let mut files = HashSet::new();
     let mut extracted_size = 0u64;
     for index in 0..archive.len() {
         let mut entry = archive
             .by_index(index)
             .map_err(|error| format!("无法读取更新包条目：{error}"))?;
-        let safe = safe_archive_path(entry.name())
-            .ok_or_else(|| format!("更新包包含不安全路径：{}", entry.name()))?;
+        let name = entry.name().map_err(|error| format!("无法读取更新包文件名：{error}"))?;
+        let safe = safe_archive_path(&name)
+            .ok_or_else(|| format!("更新包包含不安全路径：{name}"))?;
         let target = destination.join(&safe);
         if entry.is_dir() {
             fs::create_dir_all(&target).map_err(|error| error.to_string())?;
@@ -223,7 +226,7 @@ fn extract_package(payload: Vec<u8>, destination: &Path, version: &str) -> Resul
             return Err("更新包解压后超过允许大小。".to_owned());
         }
         if !files.insert(safe.to_string_lossy().replace('\\', "/")) {
-            return Err(format!("更新包包含重复文件：{}", entry.name()));
+            return Err(format!("更新包包含重复文件：{name}"));
         }
         if let Some(parent) = target.parent() {
             fs::create_dir_all(parent).map_err(|error| error.to_string())?;
@@ -457,6 +460,27 @@ mod tests {
             .collect();
         assert!(extract_package(zip_bytes(entries), &target, "1.4.0").is_err());
         let _ = fs::remove_dir_all(target);
+    }
+
+    #[test]
+    fn rejects_inconsistent_headers_before_writing_any_file() {
+        let entries = REQUIRED_FILES.iter().map(|name| {
+            let contents = match *name {
+                "zotero-pdf2zh-pro.exe" => b"MZ".to_vec(),
+                "common.ps1" => b"$PackageVersion = \"1.4.0\"\n".to_vec(),
+                _ => b"script".to_vec(),
+            };
+            (*name, contents)
+        }).collect();
+        let mut payload = zip_bytes(entries);
+        payload[30] ^= 1; // Only the local filename changes; the central name stays valid.
+        let target = destination("inconsistent-headers");
+        fs::create_dir(&target).unwrap();
+        let result = extract_package(payload, &target, "1.4.0");
+        let files = fs::read_dir(&target).unwrap().count();
+        fs::remove_dir_all(target).unwrap();
+        assert!(result.is_err());
+        assert_eq!(files, 0);
     }
 
     #[test]

@@ -8,6 +8,7 @@ import multiprocessing as mp
 import os
 import queue
 import signal
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -233,8 +234,11 @@ def run_translation(payload, task_id, *, cancel_event, progress_callback, metric
         child_ps=psutil.Process(process.pid)
         if lease_dir:
             Path(lease_dir).mkdir(parents=True,exist_ok=True)
-            lease=Path(lease_dir)/f"lease-{task_id}-{identity['attempt']}.json"
-            lease.write_text(json.dumps({'pid':process.pid,'created':child_ps.create_time(),'parentPid':owner.pid,'parentCreated':owner.create_time(),**identity}))
+            # Request identities are metadata, never filesystem path components.
+            with tempfile.NamedTemporaryFile(mode='w', prefix='lease-', suffix='.json',
+                                             dir=lease_dir, encoding='utf-8', delete=False) as stream:
+                lease=Path(stream.name)
+                json.dump({'pid':process.pid,'created':child_ps.create_time(),'parentPid':owner.pid,'parentCreated':owner.create_time(),**identity}, stream)
         if os.name=='nt': job=WindowsJob(process.pid)
         threading.Thread(target=read_control,daemon=True).start()
         threading.Thread(target=pump_updates,daemon=True).start()

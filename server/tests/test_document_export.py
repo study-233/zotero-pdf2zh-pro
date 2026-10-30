@@ -65,7 +65,7 @@ class DocumentExportTests(unittest.TestCase):
                 self.assertFalse((self.root / "tasks.json").exists())
 
     def test_invalid_format_never_starts_worker_or_writes_output(self):
-        for index, format in enumerate((None, "", "zip", "../../bad")):
+        for index, format in enumerate((None, "", "zip", "../../bad", "../export.txt", "..\\export.txt", "/tmp/export.txt", "C:\\export.txt")):
             with self.subTest(format=format), patch("document_export.run_translation") as worker:
                 self.headers["X-PDF2ZH-Request-ID"] = f"test-export-invalid-{index}"
                 response = self.upload(format=format)
