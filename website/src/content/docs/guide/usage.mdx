@@ -1,0 +1,71 @@
+---
+{
+  "title": "翻译第一篇 PDF",
+  "description": "选择原始 PDF，提交翻译，在原条目下查看结果。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/usage.mdx"
+}
+---
+
+<span id="6-第一次翻译-pdf"></span>
+
+<span id="usage"></span>
+
+先完成[连接与配置](/zotero-pdf2zh-pro/guide/api-configuration/)，并确认 PDF 已下载到本地。
+
+<span id="设置语言与输出"></span>
+
+<span id="从文库提交任务"></span>
+
+## 提交翻译
+
+1. 在插件设置中选好目标语言，并勾选需要的 **单语译文 / 双语对照** 输出。
+2. 在文库展开论文条目，右键要翻译的 **原始 PDF 附件**。
+3. 选择 **zotero-pdf2zh-pro → 翻译 PDF**。
+
+![右键原始 PDF，在 zotero-pdf2zh-pro 菜单中选择翻译 PDF](/zotero-pdf2zh-pro/assets/guide/translate-menu.webp)
+
+<span id="确认结果并开始阅读"></span>
+
+## 查看结果
+
+打开 **任务列表**。任务完成且显示 **已导入** 后，在原条目下打开译文或双语附件。
+
+![原文与译文附件保存在同一论文条目下](/zotero-pdf2zh-pro/assets/guide/translated-attachments.webp)
+
+翻译期间保持服务和 Zotero 开启。一个条目有多个 PDF 时，直接选择原始附件。
+
+<span id="导出-markdownjson-和-txt"></span>
+
+<span id="批量翻译与完成后检查"></span>
+
+## 批量与导出
+
+多选条目或 PDF，使用同一入口即可批量提交。单篇验证成功后再批量处理。
+失败、待补译或导入失败，按[任务状态](/zotero-pdf2zh-pro/guide/task-management/)选择对应操作。
+
+需要 Markdown、JSON 或 TXT？查看[文档导出](/zotero-pdf2zh-pro/guide/export/)，无需重新翻译。
+
+<span id="自定义附件标题"></span>
+
+## 附件标题与标签
+
+<details>
+<summary>自定义附件名称</summary>
+
+在设置中开启 **自定义译文附件标题**，添加论文标题、作者、年份或模型等字段，调整顺序与分隔符，查看预览；有效修改自动保存。
+
+![调整附件标题字段和分隔符，并查看单语与双语标题预览](/zotero-pdf2zh-pro/assets/guide/attachment-title.webp)
+
+- 只影响之后导入的附件，不修改 PDF 文件名或已有附件。
+- 缺失字段自动跳过；删除全部字段时保留上次有效设置。
+- 关闭后使用输出文件名；“恢复默认”重置组合。
+- 待补译附件末尾带“（待补译）”；完整结果沿用相同命名规则。
+
+</details>
+
+<details>
+<summary>为译文添加“已翻译”标签</summary>
+
+在 **PDF 输出 → 完成后**开启“为完整译文添加「已翻译」标签”（默认关闭）。仅标记新导入的完整译文附件；原文、父条目和待补译附件不变，也不会为历史附件补标。
+
+</details>

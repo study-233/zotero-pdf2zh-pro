@@ -1,0 +1,66 @@
+---
+{
+  "title": "更新、迁移与卸载",
+  "description": "更新插件与服务，备份数据或迁移安装。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/maintenance.mdx"
+}
+---
+
+<span id="9-更新与日常维护"></span>
+
+<span id="maintenance"></span>
+
+插件与本地服务需要分别更新。操作前先等待翻译结束，备份需要保留的数据。
+
+<span id="更新插件和服务端"></span>
+
+## 更新版本
+
+| 安装方式 | 操作 |
+| --- | --- |
+| Zotero 插件 | 插件管理器检查更新，或[下载新 XPI](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)从文件安装 |
+| Windows | 控制中心检查更新；旧控制中心使用[新安装器](/zotero-pdf2zh-pro/guide/windows/)升级 |
+| uv | 停止服务，执行 `uv tool upgrade zotero-pdf2zh-pro`，再启动 |
+
+macOS Homebrew 按下方命令更新。**首次迁移旧数据时保留旧版本目录**，不要提前执行清理：
+
+```bash
+brew services stop zotero-pdf2zh-pro
+brew update
+HOMEBREW_NO_INSTALL_CLEANUP=1 brew upgrade zotero-pdf2zh-pro
+brew services start zotero-pdf2zh-pro
+curl -fsS http://127.0.0.1:8890/health
+```
+
+确认 `workspace.path` 指向 `$(brew --prefix)/var/zotero-pdf2zh-pro`，旧任务、译文和术语库可用后，再按需执行 `brew cleanup zotero-pdf2zh-pro`。
+若发现多个旧数据目录，先停止服务、备份并合并，迁移完成前不要清理旧版本。
+
+<span id="数据位置与迁移"></span>
+
+## 备份与迁移
+
+- **服务数据**：Windows 控制中心选择“打开数据目录”；macOS / uv 查看 `/health` 的 `workspace.path`。停止服务后备份整个目录，保留任务、译文和检查点。
+- **Windows 更改安装位置**：展开 **存储与维护**，在 **更改安装位置**一栏点击 **迁移**，不要直接拖动正在使用的目录。
+- **划词数据**：同时备份 Zotero 数据目录下的 `pdf2zhpro/`；收藏不随云同步。
+
+<details>
+<summary>升级后配置丢失或无法调用</summary>
+
+停用的平台和旧 Codex 配置需要重新配置；插件不会自动替换来源。重新选择平台并测试，独立选段翻译也要核对来源。
+
+旧 API 备份可能位于 Zotero 配置编辑器的 `extensions.zotero.pdf2zhpro.llmApisLegacyBackup`，包含凭据，不要公开分享。ChatGPT 迁移见[套餐指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/chatgpt-account.md)，平台历史见[兼容记录](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/provider-audit-2026-10-03.md)。
+
+</details>
+
+<span id="卸载"></span>
+
+## 移除软件
+
+| 组件 | 操作 |
+| --- | --- |
+| Zotero 插件 | 在“工具 → 插件”中禁用或移除 |
+| Windows 服务 | 从控制中心或开始菜单进入卸载，默认保留数据与日志；彻底删除前确认已备份 |
+| Homebrew | 停止服务后执行 `brew uninstall zotero-pdf2zh-pro` |
+| uv | 停止服务后执行 `uv tool uninstall zotero-pdf2zh-pro` |
+
+移除插件不会自动卸载本地服务。

@@ -1,0 +1,71 @@
+---
+{
+  "title": "Windows 安装",
+  "description": "安装控制中心，启动本地翻译服务。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/windows.mdx",
+  "prev": {
+    "label": "安装前准备",
+    "link": "/zotero-pdf2zh-pro/guide/preparation/"
+  },
+  "next": {
+    "label": "安装 Zotero 插件",
+    "link": "/zotero-pdf2zh-pro/guide/installation/"
+  }
+}
+---
+
+<span id="2-windows-安装教程"></span>
+
+<span id="windows"></span>
+
+适用于 **Windows 10/11 x64**。首次安装需要联网下载 Python 和翻译依赖。
+
+<span id="第一步下载并打开安装器"></span>
+
+<span id="第二步选择安装位置并安装"></span>
+
+## 安装并启动
+
+1. [下载 Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)，双击打开。
+2. 选择安装位置，点击 **开始安装**。默认位置为 `%LOCALAPPDATA%\zotero-pdf2zh-pro`。
+3. 完成后点击 **完成并启动服务**。
+
+![选择安装位置后点击开始安装](/zotero-pdf2zh-pro/assets/guide/windows-installer.webp)
+
+看到 **翻译服务已就绪**，继续[安装 Zotero 插件](/zotero-pdf2zh-pro/guide/installation/)。
+
+![控制中心显示翻译服务已就绪](/zotero-pdf2zh-pro/assets/guide/windows-service-ready.webp)
+
+<span id="第三步保持服务运行并安装插件"></span>
+
+## 日常使用
+
+- 关闭窗口或退出控制中心，已运行的服务仍会继续；需要停止时点击 **停止服务**。
+- 登录自启默认开启，可在 **常规设置**中关闭。
+- 翻译时保持服务运行；安装或更新前先等待当前任务结束。
+
+<span id="如果控制中心打不开"></span>
+
+## 安装失败或打不开
+
+<details>
+<summary>查看处理方法</summary>
+
+| 问题 | 处理 |
+| --- | --- |
+| 下载失败 | 检查网络，在控制中心查看“日志与诊断”后重试 |
+| 8890 端口被占用 | 检查是否已运行另一份服务，避免重复启动 |
+| 旧版提示缺少 DLL | 重新下载上方 EXE 安装器，直接修复或升级，无需先卸载 |
+| SmartScreen 提示风险 | 当前 EXE 未签名；核对来源和 [Release](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest) 中的 SHA-256 |
+
+</details>
+
+<details>
+<summary>旧版升级与手动恢复</summary>
+
+同版本安装可修复，高版本可升级，不能降级；配置、数据和自启选择会保留。
+从 v1.8.2 或更早版本升级时，先等翻译结束，再从旧控制中心停止服务，然后运行新安装器。
+
+界面仍无法打开时，查看 [Windows 恢复说明](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/scripts/windows/README.txt)，使用安装目录 `bin` 下的 `install.cmd`、`start-server.cmd` 或 `view-log.cmd`。
+
+</details>

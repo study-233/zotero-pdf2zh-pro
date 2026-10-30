@@ -1,0 +1,43 @@
+---
+{
+  "title": "使用 uv 手动运行",
+  "description": "通过 uv 安装，使用终端运行本地服务。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/uv.mdx",
+  "prev": {
+    "label": "安装前准备",
+    "link": "/zotero-pdf2zh-pro/guide/preparation/"
+  },
+  "next": {
+    "label": "安装 Zotero 插件",
+    "link": "/zotero-pdf2zh-pro/guide/installation/"
+  }
+}
+---
+
+<span id="备用方式使用-uv-手动运行"></span>
+
+<span id="uv"></span>
+
+适合不使用控制中心或 Homebrew 的用户。先按 [uv 官方说明](https://docs.astral.sh/uv/getting-started/installation/)安装 uv。
+
+## 安装与启动
+
+```bash
+uv tool install --python 3.13 zotero-pdf2zh-pro
+uv tool update-shell
+```
+
+重新打开终端，再执行：
+
+```bash
+zotero-pdf2zh-pro
+```
+
+打开 [健康检查](http://127.0.0.1:8890/health)，返回 `"status":"ok"` 后继续[安装 Zotero 插件](/zotero-pdf2zh-pro/guide/installation/)。
+
+## 保持服务运行
+
+这是前台运行方式，**翻译时不要关闭终端**；按 `Ctrl+C` 停止。
+启动前停止已有的 Homebrew 或其他服务，避免争用 8890 端口。
+
+命令找不到时，重开终端并用 `uv tool list` 检查安装结果。更新与卸载见[维护教程](/zotero-pdf2zh-pro/guide/maintenance/)。

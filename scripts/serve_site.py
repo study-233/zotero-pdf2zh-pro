@@ -28,8 +28,9 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=8895)
+    parser.add_argument('--directory', type=Path, default=ROOT / 'dist/site')
     args = parser.parse_args()
-    handler = partial(Handler, directory=str(ROOT / 'dist/site'))
+    handler = partial(Handler, directory=str(args.directory.resolve()))
     server = ThreadingHTTPServer(('127.0.0.1', args.port), handler)
     print(f'Preview: http://127.0.0.1:{args.port}{BASE}', flush=True)
     server.serve_forever()

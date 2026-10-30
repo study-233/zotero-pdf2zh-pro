@@ -1,0 +1,38 @@
+---
+{
+  "title": "安装前准备",
+  "description": "先装本地服务，再装插件，最后测试翻译来源。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/preparation.mdx"
+}
+---
+
+<span id="1-安装前准备"></span>
+
+<span id="quick-start"></span>
+
+首次使用需要 **Zotero、插件、本地服务和翻译来源**。
+
+<span id="需要安装哪些东西"></span>
+
+## 准备这四项
+
+| 项目 | 如何准备 |
+| --- | --- |
+| Zotero 8–10 | 从 [Zotero 官网](https://www.zotero.org/download/)安装 |
+| 本地服务 | 按 [Windows](/zotero-pdf2zh-pro/guide/windows/) 或 [macOS](/zotero-pdf2zh-pro/guide/macos/) 教程安装；无需自行安装 Python |
+| Zotero 插件 | 下载 XPI 后[从文件安装](/zotero-pdf2zh-pro/guide/installation/) |
+| 翻译来源 | 准备 API Key，或使用已有的 [ChatGPT 套餐 / 本地模型](/zotero-pdf2zh-pro/guide/api-configuration/) |
+
+插件和本地服务都要安装。Linux / Docker 用户查看[进阶部署](/zotero-pdf2zh-pro/guide/advanced/)。
+
+<span id="两种地址不要填反"></span>
+
+## 地址与费用
+
+- **本地服务地址**：`http://127.0.0.1:8890`，填写在插件的“服务端连接”中。
+- **API 地址**：由模型服务商提供，填写在翻译配置中。两者不能混用。
+
+PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，并使用其额度。
+
+> [!TIP]
+> 第一次用一篇较短、能选中文字的 PDF 测试。保持“禁用术语提取”开启，可减少额外 token 消耗。

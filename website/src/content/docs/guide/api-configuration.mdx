@@ -1,0 +1,96 @@
+---
+{
+  "title": "配置翻译来源",
+  "description": "添加 API 或 ChatGPT 套餐配置，测试后启用。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/api-configuration.mdx"
+}
+---
+
+<span id="5-配置翻译-api"></span>
+
+<span id="api-configuration"></span>
+
+在 **设置 → zotero-pdf2zh-pro → 翻译配置** 中点击 **添加翻译配置**。已有配置时，点击 **管理配置 → ＋新增**。
+
+<span id="新增第一个配置"></span>
+
+<span id="填写-api-配置"></span>
+
+## 使用 API Key
+
+1. 选择平台，填写服务商提供的 **API Key** 和 **API 地址**。有预设地址时可直接使用。
+2. 点击 **获取模型**并选择模型；不支持列表查询时，直接填写模型 ID。
+3. 点击 **测试**。测试会发送一条短翻译请求，可能消耗少量额度。
+4. 成功后点击 **保存并使用**。
+
+![翻译配置中的 API Key、模型、API 地址和保存并使用按钮](/zotero-pdf2zh-pro/assets/guide/api-configuration.webp)
+
+**保存**仅保存编辑，**保存并使用**会切换当前来源。完成后[翻译第一篇 PDF](/zotero-pdf2zh-pro/guide/usage/)。
+
+<span id="使用-chatgpt-套餐登录"></span>
+
+## 使用 ChatGPT 套餐
+
+1. 在 **官方接口** 中选择 **ChatGPT（使用套餐）**。
+2. 点击 **使用 ChatGPT 登录**，在浏览器完成授权。
+3. 返回 Zotero，获取模型、测试并 **保存并使用**。
+
+不填写 API Key 或 API 地址，使用套餐额度。登录管理需要同一电脑上的原生服务，暂不支持 Docker 或远程登录向导。账号、用量与代理说明见 [ChatGPT 套餐指南](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/chatgpt-account.md)。
+
+<span id="接口类型与模型来源"></span>
+
+## 其他翻译来源
+
+| 来源 | 填写内容 |
+| --- | --- |
+| 自定义 OpenAI 兼容 | 服务商的地址、Key 和完整模型 ID |
+| Ollama | 本地模型地址和已安装的模型名，无需 Key |
+| Claude Code | 先在服务所在电脑登录；需要时在高级设置填写 CLI 路径 |
+| DeepL | 只填密钥，无需模型和 API 地址 |
+
+使用云端来源时，待译文本会发送给相应服务商，费用与可用模型以账号为准。
+
+<span id="使用-codex-登录配置"></span>
+
+<span id="api-地址怎么填"></span>
+
+<span id="高级设置协议和额外请求参数"></span>
+
+<span id="管理多个配置"></span>
+
+<span id="使用-codex-登录配置自-v181-起"></span>
+
+## 其他设置
+
+<details>
+<summary>API 地址如何填写？</summary>
+
+按服务商提供的地址原样填写，保留 `/v1` 或自定义前缀；插件不会自动补 `/v1`。
+完整的 `/chat/completions` 或 `/responses` 地址也可使用，手动选择的协议须与后缀一致。
+不要填写本地服务地址 `http://127.0.0.1:8890`。
+
+</details>
+
+<details>
+<summary>什么时候需要高级设置？</summary>
+
+通常保持默认：**自动（Responses 优先）**、**低推理 low**。服务商明确要求时再固定协议或修改推理设置；不支持 low 的渠道使用其可用默认设置，强制思考的模型不能关闭推理。
+
+“额外请求参数（JSON）”默认保留 `{}`。只添加服务商明确支持的字段；不能覆盖模型、翻译输入、工具或连接设置。旧配置保留原设置，更新后可以点击“应用推荐设置”。
+
+MiMo 套餐账号需填写套餐专用地址和对应 Key；智谱标准地址随 Chat / Responses 协议调整，旧配置应更新插件与服务后重新测试。各平台差异见[接口兼容说明](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/provider-audit-2026-10-03.md)。
+
+</details>
+
+<details>
+<summary>切换或迁移已有配置</summary>
+
+- 在“当前翻译配置”中选择后，仅影响后续新任务；已提交的批次沿用原配置。
+- 管理窗口中选择一行只是编辑它；点击“保存并使用”才切换。复制、置顶、删除在“⋯”菜单中。
+- 删除当前配置后需重新选择，不会自动改用其他平台。
+- 旧 Codex 配置已停用，需重新添加 ChatGPT 套餐配置；独立选段翻译也要检查所选来源。
+- 显示“需重新配置”或“请选择配置”时，重新选择平台并测试。旧配置备份可能包含密钥，不要公开分享。
+
+升级影响和备份说明见[更新与迁移](/zotero-pdf2zh-pro/guide/maintenance/)。
+
+</details>

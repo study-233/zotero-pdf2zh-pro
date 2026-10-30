@@ -31,7 +31,7 @@ class Page(HTMLParser):
             self.errors.append('Image has no alt text')
 
 
-def check(output=OUTPUT, base=DEFAULT_BASE):
+def check(output=OUTPUT, base=DEFAULT_BASE, search_index='search-index.json'):
     pages = {path: Page(path.read_text(encoding='utf-8')) for path in output.rglob('*.html')}
     errors = []
 
@@ -59,8 +59,9 @@ def check(output=OUTPUT, base=DEFAULT_BASE):
         source_url = base + label
         for url in page.links:
             link_target(url, source_url, label)
-    for record in json.loads((output / 'search-index.json').read_text(encoding='utf-8')):
-        link_target(record['url'], base, 'search-index.json')
+    records = json.loads((output / search_index).read_text(encoding='utf-8')) if search_index else []
+    for record in records:
+        link_target(record['url'], base, search_index)
         if not record['text'].strip():
             errors.append('Empty search record')
     for path in output.rglob('*.css'):

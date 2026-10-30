@@ -1,0 +1,171 @@
+{
+  "repository": "https://github.com/usememos/dotcom",
+  "commit": "e83489a13b30f89e6782510c408cc1cb319de6bd",
+  "files": [
+    {
+      "path": "src/features/marketing/components/memo-hero-mock.tsx",
+      "sha": "89c8a56d61c318e012d2a520f7d5b8b1ec2c1828",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/memo-hero-mock.tsx"
+    },
+    {
+      "path": "package.json",
+      "sha": "17e8d9d24aa19f587f46ffab40da452c7b9cf520",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/package.json"
+    },
+    {
+      "path": "src/app/global.css",
+      "sha": "14de4052f7fec38239e3029cd1fcb7667c8d990f",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/app/global.css"
+    },
+    {
+      "path": "src/app/typeset.css",
+      "sha": "27ad4ca4e7e75d3af029dcf18120b0a615d2f935",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/app/typeset.css"
+    },
+    {
+      "path": "DESIGN_SYSTEM.md",
+      "sha": "9177ef6b29a3e564d7261c654b07f869a0194a16",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/DESIGN_SYSTEM.md"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha": "10ad6a85f1934afd67f9b458a6e3a0959626c991",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/pnpm-lock.yaml"
+    },
+    {
+      "path": "src/features/marketing/components/site-header.tsx",
+      "sha": "2b5eb58654b77d48b1403436905985c5fe71637f",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/site-header.tsx"
+    },
+    {
+      "path": "src/features/marketing/components/hero-section.tsx",
+      "sha": "30213225e0385ce720d9e409428b283b5e5043fa",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/hero-section.tsx"
+    },
+    {
+      "path": "src/features/marketing/components/home-hero.module.css",
+      "sha": "a87ec2a002afb3fed70d8185f3b2ee4621609ac5",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/home-hero.module.css"
+    },
+    {
+      "path": "src/features/marketing/components/chapter-header.tsx",
+      "sha": "6d8a9a140cf99ff316e73c17ebc911aec232015f",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/chapter-header.tsx"
+    },
+    {
+      "path": "src/features/marketing/components/footer.tsx",
+      "sha": "1b9cab6a2e42ad59401813ec8205388e0c3407e0",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/footer.tsx"
+    },
+    {
+      "path": "src/features/marketing/components/marketing-page.tsx",
+      "sha": "224f732b004f4a83c936430a21360f2b99ee565c",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/marketing-page.tsx"
+    },
+    {
+      "path": "src/features/marketing/components/marketing-site-layout.tsx",
+      "sha": "fe3e67af57c34e37bc55e8f550db18633f8e2016",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/marketing-site-layout.tsx"
+    },
+    {
+      "path": "src/features/marketing/components/home-own-command.tsx",
+      "sha": "8641b1abd7b8cf57482740d354b3ed408fc8027c",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/home-own-command.tsx"
+    },
+    {
+      "path": "src/features/marketing/components/home-faq.module.css",
+      "sha": "f0cf93e5b87709f3864817ab882586b28aba751c",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/home-faq.module.css"
+    },
+    {
+      "path": "src/features/marketing/components/faq-disclosure.tsx",
+      "sha": "c964c29603fe425c4fc1675de3da5187f9c2c20d",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/components/faq-disclosure.tsx"
+    },
+    {
+      "path": "src/features/editorial/components/editorial-index.tsx",
+      "sha": "12997d160593523433be4b2547c951629a2dc224",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/editorial/components/editorial-index.tsx"
+    },
+    {
+      "path": "src/features/docs/components/docs-sidebar-layout.tsx",
+      "sha": "7bd88f97c346c5413ab26f9a65024ed4eb00137d",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/docs/components/docs-sidebar-layout.tsx"
+    },
+    {
+      "path": "src/features/editorial/components/changelog-header.tsx",
+      "sha": "8eccbd9483e743207dfc567d6158a84fc380b03d",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/editorial/components/changelog-header.tsx"
+    },
+    {
+      "path": "src/features/editorial/components/editorial-article-body.tsx",
+      "sha": "576921a219008152450712a5f6c3c3da1fc6a684",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/editorial/components/editorial-article-body.tsx"
+    },
+    {
+      "path": "src/features/editorial/components/changelog-footer.tsx",
+      "sha": "52c041c408699066110ba01c07a916530abca121",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/editorial/components/changelog-footer.tsx"
+    },
+    {
+      "path": "src/features/docs/components/docs-article-body.tsx",
+      "sha": "eb8612b95a6fdb4086f01b23e323022d728d503f",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/docs/components/docs-article-body.tsx"
+    },
+    {
+      "path": "src/app/(public)/docs/fumadocs-theme.css",
+      "sha": "1d662ee2367304afebeef5c43fe5536ba12b6c04",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/app/(public)/docs/fumadocs-theme.css"
+    },
+    {
+      "path": "scripts/generate-fumadocs-scoped-css.mjs",
+      "sha": "2cc0ba183a87920f945e3f6055b991f37a81d85a",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/scripts/generate-fumadocs-scoped-css.mjs"
+    },
+    {
+      "path": "src/features/docs/components/page-actions.tsx",
+      "sha": "6c53ac0dce7f079bb432234d96c068143714db7a",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/docs/components/page-actions.tsx"
+    },
+    {
+      "path": "src/shared/lib/use-copy-to-clipboard.ts",
+      "sha": "e0e358b306a9ef6116f2b7fc67d24683fa57fa13",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/shared/lib/use-copy-to-clipboard.ts"
+    },
+    {
+      "path": "src/shared/ui/button.tsx",
+      "sha": "edc05e574657d88732a3df00e375f1488027bdb5",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/shared/ui/button.tsx"
+    },
+    {
+      "path": "src/shared/lib/utils.ts",
+      "sha": "365058cebd7d2bdb327ca1c081b16e4937e11050",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/shared/lib/utils.ts"
+    },
+    {
+      "path": "src/shared/ui/theme-toggle.tsx",
+      "sha": "3da5aaff6d7eae4c334711ef6c70560b46b1fb95",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/shared/ui/theme-toggle.tsx"
+    },
+    {
+      "path": "src/shared/ui/github-icon.tsx",
+      "sha": "eea9e54cd4a901a6c01adadfc3d8fe801c6e5ba8",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/shared/ui/github-icon.tsx"
+    },
+    {
+      "path": "src/shared/ui/breadcrumbs.tsx",
+      "sha": "9953f80f0003c684d618af55d560cb131b578070",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/shared/ui/breadcrumbs.tsx"
+    },
+    {
+      "path": "src/shared/ui/dropdown-menu.tsx",
+      "sha": "b0d786a1a4f6add98890b6aa6fc7538bd8d88c04",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/shared/ui/dropdown-menu.tsx"
+    },
+    {
+      "path": "src/features/marketing/hooks/use-github-star-count.ts",
+      "sha": "2773358a6f1f0e9f0f603d3ec07cd6e292c27a02",
+      "url": "https://github.com/usememos/dotcom/blob/e83489a13b30f89e6782510c408cc1cb319de6bd/src/features/marketing/hooks/use-github-star-count.ts"
+    }
+  ]
+}

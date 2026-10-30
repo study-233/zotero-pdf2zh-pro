@@ -1,0 +1,25 @@
+{
+  "title": "使用教程",
+  "pages": [
+    "---开始使用---",
+    "preparation",
+    "windows",
+    "macos",
+    "installation",
+    "api-configuration",
+    "usage",
+    "---日常使用---",
+    "translation-options",
+    "task-management",
+    "selection-translation",
+    "export",
+    "glossary",
+    "---维护与排错---",
+    "maintenance",
+    "troubleshooting",
+    "diagnostics",
+    "---进阶部署---",
+    "uv",
+    "advanced"
+  ]
+}

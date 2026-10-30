@@ -1,0 +1,42 @@
+---
+{
+  "title": "导出 Markdown、JSON、TXT",
+  "description": "把 PDF 内容导出为 Markdown、JSON 或 TXT。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/export.mdx"
+}
+---
+
+<span id="export"></span>
+
+将 PDF 中的内容保存为文件，**不调用翻译模型**。原文和已有译文都能导出。
+
+## 导出文件
+
+1. 保持本地服务运行，在 Zotero 中选中 **一个本地 PDF 附件**。
+2. 右键选择 **zotero-pdf2zh-pro → 导出文件**。
+3. 选择 **Markdown…、JSON… 或 TXT…**，指定保存位置。
+
+![在导出文件子菜单中选择 Markdown、JSON 或 TXT](/zotero-pdf2zh-pro/assets/guide/export-menu.webp)
+
+看到 **已保存**提示后，到所选目录打开文件。
+关闭进度窗口或点击“取消”会停止导出；原 PDF 与批注不会被修改。
+
+## 选择附件与格式
+
+- **只要译文**：选择单语译文 PDF。
+- **需要原文**：选择原始 PDF。
+- **双语 PDF**：导出该附件中的两种语言。
+
+Markdown 适合笔记，JSON 适合程序处理，TXT 只保留纯文本。
+
+## 无法导出
+
+| 提示 | 处理 |
+| --- | --- |
+| 未包含可提取文字 | 扫描件先做 OCR，再导出带文字层的 PDF |
+| 无法读取 PDF | 确认附件已下载、未损坏、未加密 |
+| 服务不支持导出 | [更新本地服务](/zotero-pdf2zh-pro/guide/maintenance/)，只更新插件不够 |
+| 文件过大或解析超时 | 单文件上限 512 MiB，解析限时 5 分钟；减少页数后重试 |
+| 无法保存 | 检查目标文件夹权限和磁盘空间 |
+
+服务一次处理一项导出；忙碌时等当前操作完成再试。

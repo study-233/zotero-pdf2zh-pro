@@ -1,0 +1,21 @@
+{
+  "product": "Zotero",
+  "version": "10.0.6",
+  "assets": [
+    {
+      "file": "zotero-mark.png",
+      "source": "zotero.exe / Windows small application icon (ExtractIconEx)",
+      "sha256": "2e9b20ef7fe15b7fe1d0273df0c498c1776141ed5e5746980cfedcf450f5ac2a"
+    },
+    {
+      "file": "pdf-light.svg",
+      "source": "chrome/skin/default/zotero/item-type/16/light/attachment-pdf.svg",
+      "sha256": "33b3e79192397d79afeca4f6b9dfa0fa9655eafab3c21b9138fdc9bf50c77f0f"
+    },
+    {
+      "file": "pdf-dark.svg",
+      "source": "chrome/skin/default/zotero/item-type/16/dark/attachment-pdf.svg",
+      "sha256": "9bc507492d560c8a75c020530d4c4d2f4d96fcbb1410b11066a0d473151366b0"
+    }
+  ]
+}

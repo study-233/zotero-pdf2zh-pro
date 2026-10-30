@@ -1,0 +1,14 @@
+@import './fumadocs-scoped.css';
+@import './fumadocs-theme.css';
+/* The same scoped Fumadocs stylesheet used upstream; Chinese reading scale. */
+#nd-docs-layout { --fd-layout-width:87.5rem; }
+#nd-docs-layout .typeset-docs { --typeset-size:1.0625rem;--typeset-leading:1.85; }
+#nd-docs-layout h1 { font-size:2.25rem;line-height:1.35; }
+#nd-sidebar a { font-size:.9375rem; }
+.typeset-docs :where(aside.docs-callout) { border-left:3px solid var(--primary);padding:.75rem 1rem;background:var(--muted);border-radius:4px;margin-block:1.5rem; }
+.typeset-docs .callout-label { margin:0;font-weight:600; }
+.typeset-docs [data-rmiz] { max-width:100%; }
+.typeset-docs [data-rmiz-btn-zoom] { display:block;opacity:0; }
+.typeset-docs [data-rmiz]:focus-within img { outline:2px solid var(--primary);outline-offset:4px; }
+.typeset-docs img[src$="/selection-word.webp"],
+.typeset-docs img[src$="/selection-sentence.webp"] { max-width:min(100%,30rem); }

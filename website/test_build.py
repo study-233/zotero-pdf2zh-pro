@@ -189,9 +189,10 @@ class WebsiteTests(unittest.TestCase):
         self.assertIn('<span class="code-language">Bash</span>', macos)
         self.assertIn('<span class="tok-nf">brew</span>', macos)
         self.assertIn('<span class="tok-na">--version</span>', macos)
-        api = (self.output / 'guide/api-configuration/index.html').read_text(encoding='utf-8')
-        self.assertIn('<span class="code-language">JSON</span>', api)
-        self.assertIn('<span class="tok-mi">4096</span>', api)
+        # Tutorial copy need not retain an advanced JSON example to test rendering.
+        example = self.site.md.render('```json\n{"max_tokens": 4096}\n```\n')
+        self.assertIn('<span class="code-language">JSON</span>', example)
+        self.assertIn('<span class="tok-mi">4096</span>', example)
 
     def test_highlighting_preserves_copyable_source_and_escapes_unknown_languages(self):
         for language, source in [('bash', 'brew tap study-233/formula\n'),

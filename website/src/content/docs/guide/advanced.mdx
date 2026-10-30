@@ -1,0 +1,43 @@
+---
+{
+  "title": "Linux 与 Docker",
+  "description": "在 Linux 或 Docker 中运行翻译服务。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/advanced.mdx",
+  "prev": {
+    "label": "安装前准备",
+    "link": "/zotero-pdf2zh-pro/guide/preparation/"
+  },
+  "next": {
+    "label": "安装 Zotero 插件",
+    "link": "/zotero-pdf2zh-pro/guide/installation/"
+  }
+}
+---
+
+<span id="进阶linux--docker-部署"></span>
+
+<span id="advanced"></span>
+
+Linux 可使用 [uv](/zotero-pdf2zh-pro/guide/uv/)；已有 Docker 环境时按以下步骤运行。
+
+<span id="linux--docker"></span>
+
+## Docker 启动
+
+在本仓库根目录（包含 `compose.yaml`）执行：
+
+```bash
+docker compose up --build -d
+curl -fsS http://127.0.0.1:8890/health
+```
+
+返回 `"status":"ok"` 后，在插件中填写可访问的服务地址。
+
+## 端口与数据
+
+- 数据和缓存使用 `compose.yaml` 中的卷映射保存，更新或重建前保留数据卷。
+- 仅本机使用时，可将端口绑定为 `127.0.0.1:8890:8890`。
+- 容器不会继承宿主机证书信任库；私有 CA 需要在容器中配置。
+- ChatGPT 套餐登录向导暂不支持 Docker。
+
+服务配置见[服务端说明](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/README.md)，源码开发见[开发维护笔记](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/docs/development-notes.md)。

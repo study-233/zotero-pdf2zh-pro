@@ -1,0 +1,291 @@
+.reader {
+  --reader-bar: #f5f5f5;
+  --reader-tools: #fafafa;
+  --reader-active: #e4e4e4;
+  --reader-border: #d9d9d9;
+  --reader-ink: #333;
+  --reader-icon: #858585;
+  --reader-canvas: #e9e9e9;
+  --reader-paper: #fff;
+  container-type: inline-size;
+  min-width: 0;
+  color: var(--reader-ink);
+  background: var(--reader-bar);
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+
+:global(.dark) .reader {
+  --reader-bar: #1e1e1e;
+  --reader-tools: #262626;
+  --reader-active: #414141;
+  --reader-border: #3a3a3a;
+  --reader-ink: #d1d1d1;
+  --reader-icon: #939393;
+  --reader-canvas: #262626;
+  --reader-paper: #2e3440;
+}
+
+.chrome {
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+}
+
+.chrome svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke-width: 1.6;
+  color: var(--reader-icon);
+}
+
+.menuBar,
+.tabs,
+.toolbar {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--reader-border);
+}
+
+.menuBar {
+  height: 29px;
+  padding: 0 10px 0 3px;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.logo {
+  flex-shrink: 0;
+  margin-inline: 5px 7px;
+}
+
+.menuItems,
+.windowControls,
+.tabActions,
+.toolGroup,
+.readingTools {
+  display: flex;
+  align-items: center;
+}
+
+.menuItems {
+  gap: 18px;
+}
+
+.windowControls {
+  margin-left: auto;
+  gap: 24px;
+  opacity: 0.65;
+}
+
+.windowControls svg {
+  width: 11px;
+  height: 11px;
+}
+
+.tabs {
+  height: 34px;
+  gap: 14px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.library {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.library svg {
+  color: #4077e6;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 246px;
+  min-width: 0;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 5px;
+  background: var(--reader-active);
+}
+
+.tab img {
+  flex-shrink: 0;
+}
+
+.tabTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab > svg {
+  margin-left: auto;
+  width: 12px;
+  height: 12px;
+}
+
+.pdfDark {
+  display: none;
+}
+
+:global(.dark) .pdfLight {
+  display: none;
+}
+
+:global(.dark) .pdfDark {
+  display: block;
+}
+
+.tabActions {
+  gap: 18px;
+  margin-left: auto;
+}
+
+.toolbar {
+  height: 36px;
+  padding: 0 10px;
+  gap: 10px;
+  background: var(--reader-tools);
+  font-size: 11px;
+}
+
+.toolGroup {
+  gap: 10px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--reader-border);
+  padding-right: 10px;
+}
+
+.pagination {
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.pageInput {
+  padding: 3px 9px;
+  background: var(--reader-bar);
+  border-radius: 4px;
+}
+
+.readingTools {
+  gap: 10px;
+  margin-left: auto;
+}
+
+.versions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.versions svg {
+  width: 11px;
+}
+
+.viewport {
+  height: clamp(19rem, 34vw, 31rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+  background: var(--reader-canvas);
+  scrollbar-width: thin;
+  scrollbar-color: var(--reader-icon) transparent;
+}
+
+.viewport:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -3px;
+}
+
+.pages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 48rem;
+  margin-inline: auto;
+}
+
+.page {
+  isolation: isolate;
+  background: var(--reader-paper);
+  box-shadow: 0 1px 5px #00000024;
+}
+
+.paper {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+:global(.dark) .paper {
+  filter: invert(1) hue-rotate(180deg);
+  mix-blend-mode: screen;
+  opacity: 0.78;
+}
+
+@container (max-width: 720px) {
+  .annotations {
+    display: none;
+  }
+
+  .library {
+    width: 90px;
+  }
+}
+
+@container (max-width: 480px) {
+  .menuBar {
+    gap: 3px;
+    padding-right: 8px;
+  }
+
+  .menuItems {
+    gap: 10px;
+  }
+
+  .windowControls {
+    gap: 10px;
+  }
+
+  .tabs {
+    gap: 8px;
+  }
+
+  .library {
+    display: none;
+  }
+
+  .tab {
+    flex: 1;
+  }
+
+  .tabActions {
+    gap: 8px;
+  }
+
+  .secondaryTool,
+  .versions {
+    display: none;
+  }
+
+  .toolbar {
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .toolGroup,
+  .readingTools {
+    gap: 8px;
+  }
+
+  .toolGroup {
+    padding-right: 8px;
+  }
+}

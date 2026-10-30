@@ -1,0 +1,99 @@
+---
+{
+  "title": "划词精读",
+  "description": "选词查义，选句翻译，收藏并回到原文。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/selection-translation.mdx"
+}
+---
+
+<span id="reader-划词与翻译记忆"></span>
+
+<span id="selection-translation"></span>
+
+在 Zotero 中打开能选中文字的 **原始 PDF**，划选即可查询。查词无需本地服务；选句翻译和语境解释需要服务运行。
+
+<span id="查单词与短语"></span>
+
+<span id="翻译句子与段落"></span>
+
+## 查词与翻译
+
+1. 划选英文单词，默认打开“词典”；句子与段落默认打开“翻译”。
+2. 查看释义或译文，点击“复制”保存；需要单词译文时切到“翻译”。
+3. 在页签下方切换词典或翻译来源。2–3 个英文词也可切到“词典”查短语。
+
+![划选 attention 后显示有道释义、发音、例句和收藏按钮](/zotero-pdf2zh-pro/assets/guide/selection-word.webp)
+
+![划选论文中的句子，使用必应显示中文译文](/zotero-pdf2zh-pro/assets/guide/selection-sentence.webp)
+
+若只想手动触发，在 **设置 → 选文翻译 → 触发方式**选择“点击翻译”。
+
+<span id="个人词典与语境解释"></span>
+
+## 选择来源
+
+- **词典**：有道、必应、ECDICT 或柯林斯。离线词典未收录时，才查询所设在线后备。
+- **选段翻译**：默认必应，无需 Key；也可跟随全文模型或独立选择已保存的配置。
+- **语境解释 / AI 释义**：按需调用所选模型。使用必应时，在高级设置单独选择“AI 增强模型”。
+
+模型翻译与语境解释可能发送当前页及相邻页的相关上下文，并消耗模型额度；必应只发送选文与语言。
+查询失败会提示重试，不会自动改用付费模型。
+
+<span id="浮窗与右侧面板"></span>
+
+<span id="收藏与论文出处"></span>
+
+## 收藏与阅读位置
+
+点击词条旁的星标收藏，在右侧 **划词收藏**中搜索、复制或“回到原文”。
+收藏保留论文出处，不额外调用模型；**本地保存，不随 Zotero 云同步**。备份用收藏菜单的 JSON 导出。
+
+浮窗标题栏可以拖动，也可切到阅读器右侧面板。点击固定可保留浮窗；`Esc` 关闭浮窗，侧栏用“更多 → 清空结果”。
+
+<span id="下载与管理词典"></span>
+
+<span id="缓存备份与使用范围"></span>
+
+## 更多设置
+
+<details>
+<summary>触发方式、显示位置与翻译来源</summary>
+
+![在选文翻译设置中选择自动显示、浮窗和词典来源](/zotero-pdf2zh-pro/assets/guide/selection-settings.webp)
+
+</details>
+
+<details>
+<summary>修改原文、重新翻译与流式输出</summary>
+
+打开 **原文 · 编辑后重译**修正断行或 OCR 错字，再点击“翻译”或按 `Ctrl/Cmd + Enter`。
+需要原来的文字时选择“恢复划选原文”。修订后无法匹配论文上下文时，重新划选再做语境解释。
+
+“重新翻译”使用当前来源重新请求。支持的模型默认流式显示；“停止生成”保留已有文字供复制，但不作为成功缓存。
+不支持流式时，可在“更多”中选择“使用普通模式重试”。
+
+</details>
+
+<details>
+<summary>个人词典与柯林斯词库</summary>
+
+词典确实未收录时，可按设置用 AI 补充释义；接口错误不会触发自动补充。
+生成的释义标注模型，保存到个人词典后可跨论文复用；可在高级设置关闭“缺词时自动补充释义”。
+
+柯林斯词库在 **选文翻译 → 高级设置**点击“下载并启用”；也支持检查更新与从文件导入。
+下载失败保留旧词库；退出 Zotero 会中止下载。数据来源与许可见[词典说明](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/plugin/addon/content/dictionaries/NOTICE.md)。
+
+</details>
+
+<details>
+<summary>收藏与备份注意事项</summary>
+
+收藏菜单支持 JSON 导入和 JSON/CSV 导出；导入合并保留本地冲突记录。
+“加入术语表”是独立操作，单纯收藏不会改变全文译法。
+收藏库损坏时先备份原文件与 `.bak`，恢复主文件后重启，不要直接清空。
+
+清除翻译缓存不删除个人词典、全文记忆或收藏。迁移时备份 Zotero 数据目录的 `pdf2zhpro/`，并在停止服务后备份服务数据目录中的 `selection-cache.sqlite3`、`translation-memory.sqlite3`。这些数据不自动跨电脑同步。
+
+当前不支持扫描件划词、译文附件反查和精确词级对齐。记忆查询失败先处理错误，不会自动转为外部请求。更多机制见[服务端说明](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/README.md#reading-memory-and-short-text)。
+
+</details>
