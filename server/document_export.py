@@ -96,7 +96,7 @@ def install_document_export_routes(app, directory, diagnostic_store, save_pdf_in
                 return error("export_invalid_pdf", 400)
             if cancel.is_set():
                 raise asyncio.CancelledError
-            output = workspace / f"export.{format}"
+            output = workspace / {"md": "export.md", "json": "export.json", "txt": "export.txt"}[format]
             store.record("document_export_started", identity)
             result = run_translation(
                 {"input_path": str(source), "output_path": str(output), "format": format}, identity["taskId"],

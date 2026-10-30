@@ -1,4 +1,5 @@
 import asyncio
+import json
 import multiprocessing
 import os
 import signal
@@ -84,6 +85,32 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(progress)
         pid=next(row['pid'] for row in store.memory if row['event']=='worker_started')
         self.assertFalse(psutil.pid_exists(pid))
+
+    def test_lease_paths_do_not_use_task_identity_and_are_cleaned(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            leases = root / 'diagnostics'
+            outside = root / 'outside.json'
+            outside.write_text('preserve')
+            identity = {'taskId': 'probe/../../outside', 'attempt': '../attempt',
+                        'serverInstanceId': 'test'}
+            observed = []
+
+            def progress(_):
+                paths = list(leases.glob('lease-*.json'))
+                self.assertEqual(len(paths), 1)
+                observed.append(json.loads(paths[0].read_text()))
+                self.assertNotIn('probe', paths[0].name)
+
+            result = run_translation({}, identity['taskId'], cancel_event=threading.Event(),
+                progress_callback=progress, metrics_callback=lambda _: None,
+                runtime_callback=lambda _: None, store=DiagnosticStore(), identity=identity,
+                lease_dir=leases, target=success)
+            self.assertEqual(result.files, {})
+            self.assertEqual(observed[0]['taskId'], identity['taskId'])
+            self.assertEqual(observed[0]['attempt'], identity['attempt'])
+            self.assertEqual(list(leases.iterdir()), [])
+            self.assertEqual(outside.read_text(), 'preserve')
 
     def test_configuration_and_final_request_counts_arrive_before_worker_exit(self):
         _, _, progress, store = self.execute(diagnostic_worker)

@@ -3,16 +3,19 @@
 import copy
 import re
 from urllib.parse import urlsplit
-import hashlib
+import hmac
+import secrets
 import threading
 import time
 
 _catalog = {}
 _catalog_lock = threading.Lock()
+_catalog_secret = secrets.token_bytes(32)
 
 
 def _catalog_key(endpoint, key):
-    return (endpoint.rstrip("/"), hashlib.sha256((key or "").encode()).hexdigest())
+    # Ephemeral cache identity: do not retain API keys or reusable plain hashes.
+    return (endpoint.rstrip("/"), hmac.digest(_catalog_secret, (key or "").encode(), "sha256").hex())
 
 
 def remember_capabilities(endpoint, key, entries):

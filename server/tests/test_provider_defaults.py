@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 import httpx
 import openai
+from pdf2zh_pro.translator import reasoning_mode
 
 import test_openai_protocol as protocols
 from test_provider_contracts import runtime
@@ -160,6 +161,16 @@ class ProviderDefaultsTests(unittest.TestCase):
         self.assertIsNone(cached_capabilities("future", base + "/other", "KEY_A")["supportsReasoningOff"])
         engine = self.translator(lambda r: httpx.Response(200, json=protocols.response()), mode="default")
         self.assertNotIn("reasoning", engine._options("responses"))
+
+    def test_catalog_fingerprints_are_private_to_the_process(self):
+        base = "https://catalog-fingerprint.invalid/v1"
+        with patch.object(reasoning_mode, "_catalog_secret", b"a" * 32):
+            first = reasoning_mode._catalog_key(base, "SYNTHETIC_KEY")
+            self.assertEqual(first, reasoning_mode._catalog_key(base + "/", "SYNTHETIC_KEY"))
+            self.assertNotEqual(first, reasoning_mode._catalog_key(base, "ANOTHER_KEY"))
+        with patch.object(reasoning_mode, "_catalog_secret", b"b" * 32):
+            self.assertNotEqual(first, reasoning_mode._catalog_key(base, "SYNTHETIC_KEY"))
+        self.assertNotIn("SYNTHETIC_KEY", repr(first))
 
     def test_native_ollama_and_claude_controls(self):
         from pdf2zh_pro.translator.ollama import OllamaTranslator
