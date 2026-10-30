@@ -28,7 +28,7 @@
 | EditorialArticleBody | 接收既有 CHANGELOG 解析结果，保留原排版包裹 |
 | 根布局 | 同一 ThemeProvider；字体改为本地资源；替换站点元数据 |
 
-核心依赖按上游锁文件版本固定：Next 16.3.3、React 19.2.8、Tailwind 4.3.3、Fumadocs UI/Core 16.15.4、MDX 15.4.0。
+核心依赖以上游锁文件为基础固定：React 19.2.8、Tailwind 4.3.3、Fumadocs UI/Core 16.15.4、MDX 15.4.0。Next 从 16.3.3 升至 16.4.1，以包含上游安全修复。
 本项目只迁入公开站点所需模块，保留自己的内容、产品图、数据和部署子路径。
 
 ## 中文与产品适配
