@@ -164,11 +164,11 @@ class ProviderDefaultsTests(unittest.TestCase):
 
     def test_catalog_fingerprints_are_private_to_the_process(self):
         base = "https://catalog-fingerprint.invalid/v1"
-        with patch.object(reasoning_mode, "_catalog_secret", b"a" * 32):
+        with patch.object(reasoning_mode, "_catalog_salt", b"a" * 32):
             first = reasoning_mode._catalog_key(base, "SYNTHETIC_KEY")
             self.assertEqual(first, reasoning_mode._catalog_key(base + "/", "SYNTHETIC_KEY"))
             self.assertNotEqual(first, reasoning_mode._catalog_key(base, "ANOTHER_KEY"))
-        with patch.object(reasoning_mode, "_catalog_secret", b"b" * 32):
+        with patch.object(reasoning_mode, "_catalog_salt", b"b" * 32):
             self.assertNotEqual(first, reasoning_mode._catalog_key(base, "SYNTHETIC_KEY"))
         self.assertNotIn("SYNTHETIC_KEY", repr(first))
 

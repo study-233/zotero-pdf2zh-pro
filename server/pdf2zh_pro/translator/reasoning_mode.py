@@ -3,34 +3,36 @@
 import copy
 import re
 from urllib.parse import urlsplit
-import hmac
+import hashlib
 import secrets
 import threading
 import time
 
 _catalog = {}
 _catalog_lock = threading.Lock()
-_catalog_secret = secrets.token_bytes(32)
+_catalog_salt = secrets.token_bytes(32)
 
 
 def _catalog_key(endpoint, key):
-    # Ephemeral cache identity: do not retain API keys or reusable plain hashes.
-    return (endpoint.rstrip("/"), hmac.digest(_catalog_secret, (key or "").encode(), "sha256").hex())
+    # Stretch token fingerprints with an ephemeral salt; never retain credentials.
+    return (endpoint.rstrip("/"), hashlib.pbkdf2_hmac("sha256", (key or "").encode(), _catalog_salt, 600_000).hex())
 
 
 def remember_capabilities(endpoint, key, entries):
     details = {entry["id"]: model_capabilities(entry["id"], endpoint, entry)
                for entry in entries if isinstance(entry, dict) and isinstance(entry.get("id"), str) and entry["id"].strip()}
+    catalog_key = _catalog_key(endpoint, key)
     with _catalog_lock:
         if len(_catalog) >= 64:
             _catalog.pop(next(iter(_catalog)))
-        _catalog[_catalog_key(endpoint, key)] = (time.monotonic(), details)
+        _catalog[catalog_key] = (time.monotonic(), details)
     return details
 
 
 def cached_capabilities(model, endpoint, key):
+    catalog_key = _catalog_key(endpoint, key)
     with _catalog_lock:
-        cached = _catalog.get(_catalog_key(endpoint, key))
+        cached = _catalog.get(catalog_key)
         if cached and time.monotonic() - cached[0] < 600:
             return copy.deepcopy(cached[1].get(model) or model_capabilities(model, endpoint))
     return model_capabilities(model, endpoint)
