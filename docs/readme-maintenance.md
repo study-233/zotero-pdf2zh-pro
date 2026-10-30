@@ -9,20 +9,23 @@
 | 内容 | 维护位置 |
 | --- | --- |
 | 项目定位、核心能力、真实预览、快速开始、文档入口 | 根目录 README |
-| 安装图文、API 配置、完整操作、参数、更新卸载、故障排查 | [使用指南](user-guide.md) |
+| 安装、配置、使用与排错教程 | `website/src/content/docs/guide/*.mdx` 为正文源；[使用指南](user-guide.md)为自动生成的汇总 |
 | 开发环境、源码部署、测试与发布 | [开发维护笔记](development-notes.md) |
 | 插件文案、术语、布局和界面验收 | [插件文案与 UI 规范](ui-guidelines.md) |
 | 服务端接口与兼容性 | [服务端说明](../server/README.md) |
 | 单项机制、验收细节和数据来源 | `docs/` 下对应专题文档 |
 | 各版本变化 | [CHANGELOG](../CHANGELOG.md) |
 | 未实现的功能方向 | 首页 TODO |
-| 官网布局、导航、教程章节路由与样式 | `website/`；正文仍维护在本表对应的 Markdown 文档 |
+| 官网布局、导航、教程章节路由与样式 | `website/` |
 
 新功能先更新对应指南和更新记录。只有影响核心能力或首次使用路径时才补充首页，不在首页末尾追加专题教程、调试记录或版本公告。
 已有专题文档优先更新；首页只给出简短说明和准确入口，避免多处维护同一套细节。
 
-官网使用 `website/routes.json` 将使用指南的显式锚点映射为独立教程页。新增章节时同时更新路由；
-不在 HTML 模板中复制教程正文。官网更新记录直接读取 CHANGELOG，版本读取插件元数据。
+教程逐篇维护在 `website/src/content/docs/guide/`，使用 Markdown 兼容的 MDX 和 JSON 格式 frontmatter。
+修改后运行 `python scripts/sync_guide_docs.py`，生成 `docs/user-guide.md` 与 `docs/glossary-downloads.md`；不要手改这两份汇总。
+新增章节时同时更新 `website/routes.json`，保留章节与旧标题锚点；正文中不嵌入 JavaScript 或只供网页使用的组件，以保证汇总可读。
+构建用 `python scripts/sync_guide_docs.py --check` 检查内容是否同步。
+官网更新记录直接读取 CHANGELOG，版本读取插件元数据。
 修改官网后按[开发维护笔记](development-notes.md#官网开发与发布)执行构建与验证。
 
 ## 首页结构与篇幅

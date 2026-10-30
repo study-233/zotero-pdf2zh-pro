@@ -1,0 +1,23 @@
+/* Zotero content adaptations; upstream Memos tokens/layout remain in global.css. */
+:root { --font-inter:'Inter Variable','Noto Sans SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif; --font-display-serif:'Source Serif 4 Variable','Noto Serif SC','Source Han Serif SC',serif; }
+body { overflow-wrap:break-word; }
+html { scroll-padding-top:5rem; }
+button,a { -webkit-tap-highlight-color:transparent; }
+.skip-link { position:fixed;left:1rem;top:-5rem;z-index:100;border-radius:6px;padding:.75rem 1rem;background:var(--background);border:1px solid var(--border); }
+.skip-link:focus { top:1rem; }
+h1.font-serif,h2.font-serif { line-height:1.2;letter-spacing:-.035em; }
+.platform-tab { padding:1rem 0;font-size:1.0625rem;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted-foreground); }
+.platform-tab[aria-selected=true] { border-bottom-color:var(--foreground);color:var(--foreground);font-weight:600; }
+.download-row { display:flex;align-items:center;justify-content:space-between;gap:1.5rem;padding:2rem 0; }
+.download-row h3 { font-size:1.25rem;font-weight:600; }
+.download-row p { margin-top:.5rem;color:var(--muted-foreground);font-size:.9375rem; }
+.download-action { display:inline-flex;align-items:center;gap:.5rem;font-size:1rem;white-space:nowrap;text-decoration:underline;text-underline-offset:5px; }
+.download-action svg { width:18px;height:18px; }
+.typeset-docs { --typeset-body-size:1.0625rem; }
+.typeset details { border-block:1px solid var(--border);padding:1rem 0;margin-block:1.5rem; }
+.typeset summary { cursor:pointer;font-weight:600; }
+.typeset details[open] summary { margin-bottom:1rem; }
+.typeset img { max-width:100%;height:auto;border:1px solid var(--border);border-radius:8px; }
+.typeset :is(pre,table) { max-width:100%;overflow-x:auto; }
+@media(max-width:480px) { .download-row { align-items:flex-start;flex-direction:column;gap:1rem; } }
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *,*::before,*::after { transition-duration:0.01ms!important;animation-duration:0.01ms!important;animation-iteration-count:1!important; } }

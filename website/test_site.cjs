@@ -1,7 +1,18 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
-const {searchEntries, legacyTarget} = require('./static/site.js');
-const {speedFrontier, keyModels, hasUsdCost, costLabel} = require('./static/benchmark.js');
+const {readFileSync} = require('node:fs');
+const path = require('node:path');
+const {compileFunction} = require('node:vm');
+
+// These browser scripts retain their CommonJS test seam inside the ESM website package.
+function browserExports(relative) {
+  const filename = path.join(__dirname, relative);
+  const module = {exports: {}};
+  compileFunction(readFileSync(filename, 'utf8'), ['module'], {filename})(module);
+  return module.exports;
+}
+const {searchEntries, legacyTarget} = browserExports('./static/site.js');
+const {speedFrontier, keyModels, hasUsdCost, costLabel} = browserExports('./static/benchmark.js');
 
 const records = [
   {title:'Windows 安装', section:'服务启动', text:'配置 API 之前先启动本地服务。', url:'/project/guide/windows/#start'},

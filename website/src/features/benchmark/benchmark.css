@@ -1,0 +1,57 @@
+@import '../../../static/benchmark.css' layer(benchmark);
+
+/* Keep the verified chart geometry; share Next's semantic theme tokens. */
+:root:has(.benchmark-explorer) {
+  --bg: var(--background);
+  --panel: var(--background);
+  --raised: var(--secondary);
+  --line: var(--border);
+  --text: var(--foreground);
+  --benchmark-muted: var(--muted-foreground);
+  --accent: var(--primary);
+  --plot-grid: var(--border);
+  --font-benchmark: var(--font-inter);
+}
+
+.benchmark-explorer { padding: 0; font: 14px/1.5 var(--font-benchmark); color: var(--foreground); }
+.benchmark-explorer .workspace { border-radius: 8px; }
+.benchmark-explorer .source-badge { background: var(--secondary); border-color: var(--border); }
+.benchmark-explorer .model-legend button,
+.benchmark-explorer .hover-card-secondary strong { color: var(--foreground); }
+.benchmark-explorer .hover-card-configuration,
+.benchmark-explorer .hover-card-link { color: var(--muted-foreground); }
+.benchmark-explorer img { border: 0; border-radius: 0; }
+.benchmark-explorer button { cursor: pointer; }
+.benchmark-explorer :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.benchmark-explorer .benchmark-method p + p { margin-top: 1rem; }
+
+/* Site controls share neutral surfaces; the existing renderer owns plot geometry. */
+.benchmark-explorer .workspace { background: var(--background); border-color: var(--border); box-shadow: none; border-radius: 8px; }
+.benchmark-explorer .workspace-top { background: var(--secondary); padding-inline: 1rem; border-bottom-color: var(--border); }
+.benchmark-explorer .chart-tabs { box-shadow: none; gap: .25rem; }
+.benchmark-explorer .chart-tabs button { font-size: .8125rem; min-height: 48px; border-radius: 0; border: 0; border-bottom: 2px solid transparent; padding-inline: .75rem; background: transparent; color: var(--muted-foreground); }
+.benchmark-explorer .chart-tabs button[aria-selected='true'] { border-bottom-color: var(--primary); background: transparent; color: var(--foreground); }
+.benchmark-explorer .workspace-actions { gap: .5rem; }
+.benchmark-explorer .icon-button { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; }
+.benchmark-explorer .chart-toolbar { background: var(--background); border-color: var(--border); }
+.benchmark-explorer .segmented-control { border: 0; gap: 2px; background: var(--secondary); padding: 2px; border-radius: 8px; }
+.benchmark-explorer .segmented-control button { min-height: 28px; }
+.benchmark-explorer .segmented-control button[aria-pressed='true'] { background: var(--background); border-color: var(--border); box-shadow: none; color: var(--foreground); }
+.benchmark-explorer .model-legend button { border-radius: 8px; font-size: .75rem; }
+.benchmark-explorer .model-legend button[aria-pressed='false'] { opacity: .45; }
+.benchmark-explorer .benchmark-method { background: var(--background); border-color: var(--border); }
+.benchmark-explorer .benchmark-method summary { font-weight: 600; }
+.benchmark-explorer .data-table-wrap thead { background: var(--secondary); }
+.benchmark-explorer #model-comparison th, .benchmark-explorer #model-comparison td { border-color: var(--border); }
+.benchmark-explorer .chart-footer { background: var(--secondary); border-color: var(--border); }
+@media (max-width: 639px) {
+  .benchmark-explorer .workspace-top { padding-inline: .5rem; }
+  .benchmark-explorer .chart-tabs { gap: 0; }
+  .benchmark-explorer .chart-tabs button { padding-inline: .5rem; font-size: .75rem; }
+}
+.benchmark-explorer .model-legend button, .benchmark-explorer .source-badge, .benchmark-explorer .segmented-control button { display: inline-flex; align-items: center; gap: .375rem; }
+.benchmark-explorer .model-legend { gap: .5rem; }
+.benchmark-explorer .workspace { display: block; padding: 0; overflow: hidden; }
+
+.benchmark-explorer { --muted: var(--muted-foreground); }
+.benchmark-explorer tbody tr:hover th,.benchmark-explorer tbody tr:hover td { background:var(--secondary); }

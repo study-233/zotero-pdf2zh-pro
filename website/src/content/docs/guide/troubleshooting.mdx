@@ -1,0 +1,56 @@
+---
+{
+  "title": "常见问题",
+  "description": "按安装、连接、模型测试和导入定位问题。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/troubleshooting.mdx"
+}
+---
+
+<span id="10-常见问题与排查"></span>
+
+<span id="troubleshooting"></span>
+
+先判断问题出在哪一步：安装、本地连接、模型测试，还是结果导入。
+
+## 安装失败
+
+| 现象 | 处理 |
+| --- | --- |
+| Windows 安装或下载失败 | 检查网络，在控制中心查看“日志与诊断”后重试；使用[最新 EXE](/zotero-pdf2zh-pro/guide/windows/)，无需解压 ZIP |
+| `command not found: brew` | 完成 Homebrew 的 Next steps，重新打开终端 |
+| 找不到 `zotero-pdf2zh-pro` 命令 | uv 用户执行 `uv tool update-shell` 后重开终端；Homebrew 用户确认安装已成功 |
+| Zotero 没有翻译菜单 | 确认版本为 8–10、插件已启用并重启；在文库中的条目或 PDF 上右键 |
+
+## 本地服务无法连接
+
+打开 [健康检查](http://127.0.0.1:8890/health)，应返回 `"status":"ok"`。
+
+- **无法打开**：Windows 检查控制中心；macOS 执行 `brew services list`，确认服务已启动。
+- **返回 degraded**：检查 `workspace` 中的错误、数据目录权限和磁盘空间。
+- **根地址返回 404**：访问的是 `/health`，不是服务首页。
+- **端口被占用**：检查是否重复启动 Homebrew、uv 或其他服务，只停止已确认属于自己的进程。
+
+## API 测试失败
+
+| 提示 | 处理 |
+| --- | --- |
+| 401 / 403 | 检查 Key、账号和模型权限，以服务商返回原因为准 |
+| 404 / 模型不存在 | 核对地址前缀、协议后缀和完整模型 ID；插件不会自动补 `/v1` |
+| 获取模型失败 | 手填模型 ID，再点击“测试”；列表不可用不一定影响翻译 |
+| 429 | 检查额度和限额，降低 QPS 与并发后重试 |
+| 超时 / 连接错误 | 检查网络、代理及站点可用性，先用短请求测试 |
+| HTTPS 证书错误 | 检查系统或代理证书，不要关闭证书校验 |
+
+本地服务连接成功，不代表上游 API 已配置正确。返回[翻译配置](/zotero-pdf2zh-pro/guide/api-configuration/)重新测试。
+
+## PDF 与结果问题
+
+| 现象 | 处理 |
+| --- | --- |
+| 找不到文件 | 先打开原 PDF，确认已下载到本地；直接选择目标附件 |
+| 扫描件或文字异常 | 检查 OCR 选项，单篇测试后核对排版 |
+| 任务未完成 | 查看失败段落后“补译”；导入失败用“重试导入” |
+| 完成但没有新附件 | 查看导入状态，确认原条目仍存在；远端任务不一定关联当前文库 |
+| Token / 缓存显示 — | 接口未提供统计，不代表免费或零消耗 |
+
+仍无法解决时，[导出诊断包并反馈](/zotero-pdf2zh-pro/guide/diagnostics/)。

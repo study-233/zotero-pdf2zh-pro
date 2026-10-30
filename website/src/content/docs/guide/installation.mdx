@@ -1,0 +1,41 @@
+---
+{
+  "title": "安装 Zotero 插件",
+  "description": "安装 XPI，并在 Zotero 中检查服务连接。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/installation.mdx",
+  "prev": {
+    "label": "安装前准备",
+    "link": "/zotero-pdf2zh-pro/guide/preparation/"
+  }
+}
+---
+
+<span id="4-安装-zotero-插件与检查连接"></span>
+
+<span id="installation"></span>
+
+先确认本地服务已启动。Windows 和 macOS 使用同一个 XPI。
+
+<span id="安装-xpi"></span>
+
+## 安装插件
+
+1. [下载插件 XPI](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)，**不要解压**。
+2. 在 Zotero 打开 **工具 → 插件**。
+3. 点击齿轮，选择 **Install Plugin From File…**（部分版本为 `Install Add-on From File…`）。
+4. 选择 XPI，按提示安装并重启 Zotero，确认插件已启用。
+
+![在插件管理器中选择从文件安装 XPI](/zotero-pdf2zh-pro/assets/guide/install-plugin.webp)
+
+<span id="打开设置并检查本地服务"></span>
+
+## 检查连接
+
+1. 打开 Zotero 设置：Windows 为 **编辑 → 设置**，macOS 为 **Zotero → 设置**。
+2. 选择 **zotero-pdf2zh-pro**，展开 **服务端连接**。
+3. 本地服务地址填 `http://127.0.0.1:8890`，点击 **检查本地服务**。
+
+显示 **已连接** 后，继续[配置翻译来源](/zotero-pdf2zh-pro/guide/api-configuration/)。
+![填写本地服务地址，点击检查本地服务后显示已连接](/zotero-pdf2zh-pro/assets/guide/server-connected.webp)
+
+连接失败时，先确认控制中心或 Homebrew 服务已启动。

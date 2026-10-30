@@ -1,0 +1,46 @@
+---
+{
+  "title": "调整翻译参数",
+  "description": "按限流、OCR 和输出需求调整参数。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/translation-options.mdx"
+}
+---
+
+<span id="7-常用翻译参数"></span>
+
+<span id="translation-options"></span>
+
+在插件设置中展开 **高级翻译参数**。首次使用保持默认，遇到具体问题再调整。
+
+![高级翻译参数中的 QPS、并发、OCR 和输出选项](/zotero-pdf2zh-pro/assets/guide/translation-settings.webp)
+
+## 常用调整
+
+| 需要解决的问题 | 设置 |
+| --- | --- |
+| 返回 429、请求太快 | 降低“最大 QPS”和“并发池大小”；可从 **QPS 2、并发 4** 开始测试 |
+| 保留文末附录 | 设置“最后几页跳过翻译” |
+| 保留参考文献原文 | 开启“不翻译参考文献”，复杂排版需人工核对 |
+| 扫描件或文字识别异常 | 单篇尝试“强制 OCR 兼容模式”，检查结果后再批量运行 |
+| 减少额外 token 消耗 | 保持“禁用术语提取”开启 |
+
+QPS 2、并发 4 是起步建议；当前默认值为 **QPS 10、并发 50**，应按服务商限额调整。
+
+<details>
+<summary>其余默认设置</summary>
+
+| 设置 | 默认值 |
+| --- | --- |
+| 最后几页跳过翻译 | 0 |
+| 不翻译参考文献 | 关闭 |
+| 翻译表格内文字 | 开启 |
+| 自动 OCR 兼容模式 | 开启 |
+| 强制 OCR 兼容模式 | 关闭 |
+| 禁用术语提取 | 开启 |
+| 跳过文本安全检查 | 关闭 |
+| 字体族 | auto |
+| 禁用水印 | 开启 |
+
+不要把“跳过文本安全检查”作为通用报错修复方式。
+
+</details>

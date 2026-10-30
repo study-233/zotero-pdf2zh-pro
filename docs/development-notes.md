@@ -14,36 +14,27 @@ python3 -m unittest discover -s scripts -p 'test_check_docs.py'
 
 ### 官网开发与发布
 
-官网使用独立的轻量构建依赖，无需安装翻译服务。本地需要 Python 3.12+、uv；
-JavaScript 测试需要 Node.js 22+。在仓库根目录一键构建：
+官网使用 Next.js / React / Tailwind / Fumadocs 静态导出，Node.js 24+、pnpm 11.24.0、Python 3.12/3.13。无需安装翻译服务。
+Python 依赖见 `website/requirements.txt`；可放在独立的 `.tmp/website-venv/`，或通过 `PDF2ZH_WEBSITE_PYTHON` 指定解释器。
 
 ```bash
-./scripts/build_site.sh
+pnpm --dir website install --frozen-lockfile
+pnpm --dir website docs:check
+pnpm --dir website test
+pnpm --dir website build
+pnpm --dir website preview
 ```
 
-脚本固定使用 `.tmp/website-venv/`，首次运行自动创建环境，每次构建按
-`website/requirements.txt` 安装或更新依赖；uv 缓存固定在 `.tmp/cache/uv-website/`。
-无需激活虚拟环境，构建参数可直接追加，例如 `./scripts/build_site.sh --base /`。
-网站环境独立于 `.local-dev/runtime/`，避免触发 Zotero 开发环境的目录隔离检查。
-
-构建后验证与预览继续使用同一环境：
-
-```bash
-.tmp/website-venv/bin/python scripts/check_site.py
-.tmp/website-venv/bin/python -m unittest discover -s website -p 'test_*.py'
-node --test website/test_site.cjs benchmarks/translation/test_ui.cjs
-.tmp/website-venv/bin/python benchmarks/translation/validate_site.py
-.tmp/website-venv/bin/python scripts/serve_site.py
-```
-
-打开 `http://127.0.0.1:8895/zotero-pdf2zh-pro/` 预览；构建输出位于忽略的 `dist/site/`。
-教程正文来自使用指南与术语库文档，分页面由 `website/routes.json` 中的显式锚点映射生成。
-源码链接、标题锚点、图片和搜索索引在构建时统一处理。官网沿用评测页的主题存储键。
+打开 `http://127.0.0.1:8897/zotero-pdf2zh-pro/`；构建先写 `website/out/`，通过链接、旧地址、附件哈希与测评数据校验后复制到 `dist/site/`。
+教程正文维护在 `website/src/content/docs/guide/*.mdx`，修改后执行 `python scripts/sync_guide_docs.py` 同步汇总。
+`website/routes.json` 维护章节顺序与旧锚点；中文搜索在最终静态产物中运行，主题由 next-themes 统一管理。
+详细验证、Memos 源码映射及回退方法见 [官网开发](../website/README.md)。
+旧 `scripts/build_site.sh` 和 `pnpm --dir website build:legacy` 保留为 Jinja 应急构建，会替换同一个预览输出，不与新构建并发运行。
 
 公开评测基线来自 `codex/translation-benchmark` 的 `ec8001d`，与迁移前线上 Pages 分支的
 `0c371cf` 对应。只纳入网页、已公开数据/PDF、依赖许可证及静态验证，不纳入服务端实验改动。
 `benchmarks/translation/site/` 保留历史评测资源，原 JSON、CSV 与 PDF 根路径保持不变。
-`/benchmark/` 展示当前七模型 240 条结果，数据维护在 `benchmarks/translation/publications/2026-10-23-v2/`。
+`/benchmark/` 从已出版 registry 读取当前总览，每组正式测评 240 条，保留接口、推理配置和接入来源。
 测试快照与当前插件版本分别标示，不改写历史测试口径。
 
 唯一官网发布入口为 `.github/workflows/website.yml`：PR 验证并保存 7 天预览产物，

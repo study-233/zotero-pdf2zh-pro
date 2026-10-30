@@ -1,0 +1,71 @@
+---
+{
+  "title": "macOS 安装",
+  "description": "用 Homebrew 安装并启动本地服务。",
+  "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/macos.mdx",
+  "prev": {
+    "label": "安装前准备",
+    "link": "/zotero-pdf2zh-pro/guide/preparation/"
+  },
+  "next": {
+    "label": "安装 Zotero 插件",
+    "link": "/zotero-pdf2zh-pro/guide/installation/"
+  }
+}
+---
+
+<span id="3-macos-安装教程"></span>
+
+<span id="macos"></span>
+
+支持 **Apple Silicon（M 系列）Mac**；Intel Mac 暂不支持当前运行时。
+
+<span id="第一步确认-homebrew-可用"></span>
+
+<span id="第二步安装本地服务"></span>
+
+<span id="第三步启动并验证"></span>
+
+## 安装服务
+
+在“终端”执行：
+
+```bash
+brew --version
+```
+
+若提示找不到 `brew`，先[安装 Homebrew](https://brew.sh/)，完成 **Next steps** 后重开终端。
+确认可用后执行：
+
+```bash
+brew tap study-233/formula
+brew install --build-from-source study-233/formula/zotero-pdf2zh-pro
+```
+
+等待命令执行结束，再启动服务：
+
+```bash
+brew services start zotero-pdf2zh-pro
+curl -fsS http://127.0.0.1:8890/health
+```
+
+返回 `"status":"ok"` 即为成功。终端可以关闭，接着[安装 Zotero 插件](/zotero-pdf2zh-pro/guide/installation/)。
+
+<span id="日常启动停止和查看日志"></span>
+
+## 日常启停
+
+<details>
+<summary>查看状态、停止、重启与日志命令</summary>
+
+| 操作 | 命令 |
+| --- | --- |
+| 查看状态 | `brew services list`，应显示 `started` |
+| 停止 | `brew services stop zotero-pdf2zh-pro` |
+| 重启 | `brew services restart zotero-pdf2zh-pro` |
+| 查看日志 | `tail -n 100 "$(brew --prefix)/var/log/zotero-pdf2zh-pro.log"` |
+
+不要加 `sudo`。`start` 会启用当前用户的登录启动，`stop` 会关闭它。
+停止或重启前先等翻译结束。更新已有服务请看[更新教程](/zotero-pdf2zh-pro/guide/maintenance/)，不要直接清理旧版本目录。
+
+</details>
