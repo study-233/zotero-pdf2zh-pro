@@ -198,7 +198,7 @@ class EvidenceLedger:
         row = json.loads(previous[0]) if previous else {}
         row.update(fields)
         if kind == 'paragraph' and fields.get('paragraphState') == 'succeeded':
-            for key in ('validationCode', 'providerCode', 'errorType', 'statusCode', 'missingPlaceholderCount', 'extraPlaceholderCount'):
+            for key in ('validationCode', 'providerCode', 'errorType', 'statusCode', *CONTRACT['validationDetailFields']):
                 row.pop(key, None)
         row.update(taskId=self.task_id, attempt=self.attempt, executionId=self.execution_id, updatedAt=timestamp())
         row = safe_fields({key: row[key] for key in CONTRACT['evidenceFields'][kind] if key in row})
@@ -407,7 +407,8 @@ def analyze(tasks, evidence):
             linked += bool(refs)
             if failed.get('validationCode'):
                 finding('validation_failed', taskId=task_id, paragraphRef=failed.get('paragraphRef'), page=failed.get('page'),
-                        validationCode=failed['validationCode'], callRefs=refs)
+                        validationCode=failed['validationCode'], callRefs=refs,
+                        **{key: failed[key] for key in CONTRACT['validationDetailFields'] if key in failed})
         for row in requests:
             for rejected in _rows(row.get('validationFailures')):
                 finding('validation_failed', taskId=task_id, attempt=row.get('attempt'), callId=row.get('callId'),

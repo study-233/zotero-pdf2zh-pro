@@ -152,7 +152,7 @@ class BodyInputTests(unittest.TestCase):
         )
         translator.support_llm_translate = True
         seen = []
-        def prepare(p, font_map, disable):
+        def prepare(p, font_map, disable, legacy=False):
             seen.append(font_map["F1"])
             return ILTranslator.TranslateInput(p.unicode, [], p.pdf_style)
         translator.get_translate_input = Mock(side_effect=prepare)

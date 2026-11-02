@@ -219,6 +219,19 @@ export function diagnosticSummary(task: Record<string, any>): string {
                 row.validationCode,
                 (validationCounts.get(row.validationCode) || 0) + 1,
             );
+        if (
+            row.validationCode === "empty_repair_segment" ||
+            row.validationCode === "missing_repair_segment"
+        ) {
+            const reason =
+                diagnosticContract.validationErrors[
+                    row.validationCode as
+                        "empty_repair_segment" | "missing_repair_segment"
+                ].description;
+            lines.push(
+                `第 ${row.page ?? "?"} 页：${reason}。片段 ID=${row.invalidSegmentId ?? "?"}，返回 ${row.receivedSegmentCount ?? "?"}/${row.expectedSegmentCount ?? "?"} 个片段。`,
+            );
+        }
     }
     if (validationCounts.size)
         lines.push(

@@ -410,7 +410,7 @@ async def translate_pdf_with_callbacks(
         check_cancelled()
         translation_config.save_detailed_tracking = False
         from babeldoc.format.pdf.translation_recovery import TranslationRecovery
-        from babeldoc.format.pdf.document_il.midend.body_input import BODY_INPUT_VERSION
+        from babeldoc.format.pdf.document_il.midend.body_input import BODY_INPUT_VERSION, STYLE_INPUT_VERSION
         from babeldoc.format.pdf.quality_review import REVIEW_VERSION
         fingerprint_payload = {k: v for k, v in payload.items() if k not in {
             "input_path", "output_dir", "qps", "pool_size", "repair_attempt", "review_attempt", "translation_memory_path",
@@ -441,6 +441,7 @@ async def translate_pdf_with_callbacks(
         for engine in (main_translator, getattr(translation_config, "term_extraction_translator", None)):
             if engine is not None and hasattr(engine, "add_cache_impact_parameters"):
                 engine.add_cache_impact_parameters("body_input_version", BODY_INPUT_VERSION)
+                engine.add_cache_impact_parameters("style_input_version", STYLE_INPUT_VERSION)
                 engine.add_cache_fingerprint("task_glossary", payload.get("glossary_entries", []))
                 engine.add_cache_fingerprint("review_policy", review_policy)
                 if uses_glossary:

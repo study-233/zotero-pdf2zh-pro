@@ -3,8 +3,10 @@ import hashlib
 import json
 import logging
 import threading
+import uuid
 import zipfile
 from collections.abc import Callable
+from contextlib import contextmanager
 from pathlib import Path
 
 import httpx
@@ -30,7 +32,6 @@ logger = logging.getLogger(__name__)
 _FASTEST_FONT_UPSTREAM_LOCK = asyncio.Lock()
 _FASTEST_FONT_UPSTREAM: str | None = None
 _FASTEST_FONT_METADATA: dict | None = None
-_ALL_FONTS_READY = False
 
 FONT_CACHE_CHECK_STAGE = "Check Fonts"
 FONT_DOWNLOAD_STAGE = "Download Fonts"
@@ -107,6 +108,62 @@ def verify_file(path: Path, sha3_256: str):
     return hash_.hexdigest() == sha3_256
 
 
+@contextmanager
+def _atomic_writer(path: Path):
+    temporary_path = path.with_name(f".{path.name}.{uuid.uuid4().hex}.part")
+    stream = temporary_path.open("xb")
+    try:
+        with stream:
+            yield stream
+        temporary_path.replace(path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def _font_signature(path, digest):
+    try:
+        stat = path.stat()
+    except FileNotFoundError:
+        return None
+    return (digest, stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
+def _font_record(path):
+    return path.parent / ".verified-v1" / f"{path.name}.json"
+
+
+def _known_font(path, signature):
+    if signature is None:
+        return False
+    try:
+        return _font_record(path).read_bytes() == json.dumps(signature).encode("ascii")
+    except OSError:
+        return False
+
+
+def _remember_font(path, signature):
+    record = _font_record(path)
+    try:
+        record.parent.mkdir(exist_ok=True)
+        with _atomic_writer(record) as stream:
+            stream.write(json.dumps(signature).encode("ascii"))
+    except OSError as exc:
+        # A read-only font cache can still serve files verified for this call.
+        logger.debug("Could not persist font verification: %s", exc)
+
+
+def _verify_font(path, digest):
+    signature = _font_signature(path, digest)
+    if _known_font(path, signature):
+        return True
+    if signature is None or not verify_file(path, digest):
+        return False
+    if _font_signature(path, digest) != signature:
+        return False
+    _remember_font(path, signature)
+    return True
+
+
 @retry(
     retry=_retry_if_not_cancelled_and_failed,
     stop=stop_after_attempt(3),
@@ -122,35 +179,38 @@ async def download_file(
     path: Path = None,
     sha3_256: str = None,
     progress_callback: FileProgressCallback | None = None,
+    *,
+    font: bool = False,
 ):
     async def _download(active_client: httpx.AsyncClient):
-        temporary_path = path.with_name(f"{path.name}.part")
-        temporary_path.unlink(missing_ok=True)
         downloaded = 0
         hash_ = hashlib.sha3_256()
         if progress_callback is not None:
             progress_callback(0)
-        try:
+        with _atomic_writer(path) as f:
             async with active_client.stream(
                 "GET", url, follow_redirects=True
             ) as response:
                 response.raise_for_status()
-                with temporary_path.open("wb") as f:
-                    async for chunk in response.aiter_bytes(1024 * 1024):
-                        if not chunk:
-                            continue
-                        f.write(chunk)
-                        hash_.update(chunk)
-                        downloaded += len(chunk)
-                        if progress_callback is not None:
-                            progress_callback(downloaded)
+                async for chunk in response.aiter_bytes(1024 * 1024):
+                    if not chunk:
+                        continue
+                    f.write(chunk)
+                    hash_.update(chunk)
+                    downloaded += len(chunk)
+                    if progress_callback is not None:
+                        progress_callback(downloaded)
 
             if hash_.hexdigest() != sha3_256:
                 raise ValueError(f"File {path} is corrupted")
-            temporary_path.replace(path)
-        except BaseException:
-            temporary_path.unlink(missing_ok=True)
-            raise
+            if font:
+                f.close()
+                verified = _font_signature(Path(f.name), sha3_256)
+        if font:
+            published = _font_signature(path, sha3_256)
+            # Renaming may update ctime. Only stamp the file that we actually hashed.
+            if verified and published and verified[:-1] == published[:-1]:
+                _remember_font(path, published)
 
     if client is None:
         async with httpx.AsyncClient() as active_client:
@@ -308,7 +368,7 @@ async def get_font_and_metadata_async(
     font_metadata: dict | None = None,
 ):
     cache_file_path = get_cache_file_path(font_file_name, "fonts")
-    if font_file_name in EMBEDDING_FONT_METADATA and verify_file(
+    if font_file_name in EMBEDDING_FONT_METADATA and _verify_font(
         cache_file_path, EMBEDDING_FONT_METADATA[font_file_name]["sha3_256"]
     ):
         return cache_file_path, EMBEDDING_FONT_METADATA[font_file_name]
@@ -324,7 +384,7 @@ async def get_font_and_metadata_async(
             logger.critical(f"Font {font_file_name} not found in {font_metadata}")
             exit(1)
 
-        if verify_file(cache_file_path, font_metadata[font_file_name]["sha3_256"]):
+        if _verify_font(cache_file_path, font_metadata[font_file_name]["sha3_256"]):
             return cache_file_path, font_metadata[font_file_name]
 
     assert font_metadata is not None
@@ -335,7 +395,7 @@ async def get_font_and_metadata_async(
         logger.critical(f"Font {font_file_name} not found in {font_metadata}")
         exit(1)
     await download_file(
-        client, url, cache_file_path, font_metadata[font_file_name]["sha3_256"]
+        client, url, cache_file_path, font_metadata[font_file_name]["sha3_256"], font=True
     )
     return cache_file_path, font_metadata[font_file_name]
 
@@ -419,13 +479,14 @@ async def download_all_fonts_async(
     client: httpx.AsyncClient | None = None,
     progress_callback: FontProgressCallback | None = None,
 ):
-    """Verify and download the complete font cache once per server process."""
-    global _ALL_FONTS_READY
-
-    if _ALL_FONTS_READY:
+    """Recheck only fonts without a matching on-disk verification record."""
+    font_items = []
+    for name, metadata in EMBEDDING_FONT_METADATA.items():
+        path = get_cache_file_path(name, "fonts")
+        if not _known_font(path, _font_signature(path, metadata["sha3_256"])):
+            font_items.append((name, metadata))
+    if not font_items:
         return
-
-    font_items = list(EMBEDDING_FONT_METADATA.items())
     total_fonts = len(font_items)
     if progress_callback is not None:
         progress_callback(FONT_CACHE_CHECK_STAGE, 0, total_fonts)
@@ -433,14 +494,13 @@ async def download_all_fonts_async(
     missing_fonts: list[tuple[str, dict]] = []
     for index, (font_file_name, metadata) in enumerate(font_items, start=1):
         cache_file_path = get_cache_file_path(font_file_name, "fonts")
-        if not verify_file(cache_file_path, metadata["sha3_256"]):
+        if not _verify_font(cache_file_path, metadata["sha3_256"]):
             missing_fonts.append((font_file_name, metadata))
         if progress_callback is not None:
             progress_callback(FONT_CACHE_CHECK_STAGE, index, total_fonts)
 
     if not missing_fonts:
         logger.debug("All fonts are already downloaded")
-        _ALL_FONTS_READY = True
         return
 
     owns_client = client is None
@@ -495,6 +555,7 @@ async def download_all_fonts_async(
                         lambda downloaded: update_download_progress(
                             font_name, downloaded
                         ),
+                        font=True,
                     )
                 except Exception as exc:
                     raise RuntimeError(
@@ -514,7 +575,6 @@ async def download_all_fonts_async(
                     task.cancel()
             await asyncio.gather(*font_tasks, return_exceptions=True)
             raise
-        _ALL_FONTS_READY = True
     finally:
         if owns_client:
             await active_client.aclose()

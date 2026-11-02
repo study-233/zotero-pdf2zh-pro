@@ -57,6 +57,8 @@ PROMPT_TEMPLATE = Template(
 3. Inside each paragraph, you may adjust word order for fluency, but:
    - Do NOT change the meaning.
    - Do NOT move placeholders, tags, or code outside their paragraph.
+   - Keep words outside punctuation-only style spans. Translate the punctuation inside the span,
+     or leave the span empty if unnecessary. Do not repeat its punctuation outside the span.
 4. Translate ALL human-readable content into $lang_out.
 
 ## Do NOT Modify

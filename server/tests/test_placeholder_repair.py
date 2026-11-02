@@ -8,7 +8,7 @@ from unittest.mock import Mock
 import httpx
 
 from pdf2zh_pro.translator.placeholder_repair import PlaceholderRepair
-from pdf2zh_pro.translator.validation import PLACEHOLDER_PATTERN, InvalidTranslation, validate_text, canonicalize_placeholders
+from pdf2zh_pro.translator.validation import PLACEHOLDER_PATTERN, InvalidTranslation, validate_text, canonicalize_placeholders, validate_punctuation_spans
 from pdf2zh_pro.translator.request_budget import ParagraphRequestBudget
 from babeldoc.format.pdf.document_il import PdfCharacter, PdfFormula, PdfSameStyleCharacters, PdfStyle
 from babeldoc.format.pdf.document_il.midend.il_translator import (
@@ -56,6 +56,21 @@ class PlaceholderRepairTests(unittest.TestCase):
             with self.subTest(output=output), self.assertRaises(InvalidTranslation):
                 self.plan().restore(output)
 
+    def test_segment_failures_export_counts_and_id_without_text(self):
+        from babeldoc.format.pdf.translation_recovery import safe_error
+        from diagnostics import safe_fields
+        for values, code, invalid in [
+            (["译文", None, "分数"], "empty_repair_segment", 1),
+            (["译文", "F"], "missing_repair_segment", 2),
+        ]:
+            with self.subTest(code=code), self.assertRaises(InvalidTranslation) as caught:
+                self.plan().restore(response(values))
+            fields = safe_fields({"failedParagraphs": [safe_error(caught.exception)]})["failedParagraphs"][0]
+            self.assertEqual(fields["validationCode"], code)
+            self.assertEqual((fields["expectedSegmentCount"], fields["receivedSegmentCount"],
+                              fields["invalidSegmentId"]), (3, len(values), invalid))
+            self.assertNotIn("译文", json.dumps(fields, ensure_ascii=False))
+
     def test_numbers_punctuation_and_repeated_formulas_are_retained(self):
         source = "{v1} 2025; {v1}<style id='4'>Results</style>\n{v2}"
         plan = PlaceholderRepair(source, source, "zh-CN")
@@ -66,6 +81,25 @@ class PlaceholderRepairTests(unittest.TestCase):
         for output in ["<style id='1'>结果{v2}</style>", "</style>结果<style id='1'>{v2}"]:
             with self.subTest(output=output), self.assertRaises(InvalidTranslation):
                 validate_text(source, output, "zh-CN")
+
+    def test_punctuation_only_styles_can_localize_but_cannot_wrap_words_or_double_marks(self):
+        source = "Use <style id='2'>«</style>example<style id='4'>»</style>."
+        for valid in ('使用<style id="2">「</style>例子<style id="4">」</style>。',
+                      "使用<style id='2'></style>例子<style id='4'></style>。"):
+            validate_punctuation_spans(source, valid)
+        for invalid in ("使用<style id='2'>例子</style><style id='4'>」</style>。",
+                        "使用「<style id='2'>「</style>例子<style id='4'>」</style>。"):
+            with self.assertRaisesRegex(InvalidTranslation, 'placeholder_mismatch'):
+                validate_punctuation_spans(source, invalid)
+
+    def test_repair_can_omit_unneeded_styled_punctuation_but_cannot_omit_its_id(self):
+        repair = PlaceholderRepair("alpha<style id='2'>:</style>beta", "", "zh-CN")
+        self.assertEqual(repair.restore(response(["甲", "", "乙"])), "甲<style id='2'></style>乙")
+        with self.assertRaisesRegex(InvalidTranslation, "placeholder_mismatch"):
+            repair.restore(response(["甲", "重复文字", "乙"]))
+        rows = json.loads(response(["甲", "", "乙"]))["segments"]
+        with self.assertRaisesRegex(InvalidTranslation, "missing_repair_segment"):
+            repair.restore(json.dumps({"segments": [rows[0], rows[2]]}))
 
     def test_multiline_styles_and_accepted_quote_variants_retain_real_layout_objects(self):
         source = "<style id='1'>Results</style>{v2}"

@@ -8,7 +8,7 @@ from unittest.mock import Mock
 import pymupdf
 import babeldoc.format.pdf.high_level  # Initialize the existing extract_char/high_level import cycle.
 from babeldoc.format.pdf.document_il import (
-    Box, Page, PageLayout, PdfCharacter, PdfFormula, PdfLine, PdfParagraph,
+    Box, GraphicState, Page, PageLayout, PdfCharacter, PdfFormula, PdfLine, PdfParagraph,
     PdfParagraphComposition, PdfSameStyleCharacters, PdfStyle, VisualBbox,
 )
 from babeldoc.format.pdf.document_il.midend.il_translator import (
@@ -20,6 +20,7 @@ from babeldoc.format.pdf.document_il.midend.typesetting import Typesetting, Type
 from babeldoc.format.pdf.document_il.utils.layout_helper import (
     build_layout_index, get_character_layout, get_paragraph_unicode,
 )
+from pdf2zh_pro.translator.base import BaseTranslator
 
 
 def character(text, x=0, y=0):
@@ -33,7 +34,63 @@ class PDFLiveRegressionTests(unittest.TestCase):
         value._formula_placeholder_pattern = re.compile(r"\{v\d+\}")
         value._style_left_placeholder_pattern = re.compile(r"<style id=['\"]\d+['\"]>")
         value._style_right_placeholder_pattern = re.compile(r"</style>")
+        value.translate_engine = Mock(spec=BaseTranslator)
+        for method in ('get_formular_placeholder', 'get_rich_text_left_placeholder', 'get_rich_text_right_placeholder'):
+            getattr(value.translate_engine, method).side_effect = getattr(BaseTranslator, method).__get__(value)
         return value
+
+    def test_translation_spans_roundtrip_dominant_style_and_protected_objects(self):
+        translator = self.translator()
+        def style(color):
+            return PdfStyle(font_id='f', font_size=10, graphic_state=GraphicState(color))
+        plain, link = style('0 g'), style('0 0 1 rg')
+        def span(value, s):
+            return PdfParagraphComposition(pdf_same_style_characters=PdfSameStyleCharacters(
+                pdf_style=s, pdf_character=[character(value)]))
+        formula = PdfFormula(pdf_character=[character('42')])
+        for label in ('text', 'table', 'figure_caption'):
+            with self.subTest(label=label):
+                p = PdfParagraph(unicode='See Appendix for details 42', layout_label=label, pdf_style=style(None),
+                    pdf_paragraph_composition=[span('See ', plain), span('Appendix', link),
+                        span(' for details ', plain), PdfParagraphComposition(pdf_formula=formula)])
+                ti = translator.get_translate_input(p, {'f': SimpleNamespace(font_id='f')}, False)
+                self.assertEqual(ti.base_style, plain)
+                self.assertEqual(len(ti.placeholders), 2)
+                parts = translator.parse_translate_output(ti, ti.unicode)
+                self.assertEqual([part.pdf_same_style_unicode_characters.pdf_style for part in (parts[0], parts[2])],
+                                 [plain, plain])
+                self.assertEqual(parts[1].pdf_same_style_characters.pdf_style, link)
+                self.assertIs(parts[-1].pdf_formula, formula)
+                self.assertEqual(get_paragraph_unicode(PdfParagraph(pdf_paragraph_composition=parts)).split(),
+                                 p.unicode.split())
+
+    def test_font_aliases_merge_but_distinct_resources_and_sizes_keep_their_spans(self):
+        tr = self.translator()
+        base = PdfStyle(font_id='regular', font_size=10)
+        fonts = {name: SimpleNamespace(xref_id=xref)
+                 for name, xref in [('regular', 5), ('alias', 5), ('emphasis', 9)]}
+        def span(text, font, size=10):
+            return PdfParagraphComposition(pdf_same_style_characters=PdfSameStyleCharacters(
+                pdf_style=PdfStyle(font_id=font, font_size=size), pdf_character=[character(text)]))
+        spans = [span('Running text ', 'regular'), span('across fonts ', 'alias')]
+        for _ in range(22):
+            spans.extend([span('more ordinary prose ', 'regular'), span('Q', 'emphasis'), span('sub', 'regular', 8)])
+        p = PdfParagraph(unicode='Scientific text with inline labels', pdf_style=base, pdf_paragraph_composition=spans)
+        ti = tr.get_translate_input(p, fonts, False)
+        self.assertEqual(len(ti.placeholders), 44)
+        parts = tr.parse_translate_output(ti, ti.unicode)
+        protected = [c.pdf_same_style_characters.pdf_style for c in parts if c.pdf_same_style_characters]
+        self.assertEqual([(s.font_id, s.font_size) for s in protected], [('emphasis', 10), ('regular', 8)] * 22)
+
+    def test_punctuation_subset_font_uses_actual_target_glyph_and_emphasis(self):
+        tr = self.translator()
+        fonts = [SimpleNamespace(bold=False, italic=False, monospace=False, serif=True, font_id=n) for n in ('a', 'b')]
+        tr.font_mapper = SimpleNamespace(map=lambda font, mark: SimpleNamespace(font_id=font.font_id if mark == '—' else 'target'))
+        self.assertTrue(tr._same_rendered_punctuation([character('« »')], *fonts))
+        self.assertFalse(tr._same_rendered_punctuation([character('«—')], *fonts))
+        self.assertFalse(tr._same_rendered_punctuation([character('Ω')], *fonts))
+        fonts[1].italic = True
+        self.assertFalse(tr._same_rendered_punctuation([character('«')], *fonts))
 
     def test_native_ruled_cells_group_lines_without_crossing_rows_or_columns(self):
         with pymupdf.open() as doc:

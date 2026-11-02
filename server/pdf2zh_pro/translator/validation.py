@@ -1,6 +1,7 @@
 """Validation shared by cached, batch and fallback translations."""
 import json
 import re
+import unicodedata
 from collections import Counter
 from dataclasses import dataclass
 from pdf2zh_pro.translator.preserved_text import preserved_text_reason
@@ -22,6 +23,36 @@ def canonicalize_placeholders(source, output):
     """Use exact source spellings after validation accepts whitespace/quote variants."""
     originals = {normalize_placeholder(m.group()): m.group() for m in PLACEHOLDER_PATTERN.finditer(source)}
     return PLACEHOLDER_PATTERN.sub(lambda m: originals.get(normalize_placeholder(m.group()), m.group()), output)
+
+
+_STYLE_RUN = re.compile(r"""<style id=['"](\d+)['"]>(.*?)</style>""", re.DOTALL)
+
+
+def punctuation_only(text):
+    return bool(text.strip()) and all(c.isspace() or unicodedata.category(c).startswith("P") for c in text)
+
+
+def validate_punctuation_spans(source, output):
+    """A style for punctuation must not migrate to words or introduce doubled delimiters."""
+    def boundaries(text, match):
+        content = match[2].strip()
+        return (bool(content and text[:match.start()].rstrip().endswith(content[0])),
+                bool(content and text[match.end():].lstrip().startswith(content[-1])))
+
+    protected = {}
+    for match in _STYLE_RUN.finditer(source):
+        marks = match[2].strip()
+        if punctuation_only(marks):
+            protected[match[1]] = boundaries(source, match)
+    if protected:
+        output = canonicalize_placeholders(source, output)
+        for match in _STYLE_RUN.finditer(output):
+            if match[1] not in protected:
+                continue
+            if match[2].strip() and not punctuation_only(match[2]):
+                raise InvalidTranslation("placeholder_mismatch")
+            if any(new and not old for new, old in zip(boundaries(output, match), protected[match[1]])):
+                raise InvalidTranslation("placeholder_mismatch")
 
 
 def _placeholder_structure(text):

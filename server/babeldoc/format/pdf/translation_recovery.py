@@ -35,7 +35,7 @@ def safe_error(error):
         fields['validationCode'] = validation if validation in CONTRACT['validationErrors'] else 'unknown_validation'
         chain.insert(0, fields['validationCode'])
         for key, value in getattr(error, 'diagnostic_fields', {}).items():
-            if key in {'missingPlaceholderCount', 'extraPlaceholderCount'} and type(value) is int and value >= 0:
+            if key in CONTRACT['validationDetailFields'] and type(value) is int and value >= 0:
                 fields[key] = value
     return {"errorType": type(error).__name__, "statusCode": status if isinstance(status, int) else None,
             "reason": " → ".join(chain), "providerCode": code, **fields}
@@ -218,7 +218,7 @@ class TranslationRecovery:
             if entry["status"] == "failed":
                 self._failed[key] = {name: entry.get(name) for name in (
                     "page", "paragraphId", "attempts", "errorType", "statusCode", "providerCode", "reason",
-                    "validationCode", "missingPlaceholderCount", "extraPlaceholderCount",
+                    "validationCode", *CONTRACT['validationDetailFields'],
                     "paragraphRef", "taskAttempt",
                 )}
             else:
@@ -288,6 +288,13 @@ class TranslationRecovery:
                 if entry.get('paragraphRef'):
                     self.evidence.paragraphs([{'paragraphRef': entry['paragraphRef'], 'page': entry['page'],
                         'paragraphState': 'succeeded', 'outcomeSource': 'checkpoint'}])
+
+    def restored_input_version(self, paragraph):
+        with self.lock:
+            entry = self.entries.get(self.keys.get(id(paragraph)), {})
+            if entry.get("status") == "succeeded" and entry.get("quality", {}).get("status") != "failed":
+                return entry.get("inputVersion", 1)
+        return None
 
     def restored(self, paragraph, source):
         with self.lock:

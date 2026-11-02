@@ -268,6 +268,9 @@ export interface ServerTaskSnapshot extends ServerSyncMetadata {
         validationCode?: string;
         missingPlaceholderCount?: number;
         extraPlaceholderCount?: number;
+        expectedSegmentCount?: number;
+        receivedSegmentCount?: number;
+        invalidSegmentId?: number;
     }[];
 }
 

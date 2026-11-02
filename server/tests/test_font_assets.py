@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import multiprocessing
 import sys
 import tempfile
 import unittest
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from unittest.mock import patch
 
@@ -24,12 +27,74 @@ def metadata_for(content: bytes) -> dict[str, int | str]:
     }
 
 
-class FontAssetTests(unittest.IsolatedAsyncioTestCase):
-    def setUp(self) -> None:
-        assets._ALL_FONTS_READY = False
+def prepare_in_worker(directory):
+    """Exercise both task preparation and the subsequent renderer font lookup."""
+    content = {"first.ttf": b"first-font", "second.ttf": b"second-font"}
+    metadata = {name: metadata_for(data) for name, data in content.items()}
+    downloads = []
+    events = []
 
-    def tearDown(self) -> None:
-        assets._ALL_FONTS_READY = False
+    def serve(request):
+        name = request.url.path.lstrip("/")
+        downloads.append(name)
+        return httpx.Response(200, content=content[name])
+
+    async def prepare():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(serve)) as client:
+            await assets.download_all_fonts_async(client, lambda *event: events.append(event))
+            for name in content:
+                await assets.get_font_and_metadata_async(name, client)
+
+    with (
+        patch.object(assets, "EMBEDDING_FONT_METADATA", metadata),
+        patch.object(assets, "get_cache_file_path", side_effect=lambda name, _: directory / name),
+        patch.object(assets, "get_fastest_upstream_for_font", return_value=("test", metadata)),
+        patch.dict(assets.FONT_URL_BY_UPSTREAM, test=lambda name: f"https://assets.test/{name}"),
+        patch.object(assets, "verify_file", wraps=assets.verify_file) as verify,
+    ):
+        asyncio.run(prepare())
+    return [call.args[0].name for call in verify.call_args_list], downloads, events
+
+
+class FontCacheWorkerTests(unittest.TestCase):
+    def test_independent_workers_reuse_cache_and_repair_one_damaged_font(self):
+        context = multiprocessing.get_context("spawn")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            directory = Path(temp_dir)
+            first = directory / "first.ttf"
+            first.write_bytes(b"first-font")
+            (directory / "second.ttf").write_bytes(b"second-font")
+
+            def run_worker():
+                with ProcessPoolExecutor(max_workers=1, mp_context=context) as pool:
+                    return pool.submit(prepare_in_worker, directory).result(timeout=30)
+
+            checked, downloaded, _ = run_worker()
+            self.assertEqual(checked, ["first.ttf", "second.ttf"])
+            self.assertEqual(downloaded, [])
+            self.assertEqual(run_worker(), ([], [], []))
+            first.write_bytes(b"wrong-font")
+            checked, downloaded, events = run_worker()
+            self.assertEqual(checked, ["first.ttf"])
+            self.assertEqual(downloaded, ["first.ttf"])
+            self.assertIn((assets.FONT_CACHE_CHECK_STAGE, 1, 1), events)
+            self.assertIn((assets.FONT_DOWNLOAD_STAGE, 10, 10), events)
+            self.assertEqual(first.read_bytes(), b"first-font")
+            self.assertEqual(run_worker(), ([], [], []))
+
+
+class FontAssetTests(unittest.IsolatedAsyncioTestCase):
+    def test_rechecks_damaged_record_and_changed_expected_hash(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "font.ttf"
+            path.write_bytes(b"font")
+            digest = metadata_for(b"font")["sha3_256"]
+            self.assertTrue(assets._verify_font(path, digest))
+            assets._font_record(path).write_bytes(b"incomplete")
+            with patch.object(assets, "verify_file", wraps=assets.verify_file) as verify:
+                self.assertTrue(assets._verify_font(path, digest))
+                self.assertFalse(assets._verify_font(path, metadata_for(b"updated")["sha3_256"]))
+                self.assertEqual(verify.call_count, 2)
 
     async def test_download_file_streams_to_atomic_temporary_file(self) -> None:
         content = b"font-data" * 200_000
@@ -52,7 +117,7 @@ class FontAssetTests(unittest.IsolatedAsyncioTestCase):
                 )
 
             self.assertEqual(output_path.read_bytes(), content)
-            self.assertFalse(output_path.with_name("font.ttf.part").exists())
+            self.assertEqual(list(output_path.parent.glob("*.part")), [])
             self.assertEqual(progress[0], 0)
             self.assertEqual(progress[-1], len(content))
             self.assertEqual(progress, sorted(progress))
@@ -81,10 +146,12 @@ class FontAssetTests(unittest.IsolatedAsyncioTestCase):
                         "https://assets.test/font.ttf",
                         output_path,
                         hashlib.sha3_256(b"expected").hexdigest(),
+                        font=True,
                     )
 
             self.assertEqual(output_path.read_bytes(), original)
-            self.assertFalse(output_path.with_name("font.ttf.part").exists())
+            self.assertFalse(assets._font_record(output_path).exists())
+            self.assertEqual(list(output_path.parent.glob("*.part")), [])
 
     async def test_download_all_fonts_reports_missing_bytes_and_runs_once(self) -> None:
         cached_content = b"cached-font"

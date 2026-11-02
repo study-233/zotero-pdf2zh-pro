@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pdf2zh_pro.translator.request_budget import ParagraphRequestBudget
 
-from pdf2zh_pro.translator.validation import validate_text, InvalidTranslation, canonicalize_placeholders
+from pdf2zh_pro.translator.validation import (
+    validate_text, InvalidTranslation, canonicalize_placeholders, punctuation_only, validate_punctuation_spans,
+)
 from pdf2zh_pro.translator.literal_tags import LiteralTags
 from pdf2zh_pro.translator.placeholder_repair import PlaceholderRepair
 
@@ -11,6 +13,7 @@ import json
 import logging
 import re
 import threading
+from collections import Counter
 from time import perf_counter
 from pathlib import Path
 from string import Template
@@ -51,7 +54,7 @@ from babeldoc.format.pdf.document_il.utils.style_helper import GRAY80
 from babeldoc.format.pdf.document_il.midend.reference_filter import (
     find_reference_paragraph_ids,
 )
-from babeldoc.format.pdf.document_il.midend.body_input import BODY_LABELS, BodyInputPlan
+from babeldoc.format.pdf.document_il.midend.body_input import BODY_LABELS, STYLE_INPUT_VERSION, BodyInputPlan
 from babeldoc.format.pdf.document_il.midend.batch_finalizer import BatchFinalizer, ParagraphOutput
 from babeldoc.format.pdf.translation_config import TitleContextSnapshot
 from babeldoc.format.pdf.translation_config import TranslationConfig
@@ -68,6 +71,8 @@ PROMPT_TEMPLATE = Template(
 
 1. Keep the structure exactly unchanged: do NOT add/remove/reorder any tags, placeholders, or tokens.
 2. Keep all tags unchanged (e.g., <style>, <b>, </style>).
+   - Keep punctuation-only spans for punctuation. Do not move words into them or repeat their punctuation outside them.
+   - A punctuation-only span may be empty when its punctuation is unnecessary in the target language.
    - Translate human-readable text inside tags.
    - Do NOT translate text inside <code>…</code>.
 3. Do NOT translate or alter placeholders: {v1}, {name}, %s, %d, [[...]], %%...%%.
@@ -523,7 +528,16 @@ class ILTranslator:
         self._paragraph_order = {
             id(p): index for index, p in enumerate(p for page in docs.page for p in page.pdf_paragraph)
         }
-        self._body_prepared_inputs = {}
+        self._body_prepared_inputs, self.body_input_plan = self._body_inputs(docs)
+        recovery = getattr(self.translation_config, "recovery", None)
+        # Boundary normalization uses document-wide evidence. Reconstruct the entire
+        # old plan before workers mutate paragraphs when a v1 checkpoint needs it.
+        if recovery is not None and any(recovery.restored_input_version(p) == 1
+                for page in docs.page for p in page.pdf_paragraph):
+            self._legacy_body_inputs, self._legacy_body_plan = self._body_inputs(docs, legacy=True)
+
+    def _body_inputs(self, docs, *, legacy=False):
+        inputs = {}
         excluded = getattr(self, "reference_skip_ids", set())
         disable_rich_text = self.translation_config.disable_rich_text_translate or not self.support_llm_translate
         for page in docs.page:
@@ -539,6 +553,7 @@ class ILTranslator:
                 try:
                     prepared = self.get_translate_input(
                         paragraph, xobj_fonts.get(paragraph.xobj_id, fonts), disable_rich_text,
+                        legacy,
                     )
                 except Exception as exc:
                     self.translation_config.raise_if_cancelled()
@@ -547,9 +562,9 @@ class ILTranslator:
                                  paragraph.debug_id, type(exc).__name__)
                     continue
                 if prepared is not None and len(prepared.unicode) >= self.translation_config.min_text_length:
-                    self._body_prepared_inputs[id(paragraph)] = prepared
-        self.body_input_plan = BodyInputPlan(
-            docs, {key: value.unicode for key, value in self._body_prepared_inputs.items()},
+                    inputs[id(paragraph)] = prepared
+        return inputs, BodyInputPlan(
+            docs, {key: value.unicode for key, value in inputs.items()},
             evidence=(entry.source for glossary in getattr(self, "_cached_glossaries", ())
                       for entry in glossary.entries),
         )
@@ -713,6 +728,7 @@ class ILTranslator:
         paragraph: PdfParagraph,
         page_font_map: dict[str, PdfFont] = None,
         disable_rich_text_translate: bool | None = None,
+        legacy=False,
     ):
         if not paragraph.pdf_paragraph_composition:
             return
@@ -740,6 +756,12 @@ class ILTranslator:
 
         if paragraph.unicode:
             scan_placeholder_tokens(paragraph.unicode, original_placeholder_tokens)
+        if disable_rich_text_translate is None:
+            config = getattr(self, "translation_config", None)
+            disable_rich_text_translate = getattr(config, "disable_rich_text_translate", False)
+        base_style = paragraph.pdf_style
+        if not legacy and not disable_rich_text_translate:
+            base_style = self._translation_base_style(paragraph)
         if len(paragraph.pdf_paragraph_composition) == 1:
             # 如果整个段落只有一个组成部分，那么直接返回，不需要套占位符等
             composition = paragraph.pdf_paragraph_composition[0]
@@ -754,7 +776,7 @@ class ILTranslator:
                     get_char_unicode_string(composition.pdf_same_style_characters.pdf_character, body_input=True)
                     if composition.pdf_same_style_characters and paragraph.layout_label in BODY_LABELS else paragraph.unicode,
                     [],
-                    paragraph.pdf_style,
+                    base_style,
                 )
                 translate_input.set_original_placeholder_tokens(
                     original_placeholder_tokens,
@@ -773,16 +795,23 @@ class ILTranslator:
                 )
                 return None
 
-        # 如果没有指定 disable_rich_text_translate，使用配置中的值
-        if disable_rich_text_translate is None:
-            disable_rich_text_translate = (
-                self.translation_config.disable_rich_text_translate
-            )
-
         placeholder_id = 1
         placeholders = []
         chars = []
-        for composition in self.coalesce_styled_words(paragraph.pdf_paragraph_composition):
+        def same_style(left, right):
+            if is_same_style(left, right):
+                return True
+            if not is_same_style_except_font(left, right):
+                return False
+            fonts = page_font_map or {}
+            left_font, right_font = fonts.get(left.font_id), fonts.get(right.font_id)
+            # Different PDF resources can map to the same fallback font while
+            # retaining distinct glyphs, emphasis, or mathematical alphabets.
+            xref = getattr(left_font, "xref_id", None)
+            return xref is not None and xref > 0 and xref == getattr(right_font, "xref_id", None)
+
+        compare = is_same_style if legacy else same_style
+        for composition in self.coalesce_styled_words(paragraph.pdf_paragraph_composition, compare):
             if composition.pdf_line:
                 chars.extend(composition.pdf_line.pdf_character)
             elif composition.pdf_formula:
@@ -805,39 +834,21 @@ class ILTranslator:
                     chars.extend(style_chars)
                     continue
 
-                fonta = self.font_mapper.map(
-                    page_font_map[
-                        composition.pdf_same_style_characters.pdf_style.font_id
-                    ],
-                    "1",
-                )
-                fontb = self.font_mapper.map(
-                    page_font_map[paragraph.pdf_style.font_id],
-                    "1",
-                )
-                if (
-                    # 样式和段落基准样式一致，无需占位符
-                    is_same_style(
-                        composition.pdf_same_style_characters.pdf_style,
-                        paragraph.pdf_style,
-                    )
-                    # 字号差异在 0.7-1.3 之间，可能是首字母变大效果，无需占位符
-                    or is_same_style_except_size(
-                        composition.pdf_same_style_characters.pdf_style,
-                        paragraph.pdf_style,
-                    )
-                    or (
-                        # 除了字体以外样式都和基准一样，并且字体都映射到同一个字体。无需占位符
-                        is_same_style_except_font(
-                            composition.pdf_same_style_characters.pdf_style,
-                            paragraph.pdf_style,
+                style = composition.pdf_same_style_characters.pdf_style
+                if legacy:
+                    fonta = self.font_mapper.map(page_font_map[style.font_id], "1")
+                    fontb = self.font_mapper.map(page_font_map[base_style.font_id], "1")
+                    unmarked = (is_same_style(style, base_style) or is_same_style_except_size(style, base_style)
+                                or (is_same_style_except_font(style, base_style) and fonta and fontb
+                                    and fonta.font_id == fontb.font_id))
+                else:
+                    unmarked = same_style(style, base_style)
+                    if not unmarked and is_same_style_except_font(style, base_style):
+                        unmarked = self._same_rendered_punctuation(
+                            style_chars, (page_font_map or {}).get(style.font_id),
+                            (page_font_map or {}).get(base_style.font_id),
                         )
-                        and fonta
-                        and fontb
-                        and fonta.font_id == fontb.font_id
-                    )
-                    # or len(composition.pdf_same_style_characters.pdf_character) == 1
-                ):
+                if unmarked:
                     chars.extend(composition.pdf_same_style_characters.pdf_character)
                     continue
                 placeholder = self.create_rich_text_placeholder(
@@ -859,20 +870,61 @@ class ILTranslator:
                 return None
 
             # 如果占位符数量超过阈值，且未禁用富文本翻译，则递归调用并禁用富文本翻译
-            if len(placeholders) > 40 and not disable_rich_text_translate:
+            if legacy and len(placeholders) > 40 and not disable_rich_text_translate:
                 logger.warning(
                     f"Too many placeholders ({len(placeholders)}) in paragraph[{paragraph.debug_id}], "
                     "disabling rich text translation for this paragraph",
                 )
-                return self.get_translate_input(paragraph, page_font_map, True)
+                return self.get_translate_input(paragraph, page_font_map, True, legacy=True)
 
         text = get_char_unicode_string(chars, body_input=paragraph.layout_label in BODY_LABELS)
-        translate_input = self.TranslateInput(text, placeholders, paragraph.pdf_style)
+        translate_input = self.TranslateInput(text, placeholders, base_style)
         translate_input.set_original_placeholder_tokens(original_placeholder_tokens)
         return translate_input
 
+    def _same_rendered_punctuation(self, chars, font, base_font):
+        """Subset fonts often supply just punctuation. Keep it in its language context
+        only when every visible mark uses the same output font and emphasis."""
+        marks = {c for char in chars for c in (char.char_unicode or "") if not c.isspace()}
+        if not punctuation_only("".join(marks)):
+            return False
+        for prop in ("bold", "italic", "monospace", "serif"):
+            value = getattr(font, prop, None)
+            if value is None or value != getattr(base_font, prop, None):
+                return False
+        for mark in marks:
+            left, right = self.font_mapper.map(font, mark), self.font_mapper.map(base_font, mark)
+            if left is None or right is None or left.font_id != right.font_id:
+                return False
+        return True
+
     @staticmethod
-    def coalesce_styled_words(compositions):
+    def _translation_base_style(paragraph):
+        """Choose a concrete text style for both unmarked input and reconstructed output."""
+        weights = Counter()
+        styles = {}
+        for comp in paragraph.pdf_paragraph_composition:
+            run = comp.pdf_same_style_characters
+            if run is None:
+                if comp.pdf_formula is None:
+                    # Unwrapped lines/characters already inherit the paragraph style.
+                    return paragraph.pdf_style
+                continue
+            weight = sum(len((c.char_unicode or "").strip()) for c in run.pdf_character)
+            if not weight:
+                continue
+            style = run.pdf_style
+            if style is None or style.font_id is None or style.font_size is None:
+                return paragraph.pdf_style
+            state = style.graphic_state
+            key = (style.font_id, style.font_size, state is not None,
+                   state.passthrough_per_char_instruction if state is not None else None)
+            weights[key] += weight
+            styles[key] = style
+        return styles[max(weights, key=weights.get)] if weights else paragraph.pdf_style
+
+    @staticmethod
+    def coalesce_styled_words(compositions, same_style=is_same_style):
         """Treat a phrase with styled words and plain spaces as one styled span."""
         result, index = [], 0
         while index < len(compositions):
@@ -890,7 +942,7 @@ class ILTranslator:
                         spaces.extend(candidate.pdf_character)
                         following += 1
                     next_style = compositions[following].pdf_same_style_characters if following < len(compositions) else None
-                    if not next_style or not is_same_style(styled.pdf_style, next_style.pdf_style):
+                    if not next_style or not same_style(styled.pdf_style, next_style.pdf_style):
                         break
                     chars.extend([*spaces, *next_style.pdf_character])
                     end = following + 1
@@ -1136,28 +1188,35 @@ class ILTranslator:
             if recovery is not None:
                 recovery.record(paragraph, "skipped", reason=preserve_reason)
             return None, None
-        text, translate_input = self._prepare_paragraph(paragraph, tracker, page_font_map, xobj_font_map)
-        plan = getattr(self, "body_input_plan", None)
-        if text is not None and plan is not None:
-            plan.apply(paragraph, translate_input)
-            text = translate_input.unicode
-            tracker.set_input(text)
-        if text is not None:
+        stored_version = recovery.restored_input_version(paragraph) if recovery is not None else None
+        for version in ((1, STYLE_INPUT_VERSION) if stored_version == 1 else (STYLE_INPUT_VERSION,)):
+            legacy = version == 1
+            text, translate_input = self._prepare_paragraph(
+                paragraph, tracker, page_font_map, xobj_font_map, legacy,
+            )
+            if text is None:
+                if legacy:
+                    continue
+                if recovery is not None:
+                    recovery.record(paragraph, "skipped", reason="not_translatable")
+                return None, None
+            translate_input.input_version = version
+            plan = getattr(self, "_legacy_body_plan" if legacy else "body_input_plan", None)
+            if plan is not None:
+                plan.apply(paragraph, translate_input)
+                text = translate_input.unicode
+                tracker.set_input(text)
             formula_text = {p.placeholder: get_char_unicode_string(p.formula.pdf_character)
                             for p in getattr(translate_input, "placeholders", []) if isinstance(p, FormulaPlaceholder)}
             translate_input.literal_tags = LiteralTags(text, formula_text)
             text = translate_input.unicode = translate_input.literal_tags.text
-        recovery = getattr(self.translation_config, "recovery", None)
-        if recovery is not None:
-            if text is None:
-                recovery.record(paragraph, "skipped", reason="not_translatable")
-            else:
+            if stored_version == version:
                 restored = recovery.restored(paragraph, text)
                 if restored is None and translate_input.literal_tags.mapping:
-                    legacy = recovery.restored(paragraph, translate_input.literal_tags.source)
-                    if legacy is not None:
+                    unprotected = recovery.restored(paragraph, translate_input.literal_tags.source)
+                    if unprotected is not None:
                         try:
-                            restored = translate_input.literal_tags.protect_existing(legacy)
+                            restored = translate_input.literal_tags.protect_existing(unprotected)
                         except InvalidTranslation:
                             pass
                 if restored is not None:
@@ -1168,7 +1227,8 @@ class ILTranslator:
                     else:
                         recovery.checkpoint_reused(paragraph)
                         return None, None
-        return text, translate_input
+            if not legacy:
+                return text, translate_input
 
     def _prepare_paragraph(
         self,
@@ -1176,6 +1236,7 @@ class ILTranslator:
         tracker: ParagraphTranslateTracker,
         page_font_map: dict[str, PdfFont],
         xobj_font_map: dict[int, dict[str, PdfFont]],
+        legacy=False,
     ):
         """Pre-translation processing: prepare text for translation."""
         if paragraph.vertical:
@@ -1189,9 +1250,10 @@ class ILTranslator:
         if not self.support_llm_translate:
             disable_rich_text_translate = True
 
-        snapshot = getattr(self, "_body_prepared_inputs", {}).get(id(paragraph))
+        snapshots = getattr(self, "_legacy_body_inputs" if legacy else "_body_prepared_inputs", {})
+        snapshot = snapshots.get(id(paragraph))
         translate_input = copy.copy(snapshot) if snapshot is not None else self.get_translate_input(
-            paragraph, page_font_map, disable_rich_text_translate
+            paragraph, page_font_map, disable_rich_text_translate, legacy,
         )
         if not translate_input:
             return None, None
@@ -1213,6 +1275,8 @@ class ILTranslator:
     def validate_paragraph_output(self, translate_input, output):
         validate_text(translate_input.unicode, output, self.translate_engine.lang_out,
                       not self.translation_config.disable_same_text_fallback)
+        if getattr(translate_input, "input_version", None) == STYLE_INPUT_VERSION:
+            validate_punctuation_spans(translate_input.unicode, output)
         tags = getattr(translate_input, "literal_tags", None)
         if tags is not None and tags.mapping:
             tags.restore(output)
@@ -1270,6 +1334,7 @@ class ILTranslator:
         recovery = getattr(self.translation_config, "recovery", None)
         if recovery is not None:
             recovery.record(paragraph, "succeeded", input=translate_input.unicode, translation=translated_text,
+                            inputVersion=getattr(translate_input, "input_version", STYLE_INPUT_VERSION),
                             readingTranslation=get_paragraph_unicode(paragraph), reason=None)
         self._ensure_translation_completion()
         result = ParagraphOutput(translate_input.unicode, translated_text)

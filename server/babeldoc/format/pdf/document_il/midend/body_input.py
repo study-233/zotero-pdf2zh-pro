@@ -7,6 +7,8 @@ from types import MappingProxyType
 
 
 BODY_INPUT_VERSION = "body-input-v1"
+# Checkpoints select this representation per paragraph; the parser fingerprint stays stable.
+STYLE_INPUT_VERSION = 2
 BODY_LABELS = frozenset(("text", "plain text", "paragraph_hybrid"))
 _FURNITURE = frozenset(("header", "footer", "page number", "page_number"))
 _PROTECTED = re.compile(

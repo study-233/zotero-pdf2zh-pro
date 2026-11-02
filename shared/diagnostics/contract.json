@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaRevision": 5,
+  "schemaRevision": 6,
   "supportedSchemaVersions": [
     1
   ],
@@ -38,6 +38,9 @@
     "executionSeconds",
     "exitCode",
     "extraPlaceholderCount",
+    "expectedSegmentCount",
+    "receivedSegmentCount",
+    "invalidSegmentId",
     "failed",
     "filteredFields",
     "firstParagraphMs",
@@ -466,6 +469,13 @@
     "finishReasons": "finishReason",
     "protocols": "protocol"
   },
+  "validationDetailFields": [
+    "missingPlaceholderCount",
+    "extraPlaceholderCount",
+    "expectedSegmentCount",
+    "receivedSegmentCount",
+    "invalidSegmentId"
+  ],
   "failedParagraphFields": [
     "page",
     "attempts",
@@ -475,6 +485,9 @@
     "validationCode",
     "missingPlaceholderCount",
     "extraPlaceholderCount",
+    "expectedSegmentCount",
+    "receivedSegmentCount",
+    "invalidSegmentId",
     "paragraphRef",
     "callRefs",
     "operationRefs",
@@ -482,6 +495,20 @@
     "omittedLinks"
   ],
   "validationErrors": {
+    "empty_repair_segment": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": ["validationCode", "page", "expectedSegmentCount", "receivedSegmentCount", "invalidSegmentId"],
+      "description": "分片补译已返回，但必需片段没有有效译文",
+      "suggestion": "检查空片段编号及返回片段数。"
+    },
+    "missing_repair_segment": {
+      "stage": "validation",
+      "retryable": true,
+      "requiredEvidence": ["validationCode", "page", "expectedSegmentCount", "receivedSegmentCount", "invalidSegmentId"],
+      "description": "分片补译缺少必需片段",
+      "suggestion": "检查缺失片段编号及返回片段数。"
+    },
     "empty_translation": {
       "stage": "validation",
       "retryable": true,
@@ -1367,6 +1394,9 @@
       "statusCode",
       "missingPlaceholderCount",
       "extraPlaceholderCount",
+      "expectedSegmentCount",
+      "receivedSegmentCount",
+      "invalidSegmentId",
       "updatedAt",
       "recordOrigin"
     ]

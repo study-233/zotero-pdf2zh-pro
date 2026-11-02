@@ -916,6 +916,22 @@ test("configuration, outcomes and count maps survive both export boundaries", ()
     );
 });
 
+test("summary identifies an empty repair segment even when the request returned text", () => {
+    const summary = module.diagnosticSummary({
+        status: "incomplete",
+        failedParagraphs: [
+            {
+                page: 2,
+                validationCode: "empty_repair_segment",
+                expectedSegmentCount: 3,
+                receivedSegmentCount: 3,
+                invalidSegmentId: 0,
+            },
+        ],
+    });
+    assert.match(summary, /第 2 页.*片段 ID=0.*3\/3/);
+});
+
 test("summary separates request counts from tokens and marks missing configuration", () => {
     const summary = module.diagnosticSummary({
         taskId: "abc",
