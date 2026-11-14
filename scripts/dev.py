@@ -516,11 +516,11 @@ class Development:
             "extensions.update.enabled": False,
             "extensions.update.autoUpdateDefault": False,
             "extensions.zotero.sync.autoSync": False,
-            "extensions.zotero.firstRun": False,
+            "extensions.zotero.firstRun2": False,
             "browser.shell.checkDefaultBrowser": False,
             "devtools.debugger.prompt-connection": False,
             "devtools.debugger.force-local": True,
-        })
+        }, remove={"extensions.zotero.firstRun"})
 
     def sync_models(self):
         self.platform.require_closed()

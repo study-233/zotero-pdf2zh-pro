@@ -74,6 +74,19 @@ class DevelopmentTests(unittest.TestCase):
         update_prefs(target, {PREFIX + "selectedApiKey": "changed"})
         self.assertEqual((self.source / "prefs.js").read_bytes(), before)
 
+    def test_welcome_page_is_disabled_in_new_and_existing_dev_profiles(self):
+        path = self.dev.paths()["profile"] / "user.js"
+        self.dev.set_dev_prefs()
+        self.assertIs(read_prefs(path)["extensions.zotero.firstRun2"], False)
+
+        update_prefs(path, {"extensions.zotero.firstRun": False, "extensions.zotero.firstRun2": True,
+                            "extensions.zotero.firstRunGuidance": True})
+        self.dev.set_dev_prefs()
+        prefs = read_prefs(path)
+        self.assertIs(prefs["extensions.zotero.firstRun2"], False)
+        self.assertNotIn("extensions.zotero.firstRun", prefs)
+        self.assertIs(prefs["extensions.zotero.firstRunGuidance"], True)
+
     def test_source_user_overrides_are_copied(self):
         update_prefs(self.source / "user.js", {PREFIX + "selectedApiKey": "override"})
         self.dev.sync_models()
