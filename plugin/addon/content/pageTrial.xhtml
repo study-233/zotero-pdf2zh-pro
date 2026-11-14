@@ -1,0 +1,220 @@
+<?xml version="1.0"?>
+<dialog
+    xmlns="http://www.w3.org/1999/xhtml"
+    id="pdf2zh-page-trial"
+    aria-labelledby="pdf2zh-trial-title"
+    aria-describedby="pdf2zh-trial-file"
+>
+    <style>
+        #pdf2zh-page-trial {
+            --trial-muted: var(--fill-secondary, GrayText);
+            --trial-border: var(--color-border, ButtonBorder);
+            --trial-accent: var(--color-accent, AccentColor);
+            box-sizing: border-box;
+            width: min(400px, calc(100% - 32px));
+            max-height: calc(100% - 32px);
+            margin: auto;
+            padding: 0;
+            overflow: auto;
+            font: menu;
+            line-height: 1.5;
+            color: var(--fill-primary, CanvasText);
+            background: var(--color-background, Canvas);
+            border: 1px solid var(--trial-border);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgb(0 0 0 / 22%);
+        }
+        #pdf2zh-page-trial::backdrop {
+            background: rgb(0 0 0 / 14%);
+        }
+        #pdf2zh-page-trial header,
+        #pdf2zh-page-trial section {
+            padding: 20px 24px 0;
+        }
+        #pdf2zh-page-trial h1 {
+            margin: 0 0 4px;
+            font: inherit;
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+        #pdf2zh-page-trial .file-line,
+        #pdf2zh-page-trial .field-heading,
+        #pdf2zh-page-trial .presets,
+        #pdf2zh-page-trial footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #pdf2zh-page-trial .file-line {
+            color: var(--trial-muted);
+        }
+        #pdf2zh-page-trial .file-line::before {
+            content: "";
+            flex: 0 0 16px;
+            height: 16px;
+            background: url("chrome://zotero/skin/item-type/16/light/attachment-pdf.svg")
+                center / contain no-repeat;
+        }
+        @media (prefers-color-scheme: dark) {
+            #pdf2zh-page-trial .file-line::before {
+                background-image: url("chrome://zotero/skin/item-type/16/dark/attachment-pdf.svg");
+            }
+        }
+        #pdf2zh-trial-file {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #pdf2zh-page-trial .field-heading {
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        #pdf2zh-page-trial label {
+            font-weight: 600;
+        }
+        #pdf2zh-page-trial .total,
+        #pdf2zh-trial-summary {
+            font-size: 0.92em;
+            color: var(--trial-muted);
+            font-variant-numeric: tabular-nums;
+        }
+        #pdf2zh-trial-pages {
+            appearance: none;
+            box-sizing: border-box;
+            width: 100%;
+            height: 34px;
+            margin: 0;
+            padding: 4px 10px;
+            border: 1px solid var(--trial-border);
+            border-radius: 6px;
+            color: inherit;
+            background: color-mix(
+                in srgb,
+                var(--color-background, Canvas) 96%,
+                var(--fill-primary, CanvasText)
+            );
+            font: inherit;
+            font-variant-numeric: tabular-nums;
+        }
+        #pdf2zh-page-trial input:focus,
+        #pdf2zh-page-trial button:focus-visible {
+            outline: 2px solid var(--trial-accent);
+            outline-offset: 2px;
+        }
+        #pdf2zh-page-trial .presets {
+            margin-top: 8px;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        #pdf2zh-page-trial button {
+            appearance: none;
+            min-width: 0;
+            min-height: 30px;
+            margin: 0;
+            padding: 3px 13px;
+            font: inherit;
+            color: inherit;
+            background: var(--material-button, ButtonFace);
+            border: 1px solid var(--trial-border);
+            border-radius: 6px;
+        }
+        #pdf2zh-page-trial .presets button {
+            min-height: 24px;
+            padding: 1px 8px;
+            font-size: 0.92em;
+            color: var(--trial-muted);
+            background: transparent;
+            border-color: var(--color-border50, ButtonBorder);
+        }
+        #pdf2zh-page-trial button:enabled:hover {
+            background: var(--fill-quinary, ButtonFace);
+        }
+        #pdf2zh-page-trial button:enabled:active {
+            background: var(--fill-quarternary, ButtonShadow);
+        }
+        #pdf2zh-page-trial .map {
+            display: flex;
+            position: relative;
+            height: 5px;
+            overflow: hidden;
+            margin-top: 18px;
+            border-radius: 2px;
+            background: var(--fill-quarternary, ButtonFace);
+        }
+        #pdf2zh-page-trial .map > span {
+            position: absolute;
+            inset-block: 0;
+            background: var(--accent-blue, var(--trial-accent));
+        }
+        #pdf2zh-page-trial .map[data-divisions]::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                    to right,
+                    transparent calc(100% - 1px),
+                    var(--color-background, Canvas) 0
+                )
+                0 0 / var(--page-width) 100% repeat-x;
+        }
+        #pdf2zh-trial-summary {
+            margin: 6px 0 18px;
+            overflow-wrap: anywhere;
+        }
+        #pdf2zh-page-trial [aria-invalid="true"] {
+            border-color: var(--color-invalid, MarkText);
+        }
+        #pdf2zh-page-trial [data-invalid] {
+            color: var(--color-invalid, CanvasText);
+        }
+        #pdf2zh-page-trial footer {
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            padding: 12px 24px;
+            border-top: 1px solid var(--color-border50, ButtonBorder);
+            background: var(--fill-senary, transparent);
+        }
+        #pdf2zh-page-trial button[type="submit"]:enabled {
+            border-color: transparent;
+            color: var(--color-accent-text, AccentColorText);
+            background: var(--trial-accent);
+        }
+        #pdf2zh-page-trial button[type="submit"]:enabled:hover {
+            filter: brightness(1.08);
+        }
+        #pdf2zh-page-trial button[type="submit"]:enabled:active {
+            filter: brightness(0.9);
+        }
+        #pdf2zh-page-trial button:disabled {
+            opacity: 0.48;
+        }
+    </style>
+    <form>
+        <header>
+            <h1 id="pdf2zh-trial-title" />
+            <div class="file-line"><span id="pdf2zh-trial-file" /></div>
+        </header>
+        <section>
+            <div class="field-heading">
+                <label for="pdf2zh-trial-pages" />
+                <span class="total" />
+            </div>
+            <input
+                id="pdf2zh-trial-pages"
+                type="text"
+                maxlength="160"
+                aria-describedby="pdf2zh-trial-summary"
+                autocomplete="off"
+                spellcheck="false"
+                dir="ltr"
+            />
+            <div class="presets" />
+            <div class="map" aria-hidden="true" />
+            <p id="pdf2zh-trial-summary" role="status" aria-atomic="true" />
+        </section>
+        <footer>
+            <button type="button" class="cancel" />
+            <button type="submit" disabled="disabled" />
+        </footer>
+    </form>
+</dialog>

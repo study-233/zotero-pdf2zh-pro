@@ -37,6 +37,28 @@ class TaskManagerTests(unittest.TestCase):
                 self.assertEqual(manager._tasks["task"].request_payload["glossary_entries"], rows)
                 self.assertEqual(manager._tasks["task"].request_payload["glossary_packs"], packs)
 
+    def test_trial_pages_survive_restart_retry_and_repair(self):
+        for repair in (False, True):
+            with self.subTest(repair=repair), tempfile.TemporaryDirectory() as tmp:
+                workspace = Path(tmp)
+                source = workspace / 'input.pdf'
+                source.touch()
+                path = workspace / 'tasks.json'
+                manager = TaskManager(path)
+                manager._tasks['trial'] = TaskRecord(task_id='trial', file_name='input.pdf', service='openai',
+                    output_modes=['mono'], workspace_dir=workspace, status='incomplete' if repair else 'failed',
+                    request_payload={'input_path': str(source), 'output_dir': str(workspace/'output'), 'trial_pages': '1,3-5'})
+                manager._save_persistent_tasks()
+                manager.close()
+                restored = TaskManager(path)
+                try:
+                    self.assertEqual(restored.get_task('trial')['trialPages'], '1,3-5')
+                    with patch.object(restored, '_start_worker_locked'):
+                        retried = restored.retry_task('trial', repair=repair)
+                    self.assertEqual(retried['trialPages'], '1,3-5')
+                finally:
+                    restored.close()
+
     def test_retry_and_repair_preserve_original_review_choice(self):
         for repair in (False, True):
             for enabled in (False, True):

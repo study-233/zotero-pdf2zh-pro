@@ -117,6 +117,7 @@ class TaskRecord:
             "revision": self.revision,
             "taskId": self.task_id,
             "fileName": self.file_name,
+            **({"trialPages": self.request_payload["trial_pages"]} if self.request_payload.get("trial_pages") else {}),
             "service": self.service,
             "requestedConfiguration": requested_configuration({"service": self.service, **self.request_payload}),
             "outputModes": self.output_modes,

@@ -378,6 +378,12 @@ task queue time, while `Engine Wait` measures the translation engine lock.
 
 ## Binary uploads, history pagination and incremental startup sync
 
+When `/health.capabilities.pageTrial` is true, `POST /tasks` accepts optional `trialPages`
+in JSON or multipart metadata. Use one-based physical PDF pages such as `"2,4-6"`.
+The server validates the range before queueing, merges overlaps, and returns the normalized
+range in task snapshots. It takes precedence over `skipLastPages`. Both PDF outputs retain
+the original page order. Omit the field to submit a normal translation.
+
 `/health.capabilities.binaryTaskUpload` advertises multipart `POST /tasks` support.
 Send one `file` part with PDF bytes and one `metadata` text part containing the
 existing JSON task options (including `fileName`, `requestId`, and `dedupScope`),

@@ -102,6 +102,7 @@ export class ServerTaskClient {
             Array.isArray(requestBody.glossaryPacks) &&
             requestBody.glossaryPacks.length > 0;
         if (
+            requestBody.trialPages !== undefined ||
             needsApiCheck ||
             needsGlossary ||
             needsGlossaryPacks ||
@@ -116,6 +117,14 @@ export class ServerTaskClient {
             idempotent =
                 health.capabilities?.taskSubmissionIdempotency === true;
             binaryUpload = health.capabilities?.binaryTaskUpload === true;
+            if (
+                requestBody.trialPages !== undefined &&
+                health.capabilities?.pageTrial !== true
+            )
+                throw Object.assign(
+                    new Error("Page trial is not supported by this server"),
+                    { code: "page_trial_unsupported" },
+                );
             const unavailable = [];
             if (needsGlossary && health.capabilities?.glossaryEntries !== true)
                 unavailable.push("术语表");

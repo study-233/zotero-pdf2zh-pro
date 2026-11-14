@@ -43,6 +43,46 @@ class FixtureLayout:
 
 
 class NativePipelineTests(unittest.TestCase):
+    def test_page_trial_keeps_physical_page_order_and_translates_only_selected_text(self):
+        from pdf2zh_pro.pdf import build_settings_input
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'trial.pdf'
+            sentences = ['Leave the opening paragraph alone.', 'Translate the middle paragraph only.',
+                         'Preserve the final paragraph verbatim.']
+            with pymupdf.open() as doc:
+                for sentence in sentences:
+                    doc.new_page().insert_text((72, 72), sentence)
+                doc.save(source)
+            pdf = build_settings_input(dict(input_path=str(source), output_dir=str(root), output_modes=['mono', 'dual'],
+                source_lang='en', target_lang='zh-CN', service='openai', trial_pages='2', skip_last_pages=2))['pdf']
+            font = pymupdf.Font('china-s')
+            font_path = root / 'fixture.ttf'
+            font_path.write_bytes(font.buffer)
+            metadata = {'ascent': font.ascender * 1000, 'descent': font.descender * 1000, 'encoding_length': 2}
+            families = {key: ['fixture.ttf'] for key in ('normal', 'script', 'fallback', 'base')}
+            translator = FixtureTranslator()
+            config = TranslationConfig(translator, source, 'en', 'zh-CN', FixtureLayout(),
+                working_dir=root / 'work', output_dir=root / 'output', pages=pdf['pages'],
+                only_include_translated_page=pdf['only_include_translated_page'], auto_extract_glossary=False,
+                pool_max_workers=1, use_rich_pbar=False, watermark_output_mode=WatermarkOutputMode.NoWatermark)
+            with patch('babeldoc.assets.assets.get_font_family', return_value=families), patch(
+                    'babeldoc.assets.assets.get_font_and_metadata', return_value=(font_path, metadata)):
+                result = translate(config)
+            calls = ' '.join(translator.requests)
+            self.assertIn(sentences[1], calls)
+            for original in (sentences[0], sentences[2]):
+                self.assertNotIn(original, calls)
+            for path in (result.mono_pdf_path, result.dual_pdf_path):
+                with pymupdf.open(path) as doc:
+                    self.assertEqual(len(doc), 3)
+                    self.assertIn(sentences[0], doc[0].get_text())
+                    self.assertIn('论文的翻译结果', doc[1].get_text())
+                    self.assertIn(sentences[2], doc[2].get_text())
+                    self.assertNotIn('论文的翻译结果', doc[0].get_text() + doc[2].get_text())
+                    if path == result.dual_pdf_path:
+                        self.assertIn(sentences[1], doc[1].get_text())
+
     def test_native_translation_rendering_page_filter_ocr_and_recovery(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

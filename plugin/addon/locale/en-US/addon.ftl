@@ -74,7 +74,7 @@ notice-error-rate-limit = Translation requests are limited. Try again later and 
 notice-error-network = Cannot connect to the translation service. Check your network and retry.
 notice-error-certificate = The translation service certificate could not be verified. Check the network or service address.
 notice-error-output = The translated PDF could not be generated. Retry or export diagnostics.
-notice-error-pages = The page settings exclude all pages. Adjust them and retry.
+notice-error-pages = Check that the selected PDF pages are in range and at least one page is included.
 notice-error-import = The translated PDF is ready, but import failed. Retry the import.
 notice-error-timeout = The translation service timed out. Try again later.
 notice-error-pdf = No usable PDF was found. Check the selected item or attachment.
@@ -114,6 +114,31 @@ notice-error-library = Cannot access the library. Check group permissions or syn
 
 prefs-title = zotero-pdf2zh-pro
 
+trial-menu = Translate selected pages…
+trial-current = Try translating this page…
+trial-select-one = Select one paper or PDF attachment.
+notice-error-trial-upgrade = Update the translation server to use page trials.
+trial-open-error = Cannot read the PDF page count. Download the attachment and try again.
+trial-title = Translate selected pages
+trial-label = Page range
+trial-total = { $total ->
+        [one] 1 page
+       *[other] { $total } pages
+    }
+trial-example = e.g. { $example }
+trial-hint = Use PDF page numbers, starting at 1.
+trial-summary = { $count ->
+        [one] Page { $pages } · 1 selected
+       *[other] Pages { $pages } · { $count } selected
+    }
+trial-invalid = Enter pages from 1 to { $total }, using commas or ranges.
+trial-this-page = Current page · { $page }
+trial-first = First page
+trial-first-pages = First { $count } pages
+trial-start = Translate
+trial-cancel = Cancel
+task-ui-trial = Trial pages { $pages }
+trial-complete = Page trial complete
 prefs-menu-translate = Translate PDF
 prefs-menu-tasks = Task Manager
 
@@ -228,6 +253,12 @@ selection-original-editor = Original · edit and translate
 selection-submit = Translate
 selection-cancel = Cancel
 selection-restore = Restore selection
+selection-note-add = Add to note
+selection-note-added = Added to note
+selection-note-title = Bilingual excerpts
+selection-note-page = p. { $page }
+selection-note-edited = Text used for translation:
+selection-note-failed = Could not write to the note. Check that the note or library is editable and try again.
 selection-copy = Copy
 selection-stop = Stop
 selection-audio-loading = Loading pronunciation; click to cancel
@@ -551,7 +582,7 @@ task-ui-error-parameters = Translation request parameters are unsupported
 task-ui-error-auth = Translation service authentication failed
 task-ui-error-limit = Translation requests are limited; check rate or quota
 task-ui-error-output = Translated PDF could not be generated
-task-ui-error-pages = Page range excludes all pages
+task-ui-error-pages = Invalid PDF page range
 task-ui-error-timeout = Translation service timed out
 task-ui-error-network = Cannot connect to translation service
 task-ui-error-unknown = Translation failed for an unknown reason.

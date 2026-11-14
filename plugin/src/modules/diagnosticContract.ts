@@ -1096,6 +1096,10 @@ export const diagnosticContract = {
             "coverage": "availability_only",
             "component": "server"
         },
+        "pageTrial": {
+            "coverage": "task_events",
+            "component": "server"
+        },
         "translationMemory": {
             "coverage": "availability_only",
             "component": "server"
@@ -1297,6 +1301,15 @@ export const diagnosticContract = {
         "selection_memory_failed": {
             "component": "plugin",
             "requiredFields": []
+        },
+        "page_trial_open_failed": {
+            "component": "plugin",
+            "requiredFields": []
+        },
+        "selection_note_failed": {
+            "component": "plugin",
+            "requiredFields": [],
+            "feature": "bilingualSelectionNotes"
         },
         "selection_orphan_cleanup_failed": {
             "component": "plugin",

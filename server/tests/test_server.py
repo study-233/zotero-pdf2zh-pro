@@ -118,6 +118,28 @@ class ServerRouteTests(unittest.TestCase):
                 self.assertEqual(self.client.post("/tasks", json=identity).status_code, 400)
                 create.assert_not_called()
 
+    def test_trial_ranges_are_validated_before_queue_and_canonicalized_before_dedup(self):
+        import pymupdf
+        with pymupdf.open() as pdf:
+            for _ in range(5):
+                pdf.new_page()
+            data = {"fileName": "paper.pdf", "fileContent": base64.b64encode(pdf.tobytes()).decode(),
+                    "outputModes": ["mono", "dual"], "service": "openai", "skipLastPages": 5}
+        with tempfile.TemporaryDirectory() as directory, patch.object(server_module, "TRANSLATES_DIR", Path(directory)), \
+                patch.object(server_module.TASK_MANAGER, "create_task", return_value=task_snapshot()) as create:
+            for invalid in (None, "", "1,6", "0", "4-1", "-2", "1,", True, [2], "1-" + "9"*200):
+                response = self.client.post("/tasks", json={**data, "trialPages": invalid})
+                self.assertEqual(response.status_code, 400, response.json)
+                self.assertIn("invalid_page_range", [row["code"] for row in response.json["diagnostics"]])
+            create.assert_not_called()
+            self.assertFalse(list(Path(directory).iterdir()))
+            self.assertEqual(self.client.post("/tasks", json={**data, "trialPages": "4，3–5,1,3"}).status_code, 202)
+            payload = create.call_args.kwargs["request_payload"]
+            self.assertEqual((payload["trial_pages"], payload["skip_last_pages"]), ("1,3-5", 0))
+            self.assertEqual(self.client.post("/tasks", json=data).status_code, 202)
+            self.assertNotIn("trial_pages", create.call_args.kwargs["request_payload"])
+            self.assertEqual(create.call_args.kwargs["request_payload"]["skip_last_pages"], 5)
+
     def test_repair_contract_success_missing_and_active(self):
         with patch.object(server_module.TASK_MANAGER, "repair_task", return_value=task_snapshot()) as repair:
             response = self.client.post("/tasks/task-1/repair")

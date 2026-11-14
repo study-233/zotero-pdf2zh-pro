@@ -10,7 +10,7 @@ const root = path.resolve(__dirname, "..");
 const output = require('./workspace.cjs').newReport('selection-ui');
 fs.mkdirSync(output, { recursive: true });
 const modules = {};
-for (const name of ["selectionFormatting", "selectionTranslate", "selectionDictionary", "selectionDictionaryStore", "userNotice", "selectionPopup", "selectionUI", "selectionAudio", "selectionOnlineDictionary", "selectionDictionaryService", "selectionStream", "selectionEvents", "selectionRequest", "selectionView", "selectionPane"]) {
+for (const name of ["selectionNote", "selectionFormatting", "selectionTranslate", "selectionDictionary", "selectionDictionaryStore", "userNotice", "selectionPopup", "selectionUI", "selectionAudio", "selectionOnlineDictionary", "selectionDictionaryService", "selectionStream", "selectionEvents", "selectionRequest", "selectionView", "selectionPane"]) {
     modules[`./${name}`] = ts.transpileModule(fs.readFileSync(path.join(root, `plugin/src/modules/${name}.ts`), "utf8"), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText;

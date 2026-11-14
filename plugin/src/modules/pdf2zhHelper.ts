@@ -25,6 +25,7 @@ export type TaskOutputResponse = {
     outputMode: OutputMode;
     bytes: Uint8Array;
     incomplete?: boolean;
+    trialPages?: string;
     importIdentity?: string;
 };
 
@@ -77,7 +78,8 @@ export class PDF2zhHelperFactory {
             targetLang: config.targetLang,
             outputModes: config.outputModes,
             service: config.service,
-            skipLastPages: config.skipLastPages,
+            skipLastPages: config.trialPages ? "0" : config.skipLastPages,
+            ...(config.trialPages ? { trialPages: config.trialPages } : {}),
             qps: config.qps,
             poolSize: config.poolSize,
             ocr: config.ocr,
@@ -126,6 +128,7 @@ export class PDF2zhHelperFactory {
                 targetLang: config.targetLang,
                 metadata: settings?.metadata,
                 incomplete: response.incomplete,
+                trialPages: response.trialPages,
                 importIdentity: response.importIdentity,
                 isCurrent,
             });
@@ -263,6 +266,7 @@ export class PDF2zhHelperFactory {
         metadata?: TitleMetadata;
         isCurrent?: () => boolean;
         incomplete?: boolean;
+        trialPages?: string;
         importIdentity?: string;
     }) {
         const { item, filePath, options, outputMode, service } = params;
@@ -285,6 +289,11 @@ export class PDF2zhHelperFactory {
                       titleContext,
                   )
             : PathUtils.filename(filePath);
+        const scopedTitle = params.trialPages
+            ? baseTitle +
+              " · " +
+              getString("task-ui-trial", { args: { pages: params.trialPages } })
+            : baseTitle;
         const importOptions = {
             file: filePath,
             parentItemID: parentItemID == undefined ? undefined : parentItemID,
@@ -294,11 +303,13 @@ export class PDF2zhHelperFactory {
                     ? this.getCollections(item)
                     : undefined,
             title: params.incomplete
-                ? `${baseTitle}（${getString("attachment-status-incomplete")}）`
-                : baseTitle,
+                ? `${scopedTitle}（${getString("attachment-status-incomplete")}）`
+                : scopedTitle,
         };
         const tags =
-            options.addTranslatedTag && !params.incomplete ? ["已翻译"] : [];
+            options.addTranslatedTag && !params.incomplete && !params.trialPages
+                ? ["已翻译"]
+                : [];
         const attachment = params.importIdentity
             ? await importTaskOutput({
                   ...importOptions,

@@ -383,3 +383,93 @@ test("favorites serialize writes, dedupe only identical sources, recover after r
         /坐标/,
     );
 });
+
+test("group-library excerpts link the exact PDF, keep printed labels and treat both texts as plain text", async () => {
+    const window = new JSDOM("").window;
+    const pdf = {
+        libraryID: 37,
+        key: "GROUPPDF",
+        parentItem: { id: 1, key: "ARTICLE", getNotes: () => [] },
+        isPDFAttachment: () => true,
+    };
+    let html;
+    const api = load(
+        "selectionNote",
+        {
+            "../utils/locale": {
+                getString: (key, options) => options?.args.page ?? key,
+            },
+        },
+        {
+            Zotero: {
+                getString: (key) => (key.endsWith("openingQMark") ? "“" : "”"),
+                Items: { get: () => pdf, getAsync: async () => [] },
+                URI: {
+                    getItemURI: () =>
+                        "http://zotero.org/groups/111/items/GROUPPDF",
+                },
+                Libraries: {
+                    userLibraryID: 1,
+                    get: () => ({ editable: true }),
+                },
+                Groups: {
+                    getGroupIDFromLibraryID: (id) => {
+                        assert.equal(id, 37);
+                        return 111;
+                    },
+                },
+                DB: { executeTransaction: (fn) => fn() },
+                getMainWindow: () => window,
+                Item: class {
+                    addTag() {}
+                    setNote(value) {
+                        html = value;
+                    }
+                    async save() {}
+                },
+            },
+        },
+    );
+    const excerpt = {
+        original: "<b>exact</b> & other",
+        query: "edited input",
+        translation: "<img src=x> 样例\n第二行",
+        position: {
+            pageIndex: 2,
+            rects: [[1, 2, 3, 4]],
+            nextPageRects: [[5, 6, 7, 8]],
+        },
+        pageLabel: "S1",
+    };
+    await api.saveSelectionNote({ itemID: 12 }, excerpt);
+    const doc = new JSDOM(html).window.document;
+    const link = doc.querySelector("a");
+    assert.equal(
+        link.getAttribute("href"),
+        "zotero://open-pdf/groups/111/items/GROUPPDF?page=3",
+    );
+    assert.equal(link.textContent, "S1");
+    assert.equal(
+        doc.querySelector(".highlight").textContent,
+        "“" + excerpt.original + "”",
+    );
+    assert.deepEqual(
+        JSON.parse(
+            decodeURIComponent(
+                doc.querySelector(".highlight").dataset.annotation,
+            ),
+        ).position,
+        excerpt.position,
+    );
+    assert.ok(doc.body.textContent.includes("edited input"));
+    assert.ok(doc.body.textContent.includes("<img src=x> 样例"));
+    assert.ok(doc.querySelector("br"));
+    assert.equal(doc.querySelector("img, b"), null);
+    await assert.rejects(
+        api.saveSelectionNote(
+            { itemID: 12 },
+            { ...excerpt, position: { pageIndex: -1 } },
+        ),
+        /location/,
+    );
+});

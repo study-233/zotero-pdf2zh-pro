@@ -430,3 +430,16 @@ test("native files fall back to JSON before submission when binary upload is not
     assert.equal(body.requestId, "old-request-0001");
     assert.equal(count, 1);
 });
+
+test("unsupported page trials are rejected before any PDF upload", async () => {
+    const requests = [];
+    globalThis.fetch = async (url) => {
+        requests.push(url);
+        return { ok: true, json: async () => ({ capabilities: {} }) };
+    };
+    await assert.rejects(
+        ServerTaskClient.createTask("http://localhost", { trialPages: "2,5" }),
+        { code: "page_trial_unsupported" },
+    );
+    assert.deepEqual(requests, ["http://localhost/health"]);
+});

@@ -54,6 +54,7 @@ function fixture() {
         fallbacks = [];
     const state = {
         entries: [],
+        noteWrites: [],
         autoDictionary: false,
         auxiliaryRespond: undefined,
         provider: "bing",
@@ -109,6 +110,12 @@ function fixture() {
         "./llmApiManager": { profileLabel: (p) => p.key },
         "./selectionAudio": { stopSelectionAudio() {} },
         "./selectionFavorites": favorites,
+        "./selectionNote": {
+            async saveSelectionNote(reader, excerpt) {
+                state.noteWrites.push({ itemID: reader.itemID, ...excerpt });
+                if (state.writeNote) await state.writeNote();
+            },
+        },
         "./selectionFavoritesPane": {
             registerFavoritesPane() {},
             unregisterFavoritesPane() {},
@@ -401,6 +408,7 @@ function fixture() {
             params: {
                 annotation: {
                     text,
+                    pageLabel: "iv",
                     position: { pageIndex: 4, rects: [1, 2, 3, 4] },
                 },
             },
@@ -1646,4 +1654,83 @@ test("Codex selection checks proxy capability and forwards the saved proxy", asy
     await f.translateSelection(request, "paper", "sentence", 1, "context");
     assert.equal(calls.at(-1).body.llm_api.proxyMode, "manual");
     assert.equal(calls.at(-1).body.llm_api.proxyUrl, f.state.proxyUrl);
+});
+
+test("add to note saves the exact displayed translation once, without lookup or generation", async () => {
+    const f = fixture();
+    f.state.respond = async () => memory;
+    f.select("Source paragraph");
+    await f.advance();
+    const view = f.cards[0],
+        controls = view.controls;
+    const counts = () => [
+        f.requests.length,
+        f.auxiliaryRequests.length,
+        f.dictionaryCalls.length,
+        f.state.contextReads,
+    ];
+    const before = counts();
+    await controls.onAddToNote("wrong result");
+    assert.equal(f.state.noteWrites.length, 0);
+    let finish;
+    f.state.writeNote = () =>
+        new Promise((resolve) => {
+            finish = resolve;
+        });
+    const saving = controls.onAddToNote(view.result.text);
+    await controls.onAddToNote(view.result.text);
+    assert.equal(controls.noteBusy, true);
+    finish();
+    await saving;
+    await controls.onAddToNote(view.result.text);
+    assert.deepEqual(f.state.noteWrites, [
+        {
+            itemID: 7,
+            original: "Source paragraph",
+            query: "Source paragraph",
+            translation: "已有译文",
+            position: { pageIndex: 4, rects: [1, 2, 3, 4] },
+            pageLabel: "iv",
+        },
+    ]);
+    assert.deepEqual(counts(), before);
+    assert.equal(controls.savedTranslation, "已有译文");
+    f.select("Another selected sentence.");
+    await controls.onAddToNote("已有译文");
+    assert.equal(f.state.noteWrites.length, 1);
+});
+
+test("write failure can be retried locally, stale and interrupted results cannot be saved", async () => {
+    const f = fixture();
+    f.state.respond = async () => memory;
+    f.select("Source paragraph");
+    await f.advance();
+    const view = f.cards[0],
+        { onAddToNote } = view.controls;
+    f.state.writeNote = () => {
+        throw Error("private selection text");
+    };
+    await onAddToNote(view.result.text);
+    assert.equal(view.controls.noteBusy, false);
+    assert.ok(view.notice.includes("未能写入笔记"));
+    assert.deepEqual(
+        f.logs.filter((e) => e === "selection_note_failed"),
+        ["selection_note_failed"],
+    );
+    const before = f.requests.length;
+    f.state.writeNote = undefined;
+    await onAddToNote(view.result.text);
+    assert.equal(view.controls.savedTranslation, view.result.text);
+    assert.equal(f.requests.length, before);
+    f.state.respond = async () => ({ ...memory, formattingIncomplete: true });
+    f.select("Next source paragraph");
+    await f.advance();
+    // Formatting placeholders are part of a finished, already displayed result.
+    await view.controls.onAddToNote(view.result.text);
+    assert.equal(f.state.noteWrites.length, 3);
+    view.controls.onStop();
+    await f.flush();
+    assert.equal(view.result.interrupted, true);
+    await view.controls.onAddToNote(view.result.text);
+    assert.equal(f.state.noteWrites.length, 3);
 });

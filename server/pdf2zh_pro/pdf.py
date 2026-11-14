@@ -241,7 +241,9 @@ def build_settings_input(payload: dict[str, Any]) -> dict[str, Any]:
         translation_input["primary_font_family"] = font_family
 
     skip_last_pages = int(payload.get("skip_last_pages", 0) or 0)
-    if skip_last_pages > 0:
+    if payload.get("trial_pages"):
+        pdf_input.update(pages=payload["trial_pages"], only_include_translated_page=False)
+    elif skip_last_pages > 0:
         with pymupdf.open(input_path) as document:
             total_pages = document.page_count
         last_page = total_pages - skip_last_pages
@@ -556,14 +558,22 @@ async def translate_pdf_with_callbacks(
                 job_id,
                 ", ".join(file.filename for file in files.values()),
             )
+            suffix = ""
+            if pages := payload.get("trial_pages"):
+                label = pages if len(pages) <= 40 else pages[:24] + "-" + hashlib.sha256(pages.encode()).hexdigest()[:10]
+                suffix += f".pages-{label}"
             if payload.get("repair_attempt"):
-                repaired_files = {}
+                suffix += f".repair-{payload['repair_attempt']}"
+            if suffix:
+                named_files = {}
                 for mode, file in files.items():
                     check_cancelled()
-                    renamed = file.output_path.with_name(f"{file.output_path.stem}.repair-{payload['repair_attempt']}.pdf")
+                    # Keep the PDF extension, output mode and range on long UTF-8 filenames.
+                    stem = file.output_path.stem.encode()[-(255 - len(suffix) - 4):].decode(errors="ignore")
+                    renamed = file.output_path.with_name(f"{stem}{suffix}.pdf")
                     file.output_path.replace(renamed)
-                    repaired_files[mode] = TranslationOutputFile(mode, renamed, renamed.name)
-                files = repaired_files
+                    named_files[mode] = TranslationOutputFile(mode, renamed, renamed.name)
+                files = named_files
             summary, failed = translation_config.recovery.snapshot()
             evidence_status = 'incomplete' if summary['failed'] or summary['pending'] else 'completed'
             check_cancelled()

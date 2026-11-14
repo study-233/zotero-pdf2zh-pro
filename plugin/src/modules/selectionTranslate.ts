@@ -1,6 +1,7 @@
 import { config } from "../../package.json";
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 import { loadGlossaryEntries } from "./glossaryStore";
+import { saveSelectionNote } from "./selectionNote";
 import { recordDiagnostic } from "./diagnostics";
 import { getPref, setPref } from "../utils/prefs";
 import { getString } from "../utils/locale";
@@ -367,6 +368,7 @@ type ReaderState = {
     request?: SelectionRequest;
     dictionaryRequest?: ReturnType<typeof createDictionaryRequest>;
     original?: string;
+    pageLabel?: string;
     position?: { pageIndex: number; rects?: number[][] };
     onDelta?: (text: string) => void;
     onStreamStart?: () => void;
@@ -1026,10 +1028,58 @@ async function showSelection(
                         text: partial || "生成已停止。",
                         origin: "AI 译文 · 未完成",
                         incomplete: true,
+                        interrupted: true,
                     },
                 );
             },
         };
+        const position = state.position;
+        if (
+            position &&
+            Number.isSafeInteger(position.pageIndex) &&
+            position.pageIndex >= 0
+        ) {
+            const original = state.original || text;
+            const pageLabel = state.pageLabel;
+            const noteControls = controls;
+            noteControls.onAddToNote = async (translation) => {
+                const result = ownerView.result;
+                if (
+                    !current() ||
+                    state.popup !== ownerView ||
+                    noteControls.noteBusy ||
+                    noteControls.streaming ||
+                    result?.kind !== "translation" ||
+                    result.interrupted ||
+                    result.text !== translation ||
+                    !translation.trim() ||
+                    noteControls.savedTranslation === translation
+                )
+                    return;
+                noteControls.noteBusy = true;
+                ownerView.setControls(noteControls);
+                try {
+                    await saveSelectionNote(state.reader, {
+                        original,
+                        query: text,
+                        translation,
+                        position,
+                        pageLabel,
+                    });
+                    noteControls.savedTranslation = translation;
+                } catch {
+                    recordDiagnostic("selection_note_failed");
+                    if (current())
+                        ownerView.showNotice(
+                            getString("selection-note-failed"),
+                            true,
+                        );
+                } finally {
+                    noteControls.noteBusy = false;
+                    if (current()) ownerView.setControls(noteControls);
+                }
+            };
+        }
         state.popup.setControls(controls);
         const favoriteAction = async (update = false) => {
             const popup = state.popup!;
@@ -1235,6 +1285,7 @@ async function showSelection(
                     origin: "AI 译文 · 未完成",
                     notice: error,
                     incomplete: true,
+                    interrupted: true,
                 });
         };
         if (text.length > 20000)
@@ -1455,6 +1506,7 @@ async function showSelection(
                           text: partial,
                           origin: "AI 译文 · 未完成",
                           incomplete: true,
+                          interrupted: true,
                           notice: message,
                       }
                     : previousResult
@@ -1517,6 +1569,7 @@ const onSelection: _ZoteroTypes.Reader.EventHandler<
                 state.key = key;
                 state.original = text;
                 state.position = params.annotation.position;
+                state.pageLabel = params.annotation.pageLabel;
                 state.dismissed = false;
             }
             const button = selectionElement(doc, "button");
@@ -1566,6 +1619,7 @@ const onSelection: _ZoteroTypes.Reader.EventHandler<
         state.key = key;
         state.original = text;
         state.position = params.annotation.position;
+        state.pageLabel = params.annotation.pageLabel;
         state.dismissed = false;
         const version = state.version;
         const pageIndex = params.annotation.position?.pageIndex;

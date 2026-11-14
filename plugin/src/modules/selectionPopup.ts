@@ -41,6 +41,7 @@ export type SelectionResult = (
           text: string;
           origin: string;
           incomplete?: boolean;
+          interrupted?: boolean;
       }
     | {
           kind: "missing" | "error";
@@ -79,6 +80,9 @@ export type SelectionControls = {
     onDictionary: (source: string) => void;
     onTranslation: (source: string) => void;
     onSubmit: (text: string) => void;
+    onAddToNote?: (translation: string) => Promise<void>;
+    noteBusy?: boolean;
+    savedTranslation?: string;
     onStop?: () => void;
     streaming?: boolean;
     onFavorite?: () => void;
@@ -494,7 +498,28 @@ ${selectionMenuStyle}
     refresh.addEventListener("click", () => learning?.onRefresh());
     const copy = button(getString("selection-copy"));
     copy.disabled = true;
-    footer.append(status, refresh, copy);
+    const addNote = button(getString("selection-note-add"));
+    let displayedTranslation: string | undefined;
+    function updateNoteButton() {
+        addNote.hidden =
+            !displayedTranslation ||
+            !controls?.onAddToNote ||
+            Boolean(controls.streaming);
+        const saved = Boolean(
+            displayedTranslation &&
+            controls?.savedTranslation === displayedTranslation,
+        );
+        addNote.disabled = saved || Boolean(controls?.noteBusy);
+        addNote.textContent = getString(
+            saved ? "selection-note-added" : "selection-note-add",
+        );
+    }
+    updateNoteButton();
+    addNote.addEventListener("click", () => {
+        if (displayedTranslation && !addNote.disabled && !addNote.hidden)
+            void controls?.onAddToNote?.(displayedTranslation);
+    });
+    footer.append(status, refresh, addNote, copy);
     const stop = button(getString("selection-stop"));
     stop.hidden = true;
     stop.addEventListener("click", () => controls?.onStop?.());
@@ -505,6 +530,7 @@ ${selectionMenuStyle}
     footer.append(offline);
     function setControls(value: SelectionControls) {
         controls = value;
+        updateNoteButton();
         dictionaryTab.hidden = !(
             value.dictionaryAvailable ?? action === "lookup"
         );
@@ -728,6 +754,8 @@ ${selectionMenuStyle}
         content.replaceChildren();
         setStatus("");
         copyText = "";
+        displayedTranslation = undefined;
+        updateNoteButton();
         copy.disabled = true;
         favorite.disabled = true;
         if (action === "lookup" || controls?.dictionaryAvailable) {
@@ -1315,6 +1343,14 @@ ${selectionMenuStyle}
                         "部分公式未还原",
                         "旧译文中无法恢复的公式或排版已标为 ⟦原排版内容⟧，此处复用已有结果。",
                     );
+            }
+            if (
+                result.kind === "translation" &&
+                !result.interrupted &&
+                result.text.trim()
+            ) {
+                displayedTranslation = result.text;
+                updateNoteButton();
             }
             if (result.notice) paragraph(result.notice, "st-label");
             appendRelogin(

@@ -424,7 +424,7 @@ export class PDF2zhTaskManager {
     private static notifiedImports = new Set<string>();
     private static completionTimer: ReturnType<typeof setTimeout> | undefined;
 
-    static async processWorker() {
+    static async processWorker(trial?: { item: Zotero.Item; pages: string }) {
         if (this.submitting) {
             this.openWindow();
             return;
@@ -439,11 +439,12 @@ export class PDF2zhTaskManager {
         this.submission = feedback;
         let submitted = 0;
         try {
-            const selectedItems = ztoolkit
-                .getGlobal("ZoteroPane")
-                .getSelectedItems();
+            const selectedItems = trial
+                ? [trial.item]
+                : ztoolkit.getGlobal("ZoteroPane").getSelectedItems();
             if (!selectedItems.length) throw new NoticeError("no_selection");
             const serverConfig = PDF2zhHelperFactory.getServerConfig();
+            if (trial) serverConfig.trialPages = trial.pages;
             if (!serverConfig.apiConfig) throw new NoticeError("no_profile");
             if (!serverConfig.outputModes.length)
                 throw new NoticeError("no_output");
@@ -1228,6 +1229,7 @@ export class PDF2zhTaskManager {
             revision: snapshot.revision,
             taskId: snapshot.taskId,
             fileName: snapshot.fileName,
+            trialPages: snapshot.trialPages,
             service: snapshot.service,
             requestedConfiguration: snapshot.requestedConfiguration,
             effectiveConfiguration: snapshot.effectiveConfiguration,
@@ -1514,7 +1516,9 @@ export class PDF2zhTaskManager {
                     ? getString("notice-imported-title")
                     : task.status === "incomplete"
                       ? getString("notice-incomplete-title")
-                      : getString("translation-complete-title"),
+                      : task.trialPages
+                        ? getString("trial-complete")
+                        : getString("translation-complete-title"),
                 tasks.length > 1
                     ? getString("notice-imported-batch", {
                           args: { count: tasks.length, incomplete },
@@ -1529,7 +1533,15 @@ export class PDF2zhTaskManager {
                             },
                         })
                       : getString("translation-complete-body", {
-                            args: { fileName: task.fileName },
+                            args: {
+                                fileName: task.trialPages
+                                    ? task.fileName +
+                                      " · " +
+                                      getString("task-ui-trial", {
+                                          args: { pages: task.trialPages },
+                                      })
+                                    : task.fileName,
+                            },
                         }),
                 false,
                 "",

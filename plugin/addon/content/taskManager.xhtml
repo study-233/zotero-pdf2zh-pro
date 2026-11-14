@@ -1934,8 +1934,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             function updateTaskCardView(view, task) {
                 view.task = task;
                 setClassName(view.card, `card ${task.status}`);
-                setTextContent(view.name, task.fileName);
-                setAttributeValue(view.name, "title", task.fileName);
+                const name = task.trialPages ? task.fileName + " · " + t("trial", {pages: task.trialPages}) : task.fileName;
+                setTextContent(view.name, name);
+                setAttributeValue(view.name, "title", name);
                 setTextContent(
                     view.meta,
                     `${task.service} · ${task.outputModes.map((mode) => (["mono", "dual"].includes(mode) ? api.message(`attachment-type-${mode}`) : mode)).join(", ")} · ${task.source === "local" ? t("local") : t("remote")}`,
@@ -2153,6 +2154,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             function getTaskRenderSignature(task) {
                 return JSON.stringify([
                     task.fileName,
+                    task.trialPages,
                     task.service,
                     task.outputModes,
                     task.status,

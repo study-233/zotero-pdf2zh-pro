@@ -1096,3 +1096,29 @@ test("output speed remains available in sanitized diagnostic exports", () => {
     };
     assert.deepEqual(safeDiagnostic(payload), payload);
 });
+
+test("page trial and note failures are exported without paper or translation text", async () => {
+    const collector = await loadModule();
+    collector.recordDiagnostic("page_trial_open_failed", {
+        fileName: "private paper",
+    });
+    collector.recordDiagnostic("selection_note_failed", {
+        original: "secret quote",
+        translation: "secret translation",
+    });
+    await withBundle(
+        async () => new globalThis.Response('{"schemaVersion":1}'),
+        undefined,
+        (read) => {
+            const { records } = JSON.parse(read("plugin.json"));
+            assert.deepEqual(
+                records.map((r) => r.event),
+                ["page_trial_open_failed", "selection_note_failed"],
+            );
+            for (const row of records)
+                assert.deepEqual(Object.keys(row).sort(), ["event", "time"]);
+        },
+        undefined,
+        collector,
+    );
+});

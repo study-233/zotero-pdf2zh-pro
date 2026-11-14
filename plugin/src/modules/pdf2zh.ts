@@ -68,6 +68,16 @@ export class PDF2zhUIFactory {
                                 addon.hooks.onDialogEvents("openTaskManager"),
                         },
                         {
+                            menuType: "menuitem",
+                            onShowing: (_event, context) =>
+                                context.menuElem.setAttribute(
+                                    "label",
+                                    getString("trial-menu"),
+                                ),
+                            onCommand: () =>
+                                addon.hooks.onDialogEvents("pageTrial"),
+                        },
+                        {
                             menuType: "submenu",
                             onShowing: (_event, context) => {
                                 context.menuElem.setAttribute(

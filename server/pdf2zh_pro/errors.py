@@ -171,6 +171,11 @@ def diagnose_service_error(error: Exception | str) -> list[dict[str, str]]:
                 suggestion="Retry with one output mode first, then check server logs if it repeats.",
             )
         )
+    if "invalid trial page range" in lowered:
+        diagnostics.append(DiagnosticMessage(
+            code="invalid_page_range", severity="error", message="Invalid trial page range.",
+            suggestion="Choose physical PDF page numbers within the document.",
+        ))
     if "removes every page" in lowered:
         diagnostics.append(
             DiagnosticMessage(

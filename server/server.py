@@ -29,6 +29,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 
+import pymupdf
 import truststore
 
 # Initialize before HTTP libraries cache SSLContext. Keep this in the application
@@ -678,6 +679,36 @@ def save_pdf_input(data: dict[str, Any], workspace_dir: Path, *, upload=None) ->
     return file_name, input_path
 
 
+def normalize_trial_pages(value: object, input_path: Path) -> str:
+    """Normalize one-based physical PDF page ranges before accepting a paid job."""
+    invalid = "Invalid trial page range. Use physical PDF pages such as 1,3-5."
+    if not isinstance(value, str) or not value.strip() or len(value) > 160:
+        raise RequestValidationError(invalid)
+    try:
+        with pymupdf.open(input_path) as document:
+            if not document.is_pdf or document.needs_pass:
+                raise RequestValidationError("Page trial requires a readable, unlocked PDF.")
+            total = document.page_count
+    except (pymupdf.FileDataError, RuntimeError) as exc:
+        raise RequestValidationError("Page trial requires a readable, unlocked PDF.") from exc
+    intervals = []
+    for part in value.replace("，", ",").split(","):
+        match = re.fullmatch(r"\s*([0-9]+)\s*(?:[-–—]\s*([0-9]+))?\s*", part)
+        if not match:
+            raise RequestValidationError(invalid)
+        start, end = int(match[1]), int(match[2] or match[1])
+        if not 1 <= start <= end <= total:
+            raise RequestValidationError(invalid)
+        intervals.append((start, end))
+    merged: list[tuple[int, int]] = []
+    for start, end in sorted(intervals):
+        if merged and start <= merged[-1][1] + 1:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return ",".join(str(a) if a == b else f"{a}-{b}" for a, b in merged)
+
+
 def prepare_translation_request(
     data: dict[str, Any],
     workspace_dir: Path,
@@ -715,6 +746,9 @@ def prepare_translation_request(
         "output_dir": str(output_dir),
         "translation_memory_path": str(TRANSLATES_DIR / "translation-memory.sqlite3"),
     }
+    if "trialPages" in data:
+        request_payload["trial_pages"] = normalize_trial_pages(data["trialPages"], input_path)
+        request_payload["skip_last_pages"] = 0
     return PreparedTranslationRequest(
         file_name=file_name,
         service=service,
@@ -950,7 +984,7 @@ def build_health_payload() -> dict[str, Any]:
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
         "diagnostics": diagnostic_capabilities(),
         "capabilities": {"structuredExport": True, "diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "mimoApi": True, "zhipuApi": True,
-            "preprocessingReuse": True,
+            "preprocessingReuse": True, "pageTrial": True,
             "tokenOutputSpeed": True, "reasoningMode": True, "reasoningLow": True, "responsesFirst": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True, "taskSubmissionIdempotency": True, "taskRecovery": True, "taskTiming": True, "binaryTaskUpload": True, "taskPagination": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_pro"),

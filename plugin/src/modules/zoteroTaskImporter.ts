@@ -123,6 +123,7 @@ export class ZoteroTaskImporter {
                     bytes,
                     importIdentity,
                     model: task.model || "",
+                    trialPages: task.trialPages,
                     incomplete: task.status === "incomplete",
                 };
                 await PDF2zhHelperFactory.handleOutputResponse(

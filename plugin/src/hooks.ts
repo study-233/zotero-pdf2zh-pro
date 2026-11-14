@@ -3,6 +3,11 @@ import {
     exportSelectedDocument,
     type DocumentExportFormat,
 } from "./modules/documentExport";
+import {
+    openPageTrial,
+    registerPageTrial,
+    unregisterPageTrial,
+} from "./modules/pageTrial";
 import { cancelDictionaryDownload } from "./modules/selectionDictionaryDownload";
 import { stopDevelopmentLibrary } from "./modules/developmentLibrary";
 import { stopDiagnostics } from "./modules/diagnostics";
@@ -65,6 +70,7 @@ async function onStartup(reason?: number) {
         ztoolkit.log(error);
     }
     registerSelectionTranslation();
+    registerPageTrial();
     initializeReleaseNotices(reason, existingInstall);
     void PDF2zhTaskManager.start().catch((error) => ztoolkit.log(error));
     if (typeof __devRuntime__ !== "undefined" && __devRuntime__) {
@@ -104,6 +110,7 @@ async function onShutdown(): Promise<void> {
     stopPluginNotices();
     stopDevelopmentLibrary();
     cancelDictionaryDownload();
+    unregisterPageTrial();
     unregisterSelectionTranslation();
     PDF2zhTaskManager.stop();
     ztoolkit.unregisterAll();
@@ -131,6 +138,7 @@ function onDialogEvents(type: string, format?: DocumentExportFormat) {
         void exportSelectedDocument(format);
     if (type === "openNoticeHelp") openNoticeHelp();
     if (type === "reloginChatGPT") openChatGPTLogin();
+    if (type === "pageTrial") void openPageTrial();
     if (type === "translatePDF") {
         PDF2zhTaskManager.processWorker();
     }

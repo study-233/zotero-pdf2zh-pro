@@ -25,6 +25,7 @@ export interface ServerConfig {
     targetLang: string;
     outputModes: OutputMode[];
     skipLastPages: string;
+    trialPages?: string;
     qps: string;
     poolSize: string;
     ocr: string;
@@ -79,6 +80,7 @@ export interface ServerHealthResponse {
         preprocessingReuse?: boolean;
         taskTiming?: boolean;
         binaryTaskUpload?: boolean;
+        pageTrial?: boolean;
         taskPagination?: boolean;
     };
     pdf2zhVersion?: string;
@@ -215,6 +217,7 @@ export interface ServerTaskSnapshot extends ServerSyncMetadata {
     stage: string | null;
     currentPage?: number;
     selectedPage?: number;
+    trialPages?: string;
     completedPages?: number;
     totalPages?: number;
     operation?: string;
