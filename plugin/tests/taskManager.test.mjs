@@ -4,6 +4,8 @@ import fs from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 import { URL } from "node:url";
+globalThis.ensureEngine = async () => {};
+
 const { File, crypto, TextEncoder } = globalThis;
 import { noticeModules } from "./noticeFixture.mjs";
 const notices = noticeModules()("./userNotice");

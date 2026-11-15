@@ -49,55 +49,20 @@
 ## 快速开始
 
 准备好 [Zotero 8、9 或 10](https://www.zotero.org/download/)，以及翻译服务商提供的 API 地址、Key 和模型名。
-**本地服务与 Zotero 插件都需要安装。** Windows 控制中心和 macOS Homebrew 会处理 Python 环境。
-
-### 1. 安装本地服务
+Windows 10/11 x64 和运行 macOS 14 或更高版本的 Apple Silicon Mac 使用同一个 XPI。首次使用时，插件会联网准备本地引擎。已有服务继续使用原地址。
 
 <a id="windows"></a>
-
-#### Windows 10/11 x64
-
-1. 从 [最新 Release](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest) 下载：
-   - `zotero-pdf2zh-pro-windows-x64-setup.exe`
-   - `zotero-pdf2zh-pro.xpi`，留待下一步安装。
-2. 双击安装 EXE，按向导确认安装位置、自启和自动更新选项，点击 **“开始安装”**。
-3. 安装完成后点击 **“完成并启动服务”**，等待显示 **“翻译服务已就绪”**。
-
-首次安装需要联网。关闭控制中心窗口会隐藏到托盘；停止服务请使用“停止服务”按钮。
-
-[Windows 图文教程与启动排查 →](docs/user-guide.md#windows)
-
 <a id="macos"></a>
 
-#### macOS
-
-先安装 [Homebrew](https://brew.sh/)，在终端依次执行：
-
-```bash
-brew tap study-233/formula
-brew install --build-from-source study-233/formula/zotero-pdf2zh-pro
-brew services start zotero-pdf2zh-pro
-```
-
-检查本地服务：
-
-```bash
-curl -fsS http://127.0.0.1:8890/health
-```
-
-返回包含 `"status":"ok"` 的 JSON 即表示本地服务可访问。服务在后台运行，终端可以关闭。
-
-[macOS 完整教程与日志查看 →](docs/user-guide.md#macos)
-
-使用 Linux、Docker 或希望通过 uv 手动运行？查看[其他部署方式](#advanced)。
+已有控制中心、Homebrew 或远程服务的用户可直接升级插件。独立部署的启停方式见 [Windows 教程](docs/user-guide.md#windows)和 [macOS 教程](docs/user-guide.md#macos)。Linux、Docker 和 uv 用户可查看[其他部署方式](#advanced)。
 
 <a id="installation"></a>
 
-### 2. 安装 Zotero 插件
+### 1. 安装 Zotero 插件
 
 1. 下载 [最新 Release](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest) 中的 `zotero-pdf2zh-pro.xpi`，无需解压。
 2. 打开 Zotero **“工具 → 插件”**，点击齿轮 → **“Install Plugin From File…”**，选择 XPI 并按提示重启。
-3. 打开 Zotero 设置，进入 **“zotero-pdf2zh-pro”**，点击 **“检查本地服务”**。
+3. 打开 Zotero 设置，进入 **“zotero-pdf2zh-pro”**，点击 **“检查本地服务”**。新安装首次确认下载后等待“已连接”。
 
 Windows 从“编辑 → 设置”进入，macOS 从“Zotero → 设置”进入。
 服务地址保持 `http://127.0.0.1:8890`。
@@ -106,7 +71,7 @@ Windows 从“编辑 → 设置”进入，macOS 从“Zotero → 设置”进�
 
 <a id="api-configuration"></a>
 
-### 3. 配置翻译 API
+### 2. 配置翻译 API
 
 在插件设置中点击 **“新增”**，选择 **“OpenAI 兼容（中转站 / 官方）”**，填写服务商提供的 API 地址、Key 和模型。
 点击 **“测试 API”**，成功后选择 **“保存并使用”**。
@@ -125,7 +90,7 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 <a id="usage"></a>
 
-### 4. 翻译第一篇 PDF
+### 3. 翻译第一篇 PDF
 
 1. 确认当前翻译配置、源语言和目标语言；默认输出为 **“双语对照”**。
 2. 在文库中右键一个已下载到本地的 PDF，选择 **“zotero-pdf2zh-pro → zotero-pdf2zh-pro: 翻译 PDF”**。
@@ -176,7 +141,7 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 
 | 问题 | 处理方式 |
 | --- | --- |
-| 插件无法连接本地服务 | Windows 检查控制中心，macOS 检查 `brew services list`，再访问 `/health` |
+| 插件无法连接本地服务 | 在设置中再次检查本地服务；已有独立服务按原方式启动 |
 | 本地服务正常，但 API 测试失败 | 核对服务商的 API 地址、Key、模型与协议；本地连接成功不代表 API 可用 |
 | 任务已完成，却没有新附件 | 查看导入状态；导入失败时点击“重试导入”，不会重新翻译 |
 | 任务显示“未完成” | 已生成的 PDF 会带状态标记导入；修复原因后“补译”剩余段落 |

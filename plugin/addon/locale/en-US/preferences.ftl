@@ -173,3 +173,4 @@ pref-after-translation = On completion
 pref-attachment-naming = Attachment title
 pref-retryCount = Extra retries (−1 for engine default)
 pref-retryInterval = Retry interval in seconds (−1 for engine default)
+pref-engine-check = Select Check Local Service to prepare the translation engine.

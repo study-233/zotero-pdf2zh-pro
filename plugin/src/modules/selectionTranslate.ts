@@ -1,3 +1,4 @@
+import { ensureEngine } from "./managedEngine";
 import { config } from "../../package.json";
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 import { loadGlossaryEntries } from "./glossaryStore";
@@ -114,6 +115,7 @@ export async function lookupSelection(
     page: number | undefined,
     targetLang: string,
 ): Promise<MemoryResult> {
+    await ensureEngine(serverUrl);
     const response = await request.post(
         `${serverUrl.replace(/\/$/, "")}/translation-lookup`,
         {
@@ -183,6 +185,7 @@ export async function translateSelection(
         else selectionProvider = "bing";
     if (!options.mode && selectionProvider === "profile" && !settings.apiConfig)
         selectionProvider = "bing";
+    await ensureEngine(settings.serverUrl);
     const needsCodexProxy =
         selectionProvider === "profile" &&
         settings.service === "codex" &&

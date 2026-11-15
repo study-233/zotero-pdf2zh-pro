@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaRevision": 6,
+  "schemaRevision": 7,
   "supportedSchemaVersions": [
     1
   ],
@@ -1116,6 +1116,10 @@
     "structuredExport": {
       "coverage": "task_events",
       "component": "server"
+    },
+    "managedEngine": {
+      "coverage": "availability_only",
+      "component": "server"
     }
   },
   "events": {
@@ -1338,6 +1342,18 @@
         "taskId",
         "executionId"
       ]
+    },
+    "managed_engine_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "managed_engine_fallback": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "managed_engine_deferred": {
+      "component": "plugin",
+      "requiredFields": []
     }
   },
   "eventPatterns": [

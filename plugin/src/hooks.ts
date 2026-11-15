@@ -8,6 +8,7 @@ import {
     registerPageTrial,
     unregisterPageTrial,
 } from "./modules/pageTrial";
+import { initializeEngine, stopEngineManager } from "./modules/managedEngine";
 import { cancelDictionaryDownload } from "./modules/selectionDictionaryDownload";
 import { stopDevelopmentLibrary } from "./modules/developmentLibrary";
 import { stopDiagnostics } from "./modules/diagnostics";
@@ -48,6 +49,16 @@ async function onStartup(reason?: number) {
     ]);
     const existingInstall =
         Number(getPref("selectionPreferenceVersion") || 0) > 0;
+    const legacyEngine =
+        existingInstall ||
+        reason === 7 ||
+        reason === 8 ||
+        ["taskBindings", "taskBindingsBackup", "llmApis", "new_serverip"].some(
+            (key) =>
+                Services.prefs.prefHasUserValue(
+                    addon.data.config.prefsPrefix + "." + key,
+                ),
+        );
     migrateReviewPreference();
     migrateSelectionPreferences(reason);
     repairAttachmentNamingPreferences();
@@ -69,6 +80,7 @@ async function onStartup(reason?: number) {
     } catch (error) {
         ztoolkit.log(error);
     }
+    initializeEngine(legacyEngine);
     registerSelectionTranslation();
     registerPageTrial();
     initializeReleaseNotices(reason, existingInstall);
@@ -106,6 +118,7 @@ async function onMainWindowUnload(_win: Window): Promise<void> {
 
 async function onShutdown(): Promise<void> {
     cancelDocumentExport();
+    stopEngineManager();
     stopPreferenceCards();
     stopPluginNotices();
     stopDevelopmentLibrary();

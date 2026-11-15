@@ -121,6 +121,7 @@ function fixture() {
     );
     const exports = {};
     const imports = {
+        "./managedEngine": { ensureEngine: async () => {} },
         "../utils/locale": { getString: (key) => strings[key] || key },
         "./userNotice": noticeModules()("./userNotice"),
         "./profileStore": { loadProfiles: () => [] },

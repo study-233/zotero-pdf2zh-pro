@@ -14,7 +14,7 @@
 
 <span id="installation"></span>
 
-先确认本地服务已启动。Windows 和 macOS 使用同一个 XPI。
+Windows x64 与 Apple Silicon Mac 使用同一个 XPI。已有服务可按原方式启动。
 
 <span id="安装-xpi"></span>
 
@@ -33,9 +33,9 @@
 
 1. 打开 Zotero 设置：Windows 为 **编辑 → 设置**，macOS 为 **Zotero → 设置**。
 2. 选择 **zotero-pdf2zh-pro**，展开 **服务端连接**。
-3. 本地服务地址填 `http://127.0.0.1:8890`，点击 **检查本地服务**。
+3. 保留默认地址 `http://127.0.0.1:8890`，点击 **检查本地服务**。首次使用按提示确认下载，插件会准备 Python 和翻译引擎。已有服务保留原地址。
 
 显示 **已连接** 后，继续[配置翻译来源](/zotero-pdf2zh-pro/guide/api-configuration/)。
 ![填写本地服务地址，点击检查本地服务后显示已连接](/zotero-pdf2zh-pro/assets/guide/server-connected.webp)
 
-连接失败时，先确认控制中心或 Homebrew 服务已启动。
+首次准备失败时，请检查网络与磁盘空间，再次点击 **检查本地服务**。若使用原有的控制中心、Homebrew 或远程服务，先确认该服务已启动。

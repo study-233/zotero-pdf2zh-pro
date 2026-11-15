@@ -16,18 +16,9 @@ export default function Guide() {
       </div>
       <DocsTitle>开始使用</DocsTitle>
       <DocsDescription>
-        安装本地服务和插件，配置翻译来源，即可翻译第一篇论文。
+        安装 XPI，在插件中准备本地引擎并配置翻译来源，即可翻译第一篇论文。
       </DocsDescription>
-      <h2 className="mt-6 text-xl font-semibold">1. 安装本地服务</h2>
-      <Cards>
-        <Card icon={<MonitorIcon />} title="Windows" href="/guide/windows/">
-          Windows 10 / 11 · x64
-        </Card>
-        <Card icon={<AppleIcon />} title="macOS" href="/guide/macos/">
-          Apple Silicon · Homebrew
-        </Card>
-      </Cards>
-      <h2 className="mt-6 text-xl font-semibold">2. 连接 Zotero</h2>
+      <h2 className="mt-6 text-xl font-semibold">安装与配置</h2>
       <Cards>
         <Card
           icon={<BookOpenIcon />}
@@ -42,6 +33,15 @@ export default function Guide() {
           href="/guide/api-configuration/"
         >
           填写服务地址、API Key 和模型。
+        </Card>
+      </Cards>
+      <h2 className="mt-6 text-xl font-semibold">沿用独立服务</h2>
+      <Cards>
+        <Card icon={<MonitorIcon />} title="Windows" href="/guide/windows/">
+          Windows 10 / 11 · x64
+        </Card>
+        <Card icon={<AppleIcon />} title="macOS" href="/guide/macos/">
+          Apple Silicon · Homebrew
         </Card>
       </Cards>
       <Link

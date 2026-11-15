@@ -173,3 +173,4 @@ pref-after-translation = 完成后
 pref-attachment-naming = 附件命名
 pref-retryCount = 额外重试次数（−1 使用引擎默认）
 pref-retryInterval = 重试间隔秒数（−1 使用引擎默认）
+pref-engine-check = 点击“检查本地服务”准备翻译引擎。

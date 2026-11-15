@@ -1,3 +1,4 @@
+import { ensureEngine } from "./managedEngine";
 import { exportDiagnostics, recordDiagnostic } from "./diagnostics";
 import { config } from "../../package.json";
 import { getString } from "../utils/locale";
@@ -448,6 +449,7 @@ export class PDF2zhTaskManager {
             if (!serverConfig.apiConfig) throw new NoticeError("no_profile");
             if (!serverConfig.outputModes.length)
                 throw new NoticeError("no_output");
+            await ensureEngine(serverConfig.serverUrl);
             serverConfig.glossaryPacks = await resolveSelectedGlossaryPacks(
                 serverConfig.serverUrl,
                 serverConfig.sourceLang,

@@ -6,6 +6,8 @@ import fs from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 
+globalThis.ensureEngine = async () => {};
+
 const compile = (name) =>
     ts.transpileModule(
         fs.readFileSync(
@@ -689,8 +691,13 @@ test("Codex detection preserves runtime metadata and force without saving a path
 test("aborting detection sends a separate cancellation and retains error codes", async () => {
     const controller = new AbortController();
     const calls = [];
+    let submitted;
+    const started = new Promise((resolve) => {
+        submitted = resolve;
+    });
     http.post = async (url, body, options) => {
         calls.push({ url, body });
+        submitted();
         if (url.endsWith("/cancel")) return { data: { status: "ok" } };
         return new Promise((resolve, reject) =>
             options.signal.addEventListener("abort", () =>
@@ -702,6 +709,7 @@ test("aborting detection sends a separate cancellation and retains error codes",
         api("codex", "codex"),
         controller.signal,
     );
+    await started;
     controller.abort();
     await assert.rejects(pending, /cancelled/);
     assert.equal(calls.length, 2);

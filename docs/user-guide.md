@@ -47,20 +47,17 @@
 <span id="1-安装前准备"></span>
 
 
-首次使用需要 **Zotero、插件、本地服务和翻译来源**。
+Windows 10/11 x64 和运行 macOS 14 或更高版本的 Apple Silicon Mac 使用同一个插件。
 
 <span id="需要安装哪些东西"></span>
 
-### 准备这四项
+### 首次使用
 
-| 项目 | 如何准备 |
-| --- | --- |
-| Zotero 8–10 | 从 [Zotero 官网](https://www.zotero.org/download/)安装 |
-| 本地服务 | 按 [Windows](#windows) 或 [macOS](#macos) 教程安装；无需自行安装 Python |
-| Zotero 插件 | 下载 XPI 后[从文件安装](#installation) |
-| 翻译来源 | 准备 API Key，或使用已有的 [ChatGPT 套餐 / 本地模型](#api-configuration) |
+1. 安装 [Zotero 8–10](https://www.zotero.org/download/)。
+2. [安装 XPI 并检查本地服务](#installation)。首次确认后，插件自动下载并启动引擎，需要联网。
+3. 准备翻译服务的 API Key，或使用已有的 [ChatGPT 套餐或本地模型](#api-configuration)。
 
-插件和本地服务都要安装。Linux / Docker 用户查看[进阶部署](#advanced)。
+已有服务继续使用原地址和原来的数据目录。Windows 控制中心、Homebrew、uv 和 Docker 的维护入口均保留。Linux 用户请查看[进阶部署](#advanced)。
 
 <span id="两种地址不要填反"></span>
 
@@ -80,6 +77,8 @@ PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，�
 
 <span id="2-windows-安装教程"></span>
 
+
+新安装可[直接安装 XPI](#installation)，插件负责准备本地引擎。下文适用于独立维护服务的用户。
 
 适用于 **Windows 10/11 x64**。首次安装需要联网下载 Python 和翻译依赖。
 
@@ -140,6 +139,8 @@ PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，�
 <span id="3-macos-安装教程"></span>
 
 
+macOS 14 或更高版本的 Apple Silicon Mac 可[直接安装 XPI](#installation)，插件负责准备本地引擎。下文适用于独立维护服务的用户。
+
 支持 **Apple Silicon（M 系列）Mac**；Intel Mac 暂不支持当前运行时。
 
 <span id="第一步确认-homebrew-可用"></span>
@@ -199,7 +200,7 @@ curl -fsS http://127.0.0.1:8890/health
 <span id="4-安装-zotero-插件与检查连接"></span>
 
 
-先确认本地服务已启动。Windows 和 macOS 使用同一个 XPI。
+Windows x64 与 Apple Silicon Mac 使用同一个 XPI。已有服务可按原方式启动。
 
 <span id="安装-xpi"></span>
 
@@ -218,12 +219,12 @@ curl -fsS http://127.0.0.1:8890/health
 
 1. 打开 Zotero 设置：Windows 为 **编辑 → 设置**，macOS 为 **Zotero → 设置**。
 2. 选择 **zotero-pdf2zh-pro**，展开 **服务端连接**。
-3. 本地服务地址填 `http://127.0.0.1:8890`，点击 **检查本地服务**。
+3. 保留默认地址 `http://127.0.0.1:8890`，点击 **检查本地服务**。首次使用按提示确认下载，插件会准备 Python 和翻译引擎。已有服务保留原地址。
 
 显示 **已连接** 后，继续[配置翻译来源](#api-configuration)。
 ![填写本地服务地址，点击检查本地服务后显示已连接](../assets/guide/server-connected.webp)
 
-连接失败时，先确认控制中心或 Homebrew 服务已启动。
+首次准备失败时，请检查网络与磁盘空间，再次点击 **检查本地服务**。若使用原有的控制中心、Homebrew 或远程服务，先确认该服务已启动。
 
 <a id="api-configuration"></a>
 
@@ -414,10 +415,6 @@ MiMo 套餐账号需填写套餐专用地址和对应 Key；智谱标准地址�
 | 减少额外 token 消耗 | 保持“禁用术语提取”开启 |
 
 QPS 2、并发 4 是起步建议；当前默认值为 **QPS 10、并发 50**，应按服务商限额调整。
-
-在「管理配置」中打开一个模型的「高级设置」，可以分别覆盖每秒请求数、并发、额外重试次数（0–100）和重试间隔（0–300 秒）。单项留空继承全局。全局重试设为 −1 时使用引擎策略，额外重试设为 0 时一次片段请求遇到临时故障就停止重发。设置的间隔是最短等待时间，服务商的 `Retry-After` 和请求预算仍然生效。质量校验、协议探测、登录续期和用户发起的补译分别处理。
-
-全文和按页试译在提交时保存这四项参数。切换模型、编辑配置或修改全局设置只影响新提交的任务。可以在任务详情查看提交值或引擎初始化后的实际值。新版任务的重试、补译和服务重启后的继续执行都沿用快照。使用自定义重试参数需要配套更新本地服务。
 
 <details>
 <summary>其余默认设置</summary>
@@ -655,7 +652,7 @@ Markdown 适合笔记，JSON 适合程序处理，TXT 只保留纯文本。
 <span id="9-更新与日常维护"></span>
 
 
-插件与本地服务需要分别更新。操作前先等待翻译结束，备份需要保留的数据。
+通过 XPI 首次安装的引擎随插件检查更新。正在排队、翻译或下载词包时继续使用原引擎，空闲后自动切换。更新失败时保留可用版本并稍后重试。
 
 <span id="更新插件和服务端"></span>
 
@@ -664,7 +661,8 @@ Markdown 适合笔记，JSON 适合程序处理，TXT 只保留纯文本。
 | 安装方式 | 操作 |
 | --- | --- |
 | Zotero 插件 | 插件管理器检查更新，或[下载新 XPI](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)从文件安装 |
-| Windows | 控制中心检查更新；旧控制中心使用[新安装器](#windows)升级 |
+| 插件管理的引擎 | 更新 XPI 后自动处理；下次打开 Zotero 时会启动引擎 |
+| 现有 Windows 独立服务 | 控制中心检查更新；旧控制中心使用[新安装器](#windows)升级 |
 | uv | 停止服务，执行 `uv tool upgrade zotero-pdf2zh-pro`，再启动 |
 
 macOS Homebrew 按下方命令更新。**首次迁移旧数据时保留旧版本目录**，不要提前执行清理：
@@ -684,7 +682,8 @@ curl -fsS http://127.0.0.1:8890/health
 
 ### 备份与迁移
 
-- **服务数据**：Windows 控制中心选择“打开数据目录”；macOS / uv 查看 `/health` 的 `workspace.path`。停止服务后备份整个目录，保留任务、译文和检查点。
+- **插件管理的引擎**：Zotero 配置文件夹内的 `pdf2zh-engine/data` 保存任务和数据。引擎版本保存在同级 `versions` 中。备份前先等待任务结束。
+- **独立服务数据**：Windows 控制中心选择“打开数据目录”；macOS / uv 查看 `/health` 的 `workspace.path`。停止服务后备份整个目录，保留任务、译文和检查点。
 - **Windows 更改安装位置**：展开 **存储与维护**，在 **更改安装位置**一栏点击 **迁移**，不要直接拖动正在使用的目录。
 - **划词数据**：同时备份 Zotero 数据目录下的 `pdf2zhpro/`；收藏不随云同步。
 
@@ -732,7 +731,8 @@ curl -fsS http://127.0.0.1:8890/health
 
 打开 [健康检查](http://127.0.0.1:8890/health)，应返回 `"status":"ok"`。
 
-- **无法打开**：Windows 检查控制中心；macOS 执行 `brew services list`，确认服务已启动。
+- **插件管理的引擎**：在设置中点击“检查本地服务”重试，首次下载需要联网。
+- **独立服务无法打开**：Windows 检查控制中心；macOS 执行 `brew services list`，确认服务已启动。
 - **返回 degraded**：检查 `workspace` 中的错误、数据目录权限和磁盘空间。
 - **根地址返回 404**：访问的是 `/health`，不是服务首页。
 - **端口被占用**：检查是否重复启动 Homebrew、uv 或其他服务，只停止已确认属于自己的进程。

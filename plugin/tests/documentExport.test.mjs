@@ -5,6 +5,8 @@ import { Blob, Buffer } from "node:buffer";
 import { URL } from "node:url";
 import ts from "typescript";
 
+globalThis.ensureEngine = async () => {};
+
 const { Response, FormData } = globalThis;
 
 const source = fs.readFileSync(

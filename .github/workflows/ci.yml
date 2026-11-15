@@ -51,6 +51,7 @@ jobs:
         run: |
           uv run --no-project python scripts/generate_diagnostic_contract.py --check
           uv run --no-project python -m unittest discover -s scripts -p 'test_diagnostic_contract.py'
+          uv run --no-project python -m unittest discover -s scripts -p 'test_managed_engine.py'
 
       - name: Build and check plugin
         working-directory: plugin
@@ -163,3 +164,36 @@ jobs:
           uv run --locked python -m unittest discover -s tests -p test_document_export.py
           uv run --locked python -m unittest discover -s tests -p test_core_boundaries.py
           uv run --locked python -m unittest discover -s tests -p test_recovery_storage.py
+
+  windows-xpi-engine:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.34.5
+          package_json_file: plugin/package.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Build the universal XPI
+        working-directory: plugin
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+      - name: Verify first install, idle upgrade and data retention in Zotero x64
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'zotero.zip'
+          $folder = Join-Path $env:RUNNER_TEMP 'zotero'
+          Invoke-WebRequest 'https://www.zotero.org/download/client/dl?channel=release&platform=win-x64-zip' -OutFile $archive
+          Expand-Archive $archive $folder
+          $env:ZOTERO_BIN = (Get-ChildItem $folder -Filter zotero.exe -Recurse -File | Select-Object -First 1).FullName
+          if (-not $env:ZOTERO_BIN) { throw 'Zotero executable missing' }
+          python scripts/zotero_engine_smoke.py

@@ -1,3 +1,4 @@
+import { ensureEngine } from "./managedEngine";
 import axios from "axios";
 import { getPref } from "../utils/prefs";
 
@@ -10,6 +11,7 @@ export async function chatgptAccountRequest(
     const parsed = new URL(address);
     if (!["127.0.0.1", "localhost", "[::1]"].includes(parsed.hostname))
         throw new Error("ChatGPT 登录与用量管理需要连接本机服务。");
+    if (action === "login") await ensureEngine(address);
     try {
         const response = await axios.request({
             url: `${address}/chatgpt/${action}`,

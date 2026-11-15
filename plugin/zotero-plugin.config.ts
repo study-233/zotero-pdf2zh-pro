@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { defineConfig } from "zotero-plugin-scaffold";
 import pkg from "./package.json";
 
@@ -21,6 +22,16 @@ export default defineConfig({
     build: {
         assets: ["addon/**/*.*"],
         hooks: {
+            "build:copyAssets": (ctx) => {
+                execFileSync(
+                    process.platform === "win32" ? "python" : "python3",
+                    [
+                        "../scripts/build_xpi_engine.py",
+                        `${ctx.dist}/addon/content/engine`,
+                    ],
+                    { stdio: "inherit" },
+                );
+            },
             "build:init": (ctx) => {
                 // Refresh on every build, including development hot reloads.
                 ctx.build.define.profileUIBuild = String(Date.now());

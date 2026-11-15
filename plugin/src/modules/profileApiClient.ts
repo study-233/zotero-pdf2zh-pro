@@ -1,3 +1,4 @@
+import { ensureEngine } from "./managedEngine";
 import { getRequestLimits } from "./profileStore";
 import axios from "axios";
 import { getPref } from "../utils/prefs";
@@ -83,6 +84,7 @@ async function codexPost<T>(
 ) {
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const url = serverUrl();
+    await ensureEngine(url);
     let cancelSent = false;
     const cancel = () => {
         if (cancelSent) return;
@@ -145,6 +147,7 @@ export async function testProfile(
     assertSupportedProfile(api);
     try {
         const url = serverUrl();
+        await ensureEngine(url);
         const { data: health } = await axios.get<ServerHealthResponse>(
             `${url}/health`,
             { timeout: 5000, signal },
@@ -275,6 +278,7 @@ export async function fetchProfileModelCatalog(
 ): Promise<ProfileModelCatalog> {
     assertSupportedProfile(api);
     try {
+        await ensureEngine(serverUrl());
         let cancellable = false;
         if (["codex", "chatgpt"].includes(api.service)) {
             const { data: health } = await axios.get<ServerHealthResponse>(

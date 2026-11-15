@@ -1025,7 +1025,8 @@ def build_health_payload() -> dict[str, Any]:
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
         "diagnostics": diagnostic_capabilities(),
-        "capabilities": {"structuredExport": True, "diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "mimoApi": True, "zhipuApi": True,
+        "capabilities": {"managedEngine": bool(has_app_context() and current_app.extensions.get("managed_engine")),
+            "structuredExport": True, "diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "mimoApi": True, "zhipuApi": True,
             "profileLimits": True, "preprocessingReuse": True, "pageTrial": True, "sourceParagraphLookup": True,
             "tokenOutputSpeed": True, "reasoningMode": True, "reasoningLow": True, "responsesFirst": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True, "taskSubmissionIdempotency": True, "taskRecovery": True, "taskTiming": True, "binaryTaskUpload": True, "taskPagination": True},
         "supportsModelDiscovery": True,
@@ -1169,7 +1170,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
+def main(*, serve_http=None) -> None:
     args = parse_args()
     configure_runtime_paths(args.data_dir)
     # Resolve account storage after --data-dir and propagate it to spawned workers.
@@ -1208,7 +1209,10 @@ def main() -> None:
 
         signal.signal(signal.SIGTERM, stop_server)
     try:
-        app.run(host=args.host, port=args.port)
+        if serve_http is None:
+            app.run(host=args.host, port=args.port)
+        else:
+            serve_http()
     finally:
         try:
             TEXT_TRANSLATOR.close()

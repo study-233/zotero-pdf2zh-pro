@@ -1136,3 +1136,32 @@ test("page trial and note failures are exported without paper or translation tex
         collector,
     );
 });
+
+test("engine failures and postponed updates export only their event names and timestamps", async () => {
+    const collector = await loadModule();
+    const events = [
+        "managed_engine_failed",
+        "managed_engine_deferred",
+        "managed_engine_fallback",
+    ];
+    for (const event of events)
+        collector.recordDiagnostic(event, {
+            owner: "private",
+            stderr: "secret",
+        });
+    await withBundle(
+        async () => new globalThis.Response('{"schemaVersion":1}'),
+        undefined,
+        (read) => {
+            const { records } = JSON.parse(read("plugin.json"));
+            assert.deepEqual(
+                records.map((row) => row.event),
+                events,
+            );
+            for (const row of records)
+                assert.deepEqual(Object.keys(row).sort(), ["event", "time"]);
+        },
+        undefined,
+        collector,
+    );
+});

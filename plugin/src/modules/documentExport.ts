@@ -1,3 +1,4 @@
+import { ensureEngine } from "./managedEngine";
 import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
 import { diagnosticFetch } from "./diagnostics";
@@ -76,6 +77,7 @@ export async function exportSelectedDocument(format: DocumentExportFormat) {
                 fitContent: true,
             });
         errorKey = "export-server-unavailable";
+        await ensureEngine(server);
         const health = await diagnosticFetch(`${server}/health`, {
             signal: controller.signal,
         });
