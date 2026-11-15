@@ -1,4 +1,4 @@
-> 历史方案：本文的 Astro / Starlight 技术路线已被用户后续要求替代。当前执行 [Next.js / Memos 源码迁移](next-migration.md)。
+> 历史方案：本文的 Astro / Starlight 技术路线已被用户后续要求替代。当前执行 [Next.js / Memos 源码迁移](../next-migration.md)。
 
 # zotero-pdf2zh-pro 官网 V2.0 改版实施计划
 

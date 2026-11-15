@@ -13,9 +13,11 @@ import tomllib
 import zipfile
 from pathlib import Path
 
+from check_docs import public_version
 from build_windows_package import package_entries, validate_versions
 from windows_pe import validate_release_pe
 from build_windows_installer import verify_installer, METADATA_NAMES
+from release_policy import version as version_tuple
 from release_replacement import replacement_metadata, validate_source as verify_replacement_source
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,8 +49,9 @@ def verify_source(version: str, commit: str, replace_existing: str = "") -> None
     runtime = (ROOT / "server/server.py").read_text(encoding="utf-8")
     if re.search(r'^VERSION = "([^"]+)"$', runtime, re.MULTILINE).group(1) != version:
         raise ValueError("Runtime version mismatch")
-    if f"<!-- release-version --> `{version}`" not in (ROOT / "README.md").read_text(encoding="utf-8"):
-        raise ValueError("README version mismatch")
+    documented = public_version((ROOT / "README.md").read_text(encoding="utf-8"))
+    if version_tuple(documented) > version_tuple(version):
+        raise ValueError("Public README version is ahead of release source")
     if not re.search(rf"^## v{re.escape(version)} - \d{{4}}-\d{{2}}-\d{{2}}$", (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"), re.MULTILINE):
         raise ValueError("Missing dated changelog section")
     for args in [["diff", "--exit-code"], ["diff", "--cached", "--exit-code"]]:

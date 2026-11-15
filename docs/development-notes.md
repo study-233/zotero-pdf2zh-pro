@@ -1,5 +1,9 @@
 # 开发维护笔记
 
+## 待开发
+
+- [ ] 接入墨墨背单词。
+
 ## 文档维护
 
 首页与详细指南按 [README 维护规范](readme-maintenance.md) 分工。修改后运行独立检查：
@@ -37,8 +41,8 @@ pnpm --dir website preview
 `/benchmark/` 从已出版 registry 读取当前总览，每组正式测评 240 条，保留接口、推理配置和接入来源。
 测试快照与当前插件版本分别标示，不改写历史测试口径。
 
-唯一官网发布入口为 `.github/workflows/website.yml`：PR 验证并保存 7 天预览产物，
-main 验证通过后使用官方 Pages artifact 直接部署。仓库 Pages 来源设为 GitHub Actions，
+官网工作流 `.github/workflows/website.yml` 在 PR 和 main 推送时构建预览，保留 7 天。
+正式发布脚本在安装包公开后同步 README，随后从 main 调用工作流部署。工作流在部署前核对 README 版本、GitHub 最新正式版和安装附件。仓库 Pages 来源设为 GitHub Actions，
 `github-pages` 环境只允许 main 部署；构建任务只读，部署任务单独取得 Pages 与 OIDC 权限。
 工作流仅构建公开静态内容，不调用翻译接口，也不再提交生成文件到发布分支。
 
@@ -93,6 +97,12 @@ Dependabot 只创建安全修复 PR，按生态分组，不自动合并。配置
 
 仓库保持公开；插件清单配置稳定的自动更新 URL，每个 GitHub Release 必须同时发布
 XPI、`update.json` 和 Windows 安装包。不要生成或发布朋友整合包；对应源码由公开标签提供。
+
+## XPI 托管引擎
+
+插件构建调用 `scripts/build_xpi_engine.py`，将服务源码、锁文件和管理脚本打入 XPI。启动与更新由 `plugin/src/modules/managedEngine.ts` 和 `scripts/managed_engine.py` 协作。独立服务继续使用原地址与数据目录。
+
+运行 `python -m unittest discover -s scripts -p 'test_managed_engine.py'` 验证打包、进程归属与恢复。CI 的 `windows-xpi-engine` 用真实 Zotero 运行 `scripts/zotero_engine_smoke.py`。
 
 ## Python 服务
 
@@ -262,7 +272,7 @@ git diff --check
 同一分支的新提交会取消仍在运行的旧 CI，避免重复等待。
 
 Windows 开发优先在本机运行受影响的原生测试，使用上方工具链和 release 编译缓存；
-macOS 开发或本机缺少条件时，按需触发远端 Windows 验证。正式制品仍由 Actions
+macOS 开发或本机缺少条件时，按需触发远端 Windows 验证。正式制品在 Windows 本机或 Actions
 构建一次，检查最终 EXE、安装包和运行环境。具体分工、时限及发布门槛见
 [Actions 测试规范](actions-testing.md)。日常 CI 通过不代表原生编译或真实安装已验证。
 发布检查还运行 `scripts/test_windows_runtime.ps1` 和 `scripts/test_windows_package.ps1`；
@@ -512,7 +522,7 @@ scripts/release.sh <version>
 ```
 
 统一脚本同步插件、服务端、控制中心、锁文件和 Windows 脚本版本，提交并推送主仓库。
-核心 CI 通过后，Windows CI 只构建一次 XPI、PyPI 包、Windows ZIP 和源码归档，验证
+核心 CI 通过后，Windows 本机或 Actions 构建一次 XPI、PyPI 包、Windows ZIP 和源码归档，验证
 全新 Python 3.13/OCR 与所选安装/升级场景。脚本取回完整的八项产品制品及验证计划，校验提交、版本、大小
 和哈希，再将同一批文件发布到 PyPI 和 GitHub；Homebrew 固定同一源提交。
 本地不重复安装前端依赖或编译 Rust，也不重复执行核心测试。仅构建调试包时可在

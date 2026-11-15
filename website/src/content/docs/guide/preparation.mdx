@@ -1,7 +1,7 @@
 ---
 {
   "title": "安装前准备",
-  "description": "安装 XPI，在首次使用时准备引擎并连接翻译来源。",
+  "description": "先装本地服务，再装插件，最后测试翻译来源。",
   "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/preparation.mdx"
 }
 ---
@@ -10,17 +10,18 @@
 
 <span id="quick-start"></span>
 
-Windows 10/11 x64 和运行 macOS 14 或更高版本的 Apple Silicon Mac 使用同一个插件。
-
 <span id="需要安装哪些东西"></span>
 
-## 首次使用
+## 准备这四项
 
-1. 安装 [Zotero 8–10](https://www.zotero.org/download/)。
-2. [安装 XPI 并检查本地服务](/zotero-pdf2zh-pro/guide/installation/)。首次确认后，插件自动下载并启动引擎，需要联网。
-3. 准备翻译服务的 API Key，或使用已有的 [ChatGPT 套餐或本地模型](/zotero-pdf2zh-pro/guide/api-configuration/)。
+| 项目 | 如何准备 |
+| --- | --- |
+| Zotero 8–10 | 从 [Zotero 官网](https://www.zotero.org/download/)安装 |
+| 本地服务 | 按 [Windows](/zotero-pdf2zh-pro/guide/windows/) 或 [macOS](/zotero-pdf2zh-pro/guide/macos/) 教程安装；无需自行安装 Python |
+| Zotero 插件 | 下载 XPI 后[从文件安装](/zotero-pdf2zh-pro/guide/installation/) |
+| 翻译来源 | 准备 API Key，或使用已有的 [ChatGPT 套餐 / 本地模型](/zotero-pdf2zh-pro/guide/api-configuration/) |
 
-已有服务继续使用原地址和原来的数据目录。Windows 控制中心、Homebrew、uv 和 Docker 的维护入口均保留。Linux 用户请查看[进阶部署](/zotero-pdf2zh-pro/guide/advanced/)。
+Linux / Docker 用户查看[进阶部署](/zotero-pdf2zh-pro/guide/advanced/)。
 
 <span id="两种地址不要填反"></span>
 

@@ -1,4 +1,4 @@
 interface:
-  display_name: "Zotero PDF2ZH Pro Release"
-  short_description: "Prepare, publish or resume releases with concise release notes"
-  default_prompt: "Use $zotero-pdf2zh-pro-release to complete the requested version push or unified release, reuse verified artifacts, and write concise Chinese release notes without long SHA strings."
+  display_name: "Zotero PDF2ZH Pro 发布"
+  short_description: "准备和恢复正式发布，在安装包公开后同步 README 与官网"
+  default_prompt: "使用 $zotero-pdf2zh-pro-release 准备、验证或恢复本次发布。"

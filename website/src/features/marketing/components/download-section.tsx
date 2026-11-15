@@ -5,15 +5,7 @@ import { ArrowRightIcon, DownloadIcon } from "lucide-react";
 import { ChapterHeader } from "./chapter-header";
 import { HomeOwnCommand } from "./home-own-command";
 import { GITHUB_REPO_URL } from "@/shared/lib/seo";
-export function DownloadSection({
-  version,
-  min,
-  max,
-}: {
-  version: string;
-  min: string;
-  max: string;
-}) {
+export function DownloadSection({ version }: { version: string }) {
   const [platform, setPlatform] = useState("windows");
   useEffect(() => {
     const sync = () => {
@@ -36,24 +28,9 @@ export function DownloadSection({
         <ChapterHeader
           eyebrow={`v${version}`}
           title="下载与安装"
-          description="Windows x64 和 Apple Silicon Mac 使用同一个插件，首次使用时自动准备本地引擎。"
+          description="先启动翻译服务，再安装 Zotero 插件。"
         />
         <div className="mx-auto mt-12 max-w-[54rem]">
-          <div className="download-row border-t border-border">
-            <div>
-              <h3>Zotero 插件</h3>
-              <p>
-                Zotero {min}–{max} · Windows 10/11 x64 或 macOS 14+ Apple Silicon
-              </p>
-            </div>
-            <a
-              className="download-action"
-              href={`${GITHUB_REPO_URL}/releases/latest/download/zotero-pdf2zh-pro.xpi`}
-            >
-              <DownloadIcon />
-              下载 XPI
-            </a>
-          </div>
           <div
             role="tablist"
             aria-label="安装平台"
@@ -99,7 +76,7 @@ export function DownloadSection({
           >
             <div className="download-row">
               <div>
-                <h3>独立服务（可选）</h3>
+                <h3>本地服务</h3>
                 <p>Windows 10 / 11 · x64</p>
               </div>
               <a
@@ -107,7 +84,7 @@ export function DownloadSection({
                 href={`${GITHUB_REPO_URL}/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe`}
               >
                 <DownloadIcon />
-                下载独立控制中心
+                下载 Windows 版
               </a>
             </div>
           </div>
@@ -119,7 +96,7 @@ export function DownloadSection({
           >
             <div className="download-row">
               <div>
-                <h3>独立服务（可选）</h3>
+                <h3>本地服务</h3>
                 <p>Apple Silicon · Homebrew</p>
               </div>
             </div>
@@ -133,6 +110,19 @@ export function DownloadSection({
                 安装说明
               </Link>
             </p>
+          </div>
+          <div className="download-row border-t border-border">
+            <div>
+              <h3>Zotero 插件</h3>
+              <p>Zotero 8–10 · XPI</p>
+            </div>
+            <a
+              className="download-action"
+              href={`${GITHUB_REPO_URL}/releases/latest/download/zotero-pdf2zh-pro.xpi`}
+            >
+              <DownloadIcon />
+              下载插件
+            </a>
           </div>
           <div className="mt-4 flex items-center justify-between gap-4 text-base">
             <Link

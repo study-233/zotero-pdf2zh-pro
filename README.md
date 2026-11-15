@@ -1,157 +1,92 @@
 <div align="center">
 
-<img src="assets/logo.svg" width="128" height="128" alt="牛马读书 logo" />
+<img src="assets/logo.svg" width="96" height="96" alt="牛马读书" />
 
 # zotero-pdf2zh-pro
 
-**整篇翻译、双语阅读、划词精读，都在 Zotero 中完成。**
+在 Zotero 8–10 中翻译 PDF、对照阅读和划词查义。
 
-支持 Zotero 8、9 和 10，需配合本地服务使用。
-
-[![Release](https://img.shields.io/github/v/release/study-233/zotero-pdf2zh-pro?display_name=tag&sort=semver)](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)
-[![CI](https://github.com/study-233/zotero-pdf2zh-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/study-233/zotero-pdf2zh-pro/actions/workflows/ci.yml)
-[![Zotero](https://img.shields.io/badge/Zotero-8%20%7C%209%20%7C%2010-CC2936)](https://www.zotero.org/)
-[![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-3776AB?logo=python&logoColor=white)](server/pyproject.toml)
-[![PyPI](https://img.shields.io/pypi/v/zotero-pdf2zh-pro?logo=pypi&logoColor=white)](https://pypi.org/project/zotero-pdf2zh-pro/)
-[![License](https://img.shields.io/github/license/study-233/zotero-pdf2zh-pro)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/study-233/zotero-pdf2zh-pro?style=flat&logo=github&label=Stars)](https://github.com/study-233/zotero-pdf2zh-pro/stargazers)
-
-**[快速开始](#quick-start) · [使用指南](docs/user-guide.md) · [下载最新版](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)** · [插件官网](https://study-233.github.io/zotero-pdf2zh-pro/) · [常见问题](#troubleshooting) · [更新记录](CHANGELOG.md)
+[下载正式版](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest) · [官网](https://study-233.github.io/zotero-pdf2zh-pro/) · [使用指南](docs/user-guide.md) · [更新记录](https://study-233.github.io/zotero-pdf2zh-pro/changelog/)
 
 </div>
 
 <a id="features"></a>
+<a id="功能亮点"></a>
+<a id="界面预览"></a>
 
-## 功能亮点
+## 阅读与翻译
 
-- 📄 **全文翻译**：右键提交单篇或批量 PDF，译文与双语附件自动导入原条目。
-- 🔍 **划词精读**：选词查释义、选句看译文，按需结合论文上下文解释。
-- 🔄 **失败补译**：保留已译段落，只补剩余内容，旧附件与批注继续保留。
-- ⚙️ **灵活选择模型**：支持 OpenAI 兼容 API、ChatGPT 套餐登录和多配置切换。
-- 📚 **术语与排版**：支持术语库、OCR、表格翻译、参考文献保护和附件标题设置。
-- 📊 **任务管理**：查看进度、请求耗时和 token，失败时可导出诊断包。
-- 📝 **文档导出**：原文与译文 PDF 可从附件菜单导出 Markdown、JSON、TXT。
+右键提交单篇或批量 PDF，译文自动导回原条目。支持术语库、失败补译和 Markdown、JSON、TXT 导出。
 
-## 界面预览
+![在 Zotero 中对照阅读原文和译文](assets/guide/reader-bilingual.webp)
 
-**全文翻译与双语阅读**
+选词查释义，选句看译文。[划词精读指南](docs/user-guide.md#selection-translation)
 
-![在 Zotero 中阅读翻译后的双语 PDF](assets/guide/reader-bilingual.webp)
-
-**划词精读**
-
-![选中单词后自动显示释义](assets/guide/selection-reading.webp)
-
-[全文翻译教程](docs/user-guide.md#usage) · [划词精读教程](docs/user-guide.md#selection-translation)
+![阅读论文时划词显示释义](assets/guide/selection-reading.webp)
 
 <a id="quick-start"></a>
 
 ## 快速开始
 
-准备好 [Zotero 8、9 或 10](https://www.zotero.org/download/)，以及翻译服务商提供的 API 地址、Key 和模型名。
-Windows 10/11 x64 和运行 macOS 14 或更高版本的 Apple Silicon Mac 使用同一个 XPI。首次使用时，插件会联网准备本地引擎。已有服务继续使用原地址。
-
 <a id="windows"></a>
+<a id="1-安装本地服务"></a>
+<a id="windows-1011-x64"></a>
 <a id="macos"></a>
 
-已有控制中心、Homebrew 或远程服务的用户可直接升级插件。独立部署的启停方式见 [Windows 教程](docs/user-guide.md#windows)和 [macOS 教程](docs/user-guide.md#macos)。Linux、Docker 和 uv 用户可查看[其他部署方式](#advanced)。
+**1. 启动翻译服务。** 已有服务可直接使用原地址。首次安装按平台选择：
+
+| 平台 | 安装与启动 |
+| --- | --- |
+| Windows 10/11 x64 | 运行[安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)，点击「完成并启动服务」。[图解](docs/user-guide.md#windows) |
+| Apple Silicon Mac | 用 [Homebrew 安装并启动服务](docs/user-guide.md#macos)。Intel Mac 可沿用已有服务。 |
+| Linux / Docker / uv | 见[部署指南](docs/user-guide.md#advanced)。 |
 
 <a id="installation"></a>
+<a id="2-安装-zotero-插件"></a>
 
-### 1. 安装 Zotero 插件
-
-1. 下载 [最新 Release](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest) 中的 `zotero-pdf2zh-pro.xpi`，无需解压。
-2. 打开 Zotero **“工具 → 插件”**，点击齿轮 → **“Install Plugin From File…”**，选择 XPI 并按提示重启。
-3. 打开 Zotero 设置，进入 **“zotero-pdf2zh-pro”**，点击 **“检查本地服务”**。新安装首次确认下载后等待“已连接”。
-
-Windows 从“编辑 → 设置”进入，macOS 从“Zotero → 设置”进入。
-服务地址保持 `http://127.0.0.1:8890`。
-
-[插件安装与连接检查图解 →](docs/user-guide.md#installation)
+**2. 安装插件。** [下载 XPI](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)，在 Zotero「工具 → 插件」的齿轮菜单中选择从文件安装。进入插件设置，点击「检查本地服务」。本机默认地址为 `http://127.0.0.1:8890`。[安装图解](docs/user-guide.md#installation)
 
 <a id="api-configuration"></a>
+<a id="3-配置翻译-api"></a>
 
-### 2. 配置翻译 API
-
-在插件设置中点击 **“新增”**，选择 **“OpenAI 兼容（中转站 / 官方）”**，填写服务商提供的 API 地址、Key 和模型。
-点击 **“测试 API”**，成功后选择 **“保存并使用”**。
-
-| 地址 | 填写位置 | 示例 |
-| --- | --- | --- |
-| 本地服务地址 | Python服务器地址 | `http://127.0.0.1:8890` |
-| 翻译 API 地址 | 新增翻译配置 → API 地址 | `https://api.example.com/v1`（占位示例） |
-
-API 地址需保留服务商给出的完整路径，插件不会自动补 `/v1`。
-“获取模型”失败时可手填模型 ID，再测试 API。
-
-PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选服务商，并消耗其 API 额度。
-
-[API 配置图解、多配置管理与协议设置 →](docs/user-guide.md#api-configuration)
+**3. 配置翻译来源。** 添加配置，填写服务商的 API 地址、Key 和模型，测试后选择「保存并使用」。也可使用 ChatGPT 套餐或本地模型。使用云端模型时，选中的服务商会收到待译文本。[配置指南](docs/user-guide.md#api-configuration)
 
 <a id="usage"></a>
+<a id="4-翻译第一篇-pdf"></a>
 
-### 3. 翻译第一篇 PDF
-
-1. 确认当前翻译配置、源语言和目标语言；默认输出为 **“双语对照”**。
-2. 在文库中右键一个已下载到本地的 PDF，选择 **“zotero-pdf2zh-pro → zotero-pdf2zh-pro: 翻译 PDF”**。
-3. 在任务列表查看进度。完成后确认导入状态，再回到原条目下阅读新附件。
-
-首次建议使用一篇较短、能够选中文字的 PDF。批量翻译时，多选条目或 PDF 后使用同一入口。
-翻译期间保持本地服务运行，并让 Zotero 保持打开以便及时导入结果。
-
-[输出设置、批量翻译与自定义附件标题 →](docs/user-guide.md#usage)
-
-## 详细文档
+**4. 翻译 PDF。** 在文库中右键已下载的 PDF，选择「zotero-pdf2zh-pro → 翻译 PDF」。任务显示「已导入」后，在原条目下打开双语附件。[操作图解](docs/user-guide.md#usage)
 
 <a id="translation-options"></a>
+<a id="详细文档"></a>
+<a id="翻译设置"></a>
 
-### 翻译设置
+## 使用与维护
 
-- [常用参数：QPS、并发、OCR 与参考文献](docs/user-guide.md#translation-options)
-- [术语包下载与使用](docs/glossary-downloads.md)
-- [ChatGPT 套餐登录](docs/user-guide.md#使用-chatgpt-套餐登录) · [模型与套餐比较](docs/codex-model-value-2026-10-03.md)
-
+- [翻译参数与 OCR](docs/user-guide.md#translation-options) · [术语包](docs/glossary-downloads.md)
 <a id="task-management"></a>
+<a id="任务与结果"></a>
 
-### 任务与结果
-
-- [任务状态、失败重试、补译与导入](docs/user-guide.md#task-management)
-- [请求耗时、token 与缓存指标](docs/user-guide.md#看懂请求详情)
-- [卡顿排查与诊断导出](docs/user-guide.md#diagnostics)
-
+- [任务、补译与导入](docs/user-guide.md#task-management) · [请求与用量](docs/user-guide.md#看懂请求详情)
 <a id="maintenance"></a>
+<a id="更新与维护"></a>
 
-### 更新与维护
-
-- [插件和服务端更新、数据迁移与卸载](docs/user-guide.md#maintenance)
-- [完整更新记录](CHANGELOG.md)
-
+- [更新、迁移与卸载](docs/user-guide.md#maintenance)
 <a id="advanced"></a>
+<a id="其他部署与开发"></a>
 
-### 其他部署与开发
-
-- [uv 手动运行](docs/user-guide.md#uv) · [Linux / Docker](docs/user-guide.md#advanced)
-- [服务端接口与兼容性](server/README.md)
-- [开发、测试与发布](docs/development-notes.md)
-- [README 维护规范](docs/readme-maintenance.md)
+- [uv](docs/user-guide.md#uv) · [Docker](docs/user-guide.md#advanced) · [服务端接口](server/README.md)
 
 <a id="troubleshooting"></a>
 
 ## 常见问题
 
-| 问题 | 处理方式 |
+| 问题 | 处理 |
 | --- | --- |
-| 插件无法连接本地服务 | 在设置中再次检查本地服务；已有独立服务按原方式启动 |
-| 本地服务正常，但 API 测试失败 | 核对服务商的 API 地址、Key、模型与协议；本地连接成功不代表 API 可用 |
-| 任务已完成，却没有新附件 | 查看导入状态；导入失败时点击“重试导入”，不会重新翻译 |
-| 任务显示“未完成” | 已生成的 PDF 会带状态标记导入；修复原因后“补译”剩余段落 |
-| 请求指标显示 `-` | 上游未返回统计或历史记录不完整，不代表零消耗 |
+| 无法连接服务 | Windows 查看控制中心，macOS 运行 `brew services list`。确认服务已启动，再检查插件中的地址。 |
+| 服务已连接，API 测试失败 | 核对服务商的 API 地址、Key 和模型。 |
+| 已完成却没有附件 | 在任务列表点击「重试导入」。标为「待补译」的附件可在修复原因后继续补译。 |
 
-[查看完整排查指南 →](docs/user-guide.md#troubleshooting)
-
-## TODO
-
-- [ ] 接入墨墨背单词
+[排错指南](docs/user-guide.md#troubleshooting) · [导出诊断包](docs/user-guide.md#diagnostics)
 
 <a id="community"></a>
 
@@ -164,12 +99,11 @@ PDF 在本地处理；使用云端 API 时，待翻译文本会发送给所选�
 反馈时请提供操作系统、Zotero 版本、插件与服务端版本，以及复现步骤和报错。
 卡顿或任务失败可附上[诊断包](docs/user-guide.md#diagnostics)；分享截图或日志前移除密钥和私人内容。
 
-欢迎提交 PR。开发前请阅读[开发维护笔记](docs/development-notes.md)，文档改动请遵循[README 维护规范](docs/readme-maintenance.md)。
-较大的行为调整建议先通过 Issue 讨论使用场景和预期结果。
+<a id="todo"></a>
+
+[开发待办](docs/development-notes.md#待开发) · [开发维护笔记](docs/development-notes.md) · [文档规范](docs/readme-maintenance.md)
 
 ## Star History
-
-如果这个项目对你有帮助，欢迎点个 Star ⭐
 
 <p align="center">
   <a href="https://www.star-history.com/?repos=study-233%2Fzotero-pdf2zh-pro&amp;type=date&amp;legend=top-left">

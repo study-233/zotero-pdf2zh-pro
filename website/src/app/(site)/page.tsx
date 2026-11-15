@@ -28,16 +28,13 @@ export default function Home() {
       </HeroSection>
       <section id="preview-selection" className="py-16 sm:py-20 lg:py-24">
         <div className="site-container flex flex-col items-center">
-          <ChapterHeader eyebrow="划词精读" title="从一个词，读懂上下文。" />
+          <ChapterHeader title="划词精读" />
           <div className="mt-12 w-full max-w-[54rem] sm:mt-14">
             <ProductImage
               path="assets/guide/selection-reading.webp"
               alt="论文阅读时打开 attention 的词典卡片，显示释义、发音和例句"
             />
           </div>
-          <p className="mt-10 text-center text-lg leading-8 text-muted-foreground">
-            选词查义，选句翻译，按需解释上下文。
-          </p>
           <Link
             href="/guide/selection-translation/"
             className="mt-4 text-base underline underline-offset-4"
@@ -69,11 +66,7 @@ export default function Home() {
           ))}
         </div>
       </nav>
-      <DownloadSection
-        version={site.version}
-        min={site.compatibility.strict_min_version.split(".")[0]}
-        max={site.compatibility.strict_max_version.split(".")[0]}
-      />
+      <DownloadSection version={site.version} />
     </>
   );
 }

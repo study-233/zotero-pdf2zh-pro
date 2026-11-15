@@ -20,9 +20,6 @@ export function Footer() {
             <p className="text-sm font-semibold tracking-[0.18em] text-zinc-950 uppercase dark:text-zinc-100">
               Zotero PDF2ZH Pro
             </p>
-            <p className="mt-3 max-w-md text-sm leading-7 text-zinc-600 dark:text-zinc-400">
-              在 Zotero 中翻译论文。
-            </p>
           </div>
           <nav
             className="flex flex-wrap gap-x-5 gap-y-3 text-sm font-medium text-zinc-600 dark:text-zinc-300"

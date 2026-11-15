@@ -3,12 +3,13 @@ import { useEffect } from "react";
 import { BASE } from "@/shared/lib/seo";
 export function LegacyHomeHash() {
   useEffect(() => {
-    const redirect = () => {
+    const redirect = (event?: HashChangeEvent) => {
+      const hash = event ? new URL(event.newURL).hash : location.hash;
       if (
-        ["#results", "#method", "#compare", "#3d"].includes(location.hash) ||
-        location.hash.startsWith("#view=")
+        ["#results", "#method", "#compare", "#3d"].includes(hash) ||
+        hash.startsWith("#view=")
       )
-        location.replace(`${BASE}/benchmark/${location.hash}`);
+        location.replace(`${BASE}/benchmark/${hash}`);
     };
     redirect();
     window.addEventListener("hashchange", redirect);

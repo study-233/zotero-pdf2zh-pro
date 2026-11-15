@@ -21,7 +21,14 @@ PUBLIC_ANCHORS = frozenset('''features quick-start windows macos installation
 api-configuration usage translation-options task-management maintenance
 troubleshooting advanced community'''.split())
 MARKER = '<!-- release-version -->'
-VERSION_PATTERN = re.compile(r'<!-- release-version --> `([^`\n]+)`')
+VERSION_PATTERN = re.compile(r'<!-- release-version --> `(\d+\.\d+\.\d+)`')
+
+
+def public_version(text):
+    matches = VERSION_PATTERN.findall(text)
+    if text.count(MARKER) != 1 or len(matches) != 1:
+        raise ValueError('expected one release version marker followed by `version`')
+    return matches[0]
 
 
 def blank(text):
@@ -203,11 +210,11 @@ def check_readme(root):
     doc = parse_document(text)
     for anchor in sorted(PUBLIC_ANCHORS - doc.explicit.keys()):
         errors.append(f'README.md:1: missing public anchor: {anchor}')
-    matches = list(VERSION_PATTERN.finditer(text))
-    if text.count(MARKER) != 1 or len(matches) != 1:
-        errors.append('README.md:1: expected one release version marker followed by `version`')
+    try:
+        public_version(text)
+    except ValueError as error:
+        errors.append(f'README.md:1: {error}')
     else:
-        marker_line = text.count('\n', 0, matches[0].start()) + 1
         versions = {}
         sources = ('plugin/package.json', 'server/pyproject.toml', 'server/server.py')
         for source in sources:
@@ -227,9 +234,10 @@ def check_readme(root):
                 versions[source] = version
             except (OSError, ValueError, KeyError, SyntaxError) as error:
                 errors.append(f'{source}:1: cannot read version: {error}')
-        for source, version in versions.items():
-            if version != matches[0][1]:
-                errors.append(f'README.md:{marker_line}: version {matches[0][1]} differs from {source}: {version}')
+        if len(set(versions.values())) > 1:
+            for source, value in versions.items():
+                others = [path for path, other in versions.items() if value != other]
+                errors.append(f'{source}:1: product version {value} differs from {", ".join(others)}')
     length = len(text.splitlines())
     if length > 280:
         warnings.append(f'README.md:281: {length} lines; consider moving details into the user guide')

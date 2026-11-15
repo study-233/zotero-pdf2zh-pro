@@ -17,11 +17,7 @@ export default function Changelog() {
           <span id={r.anchor} key={r.anchor} />
         ))}
       </div>
-      <EditorialIndexHeader
-        eyebrow="CHANGELOG"
-        title="更新记录"
-        description="每一次改进，都在这里。"
-      />
+      <EditorialIndexHeader title="更新记录" />
       <EditorialList>
         {releases.slice(0, 10).map((release, index) => (
           <EditorialListItem

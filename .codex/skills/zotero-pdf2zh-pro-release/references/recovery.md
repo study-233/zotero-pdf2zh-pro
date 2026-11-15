@@ -45,6 +45,12 @@ Windows 本地发布使用原 `release-state.json` 加 `--resume`，保持 `--bu
 这保留原产品提交和现有令牌权限。若 PyPI 已完成而 GitHub 创建失败，沿用原制品续接该发布阶段。
 依据：[GitHub Release API 权限与 target 语义](https://docs.github.com/en/rest/releases/releases#create-a-release)。
 
+## 只恢复公开文档
+
+从 main 核对 GitHub 最新正式版。运行 `python3 scripts/release_docs.py publish <版本>`，有文档 PR 时带上原 `--pr <编号>`。主分支 README 已更新时可直接复用。
+
+若官网已有部署 run，查看该 run 并重试失败的任务。尚未启动时执行 `gh workflow run website.yml --ref main -f version=<版本>`，核对该次部署和线上下载入口。
+
 ## 远端制品已成功，本机扩展验证未完成
 
 Windows 的扩展选测会在远端完成所选生命周期后，下载最终制品并在本机补历史升级。

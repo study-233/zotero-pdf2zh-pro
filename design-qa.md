@@ -8,9 +8,9 @@ final result: passed
 
 - 参考地址：https://real-api-pricing.vercel.app/#lang=zh 。已实际打开并检查桌面、手机导航、数据表及图表工具栏。
 - 用户视觉目标：`用户提供的截图：codex-clipboard-c1709a58-065f-4a7e-8730-22fc80a4bfe4.png`。
-- 原图 2718 × 1442 px，按 2 倍密度归一为 1359 × 721 CSS px。实现同尺寸截图：`.local-dev/benchmark-pricing-ui/desktop-match.png`，1359 × 721 px，密度 1。
-- 同一输入比较：`.local-dev/benchmark-pricing-ui/comparison.jpg`，上方为参考、下方为实现；聚焦顶部导航、工具栏和图例：`comparison-controls.jpg`。两张组合图均已打开进行视觉比较。
-- 实际网站截图：`source-desktop.png`、`source-mobile.png`；本地补充证据：`preview.png`（1359 × 900）、`table-desktop.png`、`tablet.png`（768 × 1024）、`speed-mobile.png`、`value-mobile.png`（390 × 844）。上述文件均在 `.local-dev/benchmark-pricing-ui/`。
+- 原图 2718 × 1442 px，按 2 倍密度归一为 1359 × 721 CSS px。实现同尺寸截图：`.local-dev/archive/layout-20261115/benchmark-pricing-ui/desktop-match.png`，1359 × 721 px，密度 1。
+- 同一输入比较：`.local-dev/archive/layout-20261115/benchmark-pricing-ui/comparison.jpg`，上方为参考、下方为实现；聚焦顶部导航、工具栏和图例：`comparison-controls.jpg`。两张组合图均已打开进行视觉比较。
+- 实际网站截图：`source-desktop.png`、`source-mobile.png`；本地补充证据：`preview.png`（1359 × 900）、`table-desktop.png`、`tablet.png`（768 × 1024）、`speed-mobile.png`、`value-mobile.png`（390 × 844）。上述文件均在 `.local-dev/archive/layout-20261115/benchmark-pricing-ui/`。
 - 本地地址：http://127.0.0.1:8894/benchmark/#view=speed 。
 
 ## 五项视觉核对
@@ -68,7 +68,7 @@ final result: passed
 - 已核对统一发布记录：当前九条总览配置的 channel 均为 Command Code；接入来源来自记录字段，而不是从模型厂商推断。界面使用“Command Code 套餐”这一渠道标签，没有添加未记录的套餐档位。
 - 页头新增只读的接入来源徽标；二维标注显示渠道 Logo ＋ 模型 Logo；前沿徽章使用实际接入渠道图标，悬浮提示与点选详情明确显示接入来源。
 - 数据表新增“接入来源”列，九条记录逐条显示来源图标和文字；来源表头与单元格左对齐。
-- 手机核对：390 × 844，无水平溢出，来源徽标与九个来源标注均可见，无图像加载失败。证据 `channel-mobile.png`。桌面表格证据 `source-table.png`；桌面总览证据 `source-preview.png`（均在 `.local-dev/benchmark-pricing-ui/`）。
+- 手机核对：390 × 844，无水平溢出，来源徽标与九个来源标注均可见，无图像加载失败。证据 `channel-mobile.png`。桌面表格证据 `source-table.png`；桌面总览证据 `source-preview.png`（均在 `.local-dev/archive/layout-20261115/benchmark-pricing-ui/`）。
 - `desktop-match.png` / `comparison.jpg` 已更新到来源显示版本，已打开组合图核对。沿用参考页徽章与双图标标注样式，未加入筛选器或套餐选择器。
 - 来源映射同时支持既有的 ChatGPT subscription 记录（显示为“插件 GPT 账号”）；当前九模型总览没有扩展配置范围，全部下载记录保留原样。
 - 41 项 Python 网站与数据检查、7 项 Node 检查通过；新增字段核对确保逐行显示的来源与冻结记录的 channel 一致。
@@ -84,7 +84,7 @@ final result: passed
 - 插件账号没有实际现金扣费记录。费用图和三维图采用冻结记录的 API 等值估算 $0.0490566；表格和详情显示 ≈$0.04906 / API 等值估算，费用视图使用空心菱形区分估算点。没有将未知实际费用补为零。
 - 实测三个图表均有 10 个数据点；点选插件账号显示对应来源、low 设置、240/240 和估算费用。隐藏插件账号时变为 9 点、恢复全部后为 10 点，未与 Command Code 合并。
 - 390 × 844 手机检查：页面宽度 390，无水平溢出；十个标注框可读、互不重叠。手机图表高度调整为 470 px，以容纳新增结果。少数引线交叉属于数据密集区域的 P3 细节，不遮挡来源名称。
-- 证据：`account-mobile.png`、`account-table.png`、`account-preview.png`，目录 `.local-dev/benchmark-pricing-ui/`。`desktop-match.png` 与 `comparison.jpg` 已更新至双来源版本，并已打开组合图比较。
+- 证据：`account-mobile.png`、`account-table.png`、`account-preview.png`，目录 `.local-dev/archive/layout-20261115/benchmark-pricing-ui/`。`desktop-match.png` 与 `comparison.jpg` 已更新至双来源版本，并已打开组合图比较。
 - 41 项 Python 检查、7 项 Node 检查通过；验证显示配置数 10、唯一模型数 9、GPT 名称唯一、来源正确、API 等值标记存在。所有冻结发布文件字节保持一致。
 
 final result: passed

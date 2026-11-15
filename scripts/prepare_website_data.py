@@ -68,10 +68,8 @@ def prepare():
         target = public / asset
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / asset, target)
-    manifest = json.loads((ROOT / 'plugin/addon/manifest.json').read_text(encoding='utf-8'))
     metadata = {
         'version': site.version, 'base': site.base, 'repo': site.context()['repo'],
-        'compatibility': manifest['applications']['zotero'],
         'benchmark': overview, 'screenshots': site.screenshots,
         'pages': [{key: page[key] for key in ('title', 'route', 'group')} for page in site.pages],
     }
