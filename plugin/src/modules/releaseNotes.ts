@@ -153,6 +153,29 @@ export const releaseSummaries: ReleaseSummary[] = [
             },
         ],
     },
+    {
+        version: "1.9.8",
+        notes: [
+            {
+                id: "managed-translation-engine",
+                message: "release-managed-engine",
+                cardMessage: "release-card-managed-engine",
+                priority: 0,
+            },
+            {
+                id: "page-range-trial",
+                message: "release-page-trial",
+                cardMessage: "release-card-page-trial",
+                priority: 1,
+            },
+            {
+                id: "source-lookup-bilingual-notes",
+                message: "release-reading-tools",
+                cardMessage: "release-card-reading-tools",
+                priority: 2,
+            },
+        ],
+    },
 ];
 
 export function compareVersions(a: string, b: string): number {
