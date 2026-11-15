@@ -19,6 +19,61 @@ def document(*pages):
 
 
 class ReferenceFilterTests(unittest.TestCase):
+    def test_numbered_reference_heading_starts_at_the_heading_and_spans_pages(self) -> None:
+        for title in (
+            "7 References", "7. References", "4.2 Bibliography:", "VII. REFERENCES",
+            "第七章 参考文献", "七、参考文献", "７．参考文献",
+        ):
+            with self.subTest(title=title):
+                heading = paragraph(title)
+                refs = [paragraph("[1] Smith 2020"), paragraph("[2] Doe 2021")]
+                continuation = paragraph("Journal of Example Studies")
+                running_heading = paragraph("References")
+                doc = document(
+                    [paragraph("Introduction")], [paragraph("Discussion"), heading, refs[0]],
+                    [running_heading, refs[1], continuation],
+                )
+                self.assertEqual(
+                    find_reference_paragraph_ids(doc), {id(p) for p in [heading, *refs, running_heading, continuation]},
+                )
+
+    def test_new_section_resumes_translation_despite_leaked_reference_labels(self) -> None:
+        for title in (
+            "Acknowledgments", "8. Acknowledgements:", "致谢", "八、致谢", "Funding",
+            "Author Contributions", "Data Availability Statement", "利益冲突声明",
+        ):
+            with self.subTest(title=title):
+                heading = paragraph("References")
+                refs = [paragraph("[1] Smith 2020"), paragraph("[2] Doe 2021")]
+                next_heading = paragraph(title, "reference_content")
+                body = paragraph("We thank the study participants.", "reference_hybrid")
+                doc = document([paragraph("Body")], [heading, *refs, next_heading], [body])
+                self.assertEqual(find_reference_paragraph_ids(doc), {id(p) for p in [heading, *refs]})
+
+    def test_section_words_inside_citations_do_not_end_the_bibliography(self) -> None:
+        heading = paragraph("References")
+        refs = [
+            paragraph("[1] Lee 2020. Acknowledgments in scientific writing."),
+            paragraph("2. Funding and Data Availability in Clinical Trials"),
+            paragraph("3. Supplementary Materials for Experimental Economics"),
+            paragraph("See the Acknowledgements section for details."),
+            paragraph("王明. 学术论文中的致谢. 2021."),
+        ]
+        doc = document([heading, *refs, paragraph("Acknowledgements")])
+        self.assertEqual(find_reference_paragraph_ids(doc), {id(p) for p in [heading, *refs]})
+
+    def test_numbered_contents_and_unverified_headings_do_not_start_a_bibliography(self) -> None:
+        cases = (
+            document([paragraph("7 References"), paragraph("8. Results"), paragraph("9. Discussion")],
+                     [paragraph("Introduction")], [paragraph("Body")]),
+            document([paragraph("7. References"), paragraph("8. Acknowledgments"),
+                      paragraph("Our work began in 2021.")]),
+            document([paragraph("7 References to Related Work"), paragraph("[1] Smith 2020"),
+                      paragraph("[2] Doe 2021")]),
+        )
+        for doc in cases:
+            self.assertEqual(find_reference_paragraph_ids(doc), set())
+
     def test_explicit_labels_and_verified_trailing_sections_are_skipped(self) -> None:
         body = paragraph("Body")
         reference = paragraph("Smith 2020", "reference_content")

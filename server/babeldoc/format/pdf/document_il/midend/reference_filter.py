@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 from babeldoc.format.pdf.document_il import Document
 from babeldoc.format.pdf.document_il import PdfParagraph
@@ -13,6 +14,21 @@ REFERENCE_LAYOUT_LABELS = {
     "reference_hybrid",
 }
 REFERENCE_HEADINGS = {"references", "bibliography", "参考文献"}
+POST_REFERENCE_HEADINGS = {
+    "acknowledgment", "acknowledgments", "acknowledgement", "acknowledgements", "致谢", "鸣谢",
+    "funding", "funding information", "funding statement", "资助信息", "经费资助",
+    "author contributions", "credit authorship contribution statement", "作者贡献",
+    "conflict of interest", "conflicts of interest", "conflict of interest statement", "conflicts of interest statement",
+    "competing interests", "declaration of competing interest", "利益冲突", "利益冲突声明",
+    "data availability", "data availability statement", "数据可用性", "数据可用性声明",
+    "declarations", "ethics statement", "ethics approval", "伦理声明",
+    "author biography", "author biographies", "作者简介",
+}
+SECTION_NUMBER = re.compile(
+    r"^(?:(?:\d+(?:\.\d+)*|[IVX]+|[一二三四五六七八九十百]+)(?:[.):、]\s*|\s+)"
+    r"|第[零〇一二三四五六七八九十百\d]+[章节]\s*|\(\d+\)\s*)",
+    re.IGNORECASE,
+)
 APPENDIX_PREFIX = re.compile(
     r"(?:(?:appendix|appendices|supplement(?:ary|al)?(?:\s+(?:materials?|information))?)\b"
     r"(?:\s+(?:[a-z]|[ivxlcdm]+|\d+)\b)?|附录(?:\s*(?:[a-z]|\d+|[一二三四五六七八九十]+))?)",
@@ -27,7 +43,8 @@ REFERENCE_SHAPE = re.compile(
 
 
 def _normalized_heading(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip().rstrip(":：").lower()
+    text = " ".join(unicodedata.normalize("NFKC", text).split())
+    return SECTION_NUMBER.sub("", text).rstrip(":").rstrip().lower()
 
 
 def _paragraphs(document: Document) -> list[tuple[int, PdfParagraph]]:
@@ -39,7 +56,11 @@ def _paragraphs(document: Document) -> list[tuple[int, PdfParagraph]]:
     return result
 
 
-def _is_appendix_heading(paragraph: PdfParagraph, reference_style: PdfStyle | None) -> bool:
+def _ends_reference_section(paragraph: PdfParagraph, heading: str, reference_style: PdfStyle | None) -> bool:
+    if heading in POST_REFERENCE_HEADINGS:
+        return True
+    # Preserve citation numbering for the broader appendix/title heuristics.
+    # A numbered paper title can itself begin with "Supplementary Materials".
     text = " ".join(paragraph.unicode.split())
     if prefix := APPENDIX_PREFIX.match(text):
         subtitle = text[prefix.end():].strip()
@@ -67,6 +88,25 @@ def _is_appendix_heading(paragraph: PdfParagraph, reference_style: PdfStyle | No
     )
 
 
+def _has_reference_entries(
+    following: list[tuple[int, PdfParagraph]], reference_style: PdfStyle | None, likely_location: bool,
+) -> bool:
+    entries = 0
+    for _, paragraph in following:
+        heading = _normalized_heading(paragraph.unicode)
+        if heading in REFERENCE_HEADINGS:
+            continue  # The next page may repeat the bibliography heading.
+        if _ends_reference_section(paragraph, heading, reference_style):
+            break
+        if (paragraph.layout_label or "").lower() in REFERENCE_LAYOUT_LABELS:
+            likely_location = True
+        if REFERENCE_SHAPE.search(paragraph.unicode):
+            entries += 1
+        if likely_location and entries >= 2:
+            return True
+    return False
+
+
 def find_reference_paragraph_ids(document: Document) -> set[int]:
     """Return conservative paragraph identities that should remain untranslated."""
 
@@ -76,21 +116,19 @@ def find_reference_paragraph_ids(document: Document) -> set[int]:
     section = None
     reference_style = None
     for index, (page_index, paragraph) in enumerate(paragraphs):
-        if _normalized_heading(paragraph.unicode) in REFERENCE_HEADINGS:
+        heading = _normalized_heading(paragraph.unicode)
+        if heading in REFERENCE_HEADINGS:
             following = paragraphs[index + 1 : index + 9]
             # A long appendix may put the bibliography in the first half. Require
             # corroboration from the layout model there to avoid a contents page.
-            likely_location = (
-                page_index >= halfway_page or section == "appendix"
-                or any((p.layout_label or "").lower() in REFERENCE_LAYOUT_LABELS for _, p in following)
-            )
-            if likely_location and sum(bool(REFERENCE_SHAPE.search(p.unicode)) for _, p in following) >= 2:
+            likely_location = page_index >= halfway_page or section == "after_references"
+            if _has_reference_entries(following, paragraph.pdf_style, likely_location):
                 section = "references"
                 reference_style = paragraph.pdf_style
-        elif skipped and section != "appendix" and _is_appendix_heading(paragraph, reference_style):
-            section = "appendix"
+        elif skipped and section != "after_references" and _ends_reference_section(paragraph, heading, reference_style):
+            section = "after_references"
 
         labelled_reference = (paragraph.layout_label or "").lower() in REFERENCE_LAYOUT_LABELS
-        if section == "references" or (labelled_reference and section != "appendix"):
+        if section == "references" or (labelled_reference and section != "after_references"):
             skipped.add(id(paragraph))
     return skipped
