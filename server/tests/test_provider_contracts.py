@@ -246,6 +246,37 @@ class ProviderContractTests(unittest.TestCase):
             factory.assert_called_once_with("TEST_KEY")
             factory.return_value.translate_text.assert_called_once_with("Hello", target_lang="ZH-HANS", source_lang="EN")
 
+    def test_ollama_fragment_retry_is_admitted_and_uses_profile_interval(self):
+        import ollama
+        from pdf2zh_pro.translator.ollama import OllamaTranslator
+        from pdf2zh_pro.translator.request_budget import ParagraphRequestBudget
+        settings = runtime("ollama", apiUrl="http://localhost:11434", model="local")
+        settings.translation.retry_count = 2
+        settings.translation.retry_interval = 0
+        limiter = Mock()
+        with patch(IMPL + "ollama.ollama.Client") as factory:
+            engine = OllamaTranslator(settings, limiter)
+            engine._wait_cancel = Mock()
+            factory.return_value.chat.side_effect = [
+                ollama.ResponseError("busy", status_code=503),
+                ollama.ResponseError("busy", status_code=503),
+                NS(message=NS(content="译文"), prompt_eval_count=1, eval_count=2),
+            ]
+            budget = ParagraphRequestBudget(2, 0).request([object()])
+            self.assertEqual(engine.translate("test", True, {"request_budget": budget}), "译文")
+            self.assertEqual(limiter.wait.call_count, 3)
+            self.assertEqual(budget.attempts, 3)
+            self.assertEqual([call.args for call in engine._wait_cancel.call_args_list], [(0,), (0,)])
+
+    def test_deepl_sdk_retry_override_is_local_to_one_profile(self):
+        from pdf2zh_pro.translator.deepl import DeepLTranslator
+        settings = runtime("deepl")
+        inherited = DeepLTranslator(settings, NoopRateLimiter())
+        settings.translation.retry_count = 0
+        custom = DeepLTranslator(settings, NoopRateLimiter())
+        self.assertNotIn("_should_retry", vars(inherited.client._client))
+        self.assertFalse(custom.client._client._should_retry(None, None, None))
+
     def test_no_implicit_service_for_pdf_or_validation(self):
         import server
         from pathlib import Path

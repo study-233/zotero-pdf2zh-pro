@@ -5,6 +5,7 @@ import {
     type SelectionPopup,
     type SelectionLearning,
     type SelectionResult,
+    type SelectionAction,
     type SelectionControls,
 } from "./selectionPopup";
 import {
@@ -19,7 +20,7 @@ export function createSelectionView(
     doc: Document,
     anchor: HTMLElement,
     selected: string,
-    action: "lookup" | "translate",
+    action: SelectionAction,
     onClose: () => void,
     id: string,
     onDegraded: (stage: string) => void,
@@ -225,7 +226,7 @@ export function createSelectionView(
         },
         updateSelection(
             text: string,
-            kind: "lookup" | "translate",
+            kind: SelectionAction,
             nextAnchor: HTMLElement,
             preservePosition = false,
         ) {

@@ -42,6 +42,23 @@ new Function(
     ).outputText,
 )(formatting);
 
+const sentenceModule = {};
+new Function(
+    "exports",
+    ts.transpileModule(
+        fs.readFileSync(
+            new URL("../src/modules/sourceSentence.ts", import.meta.url),
+            "utf8",
+        ),
+        {
+            compilerOptions: {
+                module: ts.ModuleKind.CommonJS,
+                target: ts.ScriptTarget.ES2022,
+            },
+        },
+    ).outputText,
+)(sentenceModule);
+
 function fixture() {
     const auxiliaryRequests = [];
     const dictionaryCalls = [];
@@ -110,6 +127,29 @@ function fixture() {
         "./llmApiManager": { profileLabel: (p) => p.key },
         "./selectionAudio": { stopSelectionAudio() {} },
         "./selectionFavorites": favorites,
+        "./sourceSentence": sentenceModule,
+        "./sourcePosition": {
+            pageGlyphs: async () => [],
+            paragraphPosition: (_chars, _page, text) => ({ text }),
+            markParagraph: (_reader, mark) => {
+                state.marked = mark.text;
+                return () => {};
+            },
+        },
+        "./sourceLookup": {
+            clearSourceReturnControls() {},
+            readSourceBinding: async () => state.sourceBinding,
+            isOriginalSide: () => false,
+            matchSourceParagraphs: () => ({
+                page: 2,
+                candidates: [state.sourceParagraph || "The source paragraph."],
+                uncertain: false,
+            }),
+            openSourcePage: async (_lib, _binding, _page, text) => {
+                state.jumpText = text;
+                state.openedSource = true;
+            },
+        },
         "./selectionNote": {
             async saveSelectionNote(reader, excerpt) {
                 state.noteWrites.push({ itemID: reader.itemID, ...excerpt });
@@ -1733,4 +1773,58 @@ test("write failure can be retried locally, stale and interrupted results cannot
     assert.equal(view.result.interrupted, true);
     await view.controls.onAddToNote(view.result.text);
     assert.equal(f.state.noteWrites.length, 3);
+});
+
+test("generated attachments use local source lookup even for an English word, an old output, or changed PDF", async () => {
+    for (const binding of [
+        null,
+        { map: { outputHash: "sha256", paragraphs: {} } },
+        { map: { outputHash: "changed" } },
+    ]) {
+        const f = fixture();
+        f.state.sourceBinding = binding;
+        f.select("learning");
+        await f.advance();
+        const result = f.cards[0].result;
+        assert.equal(result.kind, "source");
+        assert.deepEqual(f.requests, []);
+        assert.deepEqual(f.dictionaryCalls, []);
+        assert.deepEqual(f.auxiliaryRequests, []);
+        if (binding?.map.outputHash === "sha256") {
+            assert.deepEqual(result.candidates, ["The source paragraph."]);
+            await result.openPage();
+            assert.equal(f.state.openedSource, true);
+        } else {
+            assert.equal(result.openPage, undefined);
+            assert.deepEqual(result.candidates, []);
+        }
+    }
+});
+
+test("reverse selection reuses the same sentence for inline highlighting, preview, and the jump without contacting a provider", async () => {
+    for (const split of [undefined, [0, 0, 0, 0, 612]]) {
+        const f = fixture();
+        const para = "We introduce the network. Training took 3.5 days.";
+        f.state.sourceParagraph = para;
+        f.state.sourceBinding = {
+            map: {
+                outputHash: "sha256",
+                split,
+                paragraphs: {
+                    2: [[para, "我们介绍该网络。训练耗时 3.5 天。"]],
+                },
+            },
+        };
+        f.select("训练耗时");
+        await f.advance();
+        const result = f.cards[0].result;
+        assert.deepEqual(result.candidates, ["Training took 3.5 days."]);
+        assert.equal(f.state.marked, split ? result.candidates[0] : undefined);
+        await result.openPage();
+        assert.equal(f.state.jumpText, result.candidates[0]);
+        assert.deepEqual(
+            [f.requests, f.auxiliaryRequests, f.dictionaryCalls],
+            [[], [], []],
+        );
+    }
 });

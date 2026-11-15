@@ -11,6 +11,9 @@ import {
 } from "./pdf2zhTypes";
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 
+import { checkedSourceMap, type SourceMap } from "./sourceLookup";
+import { getString } from "../utils/locale";
+
 type TaskListResponse = Partial<ServerTaskList> & {
     status?: string;
     tasks?: ServerTaskSnapshot[];
@@ -94,6 +97,9 @@ export class ServerTaskClient {
                 api.apiProtocol === "responses" ||
                 Object.keys(api.requestOptions || {}).length),
         );
+        const customRetry =
+            requestBody.retryCount !== undefined ||
+            requestBody.retryInterval !== undefined;
         const needsGlossary =
             Array.isArray(requestBody.glossaryEntries) &&
             requestBody.glossaryEntries.length > 0;
@@ -103,6 +109,7 @@ export class ServerTaskClient {
             requestBody.glossaryPacks.length > 0;
         if (
             requestBody.trialPages !== undefined ||
+            customRetry ||
             needsApiCheck ||
             needsGlossary ||
             needsGlossaryPacks ||
@@ -125,6 +132,8 @@ export class ServerTaskClient {
                     new Error("Page trial is not supported by this server"),
                     { code: "page_trial_unsupported" },
                 );
+            if (customRetry && !health.capabilities?.profileLimits)
+                throw new Error(getString("profile-limits-update"));
             const unavailable = [];
             if (needsGlossary && health.capabilities?.glossaryEntries !== true)
                 unavailable.push("术语表");
@@ -285,7 +294,7 @@ export class ServerTaskClient {
         serverUrl: string,
         taskId: string,
         outputMode: OutputMode,
-    ): Promise<Uint8Array> {
+    ): Promise<{ bytes: Uint8Array; sourceMap?: SourceMap }> {
         const response = await diagnosticFetch(
             `${serverUrl}/tasks/${taskId}/result?mode=${outputMode}`,
             undefined,
@@ -295,7 +304,26 @@ export class ServerTaskClient {
             throw await this.readError(response);
         }
 
-        return new Uint8Array(await response.arrayBuffer());
+        const data = await response.arrayBuffer();
+        const bytes = new Uint8Array(data);
+        const digest = response.headers.get("X-PDF2ZH-Source-Map");
+        if (!digest) return { bytes }; // Imports from earlier servers remain readable.
+        if (!/^[a-f0-9]{64}$/.test(digest))
+            throw new Error(getString("source-lookup-invalid"));
+        const snapshot = await diagnosticFetch(
+            `${serverUrl}/tasks/${taskId}/result?mode=${outputMode}&sourceMap=${digest}`,
+        );
+        if (!snapshot.ok) throw await this.readError(snapshot);
+        const encoded = await snapshot.arrayBuffer();
+        const sha256 = async (buffer: ArrayBuffer) =>
+            Array.from(
+                new Uint8Array(await crypto.subtle.digest("SHA-256", buffer)),
+                (byte) => byte.toString(16).padStart(2, "0"),
+            ).join("");
+        if ((await sha256(encoded)) !== digest)
+            throw new Error(getString("source-lookup-invalid"));
+        const map = JSON.parse(new TextDecoder().decode(encoded));
+        return { bytes, sourceMap: checkedSourceMap(map, await sha256(data)) };
     }
 
     private static async postTaskAction(

@@ -10,7 +10,9 @@ window.createProfileEditor = function (args, changed) {
         error.userFacing
             ? error.message
             : args.errorMessage?.(error) || t("failed");
+    const limitFields = ["qps", "poolSize", "retryCount", "retryInterval"];
     const fields = [
+        ...limitFields,
         "name",
         "apiUrl",
         "apiKey",
@@ -237,6 +239,13 @@ window.createProfileEditor = function (args, changed) {
             (item) => item.id === (state.presetId || args.resolvePreset(base)),
         );
         const source = state.values || base;
+        const defaults = args.globalLimits?.() || {};
+        for (const id of limitFields) {
+            $(id).placeholder =
+                defaults[id] === undefined
+                    ? t("engine-default")
+                    : t("inherit-value", { value: defaults[id] });
+        }
         for (const id of fields) {
             let value =
                 source[id] ??
@@ -387,6 +396,29 @@ window.createProfileEditor = function (args, changed) {
             service: preset.service,
             providerPreset: preset.id,
         };
+        for (const id of limitFields) {
+            const input = $(id);
+            if (input.validity?.badInput) throw localError("limits-invalid");
+            if (value[id] === "") {
+                delete value[id];
+                continue;
+            }
+            const number = Number(value[id]);
+            const minimum = id === "qps" || id === "poolSize" ? 1 : 0;
+            const maximum =
+                id === "retryCount"
+                    ? 100
+                    : id === "retryInterval"
+                      ? 300
+                      : Number.MAX_SAFE_INTEGER;
+            if (
+                !Number.isSafeInteger(number) ||
+                number < minimum ||
+                number > maximum
+            )
+                throw localError("limits-invalid");
+            value[id] = number;
+        }
         const codex = preset.service === "codex";
         const chatgpt = preset.service === "chatgpt";
         const claude = preset.service === "claudecode";

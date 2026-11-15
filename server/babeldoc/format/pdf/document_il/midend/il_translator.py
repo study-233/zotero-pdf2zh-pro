@@ -461,7 +461,9 @@ class ILTranslator:
 
     def begin_translation_completion(self):
         self._completion_lock = threading.Lock()
-        self._request_budget = ParagraphRequestBudget()
+        engine = getattr(self, "translate_engine", None)
+        self._request_budget = ParagraphRequestBudget(
+            getattr(engine, "retry_count", None), getattr(engine, "retry_interval", None))
         self._accepted_outputs = {}
         self._accepted_inputs = {}
         self._cache_finalizers = []

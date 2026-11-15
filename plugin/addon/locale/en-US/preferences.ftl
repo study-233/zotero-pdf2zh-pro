@@ -171,3 +171,5 @@ pref-selection-display-sidebar =
 pref-output-format = Format
 pref-after-translation = On completion
 pref-attachment-naming = Attachment title
+pref-retryCount = Extra retries (−1 for engine default)
+pref-retryInterval = Retry interval in seconds (−1 for engine default)

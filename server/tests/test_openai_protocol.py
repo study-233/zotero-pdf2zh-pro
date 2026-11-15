@@ -60,6 +60,22 @@ def response(text="译文", **overrides):
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_fragment_retry_overrides_preserve_zero_and_retry_after(self):
+        from pdf2zh_pro.translator.request_budget import ParagraphRequestBudget
+        for status, retries, expected in ((503, 0, 1), (503, 2, 3), (429, 2, 3), (401, 2, 1)):
+            with self.subTest(status=status, retries=retries):
+                engine = self.translator(lambda _: httpx.Response(
+                    status, headers={"Retry-After": "3"}, json={"error": {"message": "fixture"}}),
+                    protocol="chat_completions")
+                engine.retry_count, engine.retry_interval = retries, 0
+                engine._wait_cancel = Mock()
+                budget = ParagraphRequestBudget(retries, 0).request([object()])
+                with self.assertRaises(openai.APIStatusError):
+                    engine.do_translate("fixture", {"request_budget": budget})
+                self.assertEqual(len(self.requests), expected)
+                self.assertEqual(engine._wait_cancel.call_count, expected - 1)
+                self.assertTrue(all(call.args == (3.0,) for call in engine._wait_cancel.call_args_list))
+
     def translator(
         self,
         handler,

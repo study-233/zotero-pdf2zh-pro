@@ -215,7 +215,9 @@ class ChatGPTClient:
                             payload = json.loads(await response.aread())
                         except ValueError:
                             payload = {}
-                        raise response_error(response.status_code, payload)
+                        error = response_error(response.status_code, payload)
+                        error.retry_after = response.headers.get("retry-after")
+                        raise error
                     data, seen = [], set()
                     async for line in response.aiter_lines():
                         if line.startswith('data:'):

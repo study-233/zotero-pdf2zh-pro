@@ -171,3 +171,5 @@ pref-selection-display-sidebar =
 pref-output-format = 输出格式
 pref-after-translation = 完成后
 pref-attachment-naming = 附件命名
+pref-retryCount = 额外重试次数（−1 使用引擎默认）
+pref-retryInterval = 重试间隔秒数（−1 使用引擎默认）

@@ -3,6 +3,8 @@
 Only external layout inference, model requests and downloadable fonts are replaced.
 The PDF fixture and embedded Chinese font are generated locally by PyMuPDF.
 """
+import hashlib
+import json
 import tempfile
 import unittest
 from contextlib import ExitStack
@@ -66,9 +68,24 @@ class NativePipelineTests(unittest.TestCase):
                 working_dir=root / 'work', output_dir=root / 'output', pages=pdf['pages'],
                 only_include_translated_page=pdf['only_include_translated_page'], auto_extract_glossary=False,
                 pool_max_workers=1, use_rich_pbar=False, watermark_output_mode=WatermarkOutputMode.NoWatermark)
+            config.recovery = TranslationRecovery(root / "checkpoint.sqlite3", "source-map-test")
+            self.addCleanup(config.recovery.close)
             with patch('babeldoc.assets.assets.get_font_family', return_value=families), patch(
                     'babeldoc.assets.assets.get_font_and_metadata', return_value=(font_path, metadata)):
                 result = translate(config)
+            from pdf2zh_pro.pdf import collect_output_files
+            from pdf2zh_pro.source_map import write_source_maps
+            outputs = collect_output_files(result, root / "output", ["mono", "dual"], source.name)
+            source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+            for mode, output in write_source_maps(outputs, source, source_hash, config, "zh-CN").items():
+                raw = (output.output_path.parent / (output.source_map + ".source.json")).read_bytes()
+                self.assertEqual(output.source_map, hashlib.sha256(raw).hexdigest())
+                index = json.loads(raw)
+                self.assertEqual(index["sourceHash"], source_hash)
+                self.assertEqual(index["outputHash"], hashlib.sha256(output.output_path.read_bytes()).hexdigest())
+                self.assertEqual(index["pages"], [1, 2, 3])
+                self.assertEqual(set(index["paragraphs"]), {"2"})
+                self.assertEqual(index["paragraphs"]["2"], [[sentences[1], "论文的翻译结果。"]])
             calls = ' '.join(translator.requests)
             self.assertIn(sentences[1], calls)
             for original in (sentences[0], sentences[2]):

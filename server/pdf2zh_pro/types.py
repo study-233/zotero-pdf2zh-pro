@@ -8,6 +8,7 @@ class TranslationOutputFile:
     output_mode: str
     output_path: Path
     filename: str
+    source_map: str | None = None
 
 
 @dataclass(frozen=True)

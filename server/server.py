@@ -570,12 +570,23 @@ def create_app() -> Flask:
                 return error_response("Output mode is required when multiple result files exist", 400)
             return error_response("Requested PDF is unavailable or no longer exists", 404)
 
+        source_map = getattr(result_file, "source_map", None)
+        if request.args.get("sourceMap") is not None:
+            if not source_map or not re.fullmatch(r"[a-f0-9]{64}", source_map) or request.args["sourceMap"] != source_map:
+                return error_response("Source map unavailable for this PDF", 404)
+            path = result_file.output_path.parent / (source_map + ".source.json")
+            if not path.is_file():
+                return error_response("Source map file unavailable", 404)
+            return send_file(path, mimetype="application/json")
+
         response = send_file(
             result_file.output_path,
             mimetype="application/pdf",
             as_attachment=True,
             download_name=result_file.filename,
         )
+        if source_map:
+            response.headers["X-PDF2ZH-Source-Map"] = source_map
         response.headers["X-PDF2ZH-Output-Mode"] = result_file.output_mode
         response.headers["X-PDF2ZH-Version"] = VERSION
         response.headers["X-PDF2ZH-Task-Id"] = task_record.task_id
@@ -615,6 +626,39 @@ def translate_pdf_request(data: dict[str, Any]) -> tuple[bytes, str, str]:
         raise
 
 
+def request_limits(data, default_qps):
+    """Resolve per-field overrides before persisting or validating a task."""
+    profile = data.get("llm_api") or {}
+    if not isinstance(profile, dict):
+        raise RequestValidationError("Invalid model configuration")
+    values = {}
+    for field, key, default, minimum, maximum in (
+        ("qps", "qps", default_qps, 1, None), ("poolSize", "pool_size", 50, 0, None),
+        ("retryCount", "retry_count", None, 0, 100), ("retryInterval", "retry_interval", None, 0, 300),
+    ):
+        override = profile.get(field)
+        inherited = override is None or override == ""
+        value = data.get(field) if inherited else override
+        if value is None or value == "":
+            if default is not None:
+                values[key] = default
+            continue
+        if inherited and default is not None and not data.get("profileLimits"):
+            values[key] = parse_int(value, default, minimum)
+            continue
+        if field == "poolSize" and not inherited:
+            minimum = 1
+        if (type(value) not in (int, str) or not re.fullmatch(r"[0-9]{1,16}", str(value))
+                or int(value) < minimum or (maximum is not None and int(value) > maximum)):
+            raise RequestValidationError(f"Invalid {field}")
+        values[key] = int(value)
+    has_overrides = any(profile.get(key) not in (None, "") for key in
+                        ("qps", "poolSize", "retryCount", "retryInterval"))
+    if data.get("profileLimits") is True or has_overrides or "retry_count" in values or "retry_interval" in values:
+        values["profile_limits"] = True
+    return values
+
+
 def validate_config_request(data: dict[str, Any], *, check_cancelled=None):
     job_id = os.urandom(4).hex()
     service = normalize_service(data.get("service"))
@@ -622,8 +666,7 @@ def validate_config_request(data: dict[str, Any], *, check_cancelled=None):
         "source_lang": normalize_language(data.get("sourceLang"), "en"),
         "target_lang": normalize_language(data.get("targetLang"), "zh-CN"),
         "service": service,
-        "qps": parse_int(data.get("qps"), 1, minimum=1),
-        "pool_size": parse_int(data.get("poolSize"), 50, minimum=0),
+        **request_limits(data, 1),
         "ocr": parse_bool(data.get("ocr"), False),
         "auto_ocr": parse_bool(data.get("autoOcr"), True),
         "translate_table_text": parse_bool(
@@ -725,8 +768,7 @@ def prepare_translation_request(
         "target_lang": normalize_language(data.get("targetLang"), "zh-CN"),
         "output_modes": output_modes,
         "service": service,
-        "qps": parse_int(data.get("qps"), 8, minimum=1),
-        "pool_size": parse_int(data.get("poolSize"), 50, minimum=0),
+        **request_limits(data, 8),
         "skip_last_pages": parse_int(data.get("skipLastPages"), 0, minimum=0),
         "ocr": parse_bool(data.get("ocr"), False),
         "auto_ocr": parse_bool(data.get("autoOcr"), True),
@@ -984,7 +1026,7 @@ def build_health_payload() -> dict[str, Any]:
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
         "diagnostics": diagnostic_capabilities(),
         "capabilities": {"structuredExport": True, "diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "mimoApi": True, "zhipuApi": True,
-            "preprocessingReuse": True, "pageTrial": True,
+            "profileLimits": True, "preprocessingReuse": True, "pageTrial": True, "sourceParagraphLookup": True,
             "tokenOutputSpeed": True, "reasoningMode": True, "reasoningLow": True, "responsesFirst": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True, "taskSubmissionIdempotency": True, "taskRecovery": True, "taskTiming": True, "binaryTaskUpload": True, "taskPagination": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_pro"),

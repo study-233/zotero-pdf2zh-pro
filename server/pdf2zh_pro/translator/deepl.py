@@ -4,10 +4,8 @@ import deepl
 from pdf2zh_pro.config import SettingsModel
 from pdf2zh_pro.translator.rate_limit import BaseRateLimiter
 from pdf2zh_pro.translator.base import BaseTranslator
-from tenacity import before_sleep_log
-from tenacity import retry
-from tenacity import retry_if_exception
-from tenacity import stop_after_attempt
+from pdf2zh_pro.translator.request_retry import configurable_retry
+from tenacity import retry_if_exception_type
 from tenacity import wait_exponential
 
 logger = logging.getLogger(__name__)
@@ -35,6 +33,11 @@ class DeepLTranslator(BaseTranslator):
         self.client = deepl.Translator(
             settings.translate_engine_settings.deepl_auth_key
         )
+
+        if self.custom_retry:
+            # The pinned SDK has a process-wide retry default. Disable its inner
+            # loop for this client only so separate profiles remain isolated.
+            self.client._client._should_retry = lambda *_: False
 
     @staticmethod
     def _map_source_lang(lang: str | None) -> str | None:
@@ -175,11 +178,9 @@ class DeepLTranslator(BaseTranslator):
             raise ValueError(f"Unsupported DeepL target_lang for lang_out={lang}")
         return mapped
 
-    @retry(
-        retry=retry_if_exception(Exception),
-        stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=1, min=1, max=15),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+    @configurable_retry(
+        attempts=5, predicate=retry_if_exception_type(Exception),
+        backoff=wait_exponential(multiplier=1, min=1, max=15),
     )
     def do_translate(self, text, rate_limit_params: dict = None):
         # Map internal language codes to DeepL specific enums.

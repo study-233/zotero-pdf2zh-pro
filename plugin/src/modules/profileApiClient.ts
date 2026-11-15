@@ -1,3 +1,4 @@
+import { getRequestLimits } from "./profileStore";
 import axios from "axios";
 import { getPref } from "../utils/prefs";
 import { getString } from "../utils/locale";
@@ -157,7 +158,16 @@ export async function testProfile(
             health.capabilities?.chatgptPlan,
             health.capabilities?.reasoningLow,
         );
+        const limits = getRequestLimits(api);
+        if (
+            (limits.retryCount !== undefined ||
+                limits.retryInterval !== undefined) &&
+            !health.capabilities?.profileLimits
+        )
+            throw new Error(getString("profile-limits-update"));
         const body = {
+            ...limits,
+            profileLimits: true,
             service: api.service,
             llm_api: prepared.api,
             liveTest: true,

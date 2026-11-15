@@ -148,6 +148,13 @@ test("Python persistence and export retain four validation failures through the 
                     "placeholder_mismatch",
                 ],
             );
+            assert.deepEqual(task.requestedConfiguration.profileOverrides, {
+                retryCount: 2,
+                retryInterval: 0,
+            });
+            assert.equal(task.effectiveConfiguration.retryInterval, 0);
+            assert.equal(task.effectiveConfiguration.retryCount, 2);
+            assert.match(read("summary.txt"), /额外重试=2，重试间隔秒数=0/);
             assert.equal(task.failedParagraphs[0].missingPlaceholderCount, 1);
             assert.equal(
                 JSON.parse(read("manifest.json")).sources.server.status,
@@ -1102,6 +1109,9 @@ test("page trial and note failures are exported without paper or translation tex
     collector.recordDiagnostic("page_trial_open_failed", {
         fileName: "private paper",
     });
+    collector.recordDiagnostic("selection_source_lookup_failed", {
+        source: "private paragraph",
+    });
     collector.recordDiagnostic("selection_note_failed", {
         original: "secret quote",
         translation: "secret translation",
@@ -1113,7 +1123,11 @@ test("page trial and note failures are exported without paper or translation tex
             const { records } = JSON.parse(read("plugin.json"));
             assert.deepEqual(
                 records.map((r) => r.event),
-                ["page_trial_open_failed", "selection_note_failed"],
+                [
+                    "page_trial_open_failed",
+                    "selection_source_lookup_failed",
+                    "selection_note_failed",
+                ],
             );
             for (const row of records)
                 assert.deepEqual(Object.keys(row).sort(), ["event", "time"]);

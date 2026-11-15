@@ -18,6 +18,7 @@ import {
     type LLMApiData,
 } from "./llmApiManager";
 import {
+    getRequestLimits,
     loadProfiles,
     saveProfiles,
     removeProfile,
@@ -330,6 +331,7 @@ export function openProfileManager(reloginChatGPT = false) {
         `chrome,centerscreen,resizable,dialog=no,width=${width},height=${height}`,
         {
             reloginChatGPT,
+            globalLimits: () => getRequestLimits(),
             presets: PROVIDER_PRESETS.map((preset) => ({
                 ...preset,
                 label: Zotero.locale?.startsWith("zh")

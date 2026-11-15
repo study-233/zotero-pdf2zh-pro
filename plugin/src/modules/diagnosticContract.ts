@@ -87,6 +87,8 @@ export const diagnosticContract = {
         "promptTokens",
         "qps",
         "qps10s",
+        "retryCount",
+        "retryInterval",
         "queueDropped",
         "queueSeconds",
         "reasoning",
@@ -492,6 +494,7 @@ export const diagnosticContract = {
         "byPurpose",
         "collection",
         "effectiveConfiguration",
+        "profileOverrides",
         "environment",
         "evidence",
         "evidenceCollection",
@@ -1096,6 +1099,14 @@ export const diagnosticContract = {
             "coverage": "availability_only",
             "component": "server"
         },
+        "sourceParagraphLookup": {
+            "coverage": "availability_only",
+            "component": "plugin"
+        },
+        "profileLimits": {
+            "coverage": "request_metrics",
+            "component": "server"
+        },
         "pageTrial": {
             "coverage": "task_events",
             "component": "server"
@@ -1305,6 +1316,11 @@ export const diagnosticContract = {
         "page_trial_open_failed": {
             "component": "plugin",
             "requiredFields": []
+        },
+        "selection_source_lookup_failed": {
+            "component": "plugin",
+            "requiredFields": [],
+            "feature": "sourceParagraphLookup"
         },
         "selection_note_failed": {
             "component": "plugin",

@@ -47,6 +47,12 @@ and optional `targetLang`. It returns `matched: false`, or `matched: true` with
 `targetLang`, and `fromTranslationMemory: true`. A contained match returns the whole
 paragraph, not word alignment. The route never constructs or calls a provider.
 
+New task PDFs advertise a frozen paragraph map in the `X-PDF2ZH-Source-Map`
+response header. Append `&sourceMap=<digest>` to the same result URL to download
+it. The map includes SHA-256 digests of both PDFs, the target language, physical
+page correspondence and the final readable paragraph pairs. Zotero verifies the
+digests and stores the map with the imported attachment for offline lookup.
+
 `translation-memory.sqlite3` lives directly in the configured data directory.
 Completed PDF outputs sync succeeded, nonempty, quality-approved-or-unrejected
 paragraphs from their task checkpoint. Corrected text replaces earlier text.
@@ -435,8 +441,10 @@ completed-only import behavior. Import retries do not trigger translation reques
 
 `POST /tasks/{taskId}/repair` accepts incomplete, completed, and cancelled tasks
 and returns the snapshot for the new attempt. Active tasks return HTTP 409.
-Repair preserves validated translations and requests the remaining paragraphs,
-using QPS 2 and concurrency 4 by default. Pure URL footnotes are preserved without
+Repair preserves validated translations and requests the remaining paragraphs.
+Tasks submitted with per-profile limit support reuse the original request rate,
+concurrency and retry settings. Legacy repair caps the saved rate at 2 QPS
+and concurrency at 4. Pure URL footnotes are preserved without
 translation; ordinary body text containing a URL still requires translation.
 
 Paragraph checkpoints are stored in `paragraph-recovery.sqlite3` inside the task

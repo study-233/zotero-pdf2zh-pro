@@ -45,6 +45,24 @@ def task_snapshot(status: str = "queued") -> dict[str, object]:
 
 
 class ServerRouteTests(unittest.TestCase):
+    def test_profile_limits_resolve_each_field_and_reject_malformed_values(self):
+        from diagnostics import requested_configuration
+        profile = {"qps": 2, "retryCount": 0}
+        data = {"qps": 8, "poolSize": "3", "retryCount": 4, "retryInterval": 0,
+                "llm_api": profile, "profileLimits": True}
+        limits = server_module.request_limits(data, 8)
+        self.assertEqual(limits, dict(qps=2, pool_size=3, retry_count=0, retry_interval=0,
+                                      profile_limits=True))
+        config = requested_configuration({**limits, "llm_api": {**profile, "apiKey": "private"}})
+        self.assertEqual(config["profileOverrides"], profile)
+        self.assertEqual(config["retryInterval"], 0)
+        self.assertNotIn("private", str(config))
+        for key, value in (("qps", 0), ("poolSize", 0), ("retryCount", True),
+                           ("retryCount", "1.5"), ("retryCount", 101), ("retryInterval", 301)):
+            with self.subTest(key=key, value=value), self.assertRaises(server_module.RequestValidationError):
+                server_module.request_limits({**data, "llm_api": {key: value}}, 8)
+        self.assertEqual(server_module.request_limits({}, 8), {"qps": 8, "pool_size": 50})
+
     def setUp(self) -> None:
         self.client = server_module.create_app().test_client()
 

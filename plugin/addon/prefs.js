@@ -56,3 +56,5 @@ pref("__prefsPrefix__.selectionPopupHeight", 0);
 pref("__prefsPrefix__.selectionPopupPinned", false);
 pref("__prefsPrefix__.selectionPopupLeft", -1);
 pref("__prefsPrefix__.selectionPopupTop", -1);
+pref("__prefsPrefix__.retryCount", -1);
+pref("__prefsPrefix__.retryInterval", -1);

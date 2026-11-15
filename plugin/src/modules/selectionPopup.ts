@@ -21,7 +21,17 @@ import {
     contextCopyText,
     type ContextMeaning,
 } from "./selectionFormatting";
+export type SelectionAction = "lookup" | "translate" | "source";
 export type SelectionResult = (
+    | {
+          kind: "source";
+          text: string;
+          candidates: string[];
+          page?: number;
+          marked?: boolean;
+          locate?: boolean;
+          openPage?: () => Promise<void>;
+      }
     | {
           kind: "dictionary";
           text: string;
@@ -150,7 +160,7 @@ export function createSelectionPopup(
     doc: Document,
     anchor: HTMLElement,
     selected: string,
-    action: "lookup" | "translate",
+    action: SelectionAction,
     onClose: () => void,
     id = "pdf2zh-selection-card",
     onDegraded: (stage: string) => void = () => {},
@@ -229,6 +239,8 @@ export function createSelectionPopup(
 .pdf2zh-selection-card .st-body { padding:14px 16px; overflow:auto; min-height:0; flex:1 1 auto; overflow-wrap:anywhere; overscroll-behavior:contain; }
 .pdf2zh-selection-card .st-word { margin:0 0 10px; font-size:19px; line-height:1.4; font-weight:650; }
 .pdf2zh-selection-card .st-phonetic { margin:0 0 8px; color:var(--st-muted); font-size:13px; }
+.pdf2zh-selection-card .st-source-paragraph { margin:0 0 10px; white-space:pre-wrap; }
+.pdf2zh-selection-card .st-source-paragraph + .st-source-paragraph { border-top:1px solid var(--st-border); padding-top:8px; }
 .pdf2zh-selection-card .st-result { margin:0; white-space:pre-wrap; }
 .pdf2zh-selection-card .st-senses { list-style:none; margin:0; padding:0; }
 .pdf2zh-selection-card .st-sense { display:flex; align-items:baseline; gap:8px; margin:4px 0; color:var(--st-text); }
@@ -350,9 +362,22 @@ ${selectionMenuStyle}
     switchButton.addEventListener("click", () => options.onSwitch?.());
     const more = createSelectionMenu(card, getString("selection-more"));
     cleanups.push(more.destroy);
-    header.append(tabs, pin, switchButton, more.trigger, closeButton);
+    const sourceHeading = selectionElement(doc, "strong");
+    sourceHeading.textContent = getString("source-lookup-title");
+    sourceHeading.id = id + "-source";
+    sourceHeading.hidden = action !== "source";
+    tabs.hidden = action === "source";
+    header.append(
+        sourceHeading,
+        tabs,
+        pin,
+        switchButton,
+        more.trigger,
+        closeButton,
+    );
     const sourceRow = selectionElement(doc, "label");
     sourceRow.className = "st-source-row";
+    sourceRow.hidden = action === "source";
     const sourceLabel = selectionElement(doc, "span");
     sourceLabel.className = "st-source-label";
     const sourceChoice = selectionElement(doc, "select");
@@ -384,6 +409,11 @@ ${selectionMenuStyle}
     body.className = "st-body";
     body.id = `${id}-result`;
     body.setAttribute("role", "tabpanel");
+    if (action === "source") {
+        card.setAttribute("aria-label", sourceHeading.textContent);
+        body.setAttribute("role", "region");
+        body.setAttribute("aria-labelledby", sourceHeading.id);
+    }
     body.setAttribute("aria-live", "polite");
     const footer = selectionElement(doc, "footer");
     footer.className = "st-footer";
@@ -1143,7 +1173,7 @@ ${selectionMenuStyle}
         },
         updateSelection(
             text: string,
-            kind: "lookup" | "translate",
+            kind: SelectionAction,
             nextAnchor: HTMLElement,
             preservePosition = false,
         ) {
@@ -1171,6 +1201,51 @@ ${selectionMenuStyle}
         render(result: SelectionResult) {
             if (closed) return;
             reset();
+            if (result.kind === "source") {
+                if (result.text) paragraph(result.text, "st-label");
+                if (result.marked)
+                    paragraph(getString("source-lookup-marked"), "st-label");
+                if (result.openPage) {
+                    const jump = button(
+                        getString(
+                            result.locate
+                                ? "source-lookup-locate"
+                                : "source-lookup-page",
+                            {
+                                args: { page: result.page },
+                            },
+                        ),
+                    );
+                    jump.addEventListener("click", async () => {
+                        jump.disabled = true;
+                        try {
+                            await result.openPage!();
+                        } catch (error) {
+                            feedback(
+                                error instanceof Error
+                                    ? error.message
+                                    : getString("source-lookup-failed"),
+                                true,
+                            );
+                        } finally {
+                            jump.disabled = false;
+                        }
+                    });
+                    content.append(jump);
+                }
+                if (result.marked)
+                    details(
+                        getString("source-lookup-preview"),
+                        result.candidates[0],
+                    );
+                else
+                    for (const source of result.candidates)
+                        paragraph(source, "st-source-paragraph");
+                copyText = result.candidates.join("\n\n");
+                copy.disabled = !copyText;
+                fit();
+                return;
+            }
             if (result.kind === "dictionary") {
                 const word = body.querySelector(".st-word");
                 if (word && result.headword) word.textContent = result.headword;

@@ -59,6 +59,43 @@ class TaskManagerTests(unittest.TestCase):
                 finally:
                     restored.close()
 
+    def test_saved_limits_survive_restart_and_legacy_repair(self):
+        cases = [
+            ({"profile_limits": True, "qps": 8, "pool_size": 5, "retry_count": 0, "retry_interval": 0}, 8, 5),
+            ({"qps": 8, "pool_size": 5}, 2, 4),
+            ({"qps": 1, "pool_size": 1}, 1, 1),
+            ({}, 2, 4),
+        ]
+        for saved, repair_qps, repair_pool in cases:
+            for repair in (False, True):
+                with self.subTest(saved=saved, repair=repair), tempfile.TemporaryDirectory() as tmp:
+                    workspace = Path(tmp)
+                    source = workspace / "input.pdf"
+                    source.touch()
+                    store = workspace / "tasks.json"
+                    manager = TaskManager(store)
+                    manager._tasks["old"] = TaskRecord(
+                        task_id="old", file_name="input.pdf", service="openai", workspace_dir=workspace,
+                        status="incomplete" if repair else "failed", output_modes=["mono"],
+                        request_payload={"input_path": str(source), "trial_pages": "1-3", **saved},
+                    )
+                    manager._save_persistent_tasks()
+                    manager.close()
+                    restored = TaskManager(store)
+                    try:
+                        with patch.object(restored, "_start_worker_locked"):
+                            restored.retry_task("old", repair=repair)
+                        payload = restored._tasks["old"].request_payload
+                        expected = {**saved, "qps": repair_qps, "pool_size": repair_pool} if repair else saved
+                        for key in ("qps", "pool_size", "retry_count", "retry_interval", "profile_limits"):
+                            if key in expected:
+                                self.assertEqual(payload[key], expected[key])
+                            else:
+                                self.assertNotIn(key, payload)
+                        self.assertEqual(payload["trial_pages"], "1-3")
+                    finally:
+                        restored.close()
+
     def test_retry_and_repair_preserve_original_review_choice(self):
         for repair in (False, True):
             for enabled in (False, True):
