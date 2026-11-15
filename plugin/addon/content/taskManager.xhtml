@@ -1938,7 +1938,11 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             function updateTaskCardView(view, task) {
                 view.task = task;
                 setClassName(view.card, `card ${task.status}`);
-                const name = task.trialPages ? task.fileName + " · " + t("trial", {pages: task.trialPages}) : task.fileName;
+                const name = task.trialPages
+                    ? task.fileName +
+                      " · " +
+                      t("trial", { pages: task.trialPages })
+                    : task.fileName;
                 setTextContent(view.name, name);
                 setAttributeValue(view.name, "title", name);
                 setTextContent(
@@ -2097,12 +2101,22 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     );
                     setNodeHidden(view.metricEmpty, Boolean(task.timing));
                 }
-                const limits = task.effectiveConfiguration || task.requestedConfiguration;
+                const limits =
+                    task.effectiveConfiguration || task.requestedConfiguration;
                 setNodeHidden(view.limitDetail, !limits);
                 if (limits) {
-                    const label = t(task.effectiveConfiguration ? "effective-limits" : "submitted-limits");
+                    const label = t(
+                        task.effectiveConfiguration
+                            ? "effective-limits"
+                            : "submitted-limits",
+                    );
                     const defaults = t("engine-default");
-                    const values = t("limits-values", {qps: limits.qps ?? "—", pool: limits.poolSize ?? "—", count: limits.retryCount ?? defaults, interval: limits.retryInterval ?? defaults});
+                    const values = t("limits-values", {
+                        qps: limits.qps ?? "—",
+                        pool: limits.poolSize ?? "—",
+                        count: limits.retryCount ?? defaults,
+                        interval: limits.retryInterval ?? defaults,
+                    });
                     setTextContent(view.limitDetail, label + " · " + values);
                 }
                 const hasDetails = Boolean(

@@ -131,10 +131,14 @@ def run(work, report):
         z.writestr('test.js', bundle_module('export {runEngineManager} from "./src/modules/managedEngine"'))
         z.writestr('bootstrap.js', HARNESS.replace('ROOT_PATH', json.dumps(str(root))).replace('PORT', str(port))
                    .replace('RECEIPT', json.dumps(str(receipt))))
-    binary = os.environ.get('ZOTERO_BIN') or ZOTERO
+    command = [os.environ.get('ZOTERO_BIN') or ZOTERO]
+    if os.name == 'nt':
+        # The Windows launcher otherwise exits while Zotero still owns the profile.
+        command.append('-wait-for-browser')
+    command.extend(['-no-remote', '-profile', profile, '--dataDir', library])
     try:
         with (report / 'zotero.log').open('w') as f:
-            subprocess.run([binary, '-no-remote', '-profile', profile, '--dataDir', library],
+            subprocess.run(command,
                            env={**os.environ, 'MOZ_NO_REMOTE': '1'}, stdout=f, stderr=subprocess.STDOUT,
                            timeout=1200, check=True)
         result = json.loads(receipt.read_text('utf-8'))
