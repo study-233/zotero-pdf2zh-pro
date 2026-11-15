@@ -47,7 +47,7 @@ class FixtureLayout:
 class NativePipelineTests(unittest.TestCase):
     def test_page_trial_keeps_physical_page_order_and_translates_only_selected_text(self):
         from pdf2zh_pro.pdf import build_settings_input
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory() as directory, ExitStack() as cleanup:
             root = Path(directory)
             source = root / 'trial.pdf'
             sentences = ['Leave the opening paragraph alone.', 'Translate the middle paragraph only.',
@@ -69,7 +69,7 @@ class NativePipelineTests(unittest.TestCase):
                 only_include_translated_page=pdf['only_include_translated_page'], auto_extract_glossary=False,
                 pool_max_workers=1, use_rich_pbar=False, watermark_output_mode=WatermarkOutputMode.NoWatermark)
             config.recovery = TranslationRecovery(root / "checkpoint.sqlite3", "source-map-test")
-            self.addCleanup(config.recovery.close)
+            cleanup.callback(config.recovery.close)
             with patch('babeldoc.assets.assets.get_font_family', return_value=families), patch(
                     'babeldoc.assets.assets.get_font_and_metadata', return_value=(font_path, metadata)):
                 result = translate(config)

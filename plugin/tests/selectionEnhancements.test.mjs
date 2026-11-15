@@ -473,3 +473,121 @@ test("group-library excerpts link the exact PDF, keep printed labels and treat b
         /location/,
     );
 });
+
+for (const active of [false, true]) {
+    test(`open note ${active ? "at the current block" : "in the background"} waits for persistence and propagates editor errors`, async () => {
+        const window = new JSDOM("").window;
+        const pdf = {
+            libraryID: 1,
+            key: "SOURCE",
+            parentItem: { id: 1, key: "ARTICLE", getNotes: () => [3] },
+            isPDFAttachment: () => true,
+        };
+        const note = {
+            id: 3,
+            parentID: 1,
+            libraryID: 1,
+            isNote: () => true,
+            hasTag: () => true,
+        };
+        let html = "<p>Unsaved draft</p>",
+            finish,
+            completed = false;
+        const core = {
+            view: {
+                state: {
+                    doc: {},
+                    selection: {
+                        to: 12,
+                        $to: {
+                            depth: 2,
+                            after: (depth) => {
+                                assert.equal(depth, 1);
+                                return 20;
+                            },
+                        },
+                    },
+                },
+            },
+            insertHTML(position, value) {
+                assert.equal(position, active ? 20 : -1);
+                html += value;
+                this.view.state.doc = {};
+            },
+        };
+        const editor = {
+            _item: note,
+            _initPromise: Promise.resolve(),
+            _isReadOnly: () => false,
+            _ensureNoteCreated: async () => {},
+            _iframeWindow: {
+                wrappedJSObject: {
+                    _currentEditorInstance: { _editorCore: core },
+                    getDataSync: () => ({ html, state: { draft: true } }),
+                },
+            },
+            _save: (data, skipDateModifiedUpdate) =>
+                new Promise((resolve) => {
+                    assert.equal(skipDateModifiedUpdate, false);
+                    assert.ok(data.html.includes("Unsaved draft"));
+                    assert.ok(data.html.includes("译文"));
+                    finish = resolve;
+                }),
+        };
+        window.Zotero_Tabs = { selectedID: "reader" };
+        window.ZoteroContextPane = {
+            collapsed: false,
+            activeEditor: active
+                ? { item: note, mode: "edit", getCurrentInstance: () => editor }
+                : undefined,
+        };
+        const api = load(
+            "selectionNote",
+            {
+                "../utils/locale": {
+                    getString: () => "page",
+                },
+            },
+            {
+                Zotero: {
+                    getMainWindow: () => window,
+                    getString: () => '"',
+                    Items: { get: () => pdf, getAsync: async () => [note] },
+                    URI: {
+                        getItemURI: () =>
+                            "http://zotero.org/users/local/items/SOURCE",
+                    },
+                    Libraries: {
+                        userLibraryID: 1,
+                        get: () => ({ editable: true }),
+                    },
+                    Notes: { _editorInstances: [editor] },
+                    DB: { executeTransaction: (fn) => fn() },
+                },
+            },
+        );
+        const reader = { itemID: 12, tabID: "reader", _window: window };
+        const excerpt = {
+            original: "Original sentence.",
+            query: "Original sentence.",
+            translation: "译文",
+            position: { pageIndex: 2 },
+        };
+        const saving = api.saveSelectionNote(reader, excerpt).then(() => {
+            completed = true;
+        });
+        for (let i = 0; i < 20 && !finish; i++) await Promise.resolve();
+        assert.equal(typeof finish, "function");
+        assert.equal(completed, false);
+        finish();
+        await saving;
+        assert.equal(completed, true);
+        core.insertHTML = () => {
+            throw new RangeError("Invalid editor position");
+        };
+        await assert.rejects(
+            api.saveSelectionNote(reader, excerpt),
+            /Invalid editor position/,
+        );
+    });
+}

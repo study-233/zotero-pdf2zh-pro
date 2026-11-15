@@ -2,6 +2,8 @@
 from pathlib import Path
 import hashlib
 import json
+import os
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -80,6 +82,7 @@ class EngineTests(unittest.TestCase):
     def test_successful_update_and_restart_retain_previous_revision(self):
         for name in (self.old, self.new, '0' * 64):
             (self.root / 'versions' / name).mkdir()
+            (self.root / 'versions' / name / '.ready').write_text(name)
         self.assertEqual(self.run_ensure(), 'ready')
         self.request.assert_called_once_with(18890, '/internal/managed-replace', 'test-token')
         self.health.return_value = None
@@ -103,9 +106,11 @@ class EngineTests(unittest.TestCase):
         (installed / '.ready').write_text(self.new)
         self.health.return_value = None
         self.launch.side_effect = [RuntimeError('damaged environment'), 'ready']
+        repairs = []
+        self.prepare.side_effect = lambda *args: repairs.append((installed / '.repair').is_file())
         self.assertEqual(self.run_ensure(), 'ready')
         self.assertEqual(self.prepare.call_count, 2)
-        self.assertTrue((installed / '.repair').is_file())
+        self.assertEqual(repairs, [False, True])
 
     def test_offline_restart_recovers_without_uv(self):
         (self.root / 'previous').write_text(self.new)
@@ -137,6 +142,48 @@ class BundleTests(unittest.TestCase):
                 engine.prepare(root,root,revision,root/'uv')
             run.assert_not_called()
             self.assertFalse((root/'versions').exists())
+
+
+@unittest.skipUnless(os.name == 'nt', 'Windows native process and DLL paths')
+class WindowsRuntimeTests(unittest.TestCase):
+    def test_new_revisions_are_compact_and_ready_legacy_installs_keep_their_paths(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = 'a' * 64
+            compact = engine.version_folder(root, target)
+            self.assertEqual(compact, root / 'versions' / target[:16])
+            legacy = root / 'versions' / target
+            legacy.mkdir(parents=True)
+            self.assertEqual(engine.version_folder(root, target), compact)
+            (legacy / '.ready').write_text(target)
+            self.assertEqual(engine.version_folder(root, target), legacy)
+
+    def test_service_launch_can_leave_the_installer_job(self):
+        root = Path('C:/engine')
+        owner = 'test-owner'
+        target = 'a' * 64
+        live = {'managedOwner': owner, 'managedRevision': target}
+        with patch.object(engine.Path, 'open'), patch.object(engine.subprocess, 'Popen') as spawn, patch.object(
+                engine, 'health', return_value=live):
+            spawn.return_value.poll.return_value = None
+            self.assertEqual(engine.launch(root, target, 18890, owner), 'ready')
+        flags = spawn.call_args.kwargs['creationflags']
+        self.assertTrue(flags & subprocess.CREATE_BREAKAWAY_FROM_JOB)
+        self.assertTrue(flags & subprocess.CREATE_NO_WINDOW)
+
+    def test_compact_directory_checks_the_full_revision_before_reuse(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            old = 'a' * 64
+            new = 'a' * 16 + 'b' * 48
+            folder = engine.version_folder(root, old)
+            python = engine.interpreter(folder)
+            python.parent.mkdir(parents=True)
+            python.touch()
+            (folder / '.ready').write_text(old)
+            with self.assertRaisesRegex(ValueError, 'collision'):
+                engine.prepare(root, root / 'bundle', new, root / 'uv.exe')
+            self.assertEqual((folder / '.ready').read_text(), old)
 
 
 if __name__ == '__main__':

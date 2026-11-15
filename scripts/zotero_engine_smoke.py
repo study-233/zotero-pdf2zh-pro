@@ -9,7 +9,7 @@ import subprocess
 import time
 import zipfile
 
-from managed_engine import health, interpreter, request, locked
+from managed_engine import health, interpreter, request, locked, version_folder
 from workspace import ROOT, Workspace
 from zotero_acceptance import ZOTERO, bundle_module, write_profile
 
@@ -49,7 +49,7 @@ def verify_update(root, port, work):
     # Seed real legacy-format data only while the owned server has stopped.
     stop_owned(root, port)
     old = (root / 'active').read_text().strip()
-    folder = root / 'versions' / old
+    folder = version_folder(root, old)
     python = interpreter(folder)
     manager = folder / 'manager.py'
     fixture = ROOT / 'scripts/release-data-fixtures.py'
@@ -104,7 +104,7 @@ def verify_update(root, port, work):
     (staged / 'service.zip').write_bytes(b'damaged')
     assert install() == 'fallback' and health(port)['managedRevision'] == new
     stop_owned(root, port)
-    candidate = root / 'versions' / new
+    candidate = version_folder(root, new)
     subprocess.run([interpreter(candidate), fixture, 'verify', data], cwd=candidate,
                    env={**env, 'PYTHONPATH': str(candidate)}, check=True, timeout=120)
 

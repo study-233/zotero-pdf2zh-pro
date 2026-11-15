@@ -88,8 +88,22 @@ def interpreter(folder):
     return folder / '.venv' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
 
 
+def version_folder(root, target):
+    target = revision(target)
+    legacy = root / 'versions' / target
+    # A ready legacy environment keeps its absolute venv paths. New Windows
+    # installs use a compact directory; .ready still records the full revision.
+    folder = legacy
+    if os.name == 'nt' and not (legacy / '.ready').is_file():
+        folder = root / 'versions' / target[:16]
+    ready = folder / '.ready'
+    if ready.is_file() and ready.read_text().strip() != target:
+        raise ValueError('Engine revision directory collision')
+    return folder
+
+
 def prepare(root, bundle, target, uv):
-    destination = root / 'versions' / target
+    destination = version_folder(root, target)
     if (destination / '.ready').is_file() and interpreter(destination).is_file():
         return
     manifest = json.loads((bundle / 'manifest.json').read_bytes())
@@ -118,8 +132,11 @@ def prepare(root, bundle, target, uv):
 
 
 def launch(root, target, port, owner):
-    folder = root / 'versions' / revision(target)
-    options = {'creationflags': 0x08000000 | subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == 'nt' else {'start_new_session': True}
+    folder = version_folder(root, target)
+    # Gecko terminates its Windows job when the installer exits. The service
+    # must leave that job to keep serving after nativeCommand has returned.
+    options = {'creationflags': subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
+               | subprocess.CREATE_BREAKAWAY_FROM_JOB} if os.name == 'nt' else {'start_new_session': True}
     with (root / 'startup.log').open('wb') as log:
         process = subprocess.Popen([str(interpreter(folder)), str(folder / 'manager.py'),
                                     'serve', str(root), target, str(port), owner],
@@ -191,7 +208,7 @@ def ensure(root, bundle, uv, port):
         except Exception:
             if health(port) is not None:
                 raise
-            failed = root / 'versions' / target
+            failed = version_folder(root, target)
             if failed.is_dir():
                 (failed / '.ready').unlink(missing_ok=True)
                 write(failed / '.repair', target)
@@ -211,8 +228,9 @@ def ensure(root, bundle, uv, port):
                 write(backup_file, backup)
             write(active_file, target)
             # Keep the preceding working engine as well as the new one.
+            retained = {version_folder(root, value).name for value in (target, backup) if value}
             for folder in (root / 'versions').iterdir():
-                if re.fullmatch('[a-f0-9]{64}', folder.name) and folder.name not in (target, backup):
+                if re.fullmatch('[a-f0-9]{16}|[a-f0-9]{64}', folder.name) and folder.name not in retained:
                     shutil.rmtree(folder, ignore_errors=True)
         return state
 

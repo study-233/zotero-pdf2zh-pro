@@ -80,7 +80,29 @@ type ReaderWindow = {
     };
 };
 
-async function insertIntoEditor(editor: Zotero.EditorInstance, html: string) {
+type NoteEditorWindow = {
+    getDataSync(onlyChanged: boolean): object | null;
+    _currentEditorInstance: {
+        _editorCore: {
+            insertHTML(position: number, html: string): void;
+            view: {
+                state: {
+                    doc: unknown;
+                    selection: {
+                        to: number;
+                        $to: { depth: number; after(depth: number): number };
+                    };
+                };
+            };
+        };
+    };
+};
+
+async function insertIntoEditor(
+    editor: Zotero.EditorInstance,
+    html: string,
+    atCursor = false,
+) {
     await editor._initPromise;
     if (
         editor._disableSaving ||
@@ -90,8 +112,23 @@ async function insertIntoEditor(editor: Zotero.EditorInstance, html: string) {
     )
         throw new Error("Note is read-only");
     await editor._ensureNoteCreated();
-    // Same editor command as Zotero.EditorInstance.insertAnnotations, at the cursor.
-    editor._postMessage({ action: "insertHTML", pos: null, html });
+    const frame = editor._iframeWindow.wrappedJSObject as NoteEditorWindow;
+    const core = frame._currentEditorInstance._editorCore;
+    const before = core.view.state.doc;
+    let position = -1;
+    if (atCursor) {
+        const selection = core.view.state.selection;
+        position = selection.$to.depth ? selection.$to.after(1) : selection.to;
+    }
+    // Explicit block positions avoid Zotero's null-position cursor arithmetic.
+    // Invoke synchronously so editor errors reach the caller before success.
+    core.insertHTML(position, html);
+    const data = frame.getDataSync(true);
+    if (core.view.state.doc === before || !data)
+        throw new Error("Note insertion failed");
+    await editor._save(JSON.parse(JSON.stringify(data)), false);
+    if (editor._disableSaving || editor._readOnly || editor._item.deleted)
+        throw new Error("Note is read-only");
 }
 
 export async function saveSelectionNote(
@@ -125,7 +162,7 @@ export async function saveSelectionNote(
     ) {
         const editor = active.getCurrentInstance();
         if (!editor) throw new Error("Note editor unavailable");
-        return insertIntoEditor(editor, fragment.innerHTML);
+        return insertIntoEditor(editor, fragment.innerHTML, true);
     }
     const library = Zotero.Libraries.get(attachment.libraryID);
     if (!library || !library.editable) throw new Error("Library is read-only");
