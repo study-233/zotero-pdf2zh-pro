@@ -1,3 +1,4 @@
+import { ensureEngine, engineStatusMessage } from "./managedEngine";
 import { chatgptAccountRequest, openChatGPTPage } from "./chatgptAccount";
 import { exportDiagnostics } from "./diagnostics";
 import { errorNotice, renderNotice } from "./userNotice";
@@ -18,6 +19,7 @@ import {
     type LLMApiData,
 } from "./llmApiManager";
 import {
+    getRequestLimits,
     loadProfiles,
     saveProfiles,
     removeProfile,
@@ -205,7 +207,7 @@ export async function registerPrefsScripts(window: Window) {
         ).catch(report);
     });
     element("checkConnection")?.addEventListener("click", () => {
-        void refreshServerVersion();
+        void refreshServerVersion(true);
     });
     element("new_serverip")?.addEventListener("change", () => {
         void refreshServerVersion();
@@ -330,6 +332,7 @@ export function openProfileManager(reloginChatGPT = false) {
         `chrome,centerscreen,resizable,dialog=no,width=${width},height=${height}`,
         {
             reloginChatGPT,
+            globalLimits: () => getRequestLimits(),
             presets: PROVIDER_PRESETS.map((preset) => ({
                 ...preset,
                 label: Zotero.locale?.startsWith("zh")
@@ -806,7 +809,7 @@ async function importGlossary(): Promise<void> {
     }
 }
 
-async function refreshServerVersion() {
+async function refreshServerVersion(interactive = false) {
     const checkSequence = ++serverCheckSequence;
     const url =
         getPref("new_serverip")?.toString().trim().replace(/\/+$/, "") || "";
@@ -825,6 +828,7 @@ async function refreshServerVersion() {
     status("qualityCapabilities", "");
     try {
         if (!url) throw new Error();
+        if (interactive) await ensureEngine(url, true, true);
         const { data } = await axios.get<ServerHealthResponse>(
             `${url}/health`,
             { timeout: 5000 },
@@ -843,7 +847,11 @@ async function refreshServerVersion() {
             status("connectionResult", data.taskStore.message);
         else if (data.status === "degraded")
             localizedStatus("connectionResult", "pref-server-check-storage");
-        else status("connectionResult", "");
+        else
+            status(
+                "connectionResult",
+                interactive ? engineStatusMessage() : "",
+            );
         element("serverVersionCard")?.setAttribute(
             "data-state",
             data.status === "degraded" ? "degraded" : "ok",
@@ -860,11 +868,22 @@ async function refreshServerVersion() {
         } else {
             packStatus("pref-pack-upgrade-server");
         }
-    } catch {
+    } catch (error) {
         if (checkSequence !== serverCheckSequence) return;
         status("serverVersion", "—");
         localizedStatus("serverStatus", "pref-server-unreachable");
-        localizedStatus("connectionResult", "pref-server-start");
+        if (
+            interactive &&
+            error instanceof Error &&
+            error.name === "EngineSetupError"
+        )
+            status("connectionResult", error.message);
+        else if (
+            getPref("engineManagement") !== "external" &&
+            /^http:\/\/(localhost|127\.0\.0\.1):8890\/?$/i.test(url)
+        )
+            localizedStatus("connectionResult", "pref-engine-check");
+        else localizedStatus("connectionResult", "pref-server-start");
         element("serverVersionCard")?.setAttribute("data-state", "error");
         status("qualityCapabilities", "");
         packStatus("pref-pack-unreachable");

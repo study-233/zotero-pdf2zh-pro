@@ -56,6 +56,8 @@ declare namespace _ZoteroTypes {
       "selectionPopupPinned": boolean;
       "selectionPopupLeft": number;
       "selectionPopupTop": number;
+      "retryCount": number;
+      "retryInterval": number;
     };
   }
 }

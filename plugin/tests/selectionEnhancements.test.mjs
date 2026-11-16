@@ -383,3 +383,211 @@ test("favorites serialize writes, dedupe only identical sources, recover after r
         /坐标/,
     );
 });
+
+test("group-library excerpts link the exact PDF, keep printed labels and treat both texts as plain text", async () => {
+    const window = new JSDOM("").window;
+    const pdf = {
+        libraryID: 37,
+        key: "GROUPPDF",
+        parentItem: { id: 1, key: "ARTICLE", getNotes: () => [] },
+        isPDFAttachment: () => true,
+    };
+    let html;
+    const api = load(
+        "selectionNote",
+        {
+            "../utils/locale": {
+                getString: (key, options) => options?.args.page ?? key,
+            },
+        },
+        {
+            Zotero: {
+                getString: (key) => (key.endsWith("openingQMark") ? "“" : "”"),
+                Items: { get: () => pdf, getAsync: async () => [] },
+                URI: {
+                    getItemURI: () =>
+                        "http://zotero.org/groups/111/items/GROUPPDF",
+                },
+                Libraries: {
+                    userLibraryID: 1,
+                    get: () => ({ editable: true }),
+                },
+                Groups: {
+                    getGroupIDFromLibraryID: (id) => {
+                        assert.equal(id, 37);
+                        return 111;
+                    },
+                },
+                DB: { executeTransaction: (fn) => fn() },
+                getMainWindow: () => window,
+                Item: class {
+                    addTag() {}
+                    setNote(value) {
+                        html = value;
+                    }
+                    async save() {}
+                },
+            },
+        },
+    );
+    const excerpt = {
+        original: "<b>exact</b> & other",
+        query: "edited input",
+        translation: "<img src=x> 样例\n第二行",
+        position: {
+            pageIndex: 2,
+            rects: [[1, 2, 3, 4]],
+            nextPageRects: [[5, 6, 7, 8]],
+        },
+        pageLabel: "S1",
+    };
+    await api.saveSelectionNote({ itemID: 12 }, excerpt);
+    const doc = new JSDOM(html).window.document;
+    const link = doc.querySelector("a");
+    assert.equal(
+        link.getAttribute("href"),
+        "zotero://open-pdf/groups/111/items/GROUPPDF?page=3",
+    );
+    assert.equal(link.textContent, "S1");
+    assert.equal(
+        doc.querySelector(".highlight").textContent,
+        "“" + excerpt.original + "”",
+    );
+    assert.deepEqual(
+        JSON.parse(
+            decodeURIComponent(
+                doc.querySelector(".highlight").dataset.annotation,
+            ),
+        ).position,
+        excerpt.position,
+    );
+    assert.ok(doc.body.textContent.includes("edited input"));
+    assert.ok(doc.body.textContent.includes("<img src=x> 样例"));
+    assert.ok(doc.querySelector("br"));
+    assert.equal(doc.querySelector("img, b"), null);
+    await assert.rejects(
+        api.saveSelectionNote(
+            { itemID: 12 },
+            { ...excerpt, position: { pageIndex: -1 } },
+        ),
+        /location/,
+    );
+});
+
+for (const active of [false, true]) {
+    test(`open note ${active ? "at the current block" : "in the background"} waits for persistence and propagates editor errors`, async () => {
+        const window = new JSDOM("").window;
+        const pdf = {
+            libraryID: 1,
+            key: "SOURCE",
+            parentItem: { id: 1, key: "ARTICLE", getNotes: () => [3] },
+            isPDFAttachment: () => true,
+        };
+        const note = {
+            id: 3,
+            parentID: 1,
+            libraryID: 1,
+            isNote: () => true,
+            hasTag: () => true,
+        };
+        let html = "<p>Unsaved draft</p>",
+            finish,
+            completed = false;
+        const core = {
+            view: {
+                state: {
+                    doc: {},
+                    selection: {
+                        to: 12,
+                        $to: {
+                            depth: 2,
+                            after: (depth) => {
+                                assert.equal(depth, 1);
+                                return 20;
+                            },
+                        },
+                    },
+                },
+            },
+            insertHTML(position, value) {
+                assert.equal(position, active ? 20 : -1);
+                html += value;
+                this.view.state.doc = {};
+            },
+        };
+        const editor = {
+            _item: note,
+            _initPromise: Promise.resolve(),
+            _isReadOnly: () => false,
+            _ensureNoteCreated: async () => {},
+            _iframeWindow: {
+                wrappedJSObject: {
+                    _currentEditorInstance: { _editorCore: core },
+                    getDataSync: () => ({ html, state: { draft: true } }),
+                },
+            },
+            _save: (data, skipDateModifiedUpdate) =>
+                new Promise((resolve) => {
+                    assert.equal(skipDateModifiedUpdate, false);
+                    assert.ok(data.html.includes("Unsaved draft"));
+                    assert.ok(data.html.includes("译文"));
+                    finish = resolve;
+                }),
+        };
+        window.Zotero_Tabs = { selectedID: "reader" };
+        window.ZoteroContextPane = {
+            collapsed: false,
+            activeEditor: active
+                ? { item: note, mode: "edit", getCurrentInstance: () => editor }
+                : undefined,
+        };
+        const api = load(
+            "selectionNote",
+            {
+                "../utils/locale": {
+                    getString: () => "page",
+                },
+            },
+            {
+                Zotero: {
+                    getMainWindow: () => window,
+                    getString: () => '"',
+                    Items: { get: () => pdf, getAsync: async () => [note] },
+                    URI: {
+                        getItemURI: () =>
+                            "http://zotero.org/users/local/items/SOURCE",
+                    },
+                    Libraries: {
+                        userLibraryID: 1,
+                        get: () => ({ editable: true }),
+                    },
+                    Notes: { _editorInstances: [editor] },
+                    DB: { executeTransaction: (fn) => fn() },
+                },
+            },
+        );
+        const reader = { itemID: 12, tabID: "reader", _window: window };
+        const excerpt = {
+            original: "Original sentence.",
+            query: "Original sentence.",
+            translation: "译文",
+            position: { pageIndex: 2 },
+        };
+        const saving = api.saveSelectionNote(reader, excerpt).then(() => {
+            completed = true;
+        });
+        for (let i = 0; i < 20 && !finish; i++) await Promise.resolve();
+        assert.equal(typeof finish, "function");
+        assert.equal(completed, false);
+        finish();
+        await saving;
+        assert.equal(completed, true);
+        core.insertHTML = () => {
+            throw new RangeError("Invalid editor position");
+        };
+        await assert.rejects(
+            api.saveSelectionNote(reader, excerpt),
+            /Invalid editor position/,
+        );
+    });
+}

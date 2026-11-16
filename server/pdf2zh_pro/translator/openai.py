@@ -3,8 +3,9 @@ import copy
 import math
 import threading
 import time
-import random
-from email.utils import parsedate_to_datetime
+from pdf2zh_pro.translator.request_retry import (
+    _status_code, _retry_wait, _stop_provider_retry, _record_retry_before_sleep, _retry_provider_error,
+)
 from pdf2zh_pro.translator.validation import InvalidTranslation
 from urllib.parse import urlparse
 
@@ -28,87 +29,6 @@ from pdf2zh_pro.translator.openai_protocol import (
 from pdf2zh_pro.translator.reasoning_mode import apply_reasoning_mode, cached_capabilities, low_parameter_rejected
 
 logger = logging.getLogger(__name__)
-
-
-def _status_code(error) -> int | None:
-    value = getattr(error, "status_code", None)
-    if value is None:
-        value = getattr(getattr(error, "response", None), "status_code", None)
-    try:
-        return int(value) if value is not None else None
-    except (TypeError, ValueError):
-        return None
-
-
-def _retry_params(state):
-    return state.kwargs.get("rate_limit_params") or (state.args[2] if len(state.args) > 2 else {}) or {}
-
-
-def _record_retry_before_sleep(retry_state) -> None:
-    translator = retry_state.args[0] if retry_state.args else None
-    collector = getattr(translator, "metrics_collector", None)
-    params = _retry_params(retry_state)
-    budget = params.get("request_budget")
-    if budget is not None:
-        budget.reserve_wait(retry_state.next_action.sleep)
-    if collector is not None:
-        collector.retry_scheduled(kind=params.get("metric_kind", "translation"))
-    params['metric_retry_cause'] = 'provider_error'
-    error = retry_state.outcome.exception() if retry_state.outcome else None
-    logger.warning(
-        "provider retry scheduled: error_type=%s status_code=%s attempt=%s",
-        type(error).__name__ if error is not None else "unknown",
-        _status_code(error),
-        retry_state.attempt_number,
-    )
-    if translator is not None:
-        if collector is not None:
-            collector.activity_changed("retrying", 1)
-        try:
-            translator._wait_cancel(retry_state.next_action.sleep)
-        finally:
-            if collector is not None:
-                collector.activity_changed("retrying", -1)
-
-
-def _retry_provider_error(error: Exception) -> bool:
-    status = _status_code(error)
-    return (
-        isinstance(error, openai.APIConnectionError)
-        or bool(getattr(error, "retryable_verified_404", False))
-        or status in {408, 409, 429}
-        or (status is not None and status >= 500)
-    )
-
-
-def _stop_provider_retry(state) -> bool:
-    params = _retry_params(state)
-    budget = params.get("request_budget")
-    if budget is None:
-        return state.attempt_number >= 5
-    error = state.outcome.exception()
-    return (state.attempt_number >= 2
-            or (params.get("batch_size", 1) > 1 and isinstance(error, openai.APITimeoutError))
-            or not budget.available(state.upcoming_sleep))
-
-
-def _retry_wait(state):
-    delay = min(30, 2 ** state.attempt_number) + random.uniform(0, 1)
-    error = state.outcome.exception()
-    response = getattr(error, "response", None)
-    value = response.headers.get("retry-after") if response is not None else None
-    if value:
-        try:
-            seconds = float(value)
-        except ValueError:
-            try:
-                seconds = parsedate_to_datetime(value).timestamp() - time.time()
-            except (ValueError, TypeError, OverflowError):
-                seconds = 0
-        if math.isfinite(seconds):
-            delay = max(delay, seconds)
-    return delay
-
 
 
 class OpenAITranslator(BaseTranslator):
@@ -523,15 +443,6 @@ class OpenAITranslator(BaseTranslator):
     def configure_execution(self, concurrency, check_cancelled, slots=None):
         self._request_slots = slots or threading.BoundedSemaphore(max(1, concurrency))
         self.check_cancelled = check_cancelled
-
-    def _wait_cancel(self, seconds):
-        deadline = time.monotonic() + seconds
-        while True:
-            self.check_cancelled()
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                return
-            time.sleep(min(0.1, remaining))
 
     def _request(self, messages, protocol, rate_limit_params=None, *, health_check=False):
         collector = self.metrics_collector

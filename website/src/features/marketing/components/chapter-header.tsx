@@ -11,7 +11,7 @@ const TONE_CLASS = {
 } as const;
 
 interface ChapterHeaderProps {
-  eyebrow: ReactNode;
+  eyebrow?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
   tone?: keyof typeof TONE_CLASS;
@@ -22,7 +22,7 @@ interface ChapterHeaderProps {
 export function ChapterHeader({ eyebrow, title, description, tone = "light", id }: ChapterHeaderProps) {
   return (
     <div className="flex flex-col items-center text-center">
-      <p className={`text-xs font-semibold tracking-[0.18em] uppercase ${TONE_CLASS[tone].eyebrow}`}>{eyebrow}</p>
+      {eyebrow && <p className={`text-xs font-semibold tracking-[0.18em] uppercase ${TONE_CLASS[tone].eyebrow}`}>{eyebrow}</p>}
       <h2
         id={id}
         className={`mt-4 max-w-4xl text-balance font-serif text-[2.5rem] leading-[1.03] font-semibold tracking-[-0.035em] sm:text-5xl lg:text-[3.35rem] ${TONE_CLASS[tone].title}`}

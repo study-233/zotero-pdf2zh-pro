@@ -98,6 +98,11 @@ class DocumentationTests(unittest.TestCase):
     def test_valid_release_versions(self):
         self.assertEqual(check_readme(self.root), ([], []))
 
+    def test_product_candidate_can_lead_public_readme(self):
+        path = self.root / 'README.md'
+        path.write_text(path.read_text().replace('1.2.3', '1.2.2'))
+        self.assertEqual(check_readme(self.root), ([], []))
+
     def test_missing_duplicate_and_malformed_markers(self):
         original = (self.root / 'README.md').read_text()
         for replacement in ('', '<!-- release-version --> 1.2.3',

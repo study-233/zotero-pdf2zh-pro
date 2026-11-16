@@ -5,15 +5,7 @@ import { ArrowRightIcon, DownloadIcon } from "lucide-react";
 import { ChapterHeader } from "./chapter-header";
 import { HomeOwnCommand } from "./home-own-command";
 import { GITHUB_REPO_URL } from "@/shared/lib/seo";
-export function DownloadSection({
-  version,
-  min,
-  max,
-}: {
-  version: string;
-  min: string;
-  max: string;
-}) {
+export function DownloadSection({ version }: { version: string }) {
   const [platform, setPlatform] = useState("windows");
   useEffect(() => {
     const sync = () => {
@@ -36,7 +28,7 @@ export function DownloadSection({
         <ChapterHeader
           eyebrow={`v${version}`}
           title="下载与安装"
-          description="一个本地服务，一个 Zotero 插件。两者都需要安装。"
+          description="先启动翻译服务，再安装 Zotero 插件。"
         />
         <div className="mx-auto mt-12 max-w-[54rem]">
           <div
@@ -122,9 +114,7 @@ export function DownloadSection({
           <div className="download-row border-t border-border">
             <div>
               <h3>Zotero 插件</h3>
-              <p>
-                Zotero {min}–{max} · XPI
-              </p>
+              <p>Zotero 8–10 · XPI</p>
             </div>
             <a
               className="download-action"

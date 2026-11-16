@@ -24,7 +24,7 @@ const { ServerTaskClient } = await import(
     `data:text/javascript;base64,${Buffer.from(
         "const diagnosticFetch = (...args) => fetch(...args);\n" +
             "const PDF2zhHelperFactory={retryOperation:operation=>operation(),blobToBase64:async blob=>'data:application/pdf;base64,'+Buffer.from(await blob.arrayBuffer()).toString('base64')};\n" +
-            "const prepareApiForServer=api=>({api});\n" +
+            "const getString=key=>key; const prepareApiForServer=api=>({api});\n" +
             compiled,
     ).toString("base64")}`
 );
@@ -429,4 +429,30 @@ test("native files fall back to JSON before submission when binary upload is not
     assert.equal(body.fileContent, "data:application/pdf;base64,cGRm");
     assert.equal(body.requestId, "old-request-0001");
     assert.equal(count, 1);
+});
+
+test("unsupported page trials are rejected before any PDF upload", async () => {
+    const requests = [];
+    globalThis.fetch = async (url) => {
+        requests.push(url);
+        return { ok: true, json: async () => ({ capabilities: {} }) };
+    };
+    await assert.rejects(
+        ServerTaskClient.createTask("http://localhost", { trialPages: "2,5" }),
+        { code: "page_trial_unsupported" },
+    );
+    assert.deepEqual(requests, ["http://localhost/health"]);
+});
+
+test("explicit zero retries require support before upload to an older service", async () => {
+    let requests = 0;
+    globalThis.fetch = async () => {
+        requests++;
+        return { ok: true, json: async () => ({ capabilities: {} }) };
+    };
+    await assert.rejects(
+        ServerTaskClient.createTask("http://localhost", { retryCount: 0 }),
+        /profile-limits-update/,
+    );
+    assert.equal(requests, 1);
 });

@@ -49,7 +49,11 @@ def safe_counts(key, values, report=None):
 def requested_configuration(payload):
     llm = payload.get('llm_api') or {}
     if not isinstance(llm, dict): llm = {}
-    return safe_fields({'provider': payload.get('service'), 'model': llm.get('model'),
+    overrides = {k: int(llm[k]) for k in ("qps", "poolSize", "retryCount", "retryInterval")
+                 if type(llm.get(k)) in (str, int) and re.fullmatch(r"[0-9]{1,16}", str(llm[k]))}
+    return safe_fields({**({"profileOverrides": overrides} if overrides else {}),
+                        "retryCount": payload.get("retry_count"), "retryInterval": payload.get("retry_interval"),
+                        'provider': payload.get('service'), 'model': llm.get('model'),
                         'protocol': llm.get('apiProtocol'), 'qps': payload.get('qps'),
                         'poolSize': payload.get('pool_size'), 'sourceLang': payload.get('source_lang'),
                         'targetLang': payload.get('target_lang')})

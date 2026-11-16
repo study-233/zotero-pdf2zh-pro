@@ -45,6 +45,24 @@ def task_snapshot(status: str = "queued") -> dict[str, object]:
 
 
 class ServerRouteTests(unittest.TestCase):
+    def test_profile_limits_resolve_each_field_and_reject_malformed_values(self):
+        from diagnostics import requested_configuration
+        profile = {"qps": 2, "retryCount": 0}
+        data = {"qps": 8, "poolSize": "3", "retryCount": 4, "retryInterval": 0,
+                "llm_api": profile, "profileLimits": True}
+        limits = server_module.request_limits(data, 8)
+        self.assertEqual(limits, dict(qps=2, pool_size=3, retry_count=0, retry_interval=0,
+                                      profile_limits=True))
+        config = requested_configuration({**limits, "llm_api": {**profile, "apiKey": "private"}})
+        self.assertEqual(config["profileOverrides"], profile)
+        self.assertEqual(config["retryInterval"], 0)
+        self.assertNotIn("private", str(config))
+        for key, value in (("qps", 0), ("poolSize", 0), ("retryCount", True),
+                           ("retryCount", "1.5"), ("retryCount", 101), ("retryInterval", 301)):
+            with self.subTest(key=key, value=value), self.assertRaises(server_module.RequestValidationError):
+                server_module.request_limits({**data, "llm_api": {key: value}}, 8)
+        self.assertEqual(server_module.request_limits({}, 8), {"qps": 8, "pool_size": 50})
+
     def setUp(self) -> None:
         self.client = server_module.create_app().test_client()
 
@@ -117,6 +135,28 @@ class ServerRouteTests(unittest.TestCase):
             with patch.object(server_module, "create_workspace_dir") as create:
                 self.assertEqual(self.client.post("/tasks", json=identity).status_code, 400)
                 create.assert_not_called()
+
+    def test_trial_ranges_are_validated_before_queue_and_canonicalized_before_dedup(self):
+        import pymupdf
+        with pymupdf.open() as pdf:
+            for _ in range(5):
+                pdf.new_page()
+            data = {"fileName": "paper.pdf", "fileContent": base64.b64encode(pdf.tobytes()).decode(),
+                    "outputModes": ["mono", "dual"], "service": "openai", "skipLastPages": 5}
+        with tempfile.TemporaryDirectory() as directory, patch.object(server_module, "TRANSLATES_DIR", Path(directory)), \
+                patch.object(server_module.TASK_MANAGER, "create_task", return_value=task_snapshot()) as create:
+            for invalid in (None, "", "1,6", "0", "4-1", "-2", "1,", True, [2], "1-" + "9"*200):
+                response = self.client.post("/tasks", json={**data, "trialPages": invalid})
+                self.assertEqual(response.status_code, 400, response.json)
+                self.assertIn("invalid_page_range", [row["code"] for row in response.json["diagnostics"]])
+            create.assert_not_called()
+            self.assertFalse(list(Path(directory).iterdir()))
+            self.assertEqual(self.client.post("/tasks", json={**data, "trialPages": "4，3–5,1,3"}).status_code, 202)
+            payload = create.call_args.kwargs["request_payload"]
+            self.assertEqual((payload["trial_pages"], payload["skip_last_pages"]), ("1,3-5", 0))
+            self.assertEqual(self.client.post("/tasks", json=data).status_code, 202)
+            self.assertNotIn("trial_pages", create.call_args.kwargs["request_payload"])
+            self.assertEqual(create.call_args.kwargs["request_payload"]["skip_last_pages"], 5)
 
     def test_repair_contract_success_missing_and_active(self):
         with patch.object(server_module.TASK_MANAGER, "repair_task", return_value=task_snapshot()) as repair:

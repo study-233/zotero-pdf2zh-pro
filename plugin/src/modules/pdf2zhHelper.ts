@@ -2,10 +2,11 @@ import { parseTitleLayout, renderTitleLayout } from "./attachmentTitleLayout";
 import { repairAttachmentNamingPreferences } from "./attachmentNamingSettings";
 import { getPref } from "../utils/prefs";
 import { ServerConfig, PDFOperationOptions, OutputMode } from "./pdf2zhTypes";
-import { getSelectedProfile } from "./profileStore";
+import { getRequestLimits, getSelectedProfile } from "./profileStore";
 import { SERVICE_NAMES } from "./llmApiManager";
 import { loadGlossaryEntries } from "./glossaryStore";
 import { getString } from "../utils/locale";
+import type { SourceMap } from "./sourceLookup";
 import { findTaskOutput, importTaskOutput } from "./taskOutputStore";
 import {
     DEFAULT_TITLE_TEMPLATE,
@@ -25,6 +26,8 @@ export type TaskOutputResponse = {
     outputMode: OutputMode;
     bytes: Uint8Array;
     incomplete?: boolean;
+    trialPages?: string;
+    sourceMap?: SourceMap;
     importIdentity?: string;
 };
 
@@ -77,7 +80,11 @@ export class PDF2zhHelperFactory {
             targetLang: config.targetLang,
             outputModes: config.outputModes,
             service: config.service,
-            skipLastPages: config.skipLastPages,
+            skipLastPages: config.trialPages ? "0" : config.skipLastPages,
+            ...(config.trialPages ? { trialPages: config.trialPages } : {}),
+            profileLimits: true,
+            retryCount: config.retryCount,
+            retryInterval: config.retryInterval,
             qps: config.qps,
             poolSize: config.poolSize,
             ocr: config.ocr,
@@ -126,7 +133,9 @@ export class PDF2zhHelperFactory {
                 targetLang: config.targetLang,
                 metadata: settings?.metadata,
                 incomplete: response.incomplete,
+                trialPages: response.trialPages,
                 importIdentity: response.importIdentity,
+                sourceMap: response.sourceMap,
                 isCurrent,
             });
         } finally {
@@ -263,6 +272,8 @@ export class PDF2zhHelperFactory {
         metadata?: TitleMetadata;
         isCurrent?: () => boolean;
         incomplete?: boolean;
+        trialPages?: string;
+        sourceMap?: SourceMap;
         importIdentity?: string;
     }) {
         const { item, filePath, options, outputMode, service } = params;
@@ -285,6 +296,11 @@ export class PDF2zhHelperFactory {
                       titleContext,
                   )
             : PathUtils.filename(filePath);
+        const scopedTitle = params.trialPages
+            ? baseTitle +
+              " · " +
+              getString("task-ui-trial", { args: { pages: params.trialPages } })
+            : baseTitle;
         const importOptions = {
             file: filePath,
             parentItemID: parentItemID == undefined ? undefined : parentItemID,
@@ -294,14 +310,20 @@ export class PDF2zhHelperFactory {
                     ? this.getCollections(item)
                     : undefined,
             title: params.incomplete
-                ? `${baseTitle}（${getString("attachment-status-incomplete")}）`
-                : baseTitle,
+                ? `${scopedTitle}（${getString("attachment-status-incomplete")}）`
+                : scopedTitle,
         };
         const tags =
-            options.addTranslatedTag && !params.incomplete ? ["已翻译"] : [];
+            options.addTranslatedTag && !params.incomplete && !params.trialPages
+                ? ["已翻译"]
+                : [];
         const attachment = params.importIdentity
             ? await importTaskOutput({
                   ...importOptions,
+                  source: params.sourceMap && {
+                      sourceKey: item.key,
+                      map: params.sourceMap,
+                  },
                   tags,
                   outputKey: params.importIdentity,
                   isCurrent: params.isCurrent || (() => true),
@@ -341,8 +363,7 @@ export class PDF2zhHelperFactory {
             targetLang: getPref("targetLang")?.toString() || "zh-CN",
             outputModes: this.getOutputModesFromPrefs(),
             skipLastPages: getPref("skipLastPages")?.toString() || "0",
-            qps: getPref("qps")?.toString() || "10",
-            poolSize: getPref("poolSize")?.toString() || "50",
+            ...getRequestLimits(apiConfig),
             ocr: getPref("ocr")?.toString() || "false",
             autoOcr: getPref("autoOcr")?.toString() || "true",
             translateTableText:

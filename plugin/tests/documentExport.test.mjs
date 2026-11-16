@@ -5,6 +5,8 @@ import { Blob, Buffer } from "node:buffer";
 import { URL } from "node:url";
 import ts from "typescript";
 
+globalThis.ensureEngine = async () => {};
+
 const { Response, FormData } = globalThis;
 
 const source = fs.readFileSync(
@@ -247,7 +249,9 @@ test("export submenu commands pass the selected format to the hook", () => {
         (key) => key,
     );
     factory.registerRightClickMenuItem();
-    const submenu = registered.menus[0].menus[2];
+    const submenu = registered.menus[0].menus.find(
+        (menu) => menu.menuType === "submenu",
+    );
     assert.equal(submenu.menuType, "submenu");
     assert.equal(submenu.menus.length, 3);
     for (const [index, format] of ["md", "json", "txt"].entries()) {

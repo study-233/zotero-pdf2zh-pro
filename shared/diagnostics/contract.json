@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaRevision": 6,
+  "schemaRevision": 7,
   "supportedSchemaVersions": [
     1
   ],
@@ -86,6 +86,8 @@
     "promptTokens",
     "qps",
     "qps10s",
+    "retryCount",
+    "retryInterval",
     "queueDropped",
     "queueSeconds",
     "reasoning",
@@ -434,6 +436,7 @@
     "byPurpose",
     "collection",
     "effectiveConfiguration",
+    "profileOverrides",
     "environment",
     "evidence",
     "evidenceCollection",
@@ -1026,6 +1029,18 @@
       "coverage": "availability_only",
       "component": "server"
     },
+    "sourceParagraphLookup": {
+      "coverage": "availability_only",
+      "component": "plugin"
+    },
+    "profileLimits": {
+      "coverage": "request_metrics",
+      "component": "server"
+    },
+    "pageTrial": {
+      "coverage": "task_events",
+      "component": "server"
+    },
     "translationMemory": {
       "coverage": "availability_only",
       "component": "server"
@@ -1100,6 +1115,10 @@
     },
     "structuredExport": {
       "coverage": "task_events",
+      "component": "server"
+    },
+    "managedEngine": {
+      "coverage": "availability_only",
       "component": "server"
     }
   },
@@ -1228,6 +1247,20 @@
       "component": "plugin",
       "requiredFields": []
     },
+    "page_trial_open_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "selection_source_lookup_failed": {
+      "component": "plugin",
+      "requiredFields": [],
+      "feature": "sourceParagraphLookup"
+    },
+    "selection_note_failed": {
+      "component": "plugin",
+      "requiredFields": [],
+      "feature": "bilingualSelectionNotes"
+    },
     "selection_orphan_cleanup_failed": {
       "component": "plugin",
       "requiredFields": []
@@ -1309,6 +1342,18 @@
         "taskId",
         "executionId"
       ]
+    },
+    "managed_engine_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "managed_engine_fallback": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "managed_engine_deferred": {
+      "component": "plugin",
+      "requiredFields": []
     }
   },
   "eventPatterns": [

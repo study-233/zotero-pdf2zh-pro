@@ -8,7 +8,11 @@ class TranslationBudgetExhausted(Exception):
 
 
 class ParagraphRequestBudget:
-    def __init__(self):
+    def __init__(self, retry_count=None, retry_interval=None):
+        # Keep one additional per-paragraph attempt for batch-to-single recovery.
+        self.max_attempts = max(2, (retry_count or 0) + 1)  # Output validation may regenerate once.
+        self.paragraph_attempts = self.max_attempts + 1
+        self.max_wait = max(30, (retry_interval or 0) * (self.paragraph_attempts - 1))
         self.lock = threading.Lock()
         self.attempts = {}
         self.waits = {}
@@ -24,15 +28,15 @@ class RequestBudget:
 
     def available(self, delay=0):
         with self.owner.lock:
-            return self.attempts < 2 and all(
-                self.owner.attempts.get(key, 0) < 3
-                and self.owner.waits.get(key, 0) + delay <= 30
+            return self.attempts < self.owner.max_attempts and all(
+                self.owner.attempts.get(key, 0) < self.owner.paragraph_attempts
+                and self.owner.waits.get(key, 0) + delay <= self.owner.max_wait
                 for key in self.keys
             )
 
     def reserve(self):
         with self.owner.lock:
-            if self.attempts >= 2 or any(self.owner.attempts.get(key, 0) >= 3 for key in self.keys):
+            if self.attempts >= self.owner.max_attempts or any(self.owner.attempts.get(key, 0) >= self.owner.paragraph_attempts for key in self.keys):
                 raise TranslationBudgetExhausted()
             self.attempts += 1
             for key in self.keys:
@@ -40,7 +44,7 @@ class RequestBudget:
 
     def reserve_wait(self, seconds):
         with self.owner.lock:
-            if any(self.owner.waits.get(key, 0) + seconds > 30 for key in self.keys):
+            if any(self.owner.waits.get(key, 0) + seconds > self.owner.max_wait for key in self.keys):
                 raise TranslationBudgetExhausted()
             for key in self.keys:
                 self.owner.waits[key] = self.owner.waits.get(key, 0) + seconds

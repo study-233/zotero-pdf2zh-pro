@@ -14,6 +14,9 @@ from observability import TaskMetricsCollector
 
 def export_fixture():
     task = json.loads((ROOT / 'shared/diagnostics/fixtures/validation-failures.json').read_text(encoding="utf-8"))
+    task['requestedConfiguration'] = {'qps': 5, 'poolSize': 2, 'retryCount': 2, 'retryInterval': 0,
+                                      'profileOverrides': {'retryCount': 2, 'retryInterval': 0}}
+    task['effectiveConfiguration'] = {'qps': 5, 'poolSize': 2, 'retryCount': 2, 'retryInterval': 0}
     with tempfile.TemporaryDirectory() as directory:
         store = DiagnosticStore(Path(directory))
         store.record('task_state', task)

@@ -25,6 +25,9 @@ export interface ServerConfig {
     targetLang: string;
     outputModes: OutputMode[];
     skipLastPages: string;
+    trialPages?: string;
+    retryCount?: number;
+    retryInterval?: number;
     qps: string;
     poolSize: string;
     ocr: string;
@@ -79,6 +82,9 @@ export interface ServerHealthResponse {
         preprocessingReuse?: boolean;
         taskTiming?: boolean;
         binaryTaskUpload?: boolean;
+        pageTrial?: boolean;
+        profileLimits?: boolean;
+        sourceParagraphLookup?: boolean;
         taskPagination?: boolean;
     };
     pdf2zhVersion?: string;
@@ -187,6 +193,14 @@ export interface DiagnosticConfiguration {
     provider?: string;
     model?: string;
     protocol?: "auto" | "chat_completions" | "responses";
+    retryCount?: number;
+    retryInterval?: number;
+    profileOverrides?: {
+        qps?: number;
+        poolSize?: number;
+        retryCount?: number;
+        retryInterval?: number;
+    };
     qps?: number;
     poolSize?: number;
     sourceLang?: string;
@@ -215,6 +229,7 @@ export interface ServerTaskSnapshot extends ServerSyncMetadata {
     stage: string | null;
     currentPage?: number;
     selectedPage?: number;
+    trialPages?: string;
     completedPages?: number;
     totalPages?: number;
     operation?: string;

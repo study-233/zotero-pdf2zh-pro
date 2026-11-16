@@ -6,10 +6,8 @@ import subprocess
 from pdf2zh_pro.config import SettingsModel
 from pdf2zh_pro.translator.rate_limit import BaseRateLimiter
 from pdf2zh_pro.translator.base import BaseTranslator
-from tenacity import before_sleep_log
-from tenacity import retry
+from pdf2zh_pro.translator.request_retry import configurable_retry
 from tenacity import retry_if_exception_type
-from tenacity import stop_after_attempt
 from tenacity import wait_exponential
 
 logger = logging.getLogger(__name__)
@@ -61,13 +59,11 @@ class ClaudeCodeTranslator(BaseTranslator):
                 f"Claude Code CLI not found at '{self.claude_code_path}'"
             ) from e
 
-    @retry(
-        retry=retry_if_exception_type(
+    @configurable_retry(
+        attempts=3, predicate=retry_if_exception_type(
             (subprocess.CalledProcessError, subprocess.TimeoutExpired)
         ),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=2, min=2, max=15),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+        backoff=wait_exponential(multiplier=2, min=2, max=15),
     )
     def do_translate(self, text, rate_limit_params: dict = None) -> str:
         messages = self.prompt(text)

@@ -29,6 +29,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 
+import pymupdf
 import truststore
 
 # Initialize before HTTP libraries cache SSLContext. Keep this in the application
@@ -55,7 +56,7 @@ from pdf2zh_pro.glossary import normalize_glossary_entries
 from glossary_manager import GlossaryError, GlossaryManager
 from diagnostics import exception_frames, diagnostic_capabilities, negotiate_schema
 
-VERSION = "1.9.7"
+VERSION = "1.9.8"
 LOGGER = logging.getLogger("zotero_pdf2zh_server")
 DEFAULT_TRANSLATES_DIR = default_data_directory(__file__)
 TRANSLATES_DIR = Path(
@@ -569,12 +570,23 @@ def create_app() -> Flask:
                 return error_response("Output mode is required when multiple result files exist", 400)
             return error_response("Requested PDF is unavailable or no longer exists", 404)
 
+        source_map = getattr(result_file, "source_map", None)
+        if request.args.get("sourceMap") is not None:
+            if not source_map or not re.fullmatch(r"[a-f0-9]{64}", source_map) or request.args["sourceMap"] != source_map:
+                return error_response("Source map unavailable for this PDF", 404)
+            path = result_file.output_path.parent / (source_map + ".source.json")
+            if not path.is_file():
+                return error_response("Source map file unavailable", 404)
+            return send_file(path, mimetype="application/json")
+
         response = send_file(
             result_file.output_path,
             mimetype="application/pdf",
             as_attachment=True,
             download_name=result_file.filename,
         )
+        if source_map:
+            response.headers["X-PDF2ZH-Source-Map"] = source_map
         response.headers["X-PDF2ZH-Output-Mode"] = result_file.output_mode
         response.headers["X-PDF2ZH-Version"] = VERSION
         response.headers["X-PDF2ZH-Task-Id"] = task_record.task_id
@@ -614,6 +626,39 @@ def translate_pdf_request(data: dict[str, Any]) -> tuple[bytes, str, str]:
         raise
 
 
+def request_limits(data, default_qps):
+    """Resolve per-field overrides before persisting or validating a task."""
+    profile = data.get("llm_api") or {}
+    if not isinstance(profile, dict):
+        raise RequestValidationError("Invalid model configuration")
+    values = {}
+    for field, key, default, minimum, maximum in (
+        ("qps", "qps", default_qps, 1, None), ("poolSize", "pool_size", 50, 0, None),
+        ("retryCount", "retry_count", None, 0, 100), ("retryInterval", "retry_interval", None, 0, 300),
+    ):
+        override = profile.get(field)
+        inherited = override is None or override == ""
+        value = data.get(field) if inherited else override
+        if value is None or value == "":
+            if default is not None:
+                values[key] = default
+            continue
+        if inherited and default is not None and not data.get("profileLimits"):
+            values[key] = parse_int(value, default, minimum)
+            continue
+        if field == "poolSize" and not inherited:
+            minimum = 1
+        if (type(value) not in (int, str) or not re.fullmatch(r"[0-9]{1,16}", str(value))
+                or int(value) < minimum or (maximum is not None and int(value) > maximum)):
+            raise RequestValidationError(f"Invalid {field}")
+        values[key] = int(value)
+    has_overrides = any(profile.get(key) not in (None, "") for key in
+                        ("qps", "poolSize", "retryCount", "retryInterval"))
+    if data.get("profileLimits") is True or has_overrides or "retry_count" in values or "retry_interval" in values:
+        values["profile_limits"] = True
+    return values
+
+
 def validate_config_request(data: dict[str, Any], *, check_cancelled=None):
     job_id = os.urandom(4).hex()
     service = normalize_service(data.get("service"))
@@ -621,8 +666,7 @@ def validate_config_request(data: dict[str, Any], *, check_cancelled=None):
         "source_lang": normalize_language(data.get("sourceLang"), "en"),
         "target_lang": normalize_language(data.get("targetLang"), "zh-CN"),
         "service": service,
-        "qps": parse_int(data.get("qps"), 1, minimum=1),
-        "pool_size": parse_int(data.get("poolSize"), 50, minimum=0),
+        **request_limits(data, 1),
         "ocr": parse_bool(data.get("ocr"), False),
         "auto_ocr": parse_bool(data.get("autoOcr"), True),
         "translate_table_text": parse_bool(
@@ -678,6 +722,36 @@ def save_pdf_input(data: dict[str, Any], workspace_dir: Path, *, upload=None) ->
     return file_name, input_path
 
 
+def normalize_trial_pages(value: object, input_path: Path) -> str:
+    """Normalize one-based physical PDF page ranges before accepting a paid job."""
+    invalid = "Invalid trial page range. Use physical PDF pages such as 1,3-5."
+    if not isinstance(value, str) or not value.strip() or len(value) > 160:
+        raise RequestValidationError(invalid)
+    try:
+        with pymupdf.open(input_path) as document:
+            if not document.is_pdf or document.needs_pass:
+                raise RequestValidationError("Page trial requires a readable, unlocked PDF.")
+            total = document.page_count
+    except (pymupdf.FileDataError, RuntimeError) as exc:
+        raise RequestValidationError("Page trial requires a readable, unlocked PDF.") from exc
+    intervals = []
+    for part in value.replace("，", ",").split(","):
+        match = re.fullmatch(r"\s*([0-9]+)\s*(?:[-–—]\s*([0-9]+))?\s*", part)
+        if not match:
+            raise RequestValidationError(invalid)
+        start, end = int(match[1]), int(match[2] or match[1])
+        if not 1 <= start <= end <= total:
+            raise RequestValidationError(invalid)
+        intervals.append((start, end))
+    merged: list[tuple[int, int]] = []
+    for start, end in sorted(intervals):
+        if merged and start <= merged[-1][1] + 1:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return ",".join(str(a) if a == b else f"{a}-{b}" for a, b in merged)
+
+
 def prepare_translation_request(
     data: dict[str, Any],
     workspace_dir: Path,
@@ -694,8 +768,7 @@ def prepare_translation_request(
         "target_lang": normalize_language(data.get("targetLang"), "zh-CN"),
         "output_modes": output_modes,
         "service": service,
-        "qps": parse_int(data.get("qps"), 8, minimum=1),
-        "pool_size": parse_int(data.get("poolSize"), 50, minimum=0),
+        **request_limits(data, 8),
         "skip_last_pages": parse_int(data.get("skipLastPages"), 0, minimum=0),
         "ocr": parse_bool(data.get("ocr"), False),
         "auto_ocr": parse_bool(data.get("autoOcr"), True),
@@ -715,6 +788,9 @@ def prepare_translation_request(
         "output_dir": str(output_dir),
         "translation_memory_path": str(TRANSLATES_DIR / "translation-memory.sqlite3"),
     }
+    if "trialPages" in data:
+        request_payload["trial_pages"] = normalize_trial_pages(data["trialPages"], input_path)
+        request_payload["skip_last_pages"] = 0
     return PreparedTranslationRequest(
         file_name=file_name,
         service=service,
@@ -949,8 +1025,9 @@ def build_health_payload() -> dict[str, Any]:
         "pythonVersion": sys.version.split()[0],
         "supportedApiProtocols": ["auto", "chat_completions", "responses"],
         "diagnostics": diagnostic_capabilities(),
-        "capabilities": {"structuredExport": True, "diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "mimoApi": True, "zhipuApi": True,
-            "preprocessingReuse": True,
+        "capabilities": {"managedEngine": bool(has_app_context() and current_app.extensions.get("managed_engine")),
+            "structuredExport": True, "diagnosticsExport": True, "boundedCancellation": True, "detailedTaskProgress": True, "mimoApi": True, "zhipuApi": True,
+            "profileLimits": True, "preprocessingReuse": True, "pageTrial": True, "sourceParagraphLookup": True,
             "tokenOutputSpeed": True, "reasoningMode": True, "reasoningLow": True, "responsesFirst": True, "updateMaintenance": True, "glossaryEntries": True, "semanticReview": True, "glossaryPacks": True, "translationMemory": True, "textTranslation": True, "exactSelectionTranslation": True, "bingSelectionTranslation": True, "selectionLearning": True, "chatgptPlan": True, "codexCli": True, "codexProxy": True, "codexDiscovery": True, "taskSubmissionIdempotency": True, "taskRecovery": True, "taskTiming": True, "binaryTaskUpload": True, "taskPagination": True},
         "supportsModelDiscovery": True,
         "pdf2zhVersion": package_version("pdf2zh_pro"),
@@ -1093,7 +1170,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
+def main(*, serve_http=None) -> None:
     args = parse_args()
     configure_runtime_paths(args.data_dir)
     # Resolve account storage after --data-dir and propagate it to spawned workers.
@@ -1132,7 +1209,10 @@ def main() -> None:
 
         signal.signal(signal.SIGTERM, stop_server)
     try:
-        app.run(host=args.host, port=args.port)
+        if serve_http is None:
+            app.run(host=args.host, port=args.port)
+        else:
+            serve_http()
     finally:
         try:
             TEXT_TRANSLATOR.close()

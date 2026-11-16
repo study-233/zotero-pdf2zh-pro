@@ -43,6 +43,7 @@ export function errorNotice(error: unknown, t: NoticeTranslator): UserNotice {
         no_output: ["select-output", "connection"],
         server_unreachable: ["server", "connection"],
         server_capability: ["upgrade", "connection"],
+        page_trial_unsupported: ["trial-upgrade", "connection"],
         server_maintenance: ["maintenance"],
         task_store_unavailable: ["task-store", "connection"],
         task_persistence_failed: ["task-save"],

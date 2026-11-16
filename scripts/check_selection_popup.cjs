@@ -10,7 +10,7 @@ const root = path.resolve(__dirname, "..");
 const output = require('./workspace.cjs').newReport('selection-ui');
 fs.mkdirSync(output, { recursive: true });
 const modules = {};
-for (const name of ["selectionFormatting", "selectionTranslate", "selectionDictionary", "selectionDictionaryStore", "userNotice", "selectionPopup", "selectionUI", "selectionAudio", "selectionOnlineDictionary", "selectionDictionaryService", "selectionStream", "selectionEvents", "selectionRequest", "selectionView", "selectionPane"]) {
+for (const name of ["selectionNote", "selectionFormatting", "selectionTranslate", "selectionDictionary", "selectionDictionaryStore", "userNotice", "selectionPopup", "selectionUI", "selectionAudio", "selectionOnlineDictionary", "selectionDictionaryService", "selectionStream", "selectionEvents", "selectionRequest", "selectionView", "selectionPane"]) {
     modules[`./${name}`] = ts.transpileModule(fs.readFileSync(path.join(root, `plugin/src/modules/${name}.ts`), "utf8"), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText;
@@ -49,6 +49,9 @@ const dictionary = fs.readFileSync(path.join(root, "plugin/addon/content/diction
                 "./profileStore": {loadProfiles:()=>[]},
                 "./llmApiManager": {profileLabel:p=>p.key},
                 "./selectionFavorites": {listFavorites:async()=>[],favoriteLibrary:()=>({type:"user"}),favoriteIdentity:()=>""},
+                "./sourcePosition": {},
+                "./sourceSentence": {},
+                "./sourceLookup": {clearSourceReturnControls(){},readSourceBinding: async()=>undefined},
                 "./selectionFavoritesPane": {registerFavoritesPane(){},unregisterFavoritesPane(){}},
                 "../utils/locale": {getLocaleID: id => id, getString: key => localeStrings[key] || key},
                 "./glossaryStore": { loadGlossaryEntries: () => [] },

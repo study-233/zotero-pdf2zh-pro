@@ -48,6 +48,8 @@ class TranslationSettings(BaseModel):
         default=None, description="Output directory for translated files"
     )
     qps: int = Field(default=4, description="QPS limit for translation service")
+    retry_count: int | None = Field(default=None, ge=0, le=100)
+    retry_interval: int | None = Field(default=None, ge=0, le=300)
     ignore_cache: bool = Field(default=False, description="Ignore translation cache")
     custom_system_prompt: str | None = Field(
         default=None,
@@ -535,6 +537,9 @@ def create_model_settings(payload: dict[str, Any], settings_input=None):
             "translate_engine_settings": engine_type.model_validate(
                 build_service_detail(service, payload.get("llm_api") or {})),
         }
+    for key in ("retry_count", "retry_interval"):
+        if payload.get(key) is not None:
+            settings_input["translation"][key] = payload[key]
     settings = SettingsModel.model_validate(settings_input)
     settings.validate_settings()
     engine = settings.translate_engine_settings

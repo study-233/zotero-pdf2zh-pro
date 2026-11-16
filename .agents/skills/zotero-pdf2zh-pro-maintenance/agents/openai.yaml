@@ -1,4 +1,4 @@
 interface:
   display_name: "Zotero PDF2ZH Pro Maintenance"
-  short_description: "分析并修复本仓库的 PR、安全告警与代码质量问题，验证本地及远端结果"
-  default_prompt: "使用 $zotero-pdf2zh-pro-maintenance 处理本仓库的 PR 和 Security and quality，按风险排序并完成授权范围内的修复与验证。"
+  short_description: "整理项目文件与文档，处理 PR、CI 和安全告警并验证修复"
+  default_prompt: "使用 $zotero-pdf2zh-pro-maintenance 完成本次项目维护并核对结果。"

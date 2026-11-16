@@ -1,5 +1,6 @@
+import type { SourceBinding } from "./sourceLookup";
 // Local import receipts live in the same database transaction as their attachment.
-// They contain only a digest and Zotero identifiers, and do not modify synced metadata.
+// Paragraph snapshots are local to the Zotero installation that imported each result.
 async function ensureStore(): Promise<void> {
     await Zotero.DB.queryAsync(`CREATE TABLE IF NOT EXISTS pdf2zhOutputImports (
         outputKey TEXT PRIMARY KEY, libraryID INTEGER NOT NULL, itemKey TEXT NOT NULL
@@ -49,6 +50,7 @@ export async function importTaskOutput(options: {
     collections?: number[];
     title: string;
     tags?: string[];
+    source?: SourceBinding;
     isCurrent: () => boolean;
 }): Promise<Zotero.Item | undefined> {
     await ensureStore();
@@ -92,6 +94,21 @@ export async function importTaskOutput(options: {
                 "INSERT INTO pdf2zhOutputImports (outputKey, libraryID, itemKey) VALUES (?, ?, ?)",
                 [options.outputKey, item.libraryID, item.key],
             );
+            if (options.source) {
+                await Zotero.DB
+                    .queryAsync(`CREATE TABLE IF NOT EXISTS pdf2zhSourceMaps (
+                    itemID INTEGER PRIMARY KEY REFERENCES items(itemID) ON DELETE CASCADE,
+                    sourceKey TEXT NOT NULL, snapshot TEXT NOT NULL
+                )`);
+                await Zotero.DB.queryAsync(
+                    "INSERT INTO pdf2zhSourceMaps (itemID, sourceKey, snapshot) VALUES (?, ?, ?)",
+                    [
+                        item.id,
+                        options.source.sourceKey,
+                        JSON.stringify(options.source.map),
+                    ],
+                );
+            }
             created = true;
             return item;
         });

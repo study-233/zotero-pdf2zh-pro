@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import re
+import time
 import uuid
 from pdf2zh_pro.translator.validation import InvalidTranslation
 
@@ -23,6 +24,9 @@ class BaseTranslator(ABC):
 
     name = "base"
     lang_map = {}
+    limits_each_attempt = False
+    retry_count = retry_interval = None
+    check_cancelled = staticmethod(lambda: None)
 
     def __init__(
         self,
@@ -45,6 +49,8 @@ class BaseTranslator(ABC):
         self.lang_in = lang_in
         self.lang_out = lang_out
         self.rate_limiter = rate_limiter
+        self.retry_count = getattr(settings.translation, "retry_count", None)
+        self.retry_interval = getattr(settings.translation, "retry_interval", None)
 
         self.cache = TranslationCache(
             self.name,
@@ -93,6 +99,19 @@ class BaseTranslator(ABC):
 
     def configure_cache_namespace(self, *, provider: str) -> None:
         self.add_cache_impact_parameters("provider", provider)
+
+    @property
+    def custom_retry(self):
+        return self.retry_count is not None or self.retry_interval is not None
+
+    def _wait_cancel(self, seconds):
+        deadline = time.monotonic() + seconds
+        while True:
+            self.check_cancelled()
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return
+            time.sleep(min(0.1, remaining))
 
     def _commit_validated_cache(self, text, output, rate_limit_params=None, *, ignore_cache=False):
         """Commit a settled batch without issuing a request or counting an attempt."""
@@ -175,7 +194,7 @@ class BaseTranslator(ABC):
         request_text = text
         decode = None
         for generation in range(2):
-            if not getattr(self, "limits_each_attempt", False):
+            if not self.limits_each_attempt and not self.custom_retry:
                 self.rate_limiter.wait(params)
                 if params.get("on_attempt"):
                     params["on_attempt"]()

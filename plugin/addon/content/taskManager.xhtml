@@ -1705,6 +1705,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 speedDetail.className = "speed-detail";
                 speedDetail.textContent = t("output-speed-help");
                 metricsPanel.appendChild(speedDetail);
+                const limitDetail = document.createElement("div");
+                limitDetail.className = "speed-detail configuration-detail";
+                metricsPanel.appendChild(limitDetail);
                 const qualityDetail = document.createElement("div");
                 qualityDetail.className = "review-detail";
                 metricsPanel.appendChild(qualityDetail);
@@ -1908,6 +1911,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     updatedAt,
                     timingMetric,
                     speedDetail,
+                    limitDetail,
                     qualitySummary,
                     qualityDetail,
                     detailGrid,
@@ -1934,8 +1938,13 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             function updateTaskCardView(view, task) {
                 view.task = task;
                 setClassName(view.card, `card ${task.status}`);
-                setTextContent(view.name, task.fileName);
-                setAttributeValue(view.name, "title", task.fileName);
+                const name = task.trialPages
+                    ? task.fileName +
+                      " · " +
+                      t("trial", { pages: task.trialPages })
+                    : task.fileName;
+                setTextContent(view.name, name);
+                setAttributeValue(view.name, "title", name);
                 setTextContent(
                     view.meta,
                     `${task.service} · ${task.outputModes.map((mode) => (["mono", "dual"].includes(mode) ? api.message(`attachment-type-${mode}`) : mode)).join(", ")} · ${task.source === "local" ? t("local") : t("remote")}`,
@@ -2092,8 +2101,26 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     );
                     setNodeHidden(view.metricEmpty, Boolean(task.timing));
                 }
+                const limits =
+                    task.effectiveConfiguration || task.requestedConfiguration;
+                setNodeHidden(view.limitDetail, !limits);
+                if (limits) {
+                    const label = t(
+                        task.effectiveConfiguration
+                            ? "effective-limits"
+                            : "submitted-limits",
+                    );
+                    const defaults = t("engine-default");
+                    const values = t("limits-values", {
+                        qps: limits.qps ?? "—",
+                        pool: limits.poolSize ?? "—",
+                        count: limits.retryCount ?? defaults,
+                        interval: limits.retryInterval ?? defaults,
+                    });
+                    setTextContent(view.limitDetail, label + " · " + values);
+                }
                 const hasDetails = Boolean(
-                    metrics || task.qualitySummary || task.timing,
+                    limits || metrics || task.qualitySummary || task.timing,
                 );
                 const isExpanded =
                     hasDetails && expandedMetricTaskIds.has(task.taskId);
@@ -2153,6 +2180,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             function getTaskRenderSignature(task) {
                 return JSON.stringify([
                     task.fileName,
+                    task.trialPages,
                     task.service,
                     task.outputModes,
                     task.status,

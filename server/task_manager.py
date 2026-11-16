@@ -117,6 +117,7 @@ class TaskRecord:
             "revision": self.revision,
             "taskId": self.task_id,
             "fileName": self.file_name,
+            **({"trialPages": self.request_payload["trial_pages"]} if self.request_payload.get("trial_pages") else {}),
             "service": self.service,
             "requestedConfiguration": requested_configuration({"service": self.service, **self.request_payload}),
             "outputModes": self.output_modes,
@@ -628,7 +629,11 @@ class TaskManager:
             # A rejected retry must not destroy the previous attempt's files.
             output_dir = record.workspace_dir / f"{'repair' if repair else 'retry'}-{record.attempt + 1}"
             if repair:
-                record.request_payload.update(qps=2, pool_size=4, repair_attempt=record.attempt + 1)
+                record.request_payload["repair_attempt"] = record.attempt + 1
+                if not record.request_payload.get("profile_limits"):
+                    # Legacy repair mode used a small pool. Never raise a saved low limit.
+                    record.request_payload["qps"] = min(2, record.request_payload.get("qps") or 2)
+                    record.request_payload["pool_size"] = min(4, record.request_payload.get("pool_size") or 4)
             output_dir.mkdir(parents=True, exist_ok=True)
             record.request_payload["output_dir"] = str(output_dir)
 
@@ -1315,6 +1320,7 @@ class TaskManager:
                     "output_mode": output_file.output_mode,
                     "output_path": str(output_file.output_path),
                     "filename": output_file.filename,
+                    "source_map": output_file.source_map,
                 }
                 for output_mode, output_file in record.result_files.items()
             },
@@ -1338,6 +1344,7 @@ class TaskManager:
                             output_payload.get("output_mode") or output_mode
                         ),
                         output_path=Path(output_path),
+                        source_map=output_payload.get("source_map"),
                         filename=str(filename),
                     )
 

@@ -3,6 +3,8 @@ import asyncio
 import threading
 from pdf2zh_pro.translator.validation import InvalidTranslation
 from pdf2zh_pro.translator.base import BaseTranslator
+from pdf2zh_pro.translator.request_retry import configurable_retry
+from tenacity import retry_never, wait_none
 
 
 class AccountTranslator(BaseTranslator):
@@ -37,9 +39,11 @@ class AccountTranslator(BaseTranslator):
             min(self.recommended_pool_max_workers, max(1, concurrency)))
         self.check_cancelled = check_cancelled
 
+    @configurable_retry(attempts=1, predicate=retry_never, backoff=wait_none())
     def do_translate(self, text, rate_limit_params=None):
         return self._request(self.prompt(text)[0]["content"], rate_limit_params)
 
+    @configurable_retry(attempts=1, predicate=retry_never, backoff=wait_none())
     def do_llm_translate(self, text, rate_limit_params=None):
         if text is None:
             return None

@@ -6,6 +6,8 @@ import fs from "node:fs";
 import test from "node:test";
 import ts from "typescript";
 
+globalThis.ensureEngine = async () => {};
+
 const compile = (name) =>
     ts.transpileModule(
         fs.readFileSync(
@@ -134,6 +136,7 @@ test("selection uses ID even for identical models and returns isolated nested da
     assert.equal(model.selectedProfile(profiles, "missing"), null);
 });
 
+globalThis.__profileTests.getRequestLimits = store.getRequestLimits;
 globalThis.__profileTests.getSelectedProfile = store.getSelectedProfile;
 const glossary = await asModule(
     "const {getPref,setPref}=globalThis.__profileTests;\n" +
@@ -141,7 +144,7 @@ const glossary = await asModule(
 );
 globalThis.__profileTests.loadGlossaryEntries = glossary.loadGlossaryEntries;
 const { PDF2zhHelperFactory: helper } = await asModule(
-    "const {getPref, getString, getSelectedProfile, SERVICE_NAMES,loadGlossaryEntries} = globalThis.__profileTests;\n" +
+    "const {getPref, getString, getRequestLimits, getSelectedProfile, SERVICE_NAMES,loadGlossaryEntries} = globalThis.__profileTests;\n" +
         compile("pdf2zhHelper").replace(/^import .*;$/gm, ""),
 );
 test("batch request construction keeps the captured profile after selection and edits", () => {
@@ -266,7 +269,7 @@ const compatibility = await asModule(compile("apiCompatibility"));
 globalThis.__profileTests.prepareApiForServer =
     compatibility.prepareApiForServer;
 const client = await asModule(
-    "const {axios, getPref, getString, prepareApiForServer, assertSupportedProfile} = globalThis.__profileTests;\n" +
+    "const {axios, getPref, getString, getRequestLimits, prepareApiForServer, assertSupportedProfile} = globalThis.__profileTests;\n" +
         compile("profileApiClient").replace(/^import .*;$/gm, ""),
 );
 test("testing a draft forwards its credentials/options without changing saved selection", async () => {
@@ -688,8 +691,13 @@ test("Codex detection preserves runtime metadata and force without saving a path
 test("aborting detection sends a separate cancellation and retains error codes", async () => {
     const controller = new AbortController();
     const calls = [];
+    let submitted;
+    const started = new Promise((resolve) => {
+        submitted = resolve;
+    });
     http.post = async (url, body, options) => {
         calls.push({ url, body });
+        submitted();
         if (url.endsWith("/cancel")) return { data: { status: "ok" } };
         return new Promise((resolve, reject) =>
             options.signal.addEventListener("abort", () =>
@@ -701,6 +709,7 @@ test("aborting detection sends a separate cancellation and retains error codes",
         api("codex", "codex"),
         controller.signal,
     );
+    await started;
     controller.abort();
     await assert.rejects(pending, /cancelled/);
     assert.equal(calls.length, 2);
@@ -888,4 +897,39 @@ test("new low and native automatic effort require a compatible server", () => {
             ),
         /升级/,
     );
+});
+
+test("three-page jobs freeze profile and per-field defaults, including zero", () => {
+    prefs.clear();
+    prefs.set("profileSchemaVersion", 4);
+    const a = {
+        ...api("a"),
+        qps: 2,
+        poolSize: 1,
+        retryCount: 1,
+        retryInterval: 4,
+    };
+    const b = { ...api("b"), retryCount: 0, retryInterval: 0 };
+    store.saveProfiles([a, b]);
+    prefs.set("qps", 5);
+    prefs.set("poolSize", 3);
+    prefs.set("selectedApiKey", "a");
+    const original = { ...helper.getServerConfig(), trialPages: "1-3" };
+    prefs.set("selectedApiKey", "b");
+    const second = { ...helper.getServerConfig(), trialPages: "1-3" };
+    prefs.set("qps", 9);
+    for (const [config, expected] of [
+        [original, ["2", "1", 1, 4]],
+        [second, ["5", "3", 0, 0]],
+    ]) {
+        const body = helper.buildTaskRequestBody(
+            { fileName: "trial.pdf", base64: "AA==" },
+            config,
+        );
+        assert.equal(body.trialPages, "1-3");
+        assert.deepEqual(
+            [body.qps, body.poolSize, body.retryCount, body.retryInterval],
+            expected,
+        );
+    }
 });

@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: scripts/release.sh <version> [--build-source auto|local|actions] [--resume <state.json>] [--full-validation] [--baseline <version>] [--remote-validation] [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
+Usage: scripts/release.sh <version> [--docs-pr <number>] [--build-source auto|local|actions] [--resume <state.json>] [--full-validation] [--baseline <version>] [--remote-validation] [--no-push] [--no-release] [--no-pypi] [--no-tap] [--tap-path <path>] [--replace-existing <old-commit>]
 
 Build, validate, and publish a unified zotero-pdf2zh-pro release.
 
@@ -12,6 +12,7 @@ Windows GUI ZIP, a local corresponding-source archive, and an optional
 update to the public source-only Homebrew tap. Add a matching CHANGELOG.md
 section first. Windows prefers local build and validation, then imports verified packages
 into Actions for publication. --build-source actions explicitly uses the remote builder.
+--docs-pr merges the prepared documentation PR after stable installers are public.
 --no-push builds on Windows without publishing.
 --full-validation also runs rollback and relocation checks against the final packages.
 --baseline explicitly adds an older release; defaults use only the previous stable.
@@ -85,12 +86,18 @@ BUILD_SOURCE=auto
 TAP_PATH=""
 REPLACE_EXISTING=""
 RESUME_STATE=""
+DOCS_PR=""
 EXPLICIT_BASELINES=()
 PYPI_TOKEN="${UV_PUBLISH_TOKEN:-}"
 unset UV_PUBLISH_TOKEN
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --docs-pr)
+            [[ $# -ge 2 && "$2" =~ ^[1-9][0-9]*$ ]] || die "--docs-pr requires a PR number"
+            DOCS_PR="$2"
+            shift
+            ;;
         --build-source)
             [[ $# -ge 2 ]] || die "--build-source requires auto, local or actions"
             BUILD_SOURCE="$2"
@@ -222,7 +229,6 @@ function replaceOnce(file, pattern, replacement, label) {
   if (matches.length !== 1) throw new Error(`expected one ${label}, found ${matches.length}`);
   fs.writeFileSync(file, text.replace(pattern, replacement));
 }
-replaceOnce("README.md", /(<!-- release-version --> `)[^`]+(`)/g, `$1${version}$2`, "README version marker");
 replaceOnce(
   "server/uv.lock",
   /(\[\[package\]\]\r?\nname = "zotero-pdf2zh-pro"\r?\nversion = ")[^"]+(")/g,
@@ -262,7 +268,7 @@ uv run --no-project python scripts/test_windows_update_manifest.py
 uv run --no-project python scripts/windows_powershell.py scripts/test_windows_package.ps1 -Package "$WINDOWS_PACKAGE"
 fi
 
-git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock \
+git add plugin/package.json server/pyproject.toml server/server.py server/uv.lock \
     scripts/windows/common.ps1 windows-app/Cargo.toml \
     windows-app/Cargo.lock
 if ! git diff --cached --quiet; then
@@ -292,6 +298,12 @@ if [[ "$PUSH" -eq 1 ]]; then
     state_args=("$VERSION" "$COMMIT")
     [[ -z "$RESUME_STATE" ]] || state_args+=(--resume "$RESUME_STATE")
     RELEASE_STATE="$(uv run --no-project python scripts/release_control.py state "${state_args[@]}")"
+    saved_docs_pr="$(node -e 'console.log(require(process.argv[1]).stages.documentation?.pr || "")' "$RELEASE_STATE")"
+    [[ -z "$saved_docs_pr" || -z "$DOCS_PR" || "$saved_docs_pr" == "$DOCS_PR" ]] || die "documentation PR changed during recovery"
+    DOCS_PR="${DOCS_PR:-$saved_docs_pr}"
+    if [[ -n "$DOCS_PR" ]]; then
+        uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" documentation --field "pr=$DOCS_PR"
+    fi
     echo "Release recovery record: $RELEASE_STATE" >&2
     VALIDATION_PLAN="$(dirname "$RELEASE_STATE")/validation-plan.json"
     VALIDATION_RECEIPT="$(dirname "$RELEASE_STATE")/local-validation.json"
@@ -551,8 +563,14 @@ s/version "[^"]+"/version "$ENV{VERSION}"/;
     uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" homebrew --field "runId=$TAP_RUN" --field "commit=$TAP_COMMIT" --field status=passed
 fi
 
-# All publication targets and checks have succeeded; retain the backup without rolling back.
+# Product publication is complete. A documentation failure can be retried separately.
 REPLACEMENT_BACKUP=""
+if [[ "$PUBLISH_RELEASE" -eq 1 && "$PUSH" -eq 1 ]]; then
+    docs_args=(publish "$VERSION")
+    [[ -z "$DOCS_PR" ]] || docs_args+=(--pr "$DOCS_PR")
+    uv run --no-project python scripts/release_docs.py "${docs_args[@]}"
+    uv run --no-project python scripts/release_control.py workflow "$RELEASE_STATE" website website.yml --field "version=$VERSION"
+fi
 if [[ "$PUSH" -eq 1 ]]; then
     uv run --no-project python scripts/release_control.py record "$RELEASE_STATE" complete --field "githubRelease=$PUBLISH_RELEASE" --field "pypiUpload=$PUBLISH_PYPI" --field "homebrew=$UPDATE_TAP"
 fi

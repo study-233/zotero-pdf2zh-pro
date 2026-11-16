@@ -241,7 +241,9 @@ def build_settings_input(payload: dict[str, Any]) -> dict[str, Any]:
         translation_input["primary_font_family"] = font_family
 
     skip_last_pages = int(payload.get("skip_last_pages", 0) or 0)
-    if skip_last_pages > 0:
+    if payload.get("trial_pages"):
+        pdf_input.update(pages=payload["trial_pages"], only_include_translated_page=False)
+    elif skip_last_pages > 0:
         with pymupdf.open(input_path) as document:
             total_pages = document.page_count
         last_page = total_pages - skip_last_pages
@@ -398,6 +400,8 @@ async def translate_pdf_with_callbacks(
                 "protocol": getattr(translation_config.translator, "resolved_protocol", None),
                 "qps": getattr(translation_config, "qps", None),
                 "poolSize": translation_config.pool_max_workers,
+                "retryCount": payload.get("retry_count"),
+                "retryInterval": payload.get("retry_interval"),
                 "sourceLang": getattr(translation_config, "lang_in", payload.get("source_lang")),
                 "targetLang": getattr(translation_config, "lang_out", payload.get("target_lang")),
             })
@@ -413,9 +417,9 @@ async def translate_pdf_with_callbacks(
         from babeldoc.format.pdf.document_il.midend.body_input import BODY_INPUT_VERSION, STYLE_INPUT_VERSION
         from babeldoc.format.pdf.quality_review import REVIEW_VERSION
         fingerprint_payload = {k: v for k, v in payload.items() if k not in {
-            "input_path", "output_dir", "qps", "pool_size", "repair_attempt", "review_attempt", "translation_memory_path",
+            "input_path", "output_dir", "qps", "pool_size", "profile_limits", "retry_count", "retry_interval", "repair_attempt", "review_attempt", "translation_memory_path",
         }}
-        fingerprint_payload["llm_api"] = {k: v for k, v in payload.get("llm_api", {}).items() if k != "apiKey"}
+        fingerprint_payload["llm_api"] = {k: v for k, v in payload.get("llm_api", {}).items() if k not in {"apiKey", "qps", "poolSize", "retryCount", "retryInterval"}}
         if fingerprint_payload["llm_api"].get("reasoningMode") == "default":
             fingerprint_payload["llm_api"].pop("reasoningMode")
         fingerprint_payload["body_input_version"] = BODY_INPUT_VERSION
@@ -427,6 +431,7 @@ async def translate_pdf_with_callbacks(
         review_policy = {"enabled": translation_config.semantic_review, "version": REVIEW_VERSION}
         fingerprint_payload["review_policy"] = review_policy
         fingerprint = hashlib.sha256(input_path.read_bytes())
+        source_hash = fingerprint.hexdigest()
         fingerprint.update(json.dumps(fingerprint_payload, sort_keys=True).encode())
         recovery = TranslationRecovery(
             input_path.parent / "paragraph-recovery.sqlite3", fingerprint.hexdigest(), progress_callback,
@@ -556,14 +561,29 @@ async def translate_pdf_with_callbacks(
                 job_id,
                 ", ".join(file.filename for file in files.values()),
             )
+            suffix = ""
+            if pages := payload.get("trial_pages"):
+                label = pages if len(pages) <= 40 else pages[:24] + "-" + hashlib.sha256(pages.encode()).hexdigest()[:10]
+                suffix += f".pages-{label}"
             if payload.get("repair_attempt"):
-                repaired_files = {}
+                suffix += f".repair-{payload['repair_attempt']}"
+            if suffix:
+                named_files = {}
                 for mode, file in files.items():
                     check_cancelled()
-                    renamed = file.output_path.with_name(f"{file.output_path.stem}.repair-{payload['repair_attempt']}.pdf")
+                    # Keep the PDF extension, output mode and range on long UTF-8 filenames.
+                    stem = file.output_path.stem.encode()[-(255 - len(suffix) - 4):].decode(errors="ignore")
+                    renamed = file.output_path.with_name(f"{stem}{suffix}.pdf")
                     file.output_path.replace(renamed)
-                    repaired_files[mode] = TranslationOutputFile(mode, renamed, renamed.name)
-                files = repaired_files
+                    named_files[mode] = TranslationOutputFile(mode, renamed, renamed.name)
+                files = named_files
+            if payload.get("translation_memory_path"):
+                from pdf2zh_pro.source_map import write_source_maps
+                try:
+                    files = write_source_maps(files, input_path, source_hash, translation_config, payload.get("target_lang", "zh-CN"))
+                except (OSError, ValueError, RuntimeError) as error:
+                    # The generated PDFs remain usable if their optional reading index could not be saved.
+                    LOGGER.warning("[%s] source map unavailable (%s)", job_id, type(error).__name__)
             summary, failed = translation_config.recovery.snapshot()
             evidence_status = 'incomplete' if summary['failed'] or summary['pending'] else 'completed'
             check_cancelled()

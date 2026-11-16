@@ -8,6 +8,10 @@ export interface LLMApiData {
     apiKey: string;
     apiUrl: string;
     model: string;
+    qps?: number;
+    poolSize?: number;
+    retryCount?: number;
+    retryInterval?: number;
     /** Read only during legacy migration. */
     activate?: boolean;
     needsTest?: boolean;

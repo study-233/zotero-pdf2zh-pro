@@ -1,8 +1,6 @@
 # 官网开发
 
-官网已迁为 Next.js App Router、React、Tailwind CSS 和 Fumadocs。Memos 的原始组件、样式及动画直接迁入项目，来源与适配范围见 [源码记录](SOURCES.md)。旧的 Astro 页面和依赖已移除。
-
-本地实现与用户预览验收已完成，合并到 `main` 后由 GitHub Pages 工作流自动发布。阶段状态见 [迁移记录](next-migration.md)，此前方案保留在 [V2 历史计划](v2-plan.md)。
+官网使用 Next.js、React、Tailwind 和 Fumadocs。页面规范见[设计](DESIGN.md)，组件和素材见[源码记录](SOURCES.md)。
 
 ## 环境与构建
 
@@ -32,7 +30,7 @@ pnpm --dir website preview
 - 16 篇教程以 `src/content/docs/guide/*.mdx` 为唯一正文源。修改后运行 `pnpm --dir website docs:sync`，同步使用指南与术语库兼容文档；不要手改汇总。
 - `routes.json` 维护侧栏顺序和分组。JSON frontmatter 和 Markdown 兼容正文保留；指南不嵌入网页专用交互。
 - 侧栏、目录、搜索、代码复制由 Fumadocs 提供。中文词语使用多语言静态索引，保留旧标题锚点和旧入口跳转。
-- 更新记录直接读取 CHANGELOG，版本来自插件元数据。先展示最近 10 版，旧版本可展开，每版有独立详情页。
+- 更新记录直接读取 CHANGELOG，版本来自 README 的公开版本标记。先展示最近 10 版，旧版本可展开，每版有独立详情页。
 - Memos 的全局颜色、排版、1400px 容器、56px 导航、Hero 动画与更新列表组件均来自固定提交。中文适配集中在 `src/app/zotero.css` 与教程样式，字体为本地 Inter、Source Serif 4、Noto Sans SC、Noto Serif SC。
 - 首页保留项目吉祥物、双语阅读器与划词精读截图；没有“查看大图”浮标。下载区仅保留本地服务、XPI 和必要平台选择。
 - 主题由 next-themes 统一控制，支持浅色、深色与跟随系统。动画尊重减少动画设置。
@@ -60,4 +58,4 @@ node website/test_motion_browser.cjs
 冻结文本通过 `.gitattributes` 固定为 LF，保证 Windows 与 Linux 的原始字节一致。初次在 Windows 采集的 49 个源文件与 4 个下载条目的换行符哈希，已按基线提交 `f35697c292891af701ad0872352537f1900302f0` 的 Git blob 纠正；纠正前逐项确认差异仅为 CRLF/LF，不使用迁移产物重新生成基线。附件和源文件仍逐字节校验。
 
 旧 Jinja 构建仅保留为数据验证和应急回退：`pnpm --dir website build:legacy`，会替换 `dist/site/`，不要与新构建并发运行。
-迁移前源码与可用产物已有独立恢复归档。唯一发布入口仍为 `.github/workflows/website.yml`；功能分支通过 PR 校验，合并到 `main` 后由工作流发布。
+迁移前源码与可用产物已有独立恢复归档。PR 和 main 推送生成预览。发布脚本在正式文档合入后调用 `website.yml`，部署前核对最新正式版和安装包。

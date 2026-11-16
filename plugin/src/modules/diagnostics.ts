@@ -182,7 +182,7 @@ export function diagnosticSummary(task: Record<string, any>): string {
         ["实际生效配置", effective],
     ] as const) {
         lines.push(
-            `${label}：${values ? `服务类型=${values.provider ?? "未记录"}，模型=${values.model ?? "未记录"}，协议=${values.protocol ?? "未记录"}，QPS=${values.qps ?? "未记录"}，并发=${values.poolSize ?? "未记录"}` : "未记录（旧版本或尚未完成初始化）"}`,
+            `${label}：${values ? `服务类型=${values.provider ?? "未记录"}，模型=${values.model ?? "未记录"}，协议=${values.protocol ?? "未记录"}，QPS=${values.qps ?? "未记录"}，并发=${values.poolSize ?? "未记录"}，额外重试=${values.retryCount ?? "引擎默认"}，重试间隔秒数=${values.retryInterval ?? "引擎默认"}` : "未记录（旧版本或尚未完成初始化）"}`,
         );
     }
     const translation = safe.translationSummary;

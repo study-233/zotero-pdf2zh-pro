@@ -108,7 +108,7 @@ export class ZoteroTaskImporter {
                     });
                     continue;
                 }
-                const bytes = await ServerTaskClient.fetchResult(
+                const downloaded = await ServerTaskClient.fetchResult(
                     task.serverUrl,
                     task.taskId,
                     outputMode,
@@ -120,9 +120,10 @@ export class ZoteroTaskImporter {
                 const output: TaskOutputResponse = {
                     fileName,
                     outputMode,
-                    bytes,
+                    ...downloaded,
                     importIdentity,
                     model: task.model || "",
+                    trialPages: task.trialPages,
                     incomplete: task.status === "incomplete",
                 };
                 await PDF2zhHelperFactory.handleOutputResponse(

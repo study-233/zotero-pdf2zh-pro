@@ -67,7 +67,7 @@ def compatibility_body(body, destination, routes):
 def generated_documents(root=ROOT):
     routes = json.loads((root / 'website/routes.json').read_text(encoding='utf-8'))
     guide = ['# 使用指南', GENERATED, '[返回项目首页](../README.md)',
-             '按 **本地服务 → Zotero 插件 → 翻译来源 → 第一篇 PDF** 完成首次使用。', '## 目录']
+             '首次使用请从[安装前准备](#quick-start)开始。', '## 目录']
     guide += ['- [' + p['title'] + '](' + ('#' + p['anchor'] if 'anchor' in p else posixpath.relpath(p['source'], 'docs')) + ')' for p in routes]
     outputs = {}
     for page in routes:

@@ -1,6 +1,23 @@
+import { ensureEngine } from "./managedEngine";
 import { config } from "../../package.json";
 import { PDF2zhHelperFactory } from "./pdf2zhHelper";
 import { loadGlossaryEntries } from "./glossaryStore";
+import {
+    readSourceBinding,
+    isOriginalSide,
+    matchSourceParagraphs,
+    openSourcePage,
+    clearSourceReturnControls,
+} from "./sourceLookup";
+import {
+    pageGlyphs,
+    paragraphPosition,
+    selectedParagraphs,
+    markParagraph,
+} from "./sourcePosition";
+import type { SourceBinding } from "./sourceLookup";
+import { sourceSentences } from "./sourceSentence";
+import { saveSelectionNote } from "./selectionNote";
 import { recordDiagnostic } from "./diagnostics";
 import { getPref, setPref } from "../utils/prefs";
 import { getString } from "../utils/locale";
@@ -35,6 +52,7 @@ import {
 import {
     selectionElement,
     SelectionResult,
+    type SelectionAction,
     SelectionLearning,
     SelectionControls,
 } from "./selectionPopup";
@@ -97,6 +115,7 @@ export async function lookupSelection(
     page: number | undefined,
     targetLang: string,
 ): Promise<MemoryResult> {
+    await ensureEngine(serverUrl);
     const response = await request.post(
         `${serverUrl.replace(/\/$/, "")}/translation-lookup`,
         {
@@ -166,6 +185,7 @@ export async function translateSelection(
         else selectionProvider = "bing";
     if (!options.mode && selectionProvider === "profile" && !settings.apiConfig)
         selectionProvider = "bing";
+    await ensureEngine(settings.serverUrl);
     const needsCodexProxy =
         selectionProvider === "profile" &&
         settings.service === "codex" &&
@@ -367,6 +387,10 @@ type ReaderState = {
     request?: SelectionRequest;
     dictionaryRequest?: ReturnType<typeof createDictionaryRequest>;
     original?: string;
+    pageLabel?: string;
+    sourceView?: boolean;
+    clearSourceMark?: () => void;
+    sourceBinding?: Promise<SourceBinding | null | undefined>;
     position?: { pageIndex: number; rects?: number[][] };
     onDelta?: (text: string) => void;
     onStreamStart?: () => void;
@@ -386,6 +410,8 @@ type ReaderState = {
 const states = new Map<Reader, ReaderState>();
 
 function invalidate(state: ReaderState) {
+    state.clearSourceMark?.();
+    state.clearSourceMark = undefined;
     if (state.popup) stopSelectionAudio(state.popup.card);
     state.version++;
     if (state.timer !== undefined) clearTimeout(state.timer);
@@ -474,6 +500,8 @@ function getState(reader: Reader, doc: Document) {
                 if (insideCard(state, event)) return;
                 // A physical interaction starts a fresh selection session, even if
                 // the next selection has the same text and coordinates.
+                if (state.clearSourceMark || state.sourceView)
+                    invalidate(state);
                 dismiss(state);
                 state.key = "";
                 state.dismissed = false;
@@ -482,7 +510,8 @@ function getState(reader: Reader, doc: Document) {
                 if (!insideCard(state, event)) dismiss(state);
             },
             escape() {
-                if (!state.popup?.docked) dismiss(state, true);
+                if (state.sourceView || !state.popup?.docked)
+                    dismiss(state, true);
             },
             dispose() {
                 dispose(state);
@@ -827,6 +856,20 @@ function createLearning(
     };
 }
 
+function bindingFor(state: ReaderState) {
+    if (!state.sourceBinding) {
+        const item =
+            state.reader.itemID && Zotero.Items.get(state.reader.itemID);
+        state.sourceBinding = (
+            item ? readSourceBinding(item) : Promise.resolve(undefined)
+        ).catch((error) => {
+            state.sourceBinding = undefined;
+            throw error;
+        });
+    }
+    return state.sourceBinding;
+}
+
 async function showSelection(
     state: ReaderState,
     version: number,
@@ -844,6 +887,35 @@ async function showSelection(
         !state.dismissed &&
         state.version === version;
     if (!current()) return;
+    function present(kind: SelectionAction, preservePosition = false) {
+        if (state.popup && state.sourceView !== (kind === "source")) {
+            const previous = state.popup;
+            state.popup = undefined;
+            previous.close();
+        }
+        state.sourceView = kind === "source";
+        if (state.popup?.alive)
+            state.popup.updateSelection(text, kind, anchor, preservePosition);
+        else {
+            const view = createSelectionView(
+                state.reader,
+                state.doc,
+                anchor,
+                text,
+                kind,
+                () => {
+                    if (state.popup !== view) return;
+                    state.popup = undefined;
+                    state.dismissed = true;
+                    invalidate(state);
+                },
+                state.id,
+                (part) => recordDiagnostic(`selection_popup_${part}_degraded`),
+            );
+            state.popup = view;
+        }
+        return state.popup!;
+    }
     let stage = "popup";
     let learning: ReturnType<typeof createLearning> | undefined;
     let paragraphReference: { text: string; incomplete?: boolean } | undefined;
@@ -853,6 +925,144 @@ async function showSelection(
     const previousResult = refresh ? state.popup?.result : undefined;
     let chosenMeaning: string | undefined;
     try {
+        stage = "source_lookup";
+        const binding = await bindingFor(state);
+        if (!current()) return;
+        const outputChanged = binding
+            ? (await readerFingerprint(state.reader)) !== binding.map.outputHash
+            : false;
+        if (!current()) return;
+        if (
+            binding !== undefined &&
+            (outputChanged ||
+                !binding ||
+                !isOriginalSide(binding.map, state.position))
+        ) {
+            const view = present("source");
+            view.loading(getString("source-lookup-loading"));
+            const sourceResult: SelectionResult = {
+                kind: "source",
+                text: getString("source-lookup-legacy"),
+                candidates: [],
+            };
+            if (binding) {
+                if (outputChanged) {
+                    sourceResult.text = getString(
+                        "source-lookup-output-changed",
+                    );
+                } else {
+                    const match = matchSourceParagraphs(
+                        binding.map,
+                        page,
+                        text,
+                    );
+                    const pairs = match.page
+                        ? binding.map.paragraphs[match.page] || []
+                        : [];
+                    const position = state.position;
+                    const edge =
+                        position && binding.map.split?.[position.pageIndex];
+                    let pair: [string, string] | undefined;
+                    const chars =
+                        position && match.page
+                            ? await pageGlyphs(state.reader, position.pageIndex)
+                            : [];
+                    if (!current()) return;
+                    if (
+                        position &&
+                        (match.uncertain || !match.candidates.length)
+                    ) {
+                        const hits = selectedParagraphs(
+                            chars,
+                            position,
+                            pairs,
+                            edge || 0,
+                        );
+                        if (hits.length === 1) {
+                            pair = hits[0];
+                            match.candidates = [pair[0]];
+                            match.uncertain = false;
+                        }
+                    }
+                    if (
+                        !pair &&
+                        match.candidates.length === 1 &&
+                        !match.uncertain
+                    ) {
+                        const rows = pairs.filter(
+                            ([source]) => source === match.candidates[0],
+                        );
+                        if (rows.length === 1) pair = rows[0];
+                    }
+                    const sentence =
+                        pair &&
+                        sourceSentences(pair[0], pair[1], text, (sentences) => {
+                            if (!position) return;
+                            const hits = selectedParagraphs(
+                                chars,
+                                position,
+                                sentences.map((s) => [s, s]),
+                                edge || 0,
+                            );
+                            return hits.length === 1 ? hits[0][1] : undefined;
+                        });
+                    if (sentence && edge && position) {
+                        const mark = paragraphPosition(
+                            chars,
+                            position.pageIndex,
+                            sentence,
+                            edge,
+                        );
+                        if (mark) {
+                            try {
+                                state.clearSourceMark = markParagraph(
+                                    state.reader,
+                                    mark,
+                                );
+                            } catch {
+                                /* Keep the text preview if the reader layer is unavailable. */
+                            }
+                            sourceResult.marked = Boolean(
+                                state.clearSourceMark,
+                            );
+                        }
+                    }
+                    sourceResult.text = !match.candidates.length
+                        ? getString("source-lookup-no-match")
+                        : match.uncertain
+                          ? getString("source-lookup-candidates")
+                          : !sentence
+                            ? getString("source-lookup-paragraph-only")
+                            : "";
+                    sourceResult.candidates = sentence
+                        ? [sentence]
+                        : match.candidates;
+                    if (match.page) {
+                        const pageNumber = match.page;
+                        const item = Zotero.Items.get(state.reader.itemID!);
+                        if (!item)
+                            throw new Error(getString("source-lookup-missing"));
+                        sourceResult.page = pageNumber;
+                        const src =
+                            match.candidates.length === 1 && !match.uncertain
+                                ? sourceResult.candidates[0]
+                                : undefined;
+                        sourceResult.locate = Boolean(src);
+                        sourceResult.openPage = () =>
+                            openSourcePage(
+                                item.libraryID,
+                                binding,
+                                pageNumber,
+                                src,
+                                state.reader,
+                            );
+                    }
+                }
+            }
+            view.render(sourceResult);
+            return;
+        }
+        stage = "popup";
         const settings = PDF2zhHelperFactory.getServerConfig(false);
         const route = selectionRoute(
             text,
@@ -910,26 +1120,9 @@ async function showSelection(
                 state.contextModel = modelKey;
             }
         };
-        if (state.popup?.alive)
-            state.popup.updateSelection(text, kind, anchor, sameSelection);
-        else
-            state.popup = createSelectionView(
-                state.reader,
-                state.doc,
-                anchor,
-                text,
-                kind,
-                () => {
-                    state.popup = undefined;
-                    state.dismissed = true;
-                    invalidate(state);
-                },
-                state.id,
-                (part) => recordDiagnostic(`selection_popup_${part}_degraded`),
-            );
-        if (previousResult) state.popup.render(previousResult);
-        else state.popup.loading("正在查询…");
-        const ownerView = state.popup;
+        const ownerView = (state.popup = present(kind, sameSelection));
+        if (previousResult) ownerView.render(previousResult);
+        else ownerView.loading("正在查询…");
         const restart = (
             query = text,
             bypassCache = false,
@@ -1026,10 +1219,58 @@ async function showSelection(
                         text: partial || "生成已停止。",
                         origin: "AI 译文 · 未完成",
                         incomplete: true,
+                        interrupted: true,
                     },
                 );
             },
         };
+        const position = state.position;
+        if (
+            position &&
+            Number.isSafeInteger(position.pageIndex) &&
+            position.pageIndex >= 0
+        ) {
+            const original = state.original || text;
+            const pageLabel = state.pageLabel;
+            const noteControls = controls;
+            noteControls.onAddToNote = async (translation) => {
+                const result = ownerView.result;
+                if (
+                    !current() ||
+                    state.popup !== ownerView ||
+                    noteControls.noteBusy ||
+                    noteControls.streaming ||
+                    result?.kind !== "translation" ||
+                    result.interrupted ||
+                    result.text !== translation ||
+                    !translation.trim() ||
+                    noteControls.savedTranslation === translation
+                )
+                    return;
+                noteControls.noteBusy = true;
+                ownerView.setControls(noteControls);
+                try {
+                    await saveSelectionNote(state.reader, {
+                        original,
+                        query: text,
+                        translation,
+                        position,
+                        pageLabel,
+                    });
+                    noteControls.savedTranslation = translation;
+                } catch {
+                    recordDiagnostic("selection_note_failed");
+                    if (current())
+                        ownerView.showNotice(
+                            getString("selection-note-failed"),
+                            true,
+                        );
+                } finally {
+                    noteControls.noteBusy = false;
+                    if (current()) ownerView.setControls(noteControls);
+                }
+            };
+        }
         state.popup.setControls(controls);
         const favoriteAction = async (update = false) => {
             const popup = state.popup!;
@@ -1235,6 +1476,7 @@ async function showSelection(
                     origin: "AI 译文 · 未完成",
                     notice: error,
                     incomplete: true,
+                    interrupted: true,
                 });
         };
         if (text.length > 20000)
@@ -1427,9 +1669,11 @@ async function showSelection(
                 void showSelection(state, version, anchor, text, page, true);
         });
         const message =
-            stage === "popup"
-                ? getString("selection-error-popup")
-                : selectionFailure(error);
+            stage === "source_lookup"
+                ? getString("source-lookup-failed")
+                : stage === "popup"
+                  ? getString("selection-error-popup")
+                  : selectionFailure(error);
         if (message === getString("selection-error-stream") && controls)
             controls.onPlainRetry = () => restartPlain();
         function restartPlain() {
@@ -1455,6 +1699,7 @@ async function showSelection(
                           text: partial,
                           origin: "AI 译文 · 未完成",
                           incomplete: true,
+                          interrupted: true,
                           notice: message,
                       }
                     : previousResult
@@ -1517,12 +1762,32 @@ const onSelection: _ZoteroTypes.Reader.EventHandler<
                 state.key = key;
                 state.original = text;
                 state.position = params.annotation.position;
+                state.pageLabel = params.annotation.pageLabel;
                 state.dismissed = false;
             }
             const button = selectionElement(doc, "button");
             button.type = "button";
             button.textContent = "翻译";
             button.setAttribute("aria-label", "翻译选中文字");
+            void bindingFor(state)
+                .then((binding) => {
+                    if (
+                        binding !== undefined &&
+                        !(
+                            binding &&
+                            isOriginalSide(
+                                binding.map,
+                                params.annotation.position,
+                            )
+                        )
+                    ) {
+                        button.textContent = getString("source-lookup-title");
+                        button.setAttribute("aria-label", button.textContent);
+                    }
+                })
+                .catch(() =>
+                    recordDiagnostic("selection_source_lookup_failed"),
+                );
             button.addEventListener("click", (event) => {
                 event.stopPropagation();
                 invalidate(state);
@@ -1566,6 +1831,7 @@ const onSelection: _ZoteroTypes.Reader.EventHandler<
         state.key = key;
         state.original = text;
         state.position = params.annotation.position;
+        state.pageLabel = params.annotation.pageLabel;
         state.dismissed = false;
         const version = state.version;
         const pageIndex = params.annotation.position?.pageIndex;
@@ -1644,6 +1910,7 @@ export function unregisterSelectionTranslation(): void {
     registered = false;
     for (const state of states.values()) dispose(state);
     states.clear();
+    clearSourceReturnControls();
     unregisterSelectionPane();
     unregisterFavoritesPane();
     if (tabObserver) Zotero.Notifier.unregisterObserver(tabObserver);

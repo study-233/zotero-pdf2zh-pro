@@ -23,7 +23,7 @@ from pygments.lexers import TextLexer, get_lexer_by_name
 from pygments.token import Name, Text
 from pygments.util import ClassNotFound
 
-from check_docs import heading_slug
+from check_docs import heading_slug, public_version
 from website_data import (BENCHMARK, PUBLICATION, PILOT_PUBLICATION, REGISTRY,
                           EXPERIMENT_PUBLICATION, load_benchmark, copy_benchmark_assets)
 
@@ -95,6 +95,13 @@ def guide_sections(text):
             for i, m in enumerate(matches)}
 
 
+def public_changelog(text, version):
+    heading = re.search(rf'^## v{re.escape(version)} - [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}[ \t]*$', text, re.M)
+    if not heading:
+        raise ValueError(f'Missing changelog section for public version v{version}')
+    return text.splitlines()[0] + '\n\n' + text[heading.start():]
+
+
 class Website:
     def __init__(self, base=DEFAULT_BASE):
         if not re.fullmatch(r'/(?:[A-Za-z0-9_-]+/)*', base):
@@ -114,7 +121,7 @@ class Website:
         self.assets.update(self.screenshots)
         self.assets.update(image['preview'] for image in self.screenshots.values() if 'preview' in image)
         self.search = []
-        self.version = json.loads((ROOT / 'plugin/package.json').read_text(encoding='utf-8'))['version']
+        self.version = public_version((ROOT / 'README.md').read_text(encoding='utf-8'))
         sections = guide_sections((ROOT / GUIDE).read_text(encoding='utf-8'))
         configured = [p['anchor'] for p in self.pages if 'anchor' in p]
         if set(configured) != sections.keys() or len(configured) != len(set(configured)):
@@ -126,7 +133,7 @@ class Website:
             self.documents.setdefault(page['source'], page['route'])
             body = sections[page['anchor']] if 'anchor' in page else (ROOT / page['source']).read_text(encoding='utf-8')
             page['tokens'], page['toc'] = self.parse(body, page['source'], page['route'], counts)
-        self.changelog, _ = self.parse((ROOT / 'CHANGELOG.md').read_text(encoding='utf-8'),
+        self.changelog, _ = self.parse(public_changelog((ROOT / 'CHANGELOG.md').read_text(encoding='utf-8'), self.version),
                                       'CHANGELOG.md', 'changelog/', counts)
         for anchor in ('features', 'quick-start', 'windows', 'macos', 'community'):
             self.anchors['README.md', anchor] = '#' + anchor

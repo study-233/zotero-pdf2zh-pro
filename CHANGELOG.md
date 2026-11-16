@@ -3,6 +3,18 @@
 这里记录 `zotero-pdf2zh-pro` 的用户可见变化。旧项目的历史仍保留在 Git 历史中，
 不作为本产品的版本序列。
 
+## v1.9.8 - 2026-11-15
+
+Windows x64 和 Apple Silicon Mac 用户可直接从 Zotero 插件安装本地翻译引擎。阅读论文时，可以先试译几页，再从译文定位原句、保存双语笔记。
+
+- **安装与升级**　安装 XPI 后，在插件设置中点击「检查本地服务」，按提示联网下载引擎。插件会在任务空闲时更新托管引擎。使用 Windows 控制中心、Homebrew 或远程服务的用户可沿用原地址和数据，请按原方式升级服务以使用新版功能。
+- **按页试译**　在文库或 PDF 阅读器中选择「按页试译」，指定单页或多个页段。试译附件保留原页序，并标明翻译范围。
+- **译文反查与笔记**　在新版服务生成并导入的单语或双语附件中划选译文，可查看对应原句并跳回原文。无法确定原句时显示原段。选段翻译后点击「加入笔记」，可将原文、译文和页码链接保存到当前笔记或文献下的「双语摘录」。
+- **模型请求限制**　每个模型配置可以分别设置全文翻译和试译的请求频率、并发及重试。任务详情可查看实际限制，继续执行和补译时沿用提交时的设置。
+- **PDF 排版与参考文献**　改进译文的文字样式保留和补译失败诊断。识别带编号、跨页的参考文献，在文献后的致谢、资助或作者贡献等章节恢复翻译。
+
+[Zotero 插件](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.8/zotero-pdf2zh-pro.xpi) · [Windows 独立安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.8/zotero-pdf2zh-pro-windows-x64-setup.exe) · [安装指南](https://study-233.github.io/zotero-pdf2zh-pro/guide/) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.7...v1.9.8)
+
 ## v1.9.7 - 2026-10-29
 
 本次更新减少 PDF 翻译中的重复处理，并修复代码识别与官网导航。

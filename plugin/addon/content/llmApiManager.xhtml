@@ -189,6 +189,45 @@
                             type="button"
                             data-i18n="apply-recommended"
                         />
+                        <div class="field">
+                            <label for="qps" data-i18n="limit-qps" />
+                            <input id="qps" type="number" min="1" step="1" />
+                        </div>
+                        <div class="field">
+                            <label for="poolSize" data-i18n="limit-poolSize" />
+                            <input
+                                id="poolSize"
+                                type="number"
+                                min="1"
+                                step="1"
+                            />
+                        </div>
+                        <div class="field">
+                            <label
+                                for="retryCount"
+                                data-i18n="limit-retryCount"
+                            />
+                            <input
+                                id="retryCount"
+                                type="number"
+                                min="0"
+                                step="1"
+                                max="100"
+                            />
+                        </div>
+                        <div class="field">
+                            <label
+                                for="retryInterval"
+                                data-i18n="limit-retryInterval"
+                            />
+                            <input
+                                id="retryInterval"
+                                type="number"
+                                min="0"
+                                step="1"
+                                max="300"
+                            />
+                        </div>
                         <div id="protocol-field" class="field">
                             <label
                                 for="apiProtocol"

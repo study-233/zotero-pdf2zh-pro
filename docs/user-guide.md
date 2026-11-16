@@ -4,7 +4,7 @@
 
 [返回项目首页](../README.md)
 
-按 **本地服务 → Zotero 插件 → 翻译来源 → 第一篇 PDF** 完成首次使用。
+首次使用请从[安装前准备](#quick-start)开始。
 
 ## 目录
 
@@ -47,8 +47,6 @@
 <span id="1-安装前准备"></span>
 
 
-首次使用需要 **Zotero、插件、本地服务和翻译来源**。
-
 <span id="需要安装哪些东西"></span>
 
 ### 准备这四项
@@ -60,7 +58,7 @@
 | Zotero 插件 | 下载 XPI 后[从文件安装](#installation) |
 | 翻译来源 | 准备 API Key，或使用已有的 [ChatGPT 套餐 / 本地模型](#api-configuration) |
 
-插件和本地服务都要安装。Linux / Docker 用户查看[进阶部署](#advanced)。
+Linux / Docker 用户查看[进阶部署](#advanced)。
 
 <span id="两种地址不要填反"></span>
 
@@ -89,13 +87,11 @@ PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，�
 
 ### 安装并启动
 
-1. [下载 Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)，双击打开。
-2. 选择安装位置，点击 **开始安装**。默认位置为 `%LOCALAPPDATA%\zotero-pdf2zh-pro`。
-3. 完成后点击 **完成并启动服务**。
+[下载并打开 Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)，选择安装位置并点击 **开始安装**。
 
 ![选择安装位置后点击开始安装](../assets/guide/windows-installer.webp)
 
-看到 **翻译服务已就绪**，继续[安装 Zotero 插件](#installation)。
+点击 **完成并启动服务**。看到 **翻译服务已就绪**，继续[安装 Zotero 插件](#installation)。
 
 ![控制中心显示翻译服务已就绪](../assets/guide/windows-service-ready.webp)
 
@@ -205,10 +201,7 @@ curl -fsS http://127.0.0.1:8890/health
 
 ### 安装插件
 
-1. [下载插件 XPI](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)，**不要解压**。
-2. 在 Zotero 打开 **工具 → 插件**。
-3. 点击齿轮，选择 **Install Plugin From File…**（部分版本为 `Install Add-on From File…`）。
-4. 选择 XPI，按提示安装并重启 Zotero，确认插件已启用。
+[下载 XPI](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)。打开 Zotero **工具 → 插件**，在齿轮菜单选择 **Install Plugin From File…**，选中 XPI 并按提示重启。
 
 ![在插件管理器中选择从文件安装 XPI](../assets/guide/install-plugin.webp)
 
@@ -216,14 +209,11 @@ curl -fsS http://127.0.0.1:8890/health
 
 ### 检查连接
 
-1. 打开 Zotero 设置：Windows 为 **编辑 → 设置**，macOS 为 **Zotero → 设置**。
-2. 选择 **zotero-pdf2zh-pro**，展开 **服务端连接**。
-3. 本地服务地址填 `http://127.0.0.1:8890`，点击 **检查本地服务**。
+在 Zotero 设置中打开 **zotero-pdf2zh-pro → 服务端连接**。本机地址为 `http://127.0.0.1:8890`，远程服务填写已有地址。点击 **检查本地服务**。
 
-显示 **已连接** 后，继续[配置翻译来源](#api-configuration)。
 ![填写本地服务地址，点击检查本地服务后显示已连接](../assets/guide/server-connected.webp)
 
-连接失败时，先确认控制中心或 Homebrew 服务已启动。
+显示 **已连接** 后，继续[配置翻译来源](#api-configuration)。
 
 <a id="api-configuration"></a>
 

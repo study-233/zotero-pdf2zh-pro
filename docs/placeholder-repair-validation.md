@@ -30,7 +30,7 @@
 - 双语 PDF 共 9 页，原文半页与输入 PDF 逐页渲染像素完全相同。
   检查 9 页缩略总览及第 3 页放大图，表格、双栏、引文上标及 F₁ 下标可见且无新增裁切或重叠。
 
-测试副本和原始响应仅在本机 `.tmp/placeholder-verification/`，不包含在发布产物中。
+测试副本和原始响应仅在本机 `.local-dev/archive/layout-20261115/placeholder-verification/`，不包含在发布产物中。
 `report.json`、`resume-report.json` 和 `original-pages-check.json` 保存验证摘要。
 这次验证复用已经成功的译文，未声称逐句重新审核整篇论文的翻译质量。
 

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from build_site import Website
+from build_site import Website, public_changelog
 from prepare_website_data import release_entries, reset_generated
 from website_data import EXPERIMENT_PUBLICATION, PILOT_PUBLICATION, load_benchmark
 
@@ -29,6 +29,13 @@ class PreparationTests(unittest.TestCase):
             self.assertEqual(self.site.anchors['CHANGELOG.md', entry['anchor']], 'changelog/#' + entry['anchor'])
             for anchor in entry['anchors']:
                 self.assertIn(f'id="{anchor}"', entry['html'])
+
+    def test_changelog_hides_drafts_and_newer_candidates(self):
+        public = '## v1.9.7 - 2026-10-29\nreleased fix'
+        text = '# Changes\n## 未发布\ndraft\n## v1.10.0 - 2026-11-15\npreview\n' + public
+        self.assertEqual(public_changelog(text, '1.9.7'), '# Changes\n\n' + public)
+        with self.assertRaisesRegex(ValueError, 'Missing changelog'):
+            public_changelog(text, '1.9.8')
 
     def test_generated_reset_cannot_delete_authored_content(self):
         with tempfile.TemporaryDirectory() as directory, patch('prepare_website_data.SITE', Path(directory)):

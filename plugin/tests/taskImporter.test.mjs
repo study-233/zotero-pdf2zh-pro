@@ -23,7 +23,7 @@ globalThis.__importTest = {
             state.downloads.push(mode);
             await state.onDownload?.(mode);
             if (mode === state.failMode) throw new Error("download failed");
-            return new Uint8Array([1]);
+            return { bytes: new Uint8Array([1]) };
         },
     },
     PDF2zhHelperFactory: {

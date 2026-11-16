@@ -576,3 +576,34 @@ test("DeepL strips inapplicable recommended HTTP settings", () => {
     assert.equal("reasoningMode" in saved, false);
     assert.equal("apiProtocol" in saved, false);
 });
+
+test("limits round-trip per draft, preserve zero, and reject invalid overrides", () => {
+    const { nodes, editor } = fixture();
+    nodes.qps.value = "3";
+    nodes.poolSize.value = "2";
+    nodes.retryCount.value = "0";
+    nodes.retryInterval.value = "0";
+    const draftA = editor.snapshot();
+    const a = editor.read();
+    assert.equal(a.qps, 3);
+    assert.equal(a.poolSize, 2);
+    assert.equal(a.retryCount, 0);
+    assert.equal(a.retryInterval, 0);
+    editor.load({
+        profile: {
+            ...a,
+            key: "other",
+            qps: undefined,
+            poolSize: undefined,
+            retryCount: undefined,
+            retryInterval: undefined,
+        },
+    });
+    assert.equal("qps" in editor.read(), false);
+    nodes.retryCount.value = "101";
+    assert.throws(() => editor.read(), /0–100/);
+    editor.load(draftA);
+    assert.equal(editor.read().retryCount, 0);
+    nodes.qps.value = "0";
+    assert.throws(() => editor.read(), /正整数/);
+});

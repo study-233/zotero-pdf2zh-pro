@@ -55,6 +55,7 @@ function menuFixture(registerResult) {
                 getString: (key) =>
                     ({
                         "prefs-menu-translate": "Translate PDF",
+                        "trial-menu": "Translate selected pages…",
                         "prefs-menu-tasks": "Task Manager",
                         "export-title": "Export File",
                         "export-format-md": "Markdown…",
@@ -98,6 +99,7 @@ test("native item menu registers once across main-window loads and retains all a
         "zotero-pdf2zh-pro",
         "zotero-pdf2zh-pro: Translate PDF",
         "zotero-pdf2zh-pro: Task Manager",
+        "Translate selected pages…",
         "Export File",
         "Markdown…",
         "JSON…",
@@ -109,6 +111,7 @@ test("native item menu registers once across main-window loads and retains all a
     assert.deepEqual(commands, [
         "translatePDF",
         "openTaskManager",
+        "pageTrial",
         "exportDocument",
         "exportDocument",
         "exportDocument",

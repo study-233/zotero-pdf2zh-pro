@@ -5,10 +5,8 @@ from pdf2zh_pro.translator.atomic_integer import AtomicInteger
 from pdf2zh_pro.config import SettingsModel
 from pdf2zh_pro.translator.rate_limit import BaseRateLimiter
 from pdf2zh_pro.translator.base import BaseTranslator
-from tenacity import before_sleep_log
-from tenacity import retry
+from pdf2zh_pro.translator.request_retry import configurable_retry
 from tenacity import retry_if_exception_type
-from tenacity import stop_after_attempt
 from tenacity import wait_exponential
 
 logger = logging.getLogger(__name__)
@@ -66,11 +64,9 @@ class OllamaTranslator(BaseTranslator):
         return {"requested": self.reasoning_mode, "effective": effective,
                 "protocolFallback": False, "modelDetail": self.capabilities}
 
-    @retry(
-        retry=retry_if_exception_type(ollama.ResponseError),
-        stop=stop_after_attempt(100),
-        wait=wait_exponential(multiplier=1, min=1, max=15),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+    @configurable_retry(
+        attempts=100, predicate=retry_if_exception_type(ollama.ResponseError),
+        backoff=wait_exponential(multiplier=1, min=1, max=15),
     )
     def do_translate(self, text, rate_limit_params: dict = None) -> str:
         if (max_token := len(text) * 5) > self.options["num_predict"]:
@@ -88,11 +84,9 @@ class OllamaTranslator(BaseTranslator):
         message = self._remove_cot_content(message)
         return message
 
-    @retry(
-        retry=retry_if_exception_type(ollama.ResponseError),
-        stop=stop_after_attempt(100),
-        wait=wait_exponential(multiplier=1, min=1, max=15),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+    @configurable_retry(
+        attempts=100, predicate=retry_if_exception_type(ollama.ResponseError),
+        backoff=wait_exponential(multiplier=1, min=1, max=15),
     )
     def do_llm_translate(self, text, rate_limit_params: dict = None):
         if text is None:

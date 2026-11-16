@@ -77,6 +77,22 @@ export function loadProfiles(): LLMApiData[] {
     }
     return profiles;
 }
+/** Freeze the selected profile together with the global defaults at submission. */
+export function getRequestLimits(profile?: LLMApiData | null) {
+    const retryCount = Number(
+        profile?.retryCount ?? getPref("retryCount") ?? -1,
+    );
+    const retryInterval = Number(
+        profile?.retryInterval ?? getPref("retryInterval") ?? -1,
+    );
+    return {
+        qps: String(profile?.qps ?? getPref("qps") ?? 10),
+        poolSize: String(profile?.poolSize ?? getPref("poolSize") ?? 50),
+        ...(retryCount !== -1 ? { retryCount } : {}),
+        ...(retryInterval !== -1 ? { retryInterval } : {}),
+    };
+}
+
 export function saveProfiles(profiles: LLMApiData[]) {
     if (profiles.some((api) => normalizeService(api.service) === "codex"))
         throw new Error("Codex 配置已停用，请改用 ChatGPT 登录。");
