@@ -16,25 +16,16 @@ export default function Guide() {
       </div>
       <DocsTitle>开始使用</DocsTitle>
       <DocsDescription>
-        安装本地服务和插件，配置翻译来源，即可翻译第一篇论文。
+        安装插件并准备本地引擎，配置翻译来源后先试译几页。
       </DocsDescription>
-      <h2 className="mt-6 text-xl font-semibold">1. 安装本地服务</h2>
-      <Cards>
-        <Card icon={<MonitorIcon />} title="Windows" href="/guide/windows/">
-          Windows 10 / 11 · x64
-        </Card>
-        <Card icon={<AppleIcon />} title="macOS" href="/guide/macos/">
-          Apple Silicon · Homebrew
-        </Card>
-      </Cards>
-      <h2 className="mt-6 text-xl font-semibold">2. 连接 Zotero</h2>
+      <h2 className="mt-6 text-xl font-semibold">1. 安装插件并配置翻译</h2>
       <Cards>
         <Card
           icon={<BookOpenIcon />}
           title="安装 Zotero 插件"
           href="/guide/installation/"
         >
-          下载 XPI，在 Zotero 中安装。
+          下载 XPI，再点击“检查本地服务”安装引擎。
         </Card>
         <Card
           icon={<SlidersHorizontalIcon aria-hidden="true" />}
@@ -44,12 +35,25 @@ export default function Guide() {
           填写服务地址、API Key 和模型。
         </Card>
       </Cards>
+      <h2 className="mt-6 text-xl font-semibold">2. 按页试译，再翻译全文</h2>
       <Link
         className="mt-6 inline-flex text-lg font-medium underline underline-offset-4"
         href="/guide/usage/"
       >
-        翻译第一篇 PDF →
+        试译第一篇 PDF →
       </Link>
+      <h2 className="mt-10 text-xl font-semibold">需要独立本地服务？</h2>
+      <p className="text-muted-foreground">
+        Windows x64 和 Apple Silicon Mac 可直接使用插件引擎。已有服务可沿用原地址和数据，也可按下方方式独立安装。
+      </p>
+      <Cards>
+        <Card icon={<MonitorIcon />} title="Windows" href="/guide/windows/">
+          Windows 10 / 11 · x64 独立安装器
+        </Card>
+        <Card icon={<AppleIcon />} title="macOS" href="/guide/macos/">
+          Apple Silicon · Homebrew
+        </Card>
+      </Cards>
       <p className="mt-6 text-sm text-muted-foreground">
         <Link
           href="/guide/preparation/"

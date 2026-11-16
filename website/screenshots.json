@@ -486,5 +486,20 @@
     "reviewStatus": "rendered-from-pdf-and-reviewed",
     "reviewedAt": "2026-10-30",
     "reviewedSha256": "1581a12d76f20c495f41db0e0e75b8d5b7acab43e5a3ef7107c479ba3845862e"
+  },
+  "assets/guide/bilingual-note.png": {
+    "width": 1051,
+    "height": 644,
+    "purpose": "v1.9.8 双语笔记原生验收截图",
+    "alt": "Zotero 阅读器的选段翻译面板显示已加入笔记",
+    "os": "Windows 11",
+    "zoteroVersion": "10.0.7",
+    "pluginVersion": "1.9.8",
+    "serverVersion": "1.9.8",
+    "capturedAt": "2026-11-15",
+    "captureMethod": "native Zotero development profile screenshot",
+    "reviewStatus": "live-captured-and-reviewed",
+    "reviewedAt": "2026-11-16",
+    "reviewedSha256": "2b917b5d00238f58cfe5fc2e4f6603a78647b8876274295a4bba05468baf2eb4"
   }
 }

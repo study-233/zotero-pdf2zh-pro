@@ -54,23 +54,23 @@
 | 项目 | 如何准备 |
 | --- | --- |
 | Zotero 8–10 | 从 [Zotero 官网](https://www.zotero.org/download/)安装 |
-| 本地服务 | 按 [Windows](#windows) 或 [macOS](#macos) 教程安装；无需自行安装 Python |
 | Zotero 插件 | 下载 XPI 后[从文件安装](#installation) |
+| 本地引擎 | Windows x64 / Apple Silicon Mac 在插件设置中点击“检查本地服务”，联网下载安装；无需自行安装 Python |
 | 翻译来源 | 准备 API Key，或使用已有的 [ChatGPT 套餐 / 本地模型](#api-configuration) |
 
-Linux / Docker 用户查看[进阶部署](#advanced)。
+已有服务可沿用原地址和数据。需要独立服务时，按 [Windows](#windows) 或 [Homebrew](#macos) 教程安装；Linux / Docker 用户查看[进阶部署](#advanced)。Intel Mac 可继续连接已有服务。
 
 <span id="两种地址不要填反"></span>
 
 ### 地址与费用
 
-- **本地服务地址**：`http://127.0.0.1:8890`，填写在插件的“服务端连接”中。
+- **本地服务地址**：默认 `http://127.0.0.1:8890`。插件安装引擎后自动填写；独立或远程服务在“服务端连接”中填写已有地址。
 - **API 地址**：由模型服务商提供，填写在翻译配置中。两者不能混用。
 
 PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，并使用其额度。
 
 > [!TIP]
-> 第一次用一篇较短、能选中文字的 PDF 测试。保持“禁用术语提取”开启，可减少额外 token 消耗。
+> 第一次用能选中文字的 PDF [按页试译](#page-trial)，检查几页后再翻译全文。保持“禁用术语提取”开启，可减少额外 token 消耗。
 
 <a id="windows"></a>
 
@@ -195,7 +195,7 @@ curl -fsS http://127.0.0.1:8890/health
 <span id="4-安装-zotero-插件与检查连接"></span>
 
 
-先确认本地服务已启动。Windows 和 macOS 使用同一个 XPI。
+Windows 和 macOS 使用同一个 XPI。Windows 10/11 x64 和 Apple Silicon Mac 可在插件内安装本地引擎；已有独立或远程服务可继续连接。
 
 <span id="安装-xpi"></span>
 
@@ -207,13 +207,21 @@ curl -fsS http://127.0.0.1:8890/health
 
 <span id="打开设置并检查本地服务"></span>
 
-### 检查连接
+### 安装引擎并检查连接
 
-在 Zotero 设置中打开 **zotero-pdf2zh-pro → 服务端连接**。本机地址为 `http://127.0.0.1:8890`，远程服务填写已有地址。点击 **检查本地服务**。
+1. 在 Zotero 设置中打开 **zotero-pdf2zh-pro → 服务端连接**。
+2. 点击 **检查本地服务**，按提示联网下载安装本地引擎。首次下载需要网络，等待进度完成。
+3. 插件准备好引擎后自动填写本机地址。显示 **已连接** 后，继续配置翻译来源。
 
 ![填写本地服务地址，点击检查本地服务后显示已连接](../assets/guide/server-connected.webp)
 
-显示 **已连接** 后，继续[配置翻译来源](#api-configuration)。
+继续[配置翻译来源](#api-configuration)。下载失败时先检查网络，再点击 **检查本地服务**重试。
+
+### 连接已有服务
+
+使用 Windows 控制中心、Homebrew、uv、Docker 或远程服务时，先按原方式启动服务，再填写原地址并点击 **检查本地服务**。本机默认地址为 `http://127.0.0.1:8890`；保留原数据目录，无需迁移到插件引擎。
+
+Intel Mac、Linux 或需要独立管理服务的用户，可使用已有服务或[其他部署方式](#advanced)。
 
 <a id="api-configuration"></a>
 
@@ -238,6 +246,12 @@ curl -fsS http://127.0.0.1:8890/health
 ![翻译配置中的 API Key、模型、API 地址和保存并使用按钮](../assets/guide/api-configuration.webp)
 
 **保存**仅保存编辑，**保存并使用**会切换当前来源。完成后[翻译第一篇 PDF](#usage)。
+
+### 设置模型请求限制
+
+在每个翻译配置中，分别设置 **全文翻译**和 **试译**的请求频率（QPS）、并发、重试次数与重试间隔。服务商限额较低时，先降低 QPS 和并发，再按页测试。
+
+任务详情显示提交时实际使用的限制。继续执行或补译会沿用该任务提交时的设置；修改配置只影响之后的新任务。
 
 <span id="使用-chatgpt-套餐登录"></span>
 
@@ -320,7 +334,15 @@ MiMo 套餐账号需填写套餐专用地址和对应 Key；智谱标准地址�
 
 <span id="从文库提交任务"></span>
 
-### 提交翻译
+<span id="page-trial"></span>
+
+### 先按页试译
+
+在文库中右键原始 PDF，选择 **zotero-pdf2zh-pro → 按页试译**；也可从 PDF 阅读器的插件菜单打开。输入单页或多个页段，确认后提交。
+
+试译附件保留原页序，并在附件名称中标明翻译范围。先检查选定页面的译文和排版，满意后再提交全文。
+
+### 提交全文翻译
 
 1. 在插件设置中选好目标语言，并勾选需要的 **单语译文 / 双语对照** 输出。
 2. 在文库展开论文条目，右键要翻译的 **原始 PDF 附件**。
@@ -493,7 +515,7 @@ QPS 2、并发 4 是起步建议；当前默认值为 **QPS 10、并发 50**，�
 <span id="reader-划词与翻译记忆"></span>
 
 
-在 Zotero 中打开能选中文字的 **原始 PDF**，划选即可查询。查词无需本地服务；选句翻译和语境解释需要服务运行。
+在 Zotero 中打开能选中文字的 PDF，划选即可查询。查词无需本地服务；选句翻译和语境解释需要服务运行。新版译文附件还可反查原句。
 
 <span id="查单词与短语"></span>
 
@@ -510,6 +532,22 @@ QPS 2、并发 4 是起步建议；当前默认值为 **QPS 10、并发 50**，�
 ![划选论文中的句子，使用必应显示中文译文](../assets/guide/selection-sentence.webp)
 
 若只想手动触发，在 **设置 → 选文翻译 → 触发方式**选择“点击翻译”。
+
+<span id="source-lookup"></span>
+
+### 从译文查看原句
+
+用 v1.9.8 服务生成并导入单语或双语 PDF 后，在译文附件中划选文字，查看对应原句，再点击“在原文中查看”跳到原始 PDF。
+
+无法确定原句时会显示原段，便于核对上下文；不提供精确词级对齐。旧译文缺少关联信息时，需要使用新版服务重新生成并导入。
+
+<span id="bilingual-notes"></span>
+
+### 保存双语笔记
+
+选段翻译完成后，点击 **加入笔记**。原文、译文和页码链接会追加到当前打开的笔记；没有当前笔记时，保存在该文献下的 **双语摘录**中。已有笔记内容会保留。
+
+![Zotero 阅读器的选段翻译面板显示“已加入笔记”](../assets/guide/bilingual-note.png)
 
 <span id="个人词典与语境解释"></span>
 
@@ -577,7 +615,7 @@ QPS 2、并发 4 是起步建议；当前默认值为 **QPS 10、并发 50**，�
 
 清除翻译缓存不删除个人词典、全文记忆或收藏。迁移时备份 Zotero 数据目录的 `pdf2zhpro/`，并在停止服务后备份服务数据目录中的 `selection-cache.sqlite3`、`translation-memory.sqlite3`。这些数据不自动跨电脑同步。
 
-当前不支持扫描件划词、译文附件反查和精确词级对齐。记忆查询失败先处理错误，不会自动转为外部请求。更多机制见[服务端说明](../server/README.md#reading-memory-and-short-text)。
+当前不支持无法选中文字的扫描件划词和精确词级对齐。记忆查询失败先处理错误，不会自动转为外部请求。更多机制见[服务端说明](../server/README.md#reading-memory-and-short-text)。
 
 </details>
 
@@ -625,7 +663,7 @@ Markdown 适合笔记，JSON 适合程序处理，TXT 只保留纯文本。
 <span id="9-更新与日常维护"></span>
 
 
-插件与本地服务需要分别更新。操作前先等待翻译结束，备份需要保留的数据。
+插件管理的引擎会随插件在任务空闲时更新；独立服务仍按原方式升级。操作前先等待翻译结束，备份需要保留的数据。
 
 <span id="更新插件和服务端"></span>
 
@@ -634,7 +672,8 @@ Markdown 适合笔记，JSON 适合程序处理，TXT 只保留纯文本。
 | 安装方式 | 操作 |
 | --- | --- |
 | Zotero 插件 | 插件管理器检查更新，或[下载新 XPI](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)从文件安装 |
-| Windows | 控制中心检查更新；旧控制中心使用[新安装器](#windows)升级 |
+| 插件管理的引擎 | 更新 XPI 后，插件在任务空闲时更新；需要时点击“检查本地服务”查看状态 |
+| Windows 独立服务 | 控制中心检查更新；旧控制中心使用[新安装器](#windows)升级 |
 | uv | 停止服务，执行 `uv tool upgrade zotero-pdf2zh-pro`，再启动 |
 
 macOS Homebrew 按下方命令更新。**首次迁移旧数据时保留旧版本目录**，不要提前执行清理：
@@ -654,6 +693,7 @@ curl -fsS http://127.0.0.1:8890/health
 
 ### 备份与迁移
 
+- **插件引擎**：引擎文件保存在 Zotero 配置目录的 `pdf2zh-engine/`。服务数据位置仍以 `/health` 的 `workspace.path` 为准，停止 Zotero 和服务后再备份。
 - **服务数据**：Windows 控制中心选择“打开数据目录”；macOS / uv 查看 `/health` 的 `workspace.path`。停止服务后备份整个目录，保留任务、译文和检查点。
 - **Windows 更改安装位置**：展开 **存储与维护**，在 **更改安装位置**一栏点击 **迁移**，不要直接拖动正在使用的目录。
 - **划词数据**：同时备份 Zotero 数据目录下的 `pdf2zhpro/`；收藏不随云同步。
@@ -693,6 +733,7 @@ curl -fsS http://127.0.0.1:8890/health
 
 | 现象 | 处理 |
 | --- | --- |
+| 插件引擎下载失败 | 检查网络和磁盘空间，再点击“检查本地服务”重试；已有服务填写原地址 |
 | Windows 安装或下载失败 | 检查网络，在控制中心查看“日志与诊断”后重试；使用[最新 EXE](#windows)，无需解压 ZIP |
 | `command not found: brew` | 完成 Homebrew 的 Next steps，重新打开终端 |
 | 找不到 `zotero-pdf2zh-pro` 命令 | uv 用户执行 `uv tool update-shell` 后重开终端；Homebrew 用户确认安装已成功 |
@@ -702,7 +743,7 @@ curl -fsS http://127.0.0.1:8890/health
 
 打开 [健康检查](http://127.0.0.1:8890/health)，应返回 `"status":"ok"`。
 
-- **无法打开**：Windows 检查控制中心；macOS 执行 `brew services list`，确认服务已启动。
+- **无法打开**：插件引擎先点击“检查本地服务”重试，首次安装需要联网。独立服务用户在 Windows 检查控制中心，macOS 执行 `brew services list`；远程服务核对原地址。
 - **返回 degraded**：检查 `workspace` 中的错误、数据目录权限和磁盘空间。
 - **根地址返回 404**：访问的是 `/health`，不是服务首页。
 - **端口被占用**：检查是否重复启动 Homebrew、uv 或其他服务，只停止已确认属于自己的进程。
