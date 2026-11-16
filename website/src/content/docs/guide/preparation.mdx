@@ -1,7 +1,7 @@
 ---
 {
   "title": "安装前准备",
-  "description": "先装本地服务，再装插件，最后测试翻译来源。",
+  "description": "先装插件，检查本地引擎，再测试翻译来源。",
   "editUrl": "https://github.com/study-233/zotero-pdf2zh-pro/edit/main/website/src/content/docs/guide/preparation.mdx"
 }
 ---
@@ -17,20 +17,20 @@
 | 项目 | 如何准备 |
 | --- | --- |
 | Zotero 8–10 | 从 [Zotero 官网](https://www.zotero.org/download/)安装 |
-| 本地服务 | 按 [Windows](/zotero-pdf2zh-pro/guide/windows/) 或 [macOS](/zotero-pdf2zh-pro/guide/macos/) 教程安装；无需自行安装 Python |
 | Zotero 插件 | 下载 XPI 后[从文件安装](/zotero-pdf2zh-pro/guide/installation/) |
+| 本地引擎 | Windows x64 / Apple Silicon Mac 在插件设置中点击“检查本地服务”，联网下载安装；无需自行安装 Python |
 | 翻译来源 | 准备 API Key，或使用已有的 [ChatGPT 套餐 / 本地模型](/zotero-pdf2zh-pro/guide/api-configuration/) |
 
-Linux / Docker 用户查看[进阶部署](/zotero-pdf2zh-pro/guide/advanced/)。
+已有服务可沿用原地址和数据。需要独立服务时，按 [Windows](/zotero-pdf2zh-pro/guide/windows/) 或 [Homebrew](/zotero-pdf2zh-pro/guide/macos/) 教程安装；Linux / Docker 用户查看[进阶部署](/zotero-pdf2zh-pro/guide/advanced/)。Intel Mac 可继续连接已有服务。
 
 <span id="两种地址不要填反"></span>
 
 ## 地址与费用
 
-- **本地服务地址**：`http://127.0.0.1:8890`，填写在插件的“服务端连接”中。
+- **本地服务地址**：默认 `http://127.0.0.1:8890`。插件安装引擎后自动填写；独立或远程服务在“服务端连接”中填写已有地址。
 - **API 地址**：由模型服务商提供，填写在翻译配置中。两者不能混用。
 
 PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，并使用其额度。
 
 > [!TIP]
-> 第一次用一篇较短、能选中文字的 PDF 测试。保持“禁用术语提取”开启，可减少额外 token 消耗。
+> 第一次用能选中文字的 PDF [按页试译](/zotero-pdf2zh-pro/guide/usage/#page-trial)，检查几页后再翻译全文。保持“禁用术语提取”开启，可减少额外 token 消耗。

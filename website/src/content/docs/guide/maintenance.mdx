@@ -10,7 +10,7 @@
 
 <span id="maintenance"></span>
 
-插件与本地服务需要分别更新。操作前先等待翻译结束，备份需要保留的数据。
+插件管理的引擎会随插件在任务空闲时更新；独立服务仍按原方式升级。操作前先等待翻译结束，备份需要保留的数据。
 
 <span id="更新插件和服务端"></span>
 
@@ -19,7 +19,8 @@
 | 安装方式 | 操作 |
 | --- | --- |
 | Zotero 插件 | 插件管理器检查更新，或[下载新 XPI](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)从文件安装 |
-| Windows | 控制中心检查更新；旧控制中心使用[新安装器](/zotero-pdf2zh-pro/guide/windows/)升级 |
+| 插件管理的引擎 | 更新 XPI 后，插件在任务空闲时更新；需要时点击“检查本地服务”查看状态 |
+| Windows 独立服务 | 控制中心检查更新；旧控制中心使用[新安装器](/zotero-pdf2zh-pro/guide/windows/)升级 |
 | uv | 停止服务，执行 `uv tool upgrade zotero-pdf2zh-pro`，再启动 |
 
 macOS Homebrew 按下方命令更新。**首次迁移旧数据时保留旧版本目录**，不要提前执行清理：
@@ -39,6 +40,7 @@ curl -fsS http://127.0.0.1:8890/health
 
 ## 备份与迁移
 
+- **插件引擎**：引擎文件保存在 Zotero 配置目录的 `pdf2zh-engine/`。服务数据位置仍以 `/health` 的 `workspace.path` 为准，停止 Zotero 和服务后再备份。
 - **服务数据**：Windows 控制中心选择“打开数据目录”；macOS / uv 查看 `/health` 的 `workspace.path`。停止服务后备份整个目录，保留任务、译文和检查点。
 - **Windows 更改安装位置**：展开 **存储与维护**，在 **更改安装位置**一栏点击 **迁移**，不要直接拖动正在使用的目录。
 - **划词数据**：同时备份 Zotero 数据目录下的 `pdf2zhpro/`；收藏不随云同步。

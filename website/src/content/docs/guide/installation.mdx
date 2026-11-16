@@ -14,7 +14,7 @@
 
 <span id="installation"></span>
 
-先确认本地服务已启动。Windows 和 macOS 使用同一个 XPI。
+Windows 和 macOS 使用同一个 XPI。Windows 10/11 x64 和 Apple Silicon Mac 可在插件内安装本地引擎；已有独立或远程服务可继续连接。
 
 <span id="安装-xpi"></span>
 
@@ -26,10 +26,18 @@
 
 <span id="打开设置并检查本地服务"></span>
 
-## 检查连接
+## 安装引擎并检查连接
 
-在 Zotero 设置中打开 **zotero-pdf2zh-pro → 服务端连接**。本机地址为 `http://127.0.0.1:8890`，远程服务填写已有地址。点击 **检查本地服务**。
+1. 在 Zotero 设置中打开 **zotero-pdf2zh-pro → 服务端连接**。
+2. 点击 **检查本地服务**，按提示联网下载安装本地引擎。首次下载需要网络，等待进度完成。
+3. 插件准备好引擎后自动填写本机地址。显示 **已连接** 后，继续配置翻译来源。
 
 ![填写本地服务地址，点击检查本地服务后显示已连接](/zotero-pdf2zh-pro/assets/guide/server-connected.webp)
 
-显示 **已连接** 后，继续[配置翻译来源](/zotero-pdf2zh-pro/guide/api-configuration/)。
+继续[配置翻译来源](/zotero-pdf2zh-pro/guide/api-configuration/)。下载失败时先检查网络，再点击 **检查本地服务**重试。
+
+## 连接已有服务
+
+使用 Windows 控制中心、Homebrew、uv、Docker 或远程服务时，先按原方式启动服务，再填写原地址并点击 **检查本地服务**。本机默认地址为 `http://127.0.0.1:8890`；保留原数据目录，无需迁移到插件引擎。
+
+Intel Mac、Linux 或需要独立管理服务的用户，可使用已有服务或[其他部署方式](/zotero-pdf2zh-pro/guide/advanced/)。

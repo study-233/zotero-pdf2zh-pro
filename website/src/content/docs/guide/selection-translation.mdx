@@ -10,7 +10,7 @@
 
 <span id="selection-translation"></span>
 
-在 Zotero 中打开能选中文字的 **原始 PDF**，划选即可查询。查词无需本地服务；选句翻译和语境解释需要服务运行。
+在 Zotero 中打开能选中文字的 PDF，划选即可查询。查词无需本地服务；选句翻译和语境解释需要服务运行。新版译文附件还可反查原句。
 
 <span id="查单词与短语"></span>
 
@@ -27,6 +27,22 @@
 ![划选论文中的句子，使用必应显示中文译文](/zotero-pdf2zh-pro/assets/guide/selection-sentence.webp)
 
 若只想手动触发，在 **设置 → 选文翻译 → 触发方式**选择“点击翻译”。
+
+<span id="source-lookup"></span>
+
+## 从译文查看原句
+
+用 v1.9.8 服务生成并导入单语或双语 PDF 后，在译文附件中划选文字，查看对应原句，再点击“在原文中查看”跳到原始 PDF。
+
+无法确定原句时会显示原段，便于核对上下文；不提供精确词级对齐。旧译文缺少关联信息时，需要使用新版服务重新生成并导入。
+
+<span id="bilingual-notes"></span>
+
+## 保存双语笔记
+
+选段翻译完成后，点击 **加入笔记**。原文、译文和页码链接会追加到当前打开的笔记；没有当前笔记时，保存在该文献下的 **双语摘录**中。已有笔记内容会保留。
+
+![Zotero 阅读器的选段翻译面板显示“已加入笔记”](/zotero-pdf2zh-pro/assets/guide/bilingual-note.png)
 
 <span id="个人词典与语境解释"></span>
 
@@ -94,6 +110,6 @@
 
 清除翻译缓存不删除个人词典、全文记忆或收藏。迁移时备份 Zotero 数据目录的 `pdf2zhpro/`，并在停止服务后备份服务数据目录中的 `selection-cache.sqlite3`、`translation-memory.sqlite3`。这些数据不自动跨电脑同步。
 
-当前不支持扫描件划词、译文附件反查和精确词级对齐。记忆查询失败先处理错误，不会自动转为外部请求。更多机制见[服务端说明](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/README.md#reading-memory-and-short-text)。
+当前不支持无法选中文字的扫描件划词和精确词级对齐。记忆查询失败先处理错误，不会自动转为外部请求。更多机制见[服务端说明](https://github.com/study-233/zotero-pdf2zh-pro/blob/main/server/README.md#reading-memory-and-short-text)。
 
 </details>

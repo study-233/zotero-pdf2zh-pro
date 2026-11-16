@@ -28,9 +28,26 @@ export function DownloadSection({ version }: { version: string }) {
         <ChapterHeader
           eyebrow={`v${version}`}
           title="下载与安装"
-          description="先启动翻译服务，再安装 Zotero 插件。"
+          description="安装插件，在 Zotero 中检查并准备本地引擎。"
         />
         <div className="mx-auto mt-12 max-w-[54rem]">
+          <div className="download-row">
+            <div>
+              <h3>Zotero 插件</h3>
+              <p>Zotero 8–10 · XPI</p>
+            </div>
+            <a
+              className="download-action"
+              href={`${GITHUB_REPO_URL}/releases/latest/download/zotero-pdf2zh-pro.xpi`}
+            >
+              <DownloadIcon />
+              下载插件
+            </a>
+          </div>
+          <p className="mt-4 text-base text-muted-foreground">
+            Windows x64 和 Apple Silicon Mac：安装后点击插件设置中的“检查本地服务”，按提示联网下载引擎。已有服务可沿用原地址和数据。
+          </p>
+          <h3 className="mt-10 mb-3 text-lg font-medium">需要独立服务？</h3>
           <div
             role="tablist"
             aria-label="安装平台"
@@ -76,7 +93,7 @@ export function DownloadSection({ version }: { version: string }) {
           >
             <div className="download-row">
               <div>
-                <h3>本地服务</h3>
+                <h3>独立本地服务</h3>
                 <p>Windows 10 / 11 · x64</p>
               </div>
               <a
@@ -96,13 +113,13 @@ export function DownloadSection({ version }: { version: string }) {
           >
             <div className="download-row">
               <div>
-                <h3>本地服务</h3>
+                <h3>独立本地服务</h3>
                 <p>Apple Silicon · Homebrew</p>
               </div>
             </div>
             <HomeOwnCommand />
             <p className="mt-3 text-sm text-muted-foreground">
-              Intel Mac 暂不支持。
+              此安装方式适用于 Apple Silicon；Intel Mac 可连接已有服务。
               <Link
                 className="underline underline-offset-4"
                 href="/guide/macos/"
@@ -110,19 +127,6 @@ export function DownloadSection({ version }: { version: string }) {
                 安装说明
               </Link>
             </p>
-          </div>
-          <div className="download-row border-t border-border">
-            <div>
-              <h3>Zotero 插件</h3>
-              <p>Zotero 8–10 · XPI</p>
-            </div>
-            <a
-              className="download-action"
-              href={`${GITHUB_REPO_URL}/releases/latest/download/zotero-pdf2zh-pro.xpi`}
-            >
-              <DownloadIcon />
-              下载插件
-            </a>
           </div>
           <div className="mt-4 flex items-center justify-between gap-4 text-base">
             <Link
