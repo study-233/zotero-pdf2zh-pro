@@ -6,6 +6,10 @@
 
 在 Zotero 8–10 中翻译 PDF、对照阅读和划词查义。
 
+[![Release 资源总下载量](https://img.shields.io/github/downloads/study-233/zotero-pdf2zh-pro/total?label=%E6%80%BB%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://github.com/study-233/zotero-pdf2zh-pro/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/study-233/zotero-pdf2zh-pro?style=flat&label=Stars)](https://github.com/study-233/zotero-pdf2zh-pro/stargazers)
+[![最新正式版](https://img.shields.io/github/v/release/study-233/zotero-pdf2zh-pro?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest)
+
 [下载正式版](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest) · [官网](https://study-233.github.io/zotero-pdf2zh-pro/) · [使用指南](docs/user-guide.md) · [更新记录](https://study-233.github.io/zotero-pdf2zh-pro/changelog/)
 
 </div>
