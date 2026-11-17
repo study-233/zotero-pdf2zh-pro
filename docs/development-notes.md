@@ -6,34 +6,17 @@
 
 ## 文档维护
 
-首页与详细指南按 [README 维护规范](readme-maintenance.md) 分工。修改后运行独立检查：
-
-```bash
-python3 scripts/check_docs.py
-python3 -m unittest discover -s scripts -p 'test_check_docs.py'
-```
+首页与详细指南的分工、正文源文件、同步命令和文档检查统一见
+[README 维护规范](readme-maintenance.md)。
 
 文档与官网共用 `Documentation and website` 工作流，每次只执行一遍文档检查，
 不安装应用依赖；业务 CI 的触发规则保持不变。
 
 ### 官网开发与发布
 
-官网使用 Next.js / React / Tailwind / Fumadocs 静态导出，Node.js 24+、pnpm 11.24.0、Python 3.12/3.13。无需安装翻译服务。
-Python 依赖见 `website/requirements.txt`；可放在独立的 `.tmp/website-venv/`，或通过 `PDF2ZH_WEBSITE_PYTHON` 指定解释器。
-
-```bash
-pnpm --dir website install --frozen-lockfile
-pnpm --dir website docs:check
-pnpm --dir website test
-pnpm --dir website build
-pnpm --dir website preview
-```
-
-打开 `http://127.0.0.1:8897/zotero-pdf2zh-pro/`；构建先写 `website/out/`，通过链接、旧地址、附件哈希与测评数据校验后复制到 `dist/site/`。
-教程正文维护在 `website/src/content/docs/guide/*.mdx`，修改后执行 `python scripts/sync_guide_docs.py` 同步汇总。
-`website/routes.json` 维护章节顺序与旧锚点；中文搜索在最终静态产物中运行，主题由 next-themes 统一管理。
-详细验证、Memos 源码映射及回退方法见 [官网开发](../website/README.md)。
-旧 `scripts/build_site.sh` 和 `pnpm --dir website build:legacy` 保留为 Jinja 应急构建，会替换同一个预览输出，不与新构建并发运行。
+官网使用 Next.js / React / Tailwind / Fumadocs 静态导出，无需安装翻译服务。
+环境版本、构建与预览命令、内容入口、浏览器验证和 Jinja 应急回退统一维护在
+[官网开发](../website/README.md)。
 
 公开评测基线来自 `codex/translation-benchmark` 的 `ec8001d`，与迁移前线上 Pages 分支的
 `0c371cf` 对应。只纳入网页、已公开数据/PDF、依赖许可证及静态验证，不纳入服务端实验改动。
@@ -167,8 +150,10 @@ Windows SDK 的资源编译器嵌入图标、版本、DPI 清单；根目录 `.c
 服务环境使用 `runtime/versions/` 中的永久路径，准备期间旧服务继续运行。切换前通过
 本机凭据保护的维护接口原子暂停新工作；更新事务写入 `updates/transaction.json`，失败或
 中断后只使用本地备份回退。控制包和服务 wheel 整包更新，依赖通过共享 uv 缓存复用。
-当前候选及未验证设备范围见 [Slint 迁移验收](windows-slint-acceptance.md)；
+Slint 迁移过程及当时未验证的设备范围见 [Slint 迁移验收](windows-slint-acceptance.md)；
 早期后台与安装机制检查见 [原生 Windows 验收记录](windows-native-acceptance.md)。
+两者均为历史记录，当前安装入口见[使用指南](user-guide.md#windows)，发布门槛见
+[Actions 测试规范](actions-testing.md)。
 
 默认目录：
 

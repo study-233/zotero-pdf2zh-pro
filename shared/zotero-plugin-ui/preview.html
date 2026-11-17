@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zotero UI</title>
+<link rel="stylesheet" href="components.css">
+<style>
+  :root { color-scheme: light dark; font: 13px/20px system-ui, sans-serif; }
+  body { margin: 0; padding: 24px; background: Canvas; color: CanvasText; }
+  main { max-width: 780px; margin: 0 auto; display: grid; gap: 24px; }
+  nav { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  h1 { font-size: 20px; line-height: 28px; font-weight: 600; margin: 0 auto 0 0; }
+  h2 { font-size: 13px; font-weight: 500; margin: 0 0 8px; }
+  section { min-width: 0; }
+  #reader-host { margin-block-start: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <nav aria-label="Preview"><h1>Zotero UI</h1>
+    <button type="button" id="theme"></button>
+    <a id="language"></a>
+  </nav>
+  <section><h2 id="settings-label"></h2><div id="settings-host"></div></section>
+  <section><h2 id="task-label"></h2><div id="task-host"></div></section>
+  <section><h2 id="reader-label"></h2><button type="button" id="open-reader" hidden></button><div id="reader-host"></div></section>
+</main>
+<script src="components.js"></script>
+<script src="preview.js"></script>
+</body>
+</html>
