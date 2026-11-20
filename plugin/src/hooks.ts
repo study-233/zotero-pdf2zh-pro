@@ -9,6 +9,7 @@ import {
     unregisterPageTrial,
 } from "./modules/pageTrial";
 import { initializeEngine, stopEngineManager } from "./modules/managedEngine";
+import { startBrewUpdates, stopBrewUpdates } from "./modules/homebrewUpdate";
 import { cancelDictionaryDownload } from "./modules/selectionDictionaryDownload";
 import { stopDevelopmentLibrary } from "./modules/developmentLibrary";
 import { stopDiagnostics } from "./modules/diagnostics";
@@ -81,6 +82,7 @@ async function onStartup(reason?: number) {
         ztoolkit.log(error);
     }
     initializeEngine(legacyEngine);
+    startBrewUpdates();
     registerSelectionTranslation();
     registerPageTrial();
     initializeReleaseNotices(reason, existingInstall);
@@ -119,6 +121,7 @@ async function onMainWindowUnload(_win: Window): Promise<void> {
 async function onShutdown(): Promise<void> {
     cancelDocumentExport();
     stopEngineManager();
+    stopBrewUpdates();
     stopPreferenceCards();
     stopPluginNotices();
     stopDevelopmentLibrary();

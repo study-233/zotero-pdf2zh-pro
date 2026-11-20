@@ -1,4 +1,10 @@
 import { ensureEngine, engineStatusMessage } from "./managedEngine";
+import {
+    observeBrewUpdates,
+    brewControls,
+    brewUpdateAction,
+    followBrewUpdates,
+} from "./homebrewUpdate";
 import { chatgptAccountRequest, openChatGPTPage } from "./chatgptAccount";
 import { exportDiagnostics } from "./diagnostics";
 import { errorNotice, renderNotice } from "./userNotice";
@@ -124,6 +130,7 @@ export async function registerPrefsScripts(window: Window) {
     stopGlossaryPackPolling();
     glossaryPackWindow = window;
     addon.data.prefs = { window, columns: [], rows: [] };
+    if (Zotero.isMac) bindBrewPreferences(window);
     element("notice-help")?.addEventListener("click", openNoticeHelp);
     element("retirement-action")?.addEventListener("click", () =>
         openProfileManager(),
@@ -232,6 +239,85 @@ export async function registerPrefsScripts(window: Window) {
     }
     void refreshServerVersion();
     await registerPreferenceCards(window);
+}
+
+function bindBrewPreferences(win: Window) {
+    const panel = element("brew-panel");
+    const options = element("connection-options") as HTMLDetailsElement;
+    const check = element("checkConnection");
+    const exporter = element("export-diagnostics");
+    const follow = element("brew-follow") as HTMLInputElement;
+    const action = element("brew-update") as HTMLButtonElement;
+    if (!panel || !follow || !action || !options || !check || !exporter) return;
+    const ordinaryActions = check.parentElement!;
+    const copy = element("brew-copy")!;
+    let updating = false;
+    copy.addEventListener("click", () => {
+        const path = brewControls().directory;
+        if (path)
+            Cc["@mozilla.org/widget/clipboardhelper;1"]
+                .getService(Ci.nsIClipboardHelper)
+                .copyString(path);
+    });
+    action.addEventListener("click", brewUpdateAction);
+    follow.addEventListener("change", () => followBrewUpdates(follow.checked));
+    const dispose = observeBrewUpdates(() => {
+        if (!panel.isConnected) return;
+        const v = brewControls();
+        if (panel.hidden === v.visible) {
+            panel.hidden = !v.visible;
+            element("connection-options-title")!.hidden = !v.visible;
+            options.open =
+                !v.visible || options.contains(win.document.activeElement);
+            (v.visible ? element("brew-tools")! : ordinaryActions).append(
+                exporter,
+            );
+        }
+        if (!v.visible) return;
+        if (updating && !v.disabled) void refreshServerVersion();
+        updating = v.disabled;
+        const serviceState = v.updating
+            ? "updating"
+            : v.running
+              ? "running"
+              : "stopped";
+        if (panel.dataset.serviceState !== serviceState)
+            panel.dataset.serviceState = serviceState;
+        follow.checked = v.follow;
+        follow.disabled = v.disabled;
+        action.disabled =
+            v.disabled || ["ahead", "pinned", "unsupported"].includes(v.state);
+        const key =
+            v.state === "available"
+                ? "upgrade"
+                : v.state === "waiting"
+                  ? "cancel"
+                  : v.state === "interrupted" || v.state === "recoveryFailed"
+                    ? "recover"
+                    : v.retry
+                      ? "retry"
+                      : v.disabled
+                        ? "progress"
+                        : "check";
+        localizePackNode(action, "pref-brew-" + key, { version: v.target });
+        const versionNode = element("brew-version")!;
+        if (v.running && v.installed !== v.running)
+            localizePackNode(versionNode, "pref-brew-versions", {
+                running: v.running,
+                installed: v.installed!,
+            });
+        else status("brew-version", v.installed || "—");
+        status("brew-path", v.directory || "—");
+        if (["current", "available"].includes(v.state)) {
+            if (v.state === "current")
+                localizedStatus("brew-message", "pref-brew-current");
+            else status("brew-message", "");
+        } else
+            localizedStatus("brew-message", "pref-brew-state-" + v.state, {
+                version: v.target,
+            });
+    });
+    win.addEventListener("unload", dispose, { once: true });
 }
 
 export function initializeProfileMigration() {

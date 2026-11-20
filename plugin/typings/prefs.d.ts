@@ -9,6 +9,10 @@ declare namespace _ZoteroTypes {
     PluginPrefsMap: {
       "new_serverip": string;
       "releaseNoticeState": string;
+      "brewFollowPlugin": boolean;
+      "brewManualTarget": string;
+      "brewSkipTarget": string;
+      "brewInFlight": boolean;
       "sourceLang": string;
       "targetLang": string;
       "sourceLangSelect": string;

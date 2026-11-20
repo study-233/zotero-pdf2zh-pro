@@ -932,7 +932,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 align-items: baseline;
                 gap: 4px;
                 min-height: 22px;
-                padding: 0 10px;
+                padding: 0 8px;
                 font-size: 11px;
                 line-height: 16px;
                 font-variant-numeric: tabular-nums;
@@ -942,8 +942,8 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 padding-left: 2px;
             }
 
-            .metric-summary-item + .metric-summary-item {
-                border-left: 1px solid var(--border);
+            .metric-summary-item:not([hidden]) ~ .metric-summary-item {
+                border-inline-start: 1px solid var(--border);
             }
 
             .metric-summary-label {
@@ -953,6 +953,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             .metric-summary-value {
                 color: var(--text-primary);
                 font-weight: 500;
+            }
+
+            /* Reserve the exact width of a three-digit hour without indenting the clock. */
+            :is([data-metric="elapsed"], [data-metric="eta"])::before {
+                content: "000:00:00";
+                display: block;
+                block-size: 0;
+                visibility: hidden;
             }
 
             .metric-empty {
@@ -1722,21 +1730,20 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 metricRail.setAttribute("aria-label", t("metrics-label"));
                 const timingMetric = appendSummaryMetric(
                     metricRail,
-                    t("elapsed"),
+                    "elapsed",
                     "—",
                 );
                 const metricEmpty = document.createElement("span");
                 metricEmpty.className = "metric-empty";
                 metricRail.appendChild(metricEmpty);
-                timingMetric.item.setAttribute("title", t("timing-help"));
                 const summaryMetrics = [
-                    t("eta"),
-                    t("output-speed"),
-                    t("tokens"),
-                    t("provider-cache"),
-                    t("requests-retries"),
-                    t("latency"),
-                ].map((label) => appendSummaryMetric(metricRail, label, "-"));
+                    "eta",
+                    "output-speed",
+                    "tokens",
+                    "provider-cache",
+                    "requests-retries",
+                    "latency",
+                ].map((key) => appendSummaryMetric(metricRail, key, "-"));
                 footer.appendChild(metricRail);
 
                 const footerActions = document.createElement("div");
@@ -2019,7 +2026,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 setNodeHidden(view.timingMetric.item, !task.timing);
                 setTextContent(
                     view.timingMetric.value,
-                    formatTimingDuration(task.timing?.totalSeconds),
+                    formatClockDuration(task.timing?.totalSeconds),
                 );
                 setTextContent(
                     view.timingMetric.label,
@@ -2208,6 +2215,16 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     task.canResume,
                     task.timing,
                 ]);
+            }
+
+            function formatClockDuration(seconds) {
+                if (!Number.isFinite(seconds) || seconds < 0) return "—";
+                const total = Math.floor(seconds);
+                const hours = Math.floor(total / 3600);
+                const minutes = Math.floor(total / 60) % 60;
+                return [hours, minutes, total % 60]
+                    .map((part) => String(part).padStart(2, "0"))
+                    .join(":");
             }
 
             function formatTimingDuration(seconds) {
@@ -2639,14 +2656,15 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 return valueEl;
             }
 
-            function appendSummaryMetric(root, label, value) {
+            function appendSummaryMetric(root, key, value) {
                 const item = document.createElement("span");
                 item.className = "metric-summary-item";
                 const labelEl = document.createElement("span");
                 labelEl.className = "metric-summary-label";
-                labelEl.textContent = label;
+                labelEl.textContent = t(key);
                 const valueEl = document.createElement("span");
                 valueEl.className = "metric-summary-value";
+                valueEl.dataset.metric = key;
                 valueEl.textContent = value;
                 item.appendChild(labelEl);
                 item.appendChild(valueEl);
@@ -2757,13 +2775,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const value = metrics.throughput?.etaSeconds;
                 if (value === null || value === undefined) return "—";
                 const seconds = Math.max(Math.round(Number(value)), 0);
-                if (!Number.isFinite(seconds)) return "—";
-                if (seconds < 60) return t("eta-seconds", { seconds });
-                const minutes = Math.floor(seconds / 60);
-                if (minutes < 60)
-                    return t("eta-minutes", { minutes, seconds: seconds % 60 });
-                const hours = Math.floor(minutes / 60);
-                return t("eta-hours", { hours, minutes: minutes % 60 });
+                return formatClockDuration(seconds);
             }
 
             function getErrorSummary(task) {

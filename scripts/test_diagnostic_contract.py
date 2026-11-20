@@ -64,6 +64,7 @@ class DiagnosticContractTests(unittest.TestCase):
             lambda c: c['evidenceFields']['request'].append('rawResponse'),
             lambda c: c['identifierLists'].update(callRefs='unknownRef'),
             lambda c: c['diagnosisRules'].pop('validation_failed'),
+            lambda c: c['events'].pop('brew_update_failed'),
         ):
             with self.subTest(mutate=mutate):
                 changed = copy.deepcopy(self.contract)

@@ -492,6 +492,30 @@
     gap: 8px;
     margin-top: 12px;
 }
+.pdf2zh-pref-pane .brew-panel {
+    display: grid;
+    gap: 10px;
+    margin-block-end: 12px;
+}
+.pdf2zh-pref-pane .brew-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+}
+.pdf2zh-pref-pane .brew-path {
+    overflow-wrap: anywhere;
+    user-select: all;
+    direction: ltr;
+}
+.pdf2zh-pref-pane .brew-panel .toggle-row {
+    flex-wrap: wrap;
+}
+.pdf2zh-pref-pane [id$="-connection-options-title"]:not([hidden]) {
+    cursor: pointer;
+    padding-block: 8px;
+    border-top: 1px solid var(--pref-divider);
+}
 .pdf2zh-pref-pane .glossary-pack-list {
     margin-top: 8px;
 }

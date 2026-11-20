@@ -121,16 +121,40 @@ test("timing distinguishes server queue, execution and partial crash records", (
         },
     });
     const view = ui.createTaskCardView(timed);
-    assert.equal(view.timingMetric.value.textContent, "1 min");
+    assert.equal(view.timingMetric.value.textContent, "00:01:00");
     assert.equal(view.detailValues[10].textContent, "20 s");
     assert.equal(view.detailValues[11].textContent, "40 s");
     ui.updateTaskCardView(view, {
         ...timed,
         timing: { ...timed.timing, complete: false },
     });
-    assert.match(view.timingMetric.label.textContent, /耗时（部分）/);
+    assert.equal(view.timingMetric.label.textContent, "已用（部分）");
     ui.updateTaskCardView(view, task());
     assert.equal(view.timingMetric.item.hidden, true);
+});
+
+test("elapsed time keeps whole seconds across minute and hour boundaries", () => {
+    const ui = fixture();
+    const view = ui.createTaskCardView(task());
+    for (const [seconds, expected] of [
+        [0, "00:00:00"],
+        [9.9, "00:00:09"],
+        [10, "00:00:10"],
+        [59.99, "00:00:59"],
+        [60, "00:01:00"],
+        [3599.99, "00:59:59"],
+        [3600, "01:00:00"],
+        [360000, "100:00:00"],
+        [null, "—"],
+        [undefined, "—"],
+        [Infinity, "—"],
+    ]) {
+        ui.updateTaskCardView(
+            view,
+            task({ timing: { totalSeconds: seconds } }),
+        );
+        assert.equal(view.timingMetric.value.textContent, expected);
+    }
 });
 
 test("task cards distinguish checked conclusions, unchecked selections and uncovered body paragraphs", () => {

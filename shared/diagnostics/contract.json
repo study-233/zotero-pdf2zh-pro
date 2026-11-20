@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaRevision": 7,
+  "schemaRevision": 8,
   "supportedSchemaVersions": [
     1
   ],
@@ -988,6 +988,9 @@
       "suggestion": "检查服务商登录、配置与错误状态；仅对临时错误重试。"
     }
   },
+  "pluginFeatureEvents": {
+    "homebrewUpdate": ["brew_update_deferred", "brew_update_failed"]
+  },
   "productCapabilities": {
     "diagnosticsExport": {
       "coverage": "task_events",
@@ -1342,6 +1345,14 @@
         "taskId",
         "executionId"
       ]
+    },
+    "brew_update_failed": {
+      "component": "plugin",
+      "requiredFields": []
+    },
+    "brew_update_deferred": {
+      "component": "plugin",
+      "requiredFields": []
     },
     "managed_engine_failed": {
       "component": "plugin",

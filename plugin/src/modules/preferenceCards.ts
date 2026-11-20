@@ -77,7 +77,8 @@ export async function registerPreferenceCards(window: Window) {
     const update = async () => {
         if (disposed || !pane.isConnected) return;
         const current = ++revision;
-        const [unconfigured, automatic, noGlossary, advanced] =
+        const brewPanel = node("brew-panel");
+        const [unconfigured, automatic, noGlossary, advanced, brewStatus] =
             await Promise.all([
                 localize("pref-card-unconfigured"),
                 localize("pref-card-automatic"),
@@ -86,6 +87,12 @@ export async function registerPreferenceCards(window: Window) {
                     qps: value("qps") || "—",
                     pool: value("poolSize") || "—",
                 }),
+                brewPanel && !brewPanel.hidden
+                    ? localize(
+                          "pref-brew-" +
+                              (brewPanel.dataset.serviceState || "stopped"),
+                      )
+                    : "",
             ]);
         if (disposed || current !== revision) return;
         const packs = Array.from(
@@ -121,11 +128,14 @@ export async function registerPreferenceCards(window: Window) {
                     .filter(Boolean)
                     .join(" · ") || noGlossary,
             advanced,
-            connection: [text("serverStatus"), value("new_serverip")]
-                .filter(Boolean)
-                .join(" · "),
+            connection: brewStatus
+                ? "Homebrew · " + brewStatus
+                : [text("serverStatus"), value("new_serverip")]
+                      .filter(Boolean)
+                      .join(" · "),
         };
         for (const [key, summary] of Object.entries(summaries)) {
+            if (disposed || current !== revision) return;
             const target = node(`card-${key}-note`);
             if (!target || target.textContent === summary) continue;
             target.textContent = summary;
@@ -147,7 +157,13 @@ export async function registerPreferenceCards(window: Window) {
             childList: true,
             characterData: true,
             attributes: true,
-            attributeFilter: ["label", "value", "checked", "hidden"],
+            attributeFilter: [
+                "label",
+                "value",
+                "checked",
+                "hidden",
+                "data-service-state",
+            ],
         });
     const events = ["input", "change", "command"];
     for (const event of events) pane.addEventListener(event, schedule);

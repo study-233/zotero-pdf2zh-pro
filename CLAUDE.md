@@ -2,6 +2,8 @@
 
 先核对工作树、已有改动和受影响的调用路径，按改动范围验证。项目整理及 PR 见[维护 skill](.agents/skills/zotero-pdf2zh-pro-maintenance/SKILL.md)，正式发布见[发布 skill](.codex/skills/zotero-pdf2zh-pro-release/SKILL.md)。
 
+开发和测试均使用项目现有的开发环境。
+
 ## Project Notes
 
 - Diagnostic fields, error codes, events and feature coverage live in `shared/diagnostics/contract.json`. Run `python3 scripts/generate_diagnostic_contract.py` after changes and commit both generated files. New features need a coverage declaration and synthetic fault/export tests; preserve the frozen v1 compatibility baseline. See `docs/task-diagnostics-and-cancellation.md` for the release checks and compatibility rules.

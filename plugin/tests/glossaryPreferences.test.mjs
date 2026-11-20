@@ -199,7 +199,8 @@ globalThis.ztoolkit = {
 };
 globalThis.IOUtils = { read: async () => bytes };
 const ui = await asModule(
-    "const registerAttachmentNamingPreferences = () => {}; const registerSelectionPreferences = () => {}; const registerPreferenceCards = async () => {}; const resetSelectionTranslation = () => {};\n" +
+    "const Zotero = {isMac:false};\n" +
+        "const registerAttachmentNamingPreferences = () => {}; const registerSelectionPreferences = () => {}; const registerPreferenceCards = async () => {}; const resetSelectionTranslation = () => {};\n" +
         "const {config,version,getString,renderNotice,errorNotice,getLocaleID,getPref,setPref,axios,loadGlossaryEntries,importGlossaryCsv,clearGlossaryEntries,listGlossaryPacks,checkGlossaryUpdates,downloadGlossaryPack,cancelGlossaryDownload,removeGlossaryPack,getSelectedGlossaryPackIds,setSelectedGlossaryPackIds,supportsGlossaryPackLanguage}=globalThis.__glossaryUiTest;\n" +
         compile("preferenceScript") +
         "\nexport {importGlossary,refreshGlossarySummary,refreshServerVersion,refreshGlossaryPacks,renderGlossaryPacks,runGlossaryPackAction};\n//# sourceURL=preferences-fixture.js",

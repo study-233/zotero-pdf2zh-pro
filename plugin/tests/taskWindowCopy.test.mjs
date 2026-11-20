@@ -180,12 +180,31 @@ for (const locale of ["zh-CN", "en-US"]) {
                     executionSeconds: 65.993,
                     complete: true,
                 },
-                metrics: { throughput: { outputTokensPerSecond: 123.4 } },
+                metrics: {
+                    throughput: {
+                        outputTokensPerSecond: 123.4,
+                        etaSeconds: 59.9,
+                    },
+                },
             }),
         ]);
         try {
             const rail = document.querySelector(".metric-rail");
-            assert.match(rail.textContent, /1.1 min/);
+            const elapsed = rail.querySelector('[data-metric="elapsed"]');
+            const eta = rail.querySelector('[data-metric="eta"]');
+            assert.equal(elapsed.textContent, "00:01:06");
+            assert.equal(eta.textContent, "00:01:00");
+            for (const [value, label] of [
+                [elapsed, locale === "zh-CN" ? "已用" : "Elapsed"],
+                [eta, locale === "zh-CN" ? "剩余" : "Remaining"],
+            ]) {
+                assert.equal(value.previousElementSibling.textContent, label);
+                assert.equal(value.closest("[title]"), null);
+                assert.equal(
+                    value.parentElement.querySelector("[title]"),
+                    null,
+                );
+            }
             assert.match(rail.textContent, /123.4 tokens\/s/);
             assert.doesNotMatch(rail.textContent, /排队|执行|Queue|Execution/);
             assert.equal(document.querySelector(".metrics-panel").hidden, true);

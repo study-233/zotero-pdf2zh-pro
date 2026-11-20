@@ -53,6 +53,9 @@ jobs:
           uv run --no-project python -m unittest discover -s scripts -p 'test_diagnostic_contract.py'
           uv run --no-project python -m unittest discover -s scripts -p 'test_managed_engine.py'
 
+      - name: Test Homebrew upgrade and recovery
+        run: uv run --no-project python -m unittest discover -s scripts -p 'test_homebrew_update.py'
+
       - name: Build and check plugin
         working-directory: plugin
         run: |

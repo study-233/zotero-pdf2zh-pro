@@ -1,6 +1,10 @@
 /* eslint-disable no-undef */
 pref("__prefsPrefix__.new_serverip", "http://127.0.0.1:8890");
 pref("__prefsPrefix__.releaseNoticeState", "");
+pref("__prefsPrefix__.brewFollowPlugin", false);
+pref("__prefsPrefix__.brewManualTarget", "");
+pref("__prefsPrefix__.brewSkipTarget", "");
+pref("__prefsPrefix__.brewInFlight", false);
 
 pref("__prefsPrefix__.sourceLang", "en");
 pref("__prefsPrefix__.targetLang", "zh-CN");

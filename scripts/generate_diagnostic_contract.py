@@ -54,6 +54,9 @@ def validate(contract, root=ROOT):
     for feature in contract['productCapabilities'].values():
         if feature['coverage'] not in {'task_events', 'request_metrics', 'availability_only'}:
             raise ValueError('Unknown feature coverage. Do not claim unsupported collection.')
+    for feature, events in contract['pluginFeatureEvents'].items():
+        if not events or any(contract['events'].get(event, {}).get('component') != 'plugin' for event in events):
+            raise ValueError(f'Unregistered plugin feature events: {feature}')
     known_fields = set.union(*groups) | {'providerCode', 'validationCode', 'failedParagraphs'}
     for definition in (*contract['validationErrors'].values(), *contract['providerErrors'].values()):
         if not set(definition['requiredEvidence']) <= known_fields:

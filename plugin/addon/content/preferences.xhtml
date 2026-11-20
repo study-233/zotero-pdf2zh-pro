@@ -955,37 +955,100 @@
             aria-labelledby="zotero-prefpane-__addonRef__-card-connection-title"
             class="pref-section"
         >
-            <html:div class="connection-field">
-                <html:div class="form-field">
-                    <html:label
-                        class="field-label"
-                        for="zotero-prefpane-__addonRef__-new_serverip"
-                        data-l10n-id="pref-serverip"
-                    />
-                    <html:input
-                        id="zotero-prefpane-__addonRef__-new_serverip"
-                        preference="extensions.zotero.__addonRef__.new_serverip"
-                        type="text"
-                        class="server-url-input"
+            <html:div
+                id="zotero-prefpane-__addonRef__-brew-panel"
+                class="brew-panel"
+                hidden="hidden"
+            >
+                <html:div class="brew-row">
+                    <html:span data-l10n-id="pref-brew-version" />
+                    <html:span id="zotero-prefpane-__addonRef__-brew-version" />
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-brew-update"
+                        type="button"
                     />
                 </html:div>
-            </html:div>
-            <html:div class="connection-actions">
-                <html:button
-                    id="zotero-prefpane-__addonRef__-checkConnection"
-                    data-l10n-id="pref-check-local-service"
+                <html:div class="toggle-row">
+                    <html:input
+                        id="zotero-prefpane-__addonRef__-brew-follow"
+                        type="checkbox"
+                        aria-describedby="zotero-prefpane-__addonRef__-brew-hint"
+                    />
+                    <html:label
+                        for="zotero-prefpane-__addonRef__-brew-follow"
+                        data-l10n-id="pref-brew-follow"
+                    />
+                    <html:span
+                        id="zotero-prefpane-__addonRef__-brew-hint"
+                        class="pref-description"
+                        data-l10n-id="pref-brew-idle"
+                    />
+                </html:div>
+                <html:div class="brew-row">
+                    <html:span data-l10n-id="pref-brew-directory" />
+                    <html:span
+                        id="zotero-prefpane-__addonRef__-brew-path"
+                        class="brew-path"
+                    />
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-brew-copy"
+                        type="button"
+                        data-l10n-id="pref-brew-copy"
+                    />
+                </html:div>
+                <html:p
+                    id="zotero-prefpane-__addonRef__-brew-message"
+                    role="status"
+                    aria-live="polite"
+                    class="connection-result"
+                    hidden="hidden"
                 />
-                <html:button
-                    id="zotero-prefpane-__addonRef__-export-diagnostics"
-                    type="button"
-                    data-l10n-id="pref-export-diagnostics"
+                <html:div
+                    class="connection-actions"
+                    id="zotero-prefpane-__addonRef__-brew-tools"
                 />
             </html:div>
-            <html:pre
-                id="zotero-prefpane-__addonRef__-connectionResult"
-                class="connection-result"
-                hidden="hidden"
-            />
+            <html:details
+                id="zotero-prefpane-__addonRef__-connection-options"
+                open="open"
+            >
+                <html:summary
+                    hidden="hidden"
+                    id="zotero-prefpane-__addonRef__-connection-options-title"
+                    data-l10n-id="pref-brew-other"
+                />
+                <html:div class="connection-field">
+                    <html:div class="form-field">
+                        <html:label
+                            class="field-label"
+                            for="zotero-prefpane-__addonRef__-new_serverip"
+                            data-l10n-id="pref-serverip"
+                        />
+                        <html:input
+                            id="zotero-prefpane-__addonRef__-new_serverip"
+                            preference="extensions.zotero.__addonRef__.new_serverip"
+                            type="text"
+                            class="server-url-input"
+                        />
+                    </html:div>
+                </html:div>
+                <html:div class="connection-actions">
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-checkConnection"
+                        data-l10n-id="pref-check-local-service"
+                    />
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-export-diagnostics"
+                        type="button"
+                        data-l10n-id="pref-export-diagnostics"
+                    />
+                </html:div>
+                <html:pre
+                    id="zotero-prefpane-__addonRef__-connectionResult"
+                    class="connection-result"
+                    hidden="hidden"
+                />
+            </html:details>
         </html:section>
     </html:details>
 </groupbox>
