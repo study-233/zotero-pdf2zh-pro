@@ -130,7 +130,11 @@ export async function registerPrefsScripts(window: Window) {
     stopGlossaryPackPolling();
     glossaryPackWindow = window;
     addon.data.prefs = { window, columns: [], rows: [] };
-    if (Zotero.isMac) bindBrewPreferences(window);
+    if (Zotero.isMac || developmentBuild) bindServicePreferences(window);
+    else
+        element("new_serverip")?.addEventListener("change", () => {
+            void refreshServerVersion();
+        });
     element("notice-help")?.addEventListener("click", openNoticeHelp);
     element("retirement-action")?.addEventListener("click", () =>
         openProfileManager(),
@@ -216,9 +220,6 @@ export async function registerPrefsScripts(window: Window) {
     element("checkConnection")?.addEventListener("click", () => {
         void refreshServerVersion(true);
     });
-    element("new_serverip")?.addEventListener("change", () => {
-        void refreshServerVersion();
-    });
     element("glossary-import")?.addEventListener("click", () => {
         void importGlossary();
     });
@@ -241,7 +242,16 @@ export async function registerPrefsScripts(window: Window) {
     await registerPreferenceCards(window);
 }
 
-function bindBrewPreferences(win: Window) {
+const developmentBuild =
+    typeof __devRuntime__ !== "undefined" && !!__devRuntime__;
+function isDevelopmentBackend(url: string) {
+    return (
+        developmentBuild &&
+        /^http:\/\/(localhost|127\.0\.0\.1):8891\/?$/i.test(url)
+    );
+}
+
+function bindServicePreferences(win: Window) {
     const panel = element("brew-panel");
     const options = element("connection-options") as HTMLDetailsElement;
     const check = element("checkConnection");
@@ -251,6 +261,11 @@ function bindBrewPreferences(win: Window) {
     if (!panel || !follow || !action || !options || !check || !exporter) return;
     const ordinaryActions = check.parentElement!;
     const copy = element("brew-copy")!;
+    const badge = element("brew-status")!;
+    const troubleshooting = element("brew-troubleshooting")!;
+    const devPanel = element("dev-panel")!;
+    const result = element("connectionResult")!;
+    let mode: "dev" | "brew" | "other" | undefined;
     let updating = false;
     copy.addEventListener("click", () => {
         const path = brewControls().directory;
@@ -261,15 +276,38 @@ function bindBrewPreferences(win: Window) {
     });
     action.addEventListener("click", brewUpdateAction);
     follow.addEventListener("change", () => followBrewUpdates(follow.checked));
-    const dispose = observeBrewUpdates(() => {
+    const render = () => {
         if (!panel.isConnected) return;
         const v = brewControls();
-        if (panel.hidden === v.visible) {
+        const dev = isDevelopmentBackend(
+            String(getPref("new_serverip") || "").trim(),
+        );
+        const nextMode = dev ? "dev" : v.visible ? "brew" : "other";
+        if (mode !== nextMode) {
+            mode = nextMode;
+            const managedView = dev || v.visible;
             panel.hidden = !v.visible;
-            element("connection-options-title")!.hidden = !v.visible;
+            badge.hidden = !v.visible;
+            if (!v.visible) status("brew-status", "");
+            devPanel.hidden = !dev;
+            if (!dev) status("dev-health", "");
+            troubleshooting.hidden = !managedView;
+            element("brew-path")!.parentElement!.hidden = !v.visible;
+            element("connection-options-title")!.hidden = !managedView;
             options.open =
-                !v.visible || options.contains(win.document.activeElement);
-            (v.visible ? element("brew-tools")! : ordinaryActions).append(
+                !managedView || options.contains(win.document.activeElement);
+            localizePackNode(
+                check,
+                managedView ? "pref-brew-test" : "pref-check-local-service",
+            );
+            if (dev) {
+                element("dev-check")!.append(check);
+                devPanel.append(result);
+            } else {
+                ordinaryActions.prepend(check);
+                options.append(result);
+            }
+            (managedView ? element("brew-tools")! : ordinaryActions).append(
                 exporter,
             );
         }
@@ -281,8 +319,8 @@ function bindBrewPreferences(win: Window) {
             : v.running
               ? "running"
               : "stopped";
-        if (panel.dataset.serviceState !== serviceState)
-            panel.dataset.serviceState = serviceState;
+        badge.dataset.state = serviceState;
+        localizePackNode(badge, "pref-brew-" + serviceState);
         follow.checked = v.follow;
         follow.disabled = v.disabled;
         action.disabled =
@@ -308,16 +346,33 @@ function bindBrewPreferences(win: Window) {
             });
         else status("brew-version", v.installed || "—");
         status("brew-path", v.directory || "—");
-        if (["current", "available"].includes(v.state)) {
-            if (v.state === "current")
-                localizedStatus("brew-message", "pref-brew-current");
-            else status("brew-message", "");
-        } else
+        element("brew-match")!.hidden = v.state !== "current";
+        if (["current", "available"].includes(v.state))
+            status("brew-message", "");
+        else
             localizedStatus("brew-message", "pref-brew-state-" + v.state, {
                 version: v.target,
             });
-    });
-    win.addEventListener("unload", dispose, { once: true });
+    };
+    const dispose = observeBrewUpdates(render);
+    // Also react when switching between the dev backend and another external URL.
+    const observer = Zotero.Prefs.registerObserver(
+        config.prefsPrefix + ".new_serverip",
+        () => {
+            if (!panel.isConnected || win !== addon.data.prefs?.window) return;
+            render();
+            void refreshServerVersion();
+        },
+        true,
+    );
+    win.addEventListener(
+        "unload",
+        () => {
+            dispose();
+            Zotero.Prefs.unregisterObserver(observer);
+        },
+        { once: true },
+    );
 }
 
 export function initializeProfileMigration() {
@@ -899,6 +954,15 @@ async function refreshServerVersion(interactive = false) {
     const checkSequence = ++serverCheckSequence;
     const url =
         getPref("new_serverip")?.toString().trim().replace(/\/+$/, "") || "";
+    const dev = isDevelopmentBackend(url);
+    const showHealth = (state: string, key: string) => {
+        element("serverVersionCard")?.setAttribute("data-state", state);
+        localizedStatus("serverStatus", key);
+        if (dev) {
+            element("dev-health")?.setAttribute("data-state", state);
+            localizedStatus("dev-health", key);
+        }
+    };
     stopGlossaryPackPolling();
     glossaryPackSequence++;
     glossaryPackServerURL = url;
@@ -909,22 +973,26 @@ async function refreshServerVersion(interactive = false) {
     packStatus("pref-pack-connecting");
     const button = element("checkConnection") as HTMLButtonElement | null;
     if (button) button.disabled = true;
-    element("serverVersionCard")?.setAttribute("data-state", "checking");
-    localizedStatus("serverStatus", "pref-server-checking");
+    showHealth("checking", "pref-server-checking");
+    if (dev) status("dev-version", "—");
     status("qualityCapabilities", "");
     try {
         if (!url) throw new Error();
-        if (interactive) await ensureEngine(url, true, true);
+        if (interactive && !dev) await ensureEngine(url, true, true);
         const { data } = await axios.get<ServerHealthResponse>(
             `${url}/health`,
             { timeout: 5000 },
         );
         if (checkSequence !== serverCheckSequence) return;
         if (!["ok", "degraded"].includes(data.status || "")) throw new Error();
-        if (data.version) status("serverVersion", data.version);
-        else localizedStatus("serverVersion", "pref-server-unknown");
-        localizedStatus(
-            "serverStatus",
+        for (const id of dev
+            ? ["serverVersion", "dev-version"]
+            : ["serverVersion"]) {
+            if (data.version) status(id, data.version);
+            else localizedStatus(id, "pref-server-unknown");
+        }
+        showHealth(
+            data.status === "degraded" ? "degraded" : "ok",
             data.status === "degraded"
                 ? "pref-server-degraded"
                 : "pref-server-connected",
@@ -936,12 +1004,8 @@ async function refreshServerVersion(interactive = false) {
         else
             status(
                 "connectionResult",
-                interactive ? engineStatusMessage() : "",
+                interactive && !dev ? engineStatusMessage() : "",
             );
-        element("serverVersionCard")?.setAttribute(
-            "data-state",
-            data.status === "degraded" ? "degraded" : "ok",
-        );
         if (
             data.capabilities?.glossaryEntries !== true ||
             data.capabilities?.semanticReview !== true
@@ -957,7 +1021,7 @@ async function refreshServerVersion(interactive = false) {
     } catch (error) {
         if (checkSequence !== serverCheckSequence) return;
         status("serverVersion", "—");
-        localizedStatus("serverStatus", "pref-server-unreachable");
+        showHealth("error", "pref-server-unreachable");
         if (
             interactive &&
             error instanceof Error &&
@@ -970,7 +1034,6 @@ async function refreshServerVersion(interactive = false) {
         )
             localizedStatus("connectionResult", "pref-engine-check");
         else localizedStatus("connectionResult", "pref-server-start");
-        element("serverVersionCard")?.setAttribute("data-state", "error");
         status("qualityCapabilities", "");
         packStatus("pref-pack-unreachable");
     } finally {

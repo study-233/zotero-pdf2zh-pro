@@ -13,7 +13,7 @@ export class PDF2zhBasicFactory {
         });
     }
 
-    static openPrefs(target = "new_serverip") {
+    static openPrefs(target = "service-summary") {
         preparePreferenceTarget(target);
         Zotero.Utilities.Internal.openPreferences(this.paneID, {
             scrollTo: `#zotero-prefpane-${addon.data.config.addonRef}-${target}`,

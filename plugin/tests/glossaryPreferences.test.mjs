@@ -199,7 +199,7 @@ globalThis.ztoolkit = {
 };
 globalThis.IOUtils = { read: async () => bytes };
 const ui = await asModule(
-    "const Zotero = {isMac:false};\n" +
+    "const Zotero = {isMac:false}; const __devRuntime__ = '/test/dev';\n" +
         "const registerAttachmentNamingPreferences = () => {}; const registerSelectionPreferences = () => {}; const registerPreferenceCards = async () => {}; const resetSelectionTranslation = () => {};\n" +
         "const {config,version,getString,renderNotice,errorNotice,getLocaleID,getPref,setPref,axios,loadGlossaryEntries,importGlossaryCsv,clearGlossaryEntries,listGlossaryPacks,checkGlossaryUpdates,downloadGlossaryPack,cancelGlossaryDownload,removeGlossaryPack,getSelectedGlossaryPackIds,setSelectedGlossaryPackIds,supportsGlossaryPackLanguage}=globalThis.__glossaryUiTest;\n" +
         compile("preferenceScript") +
@@ -359,6 +359,37 @@ test("connection colors distinguish degraded, unreachable and retrying states", 
     await retry;
     assert.equal(card.getAttribute("data-state"), "ok");
     assert.equal(nodes.get("serverStatus").textContent, "已连接");
+});
+
+test("development connection test uses the configured health endpoint and clears stale versions", async () => {
+    reset();
+    const endpoint = "http://127.0.0.1:8891";
+    prefs.set("new_serverip", endpoint);
+    for (const id of ["dev-health", "dev-version"]) nodes.set(id, makeNode());
+    const axios = globalThis.__glossaryUiTest.axios;
+    const badge = node("dev-health");
+    const versionField = node("dev-version");
+    const originalGet = axios.get;
+    const requests = [];
+    axios.get = async (url) => {
+        requests.push(url);
+        return { data: health };
+    };
+    try {
+        for (const [response, state, expectedVersion] of [
+            [{ status: "ok", version: "2.0-dev" }, "ok", "2.0-dev"],
+            [{ status: "degraded" }, "degraded", "未知"],
+            [{ status: "offline" }, "error", "—"],
+        ]) {
+            health = response;
+            await ui.refreshServerVersion(true);
+            assert.equal(badge.getAttribute("data-state"), state);
+            assert.equal(versionField.textContent, expectedVersion);
+        }
+        assert.deepEqual(requests, Array(3).fill(endpoint + "/health"));
+    } finally {
+        axios.get = originalGet;
+    }
 });
 
 const serverURL = "http://localhost:8890";

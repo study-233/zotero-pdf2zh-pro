@@ -70,7 +70,7 @@ async function onStartup(reason?: number) {
         else if (action === "tasks") PDF2zhTaskManager.openWindow();
         else
             PDF2zhBasicFactory.openPrefs(
-                action === "selection" ? "selection-provider" : "new_serverip",
+                action === "selection" ? "selection-provider" : "service-summary",
             );
     });
     await Promise.all(

@@ -78,7 +78,8 @@ export async function registerPreferenceCards(window: Window) {
         if (disposed || !pane.isConnected) return;
         const current = ++revision;
         const brewPanel = node("brew-panel");
-        const [unconfigured, automatic, noGlossary, advanced, brewStatus] =
+        const devPanel = node("dev-panel");
+        const [unconfigured, automatic, noGlossary, advanced] =
             await Promise.all([
                 localize("pref-card-unconfigured"),
                 localize("pref-card-automatic"),
@@ -87,12 +88,6 @@ export async function registerPreferenceCards(window: Window) {
                     qps: value("qps") || "—",
                     pool: value("poolSize") || "—",
                 }),
-                brewPanel && !brewPanel.hidden
-                    ? localize(
-                          "pref-brew-" +
-                              (brewPanel.dataset.serviceState || "stopped"),
-                      )
-                    : "",
             ]);
         if (disposed || current !== revision) return;
         const packs = Array.from(
@@ -128,11 +123,14 @@ export async function registerPreferenceCards(window: Window) {
                     .filter(Boolean)
                     .join(" · ") || noGlossary,
             advanced,
-            connection: brewStatus
-                ? "Homebrew · " + brewStatus
-                : [text("serverStatus"), value("new_serverip")]
-                      .filter(Boolean)
-                      .join(" · "),
+            connection:
+                devPanel && !devPanel.hidden
+                    ? await localize("pref-development-server")
+                    : brewPanel && !brewPanel.hidden
+                      ? "Homebrew"
+                      : [text("serverStatus"), value("new_serverip")]
+                            .filter(Boolean)
+                            .join(" · "),
         };
         for (const [key, summary] of Object.entries(summaries)) {
             if (disposed || current !== revision) return;
@@ -157,13 +155,7 @@ export async function registerPreferenceCards(window: Window) {
             childList: true,
             characterData: true,
             attributes: true,
-            attributeFilter: [
-                "label",
-                "value",
-                "checked",
-                "hidden",
-                "data-service-state",
-            ],
+            attributeFilter: ["label", "value", "checked", "hidden"],
         });
     const events = ["input", "change", "command"];
     for (const event of events) pane.addEventListener(event, schedule);

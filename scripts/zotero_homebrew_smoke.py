@@ -34,7 +34,12 @@ async function run() {
         const card = el('brew-panel').closest('[data-pref-card="connection"]');
         card.open = true;
         await wait('localized action', () => el('brew-update').textContent.trim());
-        if (el('brew-follow').checked || el('connection-options').open) throw Error('default controls');
+        const diagnostics = el('brew-troubleshooting');
+        if (el('brew-follow').checked || el('connection-options').open || diagnostics.open)
+            throw Error('default controls');
+        await wait('header service status', () => !el('brew-status').hidden && el('brew-status').textContent.trim());
+        if (el('brew-match').hidden === false && !el('brew-message').hidden)
+            throw Error('duplicated version status');
         if (el('export-diagnostics').parentElement !== el('brew-tools')) throw Error('diagnostic action missing');
         if (!el('brew-path').textContent.includes('zotero-pdf2zh-pro')) throw Error('data path missing');
         const prefWin = win.docShell.rootTreeItem.domWindow;
@@ -55,10 +60,15 @@ async function run() {
             results.push({locale:Zotero.locale,dark:win.matchMedia('(prefers-color-scheme: dark)').matches,
                 window:prefWin.outerWidth, card:box.width, action:action.textContent, installed:el('brew-version').textContent});
         }
+        diagnostics.open = true;
+        for (const id of ['brew-path', 'brew-copy', 'export-diagnostics'])
+            if (!el(id).getBoundingClientRect().width) throw Error('missing troubleshooting control: ' + id);
+        diagnostics.open = false;
         el('connection-options').open = true;
         if (!el('new_serverip').getBoundingClientRect().width) throw Error('custom URL inaccessible');
         Zotero.Prefs.set('extensions.zotero.pdf2zhpro.new_serverip','http://127.0.0.1:1',true);
         await wait('custom connection view', () => el('brew-panel').hidden && el('connection-options').open);
+        if (!el('brew-status').hidden || !diagnostics.hidden) throw Error('stale Homebrew controls');
         if (el('export-diagnostics').parentElement === el('brew-tools')) throw Error('external diagnostics missing');
         await IOUtils.writeUTF8(report+'/'+LOCALE+'.json', JSON.stringify({passed:true,version:Zotero.version,results},null,2));
     } catch(e) {
@@ -79,7 +89,7 @@ def main(work, report):
     manifest = {"manifest_version": 2, "name": "Brew preferences acceptance", "version": "1.0",
                 "applications": {"zotero": {"id":addon, "update_url":"https://example.invalid/update.json",
                                              "strict_min_version":"8.0","strict_max_version":"10.0.*"}}}
-    for locale, dark in [("zh-CN", 0), ("en-US", 1)]:
+    for locale, dark in [("zh-CN", 1), ("en-US", 0)]:
         write_profile(profile, library, {"intl.locale.requested":locale, "ui.systemUsesDarkTheme":dark,
             "extensions.zotero.pdf2zhpro.engineManagement":"external",
             "extensions.zotero.pdf2zhpro.new_serverip":"http://127.0.0.1:8890",

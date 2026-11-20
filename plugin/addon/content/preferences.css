@@ -492,29 +492,83 @@
     gap: 8px;
     margin-top: 12px;
 }
+.pdf2zh-pref-pane .brew-status,
+.pdf2zh-pref-pane .dev-health {
+    font-size: 12px;
+    white-space: nowrap;
+}
+.pdf2zh-pref-pane .brew-status[data-state="running"]::before,
+.pdf2zh-pref-pane .dev-health[data-state="ok"]::before {
+    background: var(--accent-green, #16813b);
+}
+.pdf2zh-pref-pane .dev-health[data-state="error"]::before {
+    background: var(--accent-red, #c23b22);
+}
+.pdf2zh-pref-pane .dev-health[data-state="degraded"]::before {
+    background: var(--accent-gold, #996b00);
+}
+.pdf2zh-pref-pane [id$="-dev-panel"] {
+    margin-block-end: 14px;
+}
+.pdf2zh-pref-pane .brew-status[data-state="updating"]::before {
+    background: var(--pref-accent);
+}
 .pdf2zh-pref-pane .brew-panel {
     display: grid;
-    gap: 10px;
-    margin-block-end: 12px;
+    gap: 12px;
+    margin-block-end: 14px;
 }
-.pdf2zh-pref-pane .brew-row {
+.pdf2zh-pref-pane .brew-version-row,
+.pdf2zh-pref-pane .brew-version-info {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+}
+.pdf2zh-pref-pane .brew-version-row {
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 12px;
+}
+.pdf2zh-pref-pane .brew-match {
+    color: var(--pref-muted);
+    font-size: 12px;
+}
+.pdf2zh-pref-pane .brew-match::before {
+    content: "·";
+    margin-inline-end: 6px;
+}
+.pdf2zh-pref-pane .brew-panel .connection-result {
+    margin: 0;
+}
+.pdf2zh-pref-pane .brew-follow-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0 8px;
+}
+.pdf2zh-pref-pane .brew-follow-row label {
+    line-height: 24px;
+    margin: 0;
+}
+.pdf2zh-pref-pane .brew-follow-row .pref-description {
+    grid-column: 2;
+    margin: 0;
+}
+.pdf2zh-pref-pane .service-details > summary:not([hidden]) {
+    padding-block: 5px;
+    border-top: 1px solid var(--pref-divider);
+}
+.pdf2zh-pref-pane .brew-directory {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
 }
 .pdf2zh-pref-pane .brew-path {
     overflow-wrap: anywhere;
     user-select: all;
     direction: ltr;
-}
-.pdf2zh-pref-pane .brew-panel .toggle-row {
-    flex-wrap: wrap;
-}
-.pdf2zh-pref-pane [id$="-connection-options-title"]:not([hidden]) {
-    cursor: pointer;
-    padding-block: 8px;
-    border-top: 1px solid var(--pref-divider);
 }
 .pdf2zh-pref-pane .glossary-pack-list {
     margin-top: 8px;
