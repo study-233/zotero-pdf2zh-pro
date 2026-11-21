@@ -7,6 +7,7 @@ import shutil
 import socket
 import subprocess
 import time
+import tempfile
 import zipfile
 
 from managed_engine import health, interpreter, request, locked, version_folder
@@ -45,7 +46,7 @@ def stop_owned(root, port):
                 pass
 
 
-def verify_update(root, port, work):
+def verify_update(root, port, work, migration_parent):
     # Seed real legacy-format data only while the owned server has stopped.
     stop_owned(root, port)
     old = (root / 'active').read_text().strip()
@@ -91,6 +92,13 @@ def verify_update(root, port, work):
         if time.monotonic() > deadline:
             raise RuntimeError('Test request did not release the maintenance gate')
         time.sleep(.05)
+    def await_idle():
+        deadline = time.monotonic() + 75
+        while health(port)['maintenance']['idleSeconds'] < 60:
+            if time.monotonic() > deadline:
+                raise RuntimeError('Managed engine did not reach update idle period')
+            time.sleep(1)
+    await_idle()
     assert install() == 'ready' and health(port)['managedRevision'] == new
     assert (root / 'previous').read_text().strip() == old
     assert any(t['taskId'] == 'release-compatibility-task' for t in request(port, '/tasks')['tasks'])
@@ -102,11 +110,38 @@ def verify_update(root, port, work):
     spec['id'] = '0' * 64
     (staged / 'manifest.json').write_text(json.dumps(spec))
     (staged / 'service.zip').write_bytes(b'damaged')
+    await_idle()
     assert install() == 'fallback' and health(port)['managedRevision'] == new
     stop_owned(root, port)
     candidate = version_folder(root, new)
     subprocess.run([interpreter(candidate), fixture, 'verify', data], cwd=candidate,
                    env={**env, 'PYTHONPATH': str(candidate)}, check=True, timeout=120)
+
+
+    # Relocate the stopped fixture using a separate interpreter installed at the final path.
+    destination = migration_parent / '迁移 new'
+    destination.mkdir()
+    spec['id'] = new
+    (staged / 'manifest.json').write_text(json.dumps(spec))
+    with zipfile.ZipFile(ROOT / 'plugin/build/zotero-pdf2zh-pro.xpi') as xpi:
+        (staged / 'service.zip').write_bytes(xpi.read('content/engine/service.zip'))
+    binding = root.parent / 'pdf2zh-engine-location.json'
+    move_env = {**os.environ, 'UV_NO_CONFIG':'1', 'UV_PYTHON_INSTALL_DIR':str(destination / 'python'),
+                'UV_CACHE_DIR':str(destination / 'cache'), 'PYTHONUTF8':'1', 'PYTHONNOUSERSITE':'1'}
+    subprocess.run([uv,'run','--no-project','--managed-python','--python',spec['python'],'--','python',
+                    staged / 'manager.py',destination,staged,uv,'--port',str(port),'--relocate-from',root,
+                    '--binding',binding],cwd=staged,env=move_env,check=True,timeout=900)
+    assert Path(json.loads(binding.read_bytes())['root']) == destination
+    assert health(port) is None
+    moved = version_folder(destination, new)
+    try:
+        subprocess.run([interpreter(moved),moved / 'manager.py','restart',destination,str(port)],check=True,timeout=150)
+        assert Path(health(port)['workspace']['path']).resolve() == (destination / 'data').resolve()
+        assert any(t['taskId']=='release-compatibility-task' for t in request(port,'/tasks')['tasks'])
+    finally:
+        stop_owned(destination,port)
+    subprocess.run([interpreter(moved),fixture,'verify',destination / 'data'],cwd=moved,
+                   env={**env,'PYTHONPATH':str(moved)},check=True,timeout=120)
 
 
 def run(work, report):
@@ -147,9 +182,18 @@ def run(work, report):
         live = health(port)
         assert live['status'] == 'ok' and live['capabilities']['managedEngine']
         assert live['managedOwner'] == (root / 'owner').read_text().strip()
-        verify_update(root, port, work)
+        other_volume = os.environ.get('PDF2ZH_TEST_MIGRATION_PARENT')
+        if other_volume:
+            parent = Path(other_volume).resolve(strict=True)
+            if os.stat(parent).st_dev == os.stat(work).st_dev:
+                raise ValueError('Cross-volume acceptance requires another volume')
+            with tempfile.TemporaryDirectory(dir=parent, prefix='pdf2zh-move-') as secondary:
+                verify_update(root, port, work, Path(secondary))
+            result['crossVolume'] = [work.anchor, parent.anchor]
+        else:
+            verify_update(root, port, work, work)
         result['checks'] = ['cold install', 'detached process', 'offline restart', 'active request deferred',
-                            'idle update', 'damaged update fallback', 'persistent release fixtures']
+                            'idle update', 'damaged update fallback', 'persistent release fixtures', 'relocated runtime, tasks and offline restart']
         receipt.write_text(json.dumps(result, indent=2), 'utf-8')
         print('Verified managed engine in Zotero', result['version'], result['checks'], flush=True)
     finally:

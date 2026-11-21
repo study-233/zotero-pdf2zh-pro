@@ -22,6 +22,10 @@ function fixture({ mode, live, legacy = false } = {}) {
     const calls = { probes: 0, prompts: 0, files: [], timers: [], events: [] };
     const exports = {};
     const imports = {
+        "./backendInstallation": {
+            engineBinding: async () => ({ root: "/ProfD/pdf2zh-engine" }),
+            localEngineAddress: /^http:\/\/(localhost|127\.0\.0\.1):8890\/?$/i,
+        },
         "../utils/prefs": {
             getPref: (k) => prefs.get(k),
             setPref: (k, v) => prefs.set(k, v),

@@ -201,7 +201,7 @@ function Restore-RuntimeTransaction {
 }
 
 function Apply-PreparedRuntime {
-    param([switch]$KeepStopped, [switch]$AllowLegacy, [switch]$DeferLocationCommit, [switch]$NoShortcuts)
+    param([switch]$KeepStopped, [switch]$AllowLegacy, [switch]$DeferLocationCommit, [switch]$NoShortcuts, [ValidateRange(0,60)][int]$MinimumIdleSeconds=0)
     $preparedPath = Join-Path $AppRoot 'updates/prepared.json'
     $candidate = Get-Content -Raw -Encoding utf8 -LiteralPath $preparedPath | ConvertFrom-Json
     $pendingJournal=Join-Path $AppRoot 'updates/transaction.json'
@@ -219,7 +219,7 @@ function Apply-PreparedRuntime {
     Assert-InstallNotCancelled
     # Finish or roll back the live-runtime transaction before returning.
     $script:InstallCommitStarted = $true
-    $wasRunning = Request-SafeMaintenance -AllowLegacy:$AllowLegacy
+    $wasRunning = Request-SafeMaintenance -AllowLegacy:$AllowLegacy -IdleSeconds $MinimumIdleSeconds
     $transactionDir = Join-Path $AppRoot ('updates/previous/' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Force -Path $transactionDir, $BinDir | Out-Null
     foreach ($file in @(Get-ChildItem -LiteralPath $BinDir -File)) { Copy-Item -LiteralPath $file.FullName -Destination $transactionDir }

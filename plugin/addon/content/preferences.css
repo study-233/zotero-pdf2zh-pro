@@ -559,6 +559,9 @@
     padding-block: 5px;
     border-top: 1px solid var(--pref-divider);
 }
+.pdf2zh-pref-pane .pref-section:has(.brew-panel:not([hidden])) [data-external] {
+    display: none;
+}
 .pdf2zh-pref-pane .brew-directory {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;

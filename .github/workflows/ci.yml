@@ -200,3 +200,5 @@ jobs:
           $env:ZOTERO_BIN = (Get-ChildItem $folder -Filter zotero.exe -Recurse -File | Select-Object -First 1).FullName
           if (-not $env:ZOTERO_BIN) { throw 'Zotero executable missing' }
           python scripts/zotero_engine_smoke.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/zotero_backend_pane_smoke.py

@@ -1,9 +1,14 @@
 import { getPref, setPref } from "../utils/prefs";
 import { getString } from "../utils/locale";
 import { recordDiagnostic } from "./diagnostics";
+import {
+    engineBinding,
+    identifyBackend,
+    localEngineAddress,
+} from "./backendInstallation";
 
 const assets = "chrome://pdf2zhpro/content/engine/";
-const local = /^http:\/\/(127\.0\.0\.1|localhost):8890\/?$/i;
+
 type Package = {
     url: string;
     sha256: string;
@@ -21,6 +26,20 @@ let retry: ReturnType<typeof setTimeout> | undefined;
 let stopped = false;
 let lastResult = "";
 let retryAt = 0;
+export function managedUpdateState() {
+    return lastResult;
+}
+export async function cancelManagedUpdate() {
+    setPref("managedSkipRevision", (await manifest()).id);
+    setPref("managedManualRevision", "");
+    clearTimeout(retry);
+    lastResult = "cancelled";
+}
+export async function requestManagedUpdate(url: string) {
+    setPref("managedSkipRevision", "");
+    setPref("managedManualRevision", (await manifest()).id);
+    await ensureEngine(url, true, true);
+}
 export function engineStatusMessage() {
     return ["fallback", "deferred"].includes(lastResult)
         ? getString("engine-" + lastResult)
@@ -31,7 +50,7 @@ function setupError(key: string) {
         name: "EngineSetupError",
     });
 }
-async function legacyServiceInstalled() {
+export async function legacyServiceInstalled() {
     const product = "zotero-pdf2zh-pro";
     const home = Services.dirsvc.get("Home", Ci.nsIFile).path;
     let paths: string[] = [];
@@ -121,6 +140,16 @@ async function asset(path: string) {
     return new Uint8Array(response.response);
 }
 
+export async function engineUpdateAvailable(root: string) {
+    return (
+        (
+            await IOUtils.readUTF8(PathUtils.join(root, "active")).catch(
+                () => "",
+            )
+        ).trim() !== (await manifest()).id
+    );
+}
+
 function platformKey() {
     const abi = Services.appinfo.XPCOMABI;
     if (Zotero.isWin && abi.startsWith("x86_64")) return "windows-x64";
@@ -168,7 +197,11 @@ async function nativeCommand(
 }
 
 // All subprocess arguments are passed separately. No shell or global Python installation.
-export async function runEngineManager(root: string, port: number) {
+export async function runEngineManager(
+    root: string,
+    port: number,
+    options: string[] = [],
+) {
     const spec = await manifest();
     const pkg = spec.platforms[platformKey()];
     await IOUtils.makeDirectory(root, { permissions: 0o700 });
@@ -230,6 +263,7 @@ export async function runEngineManager(root: string, port: number) {
                 tool,
                 "--port",
                 String(port),
+                ...options,
             ],
             stage,
             {
@@ -260,10 +294,27 @@ async function prepare(url: string, interactive: boolean, force: boolean) {
         // An HTTP error belongs to the listener already on this port.
         if ((error as { status?: number }).status) return;
     }
-    const root = PathUtils.join(
-        Services.dirsvc.get("ProfD", Ci.nsIFile).path,
-        "pdf2zh-engine",
-    );
+    const { root, owner } = await engineBinding();
+    if (
+        owner &&
+        (
+            await IOUtils.readUTF8(PathUtils.join(root, "owner")).catch(
+                () => "",
+            )
+        ).trim() !== owner
+    )
+        throw setupError("engine-location-missing");
+    if (!health && Zotero.isWin) {
+        const installation = await identifyBackend(url);
+        if (installation.kind === "conflict")
+            throw setupError("engine-conflict");
+        if (installation.kind === "windows") throw setupError("engine-legacy");
+    }
+    const desired = (await manifest()).id;
+    const manual = getPref("managedManualRevision") === desired;
+    const follow =
+        getPref("managedFollowPlugin") !== false &&
+        getPref("managedSkipRevision") !== desired;
     if (health) {
         const ownerPath = PathUtils.join(root, "owner");
         if (
@@ -272,26 +323,43 @@ async function prepare(url: string, interactive: boolean, force: boolean) {
             (await IOUtils.readUTF8(ownerPath)).trim() !== health.managedOwner
         ) {
             lastResult = "external";
-            setPref("engineManagement", "external");
+            if (mode === "auto") setPref("engineManagement", "external");
             return;
         }
-        if (health.managedRevision === (await manifest()).id) {
+        if (health.managedRevision === desired) {
+            if (manual) setPref("managedManualRevision", "");
             lastResult = "ready";
             return;
         }
+        if (!force && !manual && !follow) return;
         if (!force && lastResult === "fallback" && Date.now() < retryAt) return;
-        if (health.maintenance?.busy || health.status === "degraded") {
+        if (
+            health.maintenance?.busy ||
+            (health.maintenance?.idleSeconds ?? 60) < 60 ||
+            health.status === "degraded"
+        ) {
             lastResult = "deferred";
             schedule();
             return;
         }
     }
+    const installed =
+        mode === "managed" &&
+        !health &&
+        (await IOUtils.exists(PathUtils.join(root, "active")));
+    const backgroundUpdate = installed && (!interactive || force || manual);
+    if (
+        backgroundUpdate &&
+        ((!manual && !follow && !force) || !(await engineUpdateAvailable(root)))
+    )
+        return;
     if (!health && mode === "auto" && (await legacyServiceInstalled())) {
         setPref("engineManagement", "external");
         throw setupError("engine-legacy");
     }
     if (
         !health &&
+        !backgroundUpdate &&
         mode === "managed" &&
         (await IOUtils.exists(PathUtils.join(root, "active")))
     ) {
@@ -302,7 +370,12 @@ async function prepare(url: string, interactive: boolean, force: boolean) {
                 )
             ).trim();
             if (!/^[a-f0-9]{64}$/.test(active)) continue;
-            const folder = PathUtils.join(root, "versions", active);
+            let folder = PathUtils.join(root, "versions", active);
+            if (
+                Zotero.isWin &&
+                !(await IOUtils.exists(PathUtils.join(folder, ".ready")))
+            )
+                folder = PathUtils.join(root, "versions", active.slice(0, 16));
             const python = PathUtils.join(
                 folder,
                 ".venv",
@@ -322,11 +395,11 @@ async function prepare(url: string, interactive: boolean, force: boolean) {
                     folder,
                 );
                 lastResult = state;
-                if (state === "external")
-                    setPref("engineManagement", "external");
                 if (
                     state === "fallback" ||
-                    (state === "ready" && active !== (await manifest()).id)
+                    (state === "ready" &&
+                        getPref("managedFollowPlugin") !== false &&
+                        active !== (await manifest()).id)
                 )
                     schedule();
                 return;
@@ -335,6 +408,13 @@ async function prepare(url: string, interactive: boolean, force: boolean) {
             }
         }
     }
+    if (
+        !force &&
+        !health &&
+        mode === "managed" &&
+        getPref("managedFollowPlugin") === false
+    )
+        throw setupError("engine-failed");
     platformKey();
     if (mode !== "managed") {
         if (
@@ -353,9 +433,19 @@ async function prepare(url: string, interactive: boolean, force: boolean) {
         ?.createLine({ text: getString("engine-preparing"), type: "default" })
         .show();
     try {
-        const state = await runEngineManager(root, 8890);
+        const keepStopped =
+            backgroundUpdate &&
+            !health &&
+            (await IOUtils.exists(PathUtils.join(root, "active")));
+        const state = await runEngineManager(
+            root,
+            8890,
+            keepStopped ? ["--keep-stopped"] : [],
+        );
         lastResult = state;
-        if (state === "external") setPref("engineManagement", "external");
+        if (state === "ready" && manual) setPref("managedManualRevision", "");
+        if (state === "external" && mode === "auto")
+            setPref("engineManagement", "external");
         if (state === "deferred" || state === "fallback") {
             recordDiagnostic(
                 state === "deferred"
@@ -392,7 +482,11 @@ export function ensureEngine(
     force = false,
 ): Promise<void> {
     const mode = getPref("engineManagement");
-    if (stopped || !local.test(url) || (mode !== "auto" && mode !== "managed"))
+    if (
+        stopped ||
+        !localEngineAddress.test(url) ||
+        (mode !== "auto" && mode !== "managed")
+    )
         return Promise.resolve();
     return (operation ??= prepare(url, interactive, force).finally(() => {
         operation = undefined;

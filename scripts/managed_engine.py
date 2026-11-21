@@ -58,8 +58,10 @@ def write(path, value):
     Path(f.name).replace(path)
 
 
-def request(port, endpoint, token=None):
+def request(port, endpoint, token=None, minimum_idle=0):
     headers = {'X-PDF2ZH-Control-Token': token} if token else {}
+    if minimum_idle:
+        headers['X-PDF2ZH-Minimum-Idle'] = str(minimum_idle)
     req = Request(f'http://127.0.0.1:{port}{endpoint}', headers=headers,
                   method='POST' if token else 'GET')
     with LOCAL.open(req, timeout=4) as response:
@@ -161,7 +163,7 @@ def launch(root, target, port, owner):
     raise RuntimeError('Engine did not become ready in time')
 
 
-def ensure(root, bundle, uv, port):
+def ensure(root, bundle, uv, port, keep_stopped=False):
     target = revision(json.loads((bundle / 'manifest.json').read_bytes())['id'])
     with locked(root / 'install.lock'):
         active_file = root / 'active'
@@ -180,21 +182,36 @@ def ensure(root, bundle, uv, port):
             if previous == target:
                 write(active_file, target)
                 return 'ready'
-            if live['status'] != 'ok' or live.get('maintenance', {}).get('busy'):
+            if live['status'] != 'ok' or live.get('maintenance', {}).get('busy') or live.get('maintenance', {}).get('idleSeconds', 60) < 60:
                 return 'deferred'
         try:
             prepare(root, bundle, target, uv)
         except Exception:
             if live:
                 return 'fallback'
+            if keep_stopped:
+                raise
             recovery = previous if previous != target else backup
             if recovery:
                 return 'fallback' if launch(root, recovery, port, owner) == 'ready' else 'external'
             raise
+        if keep_stopped and live is None:
+            if health(port):
+                return 'deferred'
+            if previous and previous != target:
+                write(backup_file, previous)
+            write(active_file, target)
+            return 'ready'
         if live:
+            current = health(port)
+            if not current or current.get('managedOwner') != owner or current.get('managedRevision') != previous:
+                return 'deferred'
+            maintenance = current.get('maintenance', {})
+            if current['status'] != 'ok' or maintenance.get('busy') or maintenance.get('idleSeconds', 60) < 60:
+                return 'deferred'
             token = (root / 'data' / '.control-token').read_text().strip()
             try:
-                request(port, '/internal/managed-replace', token)
+                request(port, '/internal/managed-replace', token, minimum_idle=60)
             except HTTPError as exc:
                 if exc.code == 409:
                     return 'deferred'
@@ -233,6 +250,102 @@ def ensure(root, bundle, uv, port):
                 if re.fullmatch('[a-f0-9]{16}|[a-f0-9]{64}', folder.name) and folder.name not in retained:
                     shutil.rmtree(folder, ignore_errors=True)
         return state
+
+
+def relocate(source, destination, bundle, uv, port, binding):
+    """Rebuild at the final absolute path, then publish one profile location record."""
+    source, destination = source.resolve(strict=True), destination.resolve(strict=True)
+    if source.is_relative_to(destination) or destination.is_relative_to(source):
+        raise ValueError('Overlapping engine directories')
+    if binding.name != 'pdf2zh-engine-location.json' or binding.is_symlink():
+        raise ValueError('Invalid profile location record')
+    target = revision(json.loads((bundle / 'manifest.json').read_bytes())['id'])
+    with locked(source / 'install.lock'), locked(destination / 'install.lock'):
+        old_binding = binding.read_text('utf-8') if binding.exists() else None
+        owner = (source / 'owner').read_text().strip()
+        if old_binding is None:
+            if source != (binding.parent / 'pdf2zh-engine').resolve():
+                raise ValueError('Unexpected default engine')
+        else:
+            saved = json.loads(old_binding)
+            if Path(saved['root']).resolve() != source or saved['owner'] != owner:
+                raise ValueError('Engine location changed during relocation')
+        old_target = revision((source / 'active').read_text().strip())
+        marker = destination / '.pdf2zh-relocation.json'
+        reserved = False
+        if marker.is_file():
+            reservation = json.loads(marker.read_text('utf-8'))
+            reserved = (Path(reservation['source']).resolve() == source and reservation['owner'] == owner
+                        and Path(reservation['binding']).resolve() == binding.resolve())
+            if not reserved:
+                raise ValueError('Destination reserved by another installation')
+        if (destination / 'active').exists() or (destination / 'data').exists():
+            if not reserved:
+                raise ValueError('Destination already in use')
+            # The source still owns the binding. Keep unpublished data from an interrupted attempt.
+            recovery = Path(tempfile.mkdtemp(prefix='recovery-', dir=destination))
+            for name in ('active', 'owner', 'data'):
+                item = destination / name
+                if item.exists():
+                    item.rename(recovery / name)
+        if target != old_target:
+            raise ValueError('Update the engine before relocation')
+        live = health(port)
+        if live and live.get('managedOwner') != owner:
+            return 'external'
+        if live and (live['status'] != 'ok' or live.get('maintenance', {}).get('busy')):
+            return 'deferred'
+        prepare(destination, bundle, target, uv)
+        folder = version_folder(destination, target)
+        # Reuse the same hashing and task-path rebasing rules as the installed service.
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('engine_storage', folder / 'runtime_storage.py')
+        storage = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(storage)
+        live = health(port)
+        if live and live.get('managedOwner') != owner:
+            return 'external'
+        if live:
+            token = (source / 'data/.control-token').read_text().strip()
+            try:
+                request(port, '/internal/managed-replace', token)
+            except HTTPError as error:
+                if error.code == 409:
+                    return 'deferred'
+                raise
+        published = False
+        try:
+            with locked(source / 'serving.lock'):
+                old_data, data = source / 'data', destination / 'data'
+                expected = storage._manifest(old_data)
+                required = sum((old_data / name).stat().st_size for name in expected)
+                if shutil.disk_usage(destination).free < required:
+                    raise OSError('Insufficient space for engine data')
+                with tempfile.TemporaryDirectory(dir=destination, prefix='migration-') as staging:
+                    copied = Path(staging) / 'data'
+                    shutil.copytree(old_data, copied, symlinks=True)
+                    if storage._manifest(copied) != expected:
+                        raise OSError('Engine data copy verification failed')
+                    storage._rebase_tasks(copied, old_data, data)
+                    copied.rename(data)
+                new_owner = secrets.token_hex(24)
+                write(destination / 'owner', new_owner)
+                write(destination / 'active', target)
+                write(binding, json.dumps({'root':str(destination), 'owner':new_owner}))
+                published = True
+            if live and launch(destination, target, port, new_owner) != 'ready':
+                raise RuntimeError('Migrated engine failed its health check')
+        except Exception:
+            if published:
+                if old_binding is None:
+                    binding.unlink()
+                else:
+                    write(binding, old_binding)
+            if live and health(port) is None:
+                launch(source, old_target, port, owner)
+            raise
+        marker.unlink(missing_ok=True)
+        return 'ready'
 
 
 def restart(root, port):
@@ -299,7 +412,8 @@ def serve(root, target, port, owner):
             if (req.method != 'POST' or req.remote_addr != '127.0.0.1' or req.headers.get('Origin')
                     or not hmac.compare_digest(req.headers.get('X-PDF2ZH-Control-Token', ''), token)):
                 code = 403
-            elif not server.app.extensions['update_maintenance'].acquire(0):
+            elif not server.app.extensions['update_maintenance'].acquire(
+                    60 if req.headers.get('X-PDF2ZH-Minimum-Idle') == '60' else 0):
                 code = 409
             else:
                 code = 200
@@ -349,5 +463,13 @@ if __name__ == '__main__':
         parser.add_argument('bundle', type=Path)
         parser.add_argument('uv', type=Path)
         parser.add_argument('--port', type=int, default=8890)
+        parser.add_argument('--keep-stopped', action='store_true')
+        parser.add_argument('--relocate-from', type=Path)
+        parser.add_argument('--binding', type=Path)
         args = parser.parse_args()
-        print(ensure(args.root, args.bundle, args.uv, args.port), flush=True)
+        if args.relocate_from:
+            if not args.binding:
+                parser.error('--binding is required for relocation')
+            print(relocate(args.relocate_from, args.root, args.bundle, args.uv, args.port, args.binding), flush=True)
+        else:
+            print(ensure(args.root, args.bundle, args.uv, args.port, args.keep_stopped), flush=True)

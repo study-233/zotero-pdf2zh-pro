@@ -2,6 +2,7 @@
     [string]$PackageSource, [string]$GuiSource, [string]$InstallRoot,
     [switch]$PrepareOnly, [switch]$Repair, [switch]$DeferLocationCommit,
     [switch]$AllowPreparedDestination, [switch]$SkipUvBootstrap,
+    [ValidateRange(0, 60)][int]$MinimumIdleSeconds=0,
     [switch]$NoShortcuts, [switch]$NonInteractive
 )
 if ($InstallRoot) {
@@ -148,7 +149,7 @@ try {
     Write-AtomicJson (Join-Path $AppRoot 'updates/prepared.json') @{version=$PackageVersion;environment=$environment;bin=$candidate;created=(Get-Date).ToUniversalTime().ToString('o')}
     Write-RuntimeLog "Prepared $PackageVersion; old service stayed available."
     Write-OperationProgress 'waiting' '新版已准备，等待空闲后切换' -Status 'waiting'
-    if (-not $PrepareOnly) {Apply-PreparedRuntime -AllowLegacy -DeferLocationCommit:$DeferLocationCommit -NoShortcuts:$NoShortcuts}
+    if (-not $PrepareOnly) {Apply-PreparedRuntime -AllowLegacy -MinimumIdleSeconds $MinimumIdleSeconds -DeferLocationCommit:$DeferLocationCommit -NoShortcuts:$NoShortcuts}
 } catch {
     $failure=$_
     if ($failure.Exception -is [OperationCanceledException]) {

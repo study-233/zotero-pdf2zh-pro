@@ -79,6 +79,7 @@ export async function registerPreferenceCards(window: Window) {
         const current = ++revision;
         const brewPanel = node("brew-panel");
         const devPanel = node("dev-panel");
+        const backendPanel = node("backend-panel");
         const [unconfigured, automatic, noGlossary, advanced] =
             await Promise.all([
                 localize("pref-card-unconfigured"),
@@ -128,9 +129,17 @@ export async function registerPreferenceCards(window: Window) {
                     ? await localize("pref-development-server")
                     : brewPanel && !brewPanel.hidden
                       ? "Homebrew"
-                      : [text("serverStatus"), value("new_serverip")]
-                            .filter(Boolean)
-                            .join(" · "),
+                      : backendPanel && !backendPanel.hidden
+                        ? [
+                              text("backend-source"),
+                              text("serverStatus"),
+                              text("serverVersion"),
+                          ]
+                              .filter(Boolean)
+                              .join(" · ")
+                        : [text("serverStatus"), value("new_serverip")]
+                              .filter(Boolean)
+                              .join(" · "),
         };
         for (const [key, summary] of Object.entries(summaries)) {
             if (disposed || current !== revision) return;

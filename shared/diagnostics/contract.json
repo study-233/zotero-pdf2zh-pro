@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "schemaRevision": 8,
+  "schemaRevision": 9,
   "supportedSchemaVersions": [
     1
   ],
@@ -989,7 +989,8 @@
     }
   },
   "pluginFeatureEvents": {
-    "homebrewUpdate": ["brew_update_deferred", "brew_update_failed"]
+    "homebrewUpdate": ["brew_update_deferred", "brew_update_failed"],
+    "backendManagement": ["backend_update_failed", "managed_engine_deferred", "managed_engine_failed"]
   },
   "productCapabilities": {
     "diagnosticsExport": {
@@ -1354,6 +1355,7 @@
       "component": "plugin",
       "requiredFields": []
     },
+    "backend_update_failed": {"component":"plugin","requiredFields":[]},
     "managed_engine_failed": {
       "component": "plugin",
       "requiredFields": []

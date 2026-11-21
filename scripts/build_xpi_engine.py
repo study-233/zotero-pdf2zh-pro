@@ -32,6 +32,7 @@ def build(out: Path):
     controller = (ROOT / 'scripts/managed_engine.py').read_bytes().replace(b'\r\n', b'\n')
     (out / 'manager.py').write_bytes(controller)
     (out / 'homebrew_update.py').write_bytes((ROOT / 'scripts/homebrew_update.py').read_bytes().replace(b'\r\n', b'\n'))
+    (out / 'windows-backend-upgrade.ps1').write_bytes((ROOT / 'scripts/windows-backend-upgrade.ps1').read_bytes().replace(b'\r\n', b'\n'))
     identity = hashlib.sha256(controller + PYTHON.encode() + UV.encode())
     payload = out / 'service.zip'
     with zipfile.ZipFile(payload, 'w') as archive:

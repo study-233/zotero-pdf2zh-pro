@@ -1142,6 +1142,7 @@ test("engine failures and postponed updates export only their event names and ti
     const events = [
         "managed_engine_failed",
         "brew_update_failed",
+        "backend_update_failed",
         "brew_update_deferred",
         "managed_engine_deferred",
         "managed_engine_fallback",

@@ -51,6 +51,8 @@ export interface DiagnosticMessage {
 }
 
 export interface ServerHealthResponse {
+    managedOwner?: string;
+    managedRevision?: string;
     diagnostics?: {
         schemaVersions: number[];
         schemaRevision: number;

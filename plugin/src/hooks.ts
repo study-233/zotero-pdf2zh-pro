@@ -9,6 +9,10 @@ import {
     unregisterPageTrial,
 } from "./modules/pageTrial";
 import { initializeEngine, stopEngineManager } from "./modules/managedEngine";
+import {
+    startWindowsUpdates,
+    stopWindowsUpdates,
+} from "./modules/windowsBackend";
 import { startBrewUpdates, stopBrewUpdates } from "./modules/homebrewUpdate";
 import { cancelDictionaryDownload } from "./modules/selectionDictionaryDownload";
 import { stopDevelopmentLibrary } from "./modules/developmentLibrary";
@@ -70,7 +74,9 @@ async function onStartup(reason?: number) {
         else if (action === "tasks") PDF2zhTaskManager.openWindow();
         else
             PDF2zhBasicFactory.openPrefs(
-                action === "selection" ? "selection-provider" : "service-summary",
+                action === "selection"
+                    ? "selection-provider"
+                    : "service-summary",
             );
     });
     await Promise.all(
@@ -83,6 +89,7 @@ async function onStartup(reason?: number) {
     }
     initializeEngine(legacyEngine);
     startBrewUpdates();
+    startWindowsUpdates();
     registerSelectionTranslation();
     registerPageTrial();
     initializeReleaseNotices(reason, existingInstall);
@@ -122,6 +129,7 @@ async function onShutdown(): Promise<void> {
     cancelDocumentExport();
     stopEngineManager();
     stopBrewUpdates();
+    stopWindowsUpdates();
     stopPreferenceCards();
     stopPluginNotices();
     stopDevelopmentLibrary();

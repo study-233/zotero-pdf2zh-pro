@@ -125,6 +125,17 @@ try {
             $arguments+=@('-PreviousVersion',$case.baseline,'-Version',$Version)
             if ($DownloadCache) {$arguments+=@('-DownloadCache',$DownloadCache)}
         }
+        if ($case.id -eq 'recent-upgrade') {
+            & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'test_windows_plugin_queue.ps1') -Package $package -Receipt (Join-Path $caseDirectory 'plugin-queue.json')
+            if ($LASTEXITCODE -ne 0) {throw 'The control center did not process plugin requests.'}
+        }
+        if ($case.baseline -eq '1.9.8' -and $case.id -eq 'recent-upgrade') {
+            $pluginManifest=Join-Path $fixture 'windows-update.json'
+            & python (Join-Path $PSScriptRoot 'build_windows_update_manifest.py') --version $Version --package $package --output $pluginManifest
+            if ($LASTEXITCODE -ne 0) {throw 'Could not prepare the plugin update manifest.'}
+            & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'test_windows_plugin_upgrade.ps1') -PreviousPackage $old.package -PreviousWheel $old.wheel -Package $package -Wheel $wheel -Manifest $pluginManifest -Receipt (Join-Path $caseDirectory 'plugin-upgrade.json')
+            if ($LASTEXITCODE -ne 0) {throw 'The plugin could not upgrade the previous Windows release.'}
+        }
         & (Join-Path $PSHOME 'powershell.exe') @arguments
         if ($LASTEXITCODE -ne 0) {throw "Validation failed: $($case.id) $($case.baseline) -> $Version"}
         $verified=& uv @verification

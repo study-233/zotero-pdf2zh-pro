@@ -966,11 +966,107 @@
             aria-labelledby="zotero-prefpane-__addonRef__-card-connection-title"
             class="pref-section"
         >
-            <html:div id="zotero-prefpane-__addonRef__-dev-panel" hidden="hidden">
+            <html:div
+                id="zotero-prefpane-__addonRef__-backend-panel"
+                hidden="hidden"
+            >
+                <html:strong
+                    id="zotero-prefpane-__addonRef__-backend-source"
+                ></html:strong>
+                <html:div
+                    id="zotero-prefpane-__addonRef__-backend-location-row"
+                    class="brew-directory"
+                    ><html:span data-l10n-id="pref-backend-location" />
+                    <html:code
+                        id="zotero-prefpane-__addonRef__-backend-location"
+                        class="brew-path"
+                    ></html:code
+                ></html:div>
+                <html:div
+                    id="zotero-prefpane-__addonRef__-backend-data-row"
+                    class="brew-directory"
+                    ><html:span data-l10n-id="pref-backend-data" />
+                    <html:code
+                        id="zotero-prefpane-__addonRef__-backend-data"
+                        class="brew-path"
+                    ></html:code
+                ></html:div>
+                <html:div
+                    id="zotero-prefpane-__addonRef__-backend-actions"
+                    class="connection-actions"
+                    ><html:button
+                        id="zotero-prefpane-__addonRef__-backend-select-managed"
+                        type="button"
+                        data-l10n-id="pref-backend-select-managed"
+                        hidden="hidden" />
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-backend-select-windows"
+                        type="button"
+                        data-l10n-id="pref-backend-select-windows"
+                        hidden="hidden" />
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-backend-install"
+                        type="button"
+                        data-l10n-id="pref-backend-install"
+                        hidden="hidden"
+                    ></html:button>
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-backend-choose"
+                        type="button"
+                        data-l10n-id="pref-backend-choose"
+                        hidden="hidden"
+                    ></html:button>
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-backend-update"
+                        type="button"
+                        data-l10n-id="pref-backend-update"
+                        hidden="hidden"
+                    ></html:button>
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-backend-move"
+                        type="button"
+                        data-l10n-id="pref-backend-move"
+                        hidden="hidden"
+                    ></html:button>
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-backend-center"
+                        type="button"
+                        data-l10n-id="pref-backend-center"
+                        hidden="hidden"
+                    ></html:button>
+                    <html:button
+                        id="zotero-prefpane-__addonRef__-backend-cancel"
+                        type="button"
+                        data-l10n-id="pref-backend-cancel"
+                        hidden="hidden"
+                    ></html:button
+                ></html:div>
+                <html:div
+                    id="zotero-prefpane-__addonRef__-backend-follow-row"
+                    class="brew-follow-row"
+                    ><html:input
+                        id="zotero-prefpane-__addonRef__-backend-follow"
+                        type="checkbox" /><html:label
+                        for="zotero-prefpane-__addonRef__-backend-follow"
+                        data-l10n-id="pref-backend-follow"
+                /></html:div>
+                <html:p
+                    id="zotero-prefpane-__addonRef__-backend-result"
+                    role="status"
+                    aria-live="polite"
+                    class="connection-result"
+                ></html:p>
+            </html:div>
+            <html:div
+                id="zotero-prefpane-__addonRef__-dev-panel"
+                hidden="hidden"
+            >
                 <html:div class="brew-version-row">
                     <html:div class="brew-version-info">
                         <html:span data-l10n-id="pref-brew-version" />
-                        <html:strong id="zotero-prefpane-__addonRef__-dev-version" />
+                        <html:strong
+                            id="zotero-prefpane-__addonRef__-dev-version"
+                        />
                     </html:div>
                     <html:span id="zotero-prefpane-__addonRef__-dev-check" />
                 </html:div>
@@ -983,7 +1079,9 @@
                 <html:div class="brew-version-row">
                     <html:div class="brew-version-info">
                         <html:span data-l10n-id="pref-brew-version" />
-                        <html:strong id="zotero-prefpane-__addonRef__-brew-version" />
+                        <html:strong
+                            id="zotero-prefpane-__addonRef__-brew-version"
+                        />
                         <html:span
                             id="zotero-prefpane-__addonRef__-brew-match"
                             class="brew-match"

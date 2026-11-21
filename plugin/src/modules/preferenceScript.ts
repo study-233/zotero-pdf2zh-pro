@@ -1,4 +1,5 @@
-import { ensureEngine, engineStatusMessage } from "./managedEngine";
+import { bindBackendPane } from "./backendPane";
+let backendPane: ReturnType<typeof bindBackendPane> | undefined;
 import {
     observeBrewUpdates,
     brewControls,
@@ -130,6 +131,9 @@ export async function registerPrefsScripts(window: Window) {
     stopGlossaryPackPolling();
     glossaryPackWindow = window;
     addon.data.prefs = { window, columns: [], rows: [] };
+    backendPane = element("backend-panel")
+        ? bindBackendPane(window, () => refreshServerVersion())
+        : undefined;
     if (Zotero.isMac || developmentBuild) bindServicePreferences(window);
     else
         element("new_serverip")?.addEventListener("change", () => {
@@ -155,6 +159,8 @@ export async function registerPrefsScripts(window: Window) {
             stopGlossaryPackPolling();
             glossaryPackSequence++;
             serverCheckSequence++;
+            backendPane?.close();
+            backendPane = undefined;
             glossaryPacksSupported = false;
             glossaryPackWindow = undefined;
         },
@@ -218,7 +224,7 @@ export async function registerPrefsScripts(window: Window) {
         ).catch(report);
     });
     element("checkConnection")?.addEventListener("click", () => {
-        void refreshServerVersion(true);
+        void refreshServerVersion();
     });
     element("glossary-import")?.addEventListener("click", () => {
         void importGlossary();
@@ -950,7 +956,7 @@ async function importGlossary(): Promise<void> {
     }
 }
 
-async function refreshServerVersion(interactive = false) {
+async function refreshServerVersion() {
     const checkSequence = ++serverCheckSequence;
     const url =
         getPref("new_serverip")?.toString().trim().replace(/\/+$/, "") || "";
@@ -978,13 +984,15 @@ async function refreshServerVersion(interactive = false) {
     status("qualityCapabilities", "");
     try {
         if (!url) throw new Error();
-        if (interactive && !dev) await ensureEngine(url, true, true);
+        backendPane?.checking();
         const { data } = await axios.get<ServerHealthResponse>(
             `${url}/health`,
             { timeout: 5000 },
         );
         if (checkSequence !== serverCheckSequence) return;
         if (!["ok", "degraded"].includes(data.status || "")) throw new Error();
+        await backendPane?.show(url, data);
+        if (checkSequence !== serverCheckSequence) return;
         for (const id of dev
             ? ["serverVersion", "dev-version"]
             : ["serverVersion"]) {
@@ -1001,11 +1009,7 @@ async function refreshServerVersion(interactive = false) {
             status("connectionResult", data.taskStore.message);
         else if (data.status === "degraded")
             localizedStatus("connectionResult", "pref-server-check-storage");
-        else
-            status(
-                "connectionResult",
-                interactive && !dev ? engineStatusMessage() : "",
-            );
+        else status("connectionResult", "");
         if (
             data.capabilities?.glossaryEntries !== true ||
             data.capabilities?.semanticReview !== true
@@ -1018,17 +1022,13 @@ async function refreshServerVersion(interactive = false) {
         } else {
             packStatus("pref-pack-upgrade-server");
         }
-    } catch (error) {
+    } catch {
+        if (checkSequence !== serverCheckSequence) return;
+        await backendPane?.show(url);
         if (checkSequence !== serverCheckSequence) return;
         status("serverVersion", "—");
         showHealth("error", "pref-server-unreachable");
         if (
-            interactive &&
-            error instanceof Error &&
-            error.name === "EngineSetupError"
-        )
-            status("connectionResult", error.message);
-        else if (
             getPref("engineManagement") !== "external" &&
             /^http:\/\/(localhost|127\.0\.0\.1):8890\/?$/i.test(url)
         )

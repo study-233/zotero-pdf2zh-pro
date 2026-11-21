@@ -9,6 +9,12 @@
 本机缺少 Windows 验证条件时，由 Actions 执行必要的 Windows 检查。Windows 正式发布
 优先在本机构建并验收最终制品，再由轻量 Actions 任务核验和归档；同一批制品的成功检查直接复用。
 
+## 后端管理验收
+
+- Windows 在隔离 Zotero 配置中运行 `scripts/zotero_engine_smoke.py` 和 `scripts/zotero_backend_pane_smoke.py`。前者检查冷安装、空闲升级、失败回退、目录迁移及迁移后的离线重启。后者用本地健康响应覆盖中英文、深浅主题和两种窗口宽度。
+- 从 1.9.8 接入 Windows 控制中心时，`scripts/test_windows_plugin_upgrade.ps1` 使用基线和候选的真实 ZIP 与 wheel。测试替换尚未发布的下载响应并使用独立注册表，核对原安装目录、任务、停止状态及新控制中心的管理协议。
+- 在 Apple Silicon 上验证正式候选时，先在独立账号中用上一正式版 Homebrew 安装创建测试任务，再通过候选插件升级。核对任务、术语包、服务启动状态和失败恢复；保留升级前后版本与健康报告。现有 `scripts/zotero_homebrew_smoke.py` 检查真实设置页，`scripts/test_homebrew_update.py` 覆盖模拟事务。
+
 ## 日常提交与 PR
 
 | 检查 | 内容 | 执行位置 |

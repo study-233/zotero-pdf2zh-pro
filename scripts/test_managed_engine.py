@@ -61,11 +61,55 @@ class EngineTests(unittest.TestCase):
         self.request.assert_not_called()
         self.launch.assert_not_called()
 
+    def test_stopped_update_prepares_and_retains_previous_without_starting(self):
+        self.health.return_value = None
+        self.assertEqual(engine.ensure(self.root, self.bundle, self.root / 'uv', 18890, True), 'ready')
+        self.launch.assert_not_called()
+        self.assertEqual((self.root / 'previous').read_text(), self.old)
+        self.assertEqual((self.root / 'active').read_text(), self.new)
+
+    def test_relocate_stopped_engine_rebases_paths_and_keeps_original(self):
+        import shutil
+        profile = self.root / 'profile'
+        profile.mkdir()
+        source = profile / 'pdf2zh-engine'
+        source.mkdir()
+        dest = self.root / 'new 位置'
+        dest.mkdir()
+        folder = engine.version_folder(dest, self.new)
+        folder.mkdir(parents=True)
+        shutil.copyfile(Path(engine.__file__).resolve().parent.parent / 'server/runtime_storage.py', folder / 'runtime_storage.py')
+        (source / 'owner').write_text('source')
+        (source / 'active').write_text(self.new)
+        data = source / 'data'
+        data.mkdir()
+        tasks = {'tasks':[{'workspace_dir':str(data / 'paper')}]}
+        (data / 'tasks.json').write_text(json.dumps(tasks))
+        self.health.return_value = None
+        binding = profile / 'pdf2zh-engine-location.json'
+        self.assertEqual(engine.relocate(source, dest, self.bundle, self.root / 'uv', 18890, binding), 'ready')
+        self.assertEqual(json.loads(binding.read_text())['root'], str(dest))
+        self.assertEqual(json.loads((data / 'tasks.json').read_text()), tasks)
+        migrated = json.loads((dest / 'data/tasks.json').read_text())
+        self.assertEqual(migrated['tasks'][0]['workspace_dir'], str(dest / 'data/paper'))
+        self.launch.assert_not_called()
+
+    def test_recently_active_service_defers_update(self):
+        self.live['maintenance'] = {'busy': False, 'idleSeconds': 59}
+        self.assertEqual(self.run_ensure(), 'deferred')
+        self.prepare.assert_not_called()
+
     def test_new_submission_during_install_denies_handoff(self):
         self.request.side_effect = HTTPError('local', 409, 'busy', {}, None)
         self.assertEqual(self.run_ensure(), 'deferred')
         self.launch.assert_not_called()
         self.assertEqual((self.root / 'active').read_text(), self.old)
+
+    def test_activity_during_staging_defers_even_when_the_old_server_cannot_enforce_idle(self):
+        self.health.side_effect = [self.live, {**self.live, 'maintenance': {'idleSeconds': 1}}]
+        self.assertEqual(self.run_ensure(), 'deferred')
+        self.request.assert_not_called()
+        self.launch.assert_not_called()
 
     def test_failed_staging_preserves_online_engine(self):
         self.prepare.side_effect = ValueError('checksum')
@@ -75,7 +119,7 @@ class EngineTests(unittest.TestCase):
 
     def test_activation_failure_restarts_last_good_engine(self):
         self.launch.side_effect = [RuntimeError('startup'), 'ready']
-        self.health.side_effect = [self.live, None]
+        self.health.side_effect = [self.live, self.live, None]
         self.assertEqual(self.run_ensure(), 'fallback')
         self.assertEqual([c.args[1] for c in self.launch.call_args_list], [self.new, self.old])
 
@@ -84,7 +128,7 @@ class EngineTests(unittest.TestCase):
             (self.root / 'versions' / name).mkdir()
             (self.root / 'versions' / name / '.ready').write_text(name)
         self.assertEqual(self.run_ensure(), 'ready')
-        self.request.assert_called_once_with(18890, '/internal/managed-replace', 'test-token')
+        self.request.assert_called_once_with(18890, '/internal/managed-replace', 'test-token', minimum_idle=60)
         self.health.return_value = None
         self.assertEqual(self.run_ensure(), 'ready')
         self.assertEqual((self.root / 'previous').read_text(), self.old)

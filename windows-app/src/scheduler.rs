@@ -69,6 +69,59 @@ fn update_failed(app: &AppHandle, paths: &ProductPaths, error: &str) {
     progress::phase(app, &paths.app_root, "update", "failed", error, "failed");
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PluginRequest {
+    action: String,
+    target: String,
+    destination: Option<String>,
+}
+
+fn valid_plugin_target(target: &str) -> bool {
+    Version::parse(target).is_ok_and(|v| v.pre.is_empty() && v.build.is_empty() && v.to_string() == target)
+}
+
+async fn handle_plugin_request(app: &AppHandle, paths: &ProductPaths) -> Result<(), String> {
+    let queue = paths.app_root.join("updates/plugin-request.json");
+    let claimed = paths.app_root.join("updates/plugin-processing.json");
+    // One control center owns this installation. A claimed request survives a restart.
+    if !claimed.is_file() {
+        match fs::rename(&queue, &claimed) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(e) => return Err(e.to_string()),
+        }
+    }
+    let parsed = fs::read(&claimed).ok().and_then(|b| serde_json::from_slice::<PluginRequest>(&b).ok());
+    let result = match parsed {
+        Some(req) if valid_plugin_target(&req.target) => {
+            let state = read_state(paths);
+            match req.action.as_str() {
+                "update" if Version::parse(&req.target).unwrap() <= Version::parse(env!("CARGO_PKG_VERSION")).unwrap() => Ok(()),
+                "update" if state.version == req.target && state.phase == "switching" => Ok(()),
+                "update" => request_update(app, Some(&req.target)).await,
+                "cancel" if state.phase == "ready" && state.version == req.target => {
+                    let mut cancelled = state;
+                    cancelled.phase = "cancelled".into();
+                    cancelled.manual_version = None;
+                    save_update_state(app,paths,&cancelled)
+                }
+                "cancel" => Ok(()),
+                "move" => match req.destination {
+                    Some(dest) if req.target == env!("CARGO_PKG_VERSION") =>
+                        relocate_installation(app.clone(), app.context(), dest),
+                    _ => Err("迁移请求与已安装版本不符".into()),
+                },
+                _ => Err("未知的插件维护操作".into())
+            }
+        }
+        _ => Err("插件维护请求无效".into())
+    };
+    if result.as_ref().err().is_some_and(|e| e == OPERATION_BUSY) {return Ok(());}
+    fs::remove_file(claimed).map_err(|e|e.to_string())?;
+    result
+}
+
 // A manual check is deliberately read-only: no staging, scheduling or progress-file writes.
 pub async fn check_latest(app: &AppHandle) -> Result<update::UpdateCheck, String> {
     let paths = ProductPaths::discover()?;
@@ -166,6 +219,8 @@ pub fn start(app: AppHandle, installed: bool) {
         if installed {
             if let Ok(paths) = ProductPaths::discover() {
                 let mut state = read_state(&paths);
+                let _ = write_json(&paths.app_root.join("updates/plugin-management.json"),
+                    &json!({"schema":1,"version":env!("CARGO_PKG_VERSION")}));
                 reconcile_update(&mut state, env!("CARGO_PKG_VERSION"));
                 let _ = save_update_state(&app, &paths, &state);
             }
@@ -214,8 +269,12 @@ pub fn start(app: AppHandle, installed: bool) {
             }
             if installed && !app.context().operation_busy.load(Ordering::Acquire) {
                 if let Ok(paths) = ProductPaths::discover() {
+                    if let Err(error) = handle_plugin_request(&app,&paths).await {emit_log(&app,&paths.control_log,error);}
                     let state = read_state(&paths);
-                    let automatic = !controller::settings().auto_update_disabled;
+                    let plugin_follow = fs::read(paths.app_root.join("updates/plugin-policy.json")).ok()
+                        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
+                        .is_some_and(|policy| policy["follow"] == true);
+                    let automatic = !controller::settings().auto_update_disabled && !plugin_follow;
                     if should_apply(&state, automatic) {
                         if let Err(error) = try_apply(&app, &paths, &state).await {
                             if error != OPERATION_BUSY { update_failed(&app, &paths, &error); }
@@ -511,6 +570,16 @@ pub async fn clean_cache(app: &AppHandle) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn plugin_requests_accept_only_stable_targets_and_known_fields() {
+        assert!(valid_plugin_target("1.10.0"));
+        for invalid in ["1", "latest", "1.10.0-beta.1", "1.10.0+debug", "1.10.0/other"] {
+            assert!(!valid_plugin_target(invalid));
+        }
+        assert!(serde_json::from_value::<PluginRequest>(json!({"action":"update","target":"1.10.0"})).is_ok());
+        assert!(serde_json::from_value::<PluginRequest>(json!({"action":"update","target":"1.10.0","url":"elsewhere"})).is_err());
+    }
 
     struct RecoveryFixture(ProductPaths);
     impl RecoveryFixture {
