@@ -176,6 +176,29 @@ export const releaseSummaries: ReleaseSummary[] = [
             },
         ],
     },
+    {
+        version: "1.9.9",
+        notes: [
+            {
+                id: "backend-installation-management",
+                message: "release-backend-management",
+                cardMessage: "release-card-backend-management",
+                priority: 0,
+            },
+            {
+                id: "windows-arm64-installation",
+                message: "release-windows-arm64",
+                cardMessage: "release-card-windows-arm64",
+                priority: 1,
+            },
+            {
+                id: "homebrew-backend-updates",
+                message: "release-homebrew-updates",
+                cardMessage: "release-card-homebrew-updates",
+                priority: 2,
+            },
+        ],
+    },
 ];
 
 export function compareVersions(a: string, b: string): number {
