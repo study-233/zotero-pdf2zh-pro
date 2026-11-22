@@ -94,7 +94,7 @@ export function DownloadSection({ version }: { version: string }) {
             <div className="download-row">
               <div>
                 <h3>独立本地服务</h3>
-                <p>Windows 10/11 x64 · Windows 11 ARM64</p>
+                <p>Windows 10/11 x64</p>
               </div>
               <a
                 className="download-action"
@@ -102,13 +102,6 @@ export function DownloadSection({ version }: { version: string }) {
               >
                 <DownloadIcon />
                 下载 x64 版
-              </a>
-              <a
-                className="download-action"
-                href={`${GITHUB_REPO_URL}/releases/latest/download/zotero-pdf2zh-pro-windows-arm64-setup.exe`}
-              >
-                <DownloadIcon />
-                下载 ARM64 版
               </a>
             </div>
           </div>

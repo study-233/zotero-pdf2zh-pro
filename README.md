@@ -44,7 +44,7 @@
 
 **2. 准备翻译引擎。** Windows 10/11 x64、Windows 11 ARM64 和 Apple Silicon Mac 用户可在插件设置的「翻译服务」中点击「安装本地引擎」，或用「选择安装位置…」指定磁盘。已有服务可填写原地址并点击「测试连接」。
 
-需要独立服务时，可用 [Windows x64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)、[Windows 11 ARM64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-arm64-setup.exe)、[Homebrew](docs/user-guide.md#macos) 或 [Linux / Docker / uv](docs/user-guide.md#advanced)。Intel Mac 可沿用已有服务。
+需要独立服务时，可用 [Windows x64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)、[Homebrew](docs/user-guide.md#macos) 或 [Linux / Docker / uv](docs/user-guide.md#advanced)。Intel Mac 可沿用已有服务。
 
 <a id="api-configuration"></a>
 <a id="3-配置翻译-api"></a>

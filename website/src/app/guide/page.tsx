@@ -48,7 +48,7 @@ export default function Guide() {
       </p>
       <Cards>
         <Card icon={<MonitorIcon />} title="Windows" href="/guide/windows/">
-          Windows 10/11 x64 与 Windows 11 ARM64 安装器
+          Windows 10/11 x64 独立安装器
         </Card>
         <Card icon={<AppleIcon />} title="macOS" href="/guide/macos/">
           Apple Silicon · Homebrew

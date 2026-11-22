@@ -79,7 +79,7 @@ PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，�
 <span id="2-windows-安装教程"></span>
 
 
-适用于 **Windows 10/11 x64 及 Windows 11 ARM64**。首次安装需要联网下载 Python 和翻译依赖。
+本页适用于 **Windows 10/11 x64**。Windows 11 ARM64 用户请在 Zotero 插件中[安装托管引擎](#installation)。首次安装需要联网下载 Python 和翻译依赖。
 
 <span id="第一步下载并打开安装器"></span>
 
@@ -87,7 +87,7 @@ PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，�
 
 ### 安装并启动
 
-在 Windows 设置的「系统 → 系统信息」查看系统类型，下载 [x64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe) 或 [ARM64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-arm64-setup.exe)。打开安装器，选择安装位置并点击 **开始安装**。
+在 Windows 设置的「系统 → 系统信息」查看系统类型，下载 [x64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)。打开安装器，选择安装位置并点击 **开始安装**。
 
 ![选择安装位置后点击开始安装](../assets/guide/windows-installer.webp)
 
