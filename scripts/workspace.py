@@ -382,6 +382,7 @@ class Workspace:
             '.local-dev': {'runtime', 'translation-bench', 'reports', 'archive', 'pnpm-store', 'deployments'},
             'dist': {'releases', 'release', 'replacement-backups', 'site', 'windows-metadata',
                      'zotero-pdf2zh-pro-windows-x64.zip', 'zotero-pdf2zh-pro-windows-x64-setup.exe',
+                     'zotero-pdf2zh-pro-windows-arm64-setup.exe', 'zotero-pdf2zh-pro-windows-arm64-setup.exe.sha256',
                      'zotero-pdf2zh-pro-windows-x64-setup.exe.sha256', 'windows-update.json',
                      'replacement-source.json', 'replacement-backup-path.txt'},
         }

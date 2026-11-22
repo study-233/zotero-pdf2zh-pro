@@ -88,10 +88,10 @@ class EngineTests(unittest.TestCase):
         self.health.return_value = None
         binding = profile / 'pdf2zh-engine-location.json'
         self.assertEqual(engine.relocate(source, dest, self.bundle, self.root / 'uv', 18890, binding), 'ready')
-        self.assertEqual(json.loads(binding.read_text())['root'], str(dest))
+        self.assertEqual(json.loads(binding.read_text())['root'], str(dest.resolve()))
         self.assertEqual(json.loads((data / 'tasks.json').read_text()), tasks)
         migrated = json.loads((dest / 'data/tasks.json').read_text())
-        self.assertEqual(migrated['tasks'][0]['workspace_dir'], str(dest / 'data/paper'))
+        self.assertEqual(migrated['tasks'][0]['workspace_dir'], str(dest.resolve() / 'data/paper'))
         self.launch.assert_not_called()
 
     def test_recently_active_service_defers_update(self):

@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import socket
 import subprocess
+import sys
 import time
 import tempfile
 import zipfile
@@ -28,7 +29,7 @@ async function run(uri) {
         Services.scriptloader.loadSubScript(uri + 'test.js', sandbox);
         const state = await sandbox.smokeModule.runEngineManager(ROOT_PATH, PORT);
         if (state !== 'ready') throw Error(state);
-        await IOUtils.writeUTF8(RECEIPT, JSON.stringify({version: Zotero.version, state}));
+        await IOUtils.writeUTF8(RECEIPT, JSON.stringify({version: Zotero.version, abi: Services.appinfo.XPCOMABI, state}));
     } catch (e) {
         await IOUtils.writeUTF8(RECEIPT, JSON.stringify({error: String(e), stack: e.stack}));
     } finally { Services.startup.quit(Ci.nsIAppStartup.eAttemptQuit); }
@@ -118,6 +119,17 @@ def verify_update(root, port, work, migration_parent):
                    env={**env, 'PYTHONPATH': str(candidate)}, check=True, timeout=120)
 
 
+    if sys.platform == 'darwin':
+        # Older tasks may use a symlinked parent, as with /var and /private/var.
+        alias = work / 'historical-data'
+        alias.symlink_to(data, target_is_directory=True)
+        for name in ('tasks.json', 'tasks.json.bak'):
+            path = data / name
+            records = json.loads(path.read_bytes())
+            task = next(t for t in records['tasks'] if t['task_id'] == 'release-compatibility-task')
+            task['workspace_dir'] = str(alias / Path(task['workspace_dir']).relative_to(data.resolve()))
+            path.write_text(json.dumps(records, ensure_ascii=False), encoding='utf-8')
+
     # Relocate the stopped fixture using a separate interpreter installed at the final path.
     destination = migration_parent / '迁移 new'
     destination.mkdir()
@@ -179,6 +191,17 @@ def run(work, report):
         result = json.loads(receipt.read_text('utf-8'))
         if result.get('state') != 'ready':
             raise RuntimeError(result)
+        expected_abi = os.environ.get('ZOTERO_EXPECTED_ABI')
+        if expected_abi and result['abi'].split('-', 1)[0] != expected_abi:
+            raise RuntimeError(f"Expected {expected_abi} Zotero, got {result['abi']}")
+        if os.name == 'nt':
+            active = version_folder(root, (root / 'active').read_text().strip())
+            platform = subprocess.check_output(
+                [interpreter(active), '-c', 'import sysconfig; print(sysconfig.get_platform())'],
+                text=True).strip()
+            if platform != 'win-amd64':
+                raise RuntimeError(f'Expected x64 engine wheels, got {platform}')
+            result['enginePlatform'] = platform
         live = health(port)
         assert live['status'] == 'ok' and live['capabilities']['managedEngine']
         assert live['managedOwner'] == (root / 'owner').read_text().strip()

@@ -54,6 +54,15 @@ class PEDependencyTests(unittest.TestCase):
             with self.subTest(size=size), self.assertRaises(PEError):
                 validate_release_pe(fixture()[:size])
 
+    def test_arm64_bootstrap_requires_the_matching_machine_and_static_dependencies(self):
+        validate_release_pe(fixture(machine=0xAA64), "arm64")
+        with self.assertRaises(PEError):
+            validate_release_pe(fixture(), "arm64")
+        with self.assertRaises(PEError):
+            validate_release_pe(fixture(machine=0xAA64))
+        with self.assertRaisesRegex(PEError, "Unshipped DLL"):
+            validate_release_pe(fixture(("VCRUNTIME140.dll",), machine=0xAA64), "arm64")
+
     def test_rejects_corrupt_name_rva(self):
         data = bytearray(fixture())
         struct.pack_into("<I", data, 0x20C, 0xDEADBEEF)

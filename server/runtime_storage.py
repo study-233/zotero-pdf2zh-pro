@@ -112,12 +112,20 @@ def _manifest(root: Path) -> dict[str, str]:
 
 
 def _rebase_tasks(staging: Path, source: Path, target: Path):
+    source = source.resolve()
+
     def relocate(container, key):
         value = container.get(key)
         if isinstance(value, str) and Path(value).is_absolute():
+            path = Path(value)
+            # Avoid probing unrelated Windows drives or network shares.
+            if path.drive.casefold() != source.drive.casefold():
+                return
             try:
-                relative = Path(value).relative_to(source)
-            except ValueError:
+                # Historical paths may use /var where the engine uses /private/var.
+                # Resolve existing parents even when a task output is still missing.
+                relative = path.resolve().relative_to(source)
+            except (OSError, RuntimeError, ValueError):
                 return
             container[key] = str(target / relative)
 

@@ -2,27 +2,38 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import { URL } from "node:url";
+import { JSDOM } from "jsdom";
 import ts from "typescript";
 
-const code = ts.transpileModule(
-    fs.readFileSync(
-        new URL("../src/modules/managedEngine.ts", import.meta.url),
+function compileModule(name) {
+    const source = fs.readFileSync(
+        new URL(`../src/modules/${name}.ts`, import.meta.url),
         "utf8",
-    ),
-    {
+    );
+    return ts.transpileModule(source, {
         compilerOptions: {
             module: ts.ModuleKind.CommonJS,
             target: ts.ScriptTarget.ES2022,
         },
-    },
-).outputText;
+    }).outputText;
+}
+const code = compileModule("managedEngine");
+const paneCode = compileModule("backendPane");
 
-function fixture({ mode, live, legacy = false } = {}) {
+function fixture({
+    mode,
+    live,
+    legacy = false,
+    windows = false,
+    abi = "aarch64-gcc3",
+    build = "26100",
+} = {}) {
     const prefs = new Map([["engineManagement", mode]]);
     const calls = { probes: 0, prompts: 0, files: [], timers: [], events: [] };
     const exports = {};
     const imports = {
         "./backendInstallation": {
+            identifyBackend: async () => ({ kind: "uninstalled" }),
             engineBinding: async () => ({ root: "/ProfD/pdf2zh-engine" }),
             localEngineAddress: /^http:\/\/(localhost|127\.0\.0\.1):8890\/?$/i,
         },
@@ -30,11 +41,15 @@ function fixture({ mode, live, legacy = false } = {}) {
             getPref: (k) => prefs.get(k),
             setPref: (k, v) => prefs.set(k, v),
         },
-        "../utils/locale": { getString: (key) => key },
+        "../utils/locale": {
+            getString: (key) => key,
+            getLocaleID: (key) => key,
+        },
         "./diagnostics": { recordDiagnostic: (e) => calls.events.push(e) },
     };
     const zotero = {
-        isMac: true,
+        isMac: !windows,
+        isWin: windows,
         HTTP: {
             request: async () => {
                 calls.probes++;
@@ -51,7 +66,8 @@ function fixture({ mode, live, legacy = false } = {}) {
         File: { getContentsFromURLAsync: async () => '{"id":"candidate"}' },
     };
     const services = {
-        appinfo: { XPCOMABI: "aarch64-gcc3" },
+        appinfo: { XPCOMABI: abi },
+        sysinfo: { getProperty: (key) => (key === "build" ? build : null) },
         dirsvc: { get: (key) => ({ path: "/" + key }) },
     };
     const io = {
@@ -72,6 +88,7 @@ function fixture({ mode, live, legacy = false } = {}) {
         "IOUtils",
         "PathUtils",
         "Ci",
+        "Cc",
         "setTimeout",
         "clearTimeout",
         code,
@@ -82,14 +99,23 @@ function fixture({ mode, live, legacy = false } = {}) {
         services,
         io,
         { join: (...parts) => parts.join("/") },
-        { nsIFile: 1 },
+        { nsIFile: 1, nsIWindowsRegKey: {} },
+        {
+            "@mozilla.org/windows-registry-key;1": {
+                createInstance: () => ({
+                    open() {},
+                    hasChild: () => false,
+                    close() {},
+                }),
+            },
+        },
         (_f, delay) => {
             calls.timers.push(delay);
             return 1;
         },
         () => {},
     );
-    return { manager: exports, prefs, calls };
+    return { manager: exports, prefs, calls, imports, zotero, services };
 }
 const local = "http://127.0.0.1:8890";
 
@@ -148,4 +174,81 @@ test("running work defers the upgrade and schedules another check", async () => 
     assert.deepEqual(calls.timers, [60000]);
     assert.equal(calls.prompts, 0);
     assert.equal(manager.engineStatusMessage(), "engine-deferred");
+});
+
+test("Windows engine setup accepts native ARM64 on Windows 11 and x64 on Windows 10", async () => {
+    for (const [abi, build, expected] of [
+        ["aarch64-msvc", "22000", "engine-cancelled"],
+        ["x86_64-msvc", "19045", "engine-cancelled"],
+        ["aarch64-msvc", "19045", "engine-platform"],
+        ["x86-msvc", "26100", "engine-platform"],
+    ]) {
+        const { manager, calls } = fixture({
+            windows: true,
+            mode: "auto",
+            abi,
+            build,
+        });
+        await assert.rejects(manager.ensureEngine(local), {
+            message: expected,
+        });
+        assert.equal(calls.prompts, expected === "engine-cancelled" ? 1 : 0);
+    }
+});
+
+test("first-install controls follow Windows engine support in the preferences pane", async () => {
+    const pkg = JSON.parse(
+        fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    );
+    const markup = fs
+        .readFileSync(
+            new URL("../addon/content/preferences.xhtml", import.meta.url),
+            "utf8",
+        )
+        .replaceAll("__addonRef__", pkg.config.addonRef);
+    for (const [abi, build, visible] of [
+        ["aarch64-msvc", "22000", true],
+        ["x86_64-msvc", "19045", true],
+        ["aarch64-msvc", "19045", false],
+        ["x86-msvc", "26100", false],
+    ]) {
+        const { manager, prefs, imports, zotero, services } = fixture({
+            windows: true,
+            abi,
+            build,
+        });
+        prefs.set("new_serverip", local);
+        const modules = {
+            ...imports,
+            "./managedEngine": manager,
+            "../../package.json": pkg,
+        };
+        const pane = {};
+        new Function("require", "exports", "Zotero", "Services", paneCode)(
+            (name) => modules[name],
+            pane,
+            zotero,
+            services,
+        );
+        const dom = new JSDOM(
+            `<window xmlns:html="http://www.w3.org/1999/xhtml">${markup}</window>`,
+            { contentType: "application/xhtml+xml" },
+        );
+        try {
+            const bound = pane.bindBackendPane(dom.window, async () => {});
+            await bound.show(local);
+            for (const id of ["panel", "install", "choose"]) {
+                const node = dom.window.document.getElementById(
+                    `zotero-prefpane-${pkg.config.addonRef}-backend-${id}`,
+                );
+                assert.equal(
+                    node.hidden,
+                    !visible,
+                    `${abi} build ${build}: ${id}`,
+                );
+            }
+        } finally {
+            dom.window.close();
+        }
+    }
 });

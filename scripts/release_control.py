@@ -531,7 +531,7 @@ def product_paths(value):
     version(value)
     product = 'zotero-pdf2zh-pro'
     return [f'plugin/build/{product}.xpi', 'plugin/build/update.json',
-            f'dist/{PACKAGE}', f'dist/{product}-windows-x64-setup.exe', 'dist/windows-update.json',
+            f'dist/{PACKAGE}', f'dist/{product}-windows-x64-setup.exe', f'dist/{product}-windows-arm64-setup.exe', 'dist/windows-update.json',
             f'dist/{product}-{value}-source.zip',
             f'server/dist/zotero_pdf2zh_pro-{value}-py3-none-any.whl',
             f'server/dist/zotero_pdf2zh_pro-{value}.tar.gz']

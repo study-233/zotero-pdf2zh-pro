@@ -394,7 +394,7 @@ class ServerRouteTests(unittest.TestCase):
             self.assertEqual(prepared.output_modes, ["mono", "dual"])
             self.assertEqual(
                 Path(prepared.request_payload["input_path"]),
-                workspace / "paper.pdf",
+                workspace.resolve() / "paper.pdf",
             )
             self.assertTrue(prepared.request_payload["no_auto_extract_glossary"])
             self.assertTrue(prepared.request_payload["skip_text_checks"])

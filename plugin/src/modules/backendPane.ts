@@ -20,6 +20,7 @@ import {
     engineUpdateAvailable,
     ensureEngine,
     legacyServiceInstalled,
+    managedEnginePlatform,
     managedUpdateState,
     requestManagedUpdate,
     cancelManagedUpdate,
@@ -75,14 +76,9 @@ export function bindBackendPane(win: Window, refresh: () => Promise<void>) {
                 (await engineUpdateAvailable(info.root!));
             const ws =
                 info.kind === "windows" ? await windowsState(info) : undefined;
-            const supported =
-                (Zotero.isWin &&
-                    Services.appinfo.XPCOMABI.startsWith("x86_64")) ||
-                (Zotero.isMac &&
-                    Services.appinfo.XPCOMABI.startsWith("aarch64"));
             const canInstall =
-                supported &&
                 info.kind === "uninstalled" &&
+                managedEnginePlatform() !== null &&
                 !(await legacyServiceInstalled());
             if (closed || seq !== revision || url() !== address) return;
             current = info;

@@ -184,7 +184,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable-x86_64-pc-windows-msvc
-          targets: x86_64-pc-windows-msvc
+          targets: x86_64-pc-windows-msvc, aarch64-pc-windows-msvc
 
       - name: Cache Rust build
         if: inputs.reuse_build_run_id == ''
@@ -269,7 +269,7 @@ jobs:
           source, version = Path(sys.argv[1]), sys.argv[2]
           product = "zotero-pdf2zh-pro"
           paths = [f"plugin/build/{product}.xpi", "plugin/build/update.json",
-                   f"dist/{product}-windows-x64.zip", f"dist/{product}-windows-x64-setup.exe", "dist/windows-update.json",
+                   f"dist/{product}-windows-x64.zip", f"dist/{product}-windows-x64-setup.exe", f"dist/{product}-windows-arm64-setup.exe", "dist/windows-update.json",
                    f"dist/{product}-{version}-source.zip",
                    f"server/dist/zotero_pdf2zh_pro-{version}-py3-none-any.whl",
                    f"server/dist/zotero_pdf2zh_pro-{version}.tar.gz"]

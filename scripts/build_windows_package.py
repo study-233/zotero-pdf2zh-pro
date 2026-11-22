@@ -97,7 +97,7 @@ def validate_versions(version: str) -> None:
         raise RuntimeError(f"Windows package version mismatch: {details}")
 
 
-def validate_gui_binary(gui_binary: Path) -> None:
+def validate_gui_binary(gui_binary: Path, arch: str = "x64") -> None:
     if not gui_binary.is_file():
         raise RuntimeError(
             f"Native release executable is missing: {gui_binary}. "
@@ -105,7 +105,7 @@ def validate_gui_binary(gui_binary: Path) -> None:
         )
     if gui_binary.stat().st_size < 1024 or gui_binary.read_bytes()[:2] != b"MZ":
         raise RuntimeError(f"Native output is not a valid Windows PE executable: {gui_binary}")
-    validate_release_pe(gui_binary.read_bytes())
+    validate_release_pe(gui_binary.read_bytes(), arch)
 
 
 def build_package(version: str, output_dir: Path, gui_binary: Path, uv: str = "uv") -> Path:

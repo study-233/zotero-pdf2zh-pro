@@ -20,11 +20,11 @@ METADATA_NAMES = ["windows-dependencies.json", "windows-requirements.txt"]
 MAX_INSTALLER_BYTES = 40_000_000
 
 
-def verify_installer(path: Path, version: str) -> dict:
+def verify_installer(path: Path, version: str, arch: str = "x64") -> dict:
     data = path.read_bytes()
     if len(data) > MAX_INSTALLER_BYTES:
         raise ValueError(f"Installer exceeds the 40 MB budget: {len(data)} bytes")
-    validate_release_pe(data)
+    validate_release_pe(data, arch)
     if len(data) < FOOTER.size:
         raise ValueError("Installer footer is missing")
     size, digest, magic = FOOTER.unpack(data[-FOOTER.size:])
@@ -63,9 +63,9 @@ def verify_installer(path: Path, version: str) -> dict:
             "payloadSize": size, "bootstrapSize": len(data) - size - FOOTER.size}
 
 
-def build_installer(version: str, package: Path, wheel_path: Path, bootstrap: Path, output: Path, candidate: bool = False) -> Path:
+def build_installer(version: str, package: Path, wheel_path: Path, bootstrap: Path, output: Path, candidate: bool = False, arch: str = "x64") -> Path:
     validate_versions(version)
-    validate_gui_binary(bootstrap)
+    validate_gui_binary(bootstrap, arch)
     with zipfile.ZipFile(package) as archive:
         expected = [e.archive_name for e in package_entries(Path("unused"))] + METADATA_NAMES
         if archive.namelist() != expected or archive.testzip() is not None:
@@ -88,7 +88,7 @@ def build_installer(version: str, package: Path, wheel_path: Path, bootstrap: Pa
     payload_bytes = buffer.getvalue()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_bytes(bootstrap.read_bytes() + payload_bytes + FOOTER.pack(len(payload_bytes), hashlib.sha256(payload_bytes).digest(), MAGIC))
-    report = verify_installer(output, version)
+    report = verify_installer(output, version, arch)
     output.with_suffix(".exe.sha256").write_text(f"{report['sha256']}  {output.name}\n", encoding="ascii")
     print(json.dumps(report, indent=2))
     return output
@@ -99,12 +99,17 @@ def main() -> None:
     parser.add_argument("--version", default=project_version())
     parser.add_argument("--package", type=Path, default=Path(f"dist/{PRODUCT}-windows-x64.zip"))
     parser.add_argument("--wheel", type=Path)
-    parser.add_argument("--bootstrap-binary", type=Path, default=DEFAULT_GUI_BINARY.with_name(f"{PRODUCT}-setup.exe"))
-    parser.add_argument("--output", type=Path, default=Path(f"dist/{PRODUCT}-windows-x64-setup.exe"))
+    parser.add_argument("--arch", choices=["x64", "arm64"], default="x64")
+    parser.add_argument("--bootstrap-binary", type=Path)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--candidate", action="store_true", help="Embed isolated candidate install defaults")
     args = parser.parse_args()
     wheel = args.wheel or Path(f"server/dist/zotero_pdf2zh_pro-{args.version}-py3-none-any.whl")
-    build_installer(args.version, args.package, wheel, args.bootstrap_binary, args.output, args.candidate)
+    target = "aarch64" if args.arch == "arm64" else "x86_64"
+    bootstrap = args.bootstrap_binary or (DEFAULT_GUI_BINARY.parents[2] /
+        f"{target}-pc-windows-msvc/release/{PRODUCT}-setup.exe")
+    output = args.output or Path(f"dist/{PRODUCT}-windows-{args.arch}-setup.exe")
+    build_installer(args.version, args.package, wheel, bootstrap, output, args.candidate, args.arch)
 
 
 if __name__ == "__main__":

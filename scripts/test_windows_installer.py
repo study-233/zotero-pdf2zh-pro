@@ -10,7 +10,8 @@ import zipfile
 from build_windows_installer import FOOTER, MAGIC, verify_installer
 
 ROOT = Path(__file__).resolve().parents[1]
-INSTALLER = Path(os.environ.get("PDF2ZH_TEST_INSTALLER", ROOT / "dist/zotero-pdf2zh-pro-windows-x64-setup.exe"))
+ARCH = os.environ.get("PDF2ZH_TEST_INSTALLER_ARCH", "x64")
+INSTALLER = Path(os.environ.get("PDF2ZH_TEST_INSTALLER", ROOT / f"dist/zotero-pdf2zh-pro-windows-{ARCH}-setup.exe"))
 
 
 @unittest.skipUnless(INSTALLER.is_file(), "Build the Windows installer first")
@@ -39,10 +40,10 @@ class InstallerTests(unittest.TestCase):
             path = Path(directory) / "setup.exe"
             path.write_bytes(data)
             with self.assertRaises((ValueError, AssertionError, KeyError, zipfile.BadZipFile)):
-                verify_installer(path, self.version)
+                verify_installer(path, self.version, ARCH)
 
     def test_single_exe_contains_a_verified_controller_lock_and_service_wheel(self):
-        report = verify_installer(INSTALLER, self.version)
+        report = verify_installer(INSTALLER, self.version, ARCH)
         self.assertEqual(report["size"], len(self.data))
         self.assertGreater(report["payloadSize"], report["bootstrapSize"])
 
@@ -58,7 +59,7 @@ class InstallerTests(unittest.TestCase):
             with path.open("wb") as stream:
                 stream.truncate(40_000_001)
             with self.assertRaisesRegex(ValueError,"40 MB"):
-                verify_installer(path,self.version)
+                verify_installer(path, self.version, ARCH)
 
     def test_repacked_wrong_wheel_cannot_pass_the_dependency_checksum(self):
         self.assert_rejected(self.checked_mutation(lambda name, data: (name, b"wrong service") if name.endswith(".whl") else (name, data)))
@@ -66,7 +67,7 @@ class InstallerTests(unittest.TestCase):
     def test_path_traversal_and_mismatched_versions_are_rejected(self):
         self.assert_rejected(self.checked_mutation(lambda name, data: ("../outside.ps1", data) if name == "install.ps1" else (name, data)))
         with self.assertRaises(ValueError):
-            verify_installer(INSTALLER, "0.0.0")
+            verify_installer(INSTALLER, "0.0.0", ARCH)
 
 
 if __name__ == "__main__":

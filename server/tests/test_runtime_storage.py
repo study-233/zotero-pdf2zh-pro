@@ -163,6 +163,30 @@ class RuntimeStorageTests(unittest.TestCase):
             self.assertEqual(Path(task['request_payload']['input_path']).read_bytes(), b'source pdf')
             self.assertEqual(Path(task['result_files']['dual']['output_path']).read_bytes(), b'translated pdf')
 
+    @unittest.skipIf(os.name == "nt", "Directory symlinks require Windows privileges")
+    def test_relocation_rebases_aliased_task_paths_and_preserves_external_paths(self):
+        module = self.brew("1.9.3")
+        alias = self.root / "old-install"
+        alias.symlink_to(module.parent, target_is_directory=True)
+        source, _ = self.seed(alias / module.name)
+        external = str(alias / "external.pdf")
+        for name in ("tasks.json", "tasks.json.bak"):
+            path = source / name
+            records = json.loads(path.read_bytes())
+            records["tasks"][0]["request_payload"]["input_path"] = external
+            path.write_text(json.dumps(records), encoding="utf-8")
+
+        target = storage.prepare_data_directory(module)
+        alias.unlink()
+        for name in ("tasks.json", "tasks.json.bak"):
+            task = json.loads((target / name).read_bytes())["tasks"][0]
+            self.assertEqual(task["workspace_dir"], str(target / "existing-task"))
+            self.assertEqual(task["request_payload"]["output_dir"], str(target / "existing-task/output"))
+            self.assertEqual(task["request_payload"]["translation_memory_path"], str(target / "translation-memory.sqlite3"))
+            self.assertEqual(task["request_payload"]["input_path"], external)
+            self.assertEqual(Path(task["result_files"]["dual"]["output_path"]).read_bytes(), b"translated pdf")
+            self.assertEqual((target / "migration-backup" / name).read_bytes(), (module.parent / "translates" / name).read_bytes())
+
     def test_source_and_docker_layout_are_unchanged(self):
         for relative in ("checkout/server", "app/server"):
             module = self.module(relative)

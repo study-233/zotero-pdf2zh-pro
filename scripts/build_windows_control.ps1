@@ -3,6 +3,7 @@ param(
     [string]$SkiaSourceRoot = $env:SKIA_SOURCE_DIR,
     [string]$TargetDirectory = $env:CARGO_TARGET_DIR,
     [string]$ManifestPath = 'windows-app/Cargo.toml',
+    [switch]$Arm64Installer,
     [switch]$RunTests,
     [string]$TestFilter,
     [ValidateRange(1, 16)][int]$TestThreads = 2
@@ -23,9 +24,11 @@ if ($env:PDF2ZH_WINDOWS_BUILD_ROOT) { $probeRepository = $env:PDF2ZH_WINDOWS_BUI
 $probeLlvm = Convert-BuildPath (Resolve-Path -LiteralPath $LlvmRoot).Path
 if (-not (Test-Path -LiteralPath (Join-Path $probeLlvm 'bin/clang-cl.exe'))) { throw 'LLVM clang-cl is missing' }
 $probeVsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
-$probeVs = & $probeVsWhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+$toolsComponent = if ($Arm64Installer) { 'Microsoft.VisualStudio.Component.VC.Tools.ARM64' } else { 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64' }
+$probeVs = & $probeVsWhere -latest -products '*' -requires $toolsComponent -property installationPath
 if (-not $probeVs) { throw 'Visual Studio C++ tools are missing' }
-$probeVcVars = Join-Path $probeVs 'VC/Auxiliary/Build/vcvars64.bat'
+$vcvars = if ($Arm64Installer) { 'vcvarsamd64_arm64.bat' } else { 'vcvars64.bat' }
+$probeVcVars = Join-Path $probeVs "VC/Auxiliary/Build/$vcvars"
 if (-not (Test-Path -LiteralPath $probeVcVars)) { throw 'Visual Studio C++ environment is missing' }
 $probeEnvironment = & cmd.exe /d /s /c "call `"$probeVcVars`" >nul && set"
 if ($LASTEXITCODE -ne 0) { throw 'Visual Studio environment initialization failed' }
@@ -56,7 +59,9 @@ $env:CARGO_BUILD_JOBS = '4'
 $probeLogs = New-WorkspaceReport -Name 'windows-build'
 New-Item -ItemType Directory -Force -Path $probeLogs | Out-Null
 $probeCommand = if ($RunTests) { 'test' } else { 'build' }
-$cargoArguments = @($probeCommand, '--release', '--locked', '--target', 'x86_64-pc-windows-msvc', '--manifest-path', (Join-Path $probeRepository $ManifestPath))
+$rustTarget = if ($Arm64Installer) { 'aarch64-pc-windows-msvc' } else { 'x86_64-pc-windows-msvc' }
+$cargoArguments = @($probeCommand, '--release', '--locked', '--target', $rustTarget, '--manifest-path', (Join-Path $probeRepository $ManifestPath))
+if ($Arm64Installer) { $cargoArguments += @('--no-default-features', '--bin', 'zotero-pdf2zh-pro-setup') }
 if ($RunTests -and $TestFilter) { $cargoArguments += $TestFilter }
 if ($RunTests) { $cargoArguments += @('--', "--test-threads=$TestThreads") }
 $previousErrorPreference = $ErrorActionPreference
@@ -68,7 +73,7 @@ try {
     $buildExitCode = $LASTEXITCODE
 } finally { $ErrorActionPreference = $previousErrorPreference }
 if ($buildExitCode -ne 0) { exit $buildExitCode }
-if (-not $RunTests -and $ManifestPath -eq 'windows-app/Cargo.toml') {
+if (-not $RunTests -and -not $Arm64Installer -and $ManifestPath -eq 'windows-app/Cargo.toml') {
     & python (Join-Path $PSScriptRoot 'generate_windows_notices.py') --skia-source $env:SKIA_SOURCE_DIR --output (Join-Path $env:CARGO_TARGET_DIR 'THIRD_PARTY_NOTICES.md')
 }
 exit $LASTEXITCODE

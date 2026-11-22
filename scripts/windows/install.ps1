@@ -111,7 +111,7 @@ try {
             $marker=Join-Path $environment '.prepared.json';$python=Join-Path $environment 'Scripts/python.exe'
         }
         Write-OperationProgress 'python' '正在准备 Python'
-        Invoke-Uv -Arguments @('venv','--python',$manifest.python,'--managed-python','--no-config',$environment)
+        Invoke-Uv -Arguments @('venv','--python',"cpython-$($manifest.python)-windows-x86_64-none",'--managed-python','--no-config',$environment)
         Write-OperationProgress 'dependencies' '正在准备依赖'
         Invoke-Uv -Arguments @('pip','install','--python',$python,'--no-deps','--require-hashes','--no-config','--link-mode','hardlink','--default-index','https://pypi.org/simple','-r',$requirements)
         Invoke-Uv -Arguments @('pip','install','--python',$python,'--no-deps','--no-config','--link-mode','hardlink',$wheel)

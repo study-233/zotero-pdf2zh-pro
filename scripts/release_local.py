@@ -327,16 +327,21 @@ def build(value, commit, plan_path, state_path):
     stages.execute('plugin-build', plugin, [ROOT / f'plugin/build/{product}.xpi', ROOT / 'plugin/build/update.json'])
     stages.execute('native-build', lambda: invoke(powershell('build_windows_control.ps1')),
                    [binary, bootstrap, Path(environment['CARGO_TARGET_DIR']) / 'THIRD_PARTY_NOTICES.md'])
+    arm_bootstrap = Path(environment['CARGO_TARGET_DIR']) / f'aarch64-pc-windows-msvc/release/{product}-setup.exe'
+    stages.execute('arm64-bootstrap', lambda: invoke(powershell('build_windows_control.ps1', '-Arm64Installer')), [arm_bootstrap])
+    arm_installer = ROOT / f'dist/{product}-windows-arm64-setup.exe'
     package = ROOT / f'dist/{product}-windows-x64.zip'
     installer = ROOT / f'dist/{product}-windows-x64-setup.exe'
     update = ROOT / 'dist/windows-update.json'
     def packages():
         script('build_windows_package.py', '--version', value, '--gui-binary', binary)
         script('build_windows_installer.py', '--version', value, '--bootstrap-binary', bootstrap)
+        script('build_windows_installer.py', '--version', value, '--arch', 'arm64', '--bootstrap-binary', arm_bootstrap)
         script('build_windows_update_manifest.py', '--version', value, '--package', package, '--output', update)
         script('test_windows_installer.py')
+        run([PYTHON, 'scripts/test_windows_installer.py'], dict(environment, PDF2ZH_TEST_INSTALLER_ARCH='arm64'))
         script('test_windows_update_manifest.py')
-    stages.execute('package-build', packages, [package, installer, update], {wheel.name: control.digest(wheel), binary.name: control.digest(binary), bootstrap.name: control.digest(bootstrap)})
+    stages.execute('package-build', packages, [package, installer, arm_installer, update], {wheel.name: control.digest(wheel), binary.name: control.digest(binary), bootstrap.name: control.digest(bootstrap), "arm64-bootstrap": control.digest(arm_bootstrap)})
     source = ROOT / f'dist/{product}-{value}-source.zip'
     stages.execute('source', lambda: invoke(['git', 'archive', '--format=zip', f'--prefix={product}-{value}/', f'--output={source}', commit]), [source])
     artifacts = control.product_identity(value)

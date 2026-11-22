@@ -27,7 +27,7 @@ class PEError(ValueError):
     pass
 
 
-def imports(data: bytes) -> set[str]:
+def imports(data: bytes, arch: str = "x64") -> set[str]:
     def read(fmt: str, offset: int):
         size = struct.calcsize(fmt)
         if offset < 0 or offset + size > len(data):
@@ -43,8 +43,8 @@ def imports(data: bytes) -> set[str]:
     optional_size, = read("<H", pe + 20)
     optional = pe + 24
     magic, = read("<H", optional)
-    if machine != 0x8664 or magic != 0x20B:
-        raise PEError("Release must be x86_64 PE32+")
+    if machine != {"x64": 0x8664, "arm64": 0xAA64}[arch] or magic != 0x20B:
+        raise PEError(f"Release must be {arch} PE32+")
     if optional_size < 112 or optional + optional_size > len(data):
         raise PEError("Invalid optional header")
     image_base, = read("<Q", optional + 24)
@@ -110,8 +110,8 @@ def imports(data: bytes) -> set[str]:
     return result
 
 
-def validate_release_pe(data: bytes) -> set[str]:
-    dependencies = imports(data)
+def validate_release_pe(data: bytes, arch: str = "x64") -> set[str]:
+    dependencies = imports(data, arch)
     unexpected = sorted(
         name for name in dependencies
         if name not in SYSTEM_DLLS

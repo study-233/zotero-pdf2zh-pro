@@ -169,7 +169,17 @@ jobs:
           uv run --locked python -m unittest discover -s tests -p test_recovery_storage.py
 
   windows-xpi-engine:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            zotero: win-x64-zip
+            abi: x86_64
+          - runner: windows-11-arm
+            zotero: win-arm64-zip
+            abi: aarch64
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 35
     env:
       PYTHONUTF8: '1'
@@ -190,12 +200,23 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm build
-      - name: Verify first install, idle upgrade and data retention in Zotero x64
+      - name: Select native Rust for ARM64 installer tests
+        if: matrix.abi == 'aarch64'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable-aarch64-pc-windows-msvc
+      - name: Test native ARM64 installer payload handling
+        if: matrix.abi == 'aarch64'
+        run: cargo test --locked --release --manifest-path windows-app/Cargo.toml --no-default-features --bin zotero-pdf2zh-pro-setup
+      - name: Verify first install, idle upgrade and data retention in ${{ matrix.zotero }}
+        env:
+          ZOTERO_EXPECTED_ABI: ${{ matrix.abi }}
+          ZOTERO_PLATFORM: ${{ matrix.zotero }}
         shell: pwsh
         run: |
           $archive = Join-Path $env:RUNNER_TEMP 'zotero.zip'
           $folder = Join-Path $env:RUNNER_TEMP 'zotero'
-          Invoke-WebRequest 'https://www.zotero.org/download/client/dl?channel=release&platform=win-x64-zip' -OutFile $archive
+          Invoke-WebRequest "https://www.zotero.org/download/client/dl?channel=release&platform=$env:ZOTERO_PLATFORM" -OutFile $archive
           Expand-Archive $archive $folder
           $env:ZOTERO_BIN = (Get-ChildItem $folder -Filter zotero.exe -Recurse -File | Select-Object -First 1).FullName
           if (-not $env:ZOTERO_BIN) { throw 'Zotero executable missing' }

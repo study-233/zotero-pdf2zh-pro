@@ -150,11 +150,26 @@ export async function engineUpdateAvailable(root: string) {
     );
 }
 
-function platformKey() {
+export function managedEnginePlatform() {
     const abi = Services.appinfo.XPCOMABI;
-    if (Zotero.isWin && abi.startsWith("x86_64")) return "windows-x64";
+    if (Zotero.isWin) {
+        if (abi.startsWith("x86_64")) return "windows-x64";
+        // Some locked engine wheels only ship for Windows x64. Windows 11
+        // can launch the x64 engine alongside a native ARM64 Zotero process.
+        if (
+            abi.startsWith("aarch64") &&
+            Number(Services.sysinfo.getProperty("build")) >= 22000
+        )
+            return "windows-x64";
+    }
     if (Zotero.isMac && abi.startsWith("aarch64")) return "macos-arm64";
-    throw setupError("engine-platform");
+    return null;
+}
+
+function platformKey() {
+    const platform = managedEnginePlatform();
+    if (!platform) throw setupError("engine-platform");
+    return platform;
 }
 
 async function nativeCommand(
@@ -203,7 +218,8 @@ export async function runEngineManager(
     options: string[] = [],
 ) {
     const spec = await manifest();
-    const pkg = spec.platforms[platformKey()];
+    const platform = platformKey();
+    const pkg = spec.platforms[platform];
     await IOUtils.makeDirectory(root, { permissions: 0o700 });
     const stage = await IOUtils.createUniqueDirectory(root, "install");
     const exe = Zotero.isWin ? "uv.exe" : "uv";
@@ -254,7 +270,9 @@ export async function runEngineManager(
                 "--no-project",
                 "--managed-python",
                 "--python",
-                spec.python,
+                platform === "windows-x64"
+                    ? `cpython-${spec.python}-windows-x86_64-none`
+                    : spec.python,
                 "--",
                 "python",
                 PathUtils.join(stage, "manager.py"),

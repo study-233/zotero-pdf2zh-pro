@@ -1,8 +1,8 @@
-zotero-pdf2zh-pro Windows 10/11 x64
+zotero-pdf2zh-pro Windows 10/11 x64、Windows 11 ARM64
 
 快速开始
 
-1. 下载 zotero-pdf2zh-pro-windows-x64-setup.exe。
+1. Intel 和 AMD 64 位电脑下载 zotero-pdf2zh-pro-windows-x64-setup.exe；Windows 11 ARM64 电脑下载 zotero-pdf2zh-pro-windows-arm64-setup.exe。
 2. 双击 EXE，确认安装位置、自启和自动更新选项，再点击“开始安装”。
 3. 等待进度完成，点击“完成并启动服务”。首次安装仍需联网准备 Python 和翻译依赖。
 4. Zotero 插件的服务地址保持为 http://127.0.0.1:8890
@@ -39,7 +39,7 @@ zotero-pdf2zh-pro Windows 10/11 x64
 
 系统要求与安全说明
 
-- 需要 Windows 10/11 x64。控制中心使用 Rust + Slint Fluent 界面与 Skia 软件渲染，不需要 WebView2 或额外 VC++ 运行库。首次安装服务仍需要联网准备 Python 和翻译依赖。
+- 支持 Windows 10/11 x64 和 Windows 11 ARM64。ARM64 系统通过 Windows 的 x64 仿真运行控制中心和翻译引擎。控制中心使用 Rust + Slint Fluent 界面与 Skia 软件渲染，不需要 WebView2 或额外 VC++ 运行库。首次安装服务仍需要联网准备 Python 和翻译依赖。
 - 旧用户运行新版安装 EXE 人工迁移一次，保留安装位置和自启选择。程序不卸载系统共享的 WebView2。
 - 当前 EXE 未进行代码签名，Windows SmartScreen 可能显示警告。请只从本项目官方 GitHub Release 下载，并核对发布页 SHA-256。
 - 程序不会创建 Windows Service、计划任务或防火墙规则，也不会停止占用 8890 端口的未知进程。

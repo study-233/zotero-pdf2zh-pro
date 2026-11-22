@@ -94,13 +94,15 @@ def collect(version: str, commit: str, replace_existing: str = "") -> None:
         assert f'$PackageVersion = "{version}" # release-version' in archive.read("common.ps1").decode("utf-8-sig")
     installer = ROOT / f"dist/{PRODUCT}-windows-x64-setup.exe"
     verify_installer(installer, version)
+    arm_installer = ROOT / f"dist/{PRODUCT}-windows-arm64-setup.exe"
+    verify_installer(arm_installer, version, "arm64")
     source = ROOT / f"dist/{PRODUCT}-{version}-source.zip"
     # git archive records the source commit in the ZIP comment.
     with zipfile.ZipFile(source) as archive:
         assert archive.comment.decode("ascii") == commit
         assert archive.testzip() is None
         assert json.loads(archive.read(f"{PRODUCT}-{version}/plugin/package.json"))["version"] == version
-    artifacts = [xpi, update_path, windows, installer, windows_update, source,
+    artifacts = [xpi, update_path, windows, installer, arm_installer, windows_update, source,
                  ROOT / f"server/dist/zotero_pdf2zh_pro-{version}-py3-none-any.whl",
                  ROOT / f"server/dist/zotero_pdf2zh_pro-{version}.tar.gz"]
     target = ROOT / "dist/release"
