@@ -14,7 +14,7 @@ import time
 from urllib.request import urlopen
 import uuid
 
-from release_policy import changed_paths, harness_digest, policy, policy_digest, previous_release, select, version
+from release_policy import changed_paths, harness_digest, policy, policy_digest, previous_release, select, ships_windows_arm64, version
 from workspace import Workspace, alive, save
 
 ROOT = Path(os.environ.get('PDF2ZH_RELEASE_ROOT', Path(__file__).resolve().parents[1])).resolve()
@@ -530,8 +530,11 @@ def plan_digest(plan):
 def product_paths(value):
     version(value)
     product = 'zotero-pdf2zh-pro'
+    installers = [f'dist/{product}-windows-x64-setup.exe']
+    if ships_windows_arm64(value):
+        installers.append(f'dist/{product}-windows-arm64-setup.exe')
     return [f'plugin/build/{product}.xpi', 'plugin/build/update.json',
-            f'dist/{PACKAGE}', f'dist/{product}-windows-x64-setup.exe', f'dist/{product}-windows-arm64-setup.exe', 'dist/windows-update.json',
+            f'dist/{PACKAGE}', *installers, 'dist/windows-update.json',
             f'dist/{product}-{value}-source.zip',
             f'server/dist/zotero_pdf2zh_pro-{value}-py3-none-any.whl',
             f'server/dist/zotero_pdf2zh_pro-{value}.tar.gz']

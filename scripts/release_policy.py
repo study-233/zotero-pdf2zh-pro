@@ -23,6 +23,11 @@ def version(value):
     return tuple(map(int, value.removeprefix('v').split('.')))
 
 
+def ships_windows_arm64(value):
+    first = policy()['windowsArm64InstallerFrom']
+    return first is not None and version(value) >= version(first)
+
+
 def policy_digest():
     # Git checkout line endings differ between local Windows and Linux publishing.
     return hashlib.sha256(json.dumps(policy(),sort_keys=True,separators=(',', ':')).encode()).hexdigest()
@@ -132,7 +137,10 @@ def harness(operation, source, root):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('overlay', 'restore'))
+    parser.add_argument('operation', choices=('overlay', 'restore', 'windows-arm64'))
     parser.add_argument('source', nargs='?', default='HEAD')
     args = parser.parse_args()
-    harness(args.operation, args.source, Path.cwd())
+    if args.operation == 'windows-arm64':
+        print('yes' if ships_windows_arm64(args.source) else 'no')
+    else:
+        harness(args.operation, args.source, Path.cwd())

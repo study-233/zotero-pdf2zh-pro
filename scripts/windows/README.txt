@@ -1,8 +1,8 @@
-zotero-pdf2zh-pro Windows 10/11 x64、Windows 11 ARM64
+zotero-pdf2zh-pro Windows 10/11 x64
 
 快速开始
 
-1. Intel 和 AMD 64 位电脑下载 zotero-pdf2zh-pro-windows-x64-setup.exe；Windows 11 ARM64 电脑下载 zotero-pdf2zh-pro-windows-arm64-setup.exe。
+1. Intel 和 AMD 64 位电脑下载 zotero-pdf2zh-pro-windows-x64-setup.exe；Windows 11 ARM64 用户可在 Zotero 插件的“翻译服务”中安装托管引擎。
 2. 双击 EXE，确认安装位置、自启和自动更新选项，再点击“开始安装”。
 3. 等待进度完成，点击“完成并启动服务”。首次安装仍需联网准备 Python 和翻译依赖。
 4. Zotero 插件的服务地址保持为 http://127.0.0.1:8890

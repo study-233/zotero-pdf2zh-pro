@@ -17,7 +17,7 @@ from check_docs import public_version
 from build_windows_package import package_entries, validate_versions
 from windows_pe import validate_release_pe
 from build_windows_installer import verify_installer, METADATA_NAMES
-from release_policy import version as version_tuple
+from release_policy import ships_windows_arm64, version as version_tuple
 from release_replacement import replacement_metadata, validate_source as verify_replacement_source
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -95,18 +95,23 @@ def collect(version: str, commit: str, replace_existing: str = "") -> None:
     installer = ROOT / f"dist/{PRODUCT}-windows-x64-setup.exe"
     verify_installer(installer, version)
     arm_installer = ROOT / f"dist/{PRODUCT}-windows-arm64-setup.exe"
-    verify_installer(arm_installer, version, "arm64")
+    installers = [installer]
+    if ships_windows_arm64(version):
+        verify_installer(arm_installer, version, "arm64")
+        installers.append(arm_installer)
     source = ROOT / f"dist/{PRODUCT}-{version}-source.zip"
     # git archive records the source commit in the ZIP comment.
     with zipfile.ZipFile(source) as archive:
         assert archive.comment.decode("ascii") == commit
         assert archive.testzip() is None
         assert json.loads(archive.read(f"{PRODUCT}-{version}/plugin/package.json"))["version"] == version
-    artifacts = [xpi, update_path, windows, installer, arm_installer, windows_update, source,
+    artifacts = [xpi, update_path, windows, *installers, windows_update, source,
                  ROOT / f"server/dist/zotero_pdf2zh_pro-{version}-py3-none-any.whl",
                  ROOT / f"server/dist/zotero_pdf2zh_pro-{version}.tar.gz"]
     target = ROOT / "dist/release"
     target.mkdir(parents=True, exist_ok=True)
+    if arm_installer not in installers:
+        (target / arm_installer.name).unlink(missing_ok=True)
     checksums = {"version": version, "commit": commit, "artifacts": {}}
     if replacement:
         checksums["replacement"] = replacement

@@ -179,12 +179,23 @@ jobs:
           enable-cache: true
           cache-suffix: windows-release
 
+      - name: Select Windows Rust targets
+        id: windows-targets
+        if: inputs.reuse_build_run_id == ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          include_arm=$(python "$RUNNER_TEMP/renderer-harness/release_policy.py" windows-arm64 "$RELEASE_VERSION")
+          targets=x86_64-pc-windows-msvc
+          if [[ "$include_arm" == yes ]]; then targets+=,aarch64-pc-windows-msvc; fi
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+
       - name: Setup Rust
         if: inputs.reuse_build_run_id == ''
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable-x86_64-pc-windows-msvc
-          targets: x86_64-pc-windows-msvc, aarch64-pc-windows-msvc
+          targets: ${{ steps.windows-targets.outputs.targets }}
 
       - name: Cache Rust build
         if: inputs.reuse_build_run_id == ''
@@ -267,12 +278,9 @@ jobs:
           import shutil, sys
           from pathlib import Path
           source, version = Path(sys.argv[1]), sys.argv[2]
-          product = "zotero-pdf2zh-pro"
-          paths = [f"plugin/build/{product}.xpi", "plugin/build/update.json",
-                   f"dist/{product}-windows-x64.zip", f"dist/{product}-windows-x64-setup.exe", f"dist/{product}-windows-arm64-setup.exe", "dist/windows-update.json",
-                   f"dist/{product}-{version}-source.zip",
-                   f"server/dist/zotero_pdf2zh_pro-{version}-py3-none-any.whl",
-                   f"server/dist/zotero_pdf2zh_pro-{version}.tar.gz"]
+          sys.path.insert(0, "scripts")
+          from release_control import product_paths
+          paths = product_paths(version)
           matches = [(Path(p), list(source.rglob(Path(p).name))) for p in paths]
           assert all(len(found) == 1 for _, found in matches), "Missing or ambiguous build artifact"
           for target, found in matches:

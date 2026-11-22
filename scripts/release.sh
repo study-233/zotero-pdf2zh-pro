@@ -176,6 +176,9 @@ PNPM=(npx --yes pnpm@10.34.5)
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
+INCLUDE_ARM64="$(uv run --no-project python scripts/release_policy.py windows-arm64 "$VERSION")"
+EXTRA_INSTALLERS=()
+if [[ "$INCLUDE_ARM64" == yes ]]; then EXTRA_INSTALLERS+=("$ARM64_INSTALLER"); fi
 
 uv run --no-project python scripts/generate_diagnostic_contract.py --check
 
@@ -258,14 +261,18 @@ rm -rf -- plugin/build
 "${PNPM[@]}" --dir plugin build
 
 uv run --no-project python scripts/windows_powershell.py scripts/build_windows_control.ps1
-uv run --no-project python scripts/windows_powershell.py scripts/build_windows_control.ps1 -Arm64Installer
+if [[ "$INCLUDE_ARM64" == yes ]]; then
+    uv run --no-project python scripts/windows_powershell.py scripts/build_windows_control.ps1 -Arm64Installer
+fi
 uv run --no-project python scripts/windows_powershell.py scripts/build_windows_control.ps1 -RunTests
 
 uv run --no-project python scripts/build_windows_package.py --version "$VERSION"
 uv run --no-project python scripts/build_windows_installer.py --version "$VERSION"
-uv run --no-project python scripts/build_windows_installer.py --version "$VERSION" --arch arm64
 uv run --no-project python scripts/test_windows_installer.py
-PDF2ZH_TEST_INSTALLER_ARCH=arm64 uv run --no-project python scripts/test_windows_installer.py
+if [[ "$INCLUDE_ARM64" == yes ]]; then
+    uv run --no-project python scripts/build_windows_installer.py --version "$VERSION" --arch arm64
+    PDF2ZH_TEST_INSTALLER_ARCH=arm64 uv run --no-project python scripts/test_windows_installer.py
+fi
 uv run --no-project python scripts/build_windows_update_manifest.py \
     --version "$VERSION" --package "$WINDOWS_PACKAGE" --output "$WINDOWS_UPDATE_MANIFEST"
 uv run --no-project python scripts/test_windows_update_manifest.py
@@ -377,11 +384,11 @@ if [[ "$PUSH" -eq 1 ]]; then
     WORKSPACE_RUN="$(printf '%s' "$VERIFIED_INFO" | MSYS2_ARG_CONV_EXCL='*' node -e 'console.log(JSON.parse(require("fs").readFileSync(0,"utf8")).work.replace(/\\/g,"/"))')"
     VERIFIED_DIR="$WORKSPACE_RUN/download"
     uv run --no-project python scripts/release_control.py download "$BUILD_RUN" "release-$VERSION-$COMMIT" "$VERIFIED_DIR"
-    node - "$VERIFIED_DIR" "$VERSION" "$COMMIT" "$REPLACE_EXISTING" <<'VERIFY_BUILD'
+    node - "$VERIFIED_DIR" "$VERSION" "$COMMIT" "$REPLACE_EXISTING" "$INCLUDE_ARM64" <<'VERIFY_BUILD'
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const [directory, version, commit, previousCommit = ""] = process.argv.slice(2);
+const [directory, version, commit, previousCommit, includeArm64] = process.argv.slice(2);
 const product = "zotero-pdf2zh-pro";
 const manifest = JSON.parse(fs.readFileSync(path.join(directory, "checksums.json"), "utf8"));
 if (manifest.version !== version || manifest.commit !== commit) throw new Error("Verified build identity mismatch");
@@ -408,7 +415,7 @@ const destinations = {
   "update.json": "plugin/build/update.json",
   [`${product}-windows-x64.zip`]: `dist/${product}-windows-x64.zip`,
   [`${product}-windows-x64-setup.exe`]: `dist/${product}-windows-x64-setup.exe`,
-  [`${product}-windows-arm64-setup.exe`]: `dist/${product}-windows-arm64-setup.exe`,
+  ...(includeArm64 === "yes" ? {[`${product}-windows-arm64-setup.exe`]: `dist/${product}-windows-arm64-setup.exe`} : {}),
   "windows-update.json": "dist/windows-update.json",
   [`${product}-${version}-source.zip`]: `dist/${product}-${version}-source.zip`,
   [`zotero_pdf2zh_pro-${version}-py3-none-any.whl`]: `server/dist/zotero_pdf2zh_pro-${version}-py3-none-any.whl`,
@@ -442,7 +449,7 @@ VERIFY_BUILD
     uv run --no-project python scripts/release_control.py verify-contract "${contract_args[@]}"
 fi
 
-for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$ARM64_INSTALLER" "$WINDOWS_UPDATE_MANIFEST" "$SOURCE_ARCHIVE"; do
+for artifact in "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "${EXTRA_INSTALLERS[@]}" "$WINDOWS_UPDATE_MANIFEST" "$SOURCE_ARCHIVE"; do
     [[ -f "$artifact" ]] || die "missing release artifact: $artifact"
 done
 
@@ -517,7 +524,7 @@ if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
         [[ -n "$REPLACEMENT_BACKUP" ]] || die "Replacement did not record its recovery backup"
     else
         uv run --no-project python scripts/release_control.py publish "$TAG" "$COMMIT" "$NOTES_FILE" \
-            "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "$ARM64_INSTALLER" "$WINDOWS_UPDATE_MANIFEST"
+            "$XPI" "$UPDATE_MANIFEST" "$WINDOWS_PACKAGE" "$WINDOWS_INSTALLER" "${EXTRA_INSTALLERS[@]}" "$WINDOWS_UPDATE_MANIFEST"
     fi
 fi
 
@@ -583,12 +590,12 @@ echo "Released $TAG at $COMMIT"
 if [[ -n "$REPLACE_EXISTING" ]]; then
     echo "PyPI distributions preserved from $REPLACE_EXISTING; client source $COMMIT"
 fi
-echo "Artifacts: $XPI $UPDATE_MANIFEST $WINDOWS_PACKAGE $WINDOWS_INSTALLER $ARM64_INSTALLER $WINDOWS_UPDATE_MANIFEST $SOURCE_ARCHIVE"
+echo "Artifacts: $XPI $UPDATE_MANIFEST $WINDOWS_PACKAGE $WINDOWS_INSTALLER ${EXTRA_INSTALLERS[*]} $WINDOWS_UPDATE_MANIFEST $SOURCE_ARCHIVE"
 echo "SHA-256:"
 echo "  $XPI_SHA256  $XPI"
 echo "  $UPDATE_SHA256  $UPDATE_MANIFEST"
 echo "  $WINDOWS_SHA256  $WINDOWS_PACKAGE"
 echo "  $WINDOWS_INSTALLER_SHA256  $WINDOWS_INSTALLER"
-echo "  $(sha256_file "$ARM64_INSTALLER")  $ARM64_INSTALLER"
+for installer in "${EXTRA_INSTALLERS[@]}"; do echo "  $(sha256_file "$installer")  $installer"; done
 echo "  $WINDOWS_UPDATE_SHA256  $WINDOWS_UPDATE_MANIFEST"
 echo "  $SOURCE_SHA256  $SOURCE_ARCHIVE"

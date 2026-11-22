@@ -161,7 +161,9 @@ jobs:
           from windows_pe import validate_release_pe
           from build_windows_installer import verify_installer
           verify_installer(source / "zotero-pdf2zh-pro-windows-x64-setup.exe", version)
-          verify_installer(source / "zotero-pdf2zh-pro-windows-arm64-setup.exe", version, "arm64")
+          from release_policy import ships_windows_arm64
+          if ships_windows_arm64(version):
+              verify_installer(source / "zotero-pdf2zh-pro-windows-arm64-setup.exe", version, "arm64")
           with zipfile.ZipFile(source / "zotero-pdf2zh-pro-windows-x64.zip") as archive:
               validate_release_pe(archive.read("zotero-pdf2zh-pro.exe"))
           PY_VERIFY_FILES
@@ -283,6 +285,9 @@ jobs:
           output.write_text(notes, encoding="utf-8")
           PY_NOTES
           source="$RUNNER_TEMP/verified-release"
+          extra_installers=()
+          include_arm64="$(python "$RUNNER_TEMP/release-control/release_policy.py" windows-arm64 "$RELEASE_TAG")"
+          if [[ "$include_arm64" == yes ]]; then extra_installers+=("$source/zotero-pdf2zh-pro-windows-arm64-setup.exe"); fi
           python "$RUNNER_TEMP/release-control/release_control.py" publish "$RELEASE_TAG" "$(git rev-parse HEAD)" "$RUNNER_TEMP/release-notes.md" --repo "$GITHUB_REPOSITORY" \
             "$source/zotero-pdf2zh-pro.xpi" "$source/update.json" \
-            "$source/zotero-pdf2zh-pro-windows-x64.zip" "$source/zotero-pdf2zh-pro-windows-x64-setup.exe" "$source/zotero-pdf2zh-pro-windows-arm64-setup.exe" "$source/windows-update.json"
+            "$source/zotero-pdf2zh-pro-windows-x64.zip" "$source/zotero-pdf2zh-pro-windows-x64-setup.exe" "${extra_installers[@]}" "$source/windows-update.json"

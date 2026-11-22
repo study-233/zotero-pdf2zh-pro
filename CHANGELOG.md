@@ -11,10 +11,10 @@
 
 - **托管引擎**　首次安装时可选择目录，之后也可迁移到其他磁盘。迁移会更新历史任务中的文件路径并保留原目录。翻译进行时会推迟更新，后端连续空闲 60 秒后再切换。
 - **Windows 独立安装**　如果正在使用 1.9.8 控制中心，可先在插件内升级控制中心，再开启「跟随插件更新」。升级沿用原安装目录和任务数据，已停止的服务升级后保持停止。
-- **Windows 11 ARM64**　原生 ARM64 版 Zotero 使用同一个 XPI，托管引擎通过 Windows 11 的 x64 仿真运行。独立安装时请按系统架构选择 x64 或 ARM64 安装器。
+- **Windows 11 ARM64**　原生 ARM64 版 Zotero 使用同一个 XPI。在「翻译服务」中选择「安装本地引擎」，即可通过 Windows 11 的 x64 仿真运行托管引擎。
 - **Homebrew**　Apple Silicon Mac 用户可从插件设置手动升级本机 Homebrew 后端，或开启自动跟随。运行中的服务会等待连续空闲 60 秒，已停止的服务升级后保持停止。
 
-[Zotero 插件](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.9/zotero-pdf2zh-pro.xpi) · [Windows x64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.9/zotero-pdf2zh-pro-windows-x64-setup.exe) · [Windows ARM64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.9/zotero-pdf2zh-pro-windows-arm64-setup.exe) · [安装指南](https://study-233.github.io/zotero-pdf2zh-pro/guide/) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.8...v1.9.9)
+[Zotero 插件](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.9/zotero-pdf2zh-pro.xpi) · [Windows x64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/download/v1.9.9/zotero-pdf2zh-pro-windows-x64-setup.exe) · [安装指南](https://study-233.github.io/zotero-pdf2zh-pro/guide/) · [完整变更](https://github.com/study-233/zotero-pdf2zh-pro/compare/v1.9.8...v1.9.9)
 
 ## v1.9.8 - 2026-11-16
 

@@ -11,14 +11,16 @@ SCRIPT = SOURCE.split("<<'VERIFY_BUILD'\n", 1)[1].split("\nVERIFY_BUILD", 1)[0]
 
 
 class ReleaseGateTests(unittest.TestCase):
-    def run_gate(self, change=None, fresh=False, replacement=False):
+    def run_gate(self, change=None, fresh=False, replacement=False, arm64=False):
         with tempfile.TemporaryDirectory(prefix="release-gate-") as temporary:
             root = Path(temporary)
             downloaded = root / "download"
             downloaded.mkdir()
-            names = ["zotero-pdf2zh-pro.xpi", "update.json", "zotero-pdf2zh-pro-windows-x64.zip", "zotero-pdf2zh-pro-windows-x64-setup.exe", "zotero-pdf2zh-pro-windows-arm64-setup.exe",
+            names = ["zotero-pdf2zh-pro.xpi", "update.json", "zotero-pdf2zh-pro-windows-x64.zip", "zotero-pdf2zh-pro-windows-x64-setup.exe",
                      "windows-update.json", "zotero-pdf2zh-pro-1.6.9-source.zip",
                      "zotero_pdf2zh_pro-1.6.9-py3-none-any.whl", "zotero_pdf2zh_pro-1.6.9.tar.gz"]
+            if arm64:
+                names.insert(4, "zotero-pdf2zh-pro-windows-arm64-setup.exe")
             manifest = {"version": "1.6.9", "commit": "a" * 40, "artifacts": {}}
             for name in names:
                 (downloaded / name).write_bytes(name.encode())
@@ -41,12 +43,24 @@ class ReleaseGateTests(unittest.TestCase):
             if change:
                 change(manifest, downloaded)
             (downloaded / "checksums.json").write_text(json.dumps(manifest), encoding="utf-8")
-            result = subprocess.run(["node", "-", str(downloaded), "1.6.9", "a" * 40, "b" * 40 if replacement else ""],
+            result = subprocess.run(["node", "-", str(downloaded), "1.6.9", "a" * 40, "b" * 40 if replacement else "", "yes" if arm64 else "no"],
                                     input=SCRIPT, text=True, capture_output=True, cwd=root)
             return result.returncode, target.read_bytes()
 
     def test_valid_packages_replace_local_build(self):
         self.assertEqual(self.run_gate(), (0, b"zotero-pdf2zh-pro.xpi"))
+
+    def test_arm64_release_policy_and_exact_artifact_set(self):
+        from release_control import product_paths
+        name = 'zotero-pdf2zh-pro-windows-arm64-setup.exe'
+        self.assertNotIn('dist/' + name, product_paths('1.9.9'))
+        from unittest.mock import patch
+        with patch('release_policy.policy', return_value={'windowsArm64InstallerFrom': '1.9.10'}):
+            self.assertNotIn('dist/' + name, product_paths('1.9.9'))
+            self.assertIn('dist/' + name, product_paths('1.9.10'))
+        self.assertEqual(self.run_gate(arm64=True)[0], 0)
+        self.assertNotEqual(self.run_gate(lambda m, _: m['artifacts'].update({name: {}}))[0], 0)
+        self.assertNotEqual(self.run_gate(lambda m, _: m['artifacts'].pop(name), arm64=True)[0], 0)
 
     def test_verified_packages_install_without_a_local_build(self):
         self.assertEqual(self.run_gate(fresh=True), (0, b"zotero-pdf2zh-pro.xpi"))
