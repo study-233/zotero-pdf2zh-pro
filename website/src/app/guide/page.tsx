@@ -25,7 +25,7 @@ export default function Guide() {
           title="安装 Zotero 插件"
           href="/guide/installation/"
         >
-          下载 XPI，再点击“检查本地服务”安装引擎。
+          下载 XPI，再在「翻译服务」中点击「安装本地引擎」。
         </Card>
         <Card
           icon={<SlidersHorizontalIcon aria-hidden="true" />}
@@ -44,11 +44,11 @@ export default function Guide() {
       </Link>
       <h2 className="mt-10 text-xl font-semibold">需要独立本地服务？</h2>
       <p className="text-muted-foreground">
-        Windows x64 和 Apple Silicon Mac 可直接使用插件引擎。已有服务可沿用原地址和数据，也可按下方方式独立安装。
+        Windows x64、Windows 11 ARM64 和 Apple Silicon Mac 可直接使用插件引擎。已有服务可沿用原地址和数据，也可按下方方式独立安装。
       </p>
       <Cards>
         <Card icon={<MonitorIcon />} title="Windows" href="/guide/windows/">
-          Windows 10 / 11 · x64 独立安装器
+          Windows 10/11 x64 与 Windows 11 ARM64 安装器
         </Card>
         <Card icon={<AppleIcon />} title="macOS" href="/guide/macos/">
           Apple Silicon · Homebrew

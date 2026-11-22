@@ -45,7 +45,7 @@ export function DownloadSection({ version }: { version: string }) {
             </a>
           </div>
           <p className="mt-4 text-base text-muted-foreground">
-            Windows x64 和 Apple Silicon Mac：安装后点击插件设置中的“检查本地服务”，按提示联网下载引擎。已有服务可沿用原地址和数据。
+            Windows x64、Windows 11 ARM64 和 Apple Silicon Mac 用户可在「翻译服务」中安装本地引擎。已有服务可沿用原地址和数据。
           </p>
           <h3 className="mt-10 mb-3 text-lg font-medium">需要独立服务？</h3>
           <div
@@ -94,14 +94,21 @@ export function DownloadSection({ version }: { version: string }) {
             <div className="download-row">
               <div>
                 <h3>独立本地服务</h3>
-                <p>Windows 10 / 11 · x64</p>
+                <p>Windows 10/11 x64 · Windows 11 ARM64</p>
               </div>
               <a
                 className="download-action"
                 href={`${GITHUB_REPO_URL}/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe`}
               >
                 <DownloadIcon />
-                下载 Windows 版
+                下载 x64 版
+              </a>
+              <a
+                className="download-action"
+                href={`${GITHUB_REPO_URL}/releases/latest/download/zotero-pdf2zh-pro-windows-arm64-setup.exe`}
+              >
+                <DownloadIcon />
+                下载 ARM64 版
               </a>
             </div>
           </div>

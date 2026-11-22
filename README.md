@@ -42,9 +42,9 @@
 <a id="installation"></a>
 <a id="2-安装-zotero-插件"></a>
 
-**2. 准备翻译引擎。** Windows 10/11 x64 和 Apple Silicon Mac 用户在插件设置中点击「检查本地服务」，按提示联网下载安装。显示「已连接」后继续；已有服务可沿用原地址和数据。
+**2. 准备翻译引擎。** Windows 10/11 x64、Windows 11 ARM64 和 Apple Silicon Mac 用户可在插件设置的「翻译服务」中点击「安装本地引擎」，或用「选择安装位置…」指定磁盘。已有服务可填写原地址并点击「测试连接」。
 
-需要独立服务时，可用 [Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)、[Homebrew](docs/user-guide.md#macos) 或 [Linux / Docker / uv](docs/user-guide.md#advanced)。Intel Mac 可沿用已有服务。
+需要独立服务时，可用 [Windows x64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)、[Windows 11 ARM64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-arm64-setup.exe)、[Homebrew](docs/user-guide.md#macos) 或 [Linux / Docker / uv](docs/user-guide.md#advanced)。Intel Mac 可沿用已有服务。
 
 <a id="api-configuration"></a>
 <a id="3-配置翻译-api"></a>
@@ -125,4 +125,4 @@
 本项目采用 **AGPL-3.0-or-later**，保留上游项目与第三方组件的许可证及归属。
 详见 [LICENSE](LICENSE) 和 [第三方声明](server/THIRD_PARTY_NOTICES.md)。
 
-[release-version]: # (<!-- release-version --> `1.9.8`)
+[release-version]: # (<!-- release-version --> `1.9.9`)

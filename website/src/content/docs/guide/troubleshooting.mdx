@@ -16,7 +16,7 @@
 
 | 现象 | 处理 |
 | --- | --- |
-| 插件引擎下载失败 | 检查网络和磁盘空间，再点击“检查本地服务”重试；已有服务填写原地址 |
+| 插件引擎下载失败 | 检查网络和磁盘空间，再到「翻译服务」重试安装或更新；已有服务填写原地址 |
 | Windows 安装或下载失败 | 检查网络，在控制中心查看“日志与诊断”后重试；使用[最新 EXE](/zotero-pdf2zh-pro/guide/windows/)，无需解压 ZIP |
 | `command not found: brew` | 完成 Homebrew 的 Next steps，重新打开终端 |
 | 找不到 `zotero-pdf2zh-pro` 命令 | uv 用户执行 `uv tool update-shell` 后重开终端；Homebrew 用户确认安装已成功 |
@@ -26,7 +26,7 @@
 
 打开 [健康检查](http://127.0.0.1:8890/health)，应返回 `"status":"ok"`。
 
-- **无法打开**：插件引擎先点击“检查本地服务”重试，首次安装需要联网。独立服务用户在 Windows 检查控制中心，macOS 执行 `brew services list`；远程服务核对原地址。
+- **无法打开**：插件引擎先到「翻译服务」点击「测试连接」，首次安装需要联网。独立服务用户在 Windows 检查控制中心，macOS 执行 `brew services list`；远程服务核对原地址。
 - **返回 degraded**：检查 `workspace` 中的错误、数据目录权限和磁盘空间。
 - **根地址返回 404**：访问的是 `/health`，不是服务首页。
 - **端口被占用**：检查是否重复启动 Homebrew、uv 或其他服务，只停止已确认属于自己的进程。
