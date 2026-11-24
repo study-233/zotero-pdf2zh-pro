@@ -66,19 +66,19 @@
     "reviewedSha256": "ef3c9ceab046c7efefffaf711626258448fcc3f0ad2054794667a944e053b62a"
   },
   "assets/guide/server-connected.webp": {
-    "width": 1600,
-    "height": 352,
-    "purpose": "检查本地服务连接",
-    "alt": "填写本地服务地址，点击检查本地服务后显示已连接",
+    "width": 800,
+    "height": 358,
+    "purpose": "托管引擎的安装位置与更新选项",
+    "alt": "翻译服务显示插件托管引擎、安装与数据目录，以及更新选项",
     "os": "Windows 11",
-    "zoteroVersion": "10.0.6",
-    "pluginVersion": "1.9.7",
-    "serverVersion": "1.9.7",
-    "capturedAt": "2026-10-30T10:24:36+08:00",
-    "captureMethod": "native Zotero Gecko drawWindow at 2x",
+    "zoteroVersion": "10.0.8",
+    "pluginVersion": "1.9.9",
+    "serverVersion": "1.9.9",
+    "capturedAt": "2026-11-22T16:02:01+08:00",
+    "captureMethod": "native Zotero Gecko drawWindow with isolated health fixture",
     "reviewStatus": "live-captured-and-reviewed",
-    "reviewedAt": "2026-10-30",
-    "reviewedSha256": "3cff0723f4e6241b02bbced0c0b2e588d0596ba4942dd914b3f328ea2ae47351"
+    "reviewedAt": "2026-11-22",
+    "reviewedSha256": "9f21e8c235d3890bff8494be822cc3acc357c9294c7f8de17233edb167dbb2ba"
   },
   "assets/guide/api-configuration.webp": {
     "width": 1574,

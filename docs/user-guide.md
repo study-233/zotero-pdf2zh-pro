@@ -55,7 +55,7 @@
 | --- | --- |
 | Zotero 8–10 | 从 [Zotero 官网](https://www.zotero.org/download/)安装 |
 | Zotero 插件 | 下载 XPI 后[从文件安装](#installation) |
-| 本地引擎 | Windows x64 / Apple Silicon Mac 在插件设置中点击“检查本地服务”，联网下载安装；无需自行安装 Python |
+| 本地引擎 | Windows 10/11 x64、Windows 11 ARM64 和 Apple Silicon Mac 在「翻译服务」中点击「安装本地引擎」，联网下载安装；无需自行安装 Python |
 | 翻译来源 | 准备 API Key，或使用已有的 [ChatGPT 套餐 / 本地模型](#api-configuration) |
 
 已有服务可沿用原地址和数据。需要独立服务时，按 [Windows](#windows) 或 [Homebrew](#macos) 教程安装；Linux / Docker 用户查看[进阶部署](#advanced)。Intel Mac 可继续连接已有服务。
@@ -64,7 +64,7 @@
 
 ### 地址与费用
 
-- **本地服务地址**：默认 `http://127.0.0.1:8890`。插件安装引擎后自动填写；独立或远程服务在“服务端连接”中填写已有地址。
+- **本地服务地址**：默认 `http://127.0.0.1:8890`。插件安装引擎后自动填写；独立或远程服务在「翻译服务」中填写已有地址。
 - **API 地址**：由模型服务商提供，填写在翻译配置中。两者不能混用。
 
 PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，并使用其额度。
@@ -79,7 +79,7 @@ PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，�
 <span id="2-windows-安装教程"></span>
 
 
-适用于 **Windows 10/11 x64**。首次安装需要联网下载 Python 和翻译依赖。
+本页适用于 **Windows 10/11 x64**。Windows 11 ARM64 用户请在 Zotero 插件中[安装托管引擎](#installation)。首次安装需要联网下载 Python 和翻译依赖。
 
 <span id="第一步下载并打开安装器"></span>
 
@@ -87,7 +87,7 @@ PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，�
 
 ### 安装并启动
 
-[下载并打开 Windows 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)，选择安装位置并点击 **开始安装**。
+在 Windows 设置的「系统 → 系统信息」查看系统类型，下载 [x64 安装器](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro-windows-x64-setup.exe)。打开安装器，选择安装位置并点击 **开始安装**。
 
 ![选择安装位置后点击开始安装](../assets/guide/windows-installer.webp)
 
@@ -121,6 +121,8 @@ PDF 在本地处理；云端翻译会把待译文本发送给所选服务商，�
 
 <details>
 <summary>旧版升级与手动恢复</summary>
+
+使用 1.9.8 控制中心时，可在 Zotero 的「翻译服务」中点击 **更新控制中心以启用插件管理**。之后可以选择 **随插件更新后端**，也可继续从控制中心更新。
 
 同版本安装可修复，高版本可升级，不能降级；配置、数据和自启选择会保留。
 从 v1.8.2 或更早版本升级时，先等翻译结束，再从旧控制中心停止服务，然后运行新安装器。
@@ -195,7 +197,7 @@ curl -fsS http://127.0.0.1:8890/health
 <span id="4-安装-zotero-插件与检查连接"></span>
 
 
-Windows 和 macOS 使用同一个 XPI。Windows 10/11 x64 和 Apple Silicon Mac 可在插件内安装本地引擎；已有独立或远程服务可继续连接。
+Windows 和 macOS 使用同一个 XPI。Windows 10/11 x64、Windows 11 ARM64 和 Apple Silicon Mac 可在插件内安装本地引擎；已有独立或远程服务可继续连接。
 
 <span id="安装-xpi"></span>
 
@@ -209,17 +211,17 @@ Windows 和 macOS 使用同一个 XPI。Windows 10/11 x64 和 Apple Silicon Mac 
 
 ### 安装引擎并检查连接
 
-1. 在 Zotero 设置中打开 **zotero-pdf2zh-pro → 服务端连接**。
-2. 点击 **检查本地服务**，按提示联网下载安装本地引擎。首次下载需要网络，等待进度完成。
+1. 在 Zotero 设置中打开 **zotero-pdf2zh-pro → 翻译服务**。
+2. 点击 **安装本地引擎** 使用默认目录，或点击 **选择安装位置…** 选择上级文件夹。确认路径后等待下载完成。
 3. 插件准备好引擎后自动填写本机地址。显示 **已连接** 后，继续配置翻译来源。
 
-![填写本地服务地址，点击检查本地服务后显示已连接](../assets/guide/server-connected.webp)
+![翻译服务显示插件托管引擎、安装与数据目录，以及更新选项](../assets/guide/server-connected.webp)
 
-继续[配置翻译来源](#api-configuration)。下载失败时先检查网络，再点击 **检查本地服务**重试。
+继续[配置翻译来源](#api-configuration)。之后可在同一处使用 **更改安装位置…** 迁移引擎和后端数据。
 
 ### 连接已有服务
 
-使用 Windows 控制中心、Homebrew、uv、Docker 或远程服务时，先按原方式启动服务，再填写原地址并点击 **检查本地服务**。本机默认地址为 `http://127.0.0.1:8890`；保留原数据目录，无需迁移到插件引擎。
+使用 Windows 控制中心、Homebrew、uv、Docker 或远程服务时，先按原方式启动服务，再填写原地址并点击 **测试连接**。本机默认地址为 `http://127.0.0.1:8890`；保留原数据目录，无需迁移到插件引擎。
 
 Intel Mac、Linux 或需要独立管理服务的用户，可使用已有服务或[其他部署方式](#advanced)。
 
@@ -476,7 +478,7 @@ QPS 2、并发 4 是起步建议；当前默认值为 **QPS 10、并发 50**，�
 
 ![展开任务详情查看请求次数、Token、缓存和输出速度](../assets/guide/task-metrics.webp)
 
-- **已用**和**剩余**都按「时:分:秒」显示。已用时间累计排队与执行时间，停机和等待恢复期间暂停计时。剩余时间为估算值，尚无估算时显示 `—`。
+- **耗时**：排队与执行的累计时间，不包含停机或等待继续。
 - **QPS / 活跃请求**：当前请求速率与并发情况。
 - **Token / 输出速度**：服务商回报的用量和速度；`—` 表示缺失，不能当作零消耗。
 - **缓存**：本地翻译缓存与服务商缓存是两种统计。
@@ -663,7 +665,7 @@ Markdown 适合笔记，JSON 适合程序处理，TXT 只保留纯文本。
 <span id="9-更新与日常维护"></span>
 
 
-插件管理的引擎会随插件在任务空闲时更新；独立服务仍按原方式升级。操作前先等待翻译结束，备份需要保留的数据。
+在 Zotero 设置的「翻译服务」中查看当前后端的安装方式和可用更新。操作前先等待翻译结束，备份需要保留的数据。
 
 <span id="更新插件和服务端"></span>
 
@@ -672,8 +674,9 @@ Markdown 适合笔记，JSON 适合程序处理，TXT 只保留纯文本。
 | 安装方式 | 操作 |
 | --- | --- |
 | Zotero 插件 | 插件管理器检查更新，或[下载新 XPI](https://github.com/study-233/zotero-pdf2zh-pro/releases/latest/download/zotero-pdf2zh-pro.xpi)从文件安装 |
-| 插件管理的引擎 | 更新 XPI 后，插件在任务空闲时更新；需要时点击“检查本地服务”查看状态 |
-| Windows 独立服务 | 控制中心检查更新；旧控制中心使用[新安装器](#windows)升级 |
+| 插件管理的引擎 | 开启「随插件更新后端」或点击「立即更新」，运行中的后端连续空闲 60 秒后切换 |
+| Windows 独立服务 | 在「翻译服务」中更新或开启自动跟随。使用 1.9.8 控制中心时先点击「更新控制中心以启用插件管理」 |
+| Apple Silicon Homebrew | 在「翻译服务」中手动升级，或开启「插件更新时自动更新后端」 |
 | uv | 停止服务，执行 `uv tool upgrade zotero-pdf2zh-pro`，再启动 |
 
 macOS Homebrew 按下方命令更新。**首次迁移旧数据时保留旧版本目录**，不要提前执行清理：
@@ -693,7 +696,7 @@ curl -fsS http://127.0.0.1:8890/health
 
 ### 备份与迁移
 
-- **插件引擎**：引擎文件保存在 Zotero 配置目录的 `pdf2zh-engine/`。服务数据位置仍以 `/health` 的 `workspace.path` 为准，停止 Zotero 和服务后再备份。
+- **插件引擎**：默认位置为 Zotero 配置目录中的 `pdf2zh-engine/`。在「翻译服务」中查看实际目录，点击「更改安装位置…」迁移。确认新位置的任务和译文可用后再处理旧目录。服务数据位置仍以 `/health` 的 `workspace.path` 为准，停止 Zotero 和服务后再备份。
 - **服务数据**：Windows 控制中心选择“打开数据目录”；macOS / uv 查看 `/health` 的 `workspace.path`。停止服务后备份整个目录，保留任务、译文和检查点。
 - **Windows 更改安装位置**：展开 **存储与维护**，在 **更改安装位置**一栏点击 **迁移**，不要直接拖动正在使用的目录。
 - **划词数据**：同时备份 Zotero 数据目录下的 `pdf2zhpro/`；收藏不随云同步。
@@ -733,7 +736,7 @@ curl -fsS http://127.0.0.1:8890/health
 
 | 现象 | 处理 |
 | --- | --- |
-| 插件引擎下载失败 | 检查网络和磁盘空间，再点击“检查本地服务”重试；已有服务填写原地址 |
+| 插件引擎下载失败 | 检查网络和磁盘空间，再到「翻译服务」重试安装或更新；已有服务填写原地址 |
 | Windows 安装或下载失败 | 检查网络，在控制中心查看“日志与诊断”后重试；使用[最新 EXE](#windows)，无需解压 ZIP |
 | `command not found: brew` | 完成 Homebrew 的 Next steps，重新打开终端 |
 | 找不到 `zotero-pdf2zh-pro` 命令 | uv 用户执行 `uv tool update-shell` 后重开终端；Homebrew 用户确认安装已成功 |
@@ -743,7 +746,7 @@ curl -fsS http://127.0.0.1:8890/health
 
 打开 [健康检查](http://127.0.0.1:8890/health)，应返回 `"status":"ok"`。
 
-- **无法打开**：插件引擎先点击“检查本地服务”重试，首次安装需要联网。独立服务用户在 Windows 检查控制中心，macOS 执行 `brew services list`；远程服务核对原地址。
+- **无法打开**：插件引擎先到「翻译服务」点击「测试连接」，首次安装需要联网。独立服务用户在 Windows 检查控制中心，macOS 执行 `brew services list`；远程服务核对原地址。
 - **返回 degraded**：检查 `workspace` 中的错误、数据目录权限和磁盘空间。
 - **根地址返回 404**：访问的是 `/health`，不是服务首页。
 - **端口被占用**：检查是否重复启动 Homebrew、uv 或其他服务，只停止已确认属于自己的进程。
